@@ -1,0 +1,26 @@
+{
+  "name": "svelte-ui-kit",
+  "description": "A source-first Svelte UI kit",
+  "private": true,
+  "license": "(MIT OR Apache-2.0)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/triesap/svelte-ui-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/triesap/svelte-ui-kit/issues"
+  },
+  "homepage": "https://github.com/triesap/svelte-ui-kit#readme",
+  "type": "module",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.9.6"
+  }
+}
