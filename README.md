@@ -15,4 +15,4 @@ See `CONTRIBUTING.md`.
 
 ## License
 
-MIT OR Apache-2.0. See `LICENSE`.
+MIT OR Apache-2.0. See `LICENSE-MIT` and `LICENSE-APACHE`.
