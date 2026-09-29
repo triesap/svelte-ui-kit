@@ -27,6 +27,7 @@ pnpm run typecheck
 pnpm run build
 pnpm run test:cli-bootstrap
 pnpm run test:unit -- tests/unit/cli-bootstrap.test.ts
+pnpm run test:integration -- tests/integration/harness.test.ts
 pnpm run test:harness
 pnpm run fixture:check
 pnpm run fixture:build
@@ -37,17 +38,21 @@ pnpm run lint
 pnpm run format:check
 ```
 
-The unit runner is dependency-free: for every discovered `*.test.ts` entry
+The suite runner is dependency-free: for every discovered `*.test.ts` entry
 (including dot-prefixed and `..`-prefixed names) it writes an ephemeral
-compiler configuration inside the ignored `.unit-test-build/` tree, extends the
-tracked `tsconfig.unit.json`, and compiles with the pinned `tsc` into that
-output tree before executing the selected tests with Node's built-in
-`node:test` runner. Operands are repository-relative `*.test.ts` files; absolute
-operands, parent-directory components and symlinked test roots or ancestors are
-rejected, discovery is deterministic, and every selected file must actually
-execute a passing test. Any `test:fail` event — including a TODO-marked one —
-fails the run wherever the test was defined. `pnpm run test:harness` runs the
-runner's own regression suite.
+compiler configuration inside the ignored `.unit-test-build/<suite>/` tree,
+extends the tracked `tsconfig.<suite>.json`, and compiles with the pinned `tsc`
+into that suite's isolated output before executing the selected tests with
+Node's built-in `node:test` runner. `--suite unit` (the default) runs
+`tests/unit`; `--suite integration` runs `tests/integration` with the typed
+helpers under `tests/helpers/`, which create owned temporary projects, capture
+complete tree snapshots and invoke the real built CLI. Operands are
+repository-relative `*.test.ts` files; absolute operands, parent-directory
+components and symlinked test roots or ancestors are rejected, discovery is
+deterministic, and every selected file must actually execute a passing test.
+Any `test:fail` event — including a TODO-marked one — fails the run wherever the
+test was defined, and one suite's run never removes another suite's output.
+`pnpm run test:harness` runs the runner's own regression suite.
 
 The CLI entrypoint is `src/cli/main.ts`, compiled with the pinned `tsc` to
 `dist/cli/main.js` (build output is ignored and never committed).

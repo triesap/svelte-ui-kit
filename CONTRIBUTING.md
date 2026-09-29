@@ -34,6 +34,7 @@ pnpm run build
 ```sh
 pnpm run test:cli-bootstrap
 pnpm run test:unit -- tests/unit/cli-bootstrap.test.ts
+pnpm run test:integration -- tests/integration/harness.test.ts
 pnpm run test:harness
 pnpm run check:contracts
 pnpm run test:contracts
@@ -51,6 +52,12 @@ executes no passing test fails. Explicit selection controls which files run, not
 which ordinary unit inputs are typechecked. Any `test:fail` event, including a
 TODO-marked one, fails the run. `pnpm run test:harness` exercises the runner
 itself.
+
+The same runner selects the typed integration suite with `--suite integration`
+(`pnpm run test:integration`): it compiles `tests/integration/**/*.test.ts` and
+their `tests/helpers/` imports through `tsconfig.integration.json` into the
+isolated ignored `.unit-test-build/integration/` tree and invokes the real built
+CLI. Each suite cleans only its own output subdirectory.
 
 Both `typecheck` and `test:unit` are required: standalone `typecheck` uses the
 tracked compiler includes, while the unit runner also compiles every discovered
@@ -141,7 +148,8 @@ Component install/inspect/update work is planned but not implemented yet.
 - Keep changes focused and well-scoped.
 - Explain the change and how you verified it.
 - Run `pnpm run typecheck`, `pnpm run build`, `pnpm run test:cli-bootstrap`,
-  `pnpm run test:unit`, `pnpm run test:harness`, `pnpm run fixture:check`,
+  `pnpm run test:unit`, `pnpm run test:integration`,
+  `pnpm run test:harness`, `pnpm run fixture:check`,
   `pnpm run test:fixture`, `pnpm run lint` and `pnpm run format:check` (plus
   `pnpm run check:contracts` and `pnpm run test:contracts` for contract or
   evidence changes).

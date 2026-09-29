@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".unit-test-build/integration"
+  },
+  "include": [
+    "src/**/*.ts",
+    "tests/helpers/**/*.ts",
+    "tests/integration/**/*.ts"
+  ]
+}

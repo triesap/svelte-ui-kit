@@ -1,7 +1,7 @@
 # S008 step report — Add the generated-app browser harness
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S008","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S008","kind":"report","commit":"f4dfa83aadc67850b6b8b999f80bd7199de4a6b2","disposition":"candidate"}
 -->
 
 Step ID and title: S008 — Add the generated-app browser harness.
@@ -14,9 +14,9 @@ Author: Pi, provider `ollama`, model `deepseek-v4.1-flash:cloud`. Runtime:
 process-local Node `24.21.0` / `pnpm 11.22.0`, after `cargo extbuild doctor`
 (exit 0) and with mutating commands routed through `cargo extbuild run --`.
 
-Under the owner-authorized batch this report is a candidate; the S008
-implementation commit makes it `committed_pending_review` pending independent
-Codex review. No completion or acceptance is claimed.
+Under the owner-authorized batch this report is `committed_pending_review` at
+`f4dfa83aadc67850b6b8b999f80bd7199de4a6b2` pending independent Codex review.
+No completion or acceptance is claimed.
 
 ## Dispatch mapping
 

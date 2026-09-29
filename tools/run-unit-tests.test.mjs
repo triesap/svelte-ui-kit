@@ -171,7 +171,12 @@ registerImportedTodoFailure();
 function makePackage(t) {
   const dir = mkdtempSync(path.join(os.tmpdir(), "suik-unit-harness-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
-  for (const rel of ["package.json", "tsconfig.json", "tsconfig.unit.json"]) {
+  for (const rel of [
+    "package.json",
+    "tsconfig.json",
+    "tsconfig.unit.json",
+    "tsconfig.integration.json",
+  ]) {
     cpSync(path.join(REPO_ROOT, rel), path.join(dir, rel));
   }
   cpSync(path.join(REPO_ROOT, "src"), path.join(dir, "src"), {
@@ -400,7 +405,12 @@ test("a TypeScript error stops execution and removes stale output", (t) => {
 
   const first = runRunner(pkg);
   assert.equal(first.status, 0, first.stderr);
-  const compiled = path.join(pkg, ".unit-test-build", "tests/unit/ts.test.js");
+  const compiled = path.join(
+    pkg,
+    ".unit-test-build",
+    "unit",
+    "tests/unit/ts.test.js",
+  );
   assert.ok(existsSync(compiled), "a passing compile emits the compiled file");
 
   writeTest(pkg, rel, `${PASS_TEST}\n${TS_ERROR}`);
@@ -481,7 +491,7 @@ test("a symlinked tests/unit root is rejected in both modes", (t) => {
     symlinkSync(external, path.join(pkg, "tests", "unit"), "dir");
     writeOwnedFile(
       pkg,
-      path.join(".unit-test-build", "stale-marker"),
+      path.join(".unit-test-build", "unit", "stale-marker"),
       "keep\n",
     );
 
@@ -493,7 +503,10 @@ test("a symlinked tests/unit root is rejected in both modes", (t) => {
       "a rejected root must not execute the linked test",
     );
     assert.equal(
-      readFileSync(path.join(pkg, ".unit-test-build", "stale-marker"), "utf8"),
+      readFileSync(
+        path.join(pkg, ".unit-test-build", "unit", "stale-marker"),
+        "utf8",
+      ),
       "keep\n",
       "a rejected selection must not clean owned stale output",
     );
@@ -551,7 +564,11 @@ test("a final symlinked operand is rejected even when it points inside", (t) => 
 test("an invalid selection preserves stale output and side-effect sentinels", (t) => {
   const pkg = makePackage(t);
   writeTest(pkg, "tests/unit/ok.test.ts", SENTINEL_PASS);
-  writeOwnedFile(pkg, path.join(".unit-test-build", "stale-marker"), "keep\n");
+  writeOwnedFile(
+    pkg,
+    path.join(".unit-test-build", "unit", "stale-marker"),
+    "keep\n",
+  );
 
   const result = runRunner(pkg, [path.join(pkg, "tests/unit/ok.test.ts")]);
   assert.equal(result.status, 1);
@@ -561,7 +578,10 @@ test("an invalid selection preserves stale output and side-effect sentinels", (t
     "an invalid selection must not run a side-effect sentinel",
   );
   assert.equal(
-    readFileSync(path.join(pkg, ".unit-test-build", "stale-marker"), "utf8"),
+    readFileSync(
+      path.join(pkg, ".unit-test-build", "unit", "stale-marker"),
+      "utf8",
+    ),
     "keep\n",
     "an invalid selection must not clean stale output",
   );
@@ -686,4 +706,126 @@ test("an invalid fixture restores to green after the negative probe", (t) => {
   writeTest(pkg, "tests/unit/a.test.ts", SENTINEL_PASS);
   const restored = runRunner(pkg);
   assert.equal(restored.status, 0, restored.stderr);
+});
+
+// ---------------------------------------------------------------------------
+// S009 — typed suite selector for the integration suite
+// ---------------------------------------------------------------------------
+
+test("the integration suite is selected explicitly and stays isolated", (t) => {
+  const pkg = makePackage(t);
+  writeTest(pkg, "tests/unit/unit-only.test.ts", PASS_TEST);
+  writeTest(pkg, "tests/integration/integration-only.test.ts", PASS_TEST);
+
+  const unit = runRunner(pkg);
+  assert.equal(unit.status, 0, unit.stderr);
+  assert.deepEqual(selected(unit.stdout), ["tests/unit/unit-only.test.ts"]);
+
+  const integration = runRunner(pkg, [
+    "--suite",
+    "integration",
+    "tests/integration/integration-only.test.ts",
+  ]);
+  assert.equal(integration.status, 0, integration.stderr);
+  assert.deepEqual(selected(integration.stdout), [
+    "tests/integration/integration-only.test.ts",
+  ]);
+
+  const equalsForm = runRunner(pkg, [
+    "--suite=integration",
+    "tests/integration/integration-only.test.ts",
+  ]);
+  assert.equal(equalsForm.status, 0, equalsForm.stderr);
+  assert.deepEqual(selected(equalsForm.stdout), [
+    "tests/integration/integration-only.test.ts",
+  ]);
+});
+
+test("suite output directories do not destroy each other", (t) => {
+  const pkg = makePackage(t);
+  writeTest(pkg, "tests/unit/unit-only.test.ts", PASS_TEST);
+  writeTest(pkg, "tests/integration/integration-only.test.ts", PASS_TEST);
+
+  // Seed a marker inside the other suite's output to prove it is preserved.
+  writeOwnedFile(
+    pkg,
+    path.join(".unit-test-build", "integration", "keep-marker"),
+    "keep\n",
+  );
+
+  const unit = runRunner(pkg);
+  assert.equal(unit.status, 0, unit.stderr);
+  assert.ok(
+    existsSync(
+      path.join(pkg, ".unit-test-build", "integration", "keep-marker"),
+    ),
+    "a unit run must not remove the integration output tree",
+  );
+
+  const integration = runRunner(pkg, ["--suite", "integration"]);
+  assert.equal(integration.status, 0, integration.stderr);
+  assert.ok(
+    existsSync(
+      path.join(
+        pkg,
+        ".unit-test-build",
+        "unit",
+        "tests/unit/unit-only.test.js",
+      ),
+    ),
+    "an integration run must not remove the unit output tree",
+  );
+  assert.ok(
+    !existsSync(
+      path.join(pkg, ".unit-test-build", "integration", "keep-marker"),
+    ),
+    "an integration run must clean only its own stale output",
+  );
+});
+
+test("an integration operand may not escape into the unit suite", (t) => {
+  const pkg = makePackage(t);
+  writeTest(pkg, "tests/unit/a.test.ts", PASS_TEST);
+
+  const result = runRunner(pkg, [
+    "--suite",
+    "integration",
+    "tests/unit/a.test.ts",
+  ]);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /escapes tests\/integration/);
+  assert.equal(result.stdout, "");
+});
+
+test("an unknown or missing suite name is rejected", (t) => {
+  const pkg = makePackage(t);
+  writeTest(pkg, "tests/unit/a.test.ts", PASS_TEST);
+
+  const unknown = runRunner(pkg, ["--suite", "bogus"]);
+  assert.equal(unknown.status, 1);
+  assert.match(unknown.stderr, /unknown suite "bogus"/);
+  assert.equal(unknown.stdout, "");
+
+  const missing = runRunner(pkg, ["--suite"]);
+  assert.equal(missing.status, 1);
+  assert.match(missing.stderr, /--suite requires a suite name/);
+});
+
+test("integration compile failures report the integration configuration", (t) => {
+  const pkg = makePackage(t);
+  writeTest(pkg, "tests/integration/bad.test.ts", `${PASS_TEST}\n${TS_ERROR}`);
+
+  const result = runRunner(pkg, ["--suite", "integration"]);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /integration TypeScript compilation failed/);
+});
+
+test("no discovered integration files is a suite-specific failure", (t) => {
+  const pkg = makePackage(t);
+  const result = runRunner(pkg, ["--suite", "integration"]);
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stderr,
+    /no integration test files were discovered under tests\/integration/,
+  );
 });

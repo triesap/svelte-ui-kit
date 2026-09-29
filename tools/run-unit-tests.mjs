@@ -1,36 +1,43 @@
 #!/usr/bin/env node
 /**
- * S005 unit test runner.
+ * S005/S009 typed suite runner.
  *
  * This runner is intentionally dependency-free: it uses the pinned TypeScript
  * compiler already present in the dev dependencies and Node's built-in
- * `node:test` runner (`run()`), so no new dependency is introduced.
+ * `node:test` runner (`run()`), so no new dependency is introduced. It selects
+ * a named typed suite (`unit`, `integration`, later `components`) that keeps
+ * its own tests root, its own tracked compiler configuration and its own
+ * output subdirectory under the ignored `.unit-test-build/` tree, so one
+ * suite's run never removes another suite's output.
  *
  * Behavioural contract:
  *
  * - Selection is deterministic. With no operands it discovers every regular
- *   `tests/unit/**\/*.test.ts` file, including dot-prefixed filenames and
- *   directories and names beginning with `..`, in sorted order. With operands
- *   it accepts one optional leading `--` separator followed by explicit
- *   repository-relative `*.test.ts` operands. Missing files, globs,
- *   directories, unknown options, absolute operands, parent-directory
- *   components and paths (or symlinks) escaping the unit-test tree are rejected
- *   without silently falling back to the full suite.
+ *   `*.test.ts` file below the selected suite's tests root, including
+ *   dot-prefixed filenames and directories and names beginning with `..`, in
+ *   sorted order. With operands it accepts one optional leading `--` separator
+ *   followed by explicit repository-relative `*.test.ts` operands. Missing
+ *   files, globs, directories, unknown options, absolute operands,
+ *   parent-directory components and paths (or symlinks) escaping the suite
+ *   tests tree are rejected without silently falling back to the full suite.
+ * - The suite is chosen with `--suite <name>` (default `unit`); unknown suite
+ *   names are rejected. `--suite=<name>` is also accepted.
  * - Package-owned boundaries are anchored to this package root. A symlinked
- *   `tests` or `tests/unit` root, a final symlink, or a symlinked ancestor
+ *   `tests` or `tests/<suite>` root, a final symlink, or a symlinked ancestor
  *   directory inside the test tree is rejected before any cleanup, compilation
  *   or execution. Nested symlink entries are ignored by discovery, never
  *   followed.
- * - The fixed, owned `.unit-test-build` output is removed before compiling so a
- *   previous run can never satisfy a later failing compile. The cleanup refuses
- *   a symlinked (including dangling) or otherwise unexpected output root using
- *   non-following metadata, so only a truly absent root is treated as absent.
- * - Every discovered unit entry is compiled through an ephemeral compiler
- *   configuration that lives inside the guarded, ignored owned output tree and
- *   extends `tsconfig.unit.json` while explicitly listing the discovered
- *   entries. Explicit selection controls execution, never which ordinary unit
- *   inputs are typechecked. A compile failure stops execution before any test
- *   runs.
+ * - The suite's owned `.unit-test-build/<suite>` output is removed before
+ *   compiling so a previous run can never satisfy a later failing compile. The
+ *   cleanup refuses a symlinked (including dangling) or otherwise unexpected
+ *   `.unit-test-build` ancestor or suite output root using non-following
+ *   metadata, and it removes only the selected suite's output.
+ * - Every discovered suite entry is compiled through an ephemeral compiler
+ *   configuration that lives inside the guarded, ignored suite output tree and
+ *   extends the tracked `tsconfig.<suite>.json` while explicitly listing the
+ *   discovered entries. Explicit selection controls execution, never which
+ *   ordinary suite inputs are typechecked. A compile failure stops execution
+ *   before any test runs.
  * - Results are read from Node's structured test events, not from output text.
  *   Child events are attributed to `entryFile` (with a `file` fallback) while
  *   the defining file/line is retained for diagnostics. Every selected file
@@ -62,17 +69,14 @@ import { inspect } from "node:util";
 const TOOLS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const PKG_ROOT = path.resolve(TOOLS_DIR, "..");
 const TESTS_ROOT = path.join(PKG_ROOT, "tests");
-const UNIT_ROOT = path.join(TESTS_ROOT, "unit");
 const OUT_DIR_NAME = ".unit-test-build";
-const OUT_DIR = path.join(PKG_ROOT, OUT_DIR_NAME);
-const UNIT_TSCONFIG = path.join(PKG_ROOT, "tsconfig.unit.json");
-const GENERATED_UNIT_TSCONFIG = path.join(
-  OUT_DIR,
-  "tsconfig.unit.generated.json",
-);
+const OUT_BASE = path.join(PKG_ROOT, OUT_DIR_NAME);
 const TSC_BIN = path.join(PKG_ROOT, "node_modules", "typescript", "bin", "tsc");
 
 const LOG_PREFIX = "run-unit-tests:";
+
+/** Approved typed suites. `components` is established by a later checkpoint. */
+const SUITE_NAMES = ["unit", "integration", "components"];
 
 /** A deterministic, user-facing selection problem (never a crash). */
 class SelectionError extends Error {}
@@ -83,6 +87,25 @@ function log(message) {
 
 function logError(message) {
   process.stderr.write(`${LOG_PREFIX} ${message}\n`);
+}
+
+function suiteDefinition(name) {
+  if (!SUITE_NAMES.includes(name)) {
+    throw new SelectionError(
+      `unknown suite "${name}"; expected one of ${SUITE_NAMES.join(", ")}`,
+    );
+  }
+  return {
+    name,
+    testsRoot: path.join(TESTS_ROOT, name),
+    outputDir: path.join(OUT_BASE, name),
+    baseTsconfig: path.join(PKG_ROOT, `tsconfig.${name}.json`),
+    generatedTsconfig: path.join(
+      OUT_BASE,
+      name,
+      `tsconfig.${name}.generated.json`,
+    ),
+  };
 }
 
 /**
@@ -96,14 +119,14 @@ function isContained(parent, child) {
 }
 
 /**
- * Reject a symlinked or non-directory `tests` / `tests/unit` root. Only the
+ * Reject a symlinked or non-directory `tests` / `tests/<suite>` root. Only the
  * final path component is inspected, so a package checkout reached through an
  * otherwise valid working-directory symlink remains a valid test root.
  */
-function assertTestRootsReal() {
+function assertTestRootsReal(suite) {
   const roots = [
     ["tests", TESTS_ROOT],
-    ["tests/unit", UNIT_ROOT],
+    [`tests/${suite.name}`, suite.testsRoot],
   ];
   for (const [label, root] of roots) {
     let stats;
@@ -122,15 +145,42 @@ function assertTestRootsReal() {
   }
 }
 
-function parseOperands(argv) {
-  const operands = [...argv];
-  if (operands[0] === "--") operands.shift();
-  for (const operand of operands) {
-    if (operand.startsWith("-")) {
-      throw new SelectionError(`unknown option is not supported: ${operand}`);
+/**
+ * Parse `--suite <name>` (or `--suite=<name>`) plus an optional leading `--`
+ * separator and repository-relative operands. Unknown options are rejected.
+ */
+function parseArgs(argv) {
+  const operands = [];
+  let suite = "unit";
+  let optionsEnded = false;
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (optionsEnded) {
+      operands.push(arg);
+      continue;
     }
+    if (arg === "--") {
+      optionsEnded = true;
+      continue;
+    }
+    if (arg === "--suite") {
+      const value = argv[++index];
+      if (value === undefined) {
+        throw new SelectionError("--suite requires a suite name");
+      }
+      suite = value;
+      continue;
+    }
+    if (arg.startsWith("--suite=")) {
+      suite = arg.slice("--suite=".length);
+      continue;
+    }
+    if (arg.startsWith("-")) {
+      throw new SelectionError(`unknown option is not supported: ${arg}`);
+    }
+    operands.push(arg);
   }
-  return operands;
+  return { suiteName: suite, operands };
 }
 
 /**
@@ -161,7 +211,7 @@ function walkComponents(abs, operand) {
   return stats;
 }
 
-function resolveOperand(operand) {
+function resolveOperand(suite, operand) {
   if (operand === "") throw new SelectionError("empty test operand");
   if (/[*?[\]{}]/.test(operand)) {
     throw new SelectionError(
@@ -183,8 +233,10 @@ function resolveOperand(operand) {
     );
   }
   const abs = path.resolve(PKG_ROOT, ...segments);
-  if (abs !== UNIT_ROOT && !isContained(UNIT_ROOT, abs)) {
-    throw new SelectionError(`test operand escapes tests/unit: ${operand}`);
+  if (abs !== suite.testsRoot && !isContained(suite.testsRoot, abs)) {
+    throw new SelectionError(
+      `test operand escapes tests/${suite.name}: ${operand}`,
+    );
   }
   const stats = walkComponents(abs, operand);
   if (stats.isDirectory()) {
@@ -204,12 +256,12 @@ function resolveOperand(operand) {
 }
 
 /**
- * Discover every regular `*.test.ts` entry below `tests/unit`, including
- * dot-prefixed names and directories. Symlink and other entry kinds are
- * ignored, never followed.
+ * Discover every regular `*.test.ts` entry below the suite tests root,
+ * including dot-prefixed names and directories. Symlink and other entry kinds
+ * are ignored, never followed.
  */
-function discover() {
-  if (!existsSync(UNIT_ROOT)) return [];
+function discover(suite) {
+  if (!existsSync(suite.testsRoot)) return [];
   const found = [];
   const walk = (dir) => {
     const entries = readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
@@ -223,23 +275,22 @@ function discover() {
       }
     }
   };
-  walk(UNIT_ROOT);
+  walk(suite.testsRoot);
   return found;
 }
 
 /**
- * Remove the fixed, owned output tree. Only a truly absent root is absent:
- * non-following metadata rejects a symlinked (including dangling) root before
- * the compiler can be invoked.
+ * Reject a symlinked or non-directory `.unit-test-build` base before it is
+ * touched. A dangling or live symlink there must never be followed.
  */
-function cleanOwnedOutput() {
-  const dirname = path.dirname(OUT_DIR);
-  if (dirname !== PKG_ROOT || path.basename(OUT_DIR) !== OUT_DIR_NAME) {
-    throw new Error(`refusing to clean unexpected output root: ${OUT_DIR}`);
+function assertOwnedOutputBase() {
+  const dirname = path.dirname(OUT_BASE);
+  if (dirname !== PKG_ROOT || path.basename(OUT_BASE) !== OUT_DIR_NAME) {
+    throw new Error(`refusing to clean unexpected output base: ${OUT_BASE}`);
   }
   let stats;
   try {
-    stats = lstatSync(OUT_DIR);
+    stats = lstatSync(OUT_BASE);
   } catch (error) {
     if (error && error.code === "ENOENT") return;
     throw error;
@@ -254,7 +305,33 @@ function cleanOwnedOutput() {
       `refusing to clean non-directory unit-build output: ${OUT_DIR_NAME}`,
     );
   }
-  rmSync(OUT_DIR, { recursive: true, force: true });
+}
+
+/**
+ * Remove only the selected suite's owned output directory. Only a truly absent
+ * suite directory is absent: non-following metadata rejects a symlinked output
+ * root (or a symlinked `.unit-test-build` ancestor) before the compiler runs.
+ */
+function cleanOwnedOutput(suite) {
+  assertOwnedOutputBase();
+  let stats;
+  try {
+    stats = lstatSync(suite.outputDir);
+  } catch (error) {
+    if (error && error.code === "ENOENT") return;
+    throw error;
+  }
+  if (stats.isSymbolicLink()) {
+    throw new Error(
+      `refusing to clean symlinked ${suite.name} output: ${OUT_DIR_NAME}/${suite.name}`,
+    );
+  }
+  if (!stats.isDirectory()) {
+    throw new Error(
+      `refusing to clean non-directory ${suite.name} output: ${OUT_DIR_NAME}/${suite.name}`,
+    );
+  }
+  rmSync(suite.outputDir, { recursive: true, force: true });
 }
 
 function toPosix(value) {
@@ -262,29 +339,33 @@ function toPosix(value) {
 }
 
 /**
- * Write the ephemeral compiler configuration inside the guarded, ignored output
- * tree. It extends the tracked unit configuration (inheriting strictness and
- * the ordinary `src`/`tests` includes) and explicitly lists every discovered
- * unit entry so dot-prefixed files and names beginning with `..` are emitted
+ * Write the ephemeral compiler configuration inside the guarded, ignored suite
+ * output tree. It extends the tracked suite configuration (inheriting
+ * strictness and the ordinary includes) and explicitly lists every discovered
+ * suite entry so dot-prefixed files and names beginning with `..` are emitted
  * exactly like any other regular test entry.
  */
-function writeGeneratedUnitConfig(compileSet) {
-  if (!existsSync(UNIT_TSCONFIG)) {
-    throw new Error(`missing unit compiler configuration: ${UNIT_TSCONFIG}`);
+function writeGeneratedConfig(suite, compileSet) {
+  if (!existsSync(suite.baseTsconfig)) {
+    throw new Error(
+      `missing ${suite.name} compiler configuration: ${path.relative(PKG_ROOT, suite.baseTsconfig)}`,
+    );
   }
   const config = {
-    extends: toPosix(path.relative(OUT_DIR, UNIT_TSCONFIG)),
-    files: compileSet.map((absTs) => toPosix(path.relative(OUT_DIR, absTs))),
+    extends: toPosix(path.relative(suite.outputDir, suite.baseTsconfig)),
+    files: compileSet.map((absTs) =>
+      toPosix(path.relative(suite.outputDir, absTs)),
+    ),
   };
-  mkdirSync(OUT_DIR, { recursive: true });
+  mkdirSync(suite.outputDir, { recursive: true });
   writeFileSync(
-    GENERATED_UNIT_TSCONFIG,
+    suite.generatedTsconfig,
     `${JSON.stringify(config, null, 2)}\n`,
   );
-  return GENERATED_UNIT_TSCONFIG;
+  return suite.generatedTsconfig;
 }
 
-function compileUnitConfig(configPath) {
+function compileConfig(configPath) {
   if (!existsSync(TSC_BIN)) {
     throw new Error(
       `installed TypeScript compiler not found at ${path.relative(PKG_ROOT, TSC_BIN)}`,
@@ -295,20 +376,26 @@ function compileUnitConfig(configPath) {
     encoding: "utf8",
   });
   if (result.error) {
-    throw new Error(`failed to launch the unit compiler: ${result.error}`);
+    throw new Error(`failed to launch the suite compiler: ${result.error}`);
   }
   if (result.status !== 0) {
     if (result.stdout) process.stderr.write(result.stdout);
     if (result.stderr) process.stderr.write(result.stderr);
     throw new Error(
-      `unit TypeScript compilation failed (exit ${result.status ?? "null"})`,
+      `${suiteNameForConfig(configPath)} TypeScript compilation failed (exit ${result.status ?? "null"})`,
     );
   }
 }
 
-function compiledPathFor(absTs) {
+/** Recover the suite name for a friendly compile diagnostic. */
+function suiteNameForConfig(configPath) {
+  const match = /tsconfig\.([a-z]+)\.generated\.json$/.exec(configPath);
+  return match ? match[1] : "suite";
+}
+
+function compiledPathFor(suite, absTs) {
   const rel = path.relative(PKG_ROOT, absTs);
-  return path.join(OUT_DIR, rel.replace(/\.test\.ts$/, ".test.js"));
+  return path.join(suite.outputDir, rel.replace(/\.test\.ts$/, ".test.js"));
 }
 
 /**
@@ -331,10 +418,13 @@ function keyFor(value) {
  * mapping mirror-compiled `.js` output back to its `.ts` source so defining
  * file/line information stays meaningful to a developer.
  */
-function displayPath(value) {
+function displayPath(value, outputDir) {
   const resolved = path.resolve(value);
-  if (resolved === OUT_DIR || resolved.startsWith(`${OUT_DIR}${path.sep}`)) {
-    return path.relative(OUT_DIR, resolved).replace(/\.js$/, ".ts");
+  if (
+    resolved === outputDir ||
+    resolved.startsWith(`${outputDir}${path.sep}`)
+  ) {
+    return path.relative(outputDir, resolved).replace(/\.js$/, ".ts");
   }
   const relative = path.relative(PKG_ROOT, resolved);
   if (
@@ -348,13 +438,15 @@ function displayPath(value) {
   return relative;
 }
 
-function renderFailure(rel, data) {
+function renderFailure(rel, data, outputDir) {
   const parts = [];
   const rawName = typeof data.name === "string" ? data.name : "(unnamed test)";
-  const name = path.isAbsolute(rawName) ? displayPath(rawName) : rawName;
+  const name = path.isAbsolute(rawName)
+    ? displayPath(rawName, outputDir)
+    : rawName;
   parts.push(`test: ${name}`);
   const definingFile =
-    typeof data.file === "string" ? displayPath(data.file) : null;
+    typeof data.file === "string" ? displayPath(data.file, outputDir) : null;
   const location =
     data.line != null
       ? `:${data.line}${data.column != null ? `:${data.column}` : ""}`
@@ -382,7 +474,7 @@ function formatDiagnostic(rel, text) {
  * Run the compiled files and classify each selected file from Node's
  * structured events. Returns `{ ok, lines }`.
  */
-async function runCompiled(selected, compiledByTs) {
+async function runCompiled(suite, selected, compiledByTs) {
   const summaries = new Map();
   const failures = new Map();
   const captured = new Map();
@@ -474,7 +566,9 @@ async function runCompiled(selected, compiledByTs) {
       ok = false;
       const block = [`FAIL ${rel} (${reason})`];
       for (const failure of fileFailures) {
-        block.push(formatDiagnostic(rel, renderFailure(rel, failure)));
+        block.push(
+          formatDiagnostic(rel, renderFailure(rel, failure, suite.outputDir)),
+        );
       }
       const capturedText = (captured.get(compiledKey) ?? []).join("");
       if (capturedText.trim() !== "") {
@@ -521,7 +615,7 @@ async function runCompiled(selected, compiledByTs) {
       block.push(
         formatDiagnostic(
           "(unassigned)",
-          renderFailure("(unassigned)", failure),
+          renderFailure("(unassigned)", failure, suite.outputDir),
         ),
       );
     }
@@ -532,9 +626,11 @@ async function runCompiled(selected, compiledByTs) {
 }
 
 async function main(argv) {
-  let operands;
+  let parsed;
+  let suite;
   try {
-    operands = parseOperands(argv);
+    parsed = parseArgs(argv);
+    suite = suiteDefinition(parsed.suiteName);
   } catch (error) {
     logError(error instanceof SelectionError ? error.message : String(error));
     return 1;
@@ -543,11 +639,11 @@ async function main(argv) {
   let selected;
   let discovered;
   try {
-    assertTestRootsReal();
-    discovered = discover();
+    assertTestRootsReal(suite);
+    discovered = discover(suite);
     selected =
-      operands.length > 0
-        ? operands.map((operand) => resolveOperand(operand))
+      parsed.operands.length > 0
+        ? parsed.operands.map((operand) => resolveOperand(suite, operand))
         : discovered;
   } catch (error) {
     logError(
@@ -560,19 +656,22 @@ async function main(argv) {
 
   selected = [...new Set(selected)].sort();
   if (selected.length === 0) {
-    logError("no unit test files were discovered under tests/unit");
+    logError(
+      `no ${suite.name} test files were discovered under tests/${suite.name}`,
+    );
     return 1;
   }
 
+  log(`suite ${suite.name}`);
   log(`selected ${selected.length} file(s):`);
   for (const absTs of selected) log(`  ${path.relative(PKG_ROOT, absTs)}`);
 
   const compileSet = [...new Set([...discovered, ...selected])].sort();
 
   try {
-    cleanOwnedOutput();
-    const configPath = writeGeneratedUnitConfig(compileSet);
-    compileUnitConfig(configPath);
+    cleanOwnedOutput(suite);
+    const configPath = writeGeneratedConfig(suite, compileSet);
+    compileConfig(configPath);
   } catch (error) {
     logError(error instanceof Error ? error.message : String(error));
     return 1;
@@ -580,7 +679,7 @@ async function main(argv) {
 
   const compiledByTs = new Map();
   for (const absTs of selected) {
-    const compiled = compiledPathFor(absTs);
+    const compiled = compiledPathFor(suite, absTs);
     if (!existsSync(compiled)) {
       logError(
         `compiled output missing for ${path.relative(PKG_ROOT, absTs)} after a successful compile`,
@@ -590,7 +689,7 @@ async function main(argv) {
     compiledByTs.set(absTs, compiled);
   }
 
-  const { ok, lines } = await runCompiled(selected, compiledByTs);
+  const { ok, lines } = await runCompiled(suite, selected, compiledByTs);
   for (const line of lines) {
     if (line.startsWith("FAIL")) logError(line);
     else log(line);

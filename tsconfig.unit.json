@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": ".unit-test-build"
+    "outDir": ".unit-test-build/unit"
   },
   "include": ["src/**/*.ts", "tests/unit/**/*.ts"]
 }

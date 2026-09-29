@@ -459,3 +459,68 @@ S008 reuses the audited S007 reference guard under the owner-authorized batch
 (clean at `a10fbf06334f4648f5755e05a7147414e4e5fc98`, fmt/check/test exit 0,
 562 top-level plus 16 nested passes, four ignored). No fresh Rust run or
 reference mutation is claimed at S008; a fresh guard runs at S012.
+
+## S009 addendum — isolated typed integration helpers
+
+S009 adds no dependency. It generalizes the dependency-free typed runner
+(`tools/run-unit-tests.mjs`) to a `--suite <name>` selector and adds the typed
+integration helpers and their suite. No product/runtime code, schema, registry
+or generated output changes.
+
+### Suite selector and isolated output
+
+- `--suite unit` (the default) keeps the existing S005 unit entrypoint,
+  discovery, fail-closed selection, compile-before-run, per-file summary and
+  TODO-cancellation protections.
+- `--suite integration` discovers `tests/integration/**/*.test.ts`, compiles
+  them and their `tests/helpers/` imports through the new tracked
+  `tsconfig.integration.json`, and executes the emitted files with Node's
+  `node:test` runner.
+- Each suite compiles into `.unit-test-build/<suite>/` and removes only its own
+  output directory before compiling. A symlinked or non-directory
+  `.unit-test-build` ancestor or suite output root is refused; the ancestor
+  guard preserves the S005 message.
+- `components` is a reserved suite name; its configuration/root are
+  established by S011.
+- `pnpm run typecheck` now also checks `tsconfig.integration.json`.
+
+### Typed helpers (`tests/helpers/`)
+
+- `project.ts`: `createTempProject` allocates an owned root under the OS
+  temporary directory and exposes `writeFile`/`writeDir`/`symlink`/`cleanup`.
+  `resolveWithin` rejects absolute, empty and parent-directory paths.
+- `tree-snapshot.ts`: `snapshotTree` uses `lstat`/`readlink` only, recording
+  path, kind, permission bits, byte size, SHA-256 and link target for hidden
+  entries, directories and links without following them.
+- `cli.ts`: `resolveCliEntrypoint` reads the package `bin` from the manifest;
+  `runCli` spawns the real built executable with a bounded timeout and captures
+  `status`, `signal`, `stdout`, `stderr` and timeout state verbatim.
+
+### Integration harness results
+
+| Step                        | Command                                                          | Exit | Result                               |
+| --------------------------- | ---------------------------------------------------------------- | ---- | ------------------------------------ |
+| Product build + integration | `pnpm run test:integration -- tests/integration/harness.test.ts` | 0    | 1 file; 9 tests, 9 pass              |
+| Default integration suite   | `pnpm run test:integration`                                      | 0    | 1 file; 9 tests, 9 pass              |
+| Unit suite                  | `pnpm run test:unit`                                             | 0    | 2 files; 14 tests, 14 pass           |
+| Runner harness              | `pnpm run test:harness`                                          | 0    | 35 tests, 35 pass                    |
+| Both compiler typechecks    | `pnpm run typecheck`                                             | 0    | includes `tsconfig.integration.json` |
+
+The harness grew from 29 to 35 cases with new coverage for explicit
+integration selection (both `--suite` forms), suite-scoped output isolation,
+cross-suite operand rejection, unknown/missing suite names, integration compile
+diagnostics and suite-specific empty discovery. The original 29 cases are
+preserved with their assertions updated only for the new suite output path.
+
+### Not proven at S009
+
+- No production filesystem/transaction implementation, injected product
+  boundary or registry asset behavior is introduced; S009 is test tooling.
+- No cross-platform claim beyond the exercised macOS/Node 24.21.0 lane.
+- No package/tarball acceptance or release-readiness claim is made.
+
+### Conditional reference guard
+
+S009 reuses the audited S007 reference guard under the owner-authorized batch
+(clean at `a10fbf06334f4648f5755e05a7147414e4e5fc98`). No fresh Rust run or
+reference mutation is claimed; a fresh guard runs at S012.
