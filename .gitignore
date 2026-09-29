@@ -8,6 +8,8 @@ dist/
 build/
 coverage/
 .unit-test-build/
+tests/browser/.output/
+playwright-report/
 *.tsbuildinfo
 
 # Logs and local environment

@@ -383,3 +383,79 @@ nested passes, zero failures and four ignored tests. No fresh Rust run or
 reference mutation is claimed at S007; a fresh guard runs at the S012
 milestone. Exact results and captured exits are recorded in
 `implementation/evidence/S007_REPORT.md`.
+
+## S008 addendum — production browser harness
+
+S008 adds the production browser qualification lane for the maintained
+consumer fixture. It changes no S003–S007 root dependency pin and no CLI
+source. One new exact root development pin is added: `@playwright/test 1.63.0`.
+
+### New package selection — installed manifest facts
+
+Inspected from the installed root manifest on 2026-09-29 (Node `24.21.0`,
+pnpm `11.22.0`):
+
+| Package            | Pin      | Engines (installed document) | Dependency (installed document) |
+| ------------------ | -------- | ---------------------------- | ------------------------------- |
+| `@playwright/test` | `1.63.0` | `>=20`                       | `playwright 1.63.0`             |
+
+`@playwright/test 1.63.0` is installed at the root with the other exact pins;
+the lockfile change is limited to its importer entries. The frozen strict
+install (`--frozen-lockfile --strict-peer-dependencies --engine-strict`) exits 0.
+
+### Browser setup and lane
+
+- Bundled headless Chromium was installed explicitly for the pinned version
+  with `pnpm exec playwright install chromium` (exit 0). No test performs an
+  automatic browser install, and no browser channel substitution or host
+  configuration is used.
+- `playwright.config.ts` runs Playwright's real runner with `testDir`
+  `tests/browser`, one worker, `retries: 0`, failure traces/screenshots in the
+  ignored `tests/browser/.output/` directory, and a single `chromium` project
+  using bundled Chromium (`devices["Desktop Chrome"]`).
+- `pnpm run test:browser` builds the maintained production fixture first, then
+  runs `tests/browser/harness.spec.ts`.
+- The spec starts the built Node-adapter production handler through the shared
+  owned-server boundary (`tests/smoke/owned-server.mjs`) on an OS-assigned
+  loopback port and stops it on teardown.
+
+### Fixture-only hydration interaction
+
+`tests/fixtures/consumer/src/routes/+page.svelte` adds a fixture-only
+`$state` counter with an `onclick` handler, a `data-testid="click-count"`
+output and a `data-hydrated` client-mount marker set in `onMount`. The marker
+lets the harness wait deterministically for hydration (no fixed sleep) before
+interacting; the counter proves client state updates the DOM after hydration.
+SSR still renders `Clicks: 0` and `data-hydrated="false"`.
+
+### Harness results
+
+| Step                | Command                                                  | Exit | Result                        |
+| ------------------- | -------------------------------------------------------- | ---- | ----------------------------- |
+| Browser install     | `pnpm exec playwright install chromium`                  | 0    | pinned browser available      |
+| Scoped browser lane | `pnpm run test:browser -- tests/browser/harness.spec.ts` | 0    | `6 passed` (bundled Chromium) |
+
+The six tests cover: accessible heading and labelled controls; Tab and
+Shift+Tab focus order; native checkbox Space activation; form submission
+navigation with a request-time query update; hydration plus client state
+update; and the gate control that detects injected page exceptions, console
+errors and hydration warnings.
+
+### Not proven at S008
+
+- Only bundled Chromium on macOS with Node 24.21.0 was exercised; no
+  Firefox/WebKit/Windows qualification, no other Chromium channel and no
+  remote CI execution is claimed.
+- No Bits UI rendering/binding/hydration compatibility is claimed; S011 owns
+  that integration.
+- No package/tarball acceptance or release-readiness claim is made.
+- The production build strips Svelte's dev-only hydration diagnostics; the
+  hydration-warning branch of the gate is proven by a control rather than by a
+  naturally mismatching page.
+
+### Conditional reference guard
+
+S008 reuses the audited S007 reference guard under the owner-authorized batch
+(clean at `a10fbf06334f4648f5755e05a7147414e4e5fc98`, fmt/check/test exit 0,
+562 top-level plus 16 nested passes, four ignored). No fresh Rust run or
+reference mutation is claimed at S008; a fresh guard runs at S012.

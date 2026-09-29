@@ -1,7 +1,7 @@
 # S007 step report — Add an SSR-enabled SvelteKit consumer fixture
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S007","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S007","kind":"report","commit":"99212955c2b812ef6bc525c9cdca14fae4e6499a","disposition":"candidate"}
 -->
 
 Step ID and title: S007 — Add an SSR-enabled SvelteKit consumer fixture.
@@ -18,10 +18,10 @@ Contract/requirement IDs: R20, R21, R29, R32, R33, R34
 `specs/API_CONTRACTS.md`, `specs/ARCHITECTURE.md`,
 `specs/COMPONENT_CATALOG.md`).
 
-Candidate state: S007 is `in_progress` while this report is authored. Under the
-owner-authorized batch, the S007 implementation commit is recorded and S007
-becomes `committed_pending_review` pending independent Codex review. No
-completion or acceptance is claimed.
+Candidate state: S007 was `in_progress` while this report was authored and is
+now `committed_pending_review` at
+`99212955c2b812ef6bc525c9cdca14fae4e6499a`. Independent Codex review follows
+the batch; no completion or acceptance is claimed.
 
 Actual target root and branch: this repository (`.`) on branch `master`.
 Starting commit / baseline: `bce30a4b7b5bf0e885d9991719f807cfda98ad63`

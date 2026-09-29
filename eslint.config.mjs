@@ -27,6 +27,8 @@ export default tseslint.config(
       "**/.svelte-kit/",
       "**/coverage/",
       "**/.unit-test-build/",
+      "**/.output/",
+      "**/playwright-report/",
       // Explicitly rooted authoring boundaries and the ignored log tree.
       "tests/fixtures/generated/",
       "implementation/evidence/logs/",

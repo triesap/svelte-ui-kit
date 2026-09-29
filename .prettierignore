@@ -5,6 +5,8 @@ dist/
 build/
 coverage/
 .unit-test-build/
+tests/browser/.output/
+playwright-report/
 tests/fixtures/generated/
 implementation/evidence/logs/
 *.log

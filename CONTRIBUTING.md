@@ -108,6 +108,25 @@ and never signals an unrelated process. Fixture dependencies, `.svelte-kit/`
 and the adapter `build/` output are ignored by the root `.gitignore` and must
 not be committed.
 
+### Browser harness
+
+The S008 browser lane uses the pinned `@playwright/test 1.63.0` runner with
+bundled headless Chromium. Install the browser once (network required):
+
+```sh
+pnpm exec playwright install chromium
+pnpm run test:browser -- tests/browser/harness.spec.ts
+```
+
+`test:browser` builds the fixture first and then runs Playwright over
+`playwright.config.ts`. The spec starts the production handler through the
+shared owned-server boundary on an OS-assigned loopback port and fails on
+unexpected server stderr/exits, page exceptions, console errors or hydration
+warnings. Failure traces and screenshots land in the ignored
+`tests/browser/.output/` tree. The initial qualified lane is bundled Chromium
+on macOS with Node 24.21.0; no Firefox/WebKit/Windows claim is made, and no
+remote CI execution is claimed.
+
 Commit dependency changes together with `pnpm-lock.yaml`.
 
 ## Current scope

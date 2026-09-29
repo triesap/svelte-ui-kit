@@ -97,6 +97,18 @@ only: it is not evidence that the future generator or an installed tarball
 already produces this app, and no browser/hydration or release qualification is
 claimed.
 
+`pnpm run test:browser` builds the fixture and runs the Playwright 1.63.0
+harness at `tests/browser/harness.spec.ts` with bundled headless Chromium over
+`playwright.config.ts`. Install the pinned browser once with
+`pnpm exec playwright install chromium`. The harness starts the built
+production handler through the same owned-server boundary and asserts the
+accessible heading/labels, Tab/Shift+Tab focus order, native checkbox keyboard
+activation, form navigation with a request-time query update, and a fixture-only
+client-state interaction that only works after hydration. Unexpected server
+stderr/exits, page exceptions, console errors and hydration warnings fail the
+lane. The initially qualified platform is bundled Chromium on macOS with Node
+24.21.0; no Firefox/WebKit/Windows or CI-execution claim is made.
+
 ## Contributing
 
 See `CONTRIBUTING.md`.

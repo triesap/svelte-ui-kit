@@ -1,10 +1,17 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
+  let clickCount = $state(0);
+  // A hydration marker: SSR renders "false"; the client sets it once mounted.
+  let hydrated = $state(false);
+  onMount(() => {
+    hydrated = true;
+  });
 </script>
 
-<main>
+<main data-hydrated={hydrated}>
   <h1>Consumer fixture qualification</h1>
   <p data-testid="server-value">Server value: {data.serverValue}</p>
 
@@ -20,4 +27,15 @@
       Enable notifications
     </label>
   </p>
+
+  <button
+    type="button"
+    data-testid="counter"
+    onclick={() => {
+      clickCount += 1;
+    }}
+  >
+    Increment
+  </button>
+  <p data-testid="click-count">Clicks: {clickCount}</p>
 </main>
