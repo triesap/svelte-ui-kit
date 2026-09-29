@@ -1,7 +1,7 @@
 # S012 step report — Separate orchestration and pure module interfaces
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S012","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S012","kind":"report","commit":"14de6da6fbeb58af2a3843874e86c391e4a17051","disposition":"candidate"}
 -->
 
 Step ID and title: S012 — Separate orchestration and pure module interfaces.
@@ -104,7 +104,20 @@ through S011 reused the audited S007 evidence as authorized.
 
 ## Commit and next action
 
-Commit message: `core: separate cli registry and codegen boundaries`. The commit
-hash is recorded in this report's evidence after the commit. This closes the
-authorized S007–S012 implementation batch; Codex independently reviews the
-sequence. S013 was not started and nothing was pushed or published.
+Commit message: `core: separate cli registry and codegen boundaries`. Actual
+commit: `14de6da6fbeb58af2a3843874e86c391e4a17051`. This closes the authorized
+S007–S012 implementation batch; Codex independently reviews the sequence. S013
+was not started and nothing was pushed or published.
+
+## Batch return summary
+
+The `pfc through RCLD-01` batch is complete. All six implementation checkpoints
+are committed and pending independent review: S007
+`99212955c2b812ef6bc525c9cdca14fae4e6499a`, S008
+`f4dfa83aadc67850b6b8b999f80bd7199de4a6b2`, S009
+`023cdf811505f5803ede334c57ee4a993073483e`, S010
+`a148a3163e5fa38e4f684292c902ac5707637299`, S011
+`64a1acb48ad552b0c6097b34b7c58f0cdbcf0c6f`, S012
+`14de6da6fbeb58af2a3843874e86c391e4a17051`. The completed-checkpoint counter
+stays `6 / 203` because pending review is not independent acceptance; the
+authored pending-review range is `S007–S012`. No S013 work was performed.

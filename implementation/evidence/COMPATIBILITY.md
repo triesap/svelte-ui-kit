@@ -662,17 +662,23 @@ The reference is clean at the audited commit and was not modified.
 
 ### S007–S012 implementation commits (pending independent review)
 
-| Checkpoint | Commit                                         |
-| ---------- | ---------------------------------------------- |
-| S007       | `99212955c2b812ef6bc525c9cdca14fae4e6499a`     |
-| S008       | `f4dfa83aadc67850b6b8b999f80bd7199de4a6b2`     |
-| S009       | `023cdf811505f5803ede334c57ee4a993073483e`     |
-| S010       | `a148a3163e5fa38e4f684292c902ac5707637299`     |
-| S011       | `64a1acb48ad552b0c6097b34b7c58f0cdbcf0c6f`     |
-| S012       | recorded in `S012_REPORT.md` after this commit |
+| Checkpoint | Commit                                     |
+| ---------- | ------------------------------------------ |
+| S007       | `99212955c2b812ef6bc525c9cdca14fae4e6499a` |
+| S008       | `f4dfa83aadc67850b6b8b999f80bd7199de4a6b2` |
+| S009       | `023cdf811505f5803ede334c57ee4a993073483e` |
+| S010       | `a148a3163e5fa38e4f684292c902ac5707637299` |
+| S011       | `64a1acb48ad552b0c6097b34b7c58f0cdbcf0c6f` |
+| S012       | `14de6da6fbeb58af2a3843874e86c391e4a17051` |
 
 These are author implementation commits pending independent Codex review; they
 do not count as accepted completion.
+
+The owner-authorized `pfc through RCLD-01` batch is complete: S007–S012 are
+committed and pending review, the completed-checkpoint counter remains `6 / 203`
+(independent acceptance only), the authored/committed-pending-review range is
+`S007–S012`, and S013 is not started. Codex independently reviews the sequence
+and records acceptance; no acceptance is claimed here.
 
 ### Not proven at S012
 
