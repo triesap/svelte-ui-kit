@@ -59,6 +59,16 @@ their `tests/helpers/` imports through `tsconfig.integration.json` into the
 isolated ignored `.unit-test-build/integration/` tree and invokes the real built
 CLI. Each suite cleans only its own output subdirectory.
 
+`pnpm run test:components` selects the typed component suite
+(`--suite components`) and drives the real `svelte-check` on the fixture-only
+Bits `Switch.Root`/`Switch.Thumb` compatibility component, proving the positive
+`bind:checked`/`bind:ref`/`child`-snippet cases type-check and that incompatible
+examples fail with their intended diagnostics in disposable copies. The fixture
+pins `csstype 3.1.3` (an undeclared transitive type dependency of the pinned
+upstream declarations) and sets `skipLibCheck` for an upstream union-complexity
+limit in the Bits barrel; authored fixture source is still checked under
+`strict`. No public kit wrapper is created.
+
 Both `typecheck` and `test:unit` are required: standalone `typecheck` uses the
 tracked compiler includes, while the unit runner also compiles every discovered
 unit entry, including dot-prefixed files and directories.
@@ -158,7 +168,8 @@ Component install/inspect/update work is planned but not implemented yet.
 - Explain the change and how you verified it.
 - Run `pnpm run typecheck`, `pnpm run build`, `pnpm run test:cli-bootstrap`,
   `pnpm run test:unit`, `pnpm run test:integration`,
-  `pnpm run test:harness`, `pnpm run fixture:check`,
+  `pnpm run test:components`, `pnpm run test:harness`,
+  `pnpm run fixture:check`,
   `pnpm run test:fixture`, `pnpm run test:browser --
 tests/browser/harness.spec.ts`, `pnpm run lint` and `pnpm run format:check`
   (plus `pnpm run check:contracts` and `pnpm run test:contracts` for contract

@@ -64,6 +64,9 @@ jobs:
       - name: Integration
         run: pnpm run test:integration
 
+      - name: Components
+        run: pnpm run test:components
+
       - name: CLI smoke
         run: pnpm run test:cli-bootstrap
 

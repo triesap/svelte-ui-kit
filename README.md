@@ -28,6 +28,7 @@ pnpm run build
 pnpm run test:cli-bootstrap
 pnpm run test:unit -- tests/unit/cli-bootstrap.test.ts
 pnpm run test:integration -- tests/integration/harness.test.ts
+pnpm run test:components -- tests/components/compatibility.test.ts
 pnpm run test:harness
 pnpm run fixture:check
 pnpm run fixture:build
@@ -58,6 +59,18 @@ test was defined, and one suite's run never removes another suite's output.
 the baseline `.github/workflows/ci.yml` lanes (Ubuntu 24.04, Node 24.21.0, pnpm
 11.22.0, immutable action revisions). The workflow is validated locally but has
 not been run remotely.
+
+The fixture also carries a fixture-only Bits compatibility component
+(`tests/fixtures/consumer/src/lib/compatibility/SwitchFixture.svelte`, served
+at `/compatibility`) that exercises the pinned `bits-ui 2.19.3`
+`Switch.Root`/`Switch.Thumb` with `bind:checked`, `bind:ref` and a real `child`
+snippet forwarding a delegated native button. `pnpm run test:components` runs
+the typed component suite: it type-checks the maintained component and proves
+incompatible `checked`/`ref`/`child` examples fail `svelte-check` for their
+intended diagnostics in disposable copies. The fixture pins `csstype 3.1.3`
+(an undeclared transitive type dependency of the upstream declarations) and sets
+`skipLibCheck` to tolerate an upstream TypeScript union-complexity limit in the
+Bits barrel; authored fixture source remains under `strict` checking.
 
 The CLI entrypoint is `src/cli/main.ts`, compiled with the pinned `tsc` to
 `dist/cli/main.js` (build output is ignored and never committed).

@@ -19,6 +19,7 @@ import { spawnSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
@@ -56,6 +57,34 @@ const COPY_EXCLUDES = new Set([
 ]);
 
 /**
+ * Link the fixture's installed packages into an owned copy.
+ *
+ * A direct `node_modules` directory symlink breaks pnpm's bin shims in the
+ * copy: the shims resolve their package target relative to their own invoked
+ * path, so a copied `node_modules/.bin/svelte-kit` resolves outside the repo.
+ * Linking each package and each bin script individually keeps the copy's
+ * package resolution and the shims' real path correct.
+ */
+function linkFixtureNodeModules(fixtureNodeModules, targetNodeModules) {
+  mkdirSync(targetNodeModules, { recursive: true });
+  for (const entry of readdirSync(fixtureNodeModules)) {
+    if (entry === ".bin") continue;
+    symlinkSync(
+      path.join(fixtureNodeModules, entry),
+      path.join(targetNodeModules, entry),
+    );
+  }
+  const binDir = path.join(targetNodeModules, ".bin");
+  mkdirSync(binDir, { recursive: true });
+  for (const bin of readdirSync(path.join(fixtureNodeModules, ".bin"))) {
+    symlinkSync(
+      path.join(fixtureNodeModules, ".bin", bin),
+      path.join(binDir, bin),
+    );
+  }
+}
+
+/**
  * Create an owned disposable copy of a fixture tree. The base directory is
  * registered for `t.after` cleanup immediately after allocation, before any
  * copy or link can throw; a synchronous setup failure also removes it before
@@ -75,10 +104,10 @@ function createDisposableCopy(
       recursive: true,
       filter: (entry) => !COPY_EXCLUDES.has(path.basename(entry)),
     });
-    // A real node_modules link lets the copy resolve the pinned tools without
-    // duplicating hundreds of megabytes of installed packages. Removal deletes
-    // the link itself, never the installed packages it points at.
-    symlinkSync(
+    // A real node_modules directory of package/bin symlinks lets the copy
+    // resolve the pinned tools without duplicating installed packages. Removal
+    // deletes the links, never the installed packages they point at.
+    linkFixtureNodeModules(
       path.join(FIXTURE_ROOT, "node_modules"),
       path.join(root, "node_modules"),
     );
@@ -218,6 +247,21 @@ test("server-rendered request values are HTML-escaped", async () => {
     !rendered.includes("<b>"),
     `visible markup must not contain raw injected markup: ${rendered}`,
   );
+});
+
+test("the compatibility route server-renders the Bits switch semantics", async () => {
+  const response = await fetchRoute(`http://127.0.0.1:${port}/compatibility`);
+  assertHtmlTransport(response, "compatibility route");
+  const visible = stripScripts(response.body);
+  assert.match(visible, /Compatibility qualification/);
+  assert.match(visible, /role="switch"/);
+  assert.match(visible, /aria-checked="false"/);
+  assert.match(visible, /aria-label="Enable compatibility notifications"/);
+  // The delegated element is the only switch button; the two fixture control
+  // buttons are separate, so no nested buttons exist.
+  assert.equal((visible.match(/<button\b/g) ?? []).length, 3);
+  // Bits renders its hidden input outside the child branch as a sibling.
+  assert.match(visible, /<input[^>]*name="notifications"/);
 });
 
 test("a real Svelte/TypeScript mismatch fails fixture:check and restored input passes", (t) => {

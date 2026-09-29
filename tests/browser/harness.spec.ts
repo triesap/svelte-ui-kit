@@ -72,6 +72,16 @@ async function openHome(page: Page): Promise<string[]> {
   return issues;
 }
 
+async function openCompatibility(page: Page): Promise<string[]> {
+  const issues = collectPageIssues(page);
+  await page.goto(`${baseURL}compatibility`);
+  await expect(
+    page.getByRole("heading", { name: "Compatibility qualification" }),
+  ).toBeVisible();
+  await expect(page.locator("main")).toHaveAttribute("data-hydrated", "true");
+  return issues;
+}
+
 test("the page renders its accessible heading and labelled controls", async ({
   page,
 }) => {
@@ -150,6 +160,79 @@ test("hydration executes and client state updates the DOM", async ({
   await page.getByTestId("counter").click();
   await expect(page.getByTestId("click-count")).toHaveText("Clicks: 2");
 
+  expectNoIssues(issues);
+});
+
+test("the Bits switch exposes accessible semantics and a delegated child button", async ({
+  page,
+}) => {
+  const issues = await openCompatibility(page);
+  const control = page.getByRole("switch", {
+    name: "Enable compatibility notifications",
+  });
+  await expect(control).toBeVisible();
+  await expect(control).toHaveAttribute("aria-checked", "false");
+  await expect(control).toHaveAttribute("data-state", "unchecked");
+  // The child snippet forwards a real native button, with no nested buttons.
+  await expect(control).toHaveJSProperty("tagName", "BUTTON");
+  expect(await control.locator("button").count()).toBe(0);
+  // The primitive's hidden input renders outside the child branch (a sibling).
+  await expect(
+    page.locator('input[type="checkbox"][name="notifications"]'),
+  ).toHaveCount(1);
+  expectNoIssues(issues);
+});
+
+test("pointer activation updates the switch state", async ({ page }) => {
+  const issues = await openCompatibility(page);
+  const control = page.getByRole("switch", {
+    name: "Enable compatibility notifications",
+  });
+  await control.click();
+  await expect(control).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByTestId("switch-state")).toHaveText("on");
+  await control.click();
+  await expect(control).toHaveAttribute("aria-checked", "false");
+  expectNoIssues(issues);
+});
+
+test("keyboard Space activation updates the switch state", async ({ page }) => {
+  const issues = await openCompatibility(page);
+  const control = page.getByRole("switch", {
+    name: "Enable compatibility notifications",
+  });
+  await control.focus();
+  await page.keyboard.press("Space");
+  await expect(control).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByTestId("switch-state")).toHaveText("on");
+  expectNoIssues(issues);
+});
+
+test("programmatic state updates flow back into the primitive", async ({
+  page,
+}) => {
+  const issues = await openCompatibility(page);
+  const control = page.getByRole("switch", {
+    name: "Enable compatibility notifications",
+  });
+  await page.getByTestId("toggle").click();
+  await expect(control).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByTestId("switch-state")).toHaveText("on");
+  await page.getByTestId("toggle").click();
+  await expect(control).toHaveAttribute("aria-checked", "false");
+  expectNoIssues(issues);
+});
+
+test("the bound ref is the delegated switch element and can take focus", async ({
+  page,
+}) => {
+  const issues = await openCompatibility(page);
+  const control = page.getByRole("switch", {
+    name: "Enable compatibility notifications",
+  });
+  await expect(control).not.toBeFocused();
+  await page.getByTestId("focus").click();
+  await expect(control).toBeFocused();
   expectNoIssues(issues);
 });
 

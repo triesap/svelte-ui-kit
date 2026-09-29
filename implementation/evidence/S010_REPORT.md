@@ -1,7 +1,7 @@
 # S010 step report — Document commands and add baseline CI
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S010","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S010","kind":"report","commit":"a148a3163e5fa38e4f684292c902ac5707637299","disposition":"candidate"}
 -->
 
 Step ID and title: S010 — Document commands and add baseline CI.

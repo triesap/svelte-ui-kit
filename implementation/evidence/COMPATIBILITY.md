@@ -524,3 +524,89 @@ preserved with their assertions updated only for the new suite output path.
 S009 reuses the audited S007 reference guard under the owner-authorized batch
 (clean at `a10fbf06334f4648f5755e05a7147414e4e5fc98`). No fresh Rust run or
 reference mutation is claimed; a fresh guard runs at S012.
+
+## S011 addendum — pinned Bits state/ref/child qualification
+
+S011 adds the pinned Bits UI integration qualification. Two runtime pins are
+added to the maintained consumer fixture; no root package pin changes and no
+public kit wrapper is created.
+
+### Approved fixture pins
+
+| Package                   | Pin      | Role                                             |
+| ------------------------- | -------- | ------------------------------------------------ |
+| `bits-ui`                 | `2.19.3` | fixture runtime dependency                       |
+| `@internationalized/date` | `3.12.4` | fixture runtime dependency                       |
+| `csstype`                 | `3.1.3`  | fixture dev dependency (see upstream constraint) |
+
+Installed `bits-ui/package.json` declares Svelte `^5.33.0` and
+`@internationalized/date` `^3.8.1`; the pinned `svelte 5.57.1` and
+`@internationalized/date 3.12.4` satisfy both.
+
+### Upgrade-relative evidence (package-relative paths)
+
+- `bits-ui/dist/bits/switch/components/switch.svelte.d.ts` declares
+  `Component<SwitchRootProps, {}, "ref" | "checked">` — `checked` and `ref` are
+  bindable.
+- `bits-ui/dist/bits/switch/types.d.ts` defines `SwitchRootProps` via
+  `WithChild<{...}, SwitchRootSnippetProps>`; the `child` snippet receives
+  `{ checked: boolean; props: Record<string, unknown> }`
+  (`bits-ui/dist/internal/types.d.ts`).
+- `bits-ui/dist/bits/switch/components/switch-thumb.svelte.d.ts` binds `ref`.
+- The SSR/HTML output renders the delegated `<button role="switch">` with merged
+  props and a sibling hidden `<input type="checkbox" name="...">` outside the
+  child branch; no nested button is produced.
+
+### Upstream constraints found
+
+1. **Undeclared type dependency.** `bits-ui/dist/shared/index.d.ts` and
+   `svelte-toolbelt/dist/types.d.ts` (pulled in by `bits-ui`) import
+   `csstype`, but both declare it only under `devDependencies`. A strict pnpm
+   consumer cannot resolve it. The fixture adds the exact direct pin
+   `csstype 3.1.3` as a dev dependency to satisfy the published declarations.
+2. **TypeScript union-complexity limit.** With TypeScript `6.0.3`,
+   `svelte-check` raises `Expression produces a union type that is too complex
+to represent` (TS2590) inside the `bits-ui` barrel declarations
+   (`dist/bits/button/components/button.svelte.d.ts` and
+   `dist/bits/calendar/components/calendar.svelte.d.ts`), which cannot be
+   avoided because `bits-ui` exposes only its root entrypoint. The fixture sets
+   `skipLibCheck: true` so declaration-file complexity in the pinned dependency
+   does not fail the app check; authored fixture `.svelte`/`.ts` source remains
+   under `strict: true` and is fully checked.
+
+Both are reported for Codex review; neither changes an existing pin and neither
+weakens checking of authored product/fixture source.
+
+### Fixture component and qualification results
+
+| Step          | Command                                                  | Exit | Result                                                  |
+| ------------- | -------------------------------------------------------- | ---- | ------------------------------------------------------- |
+| Fixture check | `pnpm run fixture:check`                                 | 0    | 0 errors, 0 warnings                                    |
+| Components    | `pnpm run test:components`                               | 0    | 1 file; 4 tests, 4 pass (positive + 3 negatives)        |
+| Consumer SSR  | `pnpm run test:fixture`                                  | 0    | 17 tests, 17 pass (includes the `/compatibility` route) |
+| Browser       | `pnpm run test:browser -- tests/browser/harness.spec.ts` | 0    | 11 passed (adds 5 Bits switch tests)                    |
+
+The compatibility component is `tests/fixtures/consumer/src/lib/compatibility/SwitchFixture.svelte`,
+served at the fixture `/compatibility` route. It binds `checked`/`ref`, uses a
+real `child` snippet that spreads the merged props onto a delegated native
+`<button>` (no nested button, events/props/ref retained), and exposes a
+fixture-only programmatic toggle and focus control. The browser lane proves
+pointer and keyboard Space activation, programmatic state flowing back into the
+primitive, real ref identity/focus, accessible switch semantics and child
+forwarding, and hydration; the SSR lane proves the switch is server-rendered.
+The components lane proves incompatible `checked`, `ref` and `child` examples
+fail `svelte-check` with their intended diagnostics in disposable copies and
+restore to green. No `any` cast is used.
+
+### Not proven at S011
+
+- No public kit wrapper, registry item, generator output or tarball acceptance
+  is produced or claimed; S011 qualifies the upstream boundary only.
+- Only bundled Chromium on macOS/Node 24.21.0 was exercised.
+- No Firefox/WebKit/Windows or remote-CI claim is made.
+
+### Conditional reference guard
+
+S011 reuses the audited S007 reference guard under the owner-authorized batch
+(clean at `a10fbf06334f4648f5755e05a7147414e4e5fc98`). No fresh Rust run or
+reference mutation is claimed; the fresh guard runs at S012.

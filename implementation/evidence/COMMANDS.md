@@ -18,26 +18,27 @@ private tooling.
 
 ## Command map
 
-| Purpose             | Local command                                                               | Notes                                                                |
-| ------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Frozen install      | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | Strict peers and engine enforcement; one root lockfile.              |
-| Format check        | `pnpm run format:check`                                                     | Nonmutating Prettier over the maintained authoring tree.             |
-| Lint                | `pnpm run lint`                                                             | `eslint . --max-warnings 0`.                                         |
-| Typecheck           | `pnpm run typecheck`                                                        | `tsconfig.json`, `tsconfig.unit.json`, `tsconfig.integration.json`.  |
-| Unit                | `pnpm run test:unit`                                                        | Builds, then runs typed `tests/unit` via the suite runner.           |
-| Runner harness      | `pnpm run test:harness`                                                     | Regression suite for `tools/run-unit-tests.mjs`.                     |
-| Integration         | `pnpm run test:integration`                                                 | Builds, then runs typed `tests/integration` (`--suite integration`). |
-| CLI smoke           | `pnpm run test:cli-bootstrap`                                               | Real `dist` CLI process assertions.                                  |
-| Contract validation | `pnpm run check:contracts`                                                  | Read-only document/projection/evidence validation.                   |
-| Contract tests      | `pnpm run test:contracts`                                                   | Focused validator regression suite.                                  |
-| Consumer check      | `pnpm run fixture:check`                                                    | `svelte-kit sync` + `svelte-check --fail-on-warnings`.               |
-| Consumer SSR        | `pnpm run test:fixture`                                                     | Builds, then owned-server SSR + lifecycle suites.                    |
-| Browser             | `pnpm run test:browser -- tests/browser/harness.spec.ts`                    | Builds, then Playwright bundled Chromium.                            |
-| Chromium install    | `pnpm exec playwright install [--with-deps] chromium`                       | Local (no `--with-deps`); CI adds system dependencies.               |
-| Diff health         | `git diff --check`                                                          | No whitespace diagnostics.                                           |
+| Purpose             | Local command                                                               | Notes                                                                                                                                                         |
+| ------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frozen install      | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | Strict peers and engine enforcement; one root lockfile.                                                                                                       |
+| Format check        | `pnpm run format:check`                                                     | Nonmutating Prettier over the maintained authoring tree.                                                                                                      |
+| Lint                | `pnpm run lint`                                                             | `eslint . --max-warnings 0`.                                                                                                                                  |
+| Typecheck           | `pnpm run typecheck`                                                        | `tsconfig.json`, `tsconfig.unit.json`, `tsconfig.integration.json`.                                                                                           |
+| Unit                | `pnpm run test:unit`                                                        | Builds, then runs typed `tests/unit` via the suite runner.                                                                                                    |
+| Runner harness      | `pnpm run test:harness`                                                     | Regression suite for `tools/run-unit-tests.mjs`.                                                                                                              |
+| Integration         | `pnpm run test:integration`                                                 | Builds, then runs typed `tests/integration` (`--suite integration`).                                                                                          |
+| Components          | `pnpm run test:components`                                                  | Runs typed `tests/components` (`--suite components`); drives real `svelte-check` on the maintained Bits compatibility fixture and disposable negative copies. |
+| CLI smoke           | `pnpm run test:cli-bootstrap`                                               | Real `dist` CLI process assertions.                                                                                                                           |
+| Contract validation | `pnpm run check:contracts`                                                  | Read-only document/projection/evidence validation.                                                                                                            |
+| Contract tests      | `pnpm run test:contracts`                                                   | Focused validator regression suite.                                                                                                                           |
+| Consumer check      | `pnpm run fixture:check`                                                    | `svelte-kit sync` + `svelte-check --fail-on-warnings`.                                                                                                        |
+| Consumer SSR        | `pnpm run test:fixture`                                                     | Builds, then owned-server SSR + lifecycle suites.                                                                                                             |
+| Browser             | `pnpm run test:browser -- tests/browser/harness.spec.ts`                    | Builds, then Playwright bundled Chromium.                                                                                                                     |
+| Chromium install    | `pnpm exec playwright install [--with-deps] chromium`                       | Local (no `--with-deps`); CI adds system dependencies.                                                                                                        |
+| Diff health         | `git diff --check`                                                          | No whitespace diagnostics.                                                                                                                                    |
 
-An explicit component qualification lane (`pnpm run test:components`) is
-scheduled for S011; CI gains that step when the lane exists.
+The component qualification lane (`pnpm run test:components`) is established at
+S011; the workflow runs it after the integration lane.
 
 ## CI workflow
 
@@ -45,9 +46,9 @@ scheduled for S011; CI gains that step when the lane exists.
 `contents` permission, a `30`-minute job timeout and the `ubuntu-24.04` runner.
 It checks out full history, sets up pnpm `11.22.0` and Node `24.21.0`, then runs
 the frozen strict install, installs bundled Chromium with system dependencies,
-and runs the format, lint, typecheck, unit, harness, integration, CLI smoke,
-consumer check, consumer SSR, browser, contract-validation and contract-test
-lanes — the same commands recorded above.
+and runs the format, lint, typecheck, unit, harness, integration, components,
+CLI smoke, consumer check, consumer SSR, browser, contract-validation and
+contract-test lanes — the same commands recorded above.
 
 Actions are pinned to immutable revisions:
 
