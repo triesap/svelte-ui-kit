@@ -285,3 +285,101 @@ remains gitignored and uncommitted.
 This is a build-boundary change only. Consumer rendering, SSR/hydration,
 browser, lint and package/tarball acceptance lanes are still not present and are
 not claimed green.
+
+## S007 addendum — SSR consumer fixture baseline
+
+S007 adds the maintained consumer qualification fixture on top of the unchanged
+S006 authoring baseline. It does not change any S003–S006 root dependency pin,
+the root package identity, the engine range, `packageManager` or the CLI
+source. Two new exact dependency selections (`@sveltejs/adapter-node 5.5.7`,
+`svelte-check 4.7.6`) are introduced **inside the fixture package**, not in the
+root `svelte-ui-kit` manifest.
+
+### Fixture identity and workspace membership
+
+- Package: `svelte-ui-kit-consumer-fixture`, private, ESM (`"type": "module"`),
+  version `0.0.0`, path `tests/fixtures/consumer/`.
+- `pnpm-workspace.yaml` now lists exactly two explicit members: `"."` and
+  `"tests/fixtures/consumer"`. There is no wildcard membership, no nested
+  lockfile and no nested `pnpm-workspace.yaml`; the single root `pnpm-lock.yaml`
+  remains authoritative.
+- The root `svelte-ui-kit` package stays `private: true` with its existing
+  sixteen exact development pins and no runtime `dependencies` block. The
+  fixture is the only workspace member with a runtime dependency (`svelte`).
+- Fixture `dependencies`: `svelte 5.57.1` only.
+- Fixture `devDependencies` (seven exact pins): `@sveltejs/kit 2.70.3`,
+  `@sveltejs/vite-plugin-svelte 7.3.1`, `vite 8.3.1`, `typescript 6.0.3`,
+  `@types/node 24.19.0`, `@sveltejs/adapter-node 5.5.7`, `svelte-check 4.7.6`.
+- No Bits UI or `@internationalized/date` consumer dependency is added; Bits
+  compatibility remains S011 scope. No automatic install hook was added to any
+  check/build/test script.
+
+### New package selections — installed manifest facts
+
+Inspected from the installed fixture manifests on 2026-09-29 (Node `24.21.0`,
+pnpm `11.22.0`):
+
+| Package                  | Pin     | Engines (installed document) | Declared peers (installed document)                                 |
+| ------------------------ | ------- | ---------------------------- | ------------------------------------------------------------------- |
+| `@sveltejs/adapter-node` | `5.5.7` | none declared                | `@sveltejs/kit ^2.4.0`                                              |
+| `svelte-check`           | `4.7.6` | `>= 18.0.0`                  | `svelte ^4.0.0 \|\| ^5.0.0-next.0`, `typescript ^5.0.0 \|\| ^6.0.0` |
+
+Compatibility against the existing pins:
+
+- adapter-node requires `@sveltejs/kit ^2.4.0`; the fixture (and root) pin
+  `@sveltejs/kit 2.70.3` satisfies it.
+- svelte-check requires Svelte `^4.0.0 || ^5.0.0-next.0`; the pinned
+  `svelte 5.57.1` satisfies it, and TypeScript `^5.0.0 || ^6.0.0`; the pinned
+  `typescript 6.0.3` satisfies it. Its `>= 18.0.0` engine admits Node 24.21.0.
+- Kit's non-optional peers (`vite ^8.0.0`, `svelte ^5.0.0-next.0`,
+  `@sveltejs/vite-plugin-svelte ^7.0.0`) are all satisfied by the fixture pins;
+  its optional `typescript` and `@opentelemetry/api` peers are supplied/omitted
+  exactly as at S003.
+
+The two installs below (exit 0) qualify the selection; no substitution or
+downgrade was required.
+
+### Install results
+
+| Step                    | Command                                                                     | Exit | Result                                        |
+| ----------------------- | --------------------------------------------------------------------------- | ---- | --------------------------------------------- |
+| Lock-generating install | `pnpm install --engine-strict --strict-peer-dependencies`                   | 0    | Added the fixture importer; 26 packages added |
+| Frozen strict install   | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | 0    | `Already up to date`; 2 workspace projects    |
+
+### Fixture check/build/SSR and controls
+
+| Step                          | Command                               | Observed                                                        | Result                                                                     |
+| ----------------------------- | ------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Fixture check (maintained)    | `pnpm run fixture:check`              | exit 0                                                          | 0 errors, 0 warnings                                                       |
+| Fixture build (maintained)    | `pnpm run fixture:build`              | exit 0                                                          | Vite 8.3.1 + adapter-node production build                                 |
+| Fixture SSR + lifecycle suite | `pnpm run test:fixture`               | exit 0                                                          | build + 16 tests, 16 pass, 0 fail                                          |
+| Negative: Svelte/TS mismatch  | disposable copy `fixture:check`       | exit 1 then restored exit 0                                     | real assignability diagnostic; restored input passes                       |
+| Negative: SSR disabled        | disposable copy build + SSR assertion | build exit 0; only the specific missing-markup assertion throws | copy builds, HTTP 200/HTML transport passes, visible server value absent   |
+| Negative: HTTP 500            | fault server + transport assertion    | `assertHtmlTransport` throws                                    | HTTP 500 is rejected, not accepted as missing markup                       |
+| Negative: wrong content type  | fault server + transport assertion    | `assertHtmlTransport` throws                                    | `text/plain` is rejected, not accepted as missing markup                   |
+| Lifecycle faults              | `tests/smoke/owned-server.test.mjs`   | observed failures detected                                      | startup failure, stderr, post-ready exit 17, stalled headers/body, cleanup |
+
+### Not proven at S007
+
+- No generated-wrapper, tarball/package acceptance or installed-tarball
+  consumer run is claimed.
+- No browser/hydration interaction assertion, accessibility audit or reduced
+  motion/RTL qualification is claimed; S008 owns the browser harness.
+- No Bits UI component rendering, binding, or SSR/hydration compatibility is
+  claimed; S011 owns that integration.
+- The fixture is a hand-authored baseline, not evidence that the future
+  generator produces it.
+- Only macOS on Node 24.21.0 was exercised; no cross-platform claim is made.
+
+### Conditional reference guard
+
+The owner-authorized batch explicitly reuses the audited S007 reference guard
+through S011 while the reference identity, Rust scope and evidence remain
+unchanged. The reference worktree was verified clean at
+`a10fbf06334f4648f5755e05a7147414e4e5fc98`; the audited guard recorded
+`cargo fmt --all -- --check`, `cargo check --workspace --all-targets` and
+`cargo test --workspace --all-targets` at exit 0 with 562 top-level plus 16
+nested passes, zero failures and four ignored tests. No fresh Rust run or
+reference mutation is claimed at S007; a fresh guard runs at the S012
+milestone. Exact results and captured exits are recorded in
+`implementation/evidence/S007_REPORT.md`.

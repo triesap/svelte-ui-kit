@@ -44,10 +44,43 @@ export const STATUS_VOCABULARY = [
   "verified_uncommitted",
   "complete",
   "not_applicable",
+  "committed_pending_review",
 ];
 
 /** Checkpoint statuses that require a completed, committed successor gate. */
 export const COMPLETE_STATUS = "complete";
+
+/**
+ * Author implementation status for the owner-authorized within-sequence batch.
+ * It means the checkpoint's implementation commit exists and is recorded, but
+ * independent review has not accepted it. It never counts as completion.
+ */
+export const PENDING_REVIEW_STATUS = "committed_pending_review";
+
+/** Structured batch-authorization schema (one live record in the plan). */
+export const BATCH_SCHEMA_VERSION = 1;
+export const BATCH_KEYS = [
+  "schemaVersion",
+  "sequence",
+  "first",
+  "last",
+  "mode",
+  "review",
+];
+
+/**
+ * The single owner-authorized batch. `committed_pending_review` is legal only
+ * for exactly this range; there is deliberately no general policy engine or
+ * free-form bypass. A live record that does not match exactly is rejected.
+ */
+export const AUTHORIZED_BATCH = {
+  schemaVersion: BATCH_SCHEMA_VERSION,
+  sequence: "RCLD-01",
+  first: "S007",
+  last: "S012",
+  mode: "pfc",
+  review: "codex-after-sequence",
+};
 
 /** Structured completion-evidence schema. */
 export const EVIDENCE_SCHEMA_VERSION = 1;
@@ -206,6 +239,21 @@ export function isReachableFromHead(root, commit) {
     execFileSync(
       "git",
       ["-C", root, "merge-base", "--is-ancestor", commit, "HEAD"],
+      { stdio: ["ignore", "ignore", "ignore"] },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** True when `ancestor` is an ancestor of `descendant` (identity included). */
+export function isAncestor(root, ancestor, descendant) {
+  if (!ancestor || !descendant) return false;
+  try {
+    execFileSync(
+      "git",
+      ["-C", root, "merge-base", "--is-ancestor", ancestor, descendant],
       { stdio: ["ignore", "ignore", "ignore"] },
     );
     return true;
@@ -607,7 +655,7 @@ function maskFencedText(text) {
 }
 
 /**
- * Parse every live `<!-- checkpoint-evidence ... -->` attempt in a document.
+ * Parse every live `<!-- <marker> ... -->` attempt in a document.
  *
  * A live opening marker establishes a present record attempt even when it is
  * never terminated. Fenced literal content is masked before scanning, so it
@@ -616,10 +664,11 @@ function maskFencedText(text) {
  * counted and either parsed as one record or reported as malformed. Stray
  * closing delimiters that precede any opening marker are inert.
  */
-export function parseEvidenceRecords(text) {
+function parseStructuredCommentRecords(text, marker) {
   const masked = maskFencedText(text);
   const tokens = [];
-  for (const match of masked.matchAll(/<!--\s*checkpoint-evidence\b/g)) {
+  const openRe = new RegExp(`<!--\\s*${marker}\\b`, "g");
+  for (const match of masked.matchAll(openRe)) {
     tokens.push({
       type: "open",
       index: match.index,
@@ -640,7 +689,7 @@ export function parseEvidenceRecords(text) {
   let count = 0;
   let bodyStart = -1;
   const reportUnterminated = () =>
-    errors.push("checkpoint-evidence comment is not terminated with -->");
+    errors.push(`${marker} comment is not terminated with -->`);
   for (const token of tokens) {
     if (token.type === "open") {
       if (bodyStart !== -1) reportUnterminated();
@@ -653,12 +702,111 @@ export function parseEvidenceRecords(text) {
     try {
       records.push(JSON.parse(body));
     } catch (error) {
-      errors.push(`checkpoint-evidence JSON did not parse: ${error.message}`);
+      errors.push(`${marker} JSON did not parse: ${error.message}`);
     }
     bodyStart = -1;
   }
   if (bodyStart !== -1) reportUnterminated();
   return { records, errors, count };
+}
+
+/**
+ * Parse every live `<!-- checkpoint-evidence ... -->` attempt in a document.
+ * See `parseStructuredCommentRecords` for the fenced/termination semantics.
+ */
+export function parseEvidenceRecords(text) {
+  return parseStructuredCommentRecords(text, "checkpoint-evidence");
+}
+
+/**
+ * Parse every live `<!-- checkpoint-batch ... -->` authorization attempt. This
+ * is a separate, single-record structured comment; fenced examples are inert.
+ */
+export function parseBatchAuthorizations(text) {
+  return parseStructuredCommentRecords(text, "checkpoint-batch");
+}
+
+/**
+ * Read and validate the single live owner-authorized batch record for `root`.
+ *
+ * Returns `null` when the record is absent or invalid. Malformed or
+ * non-approved present records push diagnostics; an absent record is reported
+ * only indirectly (a pending-review status without one is an error elsewhere).
+ * The returned object carries the authorized contiguous step-id set.
+ */
+export function readBatchAuthorization(root, errors) {
+  const text = readText(root, PLAN_REL);
+  if (text === null) return null;
+  const {
+    records,
+    errors: parseErrors,
+    count,
+  } = parseBatchAuthorizations(text);
+  for (const message of parseErrors) {
+    errors.push({
+      code: "INVALID_BATCH_AUTHORIZATION",
+      path: PLAN_REL,
+      message,
+    });
+  }
+  if (count === 0) return null;
+  if (count > 1) {
+    errors.push({
+      code: "INVALID_BATCH_AUTHORIZATION",
+      path: PLAN_REL,
+      message: `expected exactly one checkpoint-batch authorization, found ${count}`,
+    });
+    return null;
+  }
+  const record = records[0];
+  if (record === null || typeof record !== "object" || Array.isArray(record)) {
+    errors.push({
+      code: "INVALID_BATCH_AUTHORIZATION",
+      path: PLAN_REL,
+      message: "checkpoint-batch must be a JSON object",
+    });
+    return null;
+  }
+  const keys = Object.keys(record).sort();
+  const expectedKeys = [...BATCH_KEYS].sort();
+  if (
+    keys.length !== expectedKeys.length ||
+    !keys.every((key, i) => key === expectedKeys[i])
+  ) {
+    errors.push({
+      code: "INVALID_BATCH_AUTHORIZATION",
+      path: PLAN_REL,
+      message: `checkpoint-batch keys must be exactly ${BATCH_KEYS.join(", ")}`,
+    });
+    return null;
+  }
+  const mismatches = [];
+  for (const key of BATCH_KEYS) {
+    if (record[key] !== AUTHORIZED_BATCH[key]) {
+      mismatches.push(
+        `${key} must be ${JSON.stringify(AUTHORIZED_BATCH[key])}, found ${JSON.stringify(record[key])}`,
+      );
+    }
+  }
+  if (mismatches.length > 0) {
+    for (const message of mismatches) {
+      errors.push({
+        code: "INVALID_BATCH_AUTHORIZATION",
+        path: PLAN_REL,
+        message: `checkpoint-batch ${message}`,
+      });
+    }
+    return null;
+  }
+  const firstIndex = EXPECTED_STEP_IDS.indexOf(AUTHORIZED_BATCH.first);
+  const lastIndex = EXPECTED_STEP_IDS.indexOf(AUTHORIZED_BATCH.last);
+  const ids = new Set(EXPECTED_STEP_IDS.slice(firstIndex, lastIndex + 1));
+  return {
+    sequence: AUTHORIZED_BATCH.sequence,
+    first: AUTHORIZED_BATCH.first,
+    last: AUTHORIZED_BATCH.last,
+    ids,
+  };
 }
 
 /**
@@ -729,7 +877,134 @@ function ledgerHashFor(row) {
   return match ? match[0].toLowerCase() : null;
 }
 
-function validateCompletionEvidence(root, projection, errors) {
+/**
+ * Validate one `committed_pending_review` checkpoint: the ledger must record
+ * the real post-commit implementation hash, the report stays `candidate` with
+ * that hash, an optional independent review stays `changes_requested`/null,
+ * and the commit must be reachable, contain the report path, and be a
+ * descendant of a committed predecessor. Pending review never counts as
+ * completion and never records `implemented`/`accepted`.
+ */
+function validatePendingReviewEvidence(root, step, ctx) {
+  const {
+    report,
+    review,
+    reportRel,
+    reviewRel,
+    ledgerById,
+    projection,
+    batch,
+    errors,
+  } = ctx;
+  const push = (message, pathRel) =>
+    errors.push({
+      code: "MISSING_COMPLETION_EVIDENCE",
+      path: pathRel,
+      message,
+    });
+
+  if (!batch || !batch.ids.has(step.id)) {
+    push(
+      `checkpoint ${step.id} is committed_pending_review but is not within the authorized batch range`,
+      PLAN_REL,
+    );
+  }
+
+  const row = ledgerById.get(step.id);
+  const hash = ledgerHashFor(row);
+  const fullHash = hash && /^[0-9a-f]{40}$/.test(hash) ? hash : null;
+  if (!fullHash) {
+    push(
+      `pending-review checkpoint ${step.id} must record its full 40-digit implementation hash in the ledger`,
+      PLAN_REL,
+    );
+  }
+
+  if (report.missing) {
+    push(
+      `pending-review checkpoint ${step.id} is missing its report checkpoint-evidence record`,
+      reportRel,
+    );
+  } else if (report.record) {
+    if (report.record.disposition !== "candidate") {
+      push(
+        `pending-review checkpoint ${step.id} report disposition must remain "candidate", found "${report.record.disposition}"`,
+        reportRel,
+      );
+    }
+    if (fullHash && report.record.commit !== fullHash) {
+      push(
+        `pending-review checkpoint ${step.id} report commit must equal the ledger hash ${fullHash}`,
+        reportRel,
+      );
+    }
+  }
+
+  if (review.record) {
+    if (review.record.disposition !== "changes_requested") {
+      push(
+        `pending-review checkpoint ${step.id} review disposition must be "changes_requested", found "${review.record.disposition}"`,
+        reviewRel,
+      );
+    }
+    if (review.record.commit !== null) {
+      push(
+        `pending-review checkpoint ${step.id} review record must use a null commit while pending`,
+        reviewRel,
+      );
+    }
+  }
+
+  if (!fullHash) return;
+
+  if (!hasGitRepo(root)) {
+    push(
+      `pending-review checkpoint ${step.id} cannot be verified: no Git repository at ${root}`,
+      PLAN_JSON_REL,
+    );
+    return;
+  }
+
+  const resolved = resolveCommit(root, fullHash);
+  if (!resolved) {
+    push(
+      `pending-review checkpoint ${step.id} implementation hash ${fullHash} does not resolve in this repository`,
+      PLAN_JSON_REL,
+    );
+    return;
+  }
+  if (!isReachableFromHead(root, resolved)) {
+    push(
+      `pending-review checkpoint ${step.id} implementation commit ${fullHash} is not reachable from HEAD`,
+      PLAN_JSON_REL,
+    );
+  }
+  if (!pathExistsAtCommit(root, resolved, reportRel)) {
+    push(
+      `pending-review checkpoint ${step.id} implementation commit ${fullHash} does not contain its report path ${reportRel}`,
+      PLAN_JSON_REL,
+    );
+  }
+
+  const order = projection.steps.map((candidate) => candidate.id);
+  const index = order.indexOf(step.id);
+  if (index > 0) {
+    const previous = projection.steps[index - 1];
+    const previousHash = ledgerHashFor(ledgerById.get(previous.id));
+    const previousResolved =
+      previousHash && /^[0-9a-f]{40}$/.test(previousHash)
+        ? resolveCommit(root, previousHash)
+        : null;
+    if (previousResolved && !isAncestor(root, previousResolved, resolved)) {
+      push(
+        `pending-review checkpoint ${step.id} commit ${fullHash} is not a descendant of predecessor ${previous.id} commit ${previousResolved}`,
+        PLAN_JSON_REL,
+      );
+    }
+  }
+}
+
+function validateCompletionEvidence(root, projection, errors, batch) {
   const ledgerById = new Map(parseLedgerSafe(root).map((r) => [r.id, r]));
   const git = hasGitRepo(root);
 
@@ -768,6 +1043,19 @@ function validateCompletionEvidence(root, projection, errors) {
           path: PLAN_JSON_REL,
           message: `checkpoint ${step.id} is "${step.status}" but carries completion evidence`,
         });
+      }
+      if (step.status === PENDING_REVIEW_STATUS) {
+        validatePendingReviewEvidence(root, step, {
+          report,
+          review,
+          reportRel,
+          reviewRel,
+          ledgerById,
+          projection,
+          batch,
+          errors,
+        });
+        continue;
       }
       if (step.status === "verified_uncommitted") {
         // Accepted but uncommitted: both records required with null hashes.
@@ -1213,7 +1501,7 @@ function derivedSequenceState(rows) {
   return "in_progress";
 }
 
-function validatePlanStructure(root, errors) {
+function validatePlanStructure(root, errors, batch) {
   const text = readText(root, PLAN_REL);
   if (text === null) return;
   const lines = text.split("\n");
@@ -1379,6 +1667,16 @@ function validatePlanStructure(root, errors) {
         message: `checkpoint ${row.id} is not_applicable without an approved evidence-backed deviation`,
       });
     }
+    if (
+      row.status === PENDING_REVIEW_STATUS &&
+      (!batch || !batch.ids.has(row.id))
+    ) {
+      errors.push({
+        code: "INVALID_STATUS",
+        path: PLAN_REL,
+        message: `checkpoint ${row.id} is "${PENDING_REVIEW_STATUS}" without the authorized batch record`,
+      });
+    }
     const expectedSeq = EXPECTED_SEQUENCE_BY_STEP.get(row.id);
     if (expectedSeq && row.sequence !== expectedSeq) {
       errors.push({
@@ -1389,11 +1687,24 @@ function validatePlanStructure(root, errors) {
     }
   });
 
-  // Premature advancement.
+  // Premature advancement. An accepted `complete` predecessor unlocks its
+  // successor. Inside the exact owner-authorized batch, a verified
+  // `committed_pending_review` predecessor unlocks the next batch checkpoint;
+  // outside it, the accepted-predecessor rule is retained. A pending review
+  // never unlocks S013 or any other out-of-range successor.
+  const canUnlock = (previous, current) => {
+    if (previous.status === COMPLETE_STATUS) return true;
+    return Boolean(
+      batch &&
+      batch.ids.has(previous.id) &&
+      batch.ids.has(current.id) &&
+      previous.status === PENDING_REVIEW_STATUS,
+    );
+  };
   for (let i = 1; i < ledger.length; i++) {
     if (
       ledger[i].status !== "not_started" &&
-      ledger[i - 1].status !== COMPLETE_STATUS
+      !canUnlock(ledger[i - 1], ledger[i])
     ) {
       errors.push({
         code: "PREMATURE_ADVANCEMENT",
@@ -1589,6 +1900,75 @@ function validatePlanStructure(root, errors) {
         path: PLAN_REL,
         message: `summary remaining sequences ${seqSummary[2]} != ledger remaining ${11 - completedSequences}`,
       });
+    }
+  }
+
+  // Pending-review checkpoints are authored/committed progress, not accepted
+  // completion, so they are reported separately from the completed counters.
+  const pendingIds = ledger
+    .filter((row) => row.status === PENDING_REVIEW_STATUS)
+    .map((row) => row.id);
+  const pendingSummary = stripFencedLines(text)
+    .join("\n")
+    .match(
+      /Committed pending review:\s*\*\*\s*(\d+)\s*\/\s*203\s*\*\*\.\s*Authored batch range:\s*\*\*\s*([^*]+?)\s*\*\*\./,
+    );
+  if (!pendingSummary) {
+    errors.push({
+      code: "INVALID_SUMMARY_COUNT",
+      path: PLAN_REL,
+      message: "missing the top-level committed-pending-review summary",
+    });
+  } else {
+    if (Number(pendingSummary[1]) !== pendingIds.length) {
+      errors.push({
+        code: "INVALID_SUMMARY_COUNT",
+        path: PLAN_REL,
+        message: `summary committed pending review ${pendingSummary[1]} != ledger pending ${pendingIds.length}`,
+      });
+    }
+    const range = pendingSummary[2].trim();
+    if (pendingIds.length === 0) {
+      if (range !== "none") {
+        errors.push({
+          code: "INVALID_SUMMARY_COUNT",
+          path: PLAN_REL,
+          message: `summary authored batch range must be "none" with no pending-review checkpoint, found "${range}"`,
+        });
+      }
+    } else {
+      const rangeMatch = range.match(/^(S\d{3})\s*[\u2013-]\s*(S\d{3})$/);
+      if (!rangeMatch) {
+        errors.push({
+          code: "INVALID_SUMMARY_COUNT",
+          path: PLAN_REL,
+          message: `summary authored batch range "${range}" must be one Sxxx\u2013Sxxx range or "none"`,
+        });
+      } else if (
+        rangeMatch[1] !== pendingIds[0] ||
+        rangeMatch[2] !== pendingIds[pendingIds.length - 1]
+      ) {
+        errors.push({
+          code: "INVALID_SUMMARY_COUNT",
+          path: PLAN_REL,
+          message: `summary authored batch range ${rangeMatch[1]}\u2013${rangeMatch[2]} does not match ledger pending range ${pendingIds[0]}\u2013${pendingIds[pendingIds.length - 1]}`,
+        });
+      } else {
+        const contiguous = EXPECTED_STEP_IDS.slice(
+          EXPECTED_STEP_IDS.indexOf(rangeMatch[1]),
+          EXPECTED_STEP_IDS.indexOf(rangeMatch[2]) + 1,
+        );
+        if (
+          contiguous.length !== pendingIds.length ||
+          !contiguous.every((id, index) => id === pendingIds[index])
+        ) {
+          errors.push({
+            code: "INVALID_SUMMARY_COUNT",
+            path: PLAN_REL,
+            message: `pending-review checkpoints are not the contiguous authorized range ${range}`,
+          });
+        }
+      }
     }
   }
 }
@@ -1807,17 +2187,18 @@ export function validateRepository(root) {
   const ledgerText = readText(root, PLAN_REL);
   const ledger = ledgerText === null ? [] : parseLedger(ledgerText);
   const ledgerById = new Map(ledger.map((row) => [row.id, row]));
+  const batch = readBatchAuthorization(root, errors);
   validateRequiredFiles(root, errors);
   validatePackageScripts(root, errors);
   validateLinks(root, errors, warnings, ledgerById);
-  validatePlanStructure(root, errors);
+  validatePlanStructure(root, errors, batch);
   validateRequirementCoverage(root, errors);
   validateAcceptanceCriteria(root, errors);
   validateSourcesProjection(root, errors);
   validateProjection(root, errors);
   try {
     const projection = buildCheckpointProjection(root);
-    validateCompletionEvidence(root, projection, errors);
+    validateCompletionEvidence(root, projection, errors, batch);
   } catch (error) {
     errors.push({
       code: "MISSING_COMPLETION_EVIDENCE",

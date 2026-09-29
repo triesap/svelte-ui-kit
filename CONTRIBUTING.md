@@ -77,6 +77,37 @@ trees (`node_modules`, `.pnpm-store`, `dist`, `build`, `.svelte-kit`, `coverage`
 `tests/fixtures/generated/` boundary and ignored evidence-log trees. Formatting
 or lint problems must be fixed at the source instead of suppressed.
 
+## Consumer fixture
+
+`tests/fixtures/consumer/` is the maintained, private
+`svelte-ui-kit-consumer-fixture` SvelteKit workspace package and the second
+explicit member of `pnpm-workspace.yaml`. It is a hand-authored SSR/CSR
+qualification baseline, not generated output and not tarball acceptance.
+Install once from the repository root so the single root lockfile covers both
+members.
+
+```sh
+pnpm run fixture:check   # svelte-kit sync + svelte-check --fail-on-warnings
+pnpm run fixture:build   # real Vite production build with the Node adapter
+pnpm run test:fixture    # build the fixture, then the focused SSR node:test suite
+```
+
+The SSR suite at `tests/smoke/consumer-fixture.test.mjs` starts the adapter's
+production handler in an owned child process on an OS-assigned loopback port,
+asserts the real server-rendered HTTP HTML (status, content type, visible
+markup), distinct repeated/concurrent request values and HTML escaping, and
+runs disposable-copy failure controls for a real Svelte/TypeScript mismatch and
+for disabling SSR. HTTP status and content type are asserted independently, so
+an HTTP 500 or a wrong content type fails the suite rather than satisfying the
+missing-markup control. The owned-server boundary records stderr and the exit
+event through teardown and bounds startup, request headers/body and stop
+deadlines; `tests/smoke/owned-server.test.mjs` drives deterministic
+startup-failure, stderr, post-ready-exit, stalled-header/body and cleanup
+faults. It always stops its own server and removes its own temporary copies,
+and never signals an unrelated process. Fixture dependencies, `.svelte-kit/`
+and the adapter `build/` output are ignored by the root `.gitignore` and must
+not be committed.
+
 Commit dependency changes together with `pnpm-lock.yaml`.
 
 ## Current scope
@@ -91,9 +122,10 @@ Component install/inspect/update work is planned but not implemented yet.
 - Keep changes focused and well-scoped.
 - Explain the change and how you verified it.
 - Run `pnpm run typecheck`, `pnpm run build`, `pnpm run test:cli-bootstrap`,
-  `pnpm run test:unit`, `pnpm run test:harness`, `pnpm run lint` and
-  `pnpm run format:check` (plus `pnpm run check:contracts` and
-  `pnpm run test:contracts` for contract or evidence changes).
+  `pnpm run test:unit`, `pnpm run test:harness`, `pnpm run fixture:check`,
+  `pnpm run test:fixture`, `pnpm run lint` and `pnpm run format:check` (plus
+  `pnpm run check:contracts` and `pnpm run test:contracts` for contract or
+  evidence changes).
 - Update documentation when setup or scope changes.
 - Add meaningful tests and public API documentation when implementation begins.
 

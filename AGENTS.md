@@ -17,9 +17,12 @@ references.
   self-reviews within the dispatched checkpoint. Codex owns scope,
   contract/API decisions, dependency-selection approval, deviations,
   acceptance, checkpoint commits and dispatch between coding periods.
-- Complete one checkpoint at a time in the documented order. Return work
-  unstaged and uncommitted for independent review; never begin a successor
-  checkpoint before its predecessor is accepted and committed.
+- Complete one checkpoint at a time in the documented order. The owner's
+  `pfc through RCLD-01` authorization delegates green implementation commits
+  for S007–S012 to Pi, with independent Codex review after the sequence.
+  Follow the governing batch dispatch and its pending-review evidence rules;
+  never label Pi self-review as Codex acceptance. Outside that explicit batch,
+  return work unstaged/uncommitted and await predecessor acceptance/commit.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
 - No commit, push, publication, deployment or reference-repository mutation
@@ -90,8 +93,9 @@ failures, or turn off SSR to pass.
 - `pnpm run check:contracts` validates the adopted documents, local links and
   anchors, the fixed S001–S203 and RCLD-01–RCLD-11 identities, sequence gates,
   requirement/acceptance coverage, structured checkpoint completion evidence
-  (resolved against the real Git history), and Markdown/JSON agreement without
-  writing.
+  (resolved against the real Git history), the live owner-authorized batch
+  record and its strict `committed_pending_review` pending-review evidence, and
+  Markdown/JSON agreement without writing.
 - `pnpm run test:contracts` runs the focused `node:test` regression suite for
   that validator.
 - Regenerate projections explicitly with

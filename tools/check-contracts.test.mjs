@@ -47,6 +47,7 @@ import {
   setLedgerCell,
   setSequenceCell,
   writeDerivedState,
+  writeEvidence,
   writeEvidencePair,
 } from "./check-contracts.fixtures.mjs";
 import {
@@ -1460,4 +1461,345 @@ test("clean optional evidence absence validates", () => {
     const result = runCli(root);
     assert.equal(result.status, 0, result.output);
   });
+});
+
+// ---------------------------------------------------------------------------
+// Owner-authorized batch — committed_pending_review lifecycle
+// ---------------------------------------------------------------------------
+
+test("a pending-review checkpoint validates and unlocks its successor", () => {
+  withFixture(
+    (root) => {
+      assert.equal(runCli(root).status, 0);
+      setLedgerCell(root, "S008", 4, "in_progress");
+      regenerate(root, 0);
+      assert.equal(runCli(root).status, 0);
+      // A second active coding checkpoint is still rejected.
+      setLedgerCell(root, "S009", 4, "in_progress");
+      regenerate(root, 1);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /PREMATURE_ADVANCEMENT/);
+    },
+    { scenario: "pendingBatch" },
+  );
+});
+
+test("every authorized batch checkpoint validates as pending review", () => {
+  withFixture(
+    (root) => {
+      const result = runCli(root);
+      assert.equal(result.status, 0, result.output);
+    },
+    { scenario: "pendingAll" },
+  );
+});
+
+test("pending review keeps completion null and does not count as complete", () => {
+  withFixture(
+    (root) => {
+      regenerate(root, 0);
+      const projection = JSON.parse(read(root, PLAN_JSON_REL));
+      const pending = projection.steps.filter(
+        (step) => step.status === "committed_pending_review",
+      );
+      assert.equal(pending.length, 6);
+      for (const step of pending) {
+        assert.ok(
+          ["S007", "S008", "S009", "S010", "S011", "S012"].includes(step.id),
+          `unexpected pending step ${step.id}`,
+        );
+        assert.equal(step.completion, null, `${step.id} completion`);
+      }
+      const plan = read(root, PLAN_REL);
+      assert.match(
+        plan,
+        /Completed implementation checkpoints: \*\*6 \/ 203\*\*/,
+      );
+      assert.match(
+        plan,
+        /Committed pending review: \*\*6 \/ 203\*\*\. Authored batch range: \*\*S007–S012\*\*\./,
+      );
+      assert.equal(
+        runCli(root).status,
+        0,
+        "pending checkpoints must not complete RCLD-01",
+      );
+    },
+    { scenario: "pendingAll" },
+  );
+});
+
+test("an uncommitted predecessor cannot unlock a pending successor", () => {
+  withFixture(
+    (root) => {
+      setLedgerCell(root, "S007", 4, "in_progress");
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /PREMATURE_ADVANCEMENT/);
+    },
+    { scenario: "pendingAll" },
+  );
+});
+
+test("S013 cannot advance while S012 is only pending review", () => {
+  withFixture(
+    (root) => {
+      setLedgerCell(root, "S013", 4, "in_progress");
+      regenerate(root, 1);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /PREMATURE_ADVANCEMENT/);
+    },
+    { scenario: "pendingAll" },
+  );
+});
+
+test("S013 cannot be recorded as committed pending review", () => {
+  withFixture(
+    (root) => {
+      setLedgerCell(root, "S013", 4, "committed_pending_review");
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /INVALID_STATUS/);
+    },
+    { scenario: "pendingAll" },
+  );
+});
+
+test("a pending-review status without the batch authorization is rejected", () => {
+  withFixture(
+    (root) => {
+      write(
+        root,
+        PLAN_REL,
+        read(root, PLAN_REL).replace(/<!-- checkpoint-batch[\s\S]*?-->\n?/, ""),
+      );
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /INVALID_STATUS/);
+      assert.match(result.output, /authorized batch/);
+    },
+    { scenario: "pendingBatch" },
+  );
+});
+
+test("a fenced batch authorization does not admit pending review", () => {
+  withFixture(
+    (root) => {
+      write(
+        root,
+        PLAN_REL,
+        fenceBlock(read(root, PLAN_REL), /^<!-- checkpoint-batch/, /^-->$/),
+      );
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /INVALID_STATUS/);
+    },
+    { scenario: "pendingBatch" },
+  );
+});
+
+test("malformed or non-approved batch authorizations are rejected", () => {
+  const mutations = [
+    ["widened range", (text) => text.replace('"last":"S012"', '"last":"S013"')],
+    ["wrong mode", (text) => text.replace('"mode":"pfc"', '"mode":"batch"')],
+    [
+      "wrong sequence",
+      (text) => text.replace('"sequence":"RCLD-01"', '"sequence":"RCLD-02"'),
+    ],
+    [
+      "missing field",
+      (text) => text.replace(',"review":"codex-after-sequence"', ""),
+    ],
+    [
+      "unknown field",
+      (text) =>
+        text.replace(
+          '"review":"codex-after-sequence"',
+          '"review":"codex-after-sequence","extra":true',
+        ),
+    ],
+    [
+      "malformed JSON",
+      (text) => text.replace(/\{"schemaVersion":1[^}]*\}/, "{not json}"),
+    ],
+  ];
+  for (const [label, mutate] of mutations) {
+    withFixture(
+      (root) => {
+        const text = read(root, PLAN_REL);
+        const mutated = mutate(text);
+        assert.notEqual(mutated, text, `${label} mutation must apply`);
+        write(root, PLAN_REL, mutated);
+        const result = runCli(root);
+        assert.equal(result.status, 1, `${label}: ${result.output}`);
+        assert.match(result.output, /INVALID_BATCH_AUTHORIZATION/, label);
+      },
+      { scenario: "pendingBatch" },
+    );
+  }
+});
+
+test("a duplicate batch authorization is rejected", () => {
+  withFixture(
+    (root) => {
+      const record =
+        '<!-- checkpoint-batch\n{"schemaVersion":1,"sequence":"RCLD-01","first":"S007","last":"S012","mode":"pfc","review":"codex-after-sequence"}\n-->';
+      write(root, PLAN_REL, `${read(root, PLAN_REL)}\n${record}\n`);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /INVALID_BATCH_AUTHORIZATION/);
+    },
+    { scenario: "pendingBatch" },
+  );
+});
+
+test("pending review with an unresolvable implementation hash is rejected", () => {
+  withFixture(
+    (root) => {
+      const fake = "f".repeat(40);
+      setLedgerCell(root, "S007", 5, fake);
+      writeEvidence(root, "S007", "report", {
+        commit: fake,
+        disposition: "candidate",
+      });
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /does not resolve/);
+    },
+    { scenario: "pendingBatch" },
+  );
+});
+
+test("pending review with an unreachable implementation commit is rejected", () => {
+  withFixture(
+    (root) => {
+      git(root, "checkout", "-q", "-b", "side");
+      append(root, "specs/SCOPE_AND_ASSUMPTIONS.md", "side change");
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "side change");
+      const side = git(root, "rev-parse", "HEAD").trim();
+      git(root, "checkout", "-q", "master");
+      setLedgerCell(root, "S007", 5, side);
+      writeEvidence(root, "S007", "report", {
+        commit: side,
+        disposition: "candidate",
+      });
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /not reachable from HEAD/);
+    },
+    { scenario: "pendingBatch" },
+  );
+});
+
+test("pending review whose commit lacks its report path is rejected", () => {
+  withFixture(
+    (root) => {
+      const base = git(root, "rev-list", "--max-parents=0", "HEAD").trim();
+      setLedgerCell(root, "S007", 5, base);
+      writeEvidence(root, "S007", "report", {
+        commit: base,
+        disposition: "candidate",
+      });
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /does not contain its report path/);
+    },
+    { scenario: "pendingBatch" },
+  );
+});
+
+test("pending review report commit must equal the ledger hash", () => {
+  withFixture(
+    (root) => {
+      const base = git(root, "rev-list", "--max-parents=0", "HEAD").trim();
+      writeEvidence(root, "S007", "report", {
+        commit: base,
+        disposition: "candidate",
+      });
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /report commit must equal the ledger hash/);
+    },
+    { scenario: "pendingBatch" },
+  );
+});
+
+test("pending review rejects accepted report and review dispositions", () => {
+  withFixture(
+    (root) => {
+      const record = liveRecord(root, reportRel("S007"));
+      writeEvidence(root, "S007", "report", {
+        commit: record.commit,
+        disposition: "implemented",
+      });
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /must remain "candidate"/);
+    },
+    { scenario: "pendingBatch" },
+  );
+  withFixture(
+    (root) => {
+      writeEvidence(root, "S007", "review", {
+        commit: null,
+        disposition: "accepted",
+      });
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(
+        result.output,
+        /review disposition must be "changes_requested"/,
+      );
+    },
+    { scenario: "pendingBatch" },
+  );
+});
+
+test("pending-review summary count and range drift are rejected", () => {
+  withFixture(
+    (root) => {
+      write(
+        root,
+        PLAN_REL,
+        read(root, PLAN_REL).replace("**1 / 203**", "**2 / 203**"),
+      );
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /INVALID_SUMMARY_COUNT/);
+    },
+    { scenario: "pendingBatch" },
+  );
+  withFixture(
+    (root) => {
+      write(
+        root,
+        PLAN_REL,
+        read(root, PLAN_REL).replace("**S007–S007**", "**S007–S008**"),
+      );
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /INVALID_SUMMARY_COUNT/);
+    },
+    { scenario: "pendingBatch" },
+  );
+});
+
+test("generation does not legitimize invalid pending evidence", () => {
+  withFixture(
+    (root) => {
+      const fake = "f".repeat(40);
+      setLedgerCell(root, "S007", 5, fake);
+      writeEvidence(root, "S007", "report", {
+        commit: fake,
+        disposition: "candidate",
+      });
+      const result = runCli(root, "--generate");
+      assert.equal(result.status, 1);
+      assert.match(result.output, /does not resolve/);
+    },
+    { scenario: "pendingBatch" },
+  );
 });

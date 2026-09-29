@@ -1,15 +1,16 @@
 # S006 step report — Add nonmutating formatting and lint gates
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S006","kind":"report","commit":null,"disposition":"implemented"}
+{"schemaVersion":1,"checkpoint":"S006","kind":"report","commit":"bce30a4b7b5bf0e885d9991719f807cfda98ad63","disposition":"implemented"}
 -->
 
 Step ID and title: S006 — Add nonmutating formatting and lint gates.
 Codex review 2 accepts the completed S006-R1 correction. See
 `implementation/evidence/S006_REVIEW.md` and the governing correction dispatch.
-The checkpoint is verified and awaiting its authorized commit; S007 stays
-locked until that commit. Earlier candidate statements below describe the
-author's return, not the current independent disposition.
+S006 is complete at `bce30a4b7b5bf0e885d9991719f807cfda98ad63`; S007 is
+authorized. Codex recorded the real hash after commit; this factual update
+travels with S007 without amending history. Earlier candidate statements below
+describe the author's return, not the current independent disposition.
 Contract/requirement IDs: R17, R29, R32, R33, R34
 (`implementation/COMMIT_SEQUENCE.md`; see `specs/`).
 Actual target root and branch: this repository (`.`) on branch `master`.
@@ -424,22 +425,22 @@ Unresolved issues after completion: none known within S006 scope.
 
 ## Commit and next action
 
-Actual commit hash: pending; Codex accepted this report as implemented with a
-null precommit hash. Authorized message: `build: add formatting and lint verification gates`.
+Actual commit hash: `bce30a4b7b5bf0e885d9991719f807cfda98ad63`.
+Message: `build: add formatting and lint verification gates`.
 
-Structured record: report `implemented`, null precommit hash. Codex owns the
-independent accepted review and the checkpoint commit; Pi did not self-accept.
+Structured record: report `implemented`, actual checkpoint hash. Codex owns
+the independent accepted review and checkpoint commit; Pi did not self-accept.
 
 Requirements/test evidence updated: this report, `README.md`,
 `CONTRIBUTING.md` and `implementation/VERIFICATION.md`. The governing ledger and
 JSON projection were unchanged by the author; Codex reconciles acceptance and
 commit state through the governing ledger.
 
-Next step ID: S007 — Add an SSR-enabled SvelteKit consumer fixture. It remains
-locked until Codex commits the independently accepted S006 checkpoint.
+Next step ID: S007 — Add an SSR-enabled SvelteKit consumer fixture. It is
+authorized under the complete governing dispatch.
 
-Is the next step safe to begin? Not before the accepted checkpoint is committed.
-S006 is `verified_uncommitted`; S007 and all successors remain locked.
+Is the next step safe to begin? Yes. S006 is accepted and committed; S007 is
+active. S008 remains locked until S007 is independently accepted and committed.
 
 ### Decisions requiring Codex
 

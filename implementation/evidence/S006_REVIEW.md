@@ -1,13 +1,14 @@
 # S006 independent review — accepted
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S006","kind":"review","commit":null,"disposition":"accepted"}
+{"schemaVersion":1,"checkpoint":"S006","kind":"review","commit":"bce30a4b7b5bf0e885d9991719f807cfda98ad63","disposition":"accepted"}
 -->
 
 Reviewer: Codex. Date: 2026-09-29. Baseline:
 `5cf149106fbc7c9fb20eca1f31a0e5b08aff4b11` (`master`, accepted S005).
-S006 is `verified_uncommitted`; S007 stays locked until the checkpoint commit.
-Review covered the
+S006 is complete at `bce30a4b7b5bf0e885d9991719f807cfda98ad63`; S007 is
+authorized. Codex recorded the real hash after commit; this factual update
+travels with S007 without amending history. Review covered the
 complete lint/formatter configuration, typed tooling suite, two smoke edits,
 package/lock changes, affected documentation, author session and logs.
 

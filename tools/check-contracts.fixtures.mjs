@@ -72,6 +72,20 @@ export const SCENARIOS = {
     candidates: ["S014"],
     accepted: [],
   },
+  // Owner-authorized batch states: S001–S006 accepted, then one or all of the
+  // S007–S012 implementation commits pending independent review.
+  pendingBatch: {
+    complete: EXPECTED_STEP_IDS.slice(0, 6),
+    candidates: [],
+    accepted: [],
+    pendingReview: ["S007"],
+  },
+  pendingAll: {
+    complete: EXPECTED_STEP_IDS.slice(0, 6),
+    candidates: [],
+    accepted: [],
+    pendingReview: EXPECTED_STEP_IDS.slice(6, 12),
+  },
 };
 
 export const GIT_ENV = {
@@ -221,6 +235,18 @@ export function writeDerivedState(root, statuses) {
     (_m, a, b, c) =>
       `${a}${completeSequences}${b}${11 - completeSequences}${c}`,
   );
+
+  const pendingIds = EXPECTED_STEP_IDS.filter(
+    (id) => statuses.get(id) === "committed_pending_review",
+  );
+  const pendingRange =
+    pendingIds.length === 0
+      ? "none"
+      : `${pendingIds[0]}\u2013${pendingIds[pendingIds.length - 1]}`;
+  text = text.replace(
+    /(Committed pending review:\s*\*\*\s*)\d+(\s*\/\s*203\s*\*\*\.\s*Authored batch range:\s*\*\*\s*)[^*]+?(\s*\*\*\.)/,
+    (_m, a, b, c) => `${a}${pendingIds.length}${b}${pendingRange}${c}`,
+  );
   writeFileSync(abs, text);
 }
 
@@ -308,6 +334,9 @@ export function buildFixture({
     for (const id of spec.complete) statuses.set(id, "complete");
     for (const id of spec.accepted) statuses.set(id, "verified_uncommitted");
     for (const id of spec.candidates) statuses.set(id, "in_progress");
+    for (const id of spec.pendingReview ?? []) {
+      statuses.set(id, "committed_pending_review");
+    }
     if (statusOverrides) {
       for (const [id, status] of statusOverrides) statuses.set(id, status);
     }
@@ -350,6 +379,27 @@ export function buildFixture({
         });
         setLedgerCell(dir, id, 5, hash);
       }
+      for (const id of spec.pendingReview ?? []) {
+        // Commit the candidate report, then record the real post-commit hash
+        // while keeping the report disposition candidate and the review
+        // changes_requested/null.
+        writeEvidence(dir, id, "report", {
+          commit: null,
+          disposition: "candidate",
+        });
+        writeEvidence(dir, id, "review", {
+          commit: null,
+          disposition: "changes_requested",
+        });
+        git(dir, "add", "-A");
+        git(dir, "commit", "-q", "-m", `fixture: pending review ${id}`);
+        const hash = git(dir, "rev-parse", "HEAD").trim();
+        writeEvidence(dir, id, "report", {
+          commit: hash,
+          disposition: "candidate",
+        });
+        setLedgerCell(dir, id, 5, hash);
+      }
     } else {
       // No Git: completions cannot resolve. Write the records with null hashes
       // so a caller can point a fabricated ledger hash at an absent repository.
@@ -358,6 +408,16 @@ export function buildFixture({
           commit: null,
           report: "implemented",
           review: "accepted",
+        });
+      }
+      for (const id of spec.pendingReview ?? []) {
+        writeEvidence(dir, id, "report", {
+          commit: null,
+          disposition: "candidate",
+        });
+        writeEvidence(dir, id, "review", {
+          commit: null,
+          disposition: "changes_requested",
         });
       }
     }

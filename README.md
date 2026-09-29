@@ -28,6 +28,9 @@ pnpm run build
 pnpm run test:cli-bootstrap
 pnpm run test:unit -- tests/unit/cli-bootstrap.test.ts
 pnpm run test:harness
+pnpm run fixture:check
+pnpm run fixture:build
+pnpm run test:fixture
 pnpm run check:contracts
 pnpm run test:contracts
 pnpm run lint
@@ -63,6 +66,36 @@ trees, and neither ever traverses an unrelated external application.
 `pnpm run typecheck` remains a separate compiler check; lint, format and
 typecheck establish authoring hygiene only, not consumer typecheck/build,
 SSR/browser qualification or release readiness.
+
+The maintained consumer fixture is the private ESM workspace package
+`svelte-ui-kit-consumer-fixture` at `tests/fixtures/consumer/`. It is the
+second explicit member of `pnpm-workspace.yaml` and shares the single root
+lockfile; it pins `svelte 5.57.1` as its only runtime dependency and exact
+development pins for `@sveltejs/kit`, `@sveltejs/vite-plugin-svelte`,
+`@sveltejs/adapter-node`, `svelte-check`, `vite`, `typescript` and
+`@types/node`. It is a hand-authored Svelte 5/SvelteKit application with SSR
+and CSR enabled and a request-local `+page.server.ts` load rendered visibly
+into the route markup.
+
+`pnpm run fixture:check` runs the fixture's real `svelte-kit sync` followed by
+`svelte-check --tsconfig ./tsconfig.json --fail-on-warnings`; `pnpm run
+fixture:build` runs the real Vite production build through the Node adapter;
+`pnpm run test:fixture` builds the fixture and then runs the focused
+`node:test` suites at `tests/smoke/consumer-fixture.test.mjs` and
+`tests/smoke/owned-server.test.mjs`. The SSR suite hosts the adapter's
+production handler in an owned child process on an OS-assigned loopback port
+and asserts the actual server-rendered HTTP HTML before client JavaScript runs,
+distinct repeated/concurrent request values, HTML escaping, and the real
+failure controls for a Svelte/TypeScript mismatch and for disabling SSR. HTTP
+status and content type are asserted independently, so an HTTP 500 or a wrong
+content type fails the suite instead of satisfying the missing-markup control.
+The owned-server boundary records stderr and the exit event through teardown,
+bounds startup, request headers/body and stop deadlines, and the lifecycle
+suite drives deterministic startup-failure, stderr, post-ready exit, stalled
+header/body and cleanup faults. This is a hand-authored qualification baseline
+only: it is not evidence that the future generator or an installed tarball
+already produces this app, and no browser/hydration or release qualification is
+claimed.
 
 ## Contributing
 
