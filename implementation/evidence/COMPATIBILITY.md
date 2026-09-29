@@ -610,3 +610,74 @@ restore to green. No `any` cast is used.
 S011 reuses the audited S007 reference guard under the owner-authorized batch
 (clean at `a10fbf06334f4648f5755e05a7147414e4e5fc98`). No fresh Rust run or
 reference mutation is claimed; the fresh guard runs at S012.
+
+## S012 addendum — minimal production boundaries and RCLD-01 closure
+
+S012 adds no dependency and no schema/registry/command implementation. It
+separates the bootstrap CLI into pure modules behind the Node adapter and adds
+minimal readonly interfaces for later responsibilities.
+
+### Boundaries
+
+- `src/cli/args.ts` — pure `parseCliArgs(argv): CliRequest` classification.
+- `src/cli/run.ts` — pure `HELP_TEXT`, `formatUsageDiagnostic`, `applyRequest`
+  and `runCli(argv, metadata, io)` result handling with injected effects.
+- `src/cli/main.ts` — the Node adapter: package-relative metadata read/validation
+  and the real stdout/stderr/exit effects. The exact help text, usage diagnostic,
+  version line and exit codes are unchanged, and the S004 smoke mutation anchors
+  (`import { readFileSync } from "node:fs";` and the metadata-derived version
+  write) remain in the built entrypoint.
+- `src/project/input.ts`, `src/registry/snapshot.ts`, `src/codegen/plan.ts` —
+  readonly `ProjectInput`, `RegistrySnapshot` and `PlanningOutcome` interfaces
+  only; no readers, validators or planners are implemented before their
+  scheduled checkpoints.
+- `tests/unit/boundaries.test.ts` — proves pure import/execution performs no
+  filesystem writes, the injected result handling matches the real built adapter,
+  the boundary types reject invalid values at compile time (`@ts-expect-error`),
+  and consumer fixture sources import no CLI/Node/registry internals.
+
+### RCLD-01 cumulative verification (S012 milestone)
+
+All commands ran under Node `24.21.0`/`pnpm 11.22.0`, routed through
+`cargo extbuild run --`, with logs under `implementation/evidence/logs/`.
+
+| Lane                        | Result                                                                                                                                                                                              |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frozen strict install       | exit 0                                                                                                                                                                                              |
+| Format check / lint         | exit 0 / exit 0                                                                                                                                                                                     |
+| Typecheck (4 configs)       | exit 0                                                                                                                                                                                              |
+| Unit                        | 3 files; 20 tests, 20 pass                                                                                                                                                                          |
+| Runner harness              | 35 tests, 35 pass                                                                                                                                                                                   |
+| Integration                 | 9 tests, 9 pass                                                                                                                                                                                     |
+| Components                  | 4 tests, 4 pass                                                                                                                                                                                     |
+| CLI smoke                   | 41 tests, 41 pass                                                                                                                                                                                   |
+| Fixture check / build       | 0 errors, 0 warnings / exit 0                                                                                                                                                                       |
+| Consumer SSR + lifecycle    | 17 tests, 17 pass                                                                                                                                                                                   |
+| Browser (Chromium)          | 11 passed                                                                                                                                                                                           |
+| Contract validation / tests | 0 error(s), 0 warning(s) / 101 tests, 101 pass                                                                                                                                                      |
+| Workflow validation         | `actionlint 1.7.12` exit 0 (shellcheck 0.11.0 present)                                                                                                                                              |
+| Fresh reference guard       | `cargo fmt` 0, `cargo check --workspace --all-targets` 0, `cargo test --workspace --all-targets` 0; 578 passed, 0 failed, 4 ignored (43 result lines) at `a10fbf06334f4648f5755e05a7147414e4e5fc98` |
+
+The reference is clean at the audited commit and was not modified.
+
+### S007–S012 implementation commits (pending independent review)
+
+| Checkpoint | Commit                                         |
+| ---------- | ---------------------------------------------- |
+| S007       | `99212955c2b812ef6bc525c9cdca14fae4e6499a`     |
+| S008       | `f4dfa83aadc67850b6b8b999f80bd7199de4a6b2`     |
+| S009       | `023cdf811505f5803ede334c57ee4a993073483e`     |
+| S010       | `a148a3163e5fa38e4f684292c902ac5707637299`     |
+| S011       | `64a1acb48ad552b0c6097b34b7c58f0cdbcf0c6f`     |
+| S012       | recorded in `S012_REPORT.md` after this commit |
+
+These are author implementation commits pending independent Codex review; they
+do not count as accepted completion.
+
+### Not proven at S012
+
+- No product command, schema, registry read/validate, planning or transaction
+  behavior is implemented or claimed; those are later checkpoints.
+- No package/tarball acceptance, publication, deployment or remote CI execution
+  is claimed.
+- Only macOS/Node 24.21.0 (and bundled Chromium) was exercised locally.

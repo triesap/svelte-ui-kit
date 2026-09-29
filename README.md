@@ -73,7 +73,18 @@ intended diagnostics in disposable copies. The fixture pins `csstype 3.1.3`
 Bits barrel; authored fixture source remains under `strict` checking.
 
 The CLI entrypoint is `src/cli/main.ts`, compiled with the pinned `tsc` to
-`dist/cli/main.js` (build output is ignored and never committed).
+`dist/cli/main.js` (build output is ignored and never committed). Argument
+classification and result handling live in the pure `src/cli/args.ts` and
+`src/cli/run.ts` modules, which perform no I/O; `main.ts` is the adapter that
+reads the bundled package metadata next to the built module and applies the
+real stdout/stderr/exit effects. Minimal readonly `ProjectInput`,
+`RegistrySnapshot` and `PlanningOutcome` interfaces under `src/project`,
+`src/registry` and `src/codegen` express the already-approved responsibilities
+without implementing them. `tests/unit/boundaries.test.ts` proves the pure
+modules import and execute without filesystem writes, that the injected result
+handling matches the built adapter, that the boundary types reject invalid
+values at compile time, and that consumer fixture sources never import
+CLI/Node/registry internals.
 
 `pnpm run lint` runs the flat `eslint.config.mjs` configuration (JavaScript,
 TypeScript and Svelte recommended presets plus the Prettier conflict presets)

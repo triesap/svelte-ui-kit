@@ -160,7 +160,15 @@ same commands locally as listed in the command map.
 Only help and version output are implemented: `--help`/`-h` and `--version`/`-V`
 exit 0, and every other argument list (including `--json` and `--cwd`, and all
 product command names) is rejected with a stderr diagnostic and exit code 2.
-Component install/inspect/update work is planned but not implemented yet.
+Argument classification and result handling live in the pure `src/cli/args.ts`
+and `src/cli/run.ts` modules; `src/cli/main.ts` is the Node adapter that reads
+the bundled metadata next to the built module and applies stdout/stderr/exit.
+Readonly `ProjectInput`, `RegistrySnapshot` and `PlanningOutcome` interfaces
+under `src/project`, `src/registry` and `src/codegen` express later
+responsibilities without implementation; `tests/unit/boundaries.test.ts` guards
+the pure-import, injected-behavior, compile-negative and consumer-import
+boundaries. Component install/inspect/update work is planned but not implemented
+yet.
 
 ## Pull request checklist
 

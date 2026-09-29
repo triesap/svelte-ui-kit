@@ -1,8 +1,16 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 
+import { parseCliArgs } from "./args.js";
+import { HELP_TEXT, formatUsageDiagnostic } from "./run.js";
+
 /**
- * Bootstrap `svelte-ui-kit` CLI.
+ * Node adapter for the bootstrap `svelte-ui-kit` CLI.
+ *
+ * The adapter owns the only side effects: it reads and validates the bundled
+ * package metadata next to the built module and applies the classified request
+ * to the real stdout/stderr/exit. Argument classification and result handling
+ * live in the pure `./args.js` and `./run.js` modules, which perform no I/O.
  *
  * This entrypoint deliberately implements only help and version output. It
  * performs no project inspection, network access or filesystem writes, and it
@@ -12,17 +20,6 @@ import { readFileSync } from "node:fs";
 
 /** Package metadata is read next to the built module, never from the cwd. */
 const PACKAGE_METADATA_URL = new URL("../../package.json", import.meta.url);
-
-const HELP_TEXT = `svelte-ui-kit — bootstrap CLI
-
-Usage:
-  svelte-ui-kit --help, -h     Show this help text.
-  svelte-ui-kit --version, -V  Print the package name and version.
-
-This is a bootstrap build. Component install/inspect/update commands are not
-implemented yet, and no project inspection, network access or writes are
-performed.
-`;
 
 interface PackageMetadata {
   readonly name: string;
@@ -98,36 +95,20 @@ function readPackageMetadata(): PackageMetadata | undefined {
   return { name, version };
 }
 
-function usageDiagnostic(argv: readonly string[]): string {
-  const rendered = argv.map((arg) => JSON.stringify(arg)).join(" ");
-  return [
-    `svelte-ui-kit: unsupported argument list: ${rendered}`,
-    "Usage: svelte-ui-kit --help, -h or svelte-ui-kit --version, -V.",
-    "Only help and version are implemented in this bootstrap; other flags and",
-    "commands (including --json and --cwd) are not yet supported.",
-    "",
-  ].join("\n");
-}
-
 function main(argv: readonly string[]): void {
   const metadata = readPackageMetadata();
   if (metadata === undefined) return;
 
-  const first = argv[0];
-  if (first === undefined) {
+  const request = parseCliArgs(argv);
+  if (request.kind === "help") {
     process.stdout.write(HELP_TEXT);
     return;
   }
-  if (argv.length === 1 && (first === "--help" || first === "-h")) {
-    process.stdout.write(HELP_TEXT);
-    return;
-  }
-  if (argv.length === 1 && (first === "--version" || first === "-V")) {
+  if (request.kind === "version") {
     process.stdout.write(`${metadata.name} ${metadata.version}\n`);
     return;
   }
-
-  process.stderr.write(usageDiagnostic(argv));
+  process.stderr.write(formatUsageDiagnostic(request.argv));
   process.exitCode = 2;
 }
 

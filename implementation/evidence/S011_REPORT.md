@@ -1,7 +1,7 @@
 # S011 step report — Qualify the pinned primitive integration boundary
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S011","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S011","kind":"report","commit":"64a1acb48ad552b0c6097b34b7c58f0cdbcf0c6f","disposition":"candidate"}
 -->
 
 Step ID and title: S011 — Qualify the pinned primitive integration boundary.
