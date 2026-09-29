@@ -282,7 +282,7 @@ test("runs from an unrelated cwd with spaces and ignores cwd metadata", (t) => {
 });
 
 test("disposable copy runs with built output and metadata only", (t) => {
-  const { dir, entry } = makeDisposableCopy(
+  const { dir } = makeDisposableCopy(
     t,
     readFileSync(packageJsonPath, "utf8"),
     "svelte-ui-kit copy ",
@@ -308,7 +308,7 @@ test("disposable copy runs with built output and metadata only", (t) => {
 
 test("a changed valid package version is printed by both version flags", (t) => {
   const changedVersion = "2.3.4-rc.1+build.001";
-  const { dir, entry } = makeDisposableCopy(
+  const { entry } = makeDisposableCopy(
     t,
     jsonText(moduleManifest("svelte-ui-kit", changedVersion)),
     "svelte-ui-kit changed-version ",

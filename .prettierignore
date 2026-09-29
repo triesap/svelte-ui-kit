@@ -5,6 +5,9 @@ dist/
 build/
 coverage/
 .unit-test-build/
+tests/fixtures/generated/
+implementation/evidence/logs/
+*.log
 pnpm-lock.yaml
 LICENSE-MIT
 LICENSE-APACHE

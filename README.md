@@ -30,6 +30,7 @@ pnpm run test:unit -- tests/unit/cli-bootstrap.test.ts
 pnpm run test:harness
 pnpm run check:contracts
 pnpm run test:contracts
+pnpm run lint
 pnpm run format:check
 ```
 
@@ -47,6 +48,21 @@ runner's own regression suite.
 
 The CLI entrypoint is `src/cli/main.ts`, compiled with the pinned `tsc` to
 `dist/cli/main.js` (build output is ignored and never committed).
+
+`pnpm run lint` runs the flat `eslint.config.mjs` configuration (JavaScript,
+TypeScript and Svelte recommended presets plus the Prettier conflict presets)
+over the maintained authoring tree with `--max-warnings 0`; it parses
+TypeScript inside Svelte `<script>` blocks and surfaces Svelte compiler and
+accessibility diagnostics. `pnpm run format:check` checks the same authoring
+inputs with Prettier and the Svelte formatter plugin and never rewrites files;
+`pnpm run format` is the explicit authoring-only write command. Both tools skip
+reserved dependency/output trees (`node_modules`, `.pnpm-store`, `dist`,
+`build`, `.svelte-kit`, `coverage`, `.unit-test-build`) at every depth plus the
+explicitly rooted `tests/fixtures/generated/` boundary and ignored evidence-log
+trees, and neither ever traverses an unrelated external application.
+`pnpm run typecheck` remains a separate compiler check; lint, format and
+typecheck establish authoring hygiene only, not consumer typecheck/build,
+SSR/browser qualification or release readiness.
 
 ## Contributing
 

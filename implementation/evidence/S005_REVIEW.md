@@ -1,13 +1,15 @@
 # S005 independent review — accepted
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S005","kind":"review","commit":null,"disposition":"accepted"}
+{"schemaVersion":1,"checkpoint":"S005","kind":"review","commit":"5cf149106fbc7c9fb20eca1f31a0e5b08aff4b11","disposition":"accepted"}
 -->
 
 Reviewer: Codex. Date: 2026-09-29. Baseline:
 `fd5d5162c7e5e3fa22fcc8a0365525f4e0e6a100` (`master`, accepted S004).
-Review 2 accepts S005 as `verified_uncommitted`; S006 unlocks only after the
-checkpoint commit. Review 1 below is historical. This review examined
+Review 2 accepts S005, now complete at
+`5cf149106fbc7c9fb20eca1f31a0e5b08aff4b11`; S006 is authorized. Codex
+recorded this real hash after commit; the factual update travels with S006.
+Review 1 below is historical. This review examined
 the full runner, its regression suite, typed bootstrap test, fixture changes,
 affected configuration/docs, author session and verification logs.
 
@@ -169,5 +171,6 @@ whitespace checks also passed.
 
 ## Disposition
 
-Review 1 requested R1–R3; review 2 above closes them and accepts S005 pending
-its checkpoint commit. Human release testing is not due.
+Review 1 requested R1–R3; review 2 closes them. S005 is accepted and committed;
+S006 is active under the complete governing dispatch. Human release testing
+is not due.

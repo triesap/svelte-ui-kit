@@ -56,11 +56,26 @@ Both `typecheck` and `test:unit` are required: standalone `typecheck` uses the
 tracked compiler includes, while the unit runner also compiles every discovered
 unit entry, including dot-prefixed files and directories.
 
-5. Check formatting:
+5. Check lint and formatting:
 
 ```sh
+pnpm run lint
 pnpm run format:check
 ```
+
+`pnpm run lint` runs `eslint . --max-warnings 0` with the checked-in flat
+`eslint.config.mjs`: JavaScript, TypeScript and Svelte recommended presets,
+the Prettier conflict presets, the actual TypeScript parser inside Svelte
+`<script lang="ts">` blocks, and Svelte compiler/accessibility diagnostics.
+Node globals are limited to the CLI/tooling/test/config files and browser
+globals to Svelte/client authoring contexts. `pnpm run format:check` is
+nonmutating; `pnpm run format` is the explicit write command. Both tools cover
+the maintained authoring inputs (`src`, `tools`, `tests`, root configuration
+and future `registry` templates/assets) and exclude reserved dependency/output
+trees (`node_modules`, `.pnpm-store`, `dist`, `build`, `.svelte-kit`, `coverage`,
+`.unit-test-build`) at every depth plus the explicitly rooted
+`tests/fixtures/generated/` boundary and ignored evidence-log trees. Formatting
+or lint problems must be fixed at the source instead of suppressed.
 
 Commit dependency changes together with `pnpm-lock.yaml`.
 
@@ -76,15 +91,16 @@ Component install/inspect/update work is planned but not implemented yet.
 - Keep changes focused and well-scoped.
 - Explain the change and how you verified it.
 - Run `pnpm run typecheck`, `pnpm run build`, `pnpm run test:cli-bootstrap`,
-  `pnpm run test:unit`, `pnpm run test:harness` and `pnpm run format:check`
-  (plus `pnpm run check:contracts` and `pnpm run test:contracts` for contract or
-  evidence changes).
+  `pnpm run test:unit`, `pnpm run test:harness`, `pnpm run lint` and
+  `pnpm run format:check` (plus `pnpm run check:contracts` and
+  `pnpm run test:contracts` for contract or evidence changes).
 - Update documentation when setup or scope changes.
 - Add meaningful tests and public API documentation when implementation begins.
 
 ## Code style
 
-- Let the checked-in formatter handle supported file formats.
+- Run `pnpm run lint` and `pnpm run format:check`; let the checked-in
+  formatter handle supported file formats instead of hand-formatting.
 - Keep documentation clear and repository-relative.
 - Keep generated output, credentials, and local runtime state out of contributions.
 

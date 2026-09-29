@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: S001–S004 complete; S005 independently accepted and verified_uncommitted. S006 dispatch is prepared and unlocks only after the S005 commit. Updated 2026-09-29.
+Status: S001–S005 complete; S006 review 2 accepts the recursive-output correction, verified pending commit. S007 dispatch is resolved but remains locked until that commit. Updated 2026-09-29.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,17 +17,18 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S005** in **RCLD-01** — verified_uncommitted; Codex review 2 closes R1–R3. S006 remains locked until S005 is committed.
+- Active implementation checkpoint: **S006** in **RCLD-01** — verified_uncommitted; Codex review 2 closes S006-R1. S007 dispatch below is resolved but locked until S006 is committed.
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
-- Completed implementation checkpoints: **4 / 203**. Remaining: **199 / 203**.
+- Completed implementation checkpoints: **5 / 203**. Remaining: **198 / 203**.
 - Completed RCLD sequences: **0 / 11**. Remaining: **11 / 11**.
-- Last safe target commit: `fd5d5162c7e5e3fa22fcc8a0365525f4e0e6a100`, branch `master` (S004).
+- Last safe target commit: `5cf149106fbc7c9fb20eca1f31a0e5b08aff4b11`, branch `master` (S005).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
 - S004 evidence: `implementation/evidence/S004_REPORT.md` and `implementation/evidence/S004_REVIEW.md`. All review findings are closed; independent smoke 41/41 and contracts 83/83 pass, along with corrected metadata and mutation probes.
 - S005 evidence: `implementation/evidence/S005_REPORT.md` and `implementation/evidence/S005_REVIEW.md`. Review 2 accepts the correction: independent unit 5/5, harness 29/29, smoke 41/41 and contracts 84/84 pass; original boundary/filename/failure probes are corrected. No release acceptance is claimed.
-- No checkpoint has been skipped or reordered. S001–S004 are complete. Codex recorded S004's real hash and S005 activation after the commit; these four factual bookkeeping files travel with S005 under the established rule. Earlier dispatches and correction records are historical.
+- S006 evidence: `implementation/evidence/S006_REPORT.md` and `implementation/evidence/S006_REVIEW.md`. Review 2 accepts recursive exclusions and maintained-source controls; independent unit 14/14, harness 29/29, smoke 41/41 and contracts 84/84 pass. Original nested probes are corrected; real lint/format preserve all 71 tracked/untracked authoring entries. Commit pending.
+- No checkpoint has been skipped or reordered. S001–S005 are complete. Codex recorded S005's real hash and S006 activation after the commit; these four factual bookkeeping files travel with S006 under the established rule. Earlier dispatches and correction records are historical.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. Every checkpoint after S001 depends on the reviewed, verified, committed predecessor; milestone boundaries never waive that dependency.
 
@@ -319,6 +320,180 @@ No owner decision remains unresolved. Return unstaged/uncommitted with S002
 still `in_progress`, report `candidate`, review `changes_requested`, null hashes
 and S003 untouched. Codex independently reviews and accepts before any target
 commit or successor dispatch. No human release test is due at this checkpoint.
+
+## Codex dispatch decisions — S007
+
+Begin only after S006 is independently accepted and committed with its real
+hash recorded. Use a fresh Pi session and finish the complete S007 fixture,
+verification, evidence and self-review in one implementation period. Codex
+has resolved the decisions below; do not stop at a scaffold or dependency
+proposal. S008 remains locked until Codex accepts and commits S007.
+
+1. **Fixture identity and workspace.** Create the maintained, private ESM
+   package `svelte-ui-kit-consumer-fixture` at `tests/fixtures/consumer/`.
+   Extend `pnpm-workspace.yaml` with exactly that explicit member alongside
+   `.`; keep one root lockfile, no nested lockfile or wildcard membership.
+   Keep the root CLI package private and all its existing sixteen exact
+   development pins unchanged; no root runtime dependency is introduced.
+   This app is a hand-authored qualification baseline, not evidence that the
+   future generator or installed tarball already produces it.
+2. **Approved fixture dependency set.** Fixture `dependencies` contains
+   `svelte: 5.57.1`. Fixture `devDependencies` contains exact pins
+   `@sveltejs/kit: 2.70.3`, `@sveltejs/vite-plugin-svelte: 7.3.1`,
+   `vite: 8.3.1`, `typescript: 6.0.3`, `@types/node: 24.19.0`,
+   `@sveltejs/adapter-node: 5.5.7` and `svelte-check: 4.7.6`.
+   The last two are the only new package selections. Codex inspected their
+   exact npm manifests: adapter-node admits Kit `^2.4.0`; svelte-check admits
+   Svelte `^4.0.0 || ^5.0.0-next.0`, TypeScript `^5.0.0 || ^6.0.0`,
+   Node `>=18.0.0`. Preserve Node 24.21.0 / pnpm 11.22.0. Installation and
+   execution must still prove compatibility; no substitution or downgrade.
+   No Bits wrapper is needed yet, so do not add unused Bits/date consumer
+   dependencies or infer component compatibility from this fixture. S011
+   owns that integration qualification. Do not add dependency installation
+   to check/build/test scripts or lifecycle hooks.
+3. **Real SvelteKit app.** Use the pinned Kit Vite plugin, Node adapter and
+   `vitePreprocess` as appropriate, a standard app template, strict fixture
+   tsconfig extending `./.svelte-kit/tsconfig.json`, and typed Svelte 5 route
+   source. Keep CLI and unit tsconfigs separate from app compilation. Include
+   a minimal accessible page with a heading and native interactive elements
+   useful to the next browser checkpoint. Explicitly retain SSR and CSR, do
+   not prerender the qualification route, and do not add browser-only or
+   shared mutable server state. Use a small typed server load that renders a
+   request-specific query value into visible page markup (with a deterministic
+   default); no clock/random counter is needed. Layouts, if used, must render
+   their children. No kit wrappers, registry placeholders, generated CLI
+   commands, CSS framework or deployment platform integration belongs here.
+4. **Owned commands.** Add root `fixture:check` and `fixture:build` scripts
+   delegating with `pnpm --dir tests/fixtures/consumer run check` and `... run
+build`. Fixture `check` runs real `svelte-kit sync` then `svelte-check
+--tsconfig ./tsconfig.json --fail-on-warnings`; fixture `build` runs real
+   `vite build` with the Node adapter. A fixture-local `dev` script using Vite
+   is allowed for the next checkpoint. Add root `test:fixture` that builds the
+   app before executing a focused `node:test` suite at
+   `tests/smoke/consumer-fixture.test.mjs`. Keep startup/test helpers local and
+   small; do not preimplement S008's browser harness or S009's general helpers.
+5. **SSR acceptance and failure controls.** Test the actual production
+   adapter output over HTTP, not a mocked render or string search in source.
+   The generated `build/handler.js` may be hosted in an owned child process
+   using Node HTTP on `127.0.0.1` with an OS-assigned port; this is the
+   adapter's supported custom-server boundary and avoids fixed-port races.
+   Bound startup, requests and teardown; report unexpected exits/server errors
+   and always remove owned temporary artifacts and stop owned servers, including
+   assertion failures. Never kill unrelated processes. Assert HTTP 200,
+   HTML content type and visible route markup before client JavaScript runs.
+   Distinct repeated/concurrent query values must render only their own
+   visible values, proving actual request-time SSR rather than static output
+   or values present only in serialized hydration data. Check a benign HTML
+   escaping case as well. In an owned disposable fixture copy, prove a real
+   Svelte/TypeScript type mismatch makes `fixture:check` fail for its intended
+   diagnostic and restored valid input passes; disabling SSR must make the
+   SSR assertion fail. Record these controls without leaving negative source
+   in the maintained app or weakening checks. A focused test should fail if
+   the app/build is missing; `test:fixture` itself supplies the real build.
+6. **Scope, output and authoring hygiene.** Keep fixture dependencies,
+   `.svelte-kit/` and adapter `build/` output ignored. Retain S006's recursive
+   exclusions; maintained fixture source/config remains linted and formatted.
+   Use narrow parser/global configuration changes only if real fixture files
+   require them; retain semantic/compiler/a11y rules and strict types. Do not
+   blanket-ignore the fixture or disable SSR, checks, warnings or assertions.
+   Verify lint/format after sync/build and verify check/build from clean owned
+   generated output. Source, manifest, lockfile, scripts and docs must agree.
+7. **Verification and evidence.** Run the strict frozen workspace install,
+   fixture check/build/SSR suite and negative controls, both existing CLI/unit
+   typechecks, full unit discovery, harness, CLI smoke, lint, format, contract
+   validation/tests and whitespace checks. Avoid duplicate successful builds
+   where `test:fixture` already performs the required production build; record
+   the actual command composition. Update README, CONTRIBUTING,
+   VERIFICATION, the compatibility record and S007_REPORT with exact commands,
+   package roles/versions, files, results/counts, failure attempts, cleanup
+   evidence and limitations. Run the fresh conditional reference fmt/check/test
+   guard with captured exits; S006's same-checkpoint reuse exception does not
+   extend to S007. Preserve reference source and record its clean identity.
+8. **Return and advancement.** Complete all unblocked S007 work and self-review
+   before returning unstaged/uncommitted. Keep S007 `in_progress`, author report
+   `candidate` with null commit; preserve accepted S006 bookkeeping and the
+   independent review. Do not author an accepted review, change external
+   coordination state or begin S008. Report any consequential unexpected
+   incompatibility to Codex with evidence while completing independent work.
+   No browser/hydration, generated-wrapper, tarball, cross-platform or release
+   readiness is established by this baseline. No human release testing is due.
+
+Selection references: exact registry manifests for
+[svelte-check 4.7.6](https://registry.npmjs.org/svelte-check/4.7.6) and
+[adapter-node 5.5.7](https://registry.npmjs.org/@sveltejs/adapter-node/5.5.7);
+[SvelteKit Node adapter](https://svelte.dev/docs/kit/adapter-node) and
+[project structure](https://svelte.dev/docs/kit/project-structure).
+
+## Codex correction dispatch — S006 review 1
+
+Complete this bounded correction and all remaining S006 verification in a fresh
+Pi session. Read `implementation/evidence/S006_REVIEW.md` in full. Codex has
+resolved all decisions below; do not return only a patch or stop for another
+scope proposal. This supplements the original S006 dispatch without adding
+S007 implementation or changing checkpoint order.
+
+1. **R1: recursive reserved-output exclusions.** The current ESLint global
+   ignore block uses configuration-root-only directory patterns. Codex
+   reproduced exit 1 for a bad file under each of
+   `tests/fixtures/consumer/.svelte-kit/`, `build/`, `dist/`, `coverage/`
+   and `.pnpm-store/` (the latter four are also beneath the consumer root).
+   The equivalent format checks exit 0. Honor the already-approved global
+   output boundary at every depth: use directory-subtree patterns
+   `**/node_modules/`, `**/.pnpm-store/`, `**/dist/`, `**/build/`,
+   `**/.svelte-kit/`, `**/coverage/` and `**/.unit-test-build/` in the
+   global ESLint ignore configuration. Preserve the explicitly rooted
+   `tests/fixtures/generated/` and `implementation/evidence/logs/` boundaries
+   and existing log exclusion. Keep the global-ignore-only object or use
+   ESLint's own equivalent helper; no new dependency or tool wrapper.
+   These names are reserved output/dependency trees, not permission to ignore
+   all consumer, test, registry or source files. Prettier already passes the
+   nested probes; preserve its working boundary.
+2. **Regression proof and scope preservation.** Extend the existing typed
+   tooling tests with bad files under both root and nested output directories,
+   including the seven recursive names above and the existing explicit output
+   boundaries. Running the actual lint and format scripts must pass despite
+   those files. In the same fixture layout, malformed/violating maintained
+   TS and Svelte input under `tests/fixtures/consumer/src/` and `registry/`
+   must still fail for the intended diagnostics and return green after repair.
+   Check nested levels beyond the fixture root, so root-only patterns cannot
+   pass the regression. Preserve complete fixture/external-app snapshots on
+   success and failure. Do not weaken other assertions, ignore failures or put
+   negative probes in real discovery. No S007 app is needed to prove this.
+3. **Compiler/accessibility decision.** Codex explicitly accepts and requires
+   the additive `svelte/valid-compile: error` configuration. The installed
+   recommended preset alone does not satisfy the dispatched compiler/a11y
+   negative cases; the added rule implements the existing requirement. Keep
+   it enabled, together with the verified real Svelte/TS parsing and all seven
+   approved exact dependency pins. No compatibility deviation is needed.
+4. **Evidence and real-tree nonmutation.** Update the S006 report and affected
+   developer guidance to describe recursive output exclusions truthfully and
+   distinguish initial evidence from correction results. For the real-tree
+   proof include existing untracked authoring inputs as well as tracked files;
+   unchanged porcelain status alone does not establish unchanged bytes in a
+   previously untracked file. Codex independently verified all 70 existing
+   tracked/untracked authoring entries before this review-document update.
+   Preserve failed attempts and report the new fixture counts and actual exits.
+5. **Verification and reference reuse.** Run frozen strict-peer engine-strict
+   install, lint, format check, both typechecks, build, full unit discovery,
+   explicit tooling test, harness, CLI smoke, contract validation/tests and
+   target whitespace checks. Snapshot real authoring inputs around the checks.
+   Codex audited the author's fresh S006 reference guard: fmt/check/test exit
+   0, 562 top-level plus 16 nested passes, zero failures, four ignored.
+   For this same-S006 configuration/test correction, verify that the reference
+   is still clean at `a10fbf06334f4648f5755e05a7147414e4e5fc98` and cite
+   this evidence without another Rust run. Rerun if reference identity, Rust
+   scope or the evidence changes; S007 does not inherit the exception. The
+   initial timed-out attempt and complete run without a captured exit remain
+   historical, distinct from the final run with actual exit 0.
+6. **Return boundary.** Finish the entire correction, regression evidence,
+   documentation and self-review, then return unstaged/uncommitted with S006
+   `in_progress`, report `candidate`, review `changes_requested`, null hashes
+   and S007 untouched. Preserve accepted S005 evidence and Codex's factual
+   bookkeeping/review. Codex owns independent acceptance, checkpoint commit
+   and S007 dispatch. No human release testing is due.
+
+Primary behavior references: [ESLint directory ignores](https://eslint.org/docs/latest/use/configure/ignore#ignore-directories)
+and [Svelte compiler validation](https://sveltejs.github.io/eslint-plugin-svelte/rules/valid-compile/).
 
 ## Codex dispatch decisions — S006
 
@@ -1054,8 +1229,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S002 | RCLD-01  | S001       | complete             | `9ed224f60249ee67732c05737170436e06301c38` |
 | S003 | RCLD-01  | S002       | complete             | `91cdaaefd756021b343465f7ba7dd3afe2f71b6d` |
 | S004 | RCLD-01  | S003       | complete             | `fd5d5162c7e5e3fa22fcc8a0365525f4e0e6a100` |
-| S005 | RCLD-01  | S004       | verified_uncommitted | —                                          |
-| S006 | RCLD-01  | S005       | not_started          | —                                          |
+| S005 | RCLD-01  | S004       | complete             | `5cf149106fbc7c9fb20eca1f31a0e5b08aff4b11` |
+| S006 | RCLD-01  | S005       | verified_uncommitted | —                                          |
 | S007 | RCLD-01  | S006       | not_started          | —                                          |
 | S008 | RCLD-01  | S007       | not_started          | —                                          |
 | S009 | RCLD-01  | S008       | not_started          | —                                          |

@@ -1,14 +1,15 @@
 # S005 step report — Add a real unit-test harness
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S005","kind":"report","commit":null,"disposition":"implemented"}
+{"schemaVersion":1,"checkpoint":"S005","kind":"report","commit":"5cf149106fbc7c9fb20eca1f31a0e5b08aff4b11","disposition":"implemented"}
 -->
 
 Step ID and title: S005 — Add a real unit-test harness.
-Codex review 2 accepts S005 as verified_uncommitted with R1–R3 closed; see
-[S005_REVIEW.md](S005_REVIEW.md). The initial return and correction chronology
-below remain historical. Actual checkpoint commit is pending; S006 unlocks
-only after it is recorded.
+Codex review 2 accepts S005, now complete at
+`5cf149106fbc7c9fb20eca1f31a0e5b08aff4b11`, with R1–R3 closed; see
+[S005_REVIEW.md](S005_REVIEW.md). S006 is authorized. The initial return and
+correction chronology below remain historical. Codex recorded the real hash
+after commit; this factual update travels with S006 without amending history.
 Contract/requirement IDs: R29, R30, R32, R33, R34
 (`implementation/COMMIT_SEQUENCE.md`; see `specs/`).
 Actual target root and branch: this repository (`.`) on branch `master`.
