@@ -1,5 +1,6 @@
 {
   "name": "svelte-ui-kit",
+  "version": "0.1.0",
   "description": "A source-first Svelte UI kit",
   "private": true,
   "license": "(MIT OR Apache-2.0)",
@@ -12,6 +13,9 @@
   },
   "homepage": "https://github.com/triesap/svelte-ui-kit#readme",
   "type": "module",
+  "bin": {
+    "svelte-ui-kit": "./dist/cli/main.js"
+  },
   "packageManager": "pnpm@11.22.0",
   "engines": {
     "node": ">=24"
@@ -19,6 +23,9 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:cli-bootstrap": "node --test tests/smoke/cli-bootstrap.test.mjs",
     "check:contracts": "node tools/check-contracts.mjs",
     "test:contracts": "node --test tools/check-contracts.test.mjs"
   },

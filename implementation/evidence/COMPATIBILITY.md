@@ -249,3 +249,39 @@ generated-consumer behavior; those remain later gates.
   `.editorconfig`/`.prettierrc.json` behavior).
 - The target has no Cargo manifest; target Rust checks remain N/A. The
   conditional reference guard is recorded in `implementation/evidence/S003_REPORT.md`.
+
+## S004 addendum — typed CLI build boundary
+
+S004 adds the typed executable boundary on top of the unchanged S003 baseline.
+No dependency version, lockfile, engine, package-manager or workspace change
+was made.
+
+- `tsconfig.json` compiles `src/**/*.ts` with the pinned `typescript@6.0.3`
+  using ES2023 `target`/`lib`, NodeNext `module`/`moduleResolution`,
+  `types: ["node"]`, `strict: true`, `noEmitOnError: true`, `rootDir: src` and
+  `outDir: dist`, with no `skipLibCheck` or suppressions.
+- `package.json` gains the development version `0.1.0`, the `svelte-ui-kit` →
+  `./dist/cli/main.js` bin mapping and real `build`, `typecheck` and
+  `test:cli-bootstrap` scripts. The private/ESM/license flags, engine,
+  `packageManager`, root-only workspace and all S003 dependencies and existing
+  scripts are preserved.
+- The built entrypoint reads and validates `name`/`version` from this package's
+  `package.json` relative to the built module (`import.meta.url`), so its output
+  is independent of cwd, Git and invoking-application metadata. The name must be
+  the exact product identity `svelte-ui-kit`, and the version must match the
+  full SemVer 2.0.0 grammar (prerelease and build metadata included), validated
+  inline with no added dependency. Only the product/package version `0.1.0` is
+  new; every S003 dependency version remains unchanged.
+
+Observed with process-local Node `24.21.0` and pnpm `11.22.0`: `pnpm run
+format:check` and `pnpm run typecheck` exit 0; a temporary negative type fixture
+produced `TS2322` and exit 2; `pnpm run build` emits only `dist/cli/main.js` with
+the shebang preserved; the strengthened `pnpm run test:cli-bootstrap` passes
+41/41 (help/version, rejected argument lists, metadata-precedes-arguments,
+exact-name/SemVer metadata matrix, deterministic content snapshots and
+disposable-copy mutation probes). `dist/`
+remains gitignored and uncommitted.
+
+This is a build-boundary change only. Consumer rendering, SSR/hydration,
+browser, lint and package/tarball acceptance lanes are still not present and are
+not claimed green.

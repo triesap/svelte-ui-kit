@@ -1,7 +1,7 @@
 # S003 independent review — accepted
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S003","kind":"review","commit":null,"disposition":"accepted"}
+{"schemaVersion":1,"checkpoint":"S003","kind":"review","commit":"91cdaaefd756021b343465f7ba7dd3afe2f71b6d","disposition":"accepted"}
 -->
 
 Reviewer: Codex. Review date: 2026-09-29. Implementation author: Pi,
@@ -9,8 +9,11 @@ Reviewer: Codex. Review date: 2026-09-29. Implementation author: Pi,
 and assistant response metadata. Baseline:
 `9ed224f60249ee67732c05737170436e06301c38`.
 
-Verdict: accepted, verified_uncommitted pending the authorized checkpoint
-commit. No implementation blocker remains. S004 stays gated by that commit.
+Verdict: accepted and complete at
+`91cdaaefd756021b343465f7ba7dd3afe2f71b6d`. No implementation blocker
+remains. S004 is authorized by the governing dispatch. Codex recorded this
+actual hash after the commit without amending history; the factual update
+travels with S004.
 
 ## Scope and findings
 

@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: S001 and S002 complete; S003 independently verified and awaiting checkpoint commit. S004 dispatch is prepared below but remains gated by that commit. Updated 2026-09-29.
+Status: S001–S003 complete; S004 accepted by Codex review 2 and awaiting its authorized checkpoint commit. S005 dispatch is prepared below and gated by that commit. Updated 2026-09-29.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,14 +17,16 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S003** in **RCLD-01** — verified_uncommitted; Codex accepts the dependency baseline and has prepared the gated S004 dispatch.
+- Active implementation checkpoint: **S004** in **RCLD-01** — verified_uncommitted; Codex review 2 accepts S004-R1–R3 and the 41-test bootstrap. S005 remains gated by the accepted S004 commit.
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
-- Completed implementation checkpoints: **2 / 203**. Remaining: **201 / 203**.
+- Completed implementation checkpoints: **3 / 203**. Remaining: **200 / 203**.
 - Completed RCLD sequences: **0 / 11**. Remaining: **11 / 11**.
-- Last safe target commit: `9ed224f60249ee67732c05737170436e06301c38`, branch `master` (S002).
+- Last safe target commit: `91cdaaefd756021b343465f7ba7dd3afe2f71b6d`, branch `master` (S003).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
-- No checkpoint has been skipped or reordered. S001 and S002 are complete. Codex recorded S002's real hash and S003 dispatch after the commit; this factual bookkeeping travels with S003 under the established rule. Earlier S002 correction dispatches below are historical.
+- S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
+- S004 evidence: `implementation/evidence/S004_REPORT.md` and `implementation/evidence/S004_REVIEW.md`. All review findings are closed; independent smoke 41/41 and contracts 83/83 pass, along with corrected metadata and mutation probes.
+- No checkpoint has been skipped or reordered. S001–S003 are complete. Codex recorded S003's real hash and S004 activation after the commit; these four factual bookkeeping files travel with S004 under the established rule. Earlier dispatches and correction records are historical.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. Every checkpoint after S001 depends on the reviewed, verified, committed predecessor; milestone boundaries never waive that dependency.
 
@@ -316,6 +318,185 @@ No owner decision remains unresolved. Return unstaged/uncommitted with S002
 still `in_progress`, report `candidate`, review `changes_requested`, null hashes
 and S003 untouched. Codex independently reviews and accepts before any target
 commit or successor dispatch. No human release test is due at this checkpoint.
+
+## Codex dispatch decisions — S005
+
+Start this checkpoint only after S004 is accepted and committed and its actual
+hash is recorded. Use a fresh Pi session. These decisions authorize all S005
+work, including the previously scheduled contract-fixture isolation correction;
+no owner decision is pending. S006 and successors remain locked until S005 is
+independently accepted and committed.
+
+1. **Runner and compilation.** Use the existing Node `node:test` runner and
+   pinned TypeScript compiler; add no dependency. Create
+   `tools/run-unit-tests.mjs`, `tsconfig.unit.json` and
+   `tests/unit/cli-bootstrap.test.ts`. Keep the S004 product build/config and
+   its `.js` relative ESM import convention. The unit config extends the root
+   strict config, overrides `rootDir` to `.`, emits to `.unit-test-build`, and
+   includes `src/**/*.ts` and `tests/unit/**/*.ts`. Ignore that output tree.
+   No `any`, disabled checks, `skipLibCheck` or ignored compiler failures.
+   Extend `typecheck` to check both configurations without emitting.
+2. **Commands and lifecycle.** Add `test:unit` using
+   `pnpm run build && node tools/run-unit-tests.mjs` and `test:harness` using
+   `node --test tools/run-unit-tests.test.mjs`. The runner compiles the unit
+   config with the installed compiler before running selected emitted tests;
+   compilation failure stops execution. Clean only the fixed, owned unit-build
+   output before compiling so stale output cannot pass. Guard that cleanup
+   against symlinked/unexpected output roots. No runtime registry/consumer
+   changes or new command protocol are part of this checkpoint.
+3. **Discovery and arguments.** With no operands discover all regular
+   `tests/unit/**/*.test.ts` files in deterministic order. Support one optional
+   leading `--` separator and explicit repository-relative test file operands,
+   including the plan's `pnpm run test:unit -- tests/unit/cli-bootstrap.test.ts`.
+   Resolve all paths against this package root; reject missing files, globs,
+   directories, unknown options and paths/symlinks escaping the unit-test tree.
+   Do not silently fall back to all files on an invalid selection. Run compiled
+   `.js` counterparts, with the package root as the test working directory.
+   The unit bootstrap may resolve the actual product bin from that root's
+   manifest and invoke the real `dist` CLI; it must not accidentally invoke
+   the unit compiler's mirrored CLI or import it for side effects.
+4. **Fail-closed results.** Use Node's structured test events with process
+   isolation, retaining readable diagnostics and explicit counts. A successful
+   import of an empty file is not a real test. Require a completed per-file
+   summary and at least one executed, non-skipped/non-TODO test in every
+   selected file. Fail on no discovered files, missing summaries, zero tests,
+   empty suites, skipped/TODO-only files, assertion/import failures,
+   cancellation or abnormal child termination. Propagate failures to a nonzero
+   process exit; never infer success from output text or only a cumulative
+   count. Codex's local probe confirmed that an empty Node test file can yield
+   one passing file wrapper without a per-file summary. See the primary
+   [Node test-runner documentation](https://nodejs.org/docs/latest-v24.x/api/test.html).
+   Keep suites and leaf tests distinct in totals. Do not expose filters that
+   can silently execute zero tests in this initial runner.
+5. **Prove the harness.** Add focused dependency-free harness regression tests
+   in `tools/run-unit-tests.test.mjs`, using disposable copies/fixtures. Prove
+   default and explicit-file success, spaced paths, deterministic selection,
+   missing/invalid selection, no discovery, empty file/empty suite,
+   skipped/TODO-only selection, genuine named assertion failure, import or
+   syntax failure, and nonzero exit propagation. Prove an empty selected file
+   fails even beside a passing one. A TypeScript-error fixture must stop before
+   stale output can run. Show valid restores green. Negative evidence must
+   identify its intended failure, not accept any unrelated setup crash.
+   Keep failure fixtures outside normal discovery and clean owned temp roots.
+   Strip inherited `NODE_TEST_CONTEXT` when launching an independent runner
+   from a test worker, so the nested runner cannot silently no-op. Preserve
+   the existing 41-test smoke and its expected nested mutation self-skips.
+6. **Resolve the scheduled S005 isolation finding.** Change only fixture
+   ownership/cleanup plumbing in `tools/check-contracts.fixtures.mjs` and its
+   tests as needed. Let fixture creation accept an optional owned temporary
+   parent (default remains the ordinary temporary directory). The failure
+   cleanup test must inspect its own parent/allocation, never newly appearing
+   global `suik-contracts-*` entries. Preserve cleanup on construction failure,
+   lifecycle-independent scenarios and isolated Git histories. Prove an
+   unrelated live fixture remains untouched, overlapping independent suites
+   both pass, and a deliberately retained owned fixture is detected. Do not
+   delete, weaken or skip the leak assertion, and do not change validator
+   semantics. Run suites sequentially until the fix itself is established;
+   then explicitly run two overlapping contract suites and report both exits.
+7. **Documentation and gates.** Update developer commands, verification
+   guidance and candidate `implementation/evidence/S005_REPORT.md` together.
+   Preserve accepted S004 evidence and factual post-commit bookkeeping. No new
+   governing document, tracker, lint/browser/consumer lane or S006 work. Run
+   frozen strict install, both typecheck configurations, build, unit runner
+   default and explicit file, harness regression tests, existing CLI smoke,
+   contract validation/tests including isolation evidence, format and diff
+   checks. Run S005's fresh reference fmt/check/test guard; the same-S004
+   reuse exception does not carry forward. Preserve failed-attempt logs and
+   actual command exits, and separate top-level/nested/expected-negative totals.
+8. **Return boundary.** Complete every unblocked S005 requirement and
+   self-review, then return unstaged/uncommitted with S005 `in_progress`, report
+   `candidate`, null commit and S006 untouched. Codex owns consequential scope,
+   API, dependency and deviation decisions, acceptance and commits. Report new
+   consequential blockers with evidence while completing independent approved
+   work. No push, publication, reference mutation or external coordination
+   change is authorized for Pi. No human release test is due.
+
+## Codex correction dispatch — S004 review 1
+
+Codex reviewed all S004 implementation, tests, configuration, documentation and
+the actual author session and logs. The normal 27-test bootstrap and 83-test
+contract suites pass independently, as do strict frozen install, typecheck,
+build, contract validation, formatting and diff checks. That does not close the
+findings below. Keep S004 `in_progress`, report `candidate`, review
+`changes_requested`, both null hashes; S005 remains locked. The original S004
+dispatch remains applicable except for the explicit clarifications here.
+
+### Decisions resolved by Codex
+
+1. The package name is the fixed product identity `svelte-ui-kit`; metadata
+   validation must require that exact string. Do not accept a different name,
+   whitespace-normalized alias or a name containing control characters.
+   Version remains metadata-derived, not pinned in source: accept valid
+   [SemVer 2.0.0](https://semver.org/) including prerelease and build metadata.
+   Implement validation without another dependency. Reject malformed values
+   with exit 1, empty stdout and a clear CLI stderr diagnostic. Do not echo
+   untrusted metadata text into that diagnostic.
+2. Read/validate metadata before dispatching bootstrap arguments, as the
+   candidate already does: a broken installation exits 1 for help/version and
+   other invocations. With valid metadata, unsupported arguments still exit 2.
+   Syntactically invalid package JSON may be rejected by Node before the module
+   runs; Node's clear stderr rejection and exit 1 satisfy this bootstrap
+   requirement. Do not add a wrapper or change the ESM/bin architecture to
+   intercept it. Full JSON/envelope behavior still belongs to S022–S023.
+3. The existing 27-test suite is not sufficient evidence for no writes or
+   metadata-derived versions. Strengthen the S004 executable smoke itself,
+   without introducing the S005 unit harness or fixing its separate shared-temp
+   assertion early. Keep fixtures owned and isolated; no source mutation is
+   needed to demonstrate the regressions.
+4. The fresh Pi S004 reference guard has been audited: unchanged clean revision
+   `a10fbf06334f4648f5755e05a7147414e4e5fc98`, fmt/check/test exit 0,
+   562 top-level plus 16 nested subprocess passes, zero failures, four ignored
+   slow lanes. For this same-S004 TS/test/documentation correction only, verify
+   that identity and clean state and cite the existing guard honestly. Rerun
+   it if reference/Rust scope changes or evidence is invalidated. This is not
+   permission to waive a fresh guard at the next checkpoint.
+
+### Required corrections and acceptance
+
+- **S004-R1 — Validate metadata completely.** The current name check accepts
+  `svelte-ui-kit\nforged line` and the current version expression accepts
+  `1.2.3-01`, `1.2.3-..` and `1.2.3+..`, all with exit 0. Fix the name/version
+  checks under decision 1. Add executable tests for wrong/control/whitespace
+  names, missing and non-string fields, non-object metadata, empty identifiers,
+  numeric prerelease leading zeroes, and leading/trailing whitespace/newlines.
+  Preserve valid versions such as `2.3.4-rc.1+build.001`, `1.2.3-0` and
+  `1.2.3+001`; do not incorrectly prohibit leading zeroes in build identifiers.
+- **S004-R2 — Make smoke claims falsifiable.** The current snapshot compares
+  entry names only; overwriting `.decoy-hidden` still passes all 27 tests.
+  Capture deterministic entry types and regular-file bytes (or hashes), hidden
+  and nested entries, and symlink targets without following symlinks. Exclude
+  read-induced timestamp changes. Exercise no-write behavior from owned seeded
+  fixtures for help, version and representative rejected argument lists.
+  Add a disposable built-copy case that changes only its valid package version
+  and proves both version flags print the changed value from an unrelated cwd;
+  a hard-coded `0.1.0` implementation currently passes every test.
+  Demonstrate that the strengthened tests reject both an existing-file-write
+  mutant and a hard-coded-version mutant in disposable build copies. Never
+  inject these into the actual source or leave them behind. A small focused
+  regression for the snapshot helper is also acceptable evidence that a
+  same-path, same-length content replacement is detected; the real CLI smoke
+  must still use that snapshot.
+- **S004-R3 — Reconcile evidence.** Codex has corrected the public report's
+  private-tooling references and marked the review outcome. Append actual
+  correction results and all failures/retries; preserve earlier failed logs
+  and Codex review metadata. Include the initial blocked unrouted formatting
+  attempt and later formatting failure, not only the smoke retry. The
+  compatibility addendum's version wording was also clarified by Codex; preserve
+  that distinction when updating it. Report ordinary suite passes separately
+  from negative/mutation evidence and keep all
+  generated output, logs and operator paths out of committed public content.
+
+Use a fresh Pi session. Preserve S003 accepted evidence and all existing
+candidate work. No dependency/lock/runtime/workspace change is authorized.
+Run typecheck, build, strengthened executable smoke, contract validation and
+contract tests sequentially, format and diff checks using the pinned runtime
+and required execution routing. Record exact commands, real exits, counts and
+per-attempt logs. All currently known consequential decisions are resolved;
+report newly discovered consequential choices to Codex while completing
+independent in-scope work. Return the full corrected S004 candidate unstaged
+and uncommitted. No acceptance, successor implementation, staging, commit,
+push, publication, reference mutation or external coordination edit by Pi.
+No human release test is due.
 
 ## Codex dispatch decisions — S004
 
@@ -691,8 +872,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | ---- | -------- | ---------- | -------------------- | ------------------------------------------ |
 | S001 | RCLD-01  | None       | complete             | `bb5010e`                                  |
 | S002 | RCLD-01  | S001       | complete             | `9ed224f60249ee67732c05737170436e06301c38` |
-| S003 | RCLD-01  | S002       | verified_uncommitted | —                                          |
-| S004 | RCLD-01  | S003       | not_started          | —                                          |
+| S003 | RCLD-01  | S002       | complete             | `91cdaaefd756021b343465f7ba7dd3afe2f71b6d` |
+| S004 | RCLD-01  | S003       | verified_uncommitted | —                                          |
 | S005 | RCLD-01  | S004       | not_started          | —                                          |
 | S006 | RCLD-01  | S005       | not_started          | —                                          |
 | S007 | RCLD-01  | S006       | not_started          | —                                          |

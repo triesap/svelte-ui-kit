@@ -1,7 +1,7 @@
 # S003 step report — Select a reproducible Node and dependency baseline
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S003","kind":"report","commit":null,"disposition":"implemented"}
+{"schemaVersion":1,"checkpoint":"S003","kind":"report","commit":"91cdaaefd756021b343465f7ba7dd3afe2f71b6d","disposition":"implemented"}
 -->
 
 Step ID and title: S003 — Select a reproducible Node and dependency baseline.
@@ -19,10 +19,11 @@ Author/provider: Pi, provider `ollama`, model `deepseek-v4.1-flash:cloud`.
 Runtime used for target tooling: process-local Node `24.21.0` with
 `pnpm 11.22.0`. Runtime selection was process-local only; no global tool or
 package-manager configuration was changed.
-Codex reconciliation: independent review accepted S003 as
-`verified_uncommitted`, pending the authorized checkpoint commit. See
-`S003_REVIEW.md`. S004 remains gated by that commit. Author observations below
-describe the submission before Codex's acceptance bookkeeping.
+Codex reconciliation: S003 is accepted and complete at
+`91cdaaefd756021b343465f7ba7dd3afe2f71b6d`. See `S003_REVIEW.md`. The real
+hash was recorded after the commit without amending history; these factual
+updates travel with S004. Author observations below describe the submission
+before Codex's acceptance bookkeeping. S004 is now authorized.
 
 ## Implemented
 
@@ -174,20 +175,21 @@ addressed here; the target suite and any rehearsals were run sequentially.
 
 ## Commit and next action
 
-Actual commit hash: pending checkpoint commit; structured evidence is
-`implemented` with a null commit until the real hash exists. Codex accepted
-S003 after independent verification. Authorized message:
+Actual commit hash: `91cdaaefd756021b343465f7ba7dd3afe2f71b6d`; structured
+evidence is `implemented`. Codex accepted and committed S003 after independent
+verification. Commit message:
 `build: pin the initial tooling and primitive baseline`.
 
 Requirements/test evidence updated: compatibility record, this report and
 Codex's independent review. Codex reconciled the governing ledger/projection
 and prepared the S004 dispatch after review; no product contract was changed.
 
-Next step ID: S004 — Create a minimal typed CLI build boundary. It remains
-locked pending the accepted S003 commit.
+Next step ID: S004 — Create a minimal typed CLI build boundary. It is authorized
+by the governing Codex dispatch after the accepted S003 commit.
 
-Is the next step safe to begin? Only after Codex records the accepted S003
-commit and activates S004 in the ledger. No S004 implementation was started.
+Is the next step safe to begin? Yes, under the complete S004 dispatch. Codex
+recorded the accepted S003 commit and activated S004; no S004 implementation
+was performed during this review.
 
 ### Decisions requiring Codex
 
