@@ -1,0 +1,251 @@
+# Dependency compatibility evidence — S003
+
+Implementation evidence for the S003 checkpoint ("Select a reproducible Node and
+dependency baseline"). This file is implementation evidence, not a governing
+contract. `implementation/COMMIT_SEQUENCE.md` remains the execution/status
+authority, and the adopted `specs/` documents govern product intent.
+
+- Checkpoint: S003 (RCLD-01), contract anchors R01, R10, R12, R20, R32, R33, R34.
+- Author/provider: Pi, provider `ollama`, model `deepseek-v4.1-flash:cloud`.
+- Status and accepted commit: see the governing ledger and `S003_REVIEW.md`.
+- Repository root: this package root (`.`); branch `master`.
+- Starting commit: `9ed224f60249ee67732c05737170436e06301c38` (S002 complete).
+- Metadata inspection date: 2026-09-29.
+
+## 1. Scope and development-versus-consumer separation
+
+S003 pins a reproducible **development** baseline for this private CLI package.
+The selected npm packages are development tooling for the compiler, typed build
+boundary and the scheduled SvelteKit consumer fixture. S003 does not create a
+consumer-facing runtime/peer facade, a consumer scaffold, or application
+auto-install; those belong to later checkpoints (R10, S007–S012, S090).
+
+Role split for the selected packages:
+
+| Package                        | S003 role                                                               | Future consumer role                                                    |
+| ------------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `svelte`                       | dev compiler/runtime baseline for generated-source checks               | real application runtime dependency                                     |
+| `@sveltejs/kit`                | dev baseline for the scheduled consumer fixture harness                 | application framework dependency of the generated app                   |
+| `bits-ui`                      | dev primitive baseline; typed primitive boundary is proven later (S011) | real application runtime dependency emitted by installed items          |
+| `@internationalized/date`      | required Bits peer satisfier only                                       | explicit required peer when Bits is used; emitted plans qualified later |
+| `typescript`                   | dev compiler for the typed CLI/build boundary (S004 onward)             | application tooling dependency (not this package's runtime)             |
+| `vite`                         | dev build baseline for the consumer fixture                             | application build tool dependency                                       |
+| `@sveltejs/vite-plugin-svelte` | dev Svelte plugin for the consumer fixture                              | application build tool dependency                                       |
+| `@types/node`                  | dev Node 24 ambient types; satisfies Vite's optional types peer         | not a consumer-facing requirement of this package                       |
+| `prettier`                     | preserved dev formatter                                                 | none                                                                    |
+
+`package.json` remains `private: true`, ESM (`type: module`), license
+`(MIT OR Apache-2.0)`, product/package name `svelte-ui-kit`, with the existing
+four scripts, `packageManager` `pnpm@11.22.0` and engine `>=24` unchanged. The
+workspace file still lists only the root package. No package is added to a
+runtime `dependencies` or `peerDependencies` block.
+
+## 2. Node runtime pin
+
+`.node-version` records `24.21.0`. The `package.json` engine stays the broader
+supported range `>=24`; the exact pin is a reproducible development selection,
+not a narrowed package contract.
+
+Public source (retrieved 2026-09-29):
+
+- `https://nodejs.org/dist/index.json` — entry `v24.21.0`: release date
+  `2026-09-07`, `lts: "Krypton"`, bundled `npm 11.19.0`, `v8 13.6.233.17`,
+  `openssl 3.5.8`, `modules 137`.
+- `https://nodejs.org/en/blog/release/v24.21.0` — release announcement titled
+  `Node.js 24.21.0 (LTS)` dated 2026-09-08.
+
+Observed locally with the selected runtime: `node --version` → `v24.21.0`.
+
+## 3. Exact approved selections
+
+Eight newly selected npm packages were added as exact `devDependencies`
+(no ranges). `prettier` is preserved.
+
+| Package                        | Exact version | Declared engines               | Declared peer dependencies (from exact-version metadata)                                                                                                                                                                                                                              |
+| ------------------------------ | ------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `svelte`                       | `5.57.1`      | `>=18`                         | none                                                                                                                                                                                                                                                                                  |
+| `@sveltejs/kit`                | `2.70.3`      | `>=18.13`                      | `vite ^5.0.3 \|\| ^6.0.0 \|\| ^7.0.0-beta.0 \|\| ^8.0.0`, `svelte ^4.0.0 \|\| ^5.0.0-next.0`, `@sveltejs/vite-plugin-svelte ^3.0.0 \|\| ^4.0.0-next.1 \|\| ^5.0.0 \|\| ^6.0.0-next.0 \|\| ^7.0.0`, `typescript ^5.3.3 \|\| ^6.0.0` (optional), `@opentelemetry/api ^1.0.0` (optional) |
+| `bits-ui`                      | `2.19.3`      | `>=20`                         | `svelte ^5.33.0`, `@internationalized/date ^3.8.1` (non-optional)                                                                                                                                                                                                                     |
+| `typescript`                   | `6.0.3`       | `>=14.17`                      | none                                                                                                                                                                                                                                                                                  |
+| `vite`                         | `8.3.1`       | `^20.19.0 \|\| >=22.12.0`      | `tsx ^4.8.1`, `jiti >=1.21.0`, `less ^4.0.0`, `sass ^1.70.0`, `yaml ^2.4.2`, `stylus >=0.54.8`, `terser ^5.16.0`, `esbuild ^0.27.0 \|\| ^0.28.0`, `sugarss ^5.0.0`, `@types/node ^20.19.0 \|\| >=22.12.0`, `sass-embedded ^1.70.0`, `@vitejs/devtools ^0.7.1` (all optional)          |
+| `@sveltejs/vite-plugin-svelte` | `7.3.1`       | `^20.19 \|\| ^22.12 \|\| >=24` | `vite ^8.0.0-beta.7 \|\| ^8.0.0`, `svelte ^5.46.4` (non-optional)                                                                                                                                                                                                                     |
+| `@internationalized/date`      | `3.12.4`      | none                           | none                                                                                                                                                                                                                                                                                  |
+| `@types/node`                  | `24.19.0`     | none                           | none (empty map)                                                                                                                                                                                                                                                                      |
+| `prettier`                     | `3.9.6`       | `>=14`                         | none                                                                                                                                                                                                                                                                                  |
+
+`@internationalized/date` is present only to satisfy Bits UI's required peer
+range `^3.8.1`. Its presence does **not** authorize date-related components;
+those remain deferred under the approved extension gate (R31,
+`specs/COMPONENT_CATALOG.md`).
+
+### Literal inspection commands
+
+Exact-version metadata (one call per package; public registry, no
+authentication):
+
+```sh
+curl -sS https://registry.npmjs.org/svelte/5.57.1
+curl -sS https://registry.npmjs.org/@sveltejs%2Fkit/2.70.3
+curl -sS https://registry.npmjs.org/bits-ui/2.19.3
+curl -sS https://registry.npmjs.org/typescript/6.0.3
+curl -sS https://registry.npmjs.org/vite/8.3.1
+curl -sS https://registry.npmjs.org/@sveltejs%2Fvite-plugin-svelte/7.3.1
+curl -sS https://registry.npmjs.org/@internationalized%2Fdate/3.12.4
+curl -sS https://registry.npmjs.org/@types%2Fnode/24.19.0
+```
+
+Relevant fields were read with `jq '{name,version,engines,peerDependencies,peerDependenciesMeta,dependencies,optionalDependencies}'`.
+Publish timestamps were read from each package's full packument `time` map at
+`https://registry.npmjs.org/<name>` (for example
+`jq -r '.time["5.57.1"]'`). All eight exact-version documents returned HTTP 200
+on 2026-09-29. Recorded `time` values:
+
+| Package                        | Version   | Published (UTC)        |
+| ------------------------------ | --------- | ---------------------- |
+| `svelte`                       | `5.57.1`  | `2026-09-18T23:52:47Z` |
+| `@sveltejs/kit`                | `2.70.3`  | `2026-08-18T15:02:00Z` |
+| `bits-ui`                      | `2.19.3`  | `2026-09-22T21:47:32Z` |
+| `typescript`                   | `6.0.3`   | `2026-04-16T23:38:27Z` |
+| `vite`                         | `8.3.1`   | `2026-09-24T12:26:19Z` |
+| `@sveltejs/vite-plugin-svelte` | `7.3.1`   | `2026-09-23T10:38:42Z` |
+| `@internationalized/date`      | `3.12.4`  | `2026-09-01T14:27:23Z` |
+| `@types/node`                  | `24.19.0` | `2026-09-25T22:09:25Z` |
+
+These are exact-version documents; moving `latest` tags are discovery inputs and
+are not used as pins. The historical Bits UI source observation recorded at
+`specs/API_CONTRACTS.md` (Svelte `^5.33.0`, date `^3.8.1`, Node `>=20`) matches
+the inspected `2.19.3` distribution metadata, but the distribution metadata —
+not the earlier source observation — is the compatibility basis.
+
+## 4. Peer and engine findings
+
+### Direct constraints satisfied by the selections
+
+- Kit's non-optional peers: `vite` → `8.3.1` (in `^8.0.0`), `svelte` → `5.57.1`
+  (in `^5.0.0-next.0`), `@sveltejs/vite-plugin-svelte` → `7.3.1` (in `^7.0.0`).
+- Kit's optional peers: `typescript` → `6.0.3` supplied (in `^6.0.0`);
+  `@opentelemetry/api` not installed (optional, unused).
+- Bits's non-optional peers: `svelte` → `5.57.1` (in `^5.33.0`),
+  `@internationalized/date` → `3.12.4` (in `^3.8.1`).
+- Plugin's non-optional peers: `vite` → `8.3.1` (in `^8.0.0`),
+  `svelte` → `5.57.1` (in `^5.46.4`).
+- Vite's optional `@types/node ^20.19.0 || >=22.12.0` peer → `24.19.0` supplied.
+- Engine checks against Node `24.21.0`: Kit `>=18.13` ok; Bits `>=20` ok; Vite
+  `^20.19.0 || >=22.12.0` ok; plugin `^20.19 || ^22.12 || >=24` ok; Svelte
+  `>=18` ok; TypeScript `>=14.17` ok; Prettier `>=14` ok.
+
+### Transitive peer resolutions in the lockfile
+
+- `runed@0.35.1` (Bits dependency): peers `svelte ^5.7.0` (resolved `5.57.1`)
+  and optional `@sveltejs/kit ^2.21.0` (resolved `2.70.3`, present in the tree).
+- `svelte-toolbelt@0.10.6` and `bits-ui@2.19.3`: propagate the optional
+  `@sveltejs/kit` peer (`transitivePeerDependencies: - '@sveltejs/kit'`).
+- `@sveltejs/acorn-typescript@1.0.13`: peer `acorn ^8.9.0` (resolved `8.18.0`).
+- `svelte-toolbelt@0.10.6`: direct peer `svelte ^5.30.2` resolves `5.57.1`.
+- `fdir@6.5.0`: optional peer `picomatch ^3 || ^4` resolves `4.0.7`.
+- `vitefu@1.1.3`: optional Vite peer accepts majors 3–8 and resolves `8.3.1`.
+
+### Optional peers not installed, and why
+
+- `@opentelemetry/api` (Kit, optional): no tracing/instrumentation is selected
+  or needed for a private CLI package.
+- `esrap@2.4.0` has optional peer `@typescript-eslint/types ^8.2.0`, absent
+  from this lock. The Svelte compiler smoke passes without this optional type
+  package; no lint integration is claimed at this checkpoint.
+- Vite optional peers `tsx`, `jiti`, `less`, `sass`, `yaml`, `stylus`, `terser`,
+  `esbuild`, `sugarss`, `sass-embedded`, `@vitejs/devtools`: none is required by
+  a pure-CSS, rolldown-based Vite 8 development baseline. No CSS preprocessor is
+  introduced, matching the product's "pure authored CSS" contract.
+- Vite's optional peer `@types/node` **is** supplied (`24.19.0`), so it is not
+  counted as unused.
+
+### Automatic peer installation
+
+The lockfile retains the existing `autoInstallPeers: true` convention; it was
+not changed and no package-management configuration was added. Inspection shows
+the importer declares exactly the nine `devDependencies` above and has no
+importer-level `dependencies` block, i.e. no peer was silently promoted into the
+package's own declarations. The only platform `optionalDependencies` resolved
+are the expected binaries: `fsevents@2.3.3` (macOS, via Vite) and the
+cross-platform `rolldown`/`lightningcss` binding packages recorded for lockfile
+reproducibility.
+
+## 5. Install procedure, determinism and results
+
+Two separate installations were recorded, both under process-local Node
+`24.21.0` with `pnpm 11.22.0` and engine checking enabled (`--engine-strict`),
+routed through the repository's required execution wrapper:
+
+```sh
+# 1. Initial lock-generating installation
+pnpm install --engine-strict --strict-peer-dependencies
+
+# 2. Separate frozen, strict installation
+pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
+```
+
+| Step                       | Exit | Result                                                                                |
+| -------------------------- | ---- | ------------------------------------------------------------------------------------- |
+| Initial lock-generating    | `0`  | Added the eight devDependencies; resolved 92 packages, installed 67; no peer warnings |
+| Frozen `--frozen-lockfile` | `0`  | `Already up to date`; no lock or manifest rewrite                                     |
+
+Observed tool versions: `node --version` → `v24.21.0`; `pnpm --version` →
+`11.22.0`.
+
+Byte-level determinism (SHA-256):
+
+| File                  | Before baseline                                                    | After initial install                                              | After frozen install                                               |
+| --------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `package.json`        | `5cc02dbe7d56510374903e480d25a9f1435f6c6886fdd0b5fccfdc23ea9dabfa` | `3d313d4f639b03164efac186ef7968db5c6e0155f13c18c5e1b6016c8f16e0ab` | `3d313d4f639b03164efac186ef7968db5c6e0155f13c18c5e1b6016c8f16e0ab` |
+| `pnpm-lock.yaml`      | `c5a3a699074fc8fca51af9bdc2d373ac7d6e1d728b149de3341ad7b95bea665f` | `81b9ba06e6fc68932d6cdc83fb33c175f139828c62d36b9cf9bedeaab54a3dff` | `81b9ba06e6fc68932d6cdc83fb33c175f139828c62d36b9cf9bedeaab54a3dff` |
+| `pnpm-workspace.yaml` | `226909e7726c235c6b854540949bc8144625420ccdd6298fca1f7885d8bfe524` | unchanged                                                          | unchanged                                                          |
+
+The frozen installation left `package.json` and `pnpm-lock.yaml` byte-identical
+to their post-initial-install state. Codex additionally repeated the frozen,
+strict-peer, engine-strict installation in a disposable directory with no
+existing modules, copying only the manifest, lock, workspace and runtime pin.
+It installed 68 packages successfully and preserved all four input hashes.
+This proves clean installation on the reviewed host, not all-platform support.
+The lockfile keeps `lockfileVersion: '9.0'` and the existing settings
+(`autoInstallPeers: true`, `excludeLinksFromLockfile: false`). No dependency
+build script or new script approval was needed; no build script was enabled.
+
+## 6. Package-entry and compiler smoke checks
+
+A temporary probe (not a product file, removed after running) verified that the
+selected packages resolve through their declared `exports` and that the
+compiler/runtime versions match the pins. It deliberately did **not** execute
+`bits-ui` or any `.svelte` module in bare Node, because bare-Node execution of
+`.svelte` modules is not a supported test; only its package entry was resolved.
+
+Observed (Node `v24.21.0`):
+
+- `import.meta.resolve` succeeded for `prettier`, `svelte`, `svelte/compiler`,
+  `@sveltejs/kit`, `@sveltejs/vite-plugin-svelte`, `bits-ui`, `typescript`,
+  `vite` and `@internationalized/date`.
+- `svelte/compiler` reports `VERSION=5.57.1` and compiled a minimal
+  `$state` component (`generate: 'client'`).
+- `typescript` reports `version=6.0.3` and `transpileModule` produced the
+  expected ES module output.
+- `vite` reports `version=8.3.1`.
+- `@internationalized/date` is importable and evaluates `today()`.
+- `prettier` reports `version=3.9.6`.
+- Installed manifests confirm `@sveltejs/kit@2.70.3`, plugin `7.3.1`,
+  `bits-ui@2.19.3` and `@types/node@24.19.0`.
+
+This proves package resolution, compiler versions and basic compiler execution.
+It does **not** prove SvelteKit build/SSR/hydration, component rendering, or any
+generated-consumer behavior; those remain later gates.
+
+## 7. Not proven at S003
+
+- No consumer scaffold, runtime facade, auto-install or generated application
+  exists; no consumer `svelte-check`/build/SSR/browser lane is claimed.
+- No lint or typecheck lane is claimed; those scripts do not exist yet.
+- No date/select/combobox/popover components are authorized or implemented.
+- No package/tarball acceptance or publication is claimed.
+- Prettier's default directory expansion skips dotfiles, so `.node-version` is
+  not covered by `pnpm run format:check` (consistent with the existing
+  `.editorconfig`/`.prettierrc.json` behavior).
+- The target has no Cargo manifest; target Rust checks remain N/A. The
+  conditional reference guard is recorded in `implementation/evidence/S003_REPORT.md`.

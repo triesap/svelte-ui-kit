@@ -23,6 +23,14 @@
     "test:contracts": "node --test tools/check-contracts.test.mjs"
   },
   "devDependencies": {
-    "prettier": "3.9.6"
+    "@internationalized/date": "3.12.4",
+    "@sveltejs/kit": "2.70.3",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@types/node": "24.19.0",
+    "bits-ui": "2.19.3",
+    "prettier": "3.9.6",
+    "svelte": "5.57.1",
+    "typescript": "6.0.3",
+    "vite": "8.3.1"
   }
 }

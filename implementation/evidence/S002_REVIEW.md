@@ -3,19 +3,20 @@
 Current disposition: **review 4 — accepted**. Earlier reviews below are
 historical. All S002-R1 through S002-R9 acceptance findings are resolved.
 Codex has independently verified the 83-test candidate and both advanced-state
-rehearsals. S002 is `verified_uncommitted` pending its authorized checkpoint
-commit; its real full hash will be recorded afterward, without amending history.
+rehearsals. S002 is complete at
+`9ed224f60249ee67732c05737170436e06301c38`. Codex recorded this actual hash
+after the commit, without amending history; the factual update travels with S003.
 
-Date: 2026-09-28. Starting and current HEAD:
+Historical review-1 date: 2026-09-28. Its starting and ending HEAD:
 `bb5010e0605b3d0917a9037eafef69ed90d3b36c`.
 
-Disposition: **changes requested**. S002 remains `in_progress`; S003 is locked.
+Historical review-1 disposition: **changes requested**. S002 was `in_progress`; S003 was locked.
 No S002 commit or product release is accepted. Pi owns implementation fixes;
 Codex has resolved the next dispatch and its decision boundaries in the
 governing plan's “Codex correction dispatch — S002 review 1” section.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S002","kind":"review","commit":null,"disposition":"accepted"}
+{"schemaVersion":1,"checkpoint":"S002","kind":"review","commit":"9ed224f60249ee67732c05737170436e06301c38","disposition":"accepted"}
 -->
 
 ## Reviewed scope and successful work

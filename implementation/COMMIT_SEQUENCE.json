@@ -123,8 +123,12 @@
       "sequence": "RCLD-01",
       "dependsOn": "S001",
       "requirements": ["R01", "R31", "R32", "R33", "R34"],
-      "status": "verified_uncommitted",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "9ed224f60249ee67732c05737170436e06301c38",
+        "report": "implementation/evidence/S002_REPORT.md",
+        "review": "implementation/evidence/S002_REVIEW.md"
+      }
     },
     {
       "id": "S003",
@@ -132,7 +136,7 @@
       "sequence": "RCLD-01",
       "dependsOn": "S002",
       "requirements": ["R01", "R10", "R12", "R20", "R32", "R33", "R34"],
-      "status": "not_started",
+      "status": "verified_uncommitted",
       "completion": null
     },
     {

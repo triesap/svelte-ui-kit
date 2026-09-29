@@ -1,14 +1,15 @@
 # S002 step report — Anchor approved contracts and repository instructions
 
-Codex review 4 update, 2026-09-29: **accepted**, S002 `verified_uncommitted`
-pending its authorized checkpoint commit. All nine correction findings are
+Codex review 4 update, 2026-09-29: **accepted and complete**, S002 commit
+`9ed224f60249ee67732c05737170436e06301c38`. All nine correction findings are
 closed. The target and both advanced-state full suites pass 83/83 when run
 sequentially; `S002_REVIEW.md` records the shared-temp invocation limitation
-scheduled for S005. The authoring records below are historical. The actual
-completion hash will be recorded after the commit; only then may S003 begin.
+scheduled for S005. The authoring records below are historical. Codex recorded
+this real hash after the commit without amending history; the factual update
+travels with S003. S003 is authorized under the governing dispatch.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S002","kind":"report","commit":null,"disposition":"implemented"}
+{"schemaVersion":1,"checkpoint":"S002","kind":"report","commit":"9ed224f60249ee67732c05737170436e06301c38","disposition":"implemented"}
 -->
 
 Step ID and title: S002 — Anchor approved contracts and repository instructions.
