@@ -1,13 +1,15 @@
 # S004 step report — Create a minimal typed CLI build boundary
 
-Codex review 2, 2026-09-29: **accepted**, S004 `verified_uncommitted` pending
-its authorized checkpoint commit. All S004-R1–R3 findings are closed; independent
+Codex review 2, 2026-09-29: **accepted and complete**, S004 commit
+`fd5d5162c7e5e3fa22fcc8a0365525f4e0e6a100`. All S004-R1–R3 findings are closed; independent
 smoke 41/41, contracts 83/83 and earlier failing probes pass. See
 `S004_REVIEW.md`. The original submission and correction-pass observations below
-are historical. S005 remains gated by the accepted S004 commit.
+are historical. S005 is authorized by the governing dispatch. Codex recorded
+the real hash after committing without amending history; this factual update
+travels with S005.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S004","kind":"report","commit":null,"disposition":"implemented"}
+{"schemaVersion":1,"checkpoint":"S004","kind":"report","commit":"fd5d5162c7e5e3fa22fcc8a0365525f4e0e6a100","disposition":"implemented"}
 -->
 
 Step ID and title: S004 — Create a minimal typed CLI build boundary.

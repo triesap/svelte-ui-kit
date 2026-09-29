@@ -7,6 +7,7 @@ node_modules/
 dist/
 build/
 coverage/
+.unit-test-build/
 *.tsbuildinfo
 
 # Logs and local environment

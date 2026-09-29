@@ -1,13 +1,15 @@
 # S004 independent review — accepted
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S004","kind":"review","commit":null,"disposition":"accepted"}
+{"schemaVersion":1,"checkpoint":"S004","kind":"review","commit":"fd5d5162c7e5e3fa22fcc8a0365525f4e0e6a100","disposition":"accepted"}
 -->
 
-Reviewer: Codex. Date: 2026-09-29. Baseline/current HEAD:
-`91cdaaefd756021b343465f7ba7dd3afe2f71b6d`. Review 2 accepts S004 as
-`verified_uncommitted`, pending the authorized checkpoint commit. S005 remains
-gated by that commit. Findings below are historical and are now closed.
+Reviewer: Codex. Date: 2026-09-29. Review baseline:
+`91cdaaefd756021b343465f7ba7dd3afe2f71b6d`. Review 2 accepts S004, now
+complete at `fd5d5162c7e5e3fa22fcc8a0365525f4e0e6a100`. S005 is authorized
+by the governing dispatch. Codex recorded the real hash after the commit
+without amending history; this factual update travels with S005. Findings
+below are historical and are now closed.
 
 ## Review 2 — acceptance and resolved decisions
 

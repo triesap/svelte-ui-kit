@@ -26,10 +26,24 @@ pnpm install --frozen-lockfile
 pnpm run typecheck
 pnpm run build
 pnpm run test:cli-bootstrap
+pnpm run test:unit -- tests/unit/cli-bootstrap.test.ts
+pnpm run test:harness
 pnpm run check:contracts
 pnpm run test:contracts
 pnpm run format:check
 ```
+
+The unit runner is dependency-free: for every discovered `*.test.ts` entry
+(including dot-prefixed and `..`-prefixed names) it writes an ephemeral
+compiler configuration inside the ignored `.unit-test-build/` tree, extends the
+tracked `tsconfig.unit.json`, and compiles with the pinned `tsc` into that
+output tree before executing the selected tests with Node's built-in
+`node:test` runner. Operands are repository-relative `*.test.ts` files; absolute
+operands, parent-directory components and symlinked test roots or ancestors are
+rejected, discovery is deterministic, and every selected file must actually
+execute a passing test. Any `test:fail` event — including a TODO-marked one —
+fails the run wherever the test was defined. `pnpm run test:harness` runs the
+runner's own regression suite.
 
 The CLI entrypoint is `src/cli/main.ts`, compiled with the pinned `tsc` to
 `dist/cli/main.js` (build output is ignored and never committed).

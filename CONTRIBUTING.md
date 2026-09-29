@@ -29,13 +29,32 @@ pnpm run typecheck
 pnpm run build
 ```
 
-4. Run the bootstrap CLI smoke and the contract suites:
+4. Run the bootstrap CLI smoke, the unit suite and the contract suites:
 
 ```sh
 pnpm run test:cli-bootstrap
+pnpm run test:unit -- tests/unit/cli-bootstrap.test.ts
+pnpm run test:harness
 pnpm run check:contracts
 pnpm run test:contracts
 ```
+
+`pnpm run test:unit` builds the product, compiles every discovered
+`tests/unit/**/*.test.ts` entry through an ephemeral configuration that extends
+`tsconfig.unit.json`, then runs the selected typed files. It accepts
+repository-relative `*.test.ts` operands (with one optional leading `--`); with
+no operands it discovers every unit test deterministically, including
+dot-prefixed names and directories. Absolute operands, parent-directory
+components, symlinked test roots/ancestors and a symlinked owned output root all
+fail closed instead of running the whole suite, and a selected file that
+executes no passing test fails. Explicit selection controls which files run, not
+which ordinary unit inputs are typechecked. Any `test:fail` event, including a
+TODO-marked one, fails the run. `pnpm run test:harness` exercises the runner
+itself.
+
+Both `typecheck` and `test:unit` are required: standalone `typecheck` uses the
+tracked compiler includes, while the unit runner also compiles every discovered
+unit entry, including dot-prefixed files and directories.
 
 5. Check formatting:
 
@@ -56,9 +75,10 @@ Component install/inspect/update work is planned but not implemented yet.
 
 - Keep changes focused and well-scoped.
 - Explain the change and how you verified it.
-- Run `pnpm run typecheck`, `pnpm run build`, `pnpm run test:cli-bootstrap` and
-  `pnpm run format:check` (plus `pnpm run check:contracts` and
-  `pnpm run test:contracts` for contract or evidence changes).
+- Run `pnpm run typecheck`, `pnpm run build`, `pnpm run test:cli-bootstrap`,
+  `pnpm run test:unit`, `pnpm run test:harness` and `pnpm run format:check`
+  (plus `pnpm run check:contracts` and `pnpm run test:contracts` for contract or
+  evidence changes).
 - Update documentation when setup or scope changes.
 - Add meaningful tests and public API documentation when implementation begins.
 

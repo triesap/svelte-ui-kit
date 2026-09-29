@@ -24,8 +24,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.unit.json --noEmit",
     "test:cli-bootstrap": "node --test tests/smoke/cli-bootstrap.test.mjs",
+    "test:unit": "pnpm run build && node tools/run-unit-tests.mjs",
+    "test:harness": "node --test tools/run-unit-tests.test.mjs",
     "check:contracts": "node tools/check-contracts.mjs",
     "test:contracts": "node --test tools/check-contracts.test.mjs"
   },

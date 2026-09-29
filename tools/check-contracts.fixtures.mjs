@@ -291,10 +291,15 @@ export function buildFixture({
   scenario = "s001",
   git: useGit = true,
   statusOverrides = null,
+  ownedTempParent = os.tmpdir(),
 } = {}) {
   const spec = SCENARIOS[scenario];
   if (!spec) throw new Error(`unknown fixture scenario: ${scenario}`);
-  const dir = mkdtempSync(path.join(os.tmpdir(), "suik-contracts-"));
+  if (typeof ownedTempParent !== "string" || ownedTempParent === "") {
+    throw new Error("ownedTempParent must be a non-empty directory path");
+  }
+  mkdirSync(ownedTempParent, { recursive: true });
+  const dir = mkdtempSync(path.join(ownedTempParent, "suik-contracts-"));
   try {
     copyFixtureInputs(sourceRoot, dir);
     const statuses = new Map(

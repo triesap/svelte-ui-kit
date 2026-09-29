@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: S001–S003 complete; S004 accepted by Codex review 2 and awaiting its authorized checkpoint commit. S005 dispatch is prepared below and gated by that commit. Updated 2026-09-29.
+Status: S001–S004 complete; S005 independently accepted and verified_uncommitted. S006 dispatch is prepared and unlocks only after the S005 commit. Updated 2026-09-29.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,16 +17,17 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S004** in **RCLD-01** — verified_uncommitted; Codex review 2 accepts S004-R1–R3 and the 41-test bootstrap. S005 remains gated by the accepted S004 commit.
+- Active implementation checkpoint: **S005** in **RCLD-01** — verified_uncommitted; Codex review 2 closes R1–R3. S006 remains locked until S005 is committed.
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
-- Completed implementation checkpoints: **3 / 203**. Remaining: **200 / 203**.
+- Completed implementation checkpoints: **4 / 203**. Remaining: **199 / 203**.
 - Completed RCLD sequences: **0 / 11**. Remaining: **11 / 11**.
-- Last safe target commit: `91cdaaefd756021b343465f7ba7dd3afe2f71b6d`, branch `master` (S003).
+- Last safe target commit: `fd5d5162c7e5e3fa22fcc8a0365525f4e0e6a100`, branch `master` (S004).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
 - S004 evidence: `implementation/evidence/S004_REPORT.md` and `implementation/evidence/S004_REVIEW.md`. All review findings are closed; independent smoke 41/41 and contracts 83/83 pass, along with corrected metadata and mutation probes.
-- No checkpoint has been skipped or reordered. S001–S003 are complete. Codex recorded S003's real hash and S004 activation after the commit; these four factual bookkeeping files travel with S004 under the established rule. Earlier dispatches and correction records are historical.
+- S005 evidence: `implementation/evidence/S005_REPORT.md` and `implementation/evidence/S005_REVIEW.md`. Review 2 accepts the correction: independent unit 5/5, harness 29/29, smoke 41/41 and contracts 84/84 pass; original boundary/filename/failure probes are corrected. No release acceptance is claimed.
+- No checkpoint has been skipped or reordered. S001–S004 are complete. Codex recorded S004's real hash and S005 activation after the commit; these four factual bookkeeping files travel with S005 under the established rule. Earlier dispatches and correction records are historical.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. Every checkpoint after S001 depends on the reviewed, verified, committed predecessor; milestone boundaries never waive that dependency.
 
@@ -318,6 +319,185 @@ No owner decision remains unresolved. Return unstaged/uncommitted with S002
 still `in_progress`, report `candidate`, review `changes_requested`, null hashes
 and S003 untouched. Codex independently reviews and accepts before any target
 commit or successor dispatch. No human release test is due at this checkpoint.
+
+## Codex dispatch decisions — S006
+
+Begin only after S005 is accepted and committed with its real hash recorded.
+Use a fresh Pi session and complete the entire S006 definition and this
+dispatch in one implementation period, including self-review and all gates.
+Codex owns acceptance/commits and consequential decisions; S007 remains locked.
+The next logical delivery is the complete authoring-tooling checkpoint, not a
+config-only partial return or an unreviewed batch of later checkpoints.
+
+1. **Approved exact development dependencies.** Add only these seven exact
+   pins: `eslint@10.11.0`, `@eslint/js@10.0.1`,
+   `typescript-eslint@8.71.0`, `eslint-plugin-svelte@3.23.0`,
+   `eslint-config-prettier@10.1.8`, `globals@17.12.0`, and
+   `prettier-plugin-svelte@4.1.1`. Codex verified each exact npm registry
+   document on 2026-09-29. The TypeScript integration admits TS >=4.8.4 <6.1.0
+   and ESLint 10; the Svelte linter admits ESLint 10 and Svelte 5; the formatter
+   plugin admits Svelte 5 and Prettier 3. Engine requirements admit Node
+   24.21.0. These declarations support the selection; installation and actual
+   positive/negative execution must still qualify it. Preserve all nine
+   existing pins, Node/pnpm selections, package identity/private/license/ESM,
+   and root-only workspace membership. Update the lockfile normally, then prove
+   frozen strict-peer engine-strict install. No runtime/consumer dependency or
+   automatic package installation is introduced.
+2. **ESLint configuration and coverage.** Use ESM flat configuration
+   `eslint.config.mjs`, JS recommended, TypeScript recommended and Svelte
+   recommended presets. Configure the actual TS parser for Svelte script
+   blocks; use syntax-aware recommendations plus the existing compiler checks,
+   not a new type-aware project-service architecture. Apply Node globals to
+   CLI/tools/tests/config files; scope browser globals to Svelte/client authoring
+   contexts instead of enabling them everywhere. Finish with the compatible
+   Prettier presets to separate formatting from semantic lint. This approved
+   style-only conflict resolution is not permission to disable semantic or
+   accessibility rules. Add `lint` as `eslint . --max-warnings 0`, with no
+   `--fix`, cache, ignored-error fallback or pass-on-empty wrapper. Do not
+   scaffold S007's app or add a fake Svelte config solely for lint.
+3. **Formatter and ownership scope.** Preserve `.prettierrc.json` preferences
+   and `format` as an explicit authoring-only write command; keep
+   `format:check` nonmutating and add the selected Svelte plugin/parser override.
+   Lint and format cover maintained root configs/docs as applicable, `src`,
+   `tools`, `tests`, and future authored `registry` templates/assets. Future
+   maintained consumer fixture source is authoring input, not an excluded
+   output directory. Globally exclude dependency/build/cache trees, owned unit
+   output, generated fixture outputs and ignored evidence logs. Explicitly
+   reserve `tests/fixtures/generated/` for disposable generated-app output and
+   exclude it from both tools; no real generated app is created in S006. Keep
+   lockfile/license formatter exclusions. Do not broadly ignore tests, tools,
+   registry templates or authored consumer fixtures to obtain green. Checks
+   must not traverse or rewrite an arbitrary external application. No product
+   generator invocation gains implicit formatting/lint or source rewrites.
+4. **Current-source cleanup.** Repair actual violations exposed by the chosen
+   presets with the smallest behavior-preserving source/test changes. Preserve
+   S005 boundary/failure policies, contract validator semantics and S004 CLI
+   behavior. No blanket disables, `any`, type weakening, skipped tests,
+   broad ignore expansion or assertions removed to pass lint. Routine fixes
+   within this boundary are authorized; a required semantic rule/API deviation
+   must return to Codex with evidence while independent work continues.
+5. **Real nonmutation and detection tests.** Implement the scheduled typed
+   `tests/unit/tooling.test.ts`. Invoke the actual package scripts and installed
+   tools against disposable package fixtures with the real configurations;
+   this must qualify command wiring, not merely call formatter/linter libraries
+   or assert configuration text. Use bounded subprocesses, controlled inherited
+   test-runner environment and cleanup of owned roots. Verify clean TS and
+   Svelte 5 `<script lang="ts">` positives; formatting-defective TS and Svelte
+   return nonzero without changing bytes; actual TS semantic lint and Svelte
+   compiler/accessibility lint violations return nonzero for their intended
+   diagnostics. Prove green restores. Both success and failure checks must
+   preserve complete relevant fixture snapshots, including hidden sentinels,
+   file kinds/link targets and an unrelated external app. Prove bad maintained
+   authoring input is checked while bad files under generated/build output
+   paths are excluded. No unconditional-positive stubs, skipped a11y warnings
+   or empty Svelte coverage. Keep negative fixtures out of real discovery.
+6. **Command semantics and evidence.** Update README, CONTRIBUTING, verification
+   guidance and `implementation/evidence/S006_REPORT.md` together. Record exact
+   new pins and verified peer/engine facts in the S006 report rather than
+   rewriting historical S003 evidence. Standalone `typecheck` intentionally
+   checks tracked-config includes; mandatory `test:unit` additionally compiles
+   every discovered unit entry, including dot-prefixed names. That S005
+   boundary is accepted; do not add another config-writing public command or
+   change it silently. Document both lanes as required. Svelte lint/format
+   probes do not establish consumer typecheck/build, SSR/browser qualification
+   or release readiness. Source-path hints in S005 failure output are not
+   source-map-accurate TypeScript coordinates; emitted stack coordinates remain
+   authoritative. No source-map feature is required by S006.
+7. **Full verification and return.** Run frozen strict install, format check,
+   lint, both typechecks, build, full unit discovery and explicit
+   `tests/unit/tooling.test.ts`, harness, CLI smoke, contract validation/tests,
+   and whitespace checks. Prove lint/format checks leave the real authoring
+   source unchanged too. Run a fresh reference fmt/check/test guard after
+   checking its clean identity; S005's reuse exception does not carry forward.
+   Preserve failed attempts/real exits and separate top-level/nested/negative
+   counts. All unblocked S006 work is authorized. Return unstaged/uncommitted,
+   S006 `in_progress`, report `candidate`, null hash, accepted S005 evidence
+   untouched and S007 not started. Codex performs independent review and the
+   next checkpoint commit. No human release testing is due.
+
+Primary setup references: [TypeScript ESLint](https://typescript-eslint.io/getting-started/),
+[Svelte ESLint](https://sveltejs.github.io/eslint-plugin-svelte/user-guide/),
+[Svelte Prettier](https://github.com/sveltejs/prettier-plugin-svelte), and exact
+version documents at `https://registry.npmjs.org/<package>/<version>`.
+
+## Codex correction dispatch — S005 review 1
+
+This dispatch supplements the original S005 dispatch below and supersedes
+conflicting candidate claims. Complete R1–R3 in a fresh Pi session, within S005.
+Codex has resolved the following decisions; no owner approval is pending.
+Read the independent `implementation/evidence/S005_REVIEW.md` in full.
+
+1. **R1: owned selection and cleanup boundaries.** Anchor validation to the
+   canonical package root. Reject a symlinked `tests` or `tests/unit` root in
+   both discovery and explicit selection before cleanup, compilation or test
+   execution. Explicit operands are repository-relative: reject absolute
+   operands, final symlinks and symlinked ancestor directories within the test
+   tree, even if a link points back inside. Discovery continues to ignore
+   nested symlink entries without following them. Validate path components,
+   not a textual `..` prefix; a name beginning with two dots is not traversal.
+   A symlinked package checkout reached through an otherwise valid working
+   directory is not itself an invalid test root. Use non-following metadata
+   for the output guard so dangling `.unit-test-build` symlinks are rejected
+   before compiler invocation, just like live symlinks. Only a truly absent
+   output root is absent. Preserve unrelated targets and sentinels.
+2. **R2: discovery and compilation agree.** Keep the promised set of all
+   regular `*.test.ts` files, including dot-prefixed filenames and directories;
+   do not silently narrow discovery to hide an emission mismatch. Compile all
+   discovered unit entries through the pinned compiler. Codex authorizes an
+   ephemeral compiler configuration inside the guarded, ignored owned output
+   tree, extending `tsconfig.unit.json` and explicitly listing discovered
+   entries. Preserve inherited strictness, ordinary source/test includes,
+   product configuration, compile-before-run and no stale-output execution.
+   Resolve generated configuration paths correctly and do not mutate tracked
+   configs to select a run. Explicit selection still controls execution, not
+   omission of ordinary unit inputs from typechecking. Default and explicit
+   runs must both execute valid dot-prefixed tests successfully.
+3. **R3: event attribution, failures and diagnostics.** Attribute child events
+   to `entryFile` when present, with a file fallback for wrapper events; retain
+   the defining file/line separately. Render the failing test name and actual
+   structured error/cause (including useful assertion values and location),
+   rather than only a failure type/count. Preserve load-error output. A
+   failure must not disappear because it was defined in an imported helper.
+   Preserve the initial strict policy: every `test:fail` event, including one
+   marked TODO, fails the run; TODO does not exempt a throwing callback.
+   Non-failing TODO/skipped tests may coexist with an actual passing test but
+   cannot satisfy the per-entry executed-test requirement. Apply this policy
+   identically to inline and imported tests and document it. Aggregate
+   `success: false`, failed/cancelled counts, or unassigned failure events must
+   fail the run even if per-file summaries appear green. Retain all existing
+   per-file completion and empty-selection guards.
+4. **Focused regression evidence.** Add disposable fixtures proving each
+   reproduced case and its intended diagnostic: external root/parent links in
+   both modes, ancestor/final links, absolute operands, dangling output link,
+   dot-prefixed files/directories including a `..` filename prefix, inline and
+   imported named assertion/error details, identical TODO-failure outcomes,
+   cancellation via an explicit short test timeout, abnormal nonzero child
+   exit, and passing restores. Invalid selection must not clean stale output
+   or run a side-effect sentinel. Do not put negative probes in real discovery.
+   Bound regression subprocesses so a broken runner cannot hang the harness.
+   The reviewer also observed an unsettled-promise timeout under the native
+   Node runner; this is not claimed as a new product defect or a passing
+   cancellation test. No new public timeout/filter API is authorized here.
+5. **Preservation and verification.** Keep the verified owned-parent fixture
+   correction, S004 smoke/product behavior, exact pins and dependency-free
+   design. Run strict frozen install, both typechecks, build, default/explicit
+   unit, expanded harness, smoke, contracts, formatting and diff checks. The
+   two overlapping full contract suites are already independently qualified;
+   repeat overlap if fixture ownership code changes. Preserve actual failed
+   attempts and command exits. Keep public reports repository-relative and
+   free of operator tooling/coordination details. Codex has corrected that
+   wording in the candidate report; append correction evidence truthfully.
+6. **Reference evidence and return.** Codex audited the author's fresh S005
+   reference guard: fmt/check/test exit 0, 562 top-level plus 16 nested passes,
+   zero failures, four ignored. For this same-checkpoint runner-only correction,
+   verify the reference remains clean at
+   `a10fbf06334f4648f5755e05a7147414e4e5fc98` and cite that evidence without
+   claiming a fresh execution. Rerun if its identity, source/Rust scope or
+   evidence changes; S006 does not inherit this exception. Return uncommitted
+   and unstaged, S005 `in_progress`, report `candidate`, review
+   `changes_requested`, both hashes null. Preserve Codex-owned review and
+   accepted predecessor evidence. Codex reviews, accepts, commits and dispatches
+   S006 later. No human release test is due.
 
 ## Codex dispatch decisions — S005
 
@@ -873,8 +1053,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S001 | RCLD-01  | None       | complete             | `bb5010e`                                  |
 | S002 | RCLD-01  | S001       | complete             | `9ed224f60249ee67732c05737170436e06301c38` |
 | S003 | RCLD-01  | S002       | complete             | `91cdaaefd756021b343465f7ba7dd3afe2f71b6d` |
-| S004 | RCLD-01  | S003       | verified_uncommitted | —                                          |
-| S005 | RCLD-01  | S004       | not_started          | —                                          |
+| S004 | RCLD-01  | S003       | complete             | `fd5d5162c7e5e3fa22fcc8a0365525f4e0e6a100` |
+| S005 | RCLD-01  | S004       | verified_uncommitted | —                                          |
 | S006 | RCLD-01  | S005       | not_started          | —                                          |
 | S007 | RCLD-01  | S006       | not_started          | —                                          |
 | S008 | RCLD-01  | S007       | not_started          | —                                          |

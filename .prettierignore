@@ -4,6 +4,7 @@ node_modules/
 dist/
 build/
 coverage/
+.unit-test-build/
 pnpm-lock.yaml
 LICENSE-MIT
 LICENSE-APACHE

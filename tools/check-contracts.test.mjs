@@ -22,6 +22,7 @@ import {
   lstatSync,
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readFileSync,
   readdirSync,
   readlinkSync,
@@ -375,21 +376,48 @@ test("fixture completion hashes are fixture-owned post-commit values", () => {
   );
 });
 
-test("fixture construction failure removes its temporary directory", () => {
-  const prefix = "suik-contracts-";
-  const before = new Set(
-    readdirSync(os.tmpdir()).filter((name) => name.startsWith(prefix)),
-  );
+test("fixture construction failure cleans only its owned temporary allocation", (t) => {
+  const parent = mkdtempSync(path.join(os.tmpdir(), "suik-contracts-owner-"));
+  t.after(() => rmSync(parent, { recursive: true, force: true }));
+  // An unrelated live fixture in the ordinary namespace must be untouched.
+  const unrelated = mkdtempSync(path.join(os.tmpdir(), "suik-contracts-"));
+  t.after(() => rmSync(unrelated, { recursive: true, force: true }));
+
   assert.throws(() =>
     makeFixture({
       scenario: "s001",
       statusOverrides: new Map([["S001", "bogus"]]),
+      ownedTempParent: parent,
     }),
   );
-  const leaked = readdirSync(os.tmpdir()).filter(
-    (name) => name.startsWith(prefix) && !before.has(name),
+
+  assert.deepEqual(
+    readdirSync(parent),
+    [],
+    "a failed owned fixture must leave no directory behind",
   );
-  assert.deepEqual(leaked, [], `leaked fixture directories: ${leaked}`);
+  assert.ok(
+    existsSync(unrelated),
+    "an unrelated live fixture must not be removed by another invocation's cleanup",
+  );
+});
+
+test("owned-parent leak detection recognises a retained fixture", (t) => {
+  const parent = mkdtempSync(path.join(os.tmpdir(), "suik-contracts-owner-"));
+  t.after(() => rmSync(parent, { recursive: true, force: true }));
+
+  const retained = makeFixture({ scenario: "s001", ownedTempParent: parent });
+  const leaks = readdirSync(parent).filter((name) =>
+    name.startsWith("suik-contracts-"),
+  );
+  assert.deepEqual(
+    leaks,
+    [path.basename(retained)],
+    "a deliberately retained owned fixture must be detected",
+  );
+
+  rmSync(retained, { recursive: true, force: true });
+  assert.deepEqual(readdirSync(parent), []);
 });
 
 // ---------------------------------------------------------------------------
