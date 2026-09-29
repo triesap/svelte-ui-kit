@@ -136,6 +136,15 @@ remote CI execution is claimed.
 
 Commit dependency changes together with `pnpm-lock.yaml`.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs the baseline verification lanes on
+`pull_request` and `push` against `ubuntu-24.04` with Node 24.21.0 and pnpm
+11.22.0, using the immutable action revisions recorded in
+`implementation/evidence/COMMANDS.md`. It publishes nothing, reads no secrets
+and adds no private tooling. The workflow has not been run remotely; run the
+same commands locally as listed in the command map.
+
 ## Current scope
 
 Only help and version output are implemented: `--help`/`-h` and `--version`/`-V`
@@ -150,9 +159,10 @@ Component install/inspect/update work is planned but not implemented yet.
 - Run `pnpm run typecheck`, `pnpm run build`, `pnpm run test:cli-bootstrap`,
   `pnpm run test:unit`, `pnpm run test:integration`,
   `pnpm run test:harness`, `pnpm run fixture:check`,
-  `pnpm run test:fixture`, `pnpm run lint` and `pnpm run format:check` (plus
-  `pnpm run check:contracts` and `pnpm run test:contracts` for contract or
-  evidence changes).
+  `pnpm run test:fixture`, `pnpm run test:browser --
+tests/browser/harness.spec.ts`, `pnpm run lint` and `pnpm run format:check`
+  (plus `pnpm run check:contracts` and `pnpm run test:contracts` for contract
+  or evidence changes).
 - Update documentation when setup or scope changes.
 - Add meaningful tests and public API documentation when implementation begins.
 

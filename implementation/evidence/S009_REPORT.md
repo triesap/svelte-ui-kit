@@ -1,7 +1,7 @@
 # S009 step report — Add isolated filesystem and CLI integration helpers
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S009","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S009","kind":"report","commit":"023cdf811505f5803ede334c57ee4a993073483e","disposition":"candidate"}
 -->
 
 Step ID and title: S009 — Add isolated filesystem and CLI integration helpers.

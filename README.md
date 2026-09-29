@@ -54,6 +54,11 @@ Any `test:fail` event — including a TODO-marked one — fails the run wherever
 test was defined, and one suite's run never removes another suite's output.
 `pnpm run test:harness` runs the runner's own regression suite.
 
+`implementation/evidence/COMMANDS.md` records the complete local command map and
+the baseline `.github/workflows/ci.yml` lanes (Ubuntu 24.04, Node 24.21.0, pnpm
+11.22.0, immutable action revisions). The workflow is validated locally but has
+not been run remotely.
+
 The CLI entrypoint is `src/cli/main.ts`, compiled with the pinned `tsc` to
 `dist/cli/main.js` (build output is ignored and never committed).
 
