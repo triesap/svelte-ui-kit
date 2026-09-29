@@ -1,0 +1,2261 @@
+{
+  "schemaVersion": 1,
+  "source": "implementation/COMMIT_SEQUENCE.md",
+  "generator": "tools/check-contracts.mjs --generate",
+  "sequences": [
+    {
+      "id": "RCLD-01",
+      "title": "Baseline and verification harness",
+      "first": "S001",
+      "last": "S012",
+      "count": 12,
+      "state": "in_progress",
+      "predecessor": "None; S001 complete"
+    },
+    {
+      "id": "RCLD-02",
+      "title": "Versioned models and registry resolution",
+      "first": "S013",
+      "last": "S032",
+      "count": 20,
+      "state": "not_started",
+      "predecessor": "S012"
+    },
+    {
+      "id": "RCLD-03",
+      "title": "Project integration and ownership planning",
+      "first": "S033",
+      "last": "S063",
+      "count": 31,
+      "state": "not_started",
+      "predecessor": "S032"
+    },
+    {
+      "id": "RCLD-04",
+      "title": "Transactions and recovery",
+      "first": "S064",
+      "last": "S077",
+      "count": 14,
+      "state": "not_started",
+      "predecessor": "S063"
+    },
+    {
+      "id": "RCLD-05",
+      "title": "CLI workflows and generator acceptance",
+      "first": "S078",
+      "last": "S091",
+      "count": 14,
+      "state": "not_started",
+      "predecessor": "S077"
+    },
+    {
+      "id": "RCLD-06",
+      "title": "Tokens and core components",
+      "first": "S092",
+      "last": "S115",
+      "count": 24,
+      "state": "not_started",
+      "predecessor": "S091"
+    },
+    {
+      "id": "RCLD-07",
+      "title": "Alert Dialog and Menu",
+      "first": "S116",
+      "last": "S128",
+      "count": 13,
+      "state": "not_started",
+      "predecessor": "S115"
+    },
+    {
+      "id": "RCLD-08",
+      "title": "Forms and disclosures",
+      "first": "S129",
+      "last": "S148",
+      "count": 20,
+      "state": "not_started",
+      "predecessor": "S128"
+    },
+    {
+      "id": "RCLD-09",
+      "title": "Remaining catalog and identity",
+      "first": "S149",
+      "last": "S181",
+      "count": 33,
+      "state": "not_started",
+      "predecessor": "S148"
+    },
+    {
+      "id": "RCLD-10",
+      "title": "Cross-component and platform qualification",
+      "first": "S182",
+      "last": "S193",
+      "count": 12,
+      "state": "not_started",
+      "predecessor": "S181"
+    },
+    {
+      "id": "RCLD-11",
+      "title": "Packed acceptance and delivery",
+      "first": "S194",
+      "last": "S203",
+      "count": 10,
+      "state": "not_started",
+      "predecessor": "S193"
+    }
+  ],
+  "steps": [
+    {
+      "id": "S001",
+      "title": "Establish the authorized target and baseline",
+      "sequence": "RCLD-01",
+      "dependsOn": null,
+      "requirements": ["R32", "R33", "R34"],
+      "status": "complete",
+      "completion": {
+        "commit": "bb5010e0605b3d0917a9037eafef69ed90d3b36c",
+        "report": "implementation/evidence/S001_REPORT.md",
+        "review": "implementation/evidence/S001_REVIEW.md"
+      }
+    },
+    {
+      "id": "S002",
+      "title": "Anchor approved contracts and repository instructions",
+      "sequence": "RCLD-01",
+      "dependsOn": "S001",
+      "requirements": ["R01", "R31", "R32", "R33", "R34"],
+      "status": "verified_uncommitted",
+      "completion": null
+    },
+    {
+      "id": "S003",
+      "title": "Select a reproducible Node and dependency baseline",
+      "sequence": "RCLD-01",
+      "dependsOn": "S002",
+      "requirements": ["R01", "R10", "R12", "R20", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S004",
+      "title": "Create a minimal typed CLI build boundary",
+      "sequence": "RCLD-01",
+      "dependsOn": "S003",
+      "requirements": ["R01", "R02", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S005",
+      "title": "Add a real unit-test harness",
+      "sequence": "RCLD-01",
+      "dependsOn": "S004",
+      "requirements": ["R29", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S006",
+      "title": "Add nonmutating formatting and lint gates",
+      "sequence": "RCLD-01",
+      "dependsOn": "S005",
+      "requirements": ["R17", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S007",
+      "title": "Add an SSR-enabled SvelteKit consumer fixture",
+      "sequence": "RCLD-01",
+      "dependsOn": "S006",
+      "requirements": ["R20", "R21", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S008",
+      "title": "Add the generated-app browser harness",
+      "sequence": "RCLD-01",
+      "dependsOn": "S007",
+      "requirements": ["R21", "R22", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S009",
+      "title": "Add isolated filesystem and CLI integration helpers",
+      "sequence": "RCLD-01",
+      "dependsOn": "S008",
+      "requirements": ["R15", "R16", "R29", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S010",
+      "title": "Document commands and add baseline CI",
+      "sequence": "RCLD-01",
+      "dependsOn": "S009",
+      "requirements": ["R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S011",
+      "title": "Qualify the pinned primitive integration boundary",
+      "sequence": "RCLD-01",
+      "dependsOn": "S010",
+      "requirements": ["R03", "R12", "R20", "R21", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S012",
+      "title": "Separate orchestration and pure module interfaces",
+      "sequence": "RCLD-01",
+      "dependsOn": "S011",
+      "requirements": ["R01", "R02", "R03", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S013",
+      "title": "Model independent version identities",
+      "sequence": "RCLD-02",
+      "dependsOn": "S012",
+      "requirements": ["R12", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S014",
+      "title": "Freeze and validate strict kit configuration",
+      "sequence": "RCLD-02",
+      "dependsOn": "S013",
+      "requirements": ["R05", "R09", "R11", "R12", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S015",
+      "title": "Model explicit requested item sets",
+      "sequence": "RCLD-02",
+      "dependsOn": "S014",
+      "requirements": ["R11", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S016",
+      "title": "Define the registry-root schema",
+      "sequence": "RCLD-02",
+      "dependsOn": "S015",
+      "requirements": ["R08", "R12", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S017",
+      "title": "Define typed item targets and public exports",
+      "sequence": "RCLD-02",
+      "dependsOn": "S016",
+      "requirements": ["R06", "R07", "R08", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S018",
+      "title": "Add accessibility and dependency manifest metadata",
+      "sequence": "RCLD-02",
+      "dependsOn": "S017",
+      "requirements": ["R03", "R10", "R22", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S019",
+      "title": "Define source-file ownership lock records",
+      "sequence": "RCLD-02",
+      "dependsOn": "S018",
+      "requirements": ["R11", "R12", "R13", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S020",
+      "title": "Add CSS-block and integration lock records",
+      "sequence": "RCLD-02",
+      "dependsOn": "S019",
+      "requirements": ["R07", "R13", "R14", "R17", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S021",
+      "title": "Define portable theme and customization metadata schemas",
+      "sequence": "RCLD-02",
+      "dependsOn": "S020",
+      "requirements": ["R07", "R12", "R23", "R25", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S022",
+      "title": "Freeze CLI envelopes and exit outcomes",
+      "sequence": "RCLD-02",
+      "dependsOn": "S021",
+      "requirements": ["R09", "R15", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S023",
+      "title": "Parse only the approved CLI arguments",
+      "sequence": "RCLD-02",
+      "dependsOn": "S022",
+      "requirements": ["R09", "R15", "R18", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S024",
+      "title": "Implement exact-byte hashing and deterministic serialization",
+      "sequence": "RCLD-02",
+      "dependsOn": "S023",
+      "requirements": ["R12", "R13", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S025",
+      "title": "Load assets relative to the installed package",
+      "sequence": "RCLD-02",
+      "dependsOn": "S024",
+      "requirements": ["R08", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S026",
+      "title": "Build an immutable validated registry snapshot",
+      "sequence": "RCLD-02",
+      "dependsOn": "S025",
+      "requirements": ["R08", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S027",
+      "title": "Add full registry asset health validation",
+      "sequence": "RCLD-02",
+      "dependsOn": "S026",
+      "requirements": ["R08", "R26", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S028",
+      "title": "Resolve dependencies with cycle and missing-item diagnostics",
+      "sequence": "RCLD-02",
+      "dependsOn": "S027",
+      "requirements": ["R08", "R11", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S029",
+      "title": "Make closure and export order deterministic",
+      "sequence": "RCLD-02",
+      "dependsOn": "S028",
+      "requirements": ["R06", "R07", "R11", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S030",
+      "title": "Project requested versus transitive provenance",
+      "sequence": "RCLD-02",
+      "dependsOn": "S029",
+      "requirements": ["R11", "R18", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S031",
+      "title": "Merge compatible dependency requirements",
+      "sequence": "RCLD-02",
+      "dependsOn": "S030",
+      "requirements": ["R10", "R12", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S032",
+      "title": "Validate cross-item target and public symbol uniqueness",
+      "sequence": "RCLD-02",
+      "dependsOn": "S031",
+      "requirements": ["R06", "R08", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S033",
+      "title": "Validate lexical logical paths",
+      "sequence": "RCLD-03",
+      "dependsOn": "S032",
+      "requirements": ["R05", "R16", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S034",
+      "title": "Reject overlapping and reserved output roots",
+      "sequence": "RCLD-03",
+      "dependsOn": "S033",
+      "requirements": ["R05", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S035",
+      "title": "Detect default SvelteKit application packages",
+      "sequence": "RCLD-03",
+      "dependsOn": "S034",
+      "requirements": ["R05", "R09", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S036",
+      "title": "Resolve explicit working directories in workspaces",
+      "sequence": "RCLD-03",
+      "dependsOn": "S035",
+      "requirements": ["R09", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S037",
+      "title": "Freeze supported custom path mappings",
+      "sequence": "RCLD-03",
+      "dependsOn": "S036",
+      "requirements": ["R05", "R16", "R17", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S038",
+      "title": "Inspect installed and declared dependency state",
+      "sequence": "RCLD-03",
+      "dependsOn": "S037",
+      "requirements": ["R10", "R12", "R19", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S039",
+      "title": "Validate peer dependencies in the consumer plan",
+      "sequence": "RCLD-03",
+      "dependsOn": "S038",
+      "requirements": ["R10", "R12", "R20", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S040",
+      "title": "Render dependency instructions without execution",
+      "sequence": "RCLD-03",
+      "dependsOn": "S039",
+      "requirements": ["R09", "R10", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S041",
+      "title": "Capture read-only project snapshots",
+      "sequence": "RCLD-03",
+      "dependsOn": "S040",
+      "requirements": ["R13", "R15", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S042",
+      "title": "Validate filesystem ancestry and symlinks",
+      "sequence": "RCLD-03",
+      "dependsOn": "S041",
+      "requirements": ["R16", "R24", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S043",
+      "title": "Freeze the complete ownership disposition matrix",
+      "sequence": "RCLD-03",
+      "dependsOn": "S042",
+      "requirements": ["R13", "R14", "R18", "R19", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S044",
+      "title": "Implement source base/local/incoming classification",
+      "sequence": "RCLD-03",
+      "dependsOn": "S043",
+      "requirements": ["R13", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S045",
+      "title": "Plan missing and untracked source targets",
+      "sequence": "RCLD-03",
+      "dependsOn": "S044",
+      "requirements": ["R13", "R15", "R18", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S046",
+      "title": "Plan source retirement with retained customization",
+      "sequence": "RCLD-03",
+      "dependsOn": "S045",
+      "requirements": ["R11", "R13", "R18", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S047",
+      "title": "Assemble source-file change plans",
+      "sequence": "RCLD-03",
+      "dependsOn": "S046",
+      "requirements": ["R06", "R13", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S048",
+      "title": "Parse managed CSS markers without whole-file ownership",
+      "sequence": "RCLD-03",
+      "dependsOn": "S047",
+      "requirements": ["R07", "R13", "R17", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S049",
+      "title": "Apply three-way classification to CSS blocks",
+      "sequence": "RCLD-03",
+      "dependsOn": "S048",
+      "requirements": ["R07", "R13", "R19", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S050",
+      "title": "Compose stable stylesheet patches",
+      "sequence": "RCLD-03",
+      "dependsOn": "S049",
+      "requirements": ["R07", "R15", "R17", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S051",
+      "title": "Retire CSS blocks without deleting custom rules",
+      "sequence": "RCLD-03",
+      "dependsOn": "S050",
+      "requirements": ["R13", "R17", "R18", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S052",
+      "title": "Freeze and parse managed TypeScript export regions",
+      "sequence": "RCLD-03",
+      "dependsOn": "S051",
+      "requirements": ["R06", "R16", "R17", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S053",
+      "title": "Generate the root UI export region",
+      "sequence": "RCLD-03",
+      "dependsOn": "S052",
+      "requirements": ["R02", "R06", "R17", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S054",
+      "title": "Generate compound barrels and validate sibling imports",
+      "sequence": "RCLD-03",
+      "dependsOn": "S053",
+      "requirements": ["R02", "R06", "R17", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S055",
+      "title": "Identify safe Svelte layout edit spans",
+      "sequence": "RCLD-03",
+      "dependsOn": "S054",
+      "requirements": ["R17", "R20", "R21", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S056",
+      "title": "Patch ordered stylesheet imports minimally",
+      "sequence": "RCLD-03",
+      "dependsOn": "S055",
+      "requirements": ["R05", "R17", "R23", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S057",
+      "title": "Build a pure initialization plan",
+      "sequence": "RCLD-03",
+      "dependsOn": "S056",
+      "requirements": ["R05", "R09", "R15", "R17", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S058",
+      "title": "Build a pure add-request plan",
+      "sequence": "RCLD-03",
+      "dependsOn": "S057",
+      "requirements": ["R09", "R10", "R11", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S059",
+      "title": "Enforce source-style compatibility cohorts",
+      "sequence": "RCLD-03",
+      "dependsOn": "S058",
+      "requirements": ["R13", "R14", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S060",
+      "title": "Build the full synchronization plan",
+      "sequence": "RCLD-03",
+      "dependsOn": "S059",
+      "requirements": ["R09", "R11", "R13", "R14", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S061",
+      "title": "Project truthful final lock lineage",
+      "sequence": "RCLD-03",
+      "dependsOn": "S060",
+      "requirements": ["R12", "R13", "R14", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S062",
+      "title": "Integrate configuration-driven retirement",
+      "sequence": "RCLD-03",
+      "dependsOn": "S061",
+      "requirements": ["R11", "R17", "R18", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S063",
+      "title": "Qualify deterministic zero-write planning",
+      "sequence": "RCLD-03",
+      "dependsOn": "S062",
+      "requirements": ["R10", "R15", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S064",
+      "title": "Freeze transaction states and safety assumptions",
+      "sequence": "RCLD-04",
+      "dependsOn": "S063",
+      "requirements": ["R15", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S065",
+      "title": "Validate transient coordination and journal records",
+      "sequence": "RCLD-04",
+      "dependsOn": "S064",
+      "requirements": ["R16", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S066",
+      "title": "Implement exclusive writer coordination",
+      "sequence": "RCLD-04",
+      "dependsOn": "S065",
+      "requirements": ["R15", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S067",
+      "title": "Revalidate planned preimages under coordination",
+      "sequence": "RCLD-04",
+      "dependsOn": "S066",
+      "requirements": ["R13", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S068",
+      "title": "Stage replacement bytes with owned temporary files",
+      "sequence": "RCLD-04",
+      "dependsOn": "S067",
+      "requirements": ["R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S069",
+      "title": "Persist recoverable prepared-state journals",
+      "sequence": "RCLD-04",
+      "dependsOn": "S068",
+      "requirements": ["R13", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S070",
+      "title": "Apply per-file replacements with recorded progress",
+      "sequence": "RCLD-04",
+      "dependsOn": "S069",
+      "requirements": ["R16", "R18", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S071",
+      "title": "Publish the canonical install lock last",
+      "sequence": "RCLD-04",
+      "dependsOn": "S070",
+      "requirements": ["R12", "R13", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S072",
+      "title": "Clean completed transactions without losing evidence",
+      "sequence": "RCLD-04",
+      "dependsOn": "S071",
+      "requirements": ["R15", "R16", "R17", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S073",
+      "title": "Recover interrupted prepublication transactions",
+      "sequence": "RCLD-04",
+      "dependsOn": "S072",
+      "requirements": ["R13", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S074",
+      "title": "Recover published transactions and incomplete cleanup",
+      "sequence": "RCLD-04",
+      "dependsOn": "S073",
+      "requirements": ["R13", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S075",
+      "title": "Fail closed on corrupt or ambiguous recovery evidence",
+      "sequence": "RCLD-04",
+      "dependsOn": "S074",
+      "requirements": ["R09", "R16", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S076",
+      "title": "Qualify concurrency and process-interruption behavior",
+      "sequence": "RCLD-04",
+      "dependsOn": "S075",
+      "requirements": ["R16", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S077",
+      "title": "Compose the guarded apply use case",
+      "sequence": "RCLD-04",
+      "dependsOn": "S076",
+      "requirements": ["R13", "R14", "R15", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S078",
+      "title": "Render human and JSON command outcomes",
+      "sequence": "RCLD-05",
+      "dependsOn": "S077",
+      "requirements": ["R09", "R15", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S079",
+      "title": "Implement read-only info",
+      "sequence": "RCLD-05",
+      "dependsOn": "S078",
+      "requirements": ["R09", "R10", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S080",
+      "title": "Implement read-only registry view and source inspection",
+      "sequence": "RCLD-05",
+      "dependsOn": "S079",
+      "requirements": ["R08", "R09", "R13", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S081",
+      "title": "Implement init through plan and guarded apply",
+      "sequence": "RCLD-05",
+      "dependsOn": "S080",
+      "requirements": ["R05", "R09", "R15", "R16", "R17", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S082",
+      "title": "Implement add through explicit requests",
+      "sequence": "RCLD-05",
+      "dependsOn": "S081",
+      "requirements": ["R09", "R10", "R11", "R13", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S083",
+      "title": "Implement sync through customization-aware planning",
+      "sequence": "RCLD-05",
+      "dependsOn": "S082",
+      "requirements": ["R09", "R13", "R14", "R15", "R18", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S084",
+      "title": "Implement doctor structural and dependency checks",
+      "sequence": "RCLD-05",
+      "dependsOn": "S083",
+      "requirements": ["R09", "R10", "R15", "R19", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S085",
+      "title": "Separate doctor customization from strict failures",
+      "sequence": "RCLD-05",
+      "dependsOn": "S084",
+      "requirements": ["R13", "R19", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S086",
+      "title": "Qualify the executable exit and JSON matrix",
+      "sequence": "RCLD-05",
+      "dependsOn": "S085",
+      "requirements": ["R09", "R15", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S087",
+      "title": "Qualify full workflow idempotence and no-write paths",
+      "sequence": "RCLD-05",
+      "dependsOn": "S086",
+      "requirements": ["R10", "R11", "R15", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S088",
+      "title": "Reject unsupported schemas and preserve migration boundaries",
+      "sequence": "RCLD-05",
+      "dependsOn": "S087",
+      "requirements": ["R12", "R15", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S089",
+      "title": "Add synthetic upgrade and contract-revision fixtures",
+      "sequence": "RCLD-05",
+      "dependsOn": "S088",
+      "requirements": ["R12", "R13", "R14", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S090",
+      "title": "Build and inspect the package asset inventory",
+      "sequence": "RCLD-05",
+      "dependsOn": "S089",
+      "requirements": ["R01", "R08", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S091",
+      "title": "Document the working generator workflow",
+      "sequence": "RCLD-05",
+      "dependsOn": "S090",
+      "requirements": ["R02", "R09", "R13", "R19", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S092",
+      "title": "Freeze the portable token and customization vocabulary",
+      "sequence": "RCLD-06",
+      "dependsOn": "S091",
+      "requirements": ["R04", "R07", "R12", "R25", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S093",
+      "title": "Install the pure-CSS tokens foundation",
+      "sequence": "RCLD-06",
+      "dependsOn": "S092",
+      "requirements": ["R04", "R07", "R08", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S094",
+      "title": "Emit truthful token and theme integration metadata",
+      "sequence": "RCLD-06",
+      "dependsOn": "S093",
+      "requirements": ["R07", "R12", "R23", "R25", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S095",
+      "title": "Qualify token override and radius fallback behavior",
+      "sequence": "RCLD-06",
+      "dependsOn": "S094",
+      "requirements": ["R22", "R23", "R25", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S096",
+      "title": "Freeze spinner props and accessible modes",
+      "sequence": "RCLD-06",
+      "dependsOn": "S095",
+      "requirements": ["R03", "R20", "R22", "R25", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S097",
+      "title": "Generate the spinner component and CSS",
+      "sequence": "RCLD-06",
+      "dependsOn": "S096",
+      "requirements": ["R02", "R04", "R06", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S098",
+      "title": "Qualify spinner geometry and reduced motion",
+      "sequence": "RCLD-06",
+      "dependsOn": "S097",
+      "requirements": ["R22", "R23", "R25", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S099",
+      "title": "Freeze Button native props and variant types",
+      "sequence": "RCLD-06",
+      "dependsOn": "S098",
+      "requirements": ["R03", "R06", "R20", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S100",
+      "title": "Generate Button with loading-safe plain CSS",
+      "sequence": "RCLD-06",
+      "dependsOn": "S099",
+      "requirements": [
+        "R02",
+        "R04",
+        "R06",
+        "R11",
+        "R20",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S101",
+      "title": "Qualify Button keyboard, form, and loading behavior",
+      "sequence": "RCLD-06",
+      "dependsOn": "S100",
+      "requirements": ["R20", "R22", "R23", "R25", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S102",
+      "title": "Freeze Switch binding, ref, and composition contracts",
+      "sequence": "RCLD-06",
+      "dependsOn": "S101",
+      "requirements": ["R03", "R20", "R22", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S103",
+      "title": "Generate the primitive-backed Switch",
+      "sequence": "RCLD-06",
+      "dependsOn": "S102",
+      "requirements": [
+        "R02",
+        "R03",
+        "R04",
+        "R07",
+        "R20",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S104",
+      "title": "Qualify Switch state, forms, RTL, and motion",
+      "sequence": "RCLD-06",
+      "dependsOn": "S103",
+      "requirements": ["R20", "R22", "R23", "R25", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S105",
+      "title": "Freeze the Dialog family API and ownership cohort",
+      "sequence": "RCLD-06",
+      "dependsOn": "S104",
+      "requirements": [
+        "R06",
+        "R14",
+        "R20",
+        "R22",
+        "R26",
+        "R27",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S106",
+      "title": "Author Dialog root and trigger parts",
+      "sequence": "RCLD-06",
+      "dependsOn": "S105",
+      "requirements": ["R03", "R20", "R21", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S107",
+      "title": "Author Dialog portal and overlay parts",
+      "sequence": "RCLD-06",
+      "dependsOn": "S106",
+      "requirements": ["R20", "R21", "R23", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S108",
+      "title": "Author Dialog content forwarding",
+      "sequence": "RCLD-06",
+      "dependsOn": "S107",
+      "requirements": ["R03", "R20", "R21", "R27", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S109",
+      "title": "Author Dialog title, description, and close parts",
+      "sequence": "RCLD-06",
+      "dependsOn": "S108",
+      "requirements": ["R06", "R20", "R22", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S110",
+      "title": "Map Dialog managed CSS to the actual compound DOM",
+      "sequence": "RCLD-06",
+      "dependsOn": "S109",
+      "requirements": ["R04", "R07", "R22", "R25", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S111",
+      "title": "Register the complete Dialog family",
+      "sequence": "RCLD-06",
+      "dependsOn": "S110",
+      "requirements": [
+        "R05",
+        "R06",
+        "R08",
+        "R14",
+        "R26",
+        "R28",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S112",
+      "title": "Qualify Dialog keyboard, focus, dismissal, and presence",
+      "sequence": "RCLD-06",
+      "dependsOn": "S111",
+      "requirements": ["R20", "R22", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S113",
+      "title": "Qualify Dialog portal theme scopes",
+      "sequence": "RCLD-06",
+      "dependsOn": "S112",
+      "requirements": ["R23", "R24", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S114",
+      "title": "Qualify initial Dialog state through SSR and hydration",
+      "sequence": "RCLD-06",
+      "dependsOn": "S113",
+      "requirements": ["R21", "R22", "R28", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S115",
+      "title": "Qualify the complete first vertical slice",
+      "sequence": "RCLD-06",
+      "dependsOn": "S114",
+      "requirements": [
+        "R02",
+        "R08",
+        "R13",
+        "R14",
+        "R26",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S116",
+      "title": "Freeze a distinct Alert Dialog API",
+      "sequence": "RCLD-07",
+      "dependsOn": "S115",
+      "requirements": ["R03", "R20", "R22", "R27", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S117",
+      "title": "Author Alert Dialog state and activation parts",
+      "sequence": "RCLD-07",
+      "dependsOn": "S116",
+      "requirements": ["R03", "R20", "R27", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S118",
+      "title": "Author Alert Dialog portal and content parts",
+      "sequence": "RCLD-07",
+      "dependsOn": "S117",
+      "requirements": ["R20", "R21", "R23", "R27", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S119",
+      "title": "Author Alert Dialog labeling and decision controls",
+      "sequence": "RCLD-07",
+      "dependsOn": "S118",
+      "requirements": ["R03", "R20", "R22", "R27", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S120",
+      "title": "Style and register the complete Alert Dialog family",
+      "sequence": "RCLD-07",
+      "dependsOn": "S119",
+      "requirements": ["R04", "R06", "R14", "R27", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S121",
+      "title": "Qualify Alert Dialog focus and confirmation behavior",
+      "sequence": "RCLD-07",
+      "dependsOn": "S120",
+      "requirements": ["R20", "R22", "R27", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S122",
+      "title": "Freeze Menu source-parity and floating APIs",
+      "sequence": "RCLD-07",
+      "dependsOn": "S121",
+      "requirements": ["R03", "R06", "R20", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S123",
+      "title": "Author Menu root and trigger wrappers",
+      "sequence": "RCLD-07",
+      "dependsOn": "S122",
+      "requirements": ["R03", "R20", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S124",
+      "title": "Author Menu portal and floating content wrappers",
+      "sequence": "RCLD-07",
+      "dependsOn": "S123",
+      "requirements": ["R20", "R21", "R23", "R24", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S125",
+      "title": "Author Menu source-required item parts",
+      "sequence": "RCLD-07",
+      "dependsOn": "S124",
+      "requirements": ["R03", "R20", "R22", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S126",
+      "title": "Style and register the Menu family",
+      "sequence": "RCLD-07",
+      "dependsOn": "S125",
+      "requirements": ["R04", "R06", "R08", "R14", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S127",
+      "title": "Qualify Menu keyboard selection and dismissal",
+      "sequence": "RCLD-07",
+      "dependsOn": "S126",
+      "requirements": ["R20", "R22", "R26", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S128",
+      "title": "Qualify Menu placement, themes, and CSP limits",
+      "sequence": "RCLD-07",
+      "dependsOn": "S127",
+      "requirements": ["R21", "R23", "R24", "R26", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S129",
+      "title": "Freeze Checkbox props and semantic mapping",
+      "sequence": "RCLD-08",
+      "dependsOn": "S128",
+      "requirements": [
+        "R03",
+        "R07",
+        "R20",
+        "R22",
+        "R25",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S130",
+      "title": "Generate Checkbox source and managed styles",
+      "sequence": "RCLD-08",
+      "dependsOn": "S129",
+      "requirements": [
+        "R02",
+        "R03",
+        "R04",
+        "R06",
+        "R07",
+        "R08",
+        "R22",
+        "R25",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S131",
+      "title": "Qualify Checkbox behavior in the generated app",
+      "sequence": "RCLD-08",
+      "dependsOn": "S130",
+      "requirements": [
+        "R03",
+        "R07",
+        "R20",
+        "R22",
+        "R23",
+        "R25",
+        "R26",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S132",
+      "title": "Freeze Radio group and item contracts",
+      "sequence": "RCLD-08",
+      "dependsOn": "S131",
+      "requirements": ["R03", "R20", "R22", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S133",
+      "title": "Author Radio group and item wrappers",
+      "sequence": "RCLD-08",
+      "dependsOn": "S132",
+      "requirements": ["R03", "R20", "R21", "R28", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S134",
+      "title": "Style and register Radio selection",
+      "sequence": "RCLD-08",
+      "dependsOn": "S133",
+      "requirements": ["R04", "R06", "R07", "R25", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S135",
+      "title": "Qualify Radio keyboard and form behavior",
+      "sequence": "RCLD-08",
+      "dependsOn": "S134",
+      "requirements": ["R20", "R22", "R23", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S136",
+      "title": "Freeze Tabs parts, value, and activation contracts",
+      "sequence": "RCLD-08",
+      "dependsOn": "S135",
+      "requirements": ["R03", "R20", "R21", "R22", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S137",
+      "title": "Author Tabs root and list wrappers",
+      "sequence": "RCLD-08",
+      "dependsOn": "S136",
+      "requirements": ["R03", "R20", "R21", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S138",
+      "title": "Author Tabs trigger and content wrappers",
+      "sequence": "RCLD-08",
+      "dependsOn": "S137",
+      "requirements": ["R20", "R21", "R22", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S139",
+      "title": "Style and register the Tabs family",
+      "sequence": "RCLD-08",
+      "dependsOn": "S138",
+      "requirements": ["R04", "R06", "R14", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S140",
+      "title": "Qualify Tabs keyboard activation and hydration",
+      "sequence": "RCLD-08",
+      "dependsOn": "S139",
+      "requirements": ["R20", "R21", "R22", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S141",
+      "title": "Freeze Collapsible composition and presence contracts",
+      "sequence": "RCLD-08",
+      "dependsOn": "S140",
+      "requirements": ["R03", "R20", "R22", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S142",
+      "title": "Author Collapsible primitive wrappers",
+      "sequence": "RCLD-08",
+      "dependsOn": "S141",
+      "requirements": ["R03", "R20", "R21", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S143",
+      "title": "Style and register Collapsible",
+      "sequence": "RCLD-08",
+      "dependsOn": "S142",
+      "requirements": ["R04", "R06", "R14", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S144",
+      "title": "Qualify Collapsible interactions and composed disclosures",
+      "sequence": "RCLD-08",
+      "dependsOn": "S143",
+      "requirements": ["R20", "R21", "R22", "R29", "R31", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S145",
+      "title": "Freeze Field label, helper, and error composition",
+      "sequence": "RCLD-08",
+      "dependsOn": "S144",
+      "requirements": ["R03", "R20", "R22", "R28", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S146",
+      "title": "Author Field semantic source parts",
+      "sequence": "RCLD-08",
+      "dependsOn": "S145",
+      "requirements": ["R03", "R20", "R21", "R22", "R28", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S147",
+      "title": "Style and register Field",
+      "sequence": "RCLD-08",
+      "dependsOn": "S146",
+      "requirements": ["R02", "R04", "R06", "R10", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S148",
+      "title": "Qualify Field labels, validation presentation, and form lifecycle",
+      "sequence": "RCLD-08",
+      "dependsOn": "S147",
+      "requirements": ["R20", "R21", "R22", "R28", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S149",
+      "title": "Freeze Anchor props and semantic mapping",
+      "sequence": "RCLD-09",
+      "dependsOn": "S148",
+      "requirements": ["R03", "R20", "R22", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S150",
+      "title": "Generate Anchor source and managed styles",
+      "sequence": "RCLD-09",
+      "dependsOn": "S149",
+      "requirements": [
+        "R02",
+        "R03",
+        "R04",
+        "R06",
+        "R08",
+        "R20",
+        "R22",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S151",
+      "title": "Qualify Anchor behavior in the generated app",
+      "sequence": "RCLD-09",
+      "dependsOn": "S150",
+      "requirements": [
+        "R03",
+        "R20",
+        "R22",
+        "R23",
+        "R26",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S152",
+      "title": "Freeze the optional Router Link recipe",
+      "sequence": "RCLD-09",
+      "dependsOn": "S151",
+      "requirements": ["R03", "R20", "R26", "R28", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S153",
+      "title": "Generate the thin Router Link recipe",
+      "sequence": "RCLD-09",
+      "dependsOn": "S152",
+      "requirements": ["R02", "R06", "R10", "R28", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S154",
+      "title": "Qualify Router Link navigation and document the recipe",
+      "sequence": "RCLD-09",
+      "dependsOn": "S153",
+      "requirements": ["R20", "R22", "R28", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S155",
+      "title": "Freeze Avatar props and semantic mapping",
+      "sequence": "RCLD-09",
+      "dependsOn": "S154",
+      "requirements": ["R03", "R20", "R22", "R25", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S156",
+      "title": "Generate Avatar source and managed styles",
+      "sequence": "RCLD-09",
+      "dependsOn": "S155",
+      "requirements": [
+        "R02",
+        "R03",
+        "R04",
+        "R06",
+        "R08",
+        "R20",
+        "R22",
+        "R25",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S157",
+      "title": "Qualify Avatar behavior in the generated app",
+      "sequence": "RCLD-09",
+      "dependsOn": "S156",
+      "requirements": [
+        "R03",
+        "R20",
+        "R22",
+        "R23",
+        "R25",
+        "R26",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S158",
+      "title": "Freeze Badge props and semantic mapping",
+      "sequence": "RCLD-09",
+      "dependsOn": "S157",
+      "requirements": ["R03", "R20", "R22", "R25", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S159",
+      "title": "Generate Badge source and managed styles",
+      "sequence": "RCLD-09",
+      "dependsOn": "S158",
+      "requirements": [
+        "R02",
+        "R03",
+        "R04",
+        "R06",
+        "R08",
+        "R22",
+        "R25",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S160",
+      "title": "Qualify Badge behavior in the generated app",
+      "sequence": "RCLD-09",
+      "dependsOn": "S159",
+      "requirements": [
+        "R03",
+        "R20",
+        "R22",
+        "R23",
+        "R25",
+        "R26",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S161",
+      "title": "Freeze Card props and semantic mapping",
+      "sequence": "RCLD-09",
+      "dependsOn": "S160",
+      "requirements": ["R03", "R20", "R22", "R25", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S162",
+      "title": "Generate Card source and managed styles",
+      "sequence": "RCLD-09",
+      "dependsOn": "S161",
+      "requirements": [
+        "R02",
+        "R03",
+        "R04",
+        "R06",
+        "R08",
+        "R20",
+        "R22",
+        "R25",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S163",
+      "title": "Qualify Card behavior in the generated app",
+      "sequence": "RCLD-09",
+      "dependsOn": "S162",
+      "requirements": [
+        "R03",
+        "R20",
+        "R22",
+        "R23",
+        "R25",
+        "R26",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S164",
+      "title": "Freeze Alert props and semantic mapping",
+      "sequence": "RCLD-09",
+      "dependsOn": "S163",
+      "requirements": ["R03", "R20", "R22", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S165",
+      "title": "Generate Alert source and managed styles",
+      "sequence": "RCLD-09",
+      "dependsOn": "S164",
+      "requirements": [
+        "R02",
+        "R03",
+        "R04",
+        "R06",
+        "R08",
+        "R20",
+        "R22",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S166",
+      "title": "Qualify Alert behavior in the generated app",
+      "sequence": "RCLD-09",
+      "dependsOn": "S165",
+      "requirements": [
+        "R03",
+        "R20",
+        "R22",
+        "R23",
+        "R26",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S167",
+      "title": "Freeze Status props and semantic mapping",
+      "sequence": "RCLD-09",
+      "dependsOn": "S166",
+      "requirements": ["R03", "R20", "R22", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S168",
+      "title": "Generate Status source and managed styles",
+      "sequence": "RCLD-09",
+      "dependsOn": "S167",
+      "requirements": [
+        "R02",
+        "R03",
+        "R04",
+        "R06",
+        "R08",
+        "R20",
+        "R22",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S169",
+      "title": "Qualify Status behavior in the generated app",
+      "sequence": "RCLD-09",
+      "dependsOn": "S168",
+      "requirements": [
+        "R03",
+        "R20",
+        "R22",
+        "R23",
+        "R26",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S170",
+      "title": "Freeze Progress props and semantic mapping",
+      "sequence": "RCLD-09",
+      "dependsOn": "S169",
+      "requirements": ["R03", "R20", "R22", "R25", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S171",
+      "title": "Generate Progress source and managed styles",
+      "sequence": "RCLD-09",
+      "dependsOn": "S170",
+      "requirements": [
+        "R02",
+        "R03",
+        "R04",
+        "R06",
+        "R08",
+        "R20",
+        "R22",
+        "R25",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S172",
+      "title": "Qualify Progress behavior in the generated app",
+      "sequence": "RCLD-09",
+      "dependsOn": "S171",
+      "requirements": [
+        "R03",
+        "R20",
+        "R22",
+        "R23",
+        "R25",
+        "R26",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S173",
+      "title": "Freeze Separator props and semantic mapping",
+      "sequence": "RCLD-09",
+      "dependsOn": "S172",
+      "requirements": ["R03", "R20", "R22", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S174",
+      "title": "Generate Separator source and managed styles",
+      "sequence": "RCLD-09",
+      "dependsOn": "S173",
+      "requirements": [
+        "R02",
+        "R03",
+        "R04",
+        "R06",
+        "R08",
+        "R20",
+        "R22",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S175",
+      "title": "Qualify Separator behavior in the generated app",
+      "sequence": "RCLD-09",
+      "dependsOn": "S174",
+      "requirements": [
+        "R03",
+        "R20",
+        "R22",
+        "R23",
+        "R26",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S176",
+      "title": "Freeze Skeleton props and semantic mapping",
+      "sequence": "RCLD-09",
+      "dependsOn": "S175",
+      "requirements": ["R03", "R20", "R22", "R25", "R26", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S177",
+      "title": "Generate Skeleton source and managed styles",
+      "sequence": "RCLD-09",
+      "dependsOn": "S176",
+      "requirements": [
+        "R02",
+        "R03",
+        "R04",
+        "R06",
+        "R08",
+        "R22",
+        "R25",
+        "R26",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S178",
+      "title": "Qualify Skeleton behavior in the generated app",
+      "sequence": "RCLD-09",
+      "dependsOn": "S177",
+      "requirements": [
+        "R03",
+        "R20",
+        "R22",
+        "R23",
+        "R25",
+        "R26",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S179",
+      "title": "Resolve identity parity using pinned Svelte and Bits mechanisms",
+      "sequence": "RCLD-09",
+      "dependsOn": "S178",
+      "requirements": ["R03", "R21", "R26", "R28", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S180",
+      "title": "Qualify cross-request and multi-instance identity",
+      "sequence": "RCLD-09",
+      "dependsOn": "S179",
+      "requirements": ["R21", "R22", "R28", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S181",
+      "title": "Audit complete reference-catalog coverage",
+      "sequence": "RCLD-09",
+      "dependsOn": "S180",
+      "requirements": ["R06", "R26", "R27", "R28", "R31", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S182",
+      "title": "Audit public exports and consumer dependency direction",
+      "sequence": "RCLD-10",
+      "dependsOn": "S181",
+      "requirements": ["R01", "R02", "R06", "R20", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S183",
+      "title": "Qualify cross-family bindings, refs, and snippet forwarding",
+      "sequence": "RCLD-10",
+      "dependsOn": "S182",
+      "requirements": ["R20", "R22", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S184",
+      "title": "Qualify combined native forms and reset behavior",
+      "sequence": "RCLD-10",
+      "dependsOn": "S183",
+      "requirements": ["R03", "R20", "R22", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S185",
+      "title": "Qualify nested overlay interactions across families",
+      "sequence": "RCLD-10",
+      "dependsOn": "S184",
+      "requirements": ["R03", "R20", "R22", "R27", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S186",
+      "title": "Audit complete CSS property and selector coverage",
+      "sequence": "RCLD-10",
+      "dependsOn": "S185",
+      "requirements": ["R04", "R07", "R25", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S187",
+      "title": "Qualify catalog-wide themes and portal changes",
+      "sequence": "RCLD-10",
+      "dependsOn": "S186",
+      "requirements": ["R17", "R23", "R24", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S188",
+      "title": "Qualify directional, motion, and accessibility state coverage",
+      "sequence": "RCLD-10",
+      "dependsOn": "S187",
+      "requirements": ["R22", "R24", "R25", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S189",
+      "title": "Qualify full-catalog SSR and hydration",
+      "sequence": "RCLD-10",
+      "dependsOn": "S188",
+      "requirements": ["R20", "R21", "R28", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S190",
+      "title": "Qualify supported custom-layout and workspace installs",
+      "sequence": "RCLD-10",
+      "dependsOn": "S189",
+      "requirements": ["R05", "R09", "R16", "R17", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S191",
+      "title": "Qualify full-catalog retirement and re-add workflows",
+      "sequence": "RCLD-10",
+      "dependsOn": "S190",
+      "requirements": ["R11", "R13", "R17", "R18", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S192",
+      "title": "Qualify real component update cohorts",
+      "sequence": "RCLD-10",
+      "dependsOn": "S191",
+      "requirements": ["R12", "R13", "R14", "R15", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S193",
+      "title": "Qualify filesystem behavior on supported operating systems",
+      "sequence": "RCLD-10",
+      "dependsOn": "S192",
+      "requirements": ["R16", "R24", "R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S194",
+      "title": "Prove installed CLI independence from authoring source",
+      "sequence": "RCLD-11",
+      "dependsOn": "S193",
+      "requirements": ["R01", "R08", "R29", "R30", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S195",
+      "title": "Qualify a consumer generated by the installed tarball",
+      "sequence": "RCLD-11",
+      "dependsOn": "S194",
+      "requirements": [
+        "R02",
+        "R04",
+        "R10",
+        "R13",
+        "R21",
+        "R29",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S196",
+      "title": "Verify advertised compatibility and release metadata",
+      "sequence": "RCLD-11",
+      "dependsOn": "S195",
+      "requirements": ["R01", "R08", "R10", "R12", "R24", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S197",
+      "title": "Document install, customization, and upgrade operations",
+      "sequence": "RCLD-11",
+      "dependsOn": "S196",
+      "requirements": [
+        "R02",
+        "R09",
+        "R10",
+        "R13",
+        "R18",
+        "R19",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S198",
+      "title": "Document and exercise recovery procedures",
+      "sequence": "RCLD-11",
+      "dependsOn": "S197",
+      "requirements": ["R09", "R13", "R16", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S199",
+      "title": "Add documented compositional examples without new primitives",
+      "sequence": "RCLD-11",
+      "dependsOn": "S198",
+      "requirements": ["R02", "R03", "R22", "R28", "R31", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S200",
+      "title": "Reconcile agent instructions and test traceability",
+      "sequence": "RCLD-11",
+      "dependsOn": "S199",
+      "requirements": ["R29", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S201",
+      "title": "Run the final code-health and cumulative regression lane",
+      "sequence": "RCLD-11",
+      "dependsOn": "S200",
+      "requirements": [
+        "R08",
+        "R16",
+        "R20",
+        "R21",
+        "R22",
+        "R29",
+        "R30",
+        "R32",
+        "R33",
+        "R34"
+      ],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S202",
+      "title": "Record the gated extension scope without inventing APIs",
+      "sequence": "RCLD-11",
+      "dependsOn": "S201",
+      "requirements": ["R31", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    },
+    {
+      "id": "S203",
+      "title": "Freeze final implementation evidence and delivery status",
+      "sequence": "RCLD-11",
+      "dependsOn": "S202",
+      "requirements": ["R01", "R29", "R31", "R32", "R33", "R34"],
+      "status": "not_started",
+      "completion": null
+    }
+  ]
+}

@@ -1,0 +1,372 @@
+/**
+ * Deterministic, lifecycle-independent contract fixtures for the S002 validator
+ * regression suite.
+ *
+ * A fixture is a small allowlisted copy of the adopted contract documents plus
+ * a *fixture-owned* scenario: the checkpoint ledger, sequence states, summary
+ * counts and synthetic `checkpoint-evidence` records are normalised to an
+ * explicit lifecycle state, and completion hashes come only from the fixture's
+ * own temporary Git history. The live checkout's progress, its Git objects and
+ * its real checkpoint commits are never imported. Future product build output is
+ * never copied because every fixture input is named in `FIXTURE_FILES`.
+ *
+ * This module is shared by `check-contracts.test.mjs` and by the isolated
+ * advanced-state rehearsal script so both use exactly the same construction.
+ */
+import { spawnSync } from "node:child_process";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import {
+  ADOPTED_CONTRACTS,
+  EXPECTED_SEQUENCES,
+  EXPECTED_STEP_IDS,
+} from "./check-contracts.mjs";
+
+export const PLAN_REL = "implementation/COMMIT_SEQUENCE.md";
+export const PLAN_JSON_REL = "implementation/COMMIT_SEQUENCE.json";
+export const SOURCES_JSON_REL = "references/SOURCES.json";
+
+/**
+ * The complete allowlist of fixture inputs: the 27 approved contracts, the
+ * governing plan, both derived projections and the package manifest. Nothing
+ * else is copied, so no authoring checkout state or future build artifact can
+ * leak into a fixture.
+ */
+export const FIXTURE_FILES = [
+  ...ADOPTED_CONTRACTS,
+  PLAN_REL,
+  PLAN_JSON_REL,
+  SOURCES_JSON_REL,
+  "package.json",
+];
+
+const SEQUENCE_BY_STEP = new Map();
+for (const seq of EXPECTED_SEQUENCES) {
+  const start = EXPECTED_STEP_IDS.indexOf(seq.first);
+  for (let i = 0; i < seq.count; i++) {
+    SEQUENCE_BY_STEP.set(EXPECTED_STEP_IDS[start + i], seq.id);
+  }
+}
+
+/**
+ * Fixed, fixture-owned lifecycle scenarios. `s001` is the canonical negative
+ * baseline (one complete checkpoint plus the active candidate); `two` and
+ * `boundary` are positive states used to prove the suite is independent of how
+ * far the real repository has progressed.
+ */
+export const SCENARIOS = {
+  s001: { complete: ["S001"], candidates: ["S002"], accepted: [] },
+  two: { complete: ["S001", "S002"], candidates: [], accepted: [] },
+  boundary: {
+    complete: EXPECTED_STEP_IDS.slice(0, 13),
+    candidates: ["S014"],
+    accepted: [],
+  },
+};
+
+export const GIT_ENV = {
+  ...process.env,
+  GIT_AUTHOR_NAME: "Fixture Author",
+  GIT_AUTHOR_EMAIL: "fixture@example.invalid",
+  GIT_COMMITTER_NAME: "Fixture Author",
+  GIT_COMMITTER_EMAIL: "fixture@example.invalid",
+  GIT_AUTHOR_DATE: "2001-01-01T00:00:00Z",
+  GIT_COMMITTER_DATE: "2001-01-01T00:00:00Z",
+};
+
+export function git(dir, ...args) {
+  const result = spawnSync(
+    "git",
+    [
+      "-C",
+      dir,
+      "-c",
+      "commit.gpgsign=false",
+      "-c",
+      "tag.gpgsign=false",
+      ...args,
+    ],
+    { encoding: "utf8", env: GIT_ENV },
+  );
+  if (result.status !== 0) {
+    throw new Error(
+      `git ${args.join(" ")} failed (${result.status}): ${result.stderr}`,
+    );
+  }
+  return result.stdout ?? "";
+}
+
+export function reportRel(id) {
+  return `implementation/evidence/${id}_REPORT.md`;
+}
+
+export function reviewRel(id) {
+  return `implementation/evidence/${id}_REVIEW.md`;
+}
+
+export function evidenceText(id, kind, commit, disposition) {
+  const record = JSON.stringify({
+    schemaVersion: 1,
+    checkpoint: id,
+    kind,
+    commit,
+    disposition,
+  });
+  return `# ${id} ${kind} evidence (fixture)\n\n<!-- checkpoint-evidence\n${record}\n-->\n`;
+}
+
+export function writeEvidence(root, id, kind, { commit = null, disposition }) {
+  const rel = kind === "report" ? reportRel(id) : reviewRel(id);
+  const abs = path.join(root, rel);
+  mkdirSync(path.dirname(abs), { recursive: true });
+  writeFileSync(abs, evidenceText(id, kind, commit, disposition));
+}
+
+export function writeEvidencePair(
+  root,
+  id,
+  { commit = null, report = "candidate", review = "changes_requested" } = {},
+) {
+  writeEvidence(root, id, "report", { commit, disposition: report });
+  writeEvidence(root, id, "review", { commit, disposition: review });
+}
+
+export function setLedgerCell(root, id, index, value) {
+  const abs = path.join(root, PLAN_REL);
+  const lines = readFileSync(abs, "utf8").split("\n");
+  const rowIndex = lines.findIndex((line) => line.startsWith(`| ${id} |`));
+  if (rowIndex === -1) throw new Error(`ledger row ${id} not found`);
+  const cells = lines[rowIndex].split("|");
+  cells[index] = ` ${value} `;
+  lines[rowIndex] = cells.join("|");
+  writeFileSync(abs, lines.join("\n"));
+}
+
+export function setSequenceCell(root, seqId, index, value) {
+  const abs = path.join(root, PLAN_REL);
+  const lines = readFileSync(abs, "utf8").split("\n");
+  const rowIndex = lines.findIndex((line) => line.includes(`[${seqId}]`));
+  if (rowIndex === -1) throw new Error(`sequence row ${seqId} not found`);
+  const cells = lines[rowIndex].split("|");
+  cells[index] = ` ${value} `;
+  lines[rowIndex] = cells.join("|");
+  writeFileSync(abs, lines.join("\n"));
+}
+
+export function deriveSequenceState(seqId, statuses) {
+  const ids = EXPECTED_STEP_IDS.filter(
+    (id) => SEQUENCE_BY_STEP.get(id) === seqId,
+  );
+  const states = ids.map((id) => statuses.get(id));
+  if (states.every((state) => state === "complete")) return "complete";
+  if (states.every((state) => state === "not_started")) return "not_started";
+  return "in_progress";
+}
+
+/**
+ * Recompute and rewrite the derived structural state (sequence map states,
+ * sequence body states and both summary count lines) from `statuses` without
+ * touching the checkpoint ledger cells. Used after a scenario transition so a
+ * status change is reflected consistently across the whole plan.
+ */
+export function writeDerivedState(root, statuses) {
+  const abs = path.join(root, PLAN_REL);
+  let text = readFileSync(abs, "utf8");
+
+  const mapLines = text.split("\n");
+  for (let i = 0; i < mapLines.length; i++) {
+    const m = mapLines[i].match(/^\|\s*\[(RCLD-\d{2})\]\(#/);
+    if (!m) continue;
+    const seq = EXPECTED_SEQUENCES.find((entry) => entry.id === m[1]);
+    if (!seq) continue;
+    const cells = mapLines[i].split("|");
+    cells[4] = ` ${deriveSequenceState(seq.id, statuses)} `;
+    mapLines[i] = cells.join("|");
+  }
+  text = mapLines.join("\n");
+
+  text = text.replace(
+    /^(Checkpoints: (S\d{3})[–-](S\d{3})\. State: )([a-z_]+)(\.)/gm,
+    (whole, pre, first, last, _state, post) => {
+      const seq = EXPECTED_SEQUENCES.find(
+        (entry) => entry.first === first && entry.last === last,
+      );
+      if (!seq) return whole;
+      return `${pre}${deriveSequenceState(seq.id, statuses)}${post}`;
+    },
+  );
+
+  const completeCount = EXPECTED_STEP_IDS.filter(
+    (id) => statuses.get(id) === "complete",
+  ).length;
+  const completeSequences = EXPECTED_SEQUENCES.filter(
+    (seq) => deriveSequenceState(seq.id, statuses) === "complete",
+  ).length;
+  text = text.replace(
+    /(Completed implementation checkpoints:\s*\*\*\s*)\d+(\s*\/\s*203\s*\*\*\.\s*Remaining:\s*\*\*\s*)\d+(\s*\/\s*203)/,
+    (_m, a, b, c) => `${a}${completeCount}${b}${203 - completeCount}${c}`,
+  );
+  text = text.replace(
+    /(Completed RCLD sequences:\s*\*\*\s*)\d+(\s*\/\s*11\s*\*\*\.\s*Remaining:\s*\*\*\s*)\d+(\s*\/\s*11)/,
+    (_m, a, b, c) =>
+      `${a}${completeSequences}${b}${11 - completeSequences}${c}`,
+  );
+  writeFileSync(abs, text);
+}
+
+/** Read the current per-checkpoint statuses from the plan ledger. */
+export function readLedgerStatuses(root) {
+  const statuses = new Map();
+  const lines = readFileSync(path.join(root, PLAN_REL), "utf8").split("\n");
+  for (const line of lines) {
+    const m = line.match(/^\|\s*(S\d{3})\s*\|/);
+    if (!m) continue;
+    const cells = line.split("|");
+    if (!/^S\d{3}$/.test(cells[1].trim())) continue;
+    statuses.set(cells[1].trim(), cells[4].trim());
+  }
+  return statuses;
+}
+
+/**
+ * Rewrite the whole structural plan to `statuses`: every ledger status cell,
+ * every sequence map state, every sequence body state and both summary count
+ * lines. Complete rows start with a placeholder commit cell that is replaced
+ * after the fixture commit exists.
+ */
+export function normalizePlan(root, statuses) {
+  const abs = path.join(root, PLAN_REL);
+  const lines = readFileSync(abs, "utf8").split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^\|\s*(S\d{3})\s*\|/);
+    if (!m) continue;
+    const cells = lines[i].split("|");
+    if (!/^S\d{3}$/.test(cells[1].trim())) continue;
+    const status = statuses.get(cells[1].trim());
+    if (!status) continue;
+    cells[4] = ` ${status} `;
+    cells[5] = status === "complete" ? " `—` " : " — ";
+    lines[i] = cells.join("|");
+  }
+  writeFileSync(abs, lines.join("\n"));
+  writeDerivedState(root, statuses);
+}
+
+function copyFixtureInputs(sourceRoot, dir) {
+  for (const rel of FIXTURE_FILES) {
+    const src = path.join(sourceRoot, rel);
+    if (!existsSync(src)) {
+      throw new Error(`fixture input is missing: ${rel}`);
+    }
+    const dest = path.join(dir, rel);
+    mkdirSync(path.dirname(dest), { recursive: true });
+    cpSync(src, dest);
+  }
+}
+
+export function runTool(toolPath, root, extraArgs = []) {
+  return spawnSync(process.execPath, [toolPath, "--root", root, ...extraArgs], {
+    encoding: "utf8",
+  });
+}
+
+/**
+ * Build a fixture into a fresh temporary directory. Returns the directory.
+ * The caller owns cleanup. On any construction failure the partial fixture is
+ * removed before the error is re-thrown.
+ */
+export function buildFixture({
+  sourceRoot,
+  toolPath,
+  scenario = "s001",
+  git: useGit = true,
+  statusOverrides = null,
+} = {}) {
+  const spec = SCENARIOS[scenario];
+  if (!spec) throw new Error(`unknown fixture scenario: ${scenario}`);
+  const dir = mkdtempSync(path.join(os.tmpdir(), "suik-contracts-"));
+  try {
+    copyFixtureInputs(sourceRoot, dir);
+    const statuses = new Map(
+      EXPECTED_STEP_IDS.map((id) => [id, "not_started"]),
+    );
+    for (const id of spec.complete) statuses.set(id, "complete");
+    for (const id of spec.accepted) statuses.set(id, "verified_uncommitted");
+    for (const id of spec.candidates) statuses.set(id, "in_progress");
+    if (statusOverrides) {
+      for (const [id, status] of statusOverrides) statuses.set(id, status);
+    }
+    normalizePlan(dir, statuses);
+    for (const id of spec.candidates) {
+      writeEvidencePair(dir, id, {
+        commit: null,
+        report: "candidate",
+        review: "changes_requested",
+      });
+    }
+    for (const id of spec.accepted) {
+      writeEvidencePair(dir, id, {
+        commit: null,
+        report: "implemented",
+        review: "accepted",
+      });
+    }
+
+    if (useGit) {
+      git(dir, "init", "-q", "-b", "master");
+      git(dir, "add", "-A");
+      git(dir, "commit", "-q", "-m", "fixture: base scenario");
+      for (const id of spec.complete) {
+        // The evidence file is committed before its own hash is recorded, so
+        // the recorded hash is a genuine post-commit value that contains both
+        // evidence paths.
+        writeEvidencePair(dir, id, {
+          commit: null,
+          report: "implemented",
+          review: "accepted",
+        });
+        git(dir, "add", "-A");
+        git(dir, "commit", "-q", "-m", `fixture: complete ${id}`);
+        const hash = git(dir, "rev-parse", "HEAD").trim();
+        writeEvidencePair(dir, id, {
+          commit: hash,
+          report: "implemented",
+          review: "accepted",
+        });
+        setLedgerCell(dir, id, 5, hash);
+      }
+    } else {
+      // No Git: completions cannot resolve. Write the records with null hashes
+      // so a caller can point a fabricated ledger hash at an absent repository.
+      for (const id of spec.complete) {
+        writeEvidencePair(dir, id, {
+          commit: null,
+          report: "implemented",
+          review: "accepted",
+        });
+      }
+    }
+
+    const generated = runTool(toolPath, dir, ["--generate"]);
+    if (useGit && generated.status !== 0) {
+      throw new Error(
+        `valid fixture scenario "${scenario}" failed validation ` +
+          `(exit ${generated.status}):\n${generated.stdout}${generated.stderr}`,
+      );
+    }
+    return dir;
+  } catch (error) {
+    rmSync(dir, { recursive: true, force: true });
+    throw error;
+  }
+}

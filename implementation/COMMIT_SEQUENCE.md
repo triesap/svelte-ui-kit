@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: approved plan; S001 independently accepted, awaiting commit. Updated 2026-09-28.
+Status: approved plan; S002 accepted by Codex review 4 and awaiting its authorized commit; S003 dispatch prepared below. Updated 2026-09-29.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -16,14 +16,15 @@ Keep all repository content standalone and repository-relative. Record this targ
 
 ## Execution state and resume procedure
 
-- Governing document: `implementation/COMMIT_SEQUENCE.md` (this file).
-- Active implementation checkpoint: **S001** in **RCLD-01** — independently reviewed and verified; awaiting commit.
+- Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
+- Active implementation checkpoint: **S002** in **RCLD-01** — verified_uncommitted; Codex review 4 accepts all S002 corrections and the 83-test candidate. Codex will commit it and record real completion evidence before dispatching S003.
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
-- Completed implementation checkpoints: **0 / 203**. Remaining: **203 / 203**.
+- Completed implementation checkpoints: **1 / 203**. Remaining: **202 / 203**.
 - Completed RCLD sequences: **0 / 11**. Remaining: **11 / 11**.
-- Last target commit observed: `0616306`, branch `master`; the scaffold was clean before this planning document was added.
+- Last safe target commit: `bb5010e0605b3d0917a9037eafef69ed90d3b36c`, branch `master` (S001).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
-- No implementation deviations have been applied. S001 is accepted; its commit is the remaining predecessor gate for S002.
+- S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
+- No checkpoint has been skipped or reordered. S001 is complete. S002 is accepted and its checkpoint commit is authorized under the delegated execution workflow. S003 remains locked until that commit and real completion bookkeeping exist. Earlier S002 correction dispatches below are historical.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. Every checkpoint after S001 depends on the reviewed, verified, committed predecessor; milestone boundaries never waive that dependency.
 
@@ -46,13 +47,387 @@ These decisions supplement S002 without changing product requirements or checkpo
 7. Run format, contract validation and its focused tests; maintain the existing conditional reference Rust guard and document all skips. Report full commands, cwd identity, runtime selection, exit codes and log locations. Preserve original command exit statuses when capturing logs; do not infer success from a trailing shell command or truncated output. Record nested subprocess test executions separately from top-level totals.
 8. Complete the full unblocked S002 scope, self-review the whole diff, update only S002 candidate state and its report, and return unstaged and uncommitted to Codex. Do not start S003, change completion evidence for later checkpoints, create a new issue database, or modify external coordination state. Codex maintains coordination separately and advances the predecessor ledger from actual accepted commits. No human release test is due at this documentation/tooling checkpoint.
 
+## Codex correction dispatch — S002 review 1
+
+This dispatch supersedes conflicting candidate-status language in the initial
+S002 report. Complete this correction within S002; do not create a successor
+checkpoint or start dependency selection. Codex reviewed the submitted source,
+all adopted documents, the task log and independent disposable-tree mutations.
+See `implementation/evidence/S002_REVIEW.md` for findings and reproduction cases.
+
+### Decisions resolved by Codex
+
+1. **Status and ownership.** Pi reports candidates as `in_progress` while
+   awaiting review. Codex alone assigns `verified_uncommitted` after independent
+   acceptance and `complete` after the checkpoint commit. This S002 candidate
+   is `in_progress`, with changes requested, not accepted or externally blocked.
+   Consequential decisions return to Codex; ordinary implementation choices
+   within this dispatch remain Pi's responsibility.
+2. **Evidence paths and metadata.** Keep
+   `implementation/evidence/<ID>_REPORT.md` and `<ID>_REVIEW.md`; no new ledger
+   column or issue database is needed. Completion requires exactly one
+   `checkpoint-evidence` HTML comment in each record, containing one JSON object
+   with exactly `schemaVersion`, `checkpoint`, `kind`, `commit`, `disposition`.
+   Schema version is `1`; checkpoint equals the ledger ID; kind is `report` or
+   `review`; accepted completion uses a full lowercase 40-digit Git hash shared
+   by both records, report disposition `implemented`, and review disposition
+   `accepted`. Noncomplete candidates may use null commit and report
+   `candidate` or review `changes_requested`; they confer no completion.
+   Codex owns accepted review metadata and records actual hashes after commits,
+   carrying those factual updates with the next checkpoint. S001 metadata is
+   now supplied by Codex. Pi must never manufacture acceptance.
+3. **Git verification.** Resolve the ledger hash against the actual repository,
+   require it to match both evidence records, be reachable from HEAD, and contain
+   both evidence paths. The metadata may be recorded in the working tree after
+   the commit; do not demand its self-referential hash existed inside that commit.
+   Missing Git/history, empty/mismatched/rejected evidence, and an unrelated
+   resolvable object are errors for a completed checkpoint, not silent skips.
+   Use self-contained temporary Git histories for regression fixtures; do not
+   depend on the author's checkout or change its Git configuration/history.
+4. **Projection and source inventory.** Keep schemaVersion 1 and the existing
+   JSON field names/shape. Document each field's source in VERIFICATION.md.
+   Keep the Markdown source-inventory table as authority; SOURCES.json remains
+   its deterministic projection. No independent JSON edits. Generation is an
+   explicit write; default validation must remain read-only.
+5. **Catalog clarity.** The approved Field/Menu/Avatar dispositions now also
+   live in `specs/COMPONENT_CATALOG.md#approved-source-parity-clarifications`.
+   Reconcile its three inventory rows with that normative section and link the
+   plan's historical review dispositions to it. Preserve the original evidence
+   and scheduled family gates; do not add component APIs at S002.
+
+### Required corrections and acceptance
+
+- **S002-R1 — Completion evidence.** Implement decisions 2–3. Reject blank
+  reviews, explicit rejection, wrong checkpoint/kind/hash, duplicate/malformed
+  metadata, fabricated hashes with no Git, unreachable commits and missing
+  committed evidence paths. Positive fixtures must prove the legitimate
+  post-commit-hash workflow. A matching substring is not acceptance evidence.
+- **S002-R2 — Plan consistency.** Validate ledger IDs in exact S001–S203 order,
+  fixed approved RCLD-01–RCLD-11 IDs/ranges, each step's sequence membership,
+  sequence predecessor links, one nonempty scope/green/verification gate per
+  sequence, and agreement between map and sequence-body ranges/state. Derive
+  sequence state from its ledger: all not_started means not_started; all
+  complete means complete; otherwise in_progress. Check the top-level completed
+  and remaining checkpoint/sequence counts against the ledger. Preserve all
+  203 full definitions and R01–R34 / AC01–AC22; parse definition IDs outside
+  examples and reject extra/unknown IDs. Do not let regeneration legitimize an
+  invalid plan. `not_applicable` must fail closed without a separately approved
+  evidence-backed deviation; none exists, and this dispatch grants no skipping.
+- **S002-R3 — Links and anchors.** Missing ordinary local links are errors
+  regardless of `src/`, `tests/` or similar prefixes. If a future deliverable
+  truly needs a clickable link, require an explicit same-line annotation
+  `<!-- future-deliverable: SNNN -->` naming an existing noncomplete checkpoint;
+  only that annotated missing target may warn. Prefer inline-code paths for
+  illustrative future files. Support inline and reference-style Markdown links,
+  code-formatted link labels, explicit anchors and heading anchors. Reject
+  duplicate explicit IDs; do not invent suffixed HTML IDs. Respect fence marker
+  length and code spans so examples neither create links/IDs nor hide real ones.
+  Add focused parser cases, including nested fences and duplicate headings.
+- **S002-R4 — Verification quality.** Add regressions for every independently
+  reproduced gap, including default CLI nonzero exits. Snapshot entries with
+  lstat: directories (including empty/hidden), file bytes/modes, symlink targets
+  and entry kinds; ignore access times, not writes. Prove successful and failing
+  default validation leave the full temporary tree unchanged. Exercise explicit
+  projection generation, repeated-byte determinism and subsequent validation.
+  Keep tests independent of a missing-Git bypass; retain the original useful
+  negative cases. No new dependencies or general S005 harness.
+- **S002-R5 — Documentation and report accuracy.** Align AGENTS.md,
+  SCOPE_AND_ASSUMPTIONS.md, OPEN_QUESTIONS.md, VERIFICATION.md and report guidance
+  with Codex's authority and these resolved choices. Keep the report's historical
+  initial results, append corrections/retests, and distinguish source comparison
+  of all definition fields from parseDefinitions' title/anchor subset. Correct
+  shortened/inconsistent extraction digest labels and list all four ignored
+  reference tests precisely. Mark obsolete planning-only observations as
+  historical; do not claim the candidate is accepted while review is outstanding.
+
+Use a fresh Pi session for this correction dispatch. Preserve the entire
+uncommitted S002 candidate and all Codex governance changes. Execute every
+unblocked correction, run the target lanes and the existing conditional Rust
+guard before returning, and leave all work unstaged/uncommitted for Codex.
+No product implementation, S003 work, remote action or publication is authorized.
+
+## Codex correction dispatch — S002 review 2
+
+This is the current dispatch and supersedes conflicting review-1 instructions.
+It stays within S002; no product requirement, dependency selection, checkpoint
+order or later implementation is added. The 46 submitted tests and the nine
+original invalid mutations were independently rerun successfully. Review 2
+nevertheless reproduced failures at the next legitimate lifecycle state and
+additional false acceptance of malformed evidence/example definitions. See the
+review-2 section in `implementation/evidence/S002_REVIEW.md`.
+
+### S002-R6 — Make regression fixtures independent of live checkpoint progress
+
+The current fixture copies the live plan/evidence and substitutes only S001's
+hash. A valid repository with S001 and S002 complete passes the validator but
+fails both positive fixture tests because S002's commit is absent in their new
+Git histories. Hard-coded current counts and the S003-premature-advancement
+mutation also assume the checkout never advances.
+
+Codex chooses explicit fixture-owned lifecycle states. Build a small allowlisted
+contract fixture from the approved documents, normalize its entire ledger,
+sequence states, summaries and evidence to a deliberate test scenario, and
+create only its own temporary Git history. Keep canonical negative cases on a
+fixed one-complete-checkpoint scenario; create separate two-complete and
+sequence-boundary positive scenarios. Do not copy or import the operator's Git
+objects, hard-code a real accepted hash, or recursively copy future product
+build artifacts just to test contracts. The real checkout remains covered by
+`check:contracts` and a read-only structural comparison.
+
+Check fixture-generation exit codes instead of silently discarding failures;
+an intentionally invalid scenario may explicitly expect failure. Clean temporary
+fixtures even if construction fails. Retain the useful lstat purity and CLI
+exit-code assertions.
+
+Acceptance includes an isolated end-to-end rehearsal: copy the candidate tooling
+and required documents into a temporary repository, establish at least two
+legitimate completed checkpoints with post-commit hash recording, then run the
+entire contract test suite from that advanced repository. Also exercise a later
+sequence boundary. Validation and tests must pass without importing real
+checkpoint commits or mutating the target. Temporary test commits are permitted;
+target/reference/parent commits remain prohibited for Pi.
+
+### S002-R7 — Validate evidence throughout the acceptance lifecycle
+
+The review-1 dispatch did not explicitly define accepted-but-uncommitted evidence.
+Codex resolves that ambiguity now. Keep schema version 1 and the same five
+metadata keys and projection shape. The authoritative state rules are:
+
+| Ledger status                     | Report disposition | Review disposition | Commit field         | Evidence requirement                                                                            |
+| --------------------------------- | ------------------ | ------------------ | -------------------- | ----------------------------------------------------------------------------------------------- |
+| not_started, in_progress, blocked | candidate          | changes_requested  | null                 | Records optional; every present record must be structurally valid and match its checkpoint/kind |
+| verified_uncommitted              | implemented        | accepted           | null                 | Both records required; only Codex may assign this state/acceptance                              |
+| complete                          | implemented        | accepted           | Matching full hashes | Both required, with the existing Git resolution, ancestry and committed-path checks             |
+
+An optional absent record is different from a malformed present record. Reject
+malformed JSON, non-object payloads and duplicate records for every state;
+never discard parser problems merely because parsing produced no record.
+Unapproved `not_applicable` remains an error; no deviation or new N/A branch is
+authorized. `steps[].completion` stays null until `complete`. No successor may
+start from `verified_uncommitted`.
+
+Add positive and negative state-transition tests: candidate to Codex acceptance
+with null hashes, accepted precommit to real commit plus post-commit hashes,
+and successor eligibility only afterward. These are synthetic fixture states;
+Pi must not accept the actual S002 candidate or edit Codex's real review verdict.
+Update VERIFICATION.md, report guidance and scope/ownership documents to use
+this same matrix without competing prose rules.
+
+### S002-R8 — Count real definitions and preserve structural multiplicity
+
+The validator currently accepts the full R01–R34 table or AC01–AC22 definitions
+inside fenced examples, and silently overwrites duplicate RCLD body blocks in
+a Map. Apply consistent outside-fence parsing to all structural ID sources,
+including requirements, acceptance criteria, sequence titles/bodies, source
+inventory and summary counts. Literal fenced examples must neither satisfy
+missing definitions nor create duplicate/unknown-ID failures. Evidence comments
+inside fenced examples must not count as live checkpoint records.
+
+Retain sequence-body multiplicity until validation: require exactly one body
+for each approved sequence and reject duplicate/unknown bodies before indexing.
+Keep fixed ranges, order, gate and state checks. Add positive example fixtures
+and negative moved-into-example/duplicate-body fixtures; regenerate projections
+in the negative cases so the intended structural diagnostic is exercised.
+Do not implement an unrelated general Markdown framework or add dependencies.
+
+### Return boundary
+
+Use a fresh Pi session for all three corrections. Preserve the completed
+review-1 fixes and the whole existing candidate. Reconcile the report with exact
+test outcomes and distinguish the untracked candidate projection from a committed
+artifact. Run all target lanes, the advanced-state rehearsal and the existing
+conditional reference Rust guard. Return S002 `in_progress`, unstaged and
+uncommitted, with no S003 work and no remote or coordination mutation. Codex has
+resolved the remaining N/A question: retain fail-closed behavior until a real
+approved deviation exists. No owner decision or human release test is needed.
+
+## Codex correction dispatch — S002 review 3
+
+This is the current dispatch and supersedes conflicting earlier dispatches.
+S002 remains `in_progress`, unaccepted and uncommitted. Preserve the existing
+candidate, all 70 useful regressions, fixture-owned histories and the resolved
+state matrix. No checkpoint, product scope or dependency selection is added.
+
+### S002-R9 — Parse live evidence boundaries before extracting JSON
+
+The current `parseEvidenceRecords` regex first consumes comments across the raw
+document and only afterward filters matches by whether their opening is fenced.
+It also counts only comments with a closing delimiter. Codex reproduced:
+
+1. Removing the closing delimiter from a present S002 candidate record gives
+   zero errors: malformed present evidence is treated as optional absence.
+2. Appending an unterminated second record to a valid completed S001 review
+   gives zero errors: the extra malformed live record is ignored.
+3. Placing a fenced, unterminated example comment before a valid completed
+   review makes the valid live record disappear and validation fails. The raw
+   regex consumes through the live record's closing delimiter before discarding
+   the match whose opening was fenced.
+
+Codex's interpretation is explicit: a live checkpoint-evidence opening marker
+establishes a present record attempt, even without a terminator. Every live
+attempt must be counted and validated; malformed or unterminated attempts must
+produce a diagnostic in every ledger state. Fenced literal content contributes
+neither delimiters nor records and cannot consume, terminate or hide live
+metadata. Keep the existing exact five-key schema and lifecycle matrix.
+
+Implement a bounded scanner or equivalent pre-masking approach that preserves
+these boundaries. Do not build a general Markdown parser, add dependencies or
+relax malformed/duplicate validation. Add focused parser and CLI regressions
+for all three reproductions, including missing delimiters in optional and
+required states, an unterminated extra attempt after a valid record, and an
+unfinished fenced example before a valid record. Preserve a clean optional
+absence case and completed literal-example cases. Include a negative case
+where a fenced closing delimiter must not repair a live malformed attempt.
+
+Run contract validation, the entire contract suite, formatting, diff health and
+both isolated advanced-state full-suite rehearsals. Preserve complete-tree
+read-only behavior and temporary cleanup. Reconcile report wording with the
+actual comparison: the ordinary validator checks structural IDs and coverage,
+not byte/full-body equivalence of all 203 definitions. Codex's independent
+full-definition comparison supplies that separate preservation evidence.
+
+### Reference guard and reporting decision
+
+Use the existing authorized reference worktree, verified clean at
+`a10fbf06334f4648f5755e05a7147414e4e5fc98`, for the conditional Rust guard. The
+previous attempted run selected a different dependency-cache checkout. No new
+copy or relaxed machine policy is necessary. The operator dispatch supplies the
+local reference path; keep such paths and private tooling out of public files.
+Codex's review-3 evidence records the fresh guard results separately from Pi's
+previous blocked attempt. No reference source changes are authorized.
+
+Codex's fresh fmt/check/test guard passed for this same S002 checkpoint: 562
+top-level test passes plus 16 nested subprocess passes, zero failures and four
+explicitly ignored tests. For the next S002 parser-only correction pass, verify
+the identical reference hash and clean state, then cite this same-checkpoint
+reviewer evidence without claiming a fresh Pi run. Repetition is required if
+the reference/Rust scope changes or the evidence is invalidated. This bounded
+reuse does not waive the existing guard for later checkpoints.
+
+Codex has reconciled the public candidate report to remove private workstation
+tooling details; keep exact operator commands and log locations in the external
+return/coordination record. Append the new correction results without changing
+Codex's actual review disposition or claiming that historical checks were fresh.
+
+### Return boundary
+
+Use a fresh Pi session for the focused S002-R9 correction and reporting work.
+No owner decision remains unresolved. Return unstaged/uncommitted with S002
+still `in_progress`, report `candidate`, review `changes_requested`, null hashes
+and S003 untouched. Codex independently reviews and accepts before any target
+commit or successor dispatch. No human release test is due at this checkpoint.
+
+## Codex dispatch decisions — S003
+
+This is the next dispatch after the accepted S002 checkpoint is committed and
+its actual hash recorded. Earlier S002 instructions remain historical. Codex
+owns these dependency choices; Pi may implement the complete S003 scope below
+without another approval round. An actual metadata/install incompatibility
+returns to Codex with evidence, not an automatic substitution or weakened peer
+check. S004 and later implementation remain locked until accepted S003 commit.
+
+### Exact approved development baseline
+
+Codex inspected current registry metadata on 2026-09-29. Select these exact
+versions, subject to S003 proving the resolved lock and installation:
+
+| Package/tool                 | Exact version | Role and decision                                                                               |
+| ---------------------------- | ------------- | ----------------------------------------------------------------------------------------------- |
+| Node                         | 24.21.0       | Reproducible LTS development runtime; record in `.node-version`; preserve package engine `>=24` |
+| pnpm                         | 11.22.0       | Preserve existing packageManager and sole lockfile format                                       |
+| prettier                     | 3.9.6         | Preserve existing formatter dependency                                                          |
+| svelte                       | 5.57.1        | Development/compiler baseline; satisfies Bits and plugin peers                                  |
+| @sveltejs/kit                | 2.70.3        | Development baseline for the scheduled consumer harness                                         |
+| bits-ui                      | 2.19.3        | Development primitive baseline; no kit runtime facade                                           |
+| typescript                   | 6.0.3         | Within Kit's declared TypeScript peer range; do not use current latest 7.0.2                    |
+| vite                         | 8.3.1         | Kit/plugin-compatible development build baseline                                                |
+| @sveltejs/vite-plugin-svelte | 7.3.1         | Requires Svelte ^5.46.4 and Vite ^8.0.0-beta.7 or ^8.0.0                                        |
+| @internationalized/date      | 3.12.4        | Required Bits peer satisfier only; does not authorize deferred date components                  |
+| @types/node                  | 24.19.0       | Node 24 development types; satisfies Vite's optional types peer                                 |
+
+Add the eight newly selected npm packages as exact `devDependencies`, without
+ranges. Preserve `private: true`, ESM, license, product identity and the existing
+four scripts. Do not add a consumer-facing runtime/peer facade to this CLI
+package, change workspace membership, or introduce application auto-install.
+No extra adapter, runner, lint stack, schema library or build framework is
+selected here; those choices belong to their scheduled checkpoints.
+
+Primary evidence: [Node 24.21.0 release](https://nodejs.org/en/blog/release/v24.21.0),
+and the version-specific npm registry metadata for
+[Svelte](https://registry.npmjs.org/svelte/5.57.1),
+[Kit](https://registry.npmjs.org/@sveltejs%2Fkit/2.70.3),
+[Bits](https://registry.npmjs.org/bits-ui/2.19.3),
+[TypeScript](https://registry.npmjs.org/typescript/6.0.3),
+[Vite](https://registry.npmjs.org/vite/8.3.1),
+[Svelte plugin](https://registry.npmjs.org/@sveltejs%2Fvite-plugin-svelte/7.3.1),
+[date peer](https://registry.npmjs.org/@internationalized%2Fdate/3.12.4) and
+[Node types](https://registry.npmjs.org/@types%2Fnode/24.19.0).
+Use exact-version metadata in the report; moving latest tags are discovery
+inputs, not reproducible pins.
+
+Kit declares TypeScript `^5.3.3 || ^6.0.0` (optional), Svelte
+`^4.0.0 || ^5.0.0-next.0`, Vite through `^8.0.0`, and the Svelte plugin through
+`^7.0.0`. Bits requires Svelte `^5.33.0` and date `^3.8.1`; its date peer is not
+marked optional in the inspected metadata. The selected plugin requires Node
+`^20.19 || ^22.12 || >=24`; Vite requires `^20.19.0 || >=22.12.0`. These direct
+metadata constraints agree with the selections. Transitive peer and actual
+runtime verification remain S003 work, not already-proven behavior.
+
+### Implementation and verification boundary
+
+1. Recheck exact package metadata, engines, peer ranges and optional-peer flags;
+   record them with dated public sources and commands in
+   `implementation/evidence/COMPATIBILITY.md`. Identify root tool dependencies
+   separately from future generated-consumer requirements. Do not mistake
+   historical Bits source observations for a promise about the selected release.
+2. Add `.node-version`, the approved exact devDependencies and the corresponding
+   pnpm lockfile entries. Keep the root-only workspace entry unchanged. Routine
+   dependency resolution is allowed; unapproved direct packages or version
+   substitutions require Codex. Do not change global tools or package-manager
+   configuration. Do not enable dependency build scripts broadly to bypass a
+   failure; report a genuinely required new script/exception to Codex.
+3. Use the existing pnpm command surface. Record the initial lock-generating
+   install explicitly, then prove a separate
+   `pnpm install --frozen-lockfile --strict-peer-dependencies` succeeds under
+   Node 24.21.0 with engine checking enabled. Confirm the frozen install does not
+   alter package/lock bytes. Inspect all resolved peers rather than relying on
+   optional-peer auto-install or suppressed warnings. Report each missing
+   optional peer and why it is unused; do not install unrelated preprocessors.
+4. Run real package-entry/compiler-version smoke checks supported by package
+   exports. Temporary probes are allowed; no product CLI, consumer scaffold or
+   wrapper API may be implemented ahead of S004/S007–S012. A successful install
+   does not prove rendering, SSR/hydration or component behavior; preserve those
+   later gates. Do not introduce placeholder-green scripts.
+5. Run existing contract validation, full contract tests, formatting and diff
+   checks sequentially, plus S003's applicable reference guard. Update the
+   compatibility record and `implementation/evidence/S003_REPORT.md` with exact
+   commands, resolved versions, changed files, results, skips and limitations.
+   Preserve S002's accepted evidence and post-commit bookkeeping. Regenerate
+   the checkpoint projection from Markdown when status changes.
+6. Return S003 `in_progress`, candidate evidence with null commit, unstaged and
+   uncommitted for Codex review. Do not manufacture a Codex review. No S004,
+   publication, push, reference change or external coordination mutation is
+   authorized. All known choices needed to start S003 are resolved here.
+
+### Scheduled S005 test-isolation follow-up
+
+Review 4 found a bounded limitation in the existing fixture-cleanup regression:
+overlapping independent suite processes in one temporary namespace can mistake
+each other's active fixture directories for leaks. Execute the existing suite
+and advanced rehearsals sequentially through S004; no assertions are waived.
+At the already-scheduled S005 harness checkpoint, scope cleanup assertions to
+directories owned by that invocation and prove both overlapping-run isolation
+and detection of a genuinely leaked owned fixture. Keep actual fixture cleanup
+and complete-tree purity coverage. This does not change product scope or
+checkpoint order and is not extra work for Pi during S003.
+
 ## Resolved baseline and approved review dispositions
 
 1. **Target and tooling.** The target is `https://github.com/triesap/svelte-ui-kit`, using its existing `master` history. The reviewed scaffold has 14 tracked files and no product source, tests or CI workflows. Preserve `pnpm@11.22.0`, Node engine `>=24`, `prettier@3.9.6`, the existing lockfile, and MIT OR Apache-2.0 licensing unless a scheduled evidence-backed compatibility change requires an update. Node `v26.10.0` was observed on the review machine; that observation is not a supported-version matrix or an exact Node pin. Use the established `area: imperative summary` style for checkpoint messages. Revalidate these observations at S001.
 2. **Reference identity.** Use [triesap/leptos_ui_kit at a10fbf0](https://github.com/triesap/leptos_ui_kit/tree/a10fbf06334f4648f5755e05a7147414e4e5fc98) as read-only design and source evidence. It is not the target. Its Rust implementation is not a template to translate mechanically. The target has no Cargo manifest; record target Cargo checks as N/A with inventory evidence. Separately inventory and honor the conditional reference Cargo guard described in the verification contract. Reference Rust checks have not been run by this planning setup.
-3. **Field parity — S145–S148, S181.** The reference Field exports FieldRoot, FieldSurface, FieldLabel, FieldMessage, FieldRequired, FieldSlot, TextInput/TextInputType, TextArea, TextField, TextAreaField, NativeSelect, SelectField and SelectIcon. The worksheet must give each export and associated native input/textarea/select, label, required, invalid, disabled, dynamic-message and composition behavior an explicit Svelte mapping or justified disposition. Native select parity is part of the original catalog; it is not the deferred new select/combobox API. Preserve behavior without copying Rust-specific slot/context APIs. See [reference Field manifest](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/field.json).
-4. **Menu parity — S122–S128, S181.** Map the source's ordinary and radio items, controlled selection and indicators as well as activation, keyboard/typeahead, dismissal, focus return and placement. Selection is evidenced source scope, not an optional feature to omit by default. Derive the necessary pinned Bits parts without adopting its entire catalog. Do not carry over an untested strict-CSP promise. See [reference Menu manifest](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/menu.json).
-5. **Avatar — S155–S157.** The [reference Avatar](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/avatar.rs) is a native image with src, alt and class. The approved target requires loading/failure/fallback qualification. Freeze the minimal typed fallback content, transitions, accessible text and SSR behavior at S155 using pinned native/Bits evidence. Describe this as target behavior; do not claim an existing source fallback API or invent unrelated variants.
+3. **Field parity — S145–S148, S181.** The reference Field exports FieldRoot, FieldSurface, FieldLabel, FieldMessage, FieldRequired, FieldSlot, TextInput/TextInputType, TextArea, TextField, TextAreaField, NativeSelect, SelectField and SelectIcon. The worksheet must give each export and associated native input/textarea/select, label, required, invalid, disabled, dynamic-message and composition behavior an explicit Svelte mapping or justified disposition. Native select parity is part of the original catalog; it is not the deferred new select/combobox API. Preserve behavior without copying Rust-specific slot/context APIs. See [reference Field manifest](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/field.json). Normative S002 clarification: [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md#approved-source-parity-clarifications).
+4. **Menu parity — S122–S128, S181.** Map the source's ordinary and radio items, controlled selection and indicators as well as activation, keyboard/typeahead, dismissal, focus return and placement. Selection is evidenced source scope, not an optional feature to omit by default. Derive the necessary pinned Bits parts without adopting its entire catalog. Do not carry over an untested strict-CSP promise. See [reference Menu manifest](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/menu.json). Normative S002 clarification: [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md#approved-source-parity-clarifications).
+5. **Avatar — S155–S157.** The [reference Avatar](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/avatar.rs) is a native image with src, alt and class. The approved target requires loading/failure/fallback qualification. Freeze the minimal typed fallback content, transitions, accessible text and SSR behavior at S155 using pinned native/Bits evidence. Describe this as target behavior; do not claim an existing source fallback API or invent unrelated variants. Normative S002 clarification: [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md#approved-source-parity-clarifications).
 6. **Ownership — S015, S030, S043–S063.** Explicit requests remain separate from the resolved dependency closure. Compare tracked base/local/incoming bytes and enforce source/CSS/export cohorts; do not translate the source's local-edit refusal or dependency-closure-to-config behavior. Untracked equality grants no silent adoption or deletion rights. Preserve legitimate baselines, detach customized retired assets truthfully, and stop unsafe mixed updates.
 7. **Verification independence — S002 onward.** The specification archive's integrity checks validated a fixed payload and all-not-started plan; they do not validate changing implementation status or product behavior. Establish `tools/check-contracts.mjs` at S002 to check live repository links, checkpoint order, requirement coverage and truthful status evidence without assuming the archived manifest. No such target tool is implemented by this planning document.
 8. **Public evidence and execution scope.** Keep adopted contracts, commands, provenance, generated fixtures and reports self-contained. The initial planning setup completed no implementation checkpoint. Active implementation now follows the execution state and reviewed commit ledger above. Do not treat prior analysis, dependency hydration or this plan's formatting result as product implementation completion.
@@ -84,19 +459,19 @@ The checkpoint command categories use pnpm: `pnpm run <script>` replaces illustr
 
 The sequence gates below supplement each checkpoint's exact scope and tests. Run the scoped lane for each checkpoint and all applicable cumulative lanes at milestone exit. Every sequence after RCLD-01 depends on completion of its predecessor's final checkpoint.
 
-| RCLD                | Checkpoints | Count | State       | Predecessor       |
-| ------------------- | ----------- | ----- | ----------- | ----------------- |
-| [RCLD-01](#rcld-01) | S001–S012   | 12    | in_progress | None; S001 review |
-| [RCLD-02](#rcld-02) | S013–S032   | 20    | not_started | S012              |
-| [RCLD-03](#rcld-03) | S033–S063   | 31    | not_started | S032              |
-| [RCLD-04](#rcld-04) | S064–S077   | 14    | not_started | S063              |
-| [RCLD-05](#rcld-05) | S078–S091   | 14    | not_started | S077              |
-| [RCLD-06](#rcld-06) | S092–S115   | 24    | not_started | S091              |
-| [RCLD-07](#rcld-07) | S116–S128   | 13    | not_started | S115              |
-| [RCLD-08](#rcld-08) | S129–S148   | 20    | not_started | S128              |
-| [RCLD-09](#rcld-09) | S149–S181   | 33    | not_started | S148              |
-| [RCLD-10](#rcld-10) | S182–S193   | 12    | not_started | S181              |
-| [RCLD-11](#rcld-11) | S194–S203   | 10    | not_started | S193              |
+| RCLD                | Checkpoints | Count | State       | Predecessor         |
+| ------------------- | ----------- | ----- | ----------- | ------------------- |
+| [RCLD-01](#rcld-01) | S001–S012   | 12    | in_progress | None; S001 complete |
+| [RCLD-02](#rcld-02) | S013–S032   | 20    | not_started | S012                |
+| [RCLD-03](#rcld-03) | S033–S063   | 31    | not_started | S032                |
+| [RCLD-04](#rcld-04) | S064–S077   | 14    | not_started | S063                |
+| [RCLD-05](#rcld-05) | S078–S091   | 14    | not_started | S077                |
+| [RCLD-06](#rcld-06) | S092–S115   | 24    | not_started | S091                |
+| [RCLD-07](#rcld-07) | S116–S128   | 13    | not_started | S115                |
+| [RCLD-08](#rcld-08) | S129–S148   | 20    | not_started | S128                |
+| [RCLD-09](#rcld-09) | S149–S181   | 33    | not_started | S148                |
+| [RCLD-10](#rcld-10) | S182–S193   | 12    | not_started | S181                |
+| [RCLD-11](#rcld-11) | S194–S203   | 10    | not_started | S193                |
 
 <a id="rcld-01"></a>
 
@@ -236,8 +611,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 
 | Step | Sequence | Depends on | Status               | Commit / report |
 | ---- | -------- | ---------- | -------------------- | --------------- |
-| S001 | RCLD-01  | None       | verified_uncommitted | —               |
-| S002 | RCLD-01  | S001       | not_started          | —               |
+| S001 | RCLD-01  | None       | complete             | `bb5010e`       |
+| S002 | RCLD-01  | S001       | verified_uncommitted | —               |
 | S003 | RCLD-01  | S002       | not_started          | —               |
 | S004 | RCLD-01  | S003       | not_started          | —               |
 | S005 | RCLD-01  | S004       | not_started          | —               |
@@ -490,7 +865,7 @@ Total: **203 independently reviewed commit-sized steps**. All begin in `not_star
 
 ### S001 — Establish the authorized target and baseline
 
-**Contract anchors:** R32, R33, R34. [PRODUCT_SPEC.md](#contract-specs-product-spec).
+**Contract anchors:** R32, R33, R34. [PRODUCT_SPEC.md](../specs/PRODUCT_SPEC.md).
 
 **1. Step title:** Establish the authorized target and baseline.
 
@@ -533,7 +908,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** An authorized, evidenced target and known baseline exist; an unresolved location blocks further writes.
 
@@ -543,7 +918,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S002 — Anchor approved contracts and repository instructions
 
-**Contract anchors:** R01, R31, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [PRODUCT_SPEC.md](#contract-specs-product-spec), [SCOPE_AND_ASSUMPTIONS.md](#contract-specs-scope-and-assumptions).
+**Contract anchors:** R01, R31, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [PRODUCT_SPEC.md](../specs/PRODUCT_SPEC.md), [SCOPE_AND_ASSUMPTIONS.md](../specs/SCOPE_AND_ASSUMPTIONS.md).
 
 **1. Step title:** Anchor approved contracts and repository instructions.
 
@@ -585,7 +960,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The target has a clear source of intent and no product code or policy change.
 
@@ -595,7 +970,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S003 — Select a reproducible Node and dependency baseline
 
-**Contract anchors:** R01, R10, R12, R20, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [PRODUCT_SPEC.md](#contract-specs-product-spec).
+**Contract anchors:** R01, R10, R12, R20, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [PRODUCT_SPEC.md](../specs/PRODUCT_SPEC.md).
 
 **1. Step title:** Select a reproducible Node and dependency baseline.
 
@@ -637,7 +1012,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Dependency/tool versions are locked and reproducible; consumer auto-install is not introduced.
 
@@ -647,7 +1022,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S004 — Create a minimal typed CLI build boundary
 
-**Contract anchors:** R01, R02, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [PRODUCT_SPEC.md](#contract-specs-product-spec).
+**Contract anchors:** R01, R02, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [PRODUCT_SPEC.md](../specs/PRODUCT_SPEC.md).
 
 **1. Step title:** Create a minimal typed CLI build boundary.
 
@@ -690,7 +1065,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The target builds and exposes only implemented behavior.
 
@@ -700,7 +1075,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S005 — Add a real unit-test harness
 
-**Contract anchors:** R29, R30, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts).
+**Contract anchors:** R29, R30, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md).
 
 **1. Step title:** Add a real unit-test harness.
 
@@ -741,7 +1116,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Unit checks are meaningful and available for subsequent steps.
 
@@ -751,7 +1126,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S006 — Add nonmutating formatting and lint gates
 
-**Contract anchors:** R17, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R17, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Add nonmutating formatting and lint gates.
 
@@ -795,7 +1170,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Formatting and lint gates work without modifying application files.
 
@@ -805,7 +1180,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S007 — Add an SSR-enabled SvelteKit consumer fixture
 
-**Contract anchors:** R20, R21, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R20, R21, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Add an SSR-enabled SvelteKit consumer fixture.
 
@@ -847,7 +1222,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** A reproducible real-app compile/build baseline is available.
 
@@ -857,7 +1232,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S008 — Add the generated-app browser harness
 
-**Contract anchors:** R21, R22, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R21, R22, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Add the generated-app browser harness.
 
@@ -898,7 +1273,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The application can be tested in a browser with real assertions.
 
@@ -908,7 +1283,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S009 — Add isolated filesystem and CLI integration helpers
 
-**Contract anchors:** R15, R16, R29, R30, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R15, R16, R29, R30, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Add isolated filesystem and CLI integration helpers.
 
@@ -951,7 +1326,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Later dry-run and transaction tests can observe all filesystem effects.
 
@@ -961,7 +1336,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S010 — Document commands and add baseline CI
 
-**Contract anchors:** R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria).
+**Contract anchors:** R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md).
 
 **1. Step title:** Document commands and add baseline CI.
 
@@ -1007,7 +1382,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Actual scripts and CI baseline are recorded; unrun remote checks stay explicit.
 
@@ -1017,7 +1392,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S011 — Qualify the pinned primitive integration boundary
 
-**Contract anchors:** R03, R12, R20, R21, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model).
+**Contract anchors:** R03, R12, R20, R21, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md).
 
 **1. Step title:** Qualify the pinned primitive integration boundary.
 
@@ -1061,7 +1436,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The pinned upstream boundary is proven before generator templates depend on it.
 
@@ -1071,7 +1446,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S012 — Separate orchestration and pure module interfaces
 
-**Contract anchors:** R01, R02, R03, R15, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [PRODUCT_SPEC.md](#contract-specs-product-spec), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R01, R02, R03, R15, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [PRODUCT_SPEC.md](../specs/PRODUCT_SPEC.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Separate orchestration and pure module interfaces.
 
@@ -1115,7 +1490,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Subsequent model work has small, enforceable module boundaries.
 
@@ -1127,7 +1502,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S013 — Model independent version identities
 
-**Contract anchors:** R12, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model).
+**Contract anchors:** R12, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md).
 
 **1. Step title:** Model independent version identities.
 
@@ -1168,7 +1543,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Version axes are represented independently throughout new types.
 
@@ -1178,7 +1553,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S014 — Freeze and validate strict kit configuration
 
-**Contract anchors:** R05, R09, R11, R12, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R05, R09, R11, R12, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Freeze and validate strict kit configuration.
 
@@ -1221,7 +1596,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** A frozen strict configuration schema exists for subsequent planners.
 
@@ -1231,7 +1606,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S015 — Model explicit requested item sets
 
-**Contract anchors:** R11, R26, R32, R33, R34. [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R11, R26, R32, R33, R34. [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Model explicit requested item sets.
 
@@ -1273,7 +1648,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Requested roots have a standalone validated model.
 
@@ -1283,7 +1658,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S016 — Define the registry-root schema
 
-**Contract anchors:** R08, R12, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [DATA_MODEL.md](#contract-specs-data-model).
+**Contract anchors:** R08, R12, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [DATA_MODEL.md](../specs/DATA_MODEL.md).
 
 **1. Step title:** Define the registry-root schema.
 
@@ -1325,7 +1700,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Registry inventory is explicit and schema-validated.
 
@@ -1335,7 +1710,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S017 — Define typed item targets and public exports
 
-**Contract anchors:** R06, R07, R08, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R06, R07, R08, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Define typed item targets and public exports.
 
@@ -1376,7 +1751,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The manifest can describe the approved generated tree without guessing.
 
@@ -1386,7 +1761,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S018 — Add accessibility and dependency manifest metadata
 
-**Contract anchors:** R03, R10, R22, R30, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R10, R22, R30, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Add accessibility and dependency manifest metadata.
 
@@ -1427,7 +1802,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Items carry their verification and installation obligations explicitly.
 
@@ -1437,7 +1812,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S019 — Define source-file ownership lock records
 
-**Contract anchors:** R11, R12, R13, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R11, R12, R13, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Define source-file ownership lock records.
 
@@ -1479,7 +1854,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Source ownership can support the approved comparison model.
 
@@ -1489,7 +1864,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S020 — Add CSS-block and integration lock records
 
-**Contract anchors:** R07, R13, R14, R17, R32, R33, R34. [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R07, R13, R14, R17, R32, R33, R34. [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Add CSS-block and integration lock records.
 
@@ -1531,7 +1906,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** An aggregate stylesheet no longer implies whole-file ownership.
 
@@ -1541,7 +1916,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S021 — Define portable theme and customization metadata schemas
 
-**Contract anchors:** R07, R12, R23, R25, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R07, R12, R23, R25, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Define portable theme and customization metadata schemas.
 
@@ -1583,7 +1958,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Portable CSS metadata has explicit target schemas.
 
@@ -1593,7 +1968,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S022 — Freeze CLI envelopes and exit outcomes
 
-**Contract anchors:** R09, R15, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R15, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Freeze CLI envelopes and exit outcomes.
 
@@ -1636,7 +2011,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Command result semantics are frozen and fixture-tested.
 
@@ -1646,7 +2021,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S023 — Parse only the approved CLI arguments
 
-**Contract anchors:** R09, R15, R18, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R15, R18, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Parse only the approved CLI arguments.
 
@@ -1688,7 +2063,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The executable has a constrained, testable command grammar.
 
@@ -1698,7 +2073,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S024 — Implement exact-byte hashing and deterministic serialization
 
-**Contract anchors:** R12, R13, R15, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R12, R13, R15, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Implement exact-byte hashing and deterministic serialization.
 
@@ -1741,7 +2116,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Hash meanings and canonical metadata bytes are unambiguous.
 
@@ -1751,7 +2126,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S025 — Load assets relative to the installed package
 
-**Contract anchors:** R08, R16, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions).
+**Contract anchors:** R08, R16, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md).
 
 **1. Step title:** Load assets relative to the installed package.
 
@@ -1793,7 +2168,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Registry access depends only on package assets.
 
@@ -1803,7 +2178,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S026 — Build an immutable validated registry snapshot
 
-**Contract anchors:** R08, R15, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R08, R15, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Build an immutable validated registry snapshot.
 
@@ -1843,7 +2218,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Each operation sees a consistent packaged registry.
 
@@ -1853,7 +2228,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S027 — Add full registry asset health validation
 
-**Contract anchors:** R08, R26, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model).
+**Contract anchors:** R08, R26, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md).
 
 **1. Step title:** Add full registry asset health validation.
 
@@ -1896,7 +2271,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Registry health rejects incomplete published items without forcing monolithic authoring commits.
 
@@ -1906,7 +2281,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S028 — Resolve dependencies with cycle and missing-item diagnostics
 
-**Contract anchors:** R08, R11, R15, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R08, R11, R15, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Resolve dependencies with cycle and missing-item diagnostics.
 
@@ -1947,7 +2322,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Dependency closure is validated before any project planning.
 
@@ -1957,7 +2332,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S029 — Make closure and export order deterministic
 
-**Contract anchors:** R06, R07, R11, R15, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R06, R07, R11, R15, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Make closure and export order deterministic.
 
@@ -1999,7 +2374,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Equivalent inputs yield stable install order.
 
@@ -2009,7 +2384,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S030 — Project requested versus transitive provenance
 
-**Contract anchors:** R11, R18, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R11, R18, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Project requested versus transitive provenance.
 
@@ -2050,7 +2425,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Desired intent and effective installed closure are distinct.
 
@@ -2060,7 +2435,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S031 — Merge compatible dependency requirements
 
-**Contract anchors:** R10, R12, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [DATA_MODEL.md](#contract-specs-data-model).
+**Contract anchors:** R10, R12, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [DATA_MODEL.md](../specs/DATA_MODEL.md).
 
 **1. Step title:** Merge compatible dependency requirements.
 
@@ -2101,7 +2476,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Registry resolution can emit a consistent dependency plan.
 
@@ -2111,7 +2486,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S032 — Validate cross-item target and public symbol uniqueness
 
-**Contract anchors:** R06, R08, R16, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions).
+**Contract anchors:** R06, R08, R16, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md).
 
 **1. Step title:** Validate cross-item target and public symbol uniqueness.
 
@@ -2152,7 +2527,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Every advertised output has unambiguous ownership.
 
@@ -2164,7 +2539,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S033 — Validate lexical logical paths
 
-**Contract anchors:** R05, R16, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions).
+**Contract anchors:** R05, R16, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md).
 
 **1. Step title:** Validate lexical logical paths.
 
@@ -2205,7 +2580,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Logical output paths are validated independently from filesystem state.
 
@@ -2215,7 +2590,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S034 — Reject overlapping and reserved output roots
 
-**Contract anchors:** R05, R16, R32, R33, R34. [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions).
+**Contract anchors:** R05, R16, R32, R33, R34. [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md).
 
 **1. Step title:** Reject overlapping and reserved output roots.
 
@@ -2257,7 +2632,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Normalized project roots cannot overwrite each other.
 
@@ -2267,7 +2642,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S035 — Detect default SvelteKit application packages
 
-**Contract anchors:** R05, R09, R15, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R05, R09, R15, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Detect default SvelteKit application packages.
 
@@ -2308,7 +2683,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Project information has a supported default interpretation.
 
@@ -2318,7 +2693,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S036 — Resolve explicit working directories in workspaces
 
-**Contract anchors:** R09, R16, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions).
+**Contract anchors:** R09, R16, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md).
 
 **1. Step title:** Resolve explicit working directories in workspaces.
 
@@ -2360,7 +2735,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The CLI never chooses or mutates unrelated workspace members.
 
@@ -2370,7 +2745,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S037 — Freeze supported custom path mappings
 
-**Contract anchors:** R05, R16, R17, R32, R33, R34. [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R05, R16, R17, R32, R33, R34. [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Freeze supported custom path mappings.
 
@@ -2413,7 +2788,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Supported customization is frozen and bounded.
 
@@ -2423,7 +2798,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S038 — Inspect installed and declared dependency state
 
-**Contract anchors:** R10, R12, R19, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [DATA_MODEL.md](#contract-specs-data-model).
+**Contract anchors:** R10, R12, R19, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [DATA_MODEL.md](../specs/DATA_MODEL.md).
 
 **1. Step title:** Inspect installed and declared dependency state.
 
@@ -2464,7 +2839,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Consumer dependency readiness is observable and typed.
 
@@ -2474,7 +2849,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S039 — Validate peer dependencies in the consumer plan
 
-**Contract anchors:** R10, R12, R20, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model).
+**Contract anchors:** R10, R12, R20, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md).
 
 **1. Step title:** Validate peer dependencies in the consumer plan.
 
@@ -2516,7 +2891,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Dependency planning honors the full selected upstream contract.
 
@@ -2526,7 +2901,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S040 — Render dependency instructions without execution
 
-**Contract anchors:** R09, R10, R15, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R10, R15, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Render dependency instructions without execution.
 
@@ -2567,7 +2942,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Users receive actionable dependency plans without implicit installs.
 
@@ -2577,7 +2952,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S041 — Capture read-only project snapshots
 
-**Contract anchors:** R13, R15, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R15, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Capture read-only project snapshots.
 
@@ -2618,7 +2993,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Planners can reason about a stable read-only preimage.
 
@@ -2628,7 +3003,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S042 — Validate filesystem ancestry and symlinks
 
-**Contract anchors:** R16, R24, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R16, R24, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Validate filesystem ancestry and symlinks.
 
@@ -2670,7 +3045,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Filesystem path safety has explicit tests and bounded claims.
 
@@ -2680,7 +3055,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S043 — Freeze the complete ownership disposition matrix
 
-**Contract anchors:** R13, R14, R18, R19, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R14, R18, R19, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Freeze the complete ownership disposition matrix.
 
@@ -2722,7 +3097,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Ownership behavior is explicit before implementation, with unresolved Q08 closed or blocking.
 
@@ -2732,7 +3107,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S044 — Implement source base/local/incoming classification
 
-**Contract anchors:** R13, R15, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R15, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Implement source base/local/incoming classification.
 
@@ -2773,7 +3148,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Source update decisions match the approved three-way policy.
 
@@ -2783,7 +3158,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S045 — Plan missing and untracked source targets
 
-**Contract anchors:** R13, R15, R18, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R15, R18, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Plan missing and untracked source targets.
 
@@ -2824,7 +3199,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Every source target has an explicit, safe ownership disposition.
 
@@ -2834,7 +3209,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S046 — Plan source retirement with retained customization
 
-**Contract anchors:** R11, R13, R18, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R11, R13, R18, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Plan source retirement with retained customization.
 
@@ -2875,7 +3250,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Configuration-driven retirement preserves application work.
 
@@ -2885,7 +3260,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S047 — Assemble source-file change plans
 
-**Contract anchors:** R06, R13, R15, R32, R33, R34. [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R06, R13, R15, R32, R33, R34. [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Assemble source-file change plans.
 
@@ -2926,7 +3301,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Source planning is complete, pure and inspectable.
 
@@ -2936,7 +3311,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S048 — Parse managed CSS markers without whole-file ownership
 
-**Contract anchors:** R07, R13, R17, R32, R33, R34. [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R07, R13, R17, R32, R33, R34. [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Parse managed CSS markers without whole-file ownership.
 
@@ -2977,7 +3352,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Managed block boundaries are safe and explicit.
 
@@ -2987,7 +3362,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S049 — Apply three-way classification to CSS blocks
 
-**Contract anchors:** R07, R13, R19, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R07, R13, R19, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Apply three-way classification to CSS blocks.
 
@@ -3028,7 +3403,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** CSS updates have the same customization guarantees as source.
 
@@ -3038,7 +3413,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S050 — Compose stable stylesheet patches
 
-**Contract anchors:** R07, R15, R17, R32, R33, R34. [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R07, R15, R17, R32, R33, R34. [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Compose stable stylesheet patches.
 
@@ -3079,7 +3454,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** One aggregate stylesheet can be safely reconciled.
 
@@ -3089,7 +3464,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S051 — Retire CSS blocks without deleting custom rules
 
-**Contract anchors:** R13, R17, R18, R32, R33, R34. [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R17, R18, R32, R33, R34. [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Retire CSS blocks without deleting custom rules.
 
@@ -3130,7 +3505,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Retirement does not erase custom design work.
 
@@ -3140,7 +3515,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S052 — Freeze and parse managed TypeScript export regions
 
-**Contract anchors:** R06, R16, R17, R32, R33, R34. [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R06, R16, R17, R32, R33, R34. [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Freeze and parse managed TypeScript export regions.
 
@@ -3182,7 +3557,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Barrel patching has a tested structural boundary.
 
@@ -3192,7 +3567,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S053 — Generate the root UI export region
 
-**Contract anchors:** R02, R06, R17, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R06, R17, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate the root UI export region.
 
@@ -3233,7 +3608,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Root public exports are deterministic and ownership-safe.
 
@@ -3243,7 +3618,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S054 — Generate compound barrels and validate sibling imports
 
-**Contract anchors:** R02, R06, R17, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R06, R17, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate compound barrels and validate sibling imports.
 
@@ -3284,7 +3659,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Compound exports match the intended layout and dependency direction.
 
@@ -3294,7 +3669,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S055 — Identify safe Svelte layout edit spans
 
-**Contract anchors:** R17, R20, R21, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R17, R20, R21, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Identify safe Svelte layout edit spans.
 
@@ -3335,7 +3710,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Integration knows where a safe minimal import edit can occur.
 
@@ -3345,7 +3720,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S056 — Patch ordered stylesheet imports minimally
 
-**Contract anchors:** R05, R17, R23, R32, R33, R34. [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R05, R17, R23, R32, R33, R34. [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Patch ordered stylesheet imports minimally.
 
@@ -3388,7 +3763,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Styles integrate without destructive layout replacement.
 
@@ -3398,7 +3773,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S057 — Build a pure initialization plan
 
-**Contract anchors:** R05, R09, R15, R17, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R05, R09, R15, R17, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Build a pure initialization plan.
 
@@ -3439,7 +3814,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Initialization can be inspected before transactions exist.
 
@@ -3449,7 +3824,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S058 — Build a pure add-request plan
 
-**Contract anchors:** R09, R10, R11, R15, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R10, R11, R15, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Build a pure add-request plan.
 
@@ -3490,7 +3865,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Add produces one coherent proposed batch.
 
@@ -3500,7 +3875,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S059 — Enforce source-style compatibility cohorts
 
-**Contract anchors:** R13, R14, R15, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R14, R15, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Enforce source-style compatibility cohorts.
 
@@ -3542,7 +3917,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** A batch cannot update only half of a compatible component unit.
 
@@ -3552,7 +3927,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S060 — Build the full synchronization plan
 
-**Contract anchors:** R09, R11, R13, R14, R15, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R11, R13, R14, R15, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Build the full synchronization plan.
 
@@ -3593,7 +3968,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Sync is a complete read-only reconciliation operation.
 
@@ -3603,7 +3978,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S061 — Project truthful final lock lineage
 
-**Contract anchors:** R12, R13, R14, R15, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R12, R13, R14, R15, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Project truthful final lock lineage.
 
@@ -3645,7 +4020,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Lock metadata accurately describes installed effective state.
 
@@ -3655,7 +4030,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S062 — Integrate configuration-driven retirement
 
-**Contract anchors:** R11, R17, R18, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R11, R17, R18, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Integrate configuration-driven retirement.
 
@@ -3698,7 +4073,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Removal via desired config has a safe complete plan.
 
@@ -3708,7 +4083,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S063 — Qualify deterministic zero-write planning
 
-**Contract anchors:** R10, R15, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R10, R15, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Qualify deterministic zero-write planning.
 
@@ -3750,7 +4125,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Pure planning is proven before mutation commands are wired.
 
@@ -3762,7 +4137,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S064 — Freeze transaction states and safety assumptions
 
-**Contract anchors:** R15, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R15, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Freeze transaction states and safety assumptions.
 
@@ -3804,7 +4179,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The recoverable transaction contract is explicit and reviewable.
 
@@ -3814,7 +4189,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S065 — Validate transient coordination and journal records
 
-**Contract anchors:** R16, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions).
+**Contract anchors:** R16, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md).
 
 **1. Step title:** Validate transient coordination and journal records.
 
@@ -3855,7 +4230,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Recovery can only operate on valid owned transaction state.
 
@@ -3865,7 +4240,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S066 — Implement exclusive writer coordination
 
-**Contract anchors:** R15, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R15, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Implement exclusive writer coordination.
 
@@ -3907,7 +4282,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** One writer can safely own the mutation phase.
 
@@ -3917,7 +4292,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S067 — Revalidate planned preimages under coordination
 
-**Contract anchors:** R13, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Revalidate planned preimages under coordination.
 
@@ -3958,7 +4333,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Mutation begins only from the observed safe input state.
 
@@ -3968,7 +4343,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S068 — Stage replacement bytes with owned temporary files
 
-**Contract anchors:** R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions).
+**Contract anchors:** R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md).
 
 **1. Step title:** Stage replacement bytes with owned temporary files.
 
@@ -4010,7 +4385,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** A replacement batch can be prepared safely before application.
 
@@ -4020,7 +4395,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S069 — Persist recoverable prepared-state journals
 
-**Contract anchors:** R13, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Persist recoverable prepared-state journals.
 
@@ -4062,7 +4437,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Prepared batches have enough evidence for safe recovery.
 
@@ -4072,7 +4447,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S070 — Apply per-file replacements with recorded progress
 
-**Contract anchors:** R16, R18, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R16, R18, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Apply per-file replacements with recorded progress.
 
@@ -4114,7 +4489,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Live replacements are journaled and individually safe within the stated model.
 
@@ -4124,7 +4499,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S071 — Publish the canonical install lock last
 
-**Contract anchors:** R12, R13, R16, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R12, R13, R16, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Publish the canonical install lock last.
 
@@ -4165,7 +4540,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Successful state publication is coherent and truthfully ordered.
 
@@ -4175,7 +4550,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S072 — Clean completed transactions without losing evidence
 
-**Contract anchors:** R15, R16, R17, R32, R33, R34. [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R15, R16, R17, R32, R33, R34. [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Clean completed transactions without losing evidence.
 
@@ -4216,7 +4591,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Cleanup cannot invalidate committed application state or erase unrelated data.
 
@@ -4226,7 +4601,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S073 — Recover interrupted prepublication transactions
 
-**Contract anchors:** R13, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Recover interrupted prepublication transactions.
 
@@ -4267,7 +4642,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Interrupted uncommitted writes no longer leave undetected ambiguous state.
 
@@ -4277,7 +4652,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S074 — Recover published transactions and incomplete cleanup
 
-**Contract anchors:** R13, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Recover published transactions and incomplete cleanup.
 
@@ -4318,7 +4693,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Recovery distinguishes committed work from an uncommitted batch.
 
@@ -4328,7 +4703,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S075 — Fail closed on corrupt or ambiguous recovery evidence
 
-**Contract anchors:** R09, R16, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions).
+**Contract anchors:** R09, R16, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md).
 
 **1. Step title:** Fail closed on corrupt or ambiguous recovery evidence.
 
@@ -4370,7 +4745,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Ambiguous state remains visible and protected.
 
@@ -4380,7 +4755,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S076 — Qualify concurrency and process-interruption behavior
 
-**Contract anchors:** R16, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions).
+**Contract anchors:** R16, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md).
 
 **1. Step title:** Qualify concurrency and process-interruption behavior.
 
@@ -4424,7 +4799,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Concurrency and interruption claims have process-level evidence.
 
@@ -4434,7 +4809,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S077 — Compose the guarded apply use case
 
-**Contract anchors:** R13, R14, R15, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R14, R15, R16, R32, R33, R34. [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Compose the guarded apply use case.
 
@@ -4476,7 +4851,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** All mutations can share one verified transaction boundary.
 
@@ -4488,7 +4863,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S078 — Render human and JSON command outcomes
 
-**Contract anchors:** R09, R15, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R15, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Render human and JSON command outcomes.
 
@@ -4529,7 +4904,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** All command handlers can emit consistent tested outcomes.
 
@@ -4539,7 +4914,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S079 — Implement read-only info
 
-**Contract anchors:** R09, R10, R15, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R10, R15, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Implement read-only info.
 
@@ -4580,7 +4955,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Info reports actual readiness through the approved interface.
 
@@ -4590,7 +4965,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S080 — Implement read-only registry view and source inspection
 
-**Contract anchors:** R08, R09, R13, R15, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R08, R09, R13, R15, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Implement read-only registry view and source inspection.
 
@@ -4631,7 +5006,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** View exposes incoming source independently from a runtime package.
 
@@ -4641,7 +5016,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S081 — Implement init through plan and guarded apply
 
-**Contract anchors:** R05, R09, R15, R16, R17, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R05, R09, R15, R16, R17, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Implement init through plan and guarded apply.
 
@@ -4684,7 +5059,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Initialization is usable and non-destructive.
 
@@ -4694,7 +5069,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S082 — Implement add through explicit requests
 
-**Contract anchors:** R09, R10, R11, R13, R16, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R10, R11, R13, R16, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Implement add through explicit requests.
 
@@ -4736,7 +5111,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Applications can install qualified items through the approved command.
 
@@ -4746,7 +5121,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S083 — Implement sync through customization-aware planning
 
-**Contract anchors:** R09, R13, R14, R15, R18, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R13, R14, R15, R18, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Implement sync through customization-aware planning.
 
@@ -4787,7 +5162,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Sync implements the central source-ownership product promise.
 
@@ -4797,7 +5172,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S084 — Implement doctor structural and dependency checks
 
-**Contract anchors:** R09, R10, R15, R19, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R10, R15, R19, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Implement doctor structural and dependency checks.
 
@@ -4838,7 +5213,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Doctor identifies actual installation breakage without side effects.
 
@@ -4848,7 +5223,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S085 — Separate doctor customization from strict failures
 
-**Contract anchors:** R13, R19, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R13, R19, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Separate doctor customization from strict failures.
 
@@ -4890,7 +5265,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Strict doctor supports legitimate source ownership.
 
@@ -4900,7 +5275,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S086 — Qualify the executable exit and JSON matrix
 
-**Contract anchors:** R09, R15, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R15, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Qualify the executable exit and JSON matrix.
 
@@ -4942,7 +5317,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Process behavior is stable for humans and automation.
 
@@ -4952,7 +5327,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S087 — Qualify full workflow idempotence and no-write paths
 
-**Contract anchors:** R10, R11, R15, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R10, R11, R15, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Qualify full workflow idempotence and no-write paths.
 
@@ -4993,7 +5368,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** End-to-end commands preserve the planned side-effect contract.
 
@@ -5003,7 +5378,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S088 — Reject unsupported schemas and preserve migration boundaries
 
-**Contract anchors:** R12, R15, R30, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R12, R15, R30, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Reject unsupported schemas and preserve migration boundaries.
 
@@ -5045,7 +5420,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Schema evolution has an explicit safe entry boundary.
 
@@ -5055,7 +5430,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S089 — Add synthetic upgrade and contract-revision fixtures
 
-**Contract anchors:** R12, R13, R14, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [DATA_MODEL.md](#contract-specs-data-model), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R12, R13, R14, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Add synthetic upgrade and contract-revision fixtures.
 
@@ -5097,7 +5472,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Migration/upgrade behavior has executable coverage before real releases exist.
 
@@ -5107,7 +5482,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S090 — Build and inspect the package asset inventory
 
-**Contract anchors:** R01, R08, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [ARCHITECTURE.md](#contract-specs-architecture), [DATA_MODEL.md](#contract-specs-data-model), [PRODUCT_SPEC.md](#contract-specs-product-spec).
+**Contract anchors:** R01, R08, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [PRODUCT_SPEC.md](../specs/PRODUCT_SPEC.md).
 
 **1. Step title:** Build and inspect the package asset inventory.
 
@@ -5151,7 +5526,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The package layout is independently inspectable and usable.
 
@@ -5161,7 +5536,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S091 — Document the working generator workflow
 
-**Contract anchors:** R02, R09, R13, R19, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R02, R09, R13, R19, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Document the working generator workflow.
 
@@ -5208,7 +5583,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The complete generator is documented and cumulatively qualified before catalog work.
 
@@ -5220,7 +5595,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S092 — Freeze the portable token and customization vocabulary
 
-**Contract anchors:** R04, R07, R12, R25, R26, R32, R33, R34. [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R04, R07, R12, R25, R26, R32, R33, R34. [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Freeze the portable token and customization vocabulary.
 
@@ -5263,7 +5638,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Token and component-property scope is frozen before CSS installation.
 
@@ -5273,7 +5648,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S093 — Install the pure-CSS tokens foundation
 
-**Contract anchors:** R04, R07, R08, R26, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R04, R07, R08, R26, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Install the pure-CSS tokens foundation.
 
@@ -5318,7 +5693,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** A real CSS-only foundation is installable through the CLI.
 
@@ -5328,7 +5703,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S094 — Emit truthful token and theme integration metadata
 
-**Contract anchors:** R07, R12, R23, R25, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R07, R12, R23, R25, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Emit truthful token and theme integration metadata.
 
@@ -5371,7 +5746,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Committed theme metadata accurately describes installed Svelte styling.
 
@@ -5381,7 +5756,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S095 — Qualify token override and radius fallback behavior
 
-**Contract anchors:** R22, R23, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R22, R23, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify token override and radius fallback behavior.
 
@@ -5424,7 +5799,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Portable CSS customization behavior is browser-qualified.
 
@@ -5434,7 +5809,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S096 — Freeze spinner props and accessible modes
 
-**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Freeze spinner props and accessible modes.
 
@@ -5476,7 +5851,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Spinner behavior and design boundary are frozen.
 
@@ -5486,7 +5861,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S097 — Generate the spinner component and CSS
 
-**Contract anchors:** R02, R04, R06, R26, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R04, R06, R26, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate the spinner component and CSS.
 
@@ -5532,7 +5907,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Spinner installs as editable local source with plain CSS.
 
@@ -5542,7 +5917,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S098 — Qualify spinner geometry and reduced motion
 
-**Contract anchors:** R22, R23, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R22, R23, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify spinner geometry and reduced motion.
 
@@ -5585,7 +5960,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Spinner is qualified for standalone and Button composition.
 
@@ -5595,7 +5970,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S099 — Freeze Button native props and variant types
 
-**Contract anchors:** R03, R06, R20, R26, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout).
+**Contract anchors:** R03, R06, R20, R26, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md).
 
 **1. Step title:** Freeze Button native props and variant types.
 
@@ -5637,7 +6012,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Button API matches approved semantics and selected Svelte types.
 
@@ -5647,7 +6022,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S100 — Generate Button with loading-safe plain CSS
 
-**Contract anchors:** R02, R04, R06, R11, R20, R26, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R02, R04, R06, R11, R20, R26, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Generate Button with loading-safe plain CSS.
 
@@ -5694,7 +6069,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Button is an installable app-owned native component with authored styles.
 
@@ -5704,7 +6079,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S101 — Qualify Button keyboard, form, and loading behavior
 
-**Contract anchors:** R20, R22, R23, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R20, R22, R23, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Button keyboard, form, and loading behavior.
 
@@ -5748,7 +6123,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Button behavior and visual states are generated-app qualified.
 
@@ -5758,7 +6133,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S102 — Freeze Switch binding, ref, and composition contracts
 
-**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Freeze Switch binding, ref, and composition contracts.
 
@@ -5799,7 +6174,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Switch has a deliberate typed composition boundary.
 
@@ -5809,7 +6184,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S103 — Generate the primitive-backed Switch
 
-**Contract anchors:** R02, R03, R04, R07, R20, R26, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R03, R04, R07, R20, R26, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate the primitive-backed Switch.
 
@@ -5856,7 +6231,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Switch installs as a thin local primitive wrapper.
 
@@ -5866,7 +6241,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S104 — Qualify Switch state, forms, RTL, and motion
 
-**Contract anchors:** R20, R22, R23, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R20, R22, R23, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Switch state, forms, RTL, and motion.
 
@@ -5910,7 +6285,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Switch is fully qualified as the first stateful primitive wrapper.
 
@@ -5920,7 +6295,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S105 — Freeze the Dialog family API and ownership cohort
 
-**Contract anchors:** R06, R14, R20, R22, R26, R27, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R06, R14, R20, R22, R26, R27, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Freeze the Dialog family API and ownership cohort.
 
@@ -5963,7 +6338,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Compound API and qualification boundary are explicit.
 
@@ -5973,7 +6348,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S106 — Author Dialog root and trigger parts
 
-**Contract anchors:** R03, R20, R21, R26, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R21, R26, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Author Dialog root and trigger parts.
 
@@ -6016,7 +6391,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** State/trigger parts are typed and verified without advertising an incomplete item.
 
@@ -6026,7 +6401,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S107 — Author Dialog portal and overlay parts
 
-**Contract anchors:** R20, R21, R23, R26, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R20, R21, R23, R26, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Author Dialog portal and overlay parts.
 
@@ -6069,7 +6444,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Portal and overlay parts are explicit and SSR-safe.
 
@@ -6079,7 +6454,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S108 — Author Dialog content forwarding
 
-**Contract anchors:** R03, R20, R21, R27, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R21, R27, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Author Dialog content forwarding.
 
@@ -6121,7 +6496,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Content preserves the primitive interaction boundary.
 
@@ -6131,7 +6506,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S109 — Author Dialog title, description, and close parts
 
-**Contract anchors:** R06, R20, R22, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout).
+**Contract anchors:** R06, R20, R22, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md).
 
 **1. Step title:** Author Dialog title, description, and close parts.
 
@@ -6175,7 +6550,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** All required compound parts exist and are individually verified.
 
@@ -6185,7 +6560,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S110 — Map Dialog managed CSS to the actual compound DOM
 
-**Contract anchors:** R04, R07, R22, R25, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R04, R07, R22, R25, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Map Dialog managed CSS to the actual compound DOM.
 
@@ -6228,7 +6603,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Dialog CSS is mapped explicitly, not blindly copied.
 
@@ -6238,7 +6613,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S111 — Register the complete Dialog family
 
-**Contract anchors:** R05, R06, R08, R14, R26, R28, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R05, R06, R08, R14, R26, R28, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Register the complete Dialog family.
 
@@ -6284,7 +6659,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The full Dialog family is a qualified local-source item.
 
@@ -6294,7 +6669,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S112 — Qualify Dialog keyboard, focus, dismissal, and presence
 
-**Contract anchors:** R20, R22, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R20, R22, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify Dialog keyboard, focus, dismissal, and presence.
 
@@ -6338,7 +6713,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Dialog interaction behavior is browser-qualified.
 
@@ -6348,7 +6723,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S113 — Qualify Dialog portal theme scopes
 
-**Contract anchors:** R23, R24, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R23, R24, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Dialog portal theme scopes.
 
@@ -6392,7 +6767,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Portal theme strategy has explicit behavioral evidence.
 
@@ -6402,7 +6777,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S114 — Qualify initial Dialog state through SSR and hydration
 
-**Contract anchors:** R21, R22, R28, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R21, R22, R28, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify initial Dialog state through SSR and hydration.
 
@@ -6446,7 +6821,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Dialog is qualified for the SvelteKit rendering model.
 
@@ -6456,7 +6831,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S115 — Qualify the complete first vertical slice
 
-**Contract anchors:** R02, R08, R13, R14, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R02, R08, R13, R14, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Qualify the complete first vertical slice.
 
@@ -6503,7 +6878,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The initial core is independently usable and cumulatively verified.
 
@@ -6515,7 +6890,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S116 — Freeze a distinct Alert Dialog API
 
-**Contract anchors:** R03, R20, R22, R27, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R27, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Freeze a distinct Alert Dialog API.
 
@@ -6556,7 +6931,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Alert Dialog contract is distinct and scoped.
 
@@ -6566,7 +6941,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S117 — Author Alert Dialog state and activation parts
 
-**Contract anchors:** R03, R20, R27, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R27, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Author Alert Dialog state and activation parts.
 
@@ -6609,7 +6984,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Alert Dialog activation is typed and independently qualified.
 
@@ -6619,7 +6994,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S118 — Author Alert Dialog portal and content parts
 
-**Contract anchors:** R20, R21, R23, R27, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R20, R21, R23, R27, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Author Alert Dialog portal and content parts.
 
@@ -6661,7 +7036,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Alert Dialog content remains behaviorally distinct.
 
@@ -6671,7 +7046,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S119 — Author Alert Dialog labeling and decision controls
 
-**Contract anchors:** R03, R20, R22, R27, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R27, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Author Alert Dialog labeling and decision controls.
 
@@ -6713,7 +7088,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The family has complete accessible decision composition.
 
@@ -6723,7 +7098,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S120 — Style and register the complete Alert Dialog family
 
-**Contract anchors:** R04, R06, R14, R27, R32, R33, R34. [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R04, R06, R14, R27, R32, R33, R34. [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Style and register the complete Alert Dialog family.
 
@@ -6769,7 +7144,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Alert Dialog is separately installable and app-owned.
 
@@ -6779,7 +7154,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S121 — Qualify Alert Dialog focus and confirmation behavior
 
-**Contract anchors:** R20, R22, R27, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R20, R22, R27, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify Alert Dialog focus and confirmation behavior.
 
@@ -6821,7 +7196,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Distinct confirmation behavior is proven.
 
@@ -6831,7 +7206,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S122 — Freeze Menu source-parity and floating APIs
 
-**Contract anchors:** R03, R06, R20, R26, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout).
+**Contract anchors:** R03, R06, R20, R26, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md).
 
 **1. Step title:** Freeze Menu source-parity and floating APIs.
 
@@ -6872,7 +7247,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Menu has a precise source-parity scope and floating contract.
 
@@ -6882,7 +7257,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S123 — Author Menu root and trigger wrappers
 
-**Contract anchors:** R03, R20, R26, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R26, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Author Menu root and trigger wrappers.
 
@@ -6925,7 +7300,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Menu state/activation parts are independently verified.
 
@@ -6935,7 +7310,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S124 — Author Menu portal and floating content wrappers
 
-**Contract anchors:** R20, R21, R23, R24, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R20, R21, R23, R24, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Author Menu portal and floating content wrappers.
 
@@ -6978,7 +7353,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Menu positioning contract survives wrapper composition.
 
@@ -6988,7 +7363,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S125 — Author Menu source-required item parts
 
-**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Author Menu source-required item parts.
 
@@ -7030,7 +7405,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The specified menu parts are complete; extra upstream scope is not introduced.
 
@@ -7040,7 +7415,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S126 — Style and register the Menu family
 
-**Contract anchors:** R04, R06, R08, R14, R26, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R04, R06, R08, R14, R26, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Style and register the Menu family.
 
@@ -7087,7 +7462,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Menu is installed using the same generator architecture as Dialog.
 
@@ -7097,7 +7472,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S127 — Qualify Menu keyboard selection and dismissal
 
-**Contract anchors:** R20, R22, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R20, R22, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify Menu keyboard selection and dismissal.
 
@@ -7141,7 +7516,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Menu behavior is browser-qualified rather than assumed from dependency choice.
 
@@ -7151,7 +7526,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S128 — Qualify Menu placement, themes, and CSP limits
 
-**Contract anchors:** R21, R23, R24, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R21, R23, R24, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Menu placement, themes, and CSP limits.
 
@@ -7197,7 +7572,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The highest-risk floating/theme/CSP boundary has measured evidence.
 
@@ -7209,7 +7584,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S129 — Freeze Checkbox props and semantic mapping
 
-**Contract anchors:** R03, R07, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R07, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Freeze Checkbox props and semantic mapping.
 
@@ -7251,7 +7626,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Checkbox has a bounded source-anchored API and test contract.
 
@@ -7261,7 +7636,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S130 — Generate Checkbox source and managed styles
 
-**Contract anchors:** R02, R03, R04, R06, R07, R08, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R03, R04, R06, R07, R08, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate Checkbox source and managed styles.
 
@@ -7307,7 +7682,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Checkbox is completely registered with editable source and plain CSS.
 
@@ -7317,7 +7692,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S131 — Qualify Checkbox behavior in the generated app
 
-**Contract anchors:** R03, R07, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R07, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Checkbox behavior in the generated app.
 
@@ -7361,7 +7736,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Checkbox is qualified end-to-end against its frozen contract.
 
@@ -7371,7 +7746,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S132 — Freeze Radio group and item contracts
 
-**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Freeze Radio group and item contracts.
 
@@ -7412,7 +7787,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Radio family scope is frozen before wrappers.
 
@@ -7422,7 +7797,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S133 — Author Radio group and item wrappers
 
-**Contract anchors:** R03, R20, R21, R28, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R21, R28, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Author Radio group and item wrappers.
 
@@ -7464,7 +7839,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Radio parts are typed and ready for styling/registration.
 
@@ -7474,7 +7849,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S134 — Style and register Radio selection
 
-**Contract anchors:** R04, R06, R07, R25, R26, R32, R33, R34. [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R04, R06, R07, R25, R26, R32, R33, R34. [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Style and register Radio selection.
 
@@ -7519,7 +7894,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Radio is a complete installable family.
 
@@ -7529,7 +7904,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S135 — Qualify Radio keyboard and form behavior
 
-**Contract anchors:** R20, R22, R23, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R20, R22, R23, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Radio keyboard and form behavior.
 
@@ -7572,7 +7947,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Radio form and keyboard parity is browser-qualified.
 
@@ -7582,7 +7957,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S136 — Freeze Tabs parts, value, and activation contracts
 
-**Contract anchors:** R03, R20, R21, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R21, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Freeze Tabs parts, value, and activation contracts.
 
@@ -7623,7 +7998,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Tabs behavior is bounded and ready for independent parts.
 
@@ -7633,7 +8008,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S137 — Author Tabs root and list wrappers
 
-**Contract anchors:** R03, R20, R21, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R21, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Author Tabs root and list wrappers.
 
@@ -7676,7 +8051,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Tabs state/group parts are independently qualified.
 
@@ -7686,7 +8061,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S138 — Author Tabs trigger and content wrappers
 
-**Contract anchors:** R20, R21, R22, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R20, R21, R22, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Author Tabs trigger and content wrappers.
 
@@ -7729,7 +8104,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Tabs has complete source-parity behavior parts.
 
@@ -7739,7 +8114,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S139 — Style and register the Tabs family
 
-**Contract anchors:** R04, R06, R14, R26, R32, R33, R34. [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R04, R06, R14, R26, R32, R33, R34. [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Style and register the Tabs family.
 
@@ -7785,7 +8160,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Tabs installs with correct compound layout and managed CSS.
 
@@ -7795,7 +8170,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S140 — Qualify Tabs keyboard activation and hydration
 
-**Contract anchors:** R20, R21, R22, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R20, R21, R22, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify Tabs keyboard activation and hydration.
 
@@ -7838,7 +8213,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Tabs is behaviorally and server-rendering qualified.
 
@@ -7848,7 +8223,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S141 — Freeze Collapsible composition and presence contracts
 
-**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Freeze Collapsible composition and presence contracts.
 
@@ -7889,7 +8264,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Collapsible has a scoped disclosure contract.
 
@@ -7899,7 +8274,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S142 — Author Collapsible primitive wrappers
 
-**Contract anchors:** R03, R20, R21, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R21, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Author Collapsible primitive wrappers.
 
@@ -7941,7 +8316,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Disclosure parts are independently typed and usable.
 
@@ -7951,7 +8326,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S143 — Style and register Collapsible
 
-**Contract anchors:** R04, R06, R14, R26, R32, R33, R34. [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R04, R06, R14, R26, R32, R33, R34. [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Style and register Collapsible.
 
@@ -7996,7 +8371,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Collapsible is installable without a separate interaction engine.
 
@@ -8006,7 +8381,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S144 — Qualify Collapsible interactions and composed disclosures
 
-**Contract anchors:** R20, R21, R22, R29, R31, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [SCOPE_AND_ASSUMPTIONS.md](#contract-specs-scope-and-assumptions).
+**Contract anchors:** R20, R21, R22, R29, R31, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [SCOPE_AND_ASSUMPTIONS.md](../specs/SCOPE_AND_ASSUMPTIONS.md).
 
 **1. Step title:** Qualify Collapsible interactions and composed disclosures.
 
@@ -8050,7 +8425,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Disclosure behavior and composition limits are qualified.
 
@@ -8060,7 +8435,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S145 — Freeze Field label, helper, and error composition
 
-**Contract anchors:** R03, R20, R22, R28, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R28, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Freeze Field label, helper, and error composition.
 
@@ -8101,7 +8476,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Field has a source-anchored semantic contract.
 
@@ -8111,7 +8486,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S146 — Author Field semantic source parts
 
-**Contract anchors:** R03, R20, R21, R22, R28, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R21, R22, R28, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Author Field semantic source parts.
 
@@ -8154,7 +8529,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Field semantic composition is implemented without a new form engine.
 
@@ -8164,7 +8539,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S147 — Style and register Field
 
-**Contract anchors:** R02, R04, R06, R10, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R04, R06, R10, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Style and register Field.
 
@@ -8209,7 +8584,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Field installs through normal source/CSS ownership.
 
@@ -8219,7 +8594,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S148 — Qualify Field labels, validation presentation, and form lifecycle
 
-**Contract anchors:** R20, R21, R22, R28, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R20, R21, R22, R28, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify Field labels, validation presentation, and form lifecycle.
 
@@ -8263,7 +8638,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Field semantics are browser and SSR qualified.
 
@@ -8275,7 +8650,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S149 — Freeze Anchor props and semantic mapping
 
-**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Freeze Anchor props and semantic mapping.
 
@@ -8317,7 +8692,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Anchor has a bounded source-anchored API and test contract.
 
@@ -8327,7 +8702,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S150 — Generate Anchor source and managed styles
 
-**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate Anchor source and managed styles.
 
@@ -8373,7 +8748,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Anchor is completely registered with editable source and plain CSS.
 
@@ -8383,7 +8758,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S151 — Qualify Anchor behavior in the generated app
 
-**Contract anchors:** R03, R20, R22, R23, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R23, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Anchor behavior in the generated app.
 
@@ -8427,7 +8802,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Anchor is qualified end-to-end against its frozen contract.
 
@@ -8437,7 +8812,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S152 — Freeze the optional Router Link recipe
 
-**Contract anchors:** R03, R20, R26, R28, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R26, R28, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Freeze the optional Router Link recipe.
 
@@ -8478,7 +8853,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The optional recipe boundary is documented and precise.
 
@@ -8488,7 +8863,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S153 — Generate the thin Router Link recipe
 
-**Contract anchors:** R02, R06, R10, R28, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout).
+**Contract anchors:** R02, R06, R10, R28, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md).
 
 **1. Step title:** Generate the thin Router Link recipe.
 
@@ -8534,7 +8909,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Router Link is a thin local optional recipe, not a new router.
 
@@ -8544,7 +8919,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S154 — Qualify Router Link navigation and document the recipe
 
-**Contract anchors:** R20, R22, R28, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R20, R22, R28, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify Router Link navigation and document the recipe.
 
@@ -8587,7 +8962,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The optional recipe is verified and explained without architectural inflation.
 
@@ -8597,7 +8972,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S155 — Freeze Avatar props and semantic mapping
 
-**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Freeze Avatar props and semantic mapping.
 
@@ -8639,7 +9014,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Avatar has a bounded source-anchored API and test contract.
 
@@ -8649,7 +9024,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S156 — Generate Avatar source and managed styles
 
-**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate Avatar source and managed styles.
 
@@ -8695,7 +9070,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Avatar is completely registered with editable source and plain CSS.
 
@@ -8705,7 +9080,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S157 — Qualify Avatar behavior in the generated app
 
-**Contract anchors:** R03, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Avatar behavior in the generated app.
 
@@ -8749,7 +9124,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Avatar is qualified end-to-end against its frozen contract.
 
@@ -8759,7 +9134,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S158 — Freeze Badge props and semantic mapping
 
-**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Freeze Badge props and semantic mapping.
 
@@ -8801,7 +9176,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Badge has a bounded source-anchored API and test contract.
 
@@ -8811,7 +9186,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S159 — Generate Badge source and managed styles
 
-**Contract anchors:** R02, R03, R04, R06, R08, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R03, R04, R06, R08, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate Badge source and managed styles.
 
@@ -8857,7 +9232,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Badge is completely registered with editable source and plain CSS.
 
@@ -8867,7 +9242,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S160 — Qualify Badge behavior in the generated app
 
-**Contract anchors:** R03, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Badge behavior in the generated app.
 
@@ -8911,7 +9286,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Badge is qualified end-to-end against its frozen contract.
 
@@ -8921,7 +9296,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S161 — Freeze Card props and semantic mapping
 
-**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Freeze Card props and semantic mapping.
 
@@ -8963,7 +9338,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Card has a bounded source-anchored API and test contract.
 
@@ -8973,7 +9348,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S162 — Generate Card source and managed styles
 
-**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate Card source and managed styles.
 
@@ -9019,7 +9394,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Card is completely registered with editable source and plain CSS.
 
@@ -9029,7 +9404,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S163 — Qualify Card behavior in the generated app
 
-**Contract anchors:** R03, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Card behavior in the generated app.
 
@@ -9073,7 +9448,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Card is qualified end-to-end against its frozen contract.
 
@@ -9083,7 +9458,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S164 — Freeze Alert props and semantic mapping
 
-**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Freeze Alert props and semantic mapping.
 
@@ -9125,7 +9500,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Alert has a bounded source-anchored API and test contract.
 
@@ -9135,7 +9510,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S165 — Generate Alert source and managed styles
 
-**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate Alert source and managed styles.
 
@@ -9181,7 +9556,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Alert is completely registered with editable source and plain CSS.
 
@@ -9191,7 +9566,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S166 — Qualify Alert behavior in the generated app
 
-**Contract anchors:** R03, R20, R22, R23, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R23, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Alert behavior in the generated app.
 
@@ -9235,7 +9610,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Alert is qualified end-to-end against its frozen contract.
 
@@ -9245,7 +9620,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S167 — Freeze Status props and semantic mapping
 
-**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Freeze Status props and semantic mapping.
 
@@ -9287,7 +9662,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Status has a bounded source-anchored API and test contract.
 
@@ -9297,7 +9672,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S168 — Generate Status source and managed styles
 
-**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate Status source and managed styles.
 
@@ -9343,7 +9718,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Status is completely registered with editable source and plain CSS.
 
@@ -9353,7 +9728,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S169 — Qualify Status behavior in the generated app
 
-**Contract anchors:** R03, R20, R22, R23, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R23, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Status behavior in the generated app.
 
@@ -9397,7 +9772,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Status is qualified end-to-end against its frozen contract.
 
@@ -9407,7 +9782,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S170 — Freeze Progress props and semantic mapping
 
-**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Freeze Progress props and semantic mapping.
 
@@ -9449,7 +9824,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Progress has a bounded source-anchored API and test contract.
 
@@ -9459,7 +9834,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S171 — Generate Progress source and managed styles
 
-**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate Progress source and managed styles.
 
@@ -9505,7 +9880,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Progress is completely registered with editable source and plain CSS.
 
@@ -9515,7 +9890,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S172 — Qualify Progress behavior in the generated app
 
-**Contract anchors:** R03, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Progress behavior in the generated app.
 
@@ -9559,7 +9934,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Progress is qualified end-to-end against its frozen contract.
 
@@ -9569,7 +9944,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S173 — Freeze Separator props and semantic mapping
 
-**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Freeze Separator props and semantic mapping.
 
@@ -9611,7 +9986,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Separator has a bounded source-anchored API and test contract.
 
@@ -9621,7 +9996,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S174 — Generate Separator source and managed styles
 
-**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R03, R04, R06, R08, R20, R22, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate Separator source and managed styles.
 
@@ -9667,7 +10042,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Separator is completely registered with editable source and plain CSS.
 
@@ -9677,7 +10052,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S175 — Qualify Separator behavior in the generated app
 
-**Contract anchors:** R03, R20, R22, R23, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R23, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Separator behavior in the generated app.
 
@@ -9721,7 +10096,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Separator is qualified end-to-end against its frozen contract.
 
@@ -9731,7 +10106,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S176 — Freeze Skeleton props and semantic mapping
 
-**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Freeze Skeleton props and semantic mapping.
 
@@ -9773,7 +10148,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Skeleton has a bounded source-anchored API and test contract.
 
@@ -9783,7 +10158,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S177 — Generate Skeleton source and managed styles
 
-**Contract anchors:** R02, R03, R04, R06, R08, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R02, R03, R04, R06, R08, R22, R25, R26, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Generate Skeleton source and managed styles.
 
@@ -9829,7 +10204,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Skeleton is completely registered with editable source and plain CSS.
 
@@ -9839,7 +10214,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S178 — Qualify Skeleton behavior in the generated app
 
-**Contract anchors:** R03, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R03, R20, R22, R23, R25, R26, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify Skeleton behavior in the generated app.
 
@@ -9883,7 +10258,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Skeleton is qualified end-to-end against its frozen contract.
 
@@ -9893,7 +10268,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S179 — Resolve identity parity using pinned Svelte and Bits mechanisms
 
-**Contract anchors:** R03, R21, R26, R28, R32, R33, R34. [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R21, R26, R28, R32, R33, R34. [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Resolve identity parity using pinned Svelte and Bits mechanisms.
 
@@ -9938,7 +10313,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The original identity item has an evidence-backed Svelte-native parity disposition.
 
@@ -9948,7 +10323,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S180 — Qualify cross-request and multi-instance identity
 
-**Contract anchors:** R21, R22, R28, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R21, R22, R28, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify cross-request and multi-instance identity.
 
@@ -9992,7 +10367,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Identity parity is verified rather than assumed from primitive choice.
 
@@ -10002,7 +10377,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S181 — Audit complete reference-catalog coverage
 
-**Contract anchors:** R06, R26, R27, R28, R31, R32, R33, R34. [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SCOPE_AND_ASSUMPTIONS.md](#contract-specs-scope-and-assumptions).
+**Contract anchors:** R06, R26, R27, R28, R31, R32, R33, R34. [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SCOPE_AND_ASSUMPTIONS.md](../specs/SCOPE_AND_ASSUMPTIONS.md).
 
 **1. Step title:** Audit complete reference-catalog coverage.
 
@@ -10049,7 +10424,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Catalog parity is complete and its deliberate adaptations are traceable.
 
@@ -10061,7 +10436,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S182 — Audit public exports and consumer dependency direction
 
-**Contract anchors:** R01, R02, R06, R20, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [PRODUCT_SPEC.md](#contract-specs-product-spec).
+**Contract anchors:** R01, R02, R06, R20, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [PRODUCT_SPEC.md](../specs/PRODUCT_SPEC.md).
 
 **1. Step title:** Audit public exports and consumer dependency direction.
 
@@ -10105,7 +10480,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The complete catalog preserves intended import and ownership boundaries.
 
@@ -10115,7 +10490,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S183 — Qualify cross-family bindings, refs, and snippet forwarding
 
-**Contract anchors:** R20, R22, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R20, R22, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify cross-family bindings, refs, and snippet forwarding.
 
@@ -10160,7 +10535,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The shared wrapper rules have full-catalog evidence.
 
@@ -10170,7 +10545,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S184 — Qualify combined native forms and reset behavior
 
-**Contract anchors:** R03, R20, R22, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify combined native forms and reset behavior.
 
@@ -10213,7 +10588,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Form composition preserves the native behavior contract end-to-end.
 
@@ -10223,7 +10598,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S185 — Qualify nested overlay interactions across families
 
-**Contract anchors:** R03, R20, R22, R27, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R03, R20, R22, R27, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify nested overlay interactions across families.
 
@@ -10266,7 +10641,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Overlay composition works through native primitive responsibilities.
 
@@ -10276,7 +10651,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S186 — Audit complete CSS property and selector coverage
 
-**Contract anchors:** R04, R07, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R04, R07, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Audit complete CSS property and selector coverage.
 
@@ -10320,7 +10695,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Styling contracts are complete and tied to generated DOM.
 
@@ -10330,7 +10705,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S187 — Qualify catalog-wide themes and portal changes
 
-**Contract anchors:** R17, R23, R24, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R17, R23, R24, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify catalog-wide themes and portal changes.
 
@@ -10374,7 +10749,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Global and nested theme behavior is consistent across the full catalog.
 
@@ -10384,7 +10759,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S188 — Qualify directional, motion, and accessibility state coverage
 
-**Contract anchors:** R22, R24, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R22, R24, R25, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify directional, motion, and accessibility state coverage.
 
@@ -10429,7 +10804,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Supported accessibility/state coverage is evidenced and honestly bounded.
 
@@ -10439,7 +10814,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S189 — Qualify full-catalog SSR and hydration
 
-**Contract anchors:** R20, R21, R28, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog).
+**Contract anchors:** R20, R21, R28, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md).
 
 **1. Step title:** Qualify full-catalog SSR and hydration.
 
@@ -10484,7 +10859,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** All advertised components are qualified for SvelteKit SSR/hydration.
 
@@ -10494,7 +10869,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S190 — Qualify supported custom-layout and workspace installs
 
-**Contract anchors:** R05, R09, R16, R17, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R05, R09, R16, R17, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify supported custom-layout and workspace installs.
 
@@ -10539,7 +10914,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Advertised integration layouts have complete workflow evidence.
 
@@ -10549,7 +10924,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S191 — Qualify full-catalog retirement and re-add workflows
 
-**Contract anchors:** R11, R13, R17, R18, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R11, R13, R17, R18, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Qualify full-catalog retirement and re-add workflows.
 
@@ -10591,7 +10966,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Removal/re-add lifecycle preserves real application work.
 
@@ -10601,7 +10976,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S192 — Qualify real component update cohorts
 
-**Contract anchors:** R12, R13, R14, R15, R32, R33, R34. [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R12, R13, R14, R15, R32, R33, R34. [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Qualify real component update cohorts.
 
@@ -10645,7 +11020,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Cohort policy is proven against realistic compound component updates.
 
@@ -10655,7 +11030,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S193 — Qualify filesystem behavior on supported operating systems
 
-**Contract anchors:** R16, R24, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R16, R24, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Qualify filesystem behavior on supported operating systems.
 
@@ -10698,7 +11073,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Filesystem support has a documented tested matrix.
 
@@ -10710,7 +11085,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S194 — Prove installed CLI independence from authoring source
 
-**Contract anchors:** R01, R08, R29, R30, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [DATA_MODEL.md](#contract-specs-data-model), [PRODUCT_SPEC.md](#contract-specs-product-spec).
+**Contract anchors:** R01, R08, R29, R30, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [PRODUCT_SPEC.md](../specs/PRODUCT_SPEC.md).
 
 **1. Step title:** Prove installed CLI independence from authoring source.
 
@@ -10754,7 +11129,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Tarball distribution is independently operational.
 
@@ -10764,7 +11139,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S195 — Qualify a consumer generated by the installed tarball
 
-**Contract anchors:** R02, R04, R10, R13, R21, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [STYLING.md](#contract-specs-styling), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R02, R04, R10, R13, R21, R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [STYLING.md](../specs/STYLING.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Qualify a consumer generated by the installed tarball.
 
@@ -10808,7 +11183,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The packed product generates a verified real application.
 
@@ -10818,7 +11193,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S196 — Verify advertised compatibility and release metadata
 
-**Contract anchors:** R01, R08, R10, R12, R24, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [DATA_MODEL.md](#contract-specs-data-model), [PRODUCT_SPEC.md](#contract-specs-product-spec), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [STYLING.md](#contract-specs-styling).
+**Contract anchors:** R01, R08, R10, R12, R24, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [PRODUCT_SPEC.md](../specs/PRODUCT_SPEC.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [STYLING.md](../specs/STYLING.md).
 
 **1. Step title:** Verify advertised compatibility and release metadata.
 
@@ -10865,7 +11240,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Compatibility and distribution claims match tested evidence.
 
@@ -10875,7 +11250,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S197 — Document install, customization, and upgrade operations
 
-**Contract anchors:** R02, R09, R10, R13, R18, R19, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R02, R09, R10, R13, R18, R19, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Document install, customization, and upgrade operations.
 
@@ -10919,7 +11294,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Operational guidance reflects actual verified behavior.
 
@@ -10929,7 +11304,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S198 — Document and exercise recovery procedures
 
-**Contract anchors:** R09, R13, R16, R32, R33, R34. [API_CONTRACTS.md](#contract-specs-api-contracts), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions), [SYNCHRONIZATION.md](#contract-specs-synchronization).
+**Contract anchors:** R09, R13, R16, R32, R33, R34. [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md), [SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md).
 
 **1. Step title:** Document and exercise recovery procedures.
 
@@ -10973,7 +11348,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Recovery instructions match the implemented safety protocol.
 
@@ -10983,7 +11358,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S199 — Add documented compositional examples without new primitives
 
-**Contract anchors:** R02, R03, R22, R28, R31, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [GENERATED_LAYOUT.md](#contract-specs-generated-layout), [SCOPE_AND_ASSUMPTIONS.md](#contract-specs-scope-and-assumptions).
+**Contract anchors:** R02, R03, R22, R28, R31, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md), [SCOPE_AND_ASSUMPTIONS.md](../specs/SCOPE_AND_ASSUMPTIONS.md).
 
 **1. Step title:** Add documented compositional examples without new primitives.
 
@@ -11026,7 +11401,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Developers have useful compositional examples without scope expansion.
 
@@ -11036,7 +11411,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S200 — Reconcile agent instructions and test traceability
 
-**Contract anchors:** R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria).
+**Contract anchors:** R29, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md).
 
 **1. Step title:** Reconcile agent instructions and test traceability.
 
@@ -11081,7 +11456,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Durable intent, code and verification evidence are synchronized.
 
@@ -11091,7 +11466,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S201 — Run the final code-health and cumulative regression lane
 
-**Contract anchors:** R08, R16, R20, R21, R22, R29, R30, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [API_CONTRACTS.md](#contract-specs-api-contracts), [ARCHITECTURE.md](#contract-specs-architecture), [COMPONENT_CATALOG.md](#contract-specs-component-catalog), [DATA_MODEL.md](#contract-specs-data-model), [SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions).
+**Contract anchors:** R08, R16, R20, R21, R22, R29, R30, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [API_CONTRACTS.md](../specs/API_CONTRACTS.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md), [DATA_MODEL.md](../specs/DATA_MODEL.md), [SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md).
 
 **1. Step title:** Run the final code-health and cumulative regression lane.
 
@@ -11145,7 +11520,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** All required implementation verification is evidenced; failures remain blockers, not hidden exceptions.
 
@@ -11155,7 +11530,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S202 — Record the gated extension scope without inventing APIs
 
-**Contract anchors:** R31, R32, R33, R34. [SCOPE_AND_ASSUMPTIONS.md](#contract-specs-scope-and-assumptions).
+**Contract anchors:** R31, R32, R33, R34. [SCOPE_AND_ASSUMPTIONS.md](../specs/SCOPE_AND_ASSUMPTIONS.md).
 
 **1. Step title:** Record the gated extension scope without inventing APIs.
 
@@ -11199,7 +11574,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** Extension work has an explicit next specification boundary and is not falsely claimed implemented.
 
@@ -11209,7 +11584,7 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 ### S203 — Freeze final implementation evidence and delivery status
 
-**Contract anchors:** R01, R29, R31, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria), [ARCHITECTURE.md](#contract-specs-architecture), [PRODUCT_SPEC.md](#contract-specs-product-spec), [SCOPE_AND_ASSUMPTIONS.md](#contract-specs-scope-and-assumptions).
+**Contract anchors:** R01, R29, R31, R32, R33, R34. [ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md), [ARCHITECTURE.md](../specs/ARCHITECTURE.md), [PRODUCT_SPEC.md](../specs/PRODUCT_SPEC.md), [SCOPE_AND_ASSUMPTIONS.md](../specs/SCOPE_AND_ASSUMPTIONS.md).
 
 **1. Step title:** Freeze final implementation evidence and delivery status.
 
@@ -11254,7 +11629,7 @@ cargo check --workspace --all-targets
 cargo test --workspace --all-targets
 ```
 
-Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](#contract-implementation-verification).
+Add affected-crate, valid feature/target, repository lint, platform and packaging checks when relevant; discover their exact commands from manifests/CI before this step. See [verification rules](VERIFICATION.md).
 
 **7. Expected result:** The verified product or honest blocked/partial state is delivered without unsupported completion claims.
 
@@ -11262,1250 +11637,39 @@ Add affected-crate, valid feature/target, repository lint, platform and packagin
 
 **Exit gate:** Required checks pass; scope and staged diff reviewed; commit and step report recorded. Next step is the explicitly gated next specification/delivery action, not an unscheduled expansion.
 
-## Embedded approved contracts and supporting guidance
-
-- [specs/PRODUCT_SPEC.md](#contract-specs-product-spec)
-- [specs/SCOPE_AND_ASSUMPTIONS.md](#contract-specs-scope-and-assumptions)
-- [specs/ARCHITECTURE.md](#contract-specs-architecture)
-- [specs/GENERATED_LAYOUT.md](#contract-specs-generated-layout)
-- [specs/API_CONTRACTS.md](#contract-specs-api-contracts)
-- [specs/DATA_MODEL.md](#contract-specs-data-model)
-- [specs/STYLING.md](#contract-specs-styling)
-- [specs/SYNCHRONIZATION.md](#contract-specs-synchronization)
-- [specs/SECURITY_AND_TRANSACTIONS.md](#contract-specs-security-and-transactions)
-- [specs/COMPONENT_CATALOG.md](#contract-specs-component-catalog)
-- [specs/ACCEPTANCE_CRITERIA.md](#contract-specs-acceptance-criteria)
-- [implementation/TEST_PLAN.md](#contract-implementation-test-plan)
-- [implementation/VERIFICATION.md](#contract-implementation-verification)
-- [implementation/OPEN_QUESTIONS.md](#contract-implementation-open-questions)
-- [implementation/OPERATIONS_RUNBOOK.md](#contract-implementation-operations-runbook)
-- [implementation/STEP_REPORT_TEMPLATE.md](#contract-implementation-step-report-template)
-- [implementation/DEVIATION_TEMPLATE.md](#contract-implementation-deviation-template)
-- [implementation/EXTENSION_GATE.md](#contract-implementation-extension-gate)
-- [decisions/ADR-0001-architecture.md](#contract-decisions-adr-0001-architecture)
-- [decisions/ADR-0002-generated-css-and-layout.md](#contract-decisions-adr-0002-generated-css-and-layout)
-- [decisions/ADR-0003-customization-aware-sync.md](#contract-decisions-adr-0003-customization-aware-sync)
-- [decisions/ADR-0004-primitive-and-theme-boundaries.md](#contract-decisions-adr-0004-primitive-and-theme-boundaries)
-- [decisions/ADR-0005-rust-verification-boundary.md](#contract-decisions-adr-0005-rust-verification-boundary)
-- [decisions/ADR-0006-scope-and-discovery-gates.md](#contract-decisions-adr-0006-scope-and-discovery-gates)
-- [references/SOURCE_BASELINE.md](#contract-references-source-baseline)
-- [references/TOKEN_BASELINE.md](#contract-references-token-baseline)
-- [repo/AGENTS.md](#contract-repo-agents)
-
-<a id="contract-specs-product-spec"></a>
-
-### Product contract
-
-Scheduled repository file: `specs/PRODUCT_SPEC.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Status: approved intent, with explicitly labeled discovery gates. Spec: `svelte_ui_kit_v1`.
-
-#### Goal
-
-Reproduce the source-first workflow and recognizable conventions of `leptos_ui_kit` for SvelteKit. The product is a generator and authored registry, not a runtime styled component library. Developers receive editable application code and CSS; upstream interaction remains in Bits UI where useful.
-
-The original review compared registry/configuration, codegen planning and transactions, CSS/token contracts, component manifests, representative native and primitive-backed components, and CLI/package tests at `a10fbf06334f4648f5755e05a7147414e4e5fc98`. It did not execute the Rust suite or compile Svelte prototypes. See [SOURCE_BASELINE.md](#contract-references-source-baseline).
-
-#### Stable requirements
-
-| ID  | Contract                                                                                                                                      |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| R01 | Product/package/executable is `svelte-ui-kit`; spec is `svelte_ui_kit_v1`. One published npm package initially; modular TypeScript internals. |
-| R02 | Installed `.svelte`, `.ts`, and CSS are application-owned editable source. No imports from a styled kit runtime.                              |
-| R03 | Bits UI supplies complex interaction; native Svelte/HTML handles simple presentation. Do not port Rust primitive internals.                   |
-| R04 | Pure authored CSS, semantic tokens, no Tailwind/CSS-in-JS/shadcn compatibility or conversion pipeline.                                        |
-| R05 | Default UI path is `src/lib/components/ui`; state path is its `_kit` child; CSS is `src/styles/kit.css`.                                      |
-| R06 | Simple files and compound directories; flat PascalCase exports; lowercase kebab-case filenames/item IDs; camelCase props/config keys.         |
-| R07 | Preserve `.kit-*`, `--kit-*`, managed block IDs, and change only tool-specific markers/layers to `svelte-ui-kit`.                             |
-| R08 | Bundle complete registry assets and schemas in the package; built-in registry only; tarball works without authoring tree.                     |
-| R09 | CLI: `info`, `init`, `view`, `add`, `sync`, `doctor`; approved `--dry-run`, `--json`, `--cwd`, `doctor --strict`.                             |
-| R10 | Plan dependencies accurately, including peers, without implicitly editing `package.json` or invoking a package manager.                       |
-| R11 | Keep explicitly requested items in config and resolved dependency closure in lock state.                                                      |
-| R12 | Decouple schema, package, registry, item, framework compatibility, and CSS contract versions.                                                 |
-| R13 | Use base/local/incoming comparison for sources and CSS. Preserve local edits, detect real conflicts, no automatic merge.                      |
-| R14 | Treat coupled source and style changes as compatibility cohorts; conflicts must not partially update a component.                             |
-| R15 | Deterministic inspectable plans, all-or-nothing conflict planning, zero-write dry runs, idempotence, one structured result.                   |
-| R16 | Validate paths/ownership; detect concurrent changes; stage recoverable writes and publish install lock last.                                  |
-| R17 | Preserve unmanaged CSS/barrel/layout content; patch layouts structurally and fail safely on unsupported shapes.                               |
-| R18 | Retire unneeded generated assets safely; never silently delete customized assets or manufacture a remove command.                             |
-| R19 | `doctor --strict` distinguishes intentional customization from broken/unsafe installations; customization alone is not corruption.            |
-| R20 | Preserve primitive/native types, discriminated unions, state bindings, refs, snippets, event semantics, and native form behavior.             |
-| R21 | Keep SSR/hydration and request-local state safe; do not disable SSR or use shared mutable server state as a workaround.                       |
-| R22 | Test keyboard/focus/accessibility, labels, form submission/reset, disabled state, overlays, motion, RTL, and themes as applicable.            |
-| R23 | Application owns themes/persistence/color-scheme. Global and nested portal theme strategies are explicit.                                     |
-| R24 | Pure CSS is not a zero-inline-style/CSP guarantee; audit placement behavior and document actual support.                                      |
-| R25 | Preserve component-property → semantic-role → default-radius → reference-radius fallback and shape-critical geometry.                         |
-| R26 | Deliver tokens/spinner/button/switch/dialog first, then original catalog adaptation; exercise floating menu early.                            |
-| R27 | Distinct Alert Dialog behavior uses its primitive, not only `role="alertdialog"` on Dialog.                                                   |
-| R28 | Keep identity behavior Svelte-native; router-link is an optional thin native-anchor recipe, not a new router.                                 |
-| R29 | Test installed generated output in a real SvelteKit app; run typecheck/build/browser tests and packed artifact acceptance.                    |
-| R30 | Preserve the source project's JSON/error/idempotence/conflict/packaging rigor, with independently versioned target wire contracts.            |
-| R31 | Preserve approved extension direction without inventing select/combobox/popover/date/higher-level APIs; use a scoped specification gate.      |
-| R32 | Follow spec-anchored, one-step/one-commit execution; verify, self-review, report, and document evidence-backed deviations.                    |
-| R33 | Preserve any applicable Rust workspace with Cargo/repo checks at each step; Cargo is N/A in a TS-only target.                                 |
-| R34 | Use real target conventions, protect unrelated changes, do not publish/push or overwrite the reference repository.                            |
-
-#### User-facing workflow
-
-From an application package root, inspect with `info`, initialize, inspect a registry item with `view`, install with `add`, reconcile selected items with `sync`, and validate with `doctor`. Use dry runs before mutations and JSON for automation. Follow the reported dependency installation instructions separately. Commit generated files and metadata. Customize components directly or use application theme/override CSS. Upgrade the local CLI to a tested version, inspect a sync dry run, then apply only safe changes; resolve genuine conflicts explicitly.
-
-Root requests and transitive items must be distinguishable throughout. For `button`, the initial closure includes `spinner` and `tokens`; it does not make those dependencies explicit user requests. Re-adding the same item is idempotent. Removing a desired item from configuration is the reconciliation input; no separate `remove` command is part of the approved surface.
-
-#### Non-goals
-
-No distributed service, online registry protocol, telemetry, registry authentication, runtime theme store, icon dependency, generic plugin ecosystem, schema hosting deployment, automatic npm install, patch/merge UI, React compatibility, Tailwind option, Rust CLI requirement, or bulk repo migration. Do not add these to fill perceived gaps. Exact visual defaults beyond the reviewed CSS and explicit source contracts must be derived and verified, not redesigned without a spec change.
-
-The consumer dependency install can require network access; package asset loading and regeneration must not rely on live GitHub. One CLI package does not mean zero consumer runtime dependencies: Bits UI and Svelte are still real dependencies.
-
-<a id="contract-specs-scope-and-assumptions"></a>
-
-### Scope, assumptions, and decision authority
-
-Scheduled repository file: `specs/SCOPE_AND_ASSUMPTIONS.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-#### Status vocabulary
-
-**Confirmed** means the user approved the prior review recommendation. **Observed** means source/doc evidence, not target implementation. **Implementation assumption** means a necessary reversible engineering choice within the approved design; record it before encoding it. **Unresolved** means evidence or a product choice is still required. **Deferred** means the direction is preserved but not a license to invent its scope.
-
-#### Confirmed vs inferred
-
-The approved stack is TypeScript/SvelteKit/Bits UI with a Node-distributed generator. The later request mentions a senior Rust architect and Cargo checks; it does not explicitly revoke the approved stack. **A01:** retain the stack and interpret Rust checks as a guard on any present/affected Rust repository. This reconciles both requests without silently making a different product.
-
-**A02:** use the operator-supplied target worktree; absent an existing target architecture, a standalone `svelte-ui-kit` package is the default. The source repository is read-only reference. The authorized target is this standalone repository; retain its existing identity and scaffold.
-
-**A03:** exact minor versions, Node engine, package manager, TypeScript test runner, lint configuration, and minimum browser matrix are selected from actual target evidence and a passing compatibility probe. A concrete, locked baseline is required before generated wrappers. No version labeled “latest” is frozen from conversational memory.
-
-**A04:** preserve the observed envelope shape/status vocabulary as a target protocol starting point. Numerical exit codes, envelope schema version, serialization details, export-region marker grammar, and exact JSON field spellings not fixed in the review are frozen in dedicated contract commits, with tests. They are not retroactively described as human-specified wire values.
-
-**A05:** the Node filesystem implementation initially targets a trusted local developer checkout, with explicit path/symlink/concurrency protections. It must not claim the Leptos capability-handle protection against a hostile concurrent filesystem. Threat model and supported OS evidence are required before writes become available.
-
-**A06:** config and lock are strict JSON. The plan proposes versioned bundled JSON Schemas; exact `$id` hosting and initial independent schema-version value need discovery. No invented published domain or URL. Stable item/source/CSS ownership and hashes are mandatory regardless of serialization choice.
-
-**A07:** internal test files and npm script names in the plan are proposed paths/categories for a new target. Existing equivalents win after discovery. Adding one script is not permission to pretend an unavailable command passed.
-
-**A08:** simple presentation can use native elements or a thin primitive where source behavior warrants it. Avatar loading/fallback and semantic progress require behavioral review rather than treating them as inert styling. Component worksheets freeze those choices before implementation.
-
-#### Catalog scope and the extension boundary
-
-The approved three-stage direction was: prove the full core installation/update path; achieve source-catalog/browser parity; extend to select, combobox, popover, date-related controls, and higher-level patterns after contracts stabilize.
-
-The first two stages have concrete product scope and form this specification's coding deliverable. The third is an approved direction, but no exact item set, type/API surface, date/timezone model, locale behavior, or higher-level pattern inventory was specified. **A09:** finish a precise extension scope/spec gate as the last planning step, and do not invent an extension coding backlog as though those details were approved. Completing core v1 does not mean those extensions have been implemented. An expanded v1 claim including them is blocked until their contracts and independent commit sequence exist. This boundary must remain visible in status reports.
-
-The original `identity` entry describes a Leptos requirement. In the port, preserve stable identity semantics using Svelte/Bits mechanisms, not a cargo-style identity component. Whether there is any useful generated `identity` item is decided by a parity worksheet; do not ship an empty compatibility shim. `router-link` remains optional to install but its thin documented recipe is part of catalog adaptation.
-
-#### Technical choices vs product changes
-
-Agents may resolve exact type names already defined by a pinned primitive, choose an existing repository script, or select an appropriate parser after inspecting evidence. They must record the result at the scheduled contract step. They may not add a runtime component package, remote registries, broad polymorphism, automatic merging, dependency mutation, or extra components under that authority.
-
-A repository-proven obsolete/unsafe plan step needs a deviation record before execution changes. A new product requirement needs a durable spec amendment; planning notes cannot approve it. Do not repeatedly request already supplied choices, and do not treat genuine technical uncertainty as permission to invent APIs.
-
-<a id="contract-specs-architecture"></a>
-
-### Architecture
-
-Scheduled repository file: `specs/ARCHITECTURE.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-#### System boundary
-
-```
-CLI commands ──> project detection + config validation
-                      │
-bundled registry ──> dependency resolution
-                      │
-application snapshot + previous lock + incoming registry
-                      │
-                pure change planner
-                      │
-                diagnostics / dry run
-                      │
-           guarded recoverable file application
-                      │
-         app-owned components, CSS, metadata
-                      │
-                Bits UI + SvelteKit
-```
-
-There is one initially publishable npm package. Keep module boundaries without manufacturing a multi-package ecosystem. Consumer components must not import Node-only code, the CLI, registry loader, or a kit runtime facade.
-
-#### Proposed target repository
-
-```
-src/
-  cli/main.ts
-  cli/commands/{info,init,view,add,sync,doctor}.ts
-  project/{detect,dependencies,paths}.ts
-  registry/{load,resolve,validate}.ts
-  codegen/{plan,apply,lock,css,exports,svelte,transaction}.ts
-registry/
-  registry.json
-  foundation/tokens.json
-  ui/*.json
-  ui/*.svelte
-  ui/*.types.ts
-  ui/<compound>/{index.ts,root.svelte,...}
-  styles/*.css
-  contracts/{theme-v1,component-customization-v1}.json
-schema/v1/
-tests/{fixtures,codegen,components,package}/
-```
-
-These are module responsibilities, not a ban on extracting small cohesive helpers. A module may split when supported by actual code, without adding publishable packages. Exact schema subdirectory follows the independent version frozen at the schema step.
-
-#### Responsibilities
-
-**CLI** parses arguments, selects the root, renders one human or JSON outcome, and maps stable statuses to exit codes. It does not implement merge policy or perform unplanned file writes. Command handlers call use cases rather than duplicate them.
-
-**Project detection** reads manifests and approved configuration, identifies an explicit application package, discovers supported paths and dependency state, and reports unsupported layouts. Avoid executing arbitrary Svelte config simply to detect a layout; an explicit safe override or documented manual integration is preferable to guesswork.
-
-**Registry** reads packaged assets through a package-relative provider, validates schemas and manifest identity, validates target ownership/export uniqueness, resolves dependency closure deterministically, and merges dependency requirements. It never loads arbitrary remote registries.
-
-**Planner** receives validated models, immutable asset bytes, current filesystem observations, and previous lock metadata. It emits a complete, deterministic proposal with diagnostics and expected preimages. It does not write files, run a package manager, or initialize coordination state during a dry run.
-
-**Patchers** are narrow transformations for managed CSS blocks, generated export regions, and safe Svelte layout imports. They preserve unrelated source bytes and reject malformed/ambiguous structures. A patcher is not a formatter for the user's entire file.
-
-**Transaction layer** owns exclusive writer coordination, revalidation, staged content, journal/recovery, atomic file replacement where supported, rollback/roll-forward policy, and lock-last publication. Multi-file filesystem writes are not one native atomic operation; document the recovery protocol rather than promising nonexistent atomicity.
-
-**Consumer wrappers** supply design classes and constrained props; preserve upstream behavior, semantics, bindings, references, and snippet structure. No global primitive state clone or hidden module-level mutable request state.
-
-#### Boundaries to preserve from Leptos
-
-Translate `cargoPlan` into `npmPlan`, Rust/module targets into explicit Svelte/TypeScript targets and exports, and compiled-in registry assets into package-bundled assets. Preserve ownership, drift diagnostics, embedded contracts, package independence, and plan/apply separation. Do not translate Rust SSR feature flags or `web_ui_primitives` implementations into new Svelte abstractions.
-
-#### Distribution and dependencies
-
-The CLI's distribution includes all templates/manifests/contracts/schemas used at runtime. Resolve asset paths relative to the installed package, not CWD or source checkout. Package metadata and content digests supply provenance; a `.git` directory must not be necessary in a released tarball.
-
-Consumers depend on Svelte and any Bits UI requirements emitted by installed items. Node tooling dependencies belong to the CLI or development fixture. Version selection must honor actual peer requirements, not only directly imported modules. Do not put all component dependencies into every application's plan without justification.
-
-#### Composition vs expansion
-
-Keep compositional patterns: collapsibles can form accordion-like layouts; alert/status can supply notification content; native anchors/buttons can compose breadcrumbs and pagination; native semantic HTML remains appropriate for data tables and document structure. Do not invent application orchestration, notification queues, or data-grid engines.
-
-A single aggregate stylesheet is intentional. It includes CSS for installed items and is not promised to be route-level tree-shaken. Sibling imports avoid root-barrel cycles. Compound export barrels are generated from explicit manifest declarations.
-
-<a id="contract-specs-generated-layout"></a>
-
-### Generated layout, ownership, and names
-
-Scheduled repository file: `specs/GENERATED_LAYOUT.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-#### Default consumer tree
-
-```
-src/
-  lib/components/ui/
-    index.ts
-    button.svelte
-    button.types.ts
-    spinner.svelte
-    switch.svelte
-    dialog/
-      index.ts
-      root.svelte
-      trigger.svelte
-      portal.svelte
-      overlay.svelte
-      content.svelte
-      title.svelte
-      description.svelte
-      close.svelte
-    _kit/
-      kit.json
-      kit.lock.json
-      token-contract.json
-      theme-integration.json
-  styles/
-    kit.css
-    themes.css
-    app.css
-  routes/+layout.svelte
-```
-
-This is an illustrative tree after installing the listed items, not a requirement for `init` to install all of them. Unrequested source must not appear. The original default was `src/components/ui` with `_kit` and `styles/kit.css`; the Svelte adaptation deliberately uses `src/lib` and `src/styles`.
-
-`themes.css` and `app.css` are application-owned. A generator may create an absent empty integration target only when part of an explicitly reported initialization plan; it must never replace an existing theme or reset stylesheet. A tokens install produces token/theme metadata when its contracts exist. The metadata must not claim a Rust ABI or primitive package that is not used by Svelte.
-
-#### Naming
-
-| Concept                                   | Name/pattern                                               |
-| ----------------------------------------- | ---------------------------------------------------------- |
-| Spec identifier                           | `svelte_ui_kit_v1`                                         |
-| Package, CLI, namespace in markers/layers | `svelte-ui-kit`                                            |
-| Registry IDs and filename segments        | lowercase kebab-case (`router-link`, `button.svelte`)      |
-| Simple component                          | one `.svelte` file, optional adjacent `.types.ts`          |
-| Compound component                        | directory with `index.ts` and named part files             |
-| Public values/types                       | PascalCase (`Button`, `DialogRoot`, `ButtonVariant`)       |
-| Public props/config fields                | camelCase (`loadingLabel`, `schemaVersion`, `uiDir`)       |
-| CSS classes                               | `.kit-*`, BEM-like variants such as `.kit-button--primary` |
-| CSS properties                            | `--kit-*`                                                  |
-| Root import                               | `$lib/components/ui`                                       |
-
-Public dialog exports: `DialogRoot`, `DialogTrigger`, `DialogPortal`, `DialogOverlay`, `DialogContent`, `DialogTitle`, `DialogDescription`, `DialogClose`. There is one canonical flat naming surface; do not add parallel `Dialog.Root` aliases. Public use of Bits UI namespaces inside generated wrappers is not a kit namespace alias.
-
-Do not generate `src/lib/components/index.ts` merely to imitate Rust parent modules. Generated source uses direct sibling imports, not the generated root barrel. Manifest declarations determine source targets and public exports. Reject duplicate symbols, conflicting paths, and case-colliding names before writes.
-
-#### Ownership
-
-Component sources and their supporting TS files are initially generated but freely editable. The root and compound barrels have clearly managed export regions; preserve unrelated application text and detect conflicting declarations. Exact TS comment marker syntax is frozen at its dedicated contract step; CSS marker syntax is already specified.
-
-`kit.json` records user-editable desired installation and validated integration settings. `kit.lock.json` and contract metadata are tool-managed and committed. Keep ephemeral writer coordination/journals separate from semantic committed metadata; their exact paths are internal choices and must be documented, ignored appropriately, and handled safely after interruption.
-
-The stylesheet has separately managed blocks, not whole-file generator ownership. Preserve all text outside managed regions, including comments and application overrides. A customized managed block is still user work and must not be overwritten silently.
-
-#### Layout imports
-
-Ensure the application loads `kit.css`, then `themes.css`, then `app.css`, preserving existing layout code and avoiding duplicate imports. Resolve relative paths from the actual supported layout; the default is `../styles/<name>.css` from `src/routes/+layout.svelte`. Parse Svelte, identify an appropriate instance script, and apply a minimal text edit. Test layouts with no script, existing instance/module scripts, TypeScript, comments, and existing imports. Do not inject into the wrong script or replace route rendering.
-
-Custom UI/styles/root layouts require explicit validated mapping. `--cwd` chooses one package; do not scan and mutate all workspace members. Unsupported or ambiguous integration must produce a diagnostic and an explicit manual step rather than a guessed edit.
-
-<a id="contract-specs-api-contracts"></a>
-
-### Public API and CLI contracts
-
-Scheduled repository file: `specs/API_CONTRACTS.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-#### CLI surface
-
-| Command       | Behavior                                                                                                 | Mutation           |
-| ------------- | -------------------------------------------------------------------------------------------------------- | ------------------ |
-| `info`        | Inspect supported project, paths, dependencies, compatibility, and readiness.                            | None               |
-| `init`        | Plan/apply config, safe integration targets/imports, export infrastructure, and initial lock state.      | Explicit plan only |
-| `view <item>` | Show bundled item metadata; source inspection should preserve the reviewed `--source` capability.        | None               |
-| `add <item>`  | Add an explicit root request, resolve dependencies, plan/apply source, CSS, exports and state.           | Explicit plan only |
-| `sync`        | Reconcile desired config with incoming packaged registry using prior ownership baselines.                | Explicit plan only |
-| `doctor`      | Report installation consistency, dependencies, source/CSS customization, integration, and unsafe states. | None               |
-
-Write commands support `--dry-run`; structured command results support `--json`. `--cwd <path>` chooses the application package explicitly. `doctor --strict` makes broken/unsafe installation checks fail CI but must not treat customization alone as failure. Preserve help/version usability as ordinary CLI concerns. Do not add automatic installation, a remove command, compatibility aliases, or a `--force` overwrite escape hatch.
-
-The original tool accepts one item per `add`; multi-item syntax was not approved. Unknown commands/options, missing values, conflicting arguments, and malformed input need deterministic diagnostics before any write. Bare `view` must not mutate a project. Whether project context is needed for a particular information field is explicit, not an excuse to fabricate one.
-
-#### Structured results
-
-Observed source shape to carry over and freeze in the target protocol step:
-
-```
-{ schemaVersion, command, status, diagnostics, changes, data }
-```
-
-Status vocabulary: `success`, `planned`, `no_change`, `warning`, `conflict`, `error`, `unsupported`. Diagnostics include stable machine code, level, human explanation, safe logical locator where appropriate, and actionable guidance. Change records distinguish actual writes from planned actions. Dry-run output is not a report that writes occurred.
-
-In JSON mode emit exactly one complete envelope to stdout, including failures; do not mix progress text, color codes, or a second error object into it. Human failures belong on stderr. Decide and fixture the numerical exit map at the protocol step. The reference's observed mapping is a starting point, not a newly implied target requirement: 0 successful/planned/unchanged/non-strict warning; 1 ordinary failure; 2 usage/unsupported; 3 strict doctor failure; 10 conflict; 11 unsafe path; 12 registry failure. Confirm target convention before freezing it.
-
-Command schema version is independent from Svelte and package versions. Output is deterministic for equivalent logical inputs; avoid timestamps, random transaction identifiers, absolute sensitive paths, or filesystem iteration order in semantic output unless explicitly necessary and documented.
-
-#### Dependency planning
-
-Report direct package requirements, runtime versus tooling roles, relevant peer requirements, installed/declaration status, incompatible ranges, and an appropriate command for the detected package manager. Do not silently edit `package.json`/lockfiles, execute npm/pnpm/yarn, fetch mutable remote templates, or pretend missing peer dependencies are optional.
-
-The initial Bits UI source observation was 2.19.3 with Svelte `^5.33.0`, a date peer `^3.8.1`, and Node `>=20` in that source manifest. This is historical evidence, not a validated distribution baseline. Before implementation choose installed, reproducible versions that pass fixtures and record actual peer metadata. Do not automatically adopt a newer major version.
-
-#### Component interface rules
-
-Use Svelte 5 typed props and deliberate binding through wrappers. `open`, `checked`, `value`, and DOM `ref` are not made two-way merely by spreading props. Derive primitive props from the pinned Bits UI definitions; preserve union discrimination. Use native Svelte element types for native components. Do not replace a real prop contract with `any` or a generic attribute dictionary.
-
-Own design classes without erasing caller classes. Use the existing variant vocabulary where defined: `ButtonVariant` primary/secondary/ghost and `ButtonSize` sm/md/lg. Default a native Button to `type="button"`; preserve disabled/loading/busy/label behavior and native submit/reset opt-in. Do not turn Anchor into a role-button or Button into an automatically polymorphic link.
-
-For composed parts, support upstream `child`/`children` deliberately. A wrapper that owns internal markup, such as the proposed Switch with its Thumb, should exclude those customization hooks rather than accept and drop them. Floating delegated content must retain outer positioning `wrapperProps` and inner content `props` structure. Merge custom handlers only with an explicit ordering/cancellation policy; a spread is not a merge.
-
-Dialog is an exposed compound family. Portal/overlay are explicit parts; preserve custom portal targets and document composition. Do not introduce an ambiguous `portalTo` convenience alias unless the API worksheet justifies it; the earlier name was illustrative camelCase, not a frozen prop signature. Use pinned primitive names for forwarded configuration where possible.
-
-Alert Dialog gets a separate primitive-backed family, preserving accessible naming, focus and dismissal semantics. It is not Dialog with a role property. Native semantic content remains the default for tables/document structure.
-
-#### API freezing procedure
-
-Before each component family, document its source counterpart, exact pinned Bits/native types, exported names, binding/ref/snippet policy, forwarded attributes, classes/state selectors, native form behavior, accessibility expectations, dependencies, and source/CSS coupling. Add positive and negative type fixtures. Only then add wrappers. Undocumented upstream subcomponents or advanced variants are not automatically product scope.
-
-<a id="contract-specs-data-model"></a>
-
-### Data models and persistence contracts
-
-Scheduled repository file: `specs/DATA_MODEL.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-This file fixes semantic responsibilities. Exact JSON spelling not already approved is a scheduled schema-design choice; there are intentionally no fabricated production `$schema` URLs or prevalidated example lockfiles in this specification.
-
-#### Version axes
-
-Track configuration/lock schema, CLI package, registry release/content digest, individual item/template versions, Svelte/Bits compatibility ranges, and token/customization contracts independently. A framework bump is not automatically a schema migration. Item version/digest identifies incoming content; baseline content must not be relabeled as updated when preserved due to customization/conflict.
-
-#### Kit configuration (desired state)
-
-Contains schema identity/version, tool provenance as applicable, supported project and integration roots, UI/export/style mappings, built-in registry selection, and **explicit root item requests only**. Validate unknown fields, malformed values, unsafe/overlapping paths, duplicate requests, unsupported modes, and invalid names. Default state directory is under the UI root. Root requests are not replaced by the full dependency closure.
-
-A useful conceptual example is `requested=[button]`, with `resolved=[tokens, spinner, button]` in the lock. Repeated request normalization must preserve that distinction. Selecting a dependency explicitly is different from merely resolving it.
-
-#### Registry root and item
-
-Root identifies registry version/digest, compatibility policy, and item ID → manifest mapping. Each manifest identifies its own name/kind/version, public description, framework/primitive compatibility, explicit source file targets/kinds and exports, managed CSS targets and block IDs, `registryDependencies`, npm requirements, and accessibility behaviors. Foundation tokens can be CSS-only.
-
-Resolve dependencies through a validated acyclic graph with stable ordering; reject missing manifests/assets, manifest/name mismatch, cycles, duplicate exports, duplicate ownership, case collisions, malformed source paths, and incompatible requirements before planning writes. Freeze one immutable asset view per operation. No live authoring-tree reload during planning/apply.
-
-#### Install lock (observed installed lineage)
-
-Record schema/tool/registry provenance, configuration identity, requested-versus-transitive provenance, resolved item identities/versions, source-file owners and installed baseline digests, CSS-block owners and baseline digests, integration/contract references/digests, and reverse indexes if used. Validate reverse indexes against canonical records rather than trusting both independently.
-
-For each managed target distinguish the base last accepted upstream content, current local observation, and incoming registry content. Persistent base hash is required; local hash can be observed per plan. Do not invent an automatic merge requiring base bytes when only hashes exist. Transient transaction backups are not a general merge history database.
-
-A preserved customized target retains its legitimate upstream base so future incoming changes can still be detected. A current incoming version is not proof that every local target has adopted it. Track effective per-target/cohort lineage or block the mixed transition; never write misleading lock metadata.
-
-#### Theme/integration metadata
-
-`token-contract.json` describes semantic token names/types/default expectations and a versioned contract identity. `theme-integration.json` identifies stylesheet path, layers, producer, relevant primitive compatibility, and actual portal integration characteristics. Preserve separation between theme tokens and component customization properties. Do not copy the Leptos identity/presence/portal ABI numbers or Rust type names into a Svelte claim.
-
-Version the component customization contract independently. Record property scope, intended CSS grammar and fallback relationships; preserve complete border-radius grammar, including multi-corner and elliptical forms, rather than narrowing it with a typed registration accidentally.
-
-#### Plan and diagnostics
-
-A plan contains validated logical targets, intended create/update/retire actions, preserved/customized/conflicting dispositions, ownership/cohort identity, preimage observations, produced bytes/digests, dependency plan, diagnostics, and final metadata publication. No write is allowed merely because a command handler has enough information to guess one.
-
-Use stable logical paths in output. Keep content hashes deterministic; using SHA-256 on exact UTF-8 bytes is a proposed implementation convention consistent with the reference and must be frozen/tested. Do not normalize an application's CRLF, comments, or formatter output implicitly to hide edits. Semantic/canonical hashes and exact-byte preimage hashes serve different purposes and must be named distinctly.
-
-#### Transaction state
-
-An internal journal records enough before/after information to recover an interrupted multi-file batch and distinguish prepared/applied/committed outcomes. Record ownership of temporary files, expected preimages, commit marker status, and restoration policy. Keep ephemeral coordination outside committed semantic state; document paths, modes, cleanup, and stale-lock handling. Fail closed on ambiguous or corrupted recovery state. New `--force`/`recover` commands are not part of this contract; safe automatic recovery or an explicit documented recovery procedure must fit existing commands.
-
-#### Migration
-
-Reject unsupported future schemas with a clear diagnostic. Migrate older target schemas only through explicit, fixture-tested transitions. V1 does not read Leptos kit.json as if it were Svelte config and does not provide shadcn aliases. Source/CSS fixture migrations must protect local edits, preserve ownership, and publish truthful state. Config reformatting alone must not become a source-ownership reset.
-
-<a id="contract-specs-styling"></a>
-
-### CSS, themes, and visual contracts
-
-Scheduled repository file: `specs/STYLING.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-#### Distribution
-
-Registry CSS is authored plain CSS. The CLI installs each item's text as one managed block in `src/styles/kit.css`; it does not generate utility classes, scrape demos, compile Tailwind, or maintain a second installed per-component stylesheet. One registry source and one installed managed block are the authoritative pair.
-
-```
-/* svelte-ui-kit:start tokens */
-@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;
-/* token declarations in their layer */
-/* svelte-ui-kit:end tokens */
-```
-
-Component blocks use matching item IDs and `@layer svelte-ui-kit.components`. Define marker parsing precisely; reject duplicate/unmatched/nested markers and do not interpret marker-like strings inside CSS strings as structure. Preserve text outside blocks exactly. Order tokens before dependent components deterministically.
-
-#### Names and customization
-
-Preserve `.kit-button`, `.kit-button--primary`, `.kit-switch-thumb`, and the semantic `--kit-*` vocabulary. Scope Bits state selectors through kit classes; avoid globally styling every raw Bits primitive. Verify each migrated selector against actual rendered DOM and state attributes. Reuse CSS by contract, not blind byte substitution.
-
-Radius precedence is:
-
-```
-component property
-  → semantic role
-  → --kit-radius-default
-  → reference radius
-```
-
-For Button: `--kit-button-radius` → `--kit-radius-control` → `--kit-radius-default` → `--kit-radius-md`. Preserve default shapes when optional variables are unset. Shape-critical geometry (spinner, inner circular indicators) remains circular unless its exact component property explicitly overrides it. Accept full CSS border-radius grammar; do not use restrictive `@property` registration. Invalid custom-property values follow ordinary computed-value behavior.
-
-Retain semantic colors, text/surface/border roles, focus ring, shadows, motion/easing, disabled opacity, and per-component customization as observed in the reference assets. A theme token expresses portable design intent; a component property is a separately governed runtime CSS API. Preserve this distinction and test fallback precedence.
-
-#### Application themes
-
-Load kit CSS, then application theme CSS, then application overrides. The application owns theme selectors, persistence, color-scheme, and any server-provided initial theme. Do not ship a hidden theme store or browser-local-storage policy. The initialization command must preserve existing application styles.
-
-Global theme scopes belong at a document-level ancestor when body-portaled overlays must share them. Nested scopes can use a suitable custom portal host within the theme. Document clipping/stacking implications. Test both, along with theme changes while an overlay is open. Do not silently copy computed values into inline styles.
-
-#### Accessibility and motion
-
-Keep visible focus states, proper disabled state contrast/affordance, meaningful busy/loading presentation, and inherited typography. Verify the reference switch's strong unchecked track, checked primary color, thumb color override, RTL travel, and reduced-motion behavior after mapping to Bits UI. Do not equate inherited source token values with an automatic accessibility certification; assess actual rendered foreground/background combinations and record findings.
-
-Use reduced-motion alternatives for animated controls; verify logical properties/RTL where direction matters. Forms and overlays must remain legible under supported theme scopes. Do not introduce unapproved palettes or reset styles merely to imitate demo screenshots.
-
-#### CSP and performance limits
-
-Plain-CSS design styling does not guarantee no inline runtime positioning styles. Audit the pinned primitive output for floating menu/overlay placement and document supported CSP behavior. No strict-CSP parity claim is allowed without a tested policy. Do not remove necessary primitive wrapper structure just to eliminate a style attribute.
-
-The aggregate CSS contains all installed item blocks. No promise of per-route stylesheet tree shaking is made. Application-owned overrides should normally live after kit.css, minimizing future block conflicts without restricting direct editing.
-
-<a id="contract-specs-synchronization"></a>
-
-### Ownership and synchronization
-
-Scheduled repository file: `specs/SYNCHRONIZATION.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-#### Comparison table
-
-Evaluate ownership before content equality. For a tracked target, let B be the base upstream content last installed, L the local content now, and I the incoming packaged source. The first four rows below apply to tracked targets only. Untracked targets have no legitimate B and follow the final row even when their bytes equal I. Apply independently to sources and managed CSS blocks, then enforce component/cohort compatibility.
-
-| Condition                  | Disposition                                                                       |
-| -------------------------- | --------------------------------------------------------------------------------- |
-| L = I                      | Already satisfied; no content write. Preserve or advance lineage only truthfully. |
-| L = B and I differs        | Untouched locally; safe incoming update.                                          |
-| I = B and L differs        | Preserve local customization.                                                     |
-| B, L, I differ with L != I | Genuine conflict; no overwrite and no partial batch.                              |
-| Untracked target exists    | Preserve application-owned content; explicit reconciliation required.             |
-
-The equality-to-incoming case precedes conflict classification. Identical untracked content does not grant silent deletion rights; exact adoption policy is frozen/tested before implementation. Do not reset base hashes to arbitrary local bytes just to silence drift.
-
-#### Missing targets and removal
-
-Absence is not a hash. The review did not fully define whether deletion of a tracked file is intentional. At its contract step choose a conservative, visible behavior: report the missing target and planned restoration or conflict explicitly; never silently adopt absence as an upstream baseline. The source tool restores missing tracked files, but target policy must be documented.
-
-Configuration removals recalculate the closure from explicit requests. Assets still required transitively remain. Clean obsolete generated assets may be retired in the planned transaction after safety checks. Customized or untracked assets are retained with diagnostics; do not delete them. Remove ownership only through a truthful transition; subsequent commands must not silently reacquire a retained file.
-
-A customized retired CSS block requires an explicit disposition (retain as application-owned text rather than continuing to claim current generated ownership). Likewise preserve unrelated exports and warn about application imports left behind. Do not promise arbitrary import rewriting or safe deletion based only on the registry graph.
-
-#### Compatibility cohorts
-
-Source shape, exported parts, CSS selectors, and dependent component APIs can be coupled. Treat a component's source files, managed block, and relevant exports as a compatibility unit. A conflict in one member must not leave the others newly installed while claiming the unit is updated. The default initial policy is to stop the write batch on a genuine conflict.
-
-A local customization with unchanged upstream is not itself a conflict; however, if another member of its compatibility unit changes and compatibility cannot be established, preserve the whole unit or report a cohort conflict. Document the exact conservative rule and fixtures rather than guessing semantic compatibility from text hashes. Dependencies may require widening a cohort when exported APIs change; not every unrelated component belongs to one permanent giant cohort.
-
-#### Planning and lock truth
-
-Resolve all requested items, read all current managed targets, calculate CSS/barrel/layout changes and dependency status, and detect every relevant conflict before applying any writes. A source conflict must not leave kit.json updated independently. Staging begins only after a safe complete plan exists.
-
-The final lock identifies actual effective lineage, not merely the incoming registry's newest item version. Preserve base hashes when retaining customization. A no-content-write lineage update must still be planned and transactionally published if metadata really changes. Repeated add/sync after a satisfied state must have no semantic changes.
-
-#### CSS and exports
-
-Parse markers, validate unique owners, perform block-level comparison, preserve unmanaged text, and deterministic order. Reject malformed marker structure. Source formatting changes count as local edits unless a separately approved canonicalization policy says otherwise. Do not reformat whole stylesheets/barrels to simplify updates.
-
-Use managed export regions and AST-aware conflict detection for colliding application declarations. Preserve unrelated aliases/imports/comments. Registry export declarations are the source of generated public exports; do not guess PascalCase names from arbitrary filenames.
-
-#### Conflict resolution workflow
-
-`sync --dry-run` reports old/local/incoming identifiers, affected logical paths, and why the batch cannot apply. `view <item> --source` supplies incoming source for inspection. The developer explicitly reconciles or moves conflicting material, then reruns the dry run and verification. No automatic text merge, force overwrite, or synthetic “accepted” hash updates are part of v1.
-
-Hashes are enough for detection, not a three-way text merge. Base-byte retention can be a later feature only with a separate storage/migration/security contract. Transaction recovery backups do not imply a merge-history feature.
-
-<a id="contract-specs-security-and-transactions"></a>
-
-### Filesystem safety, concurrency, and recovery
-
-Scheduled repository file: `specs/SECURITY_AND_TRANSACTIONS.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-#### Threat model and limits
-
-Proposed initial scope: a trusted local developer checkout that may contain accidental unsafe paths, symlinks, stale metadata, concurrent cooperative writers, interrupted processes, and user edits. This is not a hostile multi-user filesystem guarantee. Record actual OS/filesystem support and the accepted race limits before exposing mutating commands.
-
-Do not claim Node `path.resolve` plus rename equals Leptos's capability-relative handle operations. A hostile attacker able to replace directories between checks needs a stronger design; changing this threat model is an explicit architecture decision, not a hidden portability fix.
-
-#### Path and ownership validation
-
-Validate lexical paths before joining: reject absolute paths where relative is required, parent traversal, invalid/reserved segments, unexpected drive/UNC forms, overlap between reserved state and generated targets, duplicate/case-colliding targets, and inappropriate file kinds. Use actual filesystem observations to reject unsupported symlinks and nonregular targets. Containment must use segment-aware checks, not naive string-prefix tests.
-
-Treat symlinked parents, broken links, existing directories at file targets, and project-root aliases deliberately. Do not follow a link outside the authorized root. Recheck safe target ancestry/preimages before writes. Public diagnostics should use safe logical paths rather than leaking unsanitized path input.
-
-#### Plan/apply protocol
-
-The planner is read-only, including dry-run and doctor; it must not leave temporary directories, journals, lockfiles, package-manager state, or formatting changes. A write invocation obtains exclusive coordination before committing a staged plan, revalidates observed inputs, and refuses stale or unsafe plans. The particular acquisition timing may allow a read-only speculative plan first, but the mutation phase must always revalidate under coordination.
-
-Stage new bytes on an appropriate same-filesystem location for replacement. Journal expected old/new states and target sequence. Preserve modes where appropriate, use atomic per-file replacement when supported, and publish canonical `kit.lock.json` last as the successful state marker. Explicitly test durability/order assumptions; no claim of native multi-file atomicity.
-
-The transaction must include config, source, CSS, export/layout integration, and lock metadata as one planned batch. Package dependency installation is outside the transaction because it is not performed by the CLI.
-
-#### Recovery
-
-Inject failures before/after staging, before/after individual replacement, before lock publication, during publication, and during cleanup. After restart, either recover safely to a documented consistent state or fail closed with actionable guidance. Do not silently delete a stale journal based solely on age or a recycled process ID.
-
-A recovery operation must not overwrite user changes made after the interrupted operation. Validate the expected preimage or exact staged image before restore/roll-forward. Corrupted journals, mismatched transaction identity, missing backups, and ambiguous lock-last states are explicit errors. Lock publication with unchanged bytes still needs distinguishable transaction bookkeeping; byte equality alone is not a unique commit event.
-
-Transient coordination and recovery files are not app-owned components and should not be committed. Safe ignore-file changes, when needed, must themselves be planned and preserve existing ignore rules. Do not add an undocumented recovery command/force flag; fit safe recovery and actionable manual instructions into the approved command surface.
-
-#### Resource and error handling
-
-Bound parsing and diagnostics sensibly to the packaged local asset model; validate before allocating or writing large user-controlled structures. Prefer a single serialized writer rather than unnecessary parallel mutation. Propagate filesystem and parser errors with context, close handles, clean only owned temporary files, and retain recovery evidence when cleanup cannot safely finish.
-
-Cancellation and process termination cannot always run cleanup; durable recovery must not depend solely on a finally block. A dry run is safe precisely because it does not start a transaction. Prove these properties with fault-injection tests and platform lanes, not prose assertions.
-
-<a id="contract-specs-component-catalog"></a>
-
-### Catalog and component qualification
-
-Scheduled repository file: `specs/COMPONENT_CATALOG.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-#### Inventory policy
-
-The reference registry contains 22 IDs: alert, anchor, avatar, badge, button, card, checkbox, collapsible, dialog, field, identity, menu, progress, radio, router-link, separator, skeleton, spinner, status, switch, tabs, tokens. Preserve recognizable item names; this is a behavioral/design-system adaptation, not a promise that every Rust file has a Svelte counterpart.
-
-First qualify `tokens`, `spinner`, `button`, `switch`, and `dialog` end-to-end. Then qualify distinct `alert-dialog` behavior and floating `menu` early, followed by the rest of the reference catalog. A separate generated identity item is conditional on actual need, not a placeholder shim. Extensions outside this inventory use the explicit later specification gate.
-
-#### Per-item requirements
-
-| ID           | Implementation boundary and required checks                                                                                                                                                                                                                                                                                                                         |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| tokens       | CSS-only foundation. Preserve semantic vocabulary, layers, theme metadata, customization contract separation, and fallback/default qualification.                                                                                                                                                                                                                   |
-| spinner      | Native decorative/status presentation as justified by source API. Button uses the decorative mode. Preserve shape-critical circular geometry, reduced motion, and nonduplicated accessible loading text.                                                                                                                                                            |
-| button       | Native typed button recommended; primary/secondary/ghost and sm/md/lg. Default type button; explicit submit/reset, disabled/loading/busy, loading label, direct spinner dependency and sibling import. Preserve caller attributes/classes and children semantics.                                                                                                   |
-| switch       | Bits Root/Thumb wrapper; bind checked/ref deliberately; internal thumb means excluded child/children hooks. Forward form props and events correctly; checked/unchecked styles, RTL, reduced motion, label association, reset, required and disabled cases.                                                                                                          |
-| dialog       | Bits compound family: Root, Trigger, Portal, Overlay, Content, Title, Description, Close. Preserve open/ref bindings, snippets, accessible names, focus trap/return, escape/outside handling, presence, hydration, nested themes and overlays.                                                                                                                      |
-| alert-dialog | Distinct primitive-backed family for confirmation/alert interaction. Freeze exact parts from pinned types. Do not emulate it with a Dialog role switch or invent confirmation/application state.                                                                                                                                                                    |
-| menu         | Bits Dropdown Menu adaptation with kit `Menu*` flat exports. Freeze exact source-parity parts before implementation. Verify floating wrapper structure, keyboard navigation/typeahead, item selection, dismissal/focus return, disabled items, positioning and nested overlays. Extra submenus/selection variants only when the source/API worksheet supports them. |
-| checkbox     | Bits-backed form control. Preserve native participation, checked/bind/ref behavior, indeterminate behavior if represented in the source/primitive contract, labels and disabled/required/reset cases. Preserve fixed-size SVG indicator geometry where mapped from reference.                                                                                       |
-| radio        | Bits Radio Group adaptation with kit `Radio*` family names frozen from source needs. Preserve value/type contract, arrow-key behavior, disabled items, form participation and labels; verify selection-indicator geometry/colors.                                                                                                                                   |
-| tabs         | Bits compound adaptation with typed value/activation/orientation behavior justified by source. Preserve tab/panel relationships, keyboard navigation, disabled triggers, refs and snippets, mounted-state/hydration behavior.                                                                                                                                       |
-| collapsible  | Bits Root/Trigger/Content adaptation. Controlled/uncontrolled bindings, labels/expanded semantics, content presence/motion and reduced-motion qualification. Accordion-like recipes are composition, not a new generalized state engine.                                                                                                                            |
-| field        | Svelte semantic field composition; freeze exact control/label/description/error wiring from source. Preserve real labels, unique stable associations, input form props, error semantics and helper relationships. Do not introduce a form-validation library or invented schema engine.                                                                             |
-| anchor       | Native typed anchor presentation. Preserve actual navigation, href/target/rel/download/data attributes and keyboard behavior; use source design classes. Do not synthesize button semantics.                                                                                                                                                                        |
-| router-link  | Optional thin SvelteKit/native-anchor recipe and documentation. Reuse anchor presentation where appropriate; preserve native routing/link options and base-path policy discovered from target. No copied Leptos router runtime.                                                                                                                                     |
-| avatar       | Native Svelte markup or thin primitive based on source loading/fallback behavior. Test image success/failure/fallback and accessible alternative text; do not make a purely decorative assumption.                                                                                                                                                                  |
-| badge        | Native presentation with source-supported variants only; semantic text, class forwarding and token/contrast qualification.                                                                                                                                                                                                                                          |
-| card         | Native compositional surface with source-supported parts only; preserve sensible structure/slots and application content. No business/dashboard behavior.                                                                                                                                                                                                           |
-| alert        | Native semantic message presentation following source role/variant contract. Verify accessible content and announcement behavior; no notification queue or application-level delivery system.                                                                                                                                                                       |
-| status       | Native semantic status feedback; preserve suitable announcement behavior and accessible labeling without announcing decorative copies. Distinguish from alert according to source contract.                                                                                                                                                                         |
-| progress     | Native semantic element or narrowly justified primitive; typed bounds/value/indeterminate semantics from source; accessible name and determinate/indeterminate styling. No timer/async task engine.                                                                                                                                                                 |
-| separator    | Native/primitive semantic separator as justified by source; decorative and meaningful cases, orientation, role and class forwarding.                                                                                                                                                                                                                                |
-| skeleton     | Native decorative loading placeholder; do not fabricate readable content or redundant announcements. Verify reduced motion, dimensions and theme surface contrast.                                                                                                                                                                                                  |
-| identity     | Preserve stable SSR/client identity and explicit label/control associations using pinned Svelte/Bits facilities. Evaluate whether any app-owned helper is useful. Do not copy Rust provider APIs, counters or compatibility aliases; record an evidence-backed non-generated mapping when no item is needed.                                                        |
-
-#### Required component worksheet
-
-Before writing each family, capture exact exported names, .svelte/.ts targets, source counterpart, upstream/native props, bindings and refs, snippet policy, event ordering, default markup, CSS classes/state selectors, form behavior, accessibility checks, dependency closure, and source/style compatibility group. Sources not inspected in the original approved review must be inspected by the agent or replaced by explicit conservative spec-defined behavior; an inferred API is not an approved source fact.
-
-A primitive's complete upstream catalog is not automatically this kit's catalog. Keep the wrapper small, preserve available semantics, and document intentional omitted rendering hooks. Distinguish a presentational kit default from a restriction on a behavior that users already rely on.
-
-#### Test fixture policy
-
-Each item/family has an install fixture, positive/negative type cases, a visual state fixture, and applicable browser semantics tests. Test generated application files and root exports, not only imports from authoring templates. Keep common harness utilities small and avoid snapshot-only accessibility assertions. Browser tests must assert actual focus/state/form behavior.
-
-#### Extension direction retained
-
-Select, combobox, popover, date-related components, and higher-level patterns are approved future direction after generator/wrapper stability. They need explicit inventory, values/generics, search/filtering ownership, portal behavior, locale/date/timezone and validation policy where relevant. The scheduled final extension gate captures questions and a subsequent spec/sequence without writing guessed implementations. Do not label these delivered merely because Bits UI offers them.
-
-<a id="contract-specs-acceptance-criteria"></a>
-
-### Acceptance criteria and release gate
-
-Scheduled repository file: `specs/ACCEPTANCE_CRITERIA.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Each requirement ID in `PRODUCT_SPEC.md` must map to executable tests or explicit evidence in `implementation/TRACEABILITY.md`. Criteria below are release requirements, not a claim that this specification has run them.
-
-#### Product and distribution
-
-AC01. One package-shaped `svelte-ui-kit` CLI with bundled assets/schema/contracts; no consumer styled-runtime dependency on the kit. Installed components import local siblings and Bits/native APIs correctly.
-
-AC02. Generated tree/names/exports, CSS classes/properties/layers/markers and `_kit` locations match the contract. Only requested items and required dependencies appear. Compound families expose flat public names and no invented aliases.
-
-AC03. `npm pack`-equivalent artifact can be installed and exercised outside the source repository. After making authoring source/build fixtures unavailable, packaged `view`, `init`, `add`, `sync`, and `doctor` still work with package assets. Consumer dependency setup is explicit and separately reproducible.
-
-#### CLI and ownership
-
-AC04. Every command has argument/error/help fixtures, stable exit behavior, and deterministic JSON. JSON failure produces exactly one envelope; human errors do not pollute stdout. Unsafe physical path inputs are not echoed as public locators.
-
-AC05. Dry runs, info, view and doctor perform zero project writes, including no coordination/temp/lockfile/package-manager changes. Repeat successful initialization/add/sync is semantically unchanged and does not disturb unmanaged bytes.
-
-AC06. Config stores only explicit roots; lock stores resolved closure with provenance. Removing a root retains needed dependencies, retires clean unneeded assets only safely, and preserves customized content with truthful ownership.
-
-AC07. Every base/local/incoming equality combination is tested for source and CSS. Both changed is a conflict; locally customized/upstream unchanged is preserved; local equals incoming is satisfied. Untracked collisions are never silently overwritten or adopted for deletion. Missing tracked targets have a frozen, visible tested policy.
-
-AC08. A source/CSS compatibility-cohort conflict makes the batch nonmutating. Metadata does not advance retained customized source to a falsely installed baseline. No automatic merges or force-overwrite shortcuts.
-
-AC09. Layout and export patches preserve unrelated content, comments, formatting and existing app semantics; malformed/ambiguous inputs fail safely. Multiple occurrences, duplicate symbols and malformed CSS markers are covered.
-
-AC10. Dependency plans include actual peer constraints and incompatible installed ranges. No implicit dependency install or package-manifest mutation. Unknown/unsupported schema versions and fields fail clearly; migration fixtures prove supported transitions.
-
-#### Safety
-
-AC11. Unsafe paths, parent symlinks, nonregular files, path overlap, drive/UNC edge cases and case collisions are tested for the supported platforms. Document the trusted-local threat model and unproven hostile-race limits.
-
-AC12. Concurrent writers/preimage changes are detected. Fault injection across staging/replacement/lock publication/cleanup proves recoverable consistency or safe refusal. Recovery preserves post-crash user edits and fails closed on corrupt/ambiguous journals.
-
-AC13. Lock metadata is final publication of a coherent planned batch. All ephemeral transaction state is isolated/cleaned or retained as recovery evidence deliberately. No recovery claim relies only on process-finally cleanup.
-
-#### Components and styling
-
-AC14. All original catalog mappings are recorded and implemented to the stated boundary. Initial core is qualified first; floating menu is tested early. Identity is resolved natively without unnecessary Rust shims. Router-link is a thin optional recipe. Alert Dialog uses the distinct primitive.
-
-AC15. Type fixtures preserve state bindings, refs, discriminated unions, native attributes, event semantics and snippets. Unsupported child hooks are rejected rather than silently dropped. No `any`/SSR-disable workaround conceals incompatibility.
-
-AC16. Real generated-app browser tests cover labels, keyboard navigation, focus trap/restoration, outside/Escape behavior, state changes, disabled/loading/required forms and reset, determinate feedback, and nested overlays where applicable.
-
-AC17. SSR render and hydration pass without unexpected console/hydration errors. Multiple requests/instances preserve identity and do not leak mutable state. Browser-only effects are guarded/lifecycle-local.
-
-AC18. CSS mappings match real DOM, pure CSS builds without utility tooling, token defaults and radius fallbacks pass computed-style tests, shape-critical geometry is preserved, and RTL/reduced-motion states work. Document any baseline contrast concerns instead of blindly certifying them.
-
-AC19. Global and nested theme portal scenarios work as documented, including open-overlay theme changes and clipping/stacking caveats. CSP compatibility is tested and bounded; no unsupported no-inline-style guarantee.
-
-#### Engineering completion
-
-AC20. Typecheck, tests, formatting, lint, production build, package acceptance, applicable platform lanes, and any applicable Rust guard pass. Requirements are not waived by incomplete tooling. Record pre-existing failures and final blockers accurately.
-
-AC21. Every nongated commit step is independently completed/tested/reviewed/committed with a report and evidence-backed deviations where necessary. Root docs, developer instructions, upgrade/recovery runbooks, examples, command map, dependency baseline and traceability are current.
-
-AC22. The extension specification gate is documented. Unspecified select/combobox/popover/date/higher-level scope is not implemented or claimed as delivered. Any expanded release including it requires explicit contracts and its own approved coding sequence.
-
-#### Final deliverables
-
-Source and tests, built-in manifests/assets/contracts/schemas, generated SvelteKit consumer fixture, install/upgrade/conflict examples, packed artifact for inspection (not publication), CI and compatibility records, README/CONTRIBUTING/AGENTS, requirement/test evidence, and an honest final report containing last commit, completed step range, unresolved blockers and next safe action.
-
-<a id="contract-implementation-test-plan"></a>
-
-### Test strategy
-
-Scheduled repository file: `implementation/TEST_PLAN.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-#### Test the right artifact
-
-Registry authoring templates need static checks, but the decisive artifact is the **generated app produced by the installed tarball**. Maintain separate package/CLI unit tests, temp-directory integration tests, compiled generated-source fixtures, and browser tests. Shared test helpers must not accidentally bypass generation or read hidden source-tree assets.
-
-#### Pure models and contracts
-
-Validate strict schema errors, malformed values, duplicate IDs/paths/exports, independent versions, valid/invalid compatibility ranges, deterministic serialization/hashing, missing assets, graph cycles, root-versus-transitive provenance, and incompatible dependency intersections. Include negative examples, not just one canonical manifest.
-
-#### Planning and ownership matrices
-
-Exercise every B/L/I combination in sources and CSS, current=incoming adoption, untracked collisions, missing tracked files, preserved formatting, malformed markers, retired customized assets, needed transitive assets, aggregate source/style cohorts, metadata truth, and stale configs. Snapshots should be paired with semantic assertions about writes and retained bytes.
-
-Test no writes for all read-only commands, dry runs and conflict outcomes by snapshotting the entire fixture, including hidden state, modes and temp/coordination files. Repeated commands should preserve the same semantic and byte-level state. Inspect JSON envelopes and process exit statuses from actual executable invocations.
-
-#### Filesystem transactions
-
-Use an injectable filesystem boundary for failure points and deterministic tests, supplemented by real-filesystem temp-directory tests. Test path traversal, prefix-confusion, overlap, symlinked ancestors, broken links, existing directories/nonregular targets, platform case handling, coordination contention and preimage changes. Inject termination/failure at each stage and ensure recovery does not overwrite post-crash user edits. Ambiguous journal state must refuse further mutation.
-
-#### Structural patchers
-
-CSS: missing/duplicate/mismatched/nested markers, quoted marker-like text, CRLF, comments, foreign/unmanaged rules, deterministic block order and removed blocks.
-
-Exports: app-owned declarations/comments/imports, duplicate exported symbols, renamed imports, multiple managed regions, untracked existing barrels, sibling-path accuracy and cycle checks.
-
-Svelte integration: absent layout/script, instance/module script separation, TypeScript, existing ordered/unordered imports, comments, alternate valid formatting and unsupported layouts. Assert preservation of route children/render behavior and script semantics.
-
-#### Wrapper and browser tests
-
-Use typed positive/negative fixtures for actual pinned primitive/native props. Test state/ref binding updates in both directions, optional controlled defaults, children/child forwarding or rejection, caller classes/attributes, event cancellation/order and discriminated unions. Avoid `any` casts as proof of compatibility.
-
-Browser assertions cover focus navigation/return, required accessible names and relationships, activation/dismissal, form value/required/disabled/reset behavior, no duplicate hidden inputs, loading busy semantics, image fallback, progress state, RTL and reduced motion. Test overlays nested across families and interrupted open/close transitions. Accessibility tools are supplementary to behavioral assertions, not a substitute for manual semantic review.
-
-#### CSS and theme verification
-
-Check every public class and property in the mapped contract against real generated DOM. Use computed styles for radius fallback precedence, full border-radius grammar, indicator geometry, token overrides, theme changes and scoped portals. Record visual/contrast issues honestly. Verify ordinary CSS tooling succeeds without Tailwind or CSS-in-JS.
-
-#### SSR/hydration and concurrency
-
-Build the real SvelteKit app. Render multiple instances/requests and hydrate without unexpected warnings or server-global state leakage. Test initial open/checked/value states and portal hydration per the pinned primitive contract. No SSR-disabled fixture qualifies this requirement.
-
-#### Package acceptance
-
-Build and pack the CLI, inspect included assets/schemas and executable metadata, install tarball into an isolated harness, then make the authoring checkout/build state unavailable. Run information, install, sync and doctor commands against consumer fixtures. Network during explicit dependency setup is distinct from the registry's package-local operation requirement. No npm publication is necessary.
-
-#### Matrix and evidence
-
-Resolve supported Node/OS/browser/version/feature matrix at discovery and record exact lanes. Use Linux/macOS/Windows tests for advertised filesystem behavior, not an untested portability claim. Where Rust exists, preserve its baseline and valid render-feature lanes independently. Record actual commands, versions, exit statuses, commit hashes and unverified lanes after each commit.
-
-<a id="contract-implementation-verification"></a>
-
-### Verification commands and known-good commits
-
-Scheduled repository file: `implementation/VERIFICATION.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-#### Discover before executing
-
-The authorized target is this repository. At S001 record Git root/status, authorized target/reference roots, package manager and lockfile, Node/Svelte/Bits/TS versions, package scripts, CI workflows, OS support, and any Cargo workspaces. Use `git status --short`, `git log -12 --pretty=%s`, manifest inspection, and existing instructions. Do not execute application config or install dependencies merely to enumerate it.
-
-The plan uses the following **proposed command categories for a new target**, not claims that these scripts already exist. Establish actual scripts or map existing equivalents during bootstrap and record the mapping in the implementation evidence. Use the detected package manager rather than replacing its lockfile. Commands must execute meaningful checks; placeholder scripts that always succeed are prohibited.
-
-| Category                          | Proposed invocation                                        | Required meaning                                                                                                                                                       |
-| --------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Documentation/contract validation | `node tools/check-contracts.mjs` (establish in S002)       | Validate repository contracts, links, checkpoint order and requirement coverage; allow truthful evolving implementation status. This does not verify product behavior. |
-| Format                            | `pnpm run format:check`                                    | Nonmutating format check on scoped target code/docs.                                                                                                                   |
-| Lint                              | `pnpm run lint`                                            | Real configured TS/Svelte lint, no ignored new violations.                                                                                                             |
-| CLI typecheck                     | `pnpm run typecheck`                                       | TypeScript compiler checks for Node CLI and tests.                                                                                                                     |
-| Unit                              | `pnpm run test:unit -- <test-file>`                        | Pinned unit runner with explicit file selection; map syntax if not supported.                                                                                          |
-| Integration                       | `pnpm run test:integration -- <test-file>`                 | Temporary filesystem/CLI/registry integration suite.                                                                                                                   |
-| Registry                          | `pnpm run test:registry -- <test-file>`                    | Manifest/asset/schema/contract/export integrity.                                                                                                                       |
-| Components                        | `pnpm run test:components -- <test-file>`                  | Generated wrapper typing and render/component semantics.                                                                                                               |
-| Consumer check                    | `pnpm run fixture:check`                                   | Real `svelte-check`/SvelteKit sync of generated app.                                                                                                                   |
-| Consumer build                    | `pnpm run fixture:build`                                   | Real production SvelteKit build from generated app.                                                                                                                    |
-| Browser                           | `pnpm run test:browser -- <test-file>`                     | Browser tests against generated app; runner file syntax discovered first.                                                                                              |
-| CLI build                         | `pnpm run build`                                           | Build actual executable and bundle/retain required assets.                                                                                                             |
-| Package                           | `pnpm pack --json`; `pnpm run test:package -- <test-file>` | Inspect and execute installed tarball outside authoring tree.                                                                                                          |
-| Diff health                       | `git diff --check`; `git diff --cached --check`            | Whitespace and final staged-content review.                                                                                                                            |
-
-In early steps before a lane exists, execute the meaningful already available baseline plus the current step's direct validator. Add the lane and its real test in the same step that introduces that capability. Do not report an unavailable script as passed. Every step lists its direct lane; component steps also need the app's check/build where the feature affects generated output.
-
-#### Cargo guard — applies to every commit step
-
-If an authorized target or in-place reference worktree contains Cargo manifests, keep the applicable Rust baseline known-good. A TS-only change does not authorize Rust modifications. A read-only external reference that is unavailable locally can be recorded unavailable; it must not be falsely reported as tested. No Cargo manifest in target/reference scope means Cargo is N/A, with manifest inventory evidence.
-
-For the reviewed Leptos workspace, known commands are:
-
-```sh
-cargo fmt --all -- --check
-cargo check --workspace --all-targets
-cargo test --workspace --all-targets
-```
-
-The source contribution contract explicitly names fmt/test; cargo check is added to honor the user's specification requirement. Run at the actual Rust workspace root, not the TypeScript package root. Baseline toolchain declares Rust 1.92.0 / edition 2024; respect actual rust-toolchain.toml and lockfiles rather than upgrading them as part of the port.
-
-When specific Rust files are affected, run `cargo check -p <affected-crate> --all-targets` and `cargo test -p <affected-crate> --all-targets`, plus dependent/workspace tests justified by the change. Do not literally pass angle-bracket placeholders: discover actual crate IDs first. Full workspace check/test are the safe default if scope cannot be established. If Rust is present but untouched, run/check the baseline guard at each step; an unchanged verified hash can be noted as supporting evidence but is not a fresh executed test.
-
-Run the existing lint lane discovered from repository instructions/CI. A proposed `cargo clippy --workspace --all-targets -- -D warnings` is not assumed baseline-green or newly required without discovery. Do not enable `--all-features` blindly: CSR, SSR, hydrate and render-neutral libraries have mutually constrained combinations. Discover feature names, targets and commands from Cargo manifests and fixtures and test valid combinations separately. Do not invent feature flags or install a target just to silence failure.
-
-For Rust packaging/provenance/install changes, the known reference package lane is:
-
-```sh
-cargo package --workspace --allow-dirty --no-verify --locked
-cargo test -p leptos_ui_kit_registry --test package_source \
-  packaged_sources_build_with_cargo_vcs_provenance_outside_and_inside_hostile_git -- \
-  --ignored --exact --nocapture
-cargo test -p leptos_ui_kit_cli --test packaged_runtime \
-  installed_binaries_run_after_package_source_and_build_state_are_deleted -- \
-  --ignored --exact --nocapture
-```
-
-The ignored tests are not executed by the ordinary workspace suite. The source contribution notes require them from a clean Git worktree because dirty VCS metadata is rejected. Use an isolated clean worktree/staging flow when needed; do not clean/reset unrelated user work. Transaction changes in that workspace require Linux/macOS/Windows qualification. These Rust lanes are conditional on actual Rust scope, not a requirement to rewrite Rust for a Svelte product.
-
-#### Per-step minimum
-
-Run the current step's unit/integration checks, relevant type/lint/format checks, `git diff --check`, self-review, and the conditional Cargo guard. Generated output changes require consumer check/build; browser-affecting changes require scoped browser tests. Filesystem/packaging changes require their acceptance/fault lanes. Run full cumulative suites at milestone and final boundaries, not only snapshots of the latest item.
-
-A new relevant test failure stops the next commit step. A demonstrably pre-existing/out-of-scope failure can be recorded without blocking unrelated safe work only with baseline evidence, impact reasoning and a named blocker; it cannot be called a passing lane or silently waived at release. Environmental blockers (network/compiler/browser unavailable) mean unverified, not successful.
-
-#### Final verification
-
-Regenerate fixtures with the packed CLI; install declared consumer dependencies explicitly; run all cumulative lanes, supported OS variants, SSR/hydration/browser scenarios, package-source-unavailable test, safety/recovery tests, and applicable Cargo guards. Inspect packed file inventory and consumer runtime imports. Update traceability with actual test file names and results. Do not publish or push as part of verification.
-
-<a id="contract-implementation-open-questions"></a>
-
-### Open questions and safe discovery instructions
-
-Scheduled repository file: `implementation/OPEN_QUESTIONS.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-These are not invitations to redesign approved product intent. Resolve in the scheduled contract/discovery step, record evidence, and proceed within scope. Do not repeatedly ask questions that repository inspection can answer.
-
-| ID  | Question / status                                                                                                                                                          | Safe resolution and blocking boundary                                                                                                                                                                   |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q01 | Resolved: this standalone svelte-ui-kit repository is the authorized target.                                                                                               | Inspect operator-supplied worktree and instructions; distinguish source reference from target. Block filesystem modifications outside an authorized target.                                             |
-| Q02 | Resolved: retain area: imperative summary, consistent with the target docs commit and reference fallback.                                                                  | Inspect recent subjects; use its consistent convention. Reference fallback is `area: imperative summary`.                                                                                               |
-| Q03 | Partially resolved: pnpm 11.22.0, Node >=24 and Prettier 3.9.6 are established; exact framework/runtime selections still need S003/S011 evidence.                          | Inspect manifests/lockfiles; verify actual package metadata/peers and run a pinned compatibility probe before wrappers. Historical Bits source version is not a latest-release claim.                   |
-| Q04 | Custom UI path and SvelteKit config support breadth not frozen.                                                                                                            | Support defaults first and explicit safe mapping. Determine how custom paths are discovered without arbitrary config execution; reject ambiguity.                                                       |
-| Q05 | JSON schema initial values/hosting and precise field layout not frozen.                                                                                                    | Freeze independent local schemas during model commits. Do not emit invented hosted URLs; record optional publication as future operational work.                                                        |
-| Q06 | Exact CLI exit-code map and export-region marker grammar not frozen.                                                                                                       | Compare existing target conventions with reference examples, document once and golden-test before handlers.                                                                                             |
-| Q07 | Trusted-local path threat model and supported platforms need evidence.                                                                                                     | Adopt explicit narrow initial assumption or design stronger controls; qualify symlink/race/rename/durability limits before mutating commands.                                                           |
-| Q08 | Tracked deletion and identical untracked adoption policies need freezing.                                                                                                  | Preserve user work by default, report missing content visibly, and never grant silent deletion rights. Test cases before planner integration.                                                           |
-| Q09 | Cohort compatibility with locally customized but upstream-unchanged members needs a conservative rule.                                                                     | Freeze whole-component/expanded dependency safety policy; block a risky mixed update rather than guess semantic compatibility.                                                                          |
-| Q10 | Exact wrapper signatures beyond Button/Switch/Dialog examples not supplied.                                                                                                | Read source manifest/API and pinned native/Bits types; complete each component worksheet and type tests. No unapproved upstream-part expansion.                                                         |
-| Q11 | Useful generated identity helper/item unclear.                                                                                                                             | Verify stable Svelte/Bits identity and cross-request behavior. Prefer no generated Rust-style helper; document non-generated parity mapping if none is needed.                                          |
-| Q12 | Router-link exact recipe/path behavior needs target evidence.                                                                                                              | Use native anchors and target SvelteKit link conventions; preserve separate optional install identity without inventing a router abstraction.                                                           |
-| Q13 | Strict CSP/inline-style capability not verified.                                                                                                                           | Inspect/test actual pinned positioning output and real policy. Document limits; pure CSS is not a strict-CSP promise.                                                                                   |
-| Q14 | Browser/accessibility/contrast matrix not fully specified.                                                                                                                 | Start with actual supported target lanes, add applicable keyboard/form/focus/RTL/motion/theme tests, and report baseline visual issues. Do not claim broad certification.                               |
-| Q15 | Partially resolved: target licensing is MIT OR Apache-2.0. npm name ownership, publisher identity and release destination remain unverified; publication is outside scope. | Implement package shape without publication. Inspect target license, preserve source notices for copied CSS/code, and record any name conflict. Do not rename product or publish without authorization. |
-| Q16 | Extension APIs for select/combobox/popover/date/higher-level patterns unspecified.                                                                                         | Preserve direction; final scope gate identifies inventory and contracts. No guessed code or fabricated date/timezone policy. Expanded release remains blocked.                                          |
-| Q17 | Broader non-SvelteKit Svelte libraries or other build adapters not explicitly required.                                                                                    | Keep SvelteKit default. Do not copy the Leptos CSR/SSR/shared-library matrix as new product targets; add only supported evidence-backed fixture variants.                                               |
-
-#### Unresolved does not mean incomplete execution instructions
-
-The implementation sequence contains explicit steps to resolve these technical points before affected code. A blocker requiring new product intent is reported at that boundary; unrelated verified work may continue only if dependency order and safety permit. No agent may silently mark an unresolved decision “confirmed.”
-
-<a id="contract-implementation-operations-runbook"></a>
-
-### Installation, upgrade, and recovery runbook contract
-
-Scheduled repository file: `implementation/OPERATIONS_RUNBOOK.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Status: instructions for what the implementation must support and later verify. The new CLI is not supplied as a working binary in this specification. Replace command paths only with actual built/installed executable evidence; no npm publication is assumed.
-
-#### Initial installation
-
-Start at one authorized SvelteKit application root (or use --cwd). Preserve a clean known baseline or record existing changes. Run info to inspect integration/dependency state. Inspect an item's metadata/source with view. Review init/add dry runs and all proposed paths. Apply initialization and requested items. Install reported consumer dependencies explicitly using the actual project manager. Check the generated app with Svelte check, production build and relevant browser tests. Commit application source/CSS/config/lock/contract metadata; do not commit transient writer state.
-
-The init contract does not preinstall the complete catalog. Component requests remain distinct from their dependencies. Existing themes.css/app.css/layouts are application-owned and must survive integration.
-
-#### Customization
-
-Use application theme/override styles for portable changes or edit generated source/managed blocks directly. Preserve class/property contracts as needed by related parts. A valid local edit is not a broken installation by itself. Record substantive source changes in application Git history; CLI lock baselines must not be rewritten manually just to hide drift.
-
-#### Upgrades
-
-Choose a tested CLI/registry version and review dependency compatibility. Run sync --dry-run. Untouched generated content can update, local-only edits remain, already-incoming content is satisfied, and genuine conflicts stop the batch. Inspect incoming source through view --source and reconcile deliberately. Source/CSS/export compatibility cohorts must update safely together. Rerun dry-run, apply, then typecheck/build/browser/doctor. Commit the result and metadata truthfully.
-
-Do not use invented --force, auto-merge, accept-hash or dependency-install options. Hashes alone cannot reconstruct a merge base. An application's Git history is useful to review changes but must not be silently treated as authority to overwrite local content.
-
-#### Removing desired items
-
-Edit the explicit requested set in kit.json and inspect sync --dry-run. Shared dependencies remain while needed. Clean obsolete owned targets may retire under the frozen policy; customized assets remain with diagnostics and explicit ownership changes. Resolve remaining application imports manually; the CLI does not promise arbitrary source rewriting. No remove command is part of the approved interface.
-
-#### Interrupted writes
-
-Stop further mutation when a command reports pending/ambiguous recovery. Preserve current files and transaction evidence. Use read-only diagnosis to understand the state; do not delete lock/journal files based only on age, PID, or a guess. The implemented protocol must safely finish/revert a provable interrupted state or refuse with actionable guidance. It must not overwrite edits made after interruption.
-
-The implementation must provide fixture-tested instructions for prepared, partially applied, published-but-not-cleaned, and invalid/ambiguous states. It may not claim safe recovery before those fixtures pass. A cleanup failure after publication is not the same as a failed uncommitted installation; command reports must distinguish them.
-
-#### Agent specification after each commit
-
-Use STEP_REPORT_TEMPLATE.md. State exact commands/working directories/results and unverified lanes, preserve failed evidence, commit only scoped changes, and name the next numbered step. Do not claim a final release when any required acceptance criterion remains blocked. Package construction/testing does not authorize publication or a remote push.
-
-<a id="contract-implementation-step-report-template"></a>
-
-### Commit-sized step report
-
-Scheduled repository file: `implementation/STEP_REPORT_TEMPLATE.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Step ID and title:
-Contract/requirement IDs:
-Actual target root and branch:
-Starting commit / baseline status:
-
-#### Implemented
-
-Exact behavior added or changed:
-Files changed (including generated fixtures/contracts):
-How changes stay within the scheduled scope:
-
-#### Verified
-
-Commands executed verbatim, working directory, relevant tool versions, exit status and result:
-Tests added/updated and what each demonstrates:
-Generated-app/type/build/browser/package checks, as applicable:
-Cargo check/test/fmt/repo checks, or explicit N/A with manifest inventory:
-Self-review and staged-diff findings:
-
-#### Exceptions
-
-Pre-existing/out-of-scope/environmental failures with evidence:
-Unverified behavior and release impact:
-Deviations with record ID and repository evidence:
-Unresolved issues:
-
-#### Commit and next action
-
-Actual commit hash and message:
-Requirements/test evidence updated:
-Next step ID:
-Is the next step safe to begin? yes/no, with reason:
-
-Never substitute “tests passed” for actual commands/results. Do not claim a CI/platform check ran locally if it did not. A report is evidence, not a waiver of acceptance.
-
-<a id="contract-implementation-deviation-template"></a>
-
-### Evidence-backed implementation deviation
-
-Scheduled repository file: `implementation/DEVIATION_TEMPLATE.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Deviation ID / date / current step:
-Affected scheduled step(s):
-Affected durable requirements:
-
-Repository evidence proving obsolete or unsafe scope:
-Why the original step cannot be executed as written:
-Why this is not merely convenience or broader scope:
-Proposed smallest replacement / explicit N/A disposition:
-Dependencies and ordering impact:
-Compatibility/ownership/security implications:
-Required spec amendment, if any (new product intent cannot be self-approved):
-Tests and verification proving replacement safety:
-Actual changes and commit(s):
-Remaining risk / reviewer or owner decision needed:
-
-Record before skipping, merging, reordering or broadening a step. Retain the original step ID in the plan with a cross-reference; never silently erase it. Token/time constraints are not repository evidence.
-
-<a id="contract-implementation-extension-gate"></a>
-
-### Gated extension direction
-
-Scheduled repository file: `implementation/EXTENSION_GATE.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Status: approved direction; **not implemented and not yet API-specified**.
-
-The review recommended extending the stable generator/wrapper architecture to select, combobox, popover, date-related components, and higher-level patterns after core and original-catalog parity. This direction remains part of project intent. The approved review did not supply enough public API or behavior detail to write a truthful complete coding sequence for these items.
-
-#### Required next specification inputs
-
-For select/combobox: exact item set and modes, values/generics, controlled/uncontrolled behavior, filtering/search ownership, form/validation behavior, rendering/snippet/ref policy, async behavior only if requested, disabled/empty/loading states, accessibility tests and styling contracts.
-
-For popover: exact composition/defaults and relationship to already qualified portal/floating machinery; focus/dismissal semantics and CSS contract. Do not assume it is Dialog with a renamed class.
-
-For date-related items: exact inventory (not every Bits date component), value types, locale/calendar/timezone responsibility, form serialization, formatting/validation, range behavior only if requested, and dependency/cross-request requirements. No date/timezone policy is invented by this specification.
-
-For higher-level patterns: named examples and scope; distinguish composition recipes from new primitive/state/async systems. Existing accordion-like, alert/status, breadcrumb/pagination and native-table compositions stay lightweight.
-
-#### Output of the scheduled gate
-
-Record stable reusable infrastructure, remaining product questions, exact contracts to freeze, dependency/API evidence, and acceptance criteria. Only after the missing scope is settled should an agent create the next numbered commit sequence. Do not call the core release an implementation of these extensions. Do not substitute hundreds of speculative steps for the missing human intent.
-
-<a id="contract-decisions-adr-0001-architecture"></a>
-
-### ADR-0001 — Source-first TypeScript generator, not a styled runtime
-
-Scheduled repository file: `decisions/ADR-0001-architecture.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Status: accepted by user approval of the review. The authorized target is this standalone repository.
-
-#### Context
-
-The user wants a SvelteKit equivalent of the Leptos source-first installation/styling system. The source's value includes explicit manifests, local code ownership, CSS contracts, deterministic plans, locks and packaging rigor; its Rust primitives and module system are framework-specific.
-
-#### Decision
-
-Use one initially publishable npm package named `svelte-ui-kit`, modular TypeScript internals, and bundled JSON/Svelte/TS/CSS/schema assets. Generate local components and styles; use Bits UI for interaction and native markup for appropriate simple components. Consumer imports are local, not from a styled runtime package.
-
-#### Consequences
-
-The generator is a development/install tool, while Bits and Svelte are genuine consumer dependencies. Asset lookup must work from a tarball. Internal modules can evolve independently without inventing multiple public packages. Native semantic source remains editable. A Rust rewrite, runtime styling layer or remote registry would require a separate product decision.
-
-#### Alternatives not selected
-
-A runtime styled component package would undermine source ownership. A literal Rust-to-Svelte primitive translation would duplicate Bits responsibilities. A multi-package framework is unnecessary for the initial approved architecture.
-
-<a id="contract-decisions-adr-0002-generated-css-and-layout"></a>
-
-### ADR-0002 — Preserve recognizable source and CSS conventions
-
-Scheduled repository file: `decisions/ADR-0002-generated-css-and-layout.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Status: accepted by approval.
-
-#### Decision
-
-Use `src/lib/components/ui`, `_kit`, and `src/styles/kit.css` by default. Simple items use one component file plus optional types; compound items use directories and part files. Export flat PascalCase names through explicit manifest-driven barrels. Keep `.kit-*` and `--kit-*`; rename tool markers/layers to `svelte-ui-kit`.
-
-Use one installed managed stylesheet with block-level ownership. Themes and application overrides stay app-owned and load afterward. Component custom properties and semantic tokens remain separately governed. Preserve radius fallback and shape-critical defaults.
-
-#### Consequences
-
-CSS from the reference can be mapped to Bits DOM without replacing the design vocabulary. Selectors still need verification. The aggregate stylesheet includes all installed blocks and does not promise per-route pruning. Managed export regions/layout imports must preserve application text. A second installed per-component CSS authority or a utility conversion pipeline is not part of the design.
-
-<a id="contract-decisions-adr-0003-customization-aware-sync"></a>
-
-### ADR-0003 — Three-way detection, truthful lineage, and cohorts
-
-Scheduled repository file: `decisions/ADR-0003-customization-aware-sync.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Status: accepted by approval. Missing-target/adoption and exact conservative cohort rules are scheduled technical freezes.
-
-#### Decision
-
-Compare base last-installed upstream content, current local content, and incoming registry content per source file and managed CSS block. Preserve local-only changes, update untouched targets, treat local=incoming as satisfied, and stop genuinely conflicting batches. No automatic text merging or force overwrite. Keep component source/styles/exports compatible as a cohort and record effective lineage truthfully.
-
-Store explicit root requests separately from resolved transitive items. On retirement, preserve customized source/CSS and do not silently reacquire ownership. Strict doctor does not treat a legitimate customization as corruption.
-
-#### Consequences
-
-Editable source is a first-class supported state. Hashes support detection but do not reconstruct a merge base. Per-target metadata must not merely claim the latest registry version. Conservative cohorts can require explicit reconciliation rather than a risky partial upgrade. New automatic merge/storage/accept-hash workflows would require a separate contract.
-
-<a id="contract-decisions-adr-0004-primitive-and-theme-boundaries"></a>
-
-### ADR-0004 — Preserve primitive behavior and explicit portal theme scope
-
-Scheduled repository file: `decisions/ADR-0004-primitive-and-theme-boundaries.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Status: accepted by approval.
-
-#### Decision
-
-Keep complex interaction in Bits UI and preserve its typed state/ref/snippet/event interfaces through wrappers. Use Svelte-native bindings and native element types. Keep distinct Alert Dialog semantics. Preserve floating positioning wrapper structure. Do not copy Rust focus/layer/identity internals.
-
-Application-wide themes can live at a document-level scope. Nested themes can use an explicitly suitable custom portal host, with documented stacking/clipping limits. Application code owns theme persistence and color-scheme. Pure CSS design styling is not a guarantee against runtime inline placement styles; CSP support must be measured.
-
-#### Consequences
-
-Small wrappers still require meaningful browser and type tests. Accepting and discarding a snippet is an API bug. Name/ref/event forwarding errors can undermine accessibility even when using an accessible primitive. There is no hidden theme store, computed-style-copy mechanism or unsupported CSP claim.
-
-<a id="contract-decisions-adr-0005-rust-verification-boundary"></a>
-
-### ADR-0005 — Reconcile the Rust specification language with the approved stack
-
-Scheduled repository file: `decisions/ADR-0005-rust-verification-boundary.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Status: necessary implementation assumption A01, explicitly recorded; not a user-requested stack change.
-
-#### Context
-
-The user approved a TypeScript/Svelte generator, then requested a rigorous specification using Rust-architect wording and per-step Cargo checks. No message explicitly requested replacing TypeScript with Rust.
-
-#### Decision
-
-Preserve the approved stack. At every step inventory any actual authorized target/in-place reference Cargo workspace and run its applicable check/test/format/repository lanes. Use exact workspace roots and discovered feature combinations. In a TS-only target mark Cargo N/A with evidence. Do not create Rust code, move the reference workspace, or claim npm checks verify Rust.
-
-#### Consequences
-
-The specification lists conditional Cargo commands in every step and the complete known reference package lane centrally. Target location is resolved to this repository; S001 still records the actual manifest inventory and conditional guard applicability. A truly Rust-based new CLI would be a new product decision, not a silent interpretation.
-
-<a id="contract-decisions-adr-0006-scope-and-discovery-gates"></a>
-
-### ADR-0006 — Preserve unspecified details as explicit gates
-
-Scheduled repository file: `decisions/ADR-0006-scope-and-discovery-gates.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-Status: implementation assumptions A02–A09 and explicit unresolved questions; approved intent is unchanged.
-
-#### Decision
-
-Separate confirmed product contracts from exact technical choices not supplied in the conversation. Discover target roots/conventions/toolchain/scripts before code. Freeze schema fields, exit map, marker grammar, missing-file/adoption policy, cohort rules and component API worksheets at scheduled steps. Versioned schemas are implementation deliverables; this package does not fabricate published schema URLs or claim those schemas already compile.
-
-The broader select/combobox/popover/date/higher-level direction is retained in a final specification gate. The first coding sequence delivers the fully defined generator/catalog adaptation and explicitly reports that the broader extension API scope remains undefined. An expanded v1 including those components is not called complete without their contracts and coding sequence.
-
-#### Consequences
-
-The specification is self-contained for intent and execution rules without pretending to know an undisclosed target repository or missing APIs. An agent can resolve ordinary technical details through source evidence, but cannot turn speculative new features into approved requirements. Plan deviations need repository proof; new intent needs a durable spec amendment.
-
-<a id="contract-references-source-baseline"></a>
-
-### Reference evidence and limits
-
-Scheduled repository file: `references/SOURCE_BASELINE.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-#### Immutable source baseline
-
-Repository: `https://github.com/triesap/leptos_ui_kit`
-Commit: `a10fbf06334f4648f5755e05a7147414e4e5fc98`
-Default branch observed: `master`.
-
-Use immutable blob URLs of the form:
-
-```
-https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/<path>
-```
-
-The important review evidence is summarized below so product intent does not require fetching the repository. Implementers may still inspect original code for exact catalog API/CSS details not defined in the approved review; do not pretend those details were already frozen here.
-
-| Source path                                                              | Observed evidence and relevance                                                                                                                                                                                  |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| README.md / AGENTS.md / CONTRIBUTING.md                                  | Source-first editable components, pure CSS, CLI workflow, supported Leptos modes, no Cargo.toml mutation, naming, theme policy, package validation.                                                              |
-| Cargo.toml                                                               | Six workspace crates; package version 0.1.0; edition 2024; rust-version 1.92.0. Framework/schema target is separately observed as 0.9.0-alpha; do not confuse crate package SemVer with framework compatibility. |
-| crates/leptos_ui_kit_registry/src/config.rs                              | Defaults `src/components/ui`, `_kit/kit.json`, `styles/kit.css`; strict camelCase config; several schema/framework constants share 0.9.0-alpha.                                                                  |
-| crates/leptos_ui_kit_registry/src/builtin_registry.rs                    | Embedded asset snapshot and registry/schema/contract validation; package-local immutable asset model.                                                                                                            |
-| crates/leptos_ui_kit_registry/registry/registry.json                     | 22-item inventory; primitive, identity, layer and portal compatibility metadata.                                                                                                                                 |
-| crates/leptos_ui_kit_registry/registry/ui/button.json                    | button.rs export declarations; managed CSS block; tokens/spinner dependencies; accessibility/dependency metadata.                                                                                                |
-| crates/leptos_ui_kit_registry/registry/ui/button.rs                      | Native button, primary/secondary/ghost, sm/md/lg, explicit native type, disabled/loading/busy behavior and decorative spinner.                                                                                   |
-| crates/leptos_ui_kit_registry/registry/ui/dialog.json                    | Compound directory with explicit target files/exports and identity/tokens dependencies; external web_ui_primitives dependency.                                                                                   |
-| crates/leptos_ui_kit_registry/registry/ui/dialog/content.rs              | Primitive-backed layers/dismissal/portal/presence and role switch; port should delegate to Bits, with separate Alert Dialog.                                                                                     |
-| crates/leptos_ui_kit_registry/registry/styles/{tokens,button,switch}.css | kit class/property vocabulary, managed block markers, cascade layers, radius fallback, checked-state/RTL/motion behavior.                                                                                        |
-| crates/leptos_ui_kit_codegen/src/install_lock.rs                         | File/CSS ownership, hashes and reverse indexes, strict lock constants/theme metadata.                                                                                                                            |
-| crates/leptos_ui_kit_codegen/src/planning/files.rs                       | Refuses locally edited tracked source on differing incoming output; lock publication is last marker in nonempty cohorts. Not a text merge engine.                                                                |
-| crates/leptos_ui_kit_codegen/src/planning/sync.rs                        | Rebuilds desired config from resolved closure, motivating separation of user roots from dependencies.                                                                                                            |
-| crates/leptos_ui_kit_codegen/src/planning/init.rs                        | Plans config/CSS/modules/lock instead of scattered writes.                                                                                                                                                       |
-| crates/leptos_ui_kit_cli/tests/exit_contract.rs                          | JSON stdout/stderr/exit contracts, idempotence, conflicts and unsafe paths.                                                                                                                                      |
-| crates/leptos_ui_kit_cli/tests/{workflow,packaged_runtime}.rs            | End-to-end and packaged-runtime coverage; inspect actual commands before running.                                                                                                                                |
-| crates/leptos_ui_kit_codegen/src/path_safety* and transaction*           | Strong filesystem protections; do not claim unqualified Node-equivalent security.                                                                                                                                |
-| crates/leptos_ui_kit_codegen_platform                                    | Narrow Windows platform boundary, the exceptional unsafe-code scope in the reference. Not a required Svelte package.                                                                                             |
-
-#### Commit convention evidence
-
-The GitHub connector returned these recent reference subjects at specification preparation:
-
-- `a10fbf0` — `switch: strengthen the unchecked track contrast`
-- `db5635f` — `switch: animate track and thumb state`
-- `705f972` — `checkbox: constrain svg indicator geometry`
-- `494ef17` — `checkbox: render a canonical svg checkmark`
-- `689cf8d` — `selection: stabilize white control indicators`
-- `e4c128a` — `registry: complete desired item vocabulary`
-
-Inferred convention: lowercase area, colon and space, imperative lower-case summary; optional body explains behavior/tests. Use this fallback only when the actual target has no stronger convention. Do not assume Conventional Commits `feat(scope):` was established by this source.
-
-#### Current-doc checks and version limits
-
-Official Svelte/Bits docs were read during the source review for project layout, bindings, dialog composition, child snippets, portals, handler merging, compiler parsing and request-local state. The [reference URL inventory](#reference-url-inventory) preserves those pointers for later adoption into `references/SOURCES.json`. These are mutable documentation pointers, not a lockfile or a validated compatibility matrix; recheck selected versions during implementation.
-
-The historical Bits source package manifest observed in the review was version 2.19.3, Svelte peer `^5.33.0`, date peer `^3.8.1`, Node `>=20`; verify actual selected package metadata before using it. No current npm release or package-name availability claim is made.
-
-#### Verification limitations
-
-No Rust/Svelte project test suite ran during specification creation. The source specification validator checked document/plan integrity only. The exact reference revision was available for inspection during the target review; that access does not establish test execution or implementation correctness. Target code and third-party dependencies must still be implemented and verified in the authorized environment.
-
-Retain required upstream license notices when copying CSS/code and inspect the actual target licensing policy before distribution. The reference declares MIT OR Apache-2.0; publisher identity and publication remain outside this implementation scope.
-
-<a id="contract-references-token-baseline"></a>
-
-### Reference token defaults and important component observations
-
-Scheduled repository file: `references/TOKEN_BASELINE.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-These are reference values observed in the supplied source-review context, not a new palette or a verified Svelte stylesheet. They are included so the known design vocabulary is recoverable without the approved review. Source path: `crates/leptos_ui_kit_registry/registry/styles/tokens.css` at `a10fbf06334f4648f5755e05a7147414e4e5fc98`. Exact complete source/CSS/customization assets must still be checked when implementing the mapped registry; preserve applicable notices if copying source text.
-
-| Property                         | Reference default               |
-| -------------------------------- | ------------------------------- |
-| --kit-color-canvas               | #f8fafc                         |
-| --kit-color-surface              | #ffffff                         |
-| --kit-color-surface-raised       | #ffffff                         |
-| --kit-color-surface-hover        | #f3f4f6                         |
-| --kit-color-surface-active       | #e5e7eb                         |
-| --kit-color-text                 | #111827                         |
-| --kit-color-text-secondary       | #374151                         |
-| --kit-color-text-muted           | #4b5563                         |
-| --kit-color-border               | #d1d5db                         |
-| --kit-color-border-strong        | #9ca3af                         |
-| --kit-color-primary              | #111827                         |
-| --kit-color-primary-hover        | #1f2937                         |
-| --kit-color-primary-foreground   | #ffffff                         |
-| --kit-color-selection-indicator  | #ffffff                         |
-| --kit-color-secondary            | #ffffff                         |
-| --kit-color-secondary-hover      | #f3f4f6                         |
-| --kit-color-secondary-foreground | #111827                         |
-| --kit-color-accent               | #2563eb                         |
-| --kit-color-accent-hover         | #1d4ed8                         |
-| --kit-color-accent-foreground    | #ffffff                         |
-| --kit-color-info                 | #0284c7                         |
-| --kit-color-info-foreground      | #ffffff                         |
-| --kit-color-success              | #16a34a                         |
-| --kit-color-success-foreground   | #ffffff                         |
-| --kit-color-warning              | #d97706                         |
-| --kit-color-warning-foreground   | #111827                         |
-| --kit-color-danger               | #dc2626                         |
-| --kit-color-danger-hover         | #b91c1c                         |
-| --kit-color-danger-foreground    | #ffffff                         |
-| --kit-color-link                 | #111827                         |
-| --kit-color-link-hover           | #111827                         |
-| --kit-focus-ring                 | #2563eb                         |
-| --kit-radius-sm                  | 0.25rem                         |
-| --kit-radius-md                  | 0.375rem                        |
-| --kit-radius-lg                  | 0.5rem                          |
-| --kit-radius-full                | 999px                           |
-| --kit-border-width               | 1px                             |
-| --kit-shadow-sm                  | 0 1px 2px rgb(15 23 42 / 8%)    |
-| --kit-shadow-md                  | 0 12px 28px rgb(15 23 42 / 14%) |
-| --kit-shadow-lg                  | 0 20px 40px rgb(15 23 42 / 18%) |
-| --kit-duration-fast              | 120ms                           |
-| --kit-duration-normal            | 140ms                           |
-| --kit-easing-standard            | cubic-bezier(0.2, 0, 0, 1)      |
-| --kit-disabled-opacity           | 0.55                            |
-
-The source token layer sets root color-scheme light; application theme selectors own their own color-scheme. Do not infer that all foreground/background combinations are automatically accessibility-compliant; verify actual use before claiming compliance.
-
-#### Button observations
-
-Source variants: primary, secondary, ghost. Sizes: sm/md/lg. Native type choices: button/submit/reset, default button. Disabled state includes loading, loading sets busy semantics, and a decorative Spinner plus loading label replaces visual content while loading. Reference CSS uses inline-flex, inherited font, focus-visible outline, size-specific height/padding/text, and component-level overrides for gap/border/radius/weight/line-height/focus/motion/disabled opacity. Preserve these source-supported contracts rather than inventing a different visual system.
-
-Radius fallback is --kit-button-radius → --kit-radius-control → --kit-radius-default → --kit-radius-md. Primary uses primary/foreground/hover tokens. Secondary uses secondary/border/foreground/hover. Ghost uses optional ghost tokens with surface/text fallbacks. Size reference heights are 2rem/2.5rem/3rem, inline padding .75rem/1rem/1.25rem, and font sizes .875rem/.9375rem/1rem. Inspect the source before promising every component custom-property name.
-
-#### Switch observations
-
-Reference track geometry is 2rem by 1.125rem with .125rem padding; thumb is .875rem square. Checked thumb travel is .875rem and reverses for RTL. Unchecked track fallback uses --kit-color-border-strong; checked fallback uses --kit-color-primary; thumb background falls back to --kit-color-surface. Optional overrides include --kit-switch-track-background-unchecked, --kit-switch-track-background-checked and --kit-switch-thumb-background. The outer radius uses indicator/default/full fallbacks; the thumb stays circular unless its exact radius property overrides it. Transitions use component motion fallbacks and disappear under reduced motion.
-
-These source values are reference observations. Actual Bits markup and computed styles must be tested; no byte-identical copied stylesheet or compiled Svelte implementation is supplied here.
-
-<a id="contract-repo-agents"></a>
-
-### Agent instructions — svelte-ui-kit
-
-Scheduled repository file: `repo/AGENTS.md`. Until S002 adoption, this section supplies its approved content; read it together with the resolved baseline and approved review dispositions above.
-
-This is the approved target instruction template for adoption at S002. Merge with the actual applicable instructions; it is not installed as AGENTS.md by this planning setup.
-
-#### Product
-
-Implement `svelte_ui_kit_v1` from `specs/`. Product/package/executable is `svelte-ui-kit`. One TypeScript CLI with bundled registry assets. Generated Svelte/TS/plain CSS belongs to the application. Bits UI owns behavioral primitives; simple native elements remain appropriate. No styled kit runtime dependency, Tailwind, CSS-in-JS, shadcn/React compatibility, remote registry, auto-install, auto-merge or extra unscoped APIs.
-
-#### Architecture
-
-Keep `src/cli`, `src/project`, `src/registry` and `src/codegen` separated. Authored templates/assets live under `registry`, schemas under the versioned `schema` directory. Planner is read-only; application happens through guarded recoverable transactions. Lock metadata is final publication. Consumer wrappers never import CLI/Node/registry internals.
-
-Generated defaults: `src/lib/components/ui`, its `_kit`, and `src/styles/kit.css`. Preserve hybrid simple/compound files, PascalCase exports, kebab-case items/files, camelCase props, `.kit-*`, `--kit-*`, and tool-namespaced CSS markers/layers. Use direct sibling imports inside templates. Preserve unmanaged source/CSS/layout regions.
-
-#### Ownership
-
-Keep explicit requests separate from dependencies. Preserve local customizations with base/local/incoming comparison. Stop genuine conflicting batches. Keep component source/style/export cohorts compatible. Never delete customized retired assets or falsify base hashes to hide edits. Doctor distinguishes customization from breakage. Dry runs create no files, including hidden transaction state.
-
-#### Components
-
-Use actual pinned native/Bits types. Preserve bindings, refs, snippets, discriminated unions and event ordering/cancellation. Do not accept-and-drop rendering hooks. Keep SSR/hydration and request identity safe. Test keyboard/form/focus/disabled/reset and theme/portal behavior. Separate Alert Dialog semantics. Pure CSS is not a promise of zero runtime inline positioning styles.
-
-#### Workflow
-
-Read `implementation/COMMIT_SEQUENCE.md` and run one step/commit at a time. Spec first; write tests with changes; verify continuously; self-review staged diffs. No skipping/merging/reordering/broadening without repository proof of obsolete/unsafe scope and a deviation record. No unrelated cleanup, destructive Git operations, remote push or npm publish unless explicitly instructed.
-
-Discover actual commands and commit convention before coding. Reference fallback is `area: imperative summary`. Follow `implementation/VERIFICATION.md`, including conditional Cargo guards for any present/affected Rust workspace. Do not create Rust code to satisfy a generic checklist.
-
-After every step report exact files, commands/results, commit hash, unverified issues, deviations and next-step safety. New relevant failures block progress; evidence-backed pre-existing exceptions remain explicit and do not waive final done criteria. Never disable tests, weaken types, suppress accessibility failures, or turn off SSR to pass.
-
-#### Documentation
-
-Keep enduring intent in `specs/`; execution/status in `implementation/`; rationale in `decisions/`. Root README/CONTRIBUTING/AGENTS carry public developer guidance. Do not create an unnecessary docs tree or coordination database. Code, registry, schema, examples and tests move together when contracts change. Extension work needs its own specified API/sequence gate.
+## Adopted approved contracts and supporting guidance
+
+S002 adopted the 27 approved contracts into standalone repository files. Their bodies are no longer duplicated here; this is an explicit index of the adopted locations, which govern product intent. `implementation/COMMIT_SEQUENCE.md` remains the execution/status authority for checkpoint order, status and evidence.
+
+| Contract                                               | Adopted file                                                                                                    |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `specs/PRODUCT_SPEC.md`                                | [specs/PRODUCT_SPEC.md](../specs/PRODUCT_SPEC.md)                                                               |
+| `specs/SCOPE_AND_ASSUMPTIONS.md`                       | [specs/SCOPE_AND_ASSUMPTIONS.md](../specs/SCOPE_AND_ASSUMPTIONS.md)                                             |
+| `specs/ARCHITECTURE.md`                                | [specs/ARCHITECTURE.md](../specs/ARCHITECTURE.md)                                                               |
+| `specs/GENERATED_LAYOUT.md`                            | [specs/GENERATED_LAYOUT.md](../specs/GENERATED_LAYOUT.md)                                                       |
+| `specs/API_CONTRACTS.md`                               | [specs/API_CONTRACTS.md](../specs/API_CONTRACTS.md)                                                             |
+| `specs/DATA_MODEL.md`                                  | [specs/DATA_MODEL.md](../specs/DATA_MODEL.md)                                                                   |
+| `specs/STYLING.md`                                     | [specs/STYLING.md](../specs/STYLING.md)                                                                         |
+| `specs/SYNCHRONIZATION.md`                             | [specs/SYNCHRONIZATION.md](../specs/SYNCHRONIZATION.md)                                                         |
+| `specs/SECURITY_AND_TRANSACTIONS.md`                   | [specs/SECURITY_AND_TRANSACTIONS.md](../specs/SECURITY_AND_TRANSACTIONS.md)                                     |
+| `specs/COMPONENT_CATALOG.md`                           | [specs/COMPONENT_CATALOG.md](../specs/COMPONENT_CATALOG.md)                                                     |
+| `specs/ACCEPTANCE_CRITERIA.md`                         | [specs/ACCEPTANCE_CRITERIA.md](../specs/ACCEPTANCE_CRITERIA.md)                                                 |
+| `implementation/TEST_PLAN.md`                          | [implementation/TEST_PLAN.md](TEST_PLAN.md)                                                                     |
+| `implementation/VERIFICATION.md`                       | [implementation/VERIFICATION.md](VERIFICATION.md)                                                               |
+| `implementation/OPEN_QUESTIONS.md`                     | [implementation/OPEN_QUESTIONS.md](OPEN_QUESTIONS.md)                                                           |
+| `implementation/OPERATIONS_RUNBOOK.md`                 | [implementation/OPERATIONS_RUNBOOK.md](OPERATIONS_RUNBOOK.md)                                                   |
+| `implementation/STEP_REPORT_TEMPLATE.md`               | [implementation/STEP_REPORT_TEMPLATE.md](STEP_REPORT_TEMPLATE.md)                                               |
+| `implementation/DEVIATION_TEMPLATE.md`                 | [implementation/DEVIATION_TEMPLATE.md](DEVIATION_TEMPLATE.md)                                                   |
+| `implementation/EXTENSION_GATE.md`                     | [implementation/EXTENSION_GATE.md](EXTENSION_GATE.md)                                                           |
+| `decisions/ADR-0001-architecture.md`                   | [decisions/ADR-0001-architecture.md](../decisions/ADR-0001-architecture.md)                                     |
+| `decisions/ADR-0002-generated-css-and-layout.md`       | [decisions/ADR-0002-generated-css-and-layout.md](../decisions/ADR-0002-generated-css-and-layout.md)             |
+| `decisions/ADR-0003-customization-aware-sync.md`       | [decisions/ADR-0003-customization-aware-sync.md](../decisions/ADR-0003-customization-aware-sync.md)             |
+| `decisions/ADR-0004-primitive-and-theme-boundaries.md` | [decisions/ADR-0004-primitive-and-theme-boundaries.md](../decisions/ADR-0004-primitive-and-theme-boundaries.md) |
+| `decisions/ADR-0005-rust-verification-boundary.md`     | [decisions/ADR-0005-rust-verification-boundary.md](../decisions/ADR-0005-rust-verification-boundary.md)         |
+| `decisions/ADR-0006-scope-and-discovery-gates.md`      | [decisions/ADR-0006-scope-and-discovery-gates.md](../decisions/ADR-0006-scope-and-discovery-gates.md)           |
+| `references/SOURCE_BASELINE.md`                        | [references/SOURCE_BASELINE.md](../references/SOURCE_BASELINE.md)                                               |
+| `references/TOKEN_BASELINE.md`                         | [references/TOKEN_BASELINE.md](../references/TOKEN_BASELINE.md)                                                 |
+| `AGENTS.md`                                            | [AGENTS.md](../AGENTS.md)                                                                                       |
 
 <a id="reference-url-inventory"></a>
 
@@ -12536,6 +11700,6 @@ These pointers preserve source-review provenance. Mutable documentation and sour
 
 Planning setup: governing plan created with all 203 checkpoint definitions, eleven ordered RCLD sequences, explicit scope/green/verification gates, 34 product requirements, 22 acceptance criteria, embedded contracts, review dispositions and pending-state ledger. No product checkpoint is marked complete.
 
-Planning validation on 2026-09-28: `pnpm run format:check` passed. A read-only comparison against the approved checkpoint definitions verified all 203 IDs in order and 3,243 field values, allowing only the documented command/prose adaptations. Structural checks passed for every ledger predecessor, all eleven scope/green/verification gates, 34 requirements, 22 acceptance criteria, 27 embedded contract sections, internal links, unique anchors, balanced fences and repository portability. The new-file whitespace check produced no diagnostics. These planning checks are not product tests and do not complete an implementation checkpoint. The reusable repository contract validator remains scheduled for S002.
+Planning validation on 2026-09-28: `pnpm run format:check` passed. A read-only comparison against the approved checkpoint definitions verified all 203 IDs in order and 3,243 field values, allowing only the documented command/prose adaptations. Structural checks passed for every ledger predecessor, all eleven scope/green/verification gates, 34 requirements, 22 acceptance criteria, 27 embedded contract sections, internal links, unique anchors, balanced fences and repository portability. The new-file whitespace check produced no diagnostics. These planning checks are not product tests and do not complete an implementation checkpoint. The reusable repository contract validator was established at S002 as `tools/check-contracts.mjs` with `node:test` regressions.
 
-Implementation reports: S001 is independently accepted by Codex, with author report at `implementation/evidence/S001_REPORT.md`, baseline at `implementation/evidence/BASELINE.md`, and review at `implementation/evidence/S001_REVIEW.md`. Formatting, contract preservation, scaffold hashes and reference Rust fmt/check/test passed. Implementation deviations: none. Codex clarified runtime/test-count reporting and recorded the next dispatch. S001 awaits its commit; S002 may begin only after that commit is recorded. Record subsequent evidence with the report/deviation formats and update the ledger from real outcomes.
+Implementation reports: S001 is independently accepted by Codex, with author report at `implementation/evidence/S001_REPORT.md`, baseline at `implementation/evidence/BASELINE.md`, and review at `implementation/evidence/S001_REVIEW.md`. S001 completion commit is `bb5010e0605b3d0917a9037eafef69ed90d3b36c`. S002 adopted all 27 contracts, the sixteen-source projection, checkpoint projection and dependency-free validator with regressions. Codex review 4 accepts S002 after all nine correction findings were resolved: the target and both advanced-state suites pass 83/83 sequentially, full-definition preservation passes, and the unchanged reference's same-checkpoint Rust guard remains green. The shared-temp concurrent-suite limitation is recorded for S005. S002 is verified_uncommitted pending its authorized commit; S003's exact dependency dispatch is prepared above and becomes executable after real completion bookkeeping. Record subsequent evidence with the report/deviation formats and update the ledger from real outcomes.

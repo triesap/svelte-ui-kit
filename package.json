@@ -18,7 +18,9 @@
   },
   "scripts": {
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:contracts": "node tools/check-contracts.mjs",
+    "test:contracts": "node --test tools/check-contracts.test.mjs"
   },
   "devDependencies": {
     "prettier": "3.9.6"

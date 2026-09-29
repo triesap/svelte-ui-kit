@@ -1,12 +1,18 @@
 # S001 independent review — Codex
 
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S001","kind":"review","commit":"bb5010e0605b3d0917a9037eafef69ed90d3b36c","disposition":"accepted"}
+-->
+
 Reviewed on 2026-09-28 against target starting commit
 `0616306ff06f96f41b80062fbefa39829b0cf5f5` and read-only reference commit
 `a10fbf06334f4648f5755e05a7147414e4e5fc98`.
 
 Disposition: accepted by Codex. Independent reference fmt, check and workspace
-tests passed. S001 awaits its reviewed commit; acceptance alone does not unlock
-S002.
+tests passed. S001 is complete at commit
+`bb5010e0605b3d0917a9037eafef69ed90d3b36c`. Codex recorded this
+factual hash after the commit; it travels with the next checkpoint. S002 is
+now authorized.
 
 ## Scope and evidence
 
@@ -78,7 +84,7 @@ read-only check; it did not modify repository files.
 Pi remains responsible for implementation code and corrections. Codex owns
 scope decisions between coding periods, independent acceptance and checkpoint
 commits. The S002 dispatch is recorded in the governing plan. S002 may start
-only after the remaining checks pass and S001 is committed. Its implementation
+because the required checks passed and S001 is committed. Its implementation
 must return uncommitted for the next review; S003 remains locked until S002's
 own acceptance and commit. There is no release candidate requiring human
 testing at this stage.

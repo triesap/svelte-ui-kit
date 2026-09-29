@@ -1,5 +1,9 @@
 # S001 step report — Establish the authorized target and baseline
 
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S001","kind":"report","commit":"bb5010e0605b3d0917a9037eafef69ed90d3b36c","disposition":"implemented"}
+-->
+
 Step ID and title: S001 — Establish the authorized target and baseline.
 Contract/requirement IDs: R32, R33, R34 (`implementation/COMMIT_SEQUENCE.md`).
 Actual target root and branch: this repository (`.`) on branch `master`.
@@ -88,14 +92,15 @@ selection, contract adoption, and all product lanes.
 
 ## Commit and next action
 
-Actual commit hash and message: **pending** — Codex accepted the candidate
-and is recording the reviewed checkpoint. The message is `repo: record the authorized target and verification
-baseline`.
+Actual commit hash: `bb5010e0605b3d0917a9037eafef69ed90d3b36c`.
+Message: `repo: record the authorized target and verification baseline`.
+Codex committed the reviewed S001 scope and recorded this hash afterward, as
+permitted by the governing sequence; this factual update travels with S002.
 
 Independent review status: **accepted by Codex** — see
 `implementation/evidence/S001_REVIEW.md`. Independent formatting, scaffold
 hashes, contract preservation and reference Rust fmt/check/test passed. The
-commit remains the final completion gate.
+commit gate is satisfied.
 
 Requirements/test evidence updated: R32, R33, R34 evidenced by
 `implementation/evidence/BASELINE.md` and this report; the
@@ -104,6 +109,6 @@ updated to reflect the pending-review state narrowly.
 
 Next step ID: S002.
 
-Is the next step safe to begin? No. S002 must not begin until S001 is
-independently reviewed, verified, and committed; S001 is not complete merely
-because the author's checks passed.
+Is the next step safe to begin? Yes. Codex independently reviewed, verified
+and committed S001. S002 is authorized under the governing dispatch; S003
+remains unavailable until S002 is independently accepted and committed.
