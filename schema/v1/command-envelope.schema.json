@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:svelte-ui-kit:schema:v1:command-envelope",
+  "title": "svelte-ui-kit command envelope (v1)",
+  "description": "Exactly one structured result envelope per JSON invocation. schemaVersion is the independent protocol version, never the package or framework version.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "command",
+    "status",
+    "diagnostics",
+    "changes",
+    "data"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "command": {
+      "enum": [
+        "info",
+        "init",
+        "view",
+        "add",
+        "sync",
+        "doctor",
+        "help",
+        "version"
+      ]
+    },
+    "status": {
+      "enum": [
+        "success",
+        "planned",
+        "no_change",
+        "warning",
+        "conflict",
+        "error",
+        "unsupported"
+      ]
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "level", "message"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          },
+          "level": { "enum": ["info", "warn", "error"] },
+          "message": { "type": "string", "minLength": 1 },
+          "locator": { "type": "string", "minLength": 1 },
+          "guidance": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "path", "applied"],
+        "properties": {
+          "action": { "enum": ["create", "update", "retire"] },
+          "path": { "type": "string", "minLength": 1 },
+          "applied": { "type": "boolean" }
+        }
+      }
+    },
+    "data": {}
+  }
+}

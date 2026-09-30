@@ -1,7 +1,7 @@
 # S021 step report — Define portable theme and customization metadata schemas
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S021","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S021","kind":"report","commit":"6bb1f2564786dd1e5f3f5d65750b22abdf17c9b0","disposition":"candidate"}
 -->
 
 Step ID and title: S021 — Define portable theme and customization metadata schemas.

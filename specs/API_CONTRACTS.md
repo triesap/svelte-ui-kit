@@ -29,6 +29,8 @@ Status vocabulary: `success`, `planned`, `no_change`, `warning`, `conflict`, `er
 
 In JSON mode emit exactly one complete envelope to stdout, including failures; do not mix progress text, color codes, or a second error object into it. Human failures belong on stderr. Decide and fixture the numerical exit map at the protocol step. The reference's observed mapping is a starting point, not a newly implied target requirement: 0 successful/planned/unchanged/non-strict warning; 1 ordinary failure; 2 usage/unsupported; 3 strict doctor failure; 10 conflict; 11 unsafe path; 12 registry failure. Confirm target convention before freezing it.
 
+Frozen v1 protocol: the envelope is `{ schemaVersion, command, status, diagnostics, changes, data }` with `schemaVersion` equal to the independent protocol version; diagnostics carry `code`, `level` (info/warn/error), `message`, an optional safe logical `locator` and `guidance`; changes carry `action` (create/update/retire), a logical `path` and `applied`. The frozen exit map is 0 for success/planned/no_change/non-strict warning, 1 ordinary error, 2 usage/unsupported, 3 strict-doctor broken/unsafe, 10 conflict, 11 unsafe path and 12 registry failure, with the most specific causal class winning deterministically.
+
 Command schema version is independent from Svelte and package versions. Output is deterministic for equivalent logical inputs; avoid timestamps, random transaction identifiers, absolute sensitive paths, or filesystem iteration order in semantic output unless explicitly necessary and documented.
 
 #### Dependency planning
