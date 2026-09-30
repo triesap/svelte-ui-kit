@@ -116,8 +116,15 @@ export function createTempProject(
       const abs = resolveWithin(root, rel);
       assertPhysicalWithin(root, abs);
       const existing = lstatOrNull(abs);
-      if (existing !== null && existing.isDirectory()) {
-        throw new Error(`cannot write a file over a directory: ${rel}`);
+      if (existing !== null) {
+        if (existing.isDirectory()) {
+          throw new Error(`cannot write a file over a directory: ${rel}`);
+        }
+        if (!existing.isFile()) {
+          throw new Error(
+            `cannot write a file over a non-regular entry: ${rel}`,
+          );
+        }
       }
       mkdirSync(path.dirname(abs), { recursive: true });
       writeFileSync(abs, contents);

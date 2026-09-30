@@ -504,13 +504,19 @@ are appended separately as they land.
   installed-package paths, and adds pure parser, synthetic classifier and real
   authored `.svelte`/`.ts`/referenced `.d.ts`/additional-dependency controls
   including colon and space filenames. Components lane 19/19.
-- RCLD01-R2-2/R2-3 (committed in this repair): browser issue enforcement runs
-  after `page.close()` drains the lifecycle, per-fault bounded child runs
-  cover console, hydration, page-exception and their teardown emissions with a
-  clean restoration run, `startFixtureServer` retains ownership and stops and
-  drains its child on every rejected readiness path, and owned child
-  environments drop a conflicting `FORCE_COLOR` only when `NO_COLOR` is set.
-  Browser lane 22/22; SSR/lifecycle lane 23/23.
+- `abeedd301c634461ae791618311462ffd575af23` — RCLD01-R2-2/R2-3: browser
+  issue enforcement runs after `page.close()` drains the lifecycle, per-fault
+  bounded child runs cover console, hydration, page-exception and their
+  teardown emissions with a clean restoration run, `startFixtureServer`
+  retains ownership and stops and drains its child on every rejected readiness
+  path, and owned child environments drop a conflicting `FORCE_COLOR` only
+  when `NO_COLOR` is set. Browser lane 22/22; SSR/lifecycle lane 23/23.
+- RCLD01-R2-4 (committed in this repair): the owned temp-project write helper
+  requires an existing final target to be a regular file, rejecting FIFO,
+  socket and device targets before opening while preserving symlink and
+  ancestor protections, with a real bounded FIFO regression and a socket
+  control. Integration lane 14 tests (13 pass, 1 skipped only for the
+  remapped long UNIX-socket path).
 
 ## Codex takeover dispatch — RCLD-01 repair and qualification
 

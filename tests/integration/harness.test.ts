@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   chmodSync,
@@ -7,6 +8,7 @@ import {
   readlinkSync,
   statSync,
 } from "node:fs";
+import { createServer } from "node:net";
 import path from "node:path";
 import { test } from "node:test";
 
@@ -301,4 +303,95 @@ test("dangling links and invalid non-directory ancestors are rejected", (t) => {
     () => project.symlink("/tmp", "file.txt/child"),
     /invalid non-directory ancestor/,
   );
+});
+
+test("writes reject a FIFO final target without opening it", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeDir("pipes");
+  const fifo = path.join(project.root, "pipes", "input");
+  const created = spawnSync("mkfifo", [fifo], { encoding: "utf8" });
+  if (created.error || created.status !== 0) {
+    t.skip(`mkfifo unavailable: ${created.error?.message ?? created.stderr}`);
+    return;
+  }
+
+  const before = snapshotByPath(snapshotTree(project.root));
+  assert.equal(
+    before.get("pipes/input")?.kind,
+    "other",
+    "the FIFO must be recorded as a non-regular entry",
+  );
+
+  const started = Date.now();
+  assert.throws(
+    () => project.writeFile("pipes/input", "x"),
+    /non-regular entry/,
+  );
+  assert.ok(
+    Date.now() - started < 1_000,
+    "the rejection must not block on opening the FIFO",
+  );
+  assert.throws(
+    () => project.writeDir("pipes/input"),
+    /cannot create a directory over a non-directory/,
+  );
+
+  const after = snapshotByPath(snapshotTree(project.root));
+  assert.deepEqual(
+    after.get("pipes/input"),
+    before.get("pipes/input"),
+    "the FIFO kind, mode and size are preserved",
+  );
+
+  project.cleanup();
+  assert.ok(!existsSync(project.root), "owned cleanup removes the FIFO root");
+});
+
+test("writes reject a socket final target without side effects", async (t) => {
+  const project = createTempProject();
+  const socketPath = path.join(project.root, "control.sock");
+  const server = createServer();
+  let listening = false;
+  try {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        server.once("listening", () => resolve());
+        server.once("error", reject);
+        server.listen(socketPath);
+      });
+      listening = true;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "EINVAL" || code === "ENAMETOOLONG") {
+        t.skip(`UNIX socket path unsupported here: ${code}`);
+        return;
+      }
+      throw error;
+    }
+
+    const before = snapshotByPath(snapshotTree(project.root));
+    assert.equal(before.get("control.sock")?.kind, "other");
+
+    assert.throws(
+      () => project.writeFile("control.sock", "x"),
+      /non-regular entry/,
+    );
+    assert.throws(
+      () => project.writeDir("control.sock"),
+      /cannot create a directory over a non-directory/,
+    );
+
+    const after = snapshotByPath(snapshotTree(project.root));
+    assert.deepEqual(
+      after.get("control.sock"),
+      before.get("control.sock"),
+      "the socket kind and mode are preserved",
+    );
+  } finally {
+    if (listening) {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+    project.cleanup();
+  }
 });
