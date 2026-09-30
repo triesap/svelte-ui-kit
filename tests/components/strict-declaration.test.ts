@@ -1,5 +1,15 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -74,16 +84,66 @@ function completedRecord(
   errors: number,
   warnings: number,
   problems: number,
+  files = 10,
 ): string {
-  return `9 COMPLETED 10 FILES ${errors} ERRORS ${warnings} WARNINGS ${problems} FILES_WITH_PROBLEMS`;
+  return `9 COMPLETED ${files} FILES ${errors} ERRORS ${warnings} WARNINGS ${problems} FILES_WITH_PROBLEMS`;
 }
 
 function machine(lines: readonly string[]): string {
   return `${lines.join("\n")}\n`;
 }
 
+const UPSTREAM_UNION_MESSAGE =
+  "Expression produces a union type that is too complex to represent.";
+
+/** The real installed Bits declaration file inside an owned fixture copy. */
+function installedBitsFile(copyRoot: string, rel: string): string {
+  const bitsRoot = realpathSync(path.join(copyRoot, "node_modules", "bits-ui"));
+  return path.join(bitsRoot, rel);
+}
+
+/** A machine-verbose record for one pinned union-complexity diagnostic. */
+function upstreamDiagnostic(
+  filename: string,
+  start: { readonly line: number; readonly character: number },
+  end: { readonly line: number; readonly character: number },
+): string {
+  return `2 ${JSON.stringify({
+    type: "ERROR",
+    filename,
+    start,
+    end,
+    message: UPSTREAM_UNION_MESSAGE,
+    code: 2590,
+  })}`;
+}
+
+/** A complete synthetic run that names the real installed Bits declarations. */
+function workspaceMachine(workspace: string, copyRoot: string): string {
+  return machine([
+    startRecord(workspace),
+    upstreamDiagnostic(
+      installedBitsFile(
+        copyRoot,
+        "dist/bits/button/components/button.svelte.d.ts",
+      ),
+      { line: 1, character: 22 },
+      { line: 1, character: 76 },
+    ),
+    upstreamDiagnostic(
+      installedBitsFile(
+        copyRoot,
+        "dist/bits/calendar/components/calendar.svelte.d.ts",
+      ),
+      { line: 1, character: 24 },
+      { line: 1, character: 106 },
+    ),
+    completedRecord(2, 0, 2, 1234),
+  ]);
+}
+
 const ACCEPTED_MACHINE = machine([
-  startRecord(),
+  startRecord(process.cwd()),
   diagnosticRecord(),
   completedRecord(1, 0, 1),
 ]);
@@ -101,7 +161,7 @@ function classify(copy: {
 test("the machine parser accepts a complete well-formed stream", () => {
   const parsed = parseMachineVerbose(ACCEPTED_MACHINE);
   assert.equal(parsed.ok, true, parsed.reasons.join("\n"));
-  assert.equal(parsed.run?.workspace, "/ws");
+  assert.equal(parsed.run?.workspace, process.cwd());
   assert.equal(parsed.run?.diagnostics.length, 1);
   assert.deepEqual(parsed.run?.completed, {
     files: 10,
@@ -233,6 +293,49 @@ test("the machine parser rejects summary and duplicate inconsistencies", () => {
   );
 });
 
+test("the machine parser rejects unsafe and inconsistent COMPLETED totals", () => {
+  const twoDiagnostics = [
+    startRecord(),
+    diagnosticRecord(),
+    diagnosticRecord({ filename: "src/b.ts" }),
+  ];
+
+  // A total below the problem-file count is inconsistent.
+  for (const total of ["0", "1"]) {
+    assert.match(
+      parseMachineVerbose(
+        machine([
+          ...twoDiagnostics,
+          `9 COMPLETED ${total} FILES 2 ERRORS 0 WARNINGS 2 FILES_WITH_PROBLEMS`,
+        ]),
+      ).reasons.join("\n"),
+      /total file\(s\) but 2 problem file\(s\)/,
+    );
+  }
+
+  // An overflowing digit run is not a safe integer and must fail closed.
+  assert.match(
+    parseMachineVerbose(
+      machine([
+        ...twoDiagnostics,
+        `9 COMPLETED 99999999999999999999 FILES 2 ERRORS 0 WARNINGS 2 FILES_WITH_PROBLEMS`,
+      ]),
+    ).reasons.join("\n"),
+    /non-safe or non-finite summary count/,
+  );
+
+  // A large but safe total at or above the problem-file count is legitimate;
+  // the total is not frozen to any particular checked-in value.
+  const ok = parseMachineVerbose(
+    machine([
+      ...twoDiagnostics,
+      `9 COMPLETED ${Number.MAX_SAFE_INTEGER} FILES 2 ERRORS 0 WARNINGS 2 FILES_WITH_PROBLEMS`,
+    ]),
+  );
+  assert.equal(ok.ok, true, ok.reasons.join("\n"));
+  assert.equal(ok.run?.completed.files, Number.MAX_SAFE_INTEGER);
+});
+
 // ---------------------------------------------------------------------------
 // Synthetic classifier controls
 // ---------------------------------------------------------------------------
@@ -290,7 +393,7 @@ test("the classifier rejects warnings", () => {
   const result = classifyStrictCheck(
     syntheticRun(
       machine([
-        startRecord(),
+        startRecord(process.cwd()),
         diagnosticRecord({ type: "WARNING", message: "warn" }),
         completedRecord(0, 1, 1),
       ]),
@@ -305,30 +408,39 @@ test("the classifier rejects a misleading Bits-like path outside the installed p
   const copy = prepareStrictFixture();
   t.after(() => copy.cleanup());
 
-  const fakeWorkspace = mkdtempSync(path.join(os.tmpdir(), "suik-audit-fake-"));
-  t.after(() => rmSync(fakeWorkspace, { recursive: true, force: true }));
+  // Real files whose paths merely end with the Bits-like suffix, outside the
+  // installed package. The START workspace correctly names the fixture, so the
+  // only possible rejection reason is the path identity itself.
+  const fakeRoot = mkdtempSync(path.join(os.tmpdir(), "suik-audit-fake-"));
+  t.after(() => rmSync(fakeRoot, { recursive: true, force: true }));
+  const fakeButton = path.join(
+    fakeRoot,
+    "node_modules/bits-ui/dist/bits/button/components/button.svelte.d.ts",
+  );
+  const fakeCalendar = path.join(
+    fakeRoot,
+    "node_modules/bits-ui/dist/bits/calendar/components/calendar.svelte.d.ts",
+  );
+  for (const fake of [fakeButton, fakeCalendar]) {
+    mkdirSync(path.dirname(fake), { recursive: true });
+    writeFileSync(fake, "// not the installed package\n");
+  }
 
-  const fakeDiagnostic = (filename: string): string =>
-    `2 ${JSON.stringify({
-      type: "ERROR",
-      filename,
-      start: { line: 1, character: 22 },
-      end: { line: 1, character: 76 },
-      message:
-        "Expression produces a union type that is too complex to represent.",
-      code: 2590,
-    })}`;
   const result = classifyStrictCheck(
     syntheticRun(
       machine([
-        `1 START ${JSON.stringify(fakeWorkspace)}`,
-        fakeDiagnostic(
-          "node_modules/bits-ui/dist/bits/button/components/button.svelte.d.ts",
+        startRecord(copy.root),
+        upstreamDiagnostic(
+          fakeButton,
+          { line: 1, character: 22 },
+          { line: 1, character: 76 },
         ),
-        fakeDiagnostic(
-          "node_modules/bits-ui/dist/bits/calendar/components/calendar.svelte.d.ts",
+        upstreamDiagnostic(
+          fakeCalendar,
+          { line: 1, character: 24 },
+          { line: 1, character: 106 },
         ),
-        completedRecord(2, 0, 2),
+        completedRecord(2, 0, 2, 1234),
       ]),
     ),
     copy.root,
@@ -340,9 +452,58 @@ test("the classifier rejects a misleading Bits-like path outside the installed p
   );
 });
 
+test("the classifier requires START's workspace to resolve to the audited fixture", (t) => {
+  const copy = prepareStrictFixture();
+  t.after(() => copy.cleanup());
+
+  const other = mkdtempSync(path.join(os.tmpdir(), "suik-audit-other-"));
+  t.after(() => rmSync(other, { recursive: true, force: true }));
+  const alias = path.join(other, "alias");
+  symlinkSync(copy.root, alias);
+
+  // The fixture root, its real path and an equivalent symlink alias all name
+  // the same real directory and must qualify.
+  for (const workspace of [copy.root, realpathSync(copy.root), alias]) {
+    const result = classifyStrictCheck(
+      syntheticRun(workspaceMachine(workspace, copy.root)),
+      copy.root,
+    );
+    assert.equal(
+      result.kind,
+      "qualified-upstream-exception",
+      `${workspace}: ${result.reasons.join("\n")}`,
+    );
+  }
+
+  // A different existing directory must fail even though the relative
+  // diagnostic paths would resolve to the same installed package.
+  const different = classifyStrictCheck(
+    syntheticRun(workspaceMachine(other, copy.root)),
+    copy.root,
+  );
+  assert.equal(different.kind, "rejected");
+  assert.match(
+    different.reasons.join("\n"),
+    /does not identify the audited fixture/,
+  );
+
+  // An absent workspace root must fail rather than silently resolve.
+  const absent = classifyStrictCheck(
+    syntheticRun(workspaceMachine(path.join(other, "missing-root"), copy.root)),
+    copy.root,
+  );
+  assert.equal(absent.kind, "rejected");
+  assert.match(
+    absent.reasons.join("\n"),
+    /does not resolve to an existing directory/,
+  );
+});
+
 test("the version guard rejects every changed or unreadable pin", (t) => {
+  const copy = prepareStrictFixture();
+  t.after(() => copy.cleanup());
   assert.deepEqual(
-    validateStrictAuditVersions(prepareStrictFixture().root),
+    validateStrictAuditVersions(copy.root),
     [],
     "the maintained fixture must match every approved pin",
   );
@@ -589,4 +750,83 @@ test("the normal fixture check hides the referenced declaration defect that the 
   removeProbe(copy.root, probe);
   const restored = classify(copy);
   assert.equal(restored.kind, "qualified-upstream-exception");
+});
+
+// ---------------------------------------------------------------------------
+// Owned fixture cleanup control
+// ---------------------------------------------------------------------------
+
+const CLEANUP_CONTROL_SPEC = "tests/components/fixture-cleanup-control.mjs";
+
+/**
+ * Prove that every owned strict-audit fixture copy is cleaned up, even when a
+ * test fails. A bounded `node --test` child allocates two real copies, registers
+ * cleanup immediately on each test context, records both owned roots and then
+ * deliberately fails one assertion. The parent asserts the child failed for
+ * that deliberate reason and that neither owned root survives, without touching
+ * any unrelated temporary tree.
+ */
+test("owned fixture cleanup runs after success and after a deliberate assertion failure", (t) => {
+  const reportDir = mkdtempSync(path.join(os.tmpdir(), "suik-cleanup-report-"));
+  const reportPath = path.join(reportDir, "roots.txt");
+  t.after(() => rmSync(reportDir, { recursive: true, force: true }));
+
+  const childEnv: NodeJS.ProcessEnv = {
+    ...process.env,
+    SUIK_STRICT_AUDIT_MODULE: new URL(
+      "../helpers/strict-audit.js",
+      import.meta.url,
+    ).href,
+    SUIK_CLEANUP_REPORT: reportPath,
+  };
+  // The parent runs inside Node's own test runner; the child must not inherit
+  // its recursion guard or runner options.
+  delete childEnv["NODE_TEST_CONTEXT"];
+  delete childEnv["NODE_OPTIONS"];
+  delete childEnv["NODE_V8_COVERAGE"];
+
+  const result = spawnSync(process.execPath, ["--test", CLEANUP_CONTROL_SPEC], {
+    cwd: process.cwd(),
+    env: childEnv,
+    encoding: "utf8",
+    timeout: 300_000,
+  });
+  assert.equal(
+    result.error,
+    undefined,
+    `the cleanup control child reported an error: ${String(result.error)}`,
+  );
+  assert.equal(result.signal, null, "the cleanup control child was signalled");
+  assert.notEqual(
+    result.status,
+    0,
+    `the deliberate assertion failure must fail the child\n${result.stdout}\n${result.stderr}`,
+  );
+
+  const entries = readFileSync(reportPath, "utf8")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "")
+    .map((line) => {
+      const separator = line.indexOf(" ");
+      return {
+        label: line.slice(0, separator),
+        root: line.slice(separator + 1),
+      };
+    });
+  assert.deepEqual(entries.map((entry) => entry.label).sort(), [
+    "failure",
+    "success",
+  ]);
+  for (const entry of entries) {
+    assert.ok(
+      entry.root.startsWith(os.tmpdir()),
+      `the control must only report its own owned root: ${entry.root}`,
+    );
+    assert.equal(
+      existsSync(entry.root),
+      false,
+      `the ${entry.label} fixture root must be cleaned up`,
+    );
+  }
 });

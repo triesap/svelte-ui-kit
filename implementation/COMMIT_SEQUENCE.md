@@ -332,15 +332,108 @@ IDs/order, R01–R34, AC01–AC22 or any sequence dependency. Reviewed candidate
 repair/bookkeeping commits after `9310790c9900f3cfdc516e4a8cf42b8095c7422a`.
 The original S007–S012 pending hashes remain unchanged.
 
-Follow-up inspection on 2026-09-30 found the same candidate revision and only
-the three existing governance amendments in the working tree. No further
-implementation or repair evidence is available. All four findings below remain
-open in unchanged source and its maintained callers; closure-batch progress is
-still not started. Reissue the complete closure batch under the same decisions
-and endpoint. The independent test results below belong to the preceding
-review, not a new execution of those suites. No acceptance state changes.
+The initial follow-up found no new implementation. A subsequent closure batch
+returned seven commits through `370db8501e55388e7347e8a8a076a134fb9fd7bf`,
+clean at independent review. The current disposition and execution instructions
+below supersede the earlier unfinished-work narrative while preserving its
+requirements, historical evidence and original pending hashes.
 
-### Independent disposition and preserved progress
+### Current independent review and remaining closure batch
+
+Changes requested on the complete candidate; no checkpoint promotion. Keep
+6/203 accepted, six pending, 191 not started and all eleven sequences unfinished.
+Preserve the substantive new repairs: real authored Svelte/TypeScript/referenced
+declaration/dependency diagnostics now fail the strict qualifier; browser body
+and dependent-fixture teardown issues fail; startup rejection stops and drains
+the owned child; and existing nonregular write targets are rejected before open.
+RCLD01-R2-3 is closed by source review and fresh maintained malformed-readiness,
+timeout, spawn-failure and successful-lifecycle controls. The behavioral fixes
+for R2-2 and R2-4 are verified; their remaining evidence gaps are below. R2-1
+remains incomplete at the protocol consistency and fixture-ownership boundaries.
+
+Fresh independent checks on this candidate: four-config typecheck exit 0;
+components 19/19; Chromium production-browser lane 22/22; production build and
+SSR/lifecycle 23/23; integration 13 passed, one socket-path skip. A separate
+execution of the maintained socket test with an owned short temporary root
+passed 1/1 without skips and cleaned its root. The author's full target-lane
+results were audited against the unchanged code and retained logs. The clean
+reference's author-run fmt/check/test results were also audited (578 passed,
+zero failed, four ignored); they are not fresh reviewer Rust runs. Remote CI,
+other platforms and release acceptance are not claimed.
+
+Complete all three groups below in the same `pfc through RCLD-01` batch:
+
+1. **RCLD01-R3-1 — complete strict-audit consistency and owned cleanup.**
+   An independent real-baseline mutation replacing the COMPLETED total with
+   `0 FILES`, `1 FILES`, or an overflowing integer still produces
+   `qualified-upstream-exception` with two problem files and no reasons.
+   Replacing START's workspace with an unrelated existing directory likewise
+   qualifies against a different fixture because the relative diagnostic paths
+   still resolve to the same installed Bits files. Require every summary count
+   to be a finite nonnegative safe integer, reconcile errors/warnings/problem
+   files as before, and require total files to be at least problem files. Do
+   not freeze the legitimate total to today's 747. Resolve START's workspace
+   and require it to identify the actual fixture passed to the qualifier,
+   accepting equivalent real paths but rejecting absent or different roots.
+   Keep exact diagnostic, pin, process-outcome and package-path checks intact.
+
+   The version-guard test also calls `prepareStrictFixture()` without retaining
+   its cleanup handle. An isolated successful run leaves an owned consumer
+   directory behind. Register cleanup immediately for every allocated copy,
+   including this test, and prove no owned fixture remains after success or
+   intentional assertion failure. Do not remove unrelated temporary trees.
+   Add these controls to the maintained component lane; retain the existing
+   separate real authored/dependency controls and clean restoration proof.
+
+2. **RCLD01-R3-2 — preserve screenshots for collector-detected failures.**
+   The original teardown-error false pass is fixed. However, closing the page
+   before the collector assertion means these failures retain a trace and
+   error context but no configured failure PNG. All six fresh maintained fault
+   children show this omission. A separate dependent-fixture teardown probe
+   fails for its intended console diagnostic with no PNG; a normal body
+   assertion control does retain a PNG. Preserve a usable screenshot attachment
+   for collected body/teardown faults while the page is available, then keep
+   enforcement after actual page teardown/close and event draining. Do not
+   restore the earlier assertion boundary, suppress messages, or add sleeps.
+   Evidence-capture errors must not replace the original browser diagnostic.
+   Assert retained nonempty screenshot and trace artifacts in the real fault
+   controls, with isolated output and clean restoration. Preserve ordinary
+   assertion-failure artifacts and the verified startup-ownership repair.
+
+3. **RCLD01-R3-3 — make nonregular-target regressions genuinely bounded.**
+   The current FIFO test calls synchronous `writeFile` in its own test process
+   and checks elapsed time only after return. Removing the guard in an isolated
+   copy hangs that unchanged test until the reviewer's external 1.5-second
+   deadline kills it. The maintained runner provides no deadline for this
+   synchronous block. Move the potentially blocking operation into an owned
+   child with an enforceable external deadline, explicit exit/signal/error
+   assertions, and parent-owned cleanup. Prove a regressed blocking writer is
+   terminated and reported as a failure, not a pass or indefinite hang; prove
+   the real helper rejects before open and preserves kind/mode/size/bytes.
+   A timer in the same blocked process is insufficient. On the supported local
+   and CI platforms, missing mkfifo or fixture setup failures are failures,
+   not silent skips. Use an owned short socket path so the locally capable
+   socket control runs without the avoidable path-length skip. Do not use real
+   devices, mutate global temporary-directory settings, or change the trusted
+   local threat model. Keep these controls in the maintained integration lane.
+
+Then reconcile stale progress and evidence statements and run the full existing
+cumulative qualification, including all new controls in the actual CI lanes.
+Use narrow affected checks for each green repair commit, preserve underlying
+command exits, and continue after every green checkpoint. Preserve original
+pending hashes and append repair hashes; JSON remains derived and completion
+stays null. The original narrow declaration exception and release AC20 debt
+remain unchanged. No dependency or product-scope expansion is approved.
+
+Endpoint: the entire remaining RCLD-01 candidate, verified and committed for
+Codex review before S013. S012's independent acceptance gate still prevents
+RCLD-02 advancement; there is no eligible successor implementation to combine
+across that gate. No owner decision or hardware blocker remains. Reuse audited
+reference results only at unchanged intermediate revisions; run the required
+fresh reference guard at the final repaired milestone. Codex alone performs
+the previously approved atomic acceptance transition.
+
+### Preceding independent disposition and preserved progress
 
 Changes requested; no additional checkpoint or sequence is accepted. Keep
 S001–S006 complete (6/203), S007–S012 pending (6/203), S013–S203 not started
@@ -365,7 +458,10 @@ these are not fresh reviewer Rust runs. Remote CI, other browser/OS lanes,
 package acceptance and human release testing remain unproven and are not due
 at this bootstrap gate.
 
-### Remaining findings and resolved implementation decisions
+### Previous review findings and resolved implementation decisions
+
+These are the preceding review's definitions and evidence. The current
+dispositions and three remaining closure groups above govern execution.
 
 1. **RCLD01-R2-1 — strict audit admits extra authored errors (blocking).**
    In an owned copy, a real `src/audit:extra.ts` error produces three checker
@@ -457,7 +553,8 @@ controls, caller integration, current documentation and cumulative qualification
 as one authorized batch of coherent green commits. Start with RCLD01-R2-1;
 then close the coupled browser findings and nonregular-target safety. Continue
 other independent eligible work if a slice has a genuine blocker. Current
-closure-batch progress: not started. Reconcile this section and report addenda
+closure-batch progress is recorded below and assessed by the current review
+above. Reconcile this section and report addenda
 after every green commit; do not stop after one fix or passing subset.
 
 This is the full remaining eligible implementation within the required review

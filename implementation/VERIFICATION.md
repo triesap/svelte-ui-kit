@@ -78,7 +78,12 @@ only writing modes.
 #### Owner-authorized RCLD-01 batch verification
 
 The 2026-09-30 "Codex review dispatch" in `COMMIT_SEQUENCE.md` governs the
-current complete repair/qualification batch and its four remaining findings.
+current complete repair/qualification batch. Its current independent review
+requires all three RCLD01-R3 closure groups: consistent strict-audit totals and
+workspace identity plus owned fixture cleanup; screenshot/trace retention for
+collector-detected browser failures; and externally bounded FIFO regression
+coverage with locally executable socket coverage. Preserve the verified R2
+behavioral repairs and the closed startup-ownership finding.
 It requires a fail-closed machine-readable strict audit, browser enforcement
 after page teardown, ownership cleanup on startup rejection, and nonregular
 write-target rejection. It preserves the earlier requirements: lifecycle checks

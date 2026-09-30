@@ -255,6 +255,17 @@ function readCode(value: unknown): number | string | null {
   return null;
 }
 
+/**
+ * Parse a COMPLETED summary count. Counts must be finite nonnegative safe
+ * integers, so an overflowing digit run (which `Number` would coerce to a
+ * float or `Infinity`) is rejected rather than silently accepted.
+ */
+function readSummaryCount(raw: string): number | null {
+  if (!/^\d+$/.test(raw)) return null;
+  const value = Number(raw);
+  return Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
+
 function describeDiagnostic(diagnostic: MachineDiagnostic): string {
   return `${diagnostic.filename}:${diagnostic.start.line + 1}:${diagnostic.start.character + 1} [${diagnostic.type}] ${diagnostic.message}`;
 }
@@ -321,12 +332,22 @@ export function parseMachineVerbose(text: string): MachineParseResult {
       if (!match) {
         reasons.push(`malformed COMPLETED record: ${JSON.stringify(payload)}`);
       } else {
-        completed = {
-          files: Number(match[1]),
-          errors: Number(match[2]),
-          warnings: Number(match[3]),
-          filesWithProblems: Number(match[4]),
-        };
+        const files = readSummaryCount(match[1]);
+        const errors = readSummaryCount(match[2]);
+        const warnings = readSummaryCount(match[3]);
+        const filesWithProblems = readSummaryCount(match[4]);
+        if (
+          files === null ||
+          errors === null ||
+          warnings === null ||
+          filesWithProblems === null
+        ) {
+          reasons.push(
+            `COMPLETED record has a non-safe or non-finite summary count: ${JSON.stringify(payload)}`,
+          );
+        } else {
+          completed = { files, errors, warnings, filesWithProblems };
+        }
       }
       continue;
     }
@@ -455,6 +476,11 @@ export function parseMachineVerbose(text: string): MachineParseResult {
   if (completed.filesWithProblems !== problemFileCount) {
     reasons.push(
       `summary reports ${completed.filesWithProblems} problem file(s) but ${problemFileCount} distinct diagnostic file(s) were parsed`,
+    );
+  }
+  if (completed.files < completed.filesWithProblems) {
+    reasons.push(
+      `summary reports ${completed.files} total file(s) but ${completed.filesWithProblems} problem file(s)`,
     );
   }
   if (reasons.length > 0) return { ok: false, reasons, run };
@@ -661,6 +687,27 @@ export function classifyStrictCheck(
   }
 
   reasons.push(...validateStrictAuditVersions(fixtureRoot));
+
+  // The START record names the workspace the checker analyzed. It must resolve
+  // to the actual fixture passed to the qualifier: an equivalent real path is
+  // accepted (temporary roots are commonly reached through a `/var` or
+  // `symlink` alias), but an absent or different root is rejected. This closes
+  // the gap where unrelated relative diagnostic paths still resolved to the
+  // installed Bits files through a coincidentally equivalent `..` depth.
+  const expectedWorkspace = realpathOrNull(fixtureRoot);
+  const reportedWorkspace = realpathOrNull(machineRun.workspace);
+  if (reportedWorkspace === null) {
+    reasons.push(
+      `the reported START workspace does not resolve to an existing directory: ${machineRun.workspace}`,
+    );
+  } else if (
+    expectedWorkspace === null ||
+    reportedWorkspace !== expectedWorkspace
+  ) {
+    reasons.push(
+      `the reported START workspace ${machineRun.workspace} does not identify the audited fixture ${fixtureRoot}`,
+    );
+  }
 
   const bitsRoot = realpathOrNull(
     path.join(fixtureRoot, "node_modules", "bits-ui"),
