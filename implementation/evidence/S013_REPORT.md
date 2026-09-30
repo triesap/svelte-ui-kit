@@ -1,7 +1,9 @@
 # S013 step report — Model independent version identities
 
+Current disposition: independently accepted by Codex on 2026-09-30 at combined evidence anchor `0e5b1852d02e15159f2ee4dd885152230457e119`. Original implementation `bbd3cf4b0f07ebb9f82f259577a5d1ff17ed6878` remains provenance. Historical candidate/pending statements below are superseded by this acceptance; later requirements and release AC20 remain open.
+
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S013","kind":"report","commit":"bbd3cf4b0f07ebb9f82f259577a5d1ff17ed6878","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S013","kind":"report","commit":"0e5b1852d02e15159f2ee4dd885152230457e119","disposition":"implemented"}
 -->
 
 Step ID and title: S013 — Model independent version identities.

@@ -1,7 +1,9 @@
 # S017 step report — Define typed item targets and public exports
 
+Current disposition: independently accepted by Codex on 2026-09-30 at combined evidence anchor `0e5b1852d02e15159f2ee4dd885152230457e119`. Original implementation `1fb85b7f80fcde988d494c1446e2487ed40e6899` remains provenance. Historical candidate/pending statements below are superseded by this acceptance; later requirements and release AC20 remain open.
+
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S017","kind":"report","commit":"1fb85b7f80fcde988d494c1446e2487ed40e6899","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S017","kind":"report","commit":"0e5b1852d02e15159f2ee4dd885152230457e119","disposition":"implemented"}
 -->
 
 Step ID and title: S017 — Define typed item targets and public exports.

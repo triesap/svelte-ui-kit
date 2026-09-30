@@ -1,7 +1,9 @@
 # S030 step report — Project requested versus transitive provenance
 
+Current disposition: independently accepted by Codex on 2026-09-30 at combined evidence anchor `0e5b1852d02e15159f2ee4dd885152230457e119`. Original implementation `cb67f7cb6b70e5424b7e51258c631cc119db055e` remains provenance. Historical candidate/pending statements below are superseded by this acceptance; later requirements and release AC20 remain open.
+
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S030","kind":"report","commit":"cb67f7cb6b70e5424b7e51258c631cc119db055e","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S030","kind":"report","commit":"0e5b1852d02e15159f2ee4dd885152230457e119","disposition":"implemented"}
 -->
 
 Step ID and title: S030 — Project requested versus transitive provenance.

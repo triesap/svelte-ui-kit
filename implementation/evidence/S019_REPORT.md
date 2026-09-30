@@ -1,7 +1,9 @@
 # S019 step report — Define source-file ownership lock records
 
+Current disposition: independently accepted by Codex on 2026-09-30 at combined evidence anchor `0e5b1852d02e15159f2ee4dd885152230457e119`. Original implementation `58ee9b84c9ee99c225e69e386c477ea344308d61` remains provenance. Historical candidate/pending statements below are superseded by this acceptance; later requirements and release AC20 remain open.
+
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S019","kind":"report","commit":"58ee9b84c9ee99c225e69e386c477ea344308d61","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S019","kind":"report","commit":"0e5b1852d02e15159f2ee4dd885152230457e119","disposition":"implemented"}
 -->
 
 Step ID and title: S019 — Define source-file ownership lock records.

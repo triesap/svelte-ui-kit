@@ -1,7 +1,9 @@
 # S022 step report — Freeze CLI envelopes and exit outcomes
 
+Current disposition: independently accepted by Codex on 2026-09-30 at combined evidence anchor `0e5b1852d02e15159f2ee4dd885152230457e119`. Original implementation `0e399f17b1e7bb913a5e84ea93a5e9600cff338a` remains provenance. Historical candidate/pending statements below are superseded by this acceptance; later requirements and release AC20 remain open.
+
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S022","kind":"report","commit":"0e399f17b1e7bb913a5e84ea93a5e9600cff338a","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S022","kind":"report","commit":"0e5b1852d02e15159f2ee4dd885152230457e119","disposition":"implemented"}
 -->
 
 Step ID and title: S022 — Freeze CLI envelopes and exit outcomes.

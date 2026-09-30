@@ -1,5 +1,7 @@
 # RCLD-02 cumulative qualification (S013–S032)
 
+Current disposition: S013–S032 independently accepted by Codex at `0e5b1852d02e15159f2ee4dd885152230457e119`. Historical pending statements below describe author qualification before acceptance. See the twenty checkpoint reviews for fresh independent results and limitations. The author also repaired an iterator flatMap type error and a 25/27 ownership-test fixture attempt before the final green product commit; final passing lanes do not erase these attempts.
+
 This record captures the final S013–S032 cumulative qualification for the
 owner-authorized `pfc through RCLD-02` batch. All checkpoints are implemented,
 verified and committed **pending independent Codex review**; none is

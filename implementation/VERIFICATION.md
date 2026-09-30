@@ -75,7 +75,27 @@ completion unlocks a successor. Unapproved `not_applicable` fails closed.
 Default validation is read-only; `--generate` and `--generate-sources` are the
 only writing modes.
 
-#### Current owner-authorized RCLD-02 batch verification
+#### Current owner-authorized RCLD-03 batch verification
+
+S001–S032 are independently accepted at the anchors in COMMIT_SEQUENCE.md.
+The current S033–S063 dispatch governs: test the bounded third authorization
+before replacing the single live record, retain predecessor/acceptance semantics,
+and run each original checkpoint's direct checks plus format/lint/typecheck and
+contracts before its green commit. At S063 qualify actual composed planners,
+complete-tree zero-write behavior, deterministic B/L/I/cohort/conflict/retirement
+and lineage results, preserved CSS/exports/layout bytes, custom mappings and
+installed runtime parser independence. Build test-owned planned consumers.
+Run the full existing cumulative lane set, strict declaration controls, actual
+workflow validation and fresh conditional reference guard. Keep exact exits,
+failed attempts, skipped checks and raw logs. The qualified upstream Bits
+exception remains fixture-only release AC20 debt. No transaction/CLI workflow
+completion or other platform/release acceptance is implied. Pi records evidence;
+Codex independently accepts before S064.
+
+#### Historical owner-authorized RCLD-02 batch verification
+
+The following review4 changes-requested state is historical and superseded by
+the independent S013–S032 acceptance in the current RCLD-03 dispatch.
 
 Current independent review4 of `e0a23bb3423fe88e109da8e11a52ae58251ae641`
 requests both RCLD02-R4 groups in COMMIT_SEQUENCE.md. R3-1 joint compatibility

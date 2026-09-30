@@ -1,7 +1,9 @@
 # S016 step report — Define the registry-root schema
 
+Current disposition: independently accepted by Codex on 2026-09-30 at combined evidence anchor `0e5b1852d02e15159f2ee4dd885152230457e119`. Original implementation `ddba4853d36f8eb1980c7caaa71b24ae26b9d30c` remains provenance. Historical candidate/pending statements below are superseded by this acceptance; later requirements and release AC20 remain open.
+
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S016","kind":"report","commit":"ddba4853d36f8eb1980c7caaa71b24ae26b9d30c","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S016","kind":"report","commit":"0e5b1852d02e15159f2ee4dd885152230457e119","disposition":"implemented"}
 -->
 
 Step ID and title: S016 — Define the registry-root schema.

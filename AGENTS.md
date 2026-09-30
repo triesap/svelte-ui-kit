@@ -17,18 +17,16 @@ references.
   self-reviews within the dispatched checkpoint. Codex owns scope,
   contract/API decisions, dependency-selection approval, deviations,
   acceptance, checkpoint commits and dispatch between coding periods.
-- Complete one checkpoint at a time in the documented order. The owner's
-  current `pfc through RCLD-02` authorization delegates green implementation
-  commits for S013–S032 to Pi, with independent Codex review after the sequence.
-  RCLD-01/S001–S012 are independently accepted. Follow the current
-  "Codex dispatch — complete RCLD-02 models and registry resolution" section,
-  including its current "Independent review 4 — validate one complete lock ownership set".
-  Complete both RCLD02-R4 groups and remaining original criteria; preserve
-  closed findings and verified progress before returning for acceptance;
-  S033 remains gated. The bounded batch authorization is already active.
-  Follow the governing batch dispatch and its pending-review evidence rules;
-  never label Pi self-review as Codex acceptance. Outside that explicit batch,
-  return work unstaged/uncommitted and await predecessor acceptance/commit.
+- Complete one checkpoint at a time in documented order. The current
+  `pfc through RCLD-03` authorization delegates green implementation commits
+  for S033–S063 plus the bounded authorization-tooling prerequisite to Pi.
+  S001–S032/RCLD-01–RCLD-02 are independently accepted. Follow the current
+  "Codex dispatch — complete RCLD-03 project integration and ownership planning"
+  section, including its activation prerequisite and resolved decisions.
+  Continue through the full 31-checkpoint sequence and cumulative qualification;
+  S064 stays gated by independent S063 acceptance. Pi updates pending-review
+  evidence and never assigns Codex acceptance. Outside this exact batch, return
+  work unstaged/uncommitted and await predecessor acceptance/commit.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
 - No commit, push, publication, deployment or reference-repository mutation

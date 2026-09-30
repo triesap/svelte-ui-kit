@@ -1,7 +1,9 @@
 # S021 step report — Define portable theme and customization metadata schemas
 
+Current disposition: independently accepted by Codex on 2026-09-30 at combined evidence anchor `0e5b1852d02e15159f2ee4dd885152230457e119`. Original implementation `6bb1f2564786dd1e5f3f5d65750b22abdf17c9b0` remains provenance. Historical candidate/pending statements below are superseded by this acceptance; later requirements and release AC20 remain open.
+
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S021","kind":"report","commit":"6bb1f2564786dd1e5f3f5d65750b22abdf17c9b0","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S021","kind":"report","commit":"0e5b1852d02e15159f2ee4dd885152230457e119","disposition":"implemented"}
 -->
 
 Step ID and title: S021 — Define portable theme and customization metadata schemas.

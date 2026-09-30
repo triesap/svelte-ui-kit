@@ -1,7 +1,9 @@
 # S031 independent review
 
+Current disposition: independently accepted by Codex on 2026-09-30 at combined evidence anchor `0e5b1852d02e15159f2ee4dd885152230457e119`. Original implementation `07f35d25df24112f8d7fc20ca549a0167ba3f230` remains provenance. Historical candidate/pending statements below are superseded by this acceptance; later requirements and release AC20 remain open.
+
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S031","kind":"review","commit":null,"disposition":"changes_requested"}
+{"schemaVersion":1,"checkpoint":"S031","kind":"review","commit":"0e5b1852d02e15159f2ee4dd885152230457e119","disposition":"accepted"}
 -->
 
 ## Final independent review preparation — 2026-09-30
