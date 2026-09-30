@@ -17,10 +17,10 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S031** in **RCLD-02**, under the complete S013–S032 batch dispatch below. S033 stays locked until S032 is independently accepted.
+- Active implementation checkpoint: **S032** in **RCLD-02**, under the complete S013–S032 batch dispatch below. S033 stays locked until S032 is independently accepted.
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **12 / 203**. Remaining: **191 / 203**.
-- Committed pending review: **18 / 203**. Authored batch range: **S013–S030**.
+- Committed pending review: **19 / 203**. Authored batch range: **S013–S031**.
 - Completed RCLD sequences: **1 / 11**. Remaining: **10 / 11**.
 - Last safe target commit: `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c`, branch `master` (independently accepted S007–S012 combined evidence anchor).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
@@ -2274,8 +2274,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S028 | RCLD-02  | S027       | committed_pending_review | `23ad1cd7d042f31fa2597053e0e11cb9da68162e` |
 | S029 | RCLD-02  | S028       | committed_pending_review | `3720ea8702e96c293feec91950313623f8e1b6ba` |
 | S030 | RCLD-02  | S029       | committed_pending_review | `cb67f7cb6b70e5424b7e51258c631cc119db055e` |
-| S031 | RCLD-02  | S030       | in_progress              | —                                          |
-| S032 | RCLD-02  | S031       | not_started              | —                                          |
+| S031 | RCLD-02  | S030       | committed_pending_review | `07f35d25df24112f8d7fc20ca549a0167ba3f230` |
+| S032 | RCLD-02  | S031       | in_progress              | —                                          |
 | S033 | RCLD-03  | S032       | not_started              | —                                          |
 | S034 | RCLD-03  | S033       | not_started              | —                                          |
 | S035 | RCLD-03  | S034       | not_started              | —                                          |
