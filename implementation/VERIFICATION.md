@@ -77,6 +77,25 @@ only writing modes.
 
 #### Current owner-authorized RCLD-02 batch verification
 
+Current independent review2 of `baebed721b88afa48f6c3af489cb6daa193088ee`
+requests the four RCLD02-R2 groups in COMMIT_SEQUENCE.md. R1-3/R1-6 are closed;
+other R1 groups have verified partial progress. Fresh reviewer typecheck,
+unit179/179, registry18/18, integration16/16, CLI52/52 and contracts117/117 pass,
+zero skips. A separate SemVer probe found zero mismatches in114264 bounded
+membership comparisons. Original-fault probes confirm repairs but demonstrate
+remaining caller/cache/overlap/compatibility/JSON-order failures.
+
+Maintain real parser/installed-copy controls for file/directory role collisions,
+all default schema consumers, cache reuse and authority binding, ordinary asset
+I/O errors, declared compatibility against root support and explicit npm peers,
+CSS case aliases, complete-argv JSON classification and metadata attribution.
+Keep Node failures before ESM entrypoint execution distinguished from controlled
+adapter failures. Full original cumulative qualification remains mandatory;
+no checkpoint counts or pending hashes change until Codex independently accepts.
+
+The following review1 record is historical evidence and its unresolved original
+criteria remain in scope under the current review2 dispatch.
+
 Independent review of candidate `9b576117ac1e76b3e724921ca12405a8e079f05f`
 requests changes under all seven RCLD02-R1 groups in COMMIT_SEQUENCE.md.
 Fresh reviewer typecheck, unit148/148, registry8/8, CLI49/49, harness37/37,

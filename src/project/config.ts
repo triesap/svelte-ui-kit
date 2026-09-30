@@ -25,7 +25,11 @@ import {
   INITIAL_TOOL_VERSION,
   isSemVer,
 } from "../registry/versions.js";
-import { asciiFold, isSafeLogicalRelativePath, pathsOverlap } from "./paths.js";
+import {
+  isSafeLogicalRelativePath,
+  isSameOrBelow,
+  pathsOverlap,
+} from "./paths.js";
 
 /** Schema document that owns the `kit.json` shape. */
 export const KIT_CONFIG_SCHEMA = "kit.schema.json";
@@ -176,6 +180,64 @@ export function parseKitConfig(
     layoutFile,
   });
 
+  // Validate the complete derived target set with explicit file/directory
+  // roles. A required directory and a generated file are different roles and
+  // may only be related by strict ancestry (file strictly below directory): a
+  // file may never equal or be an ancestor of a directory, layout may never
+  // alias the reserved state directory, and two generated files must stay
+  // distinct. Nesting one required directory under another (the intentional UI
+  // `_kit` state directory) remains allowed.
+  const directoryRoles: readonly {
+    readonly label: string;
+    readonly locator: string;
+    readonly path: string;
+  }[] = [
+    { label: "UI root", locator: "uiDir", path: uiDir },
+    { label: "styles root", locator: "stylesDir", path: stylesDir },
+  ];
+  const fileRoles: readonly {
+    readonly label: string;
+    readonly locator: string;
+    readonly path: string;
+  }[] = [
+    { label: "layout file", locator: "layoutFile", path: layoutFile },
+    {
+      label: "root exports file",
+      locator: "uiDir",
+      path: derived.rootExports,
+    },
+    { label: "kit stylesheet", locator: "stylesDir", path: derived.kitCss },
+    {
+      label: "themes stylesheet",
+      locator: "stylesDir",
+      path: derived.themesCss,
+    },
+    { label: "app stylesheet", locator: "stylesDir", path: derived.appCss },
+  ];
+
+  for (const directory of directoryRoles) {
+    for (const file of fileRoles) {
+      if (isSameOrBelow(directory.path, file.path)) {
+        issues.push(
+          issue(
+            "PATH_OVERLAP",
+            `${file.label} ${JSON.stringify(file.path)} must not equal or contain the ${directory.label} ${JSON.stringify(directory.path)}`,
+            file.locator,
+          ),
+        );
+      }
+    }
+  }
+
+  if (pathsOverlap(layoutFile, derived.stateDir)) {
+    issues.push(
+      issue(
+        "PATH_OVERLAP",
+        `layoutFile ${JSON.stringify(layoutFile)} must not overlap the reserved state directory ${JSON.stringify(derived.stateDir)}`,
+        "layoutFile",
+      ),
+    );
+  }
   if (pathsOverlap(stylesDir, derived.stateDir)) {
     issues.push(
       issue(
@@ -185,27 +247,21 @@ export function parseKitConfig(
       ),
     );
   }
-  if (
-    derived.stateDir === layoutFile ||
-    asciiFold(layoutFile).startsWith(`${asciiFold(derived.stateDir)}/`)
-  ) {
-    issues.push(
-      issue(
-        "PATH_OVERLAP",
-        `layoutFile ${JSON.stringify(layoutFile)} must not live inside the reserved state directory ${JSON.stringify(derived.stateDir)}`,
-        "layoutFile",
-      ),
-    );
+
+  for (let left = 0; left < fileRoles.length; left += 1) {
+    for (let right = left + 1; right < fileRoles.length; right += 1) {
+      if (pathsOverlap(fileRoles[left].path, fileRoles[right].path)) {
+        issues.push(
+          issue(
+            "PATH_OVERLAP",
+            `${fileRoles[left].label} ${JSON.stringify(fileRoles[left].path)} must not equal or contain the ${fileRoles[right].label} ${JSON.stringify(fileRoles[right].path)}`,
+            fileRoles[left].locator,
+          ),
+        );
+      }
+    }
   }
-  if (asciiFold(layoutFile) === asciiFold(derived.rootExports)) {
-    issues.push(
-      issue(
-        "PATH_OVERLAP",
-        `layoutFile ${JSON.stringify(layoutFile)} must not collide with the root exports file ${JSON.stringify(derived.rootExports)}`,
-        "layoutFile",
-      ),
-    );
-  }
+
   if (issues.length > 0) return fail(issues);
 
   const requested = record["requested"];

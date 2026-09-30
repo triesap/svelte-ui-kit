@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: S001–S012 independently accepted; RCLD-01 complete. S013–S032 are authored and committed pending review; independent review 1 requests the complete closure batch below; S033 remains locked behind independent S032 acceptance. Updated 2026-09-30.
+Status: S001–S012 independently accepted; RCLD-01 complete. S013–S032 are authored and committed pending review; independent review 2 requests the complete validation-boundary closure batch below; S033 remains locked behind independent S032 acceptance. Updated 2026-09-30.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -333,6 +333,147 @@ report/review paths and the reviewed source from
 and independent prior-fault probes pass. RCLD-01 is complete; all its review
 findings are closed. Twelve checkpoints are accepted; 191 remain. The narrow
 fixture declaration exception remains an open release AC20 obligation.
+
+### Independent review 2 — finish the RCLD-02 validation boundary
+
+Decision date: 2026-09-30. Candidate `baebed721b88afa48f6c3af489cb6daa193088ee`
+is **changes requested**. Preserve the seven repair commits and all original
+S013–S032 hashes. All twenty checkpoints remain `committed_pending_review`;
+S001–S012 stay accepted and S033 remains `not_started`. This is the current
+closure dispatch; review 1 below remains the record of its original findings
+and decisions. No original requirement, acceptance criterion or dependency
+has been waived. No owner decision or external/hardware blocker is outstanding.
+
+Fresh reviewer checks pass: typecheck, unit179/179, registry18/18,
+integration16/16 (including copied installed modules), CLI52/52 and
+contracts117/117, zero skips. Original failed probes now confirm strict release
+identities, exact initial support, basic traversal/reserved-descendant rejection,
+snapshot byte/nested-metadata immutability, the three reported SemVer fixes,
+JSON errors when the flag precedes the error, and strict JSON data rejection.
+A separate bounded membership probe checked529 range pairs against216 versions
+(114264 comparisons), with zero mismatches. RCLD02-R1-3 and RCLD02-R1-6 are
+closed; preserve their maintained controls. Provider missing-schema/UTF-8 checks
+on cold roots, symlinked listing-start rejection, integrated graph checks and
+shared aggregate CSS also represent preserved progress. R1-1, R1-2, R1-4,
+R1-5 and R1-7 remain partially addressed for the reasons below. This is not
+checkpoint acceptance, release acceptance or a reopening of accepted RCLD-01.
+
+Execute **`pfc through RCLD-02`** for the complete remaining validation boundary:
+all four groups below, actual caller integration, maintained negative and
+positive controls, evidence and cumulative qualification in green local repair
+commits. Continue after every green checkpoint. S033 cannot be combined because
+independent S032 acceptance remains a hard dependency. No single-fix endpoint
+or further authorization mechanism is needed; preserve the existing live tuple.
+
+1. **RCLD02-R2-1 — Complete role-aware mapping/ownership overlap validation
+   (S014/S019/S020).** The parser still accepts layoutFile equal to
+   `src/styles/kit.css`, layoutFile equal to the case alias
+   `src/lib/components/ui/_KIT`, layoutFile `src/lib` (a file ancestor of
+   required directories), and stylesDir equal to the root exports file
+   `src/lib/components/ui/index.ts`. Validate the entire derived target set
+   with explicit file/directory roles, ASCII case folding and segment-aware
+   ancestry. A file cannot equal or be an ancestor of a required directory or
+   another differently owned file, and layout cannot alias any generated CSS,
+   export or state target. Apply equivalent context-aware lock checks, including
+   a managed file claiming a namespace directory or an ancestor of reserved
+   state. Preserve the intentional UI/state directory nesting, valid safe custom
+   mappings and multiple unique CSS blocks in one aggregate file; do not replace
+   these rules with a blanket ban on every nested directory. Reuse the approved
+   lexical helper; actual filesystem/project discovery remains S033+ work.
+   Add table-driven positive and negative cases through actual model parsers.
+
+2. **RCLD02-R2-2 — Remove schema and asset authority bypasses (S025–S027,
+   actual config/lock/theme/envelope callers).** The new provider path coexists
+   with `legacyValidatorFor`/raw reads used by default parsers. An isolated copy's
+   config parser follows an escaping schema symlink containing `{}` and accepts
+   an unknown config field; a missing schema throws raw ENOENT with a physical
+   path. Remove the raw legacy path and route every model caller through the
+   same contained, typed authority, with a safe installed-package default.
+   Lazy initialization may preserve bare CLI bootstrap usability.
+
+   The process-global authority cache uses only `provider.root`: a second
+   provider with the same root and a reject-all schema is ignored, and a new
+   load after schema removal still succeeds. A caller can also supply another
+   root's authority to `loadRegistrySnapshot` and load a package with no schemas.
+   Bind authority to one captured operation's validated schema bytes/provider;
+   do not trust an independent root string or caller-supplied authority. Each
+   new operation must validate its own inputs. Reuse compilation only for the
+   same verified captured content; no test-only reset call may be necessary for
+   correct production behavior. Completed snapshots remain immutable despite
+   later filesystem/provider changes. Prefer an internally owned operation
+   context over separately injectable provider/authority objects that disagree.
+
+   `readBytes` also throws EACCES instead of returning a typed failure for an
+   unreadable owned fixture. Handle ordinary read/stat/list/resolve failures at
+   the provider boundary, retain useful cause codes and safe logical locators,
+   and avoid raw host paths/stacks in public diagnostics. Do not invent a hostile
+   race guarantee. Add cold/warm, same-root-different-provider, schema replacement
+   and deletion, wrong-authority, symlink and I/O controls. Exercise config,
+   lock, theme, envelope and snapshot parsing from copied emitted modules.
+   Strengthen the positive installed-copy test with missing/corrupt/escaping
+   asset negative controls that prove authoring fallback cannot satisfy it.
+
+3. **RCLD02-R2-3 — Finish integrated compatibility and style validation
+   (S016–S018/S027–S032).** Fully parsed advertised items declaring Svelte `^4`,
+   Bits `^1` and date `^2` pass health under the qualified root. The current
+   integration checks npm records but only syntax-checks compatibility fields.
+   Validate the joint compatibility constraints of the root and selected items,
+   and reconcile matching explicit npm constraints without dropping roles or
+   actual peer requirements. The pinned root's qualified Svelte/Bits versions must remain admitted;
+   other peer ranges require joint satisfiability. Do not rewrite the root
+   compatibility claim to hide a conflict. Map axes to Svelte, bits-ui and
+   @internationalized/date explicitly. Keep tested support separate from actual
+   peer requirements; do not fabricate runtime dependency records from support
+   metadata alone. Installed package discovery remains a later project gate.
+   Use the repaired npm semantics and typed diagnostics with involved identities.
+
+   Removing whole-file CSS ownership checks also removed style-target case
+   checks: two distinct blocks targeting `kit.css` and `Kit.css` now pass health.
+   Distinct block owners may share the exact aggregate target, but differently
+   spelled ASCII case aliases must fail. Preserve duplicate block/source/export
+   checks and styles-relative target spelling. Add fully parsed valid multi-item
+   and failing compatibility/peer/case-alias cases through registry health and
+   the operation validation path; do not limit coverage to cast partial objects.
+
+4. **RCLD02-R2-4 — Parse JSON intent and command attribution independently
+   of the first error, then qualify the whole sequence (S022/S023 and evidence).**
+   Built `info --bogus --json`, `--cwd --json info` and
+   `--bogus info --json` still emit no JSON envelope because parsing returns
+   before seeing the flag. Use one shared lexical classification for JSON intent
+   and command attribution across both usage and adapter metadata failures;
+   inspect the complete argument list without executing anything or swallowing
+   errors. Respect option-value boundaries: `--cwd=--json` is a value, whereas
+   the grammar rejects a separate `--json` as the missing --cwd value and it
+   still expresses JSON intent. Do not misclassify a directory value `info` as
+   the command. A recognized command stays attributed to that command even
+   when an earlier flag is invalid; missing/unknown commands use `help`.
+   Metadata errors for `--json info` currently claim `help` and a maintained
+   test enshrines that contrary to review1; correct the caller and assertion.
+   Preserve one envelope, exits, human-mode output, no writes and stable bare
+   help/version. Add spawned executable permutations and copied metadata cases.
+
+   An invalid package.json that Node rejects before this ESM entrypoint executes
+   is an explicitly identified runtime-loader failure, not an application
+   result; the already accepted bootstrap negative control remains relevant.
+   Preserve that evidence boundary rather than claiming the adapter ran or
+   redesigning the launcher outside this batch. All metadata errors controlled
+   by the running adapter must follow the JSON protocol and attribution rules.
+
+   Reconcile all R1/R2 reports and retained commands/results; do not label the
+   remaining groups complete until their production paths and maintained
+   controls pass. Keep public evidence standalone and private runtime metadata
+   outside this repository. Retain the qualified upstream declaration exception
+   with its release AC20 obligation, original hashes, accepted evidence and one
+   live batch record. Run all original direct and cumulative target checks,
+   fresh installed-copy controls, actual actionlint and final reference guard.
+   Codex alone owns independent acceptance and the later atomic transition.
+
+The endpoint is the entire repaired and qualified S013–S032 candidate with all
+remaining original criteria and R2 groups addressed, before S033. A commit,
+report, partial passing run or long conversation is not a stop. Respect user
+stops, actual runtime limits and concrete external blockers; continue other
+eligible work where possible. No physical hardware or human-only gate prevents
+this batch. No dependency change or product scope expansion is approved.
 
 ### Independent review 1 — complete RCLD-02 closure dispatch
 

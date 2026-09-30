@@ -200,3 +200,48 @@ test("prefix siblings and nested safe roots are not rejected", () => {
   });
   assert.equal(result.ok, true, JSON.stringify(result));
 });
+
+test("file and directory roles cannot collide", () => {
+  const cases: readonly [string, string][] = [
+    ["layoutFile", `${DEFAULT_STYLES_DIR}/kit.css`],
+    ["layoutFile", `${DEFAULT_UI_DIR}/_KIT`],
+    ["layoutFile", "src/lib"],
+    ["layoutFile", `${DEFAULT_UI_DIR}/index.ts`],
+    ["stylesDir", `${DEFAULT_UI_DIR}/index.ts`],
+    ["layoutFile", `${DEFAULT_UI_DIR}/_kit/kit.lock.json`],
+  ];
+  for (const [field, value] of cases) {
+    const result = parseKitConfig({ schemaVersion: 1, [field]: value });
+    assert.equal(result.ok, false, `${field}=${value}`);
+    if (!result.ok) {
+      assert.equal(result.issues[0]?.code, "PATH_OVERLAP", `${field}=${value}`);
+    }
+  }
+});
+
+test("safe nested and sibling custom mappings are preserved", () => {
+  for (const value of [
+    DEFAULT_KIT_CONFIG,
+    {
+      schemaVersion: 1,
+      uiDir: "app/lib/ui",
+      stylesDir: "app/styles",
+      layoutFile: "src/routes/root/+layout.svelte",
+    },
+    {
+      schemaVersion: 1,
+      uiDir: "src/lib/components/ui",
+      stylesDir: "src/lib/components/ui/styles",
+      layoutFile: "src/routes/+layout.svelte",
+    },
+    {
+      schemaVersion: 1,
+      uiDir: "src/lib/components/ui",
+      stylesDir: "src/lib/components/ui-kit",
+      layoutFile: "src/routes/+layout.svelte",
+    },
+  ]) {
+    const result = parseKitConfig(value);
+    assert.equal(result.ok, true, JSON.stringify(value));
+  }
+});

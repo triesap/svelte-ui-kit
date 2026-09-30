@@ -279,3 +279,60 @@ test("validated mapping context rejects reserved-state and out-of-namespace reco
   const good = parseKitLock(base(), ".kit/kit.lock.json", context);
   assert.equal(good.ok, true, JSON.stringify(good));
 });
+
+test("managed files cannot claim a namespace directory or reserve state ancestry", () => {
+  const context = {
+    stateDir: "src/lib/components/ui/_kit",
+    uiDir: "src/lib/components/ui",
+    stylesDir: "src/styles",
+  };
+  const fileRecord = (path: string): Record<string, unknown> => ({
+    path,
+    owner: "button",
+    baseHash: H("e"),
+    itemVersion: "0.1.0",
+    cohort: "core",
+  });
+
+  for (const path of ["src/lib/components/ui", "SRC/LIB/COMPONENTS/UI"]) {
+    const result = parseKitLock(
+      base({ files: [fileRecord(path)] }),
+      ".kit/kit.lock.json",
+      context,
+    );
+    assert.equal(result.ok, false, path);
+    if (!result.ok) {
+      assert.equal(
+        result.issues.some((entry) => entry.code === "LOCK_NAMESPACE"),
+        true,
+        path,
+      );
+    }
+  }
+
+  const stylesNamespace = parseKitLock(
+    base({ files: [fileRecord("src/styles")] }),
+    ".kit/kit.lock.json",
+    context,
+  );
+  assert.equal(stylesNamespace.ok, false);
+  if (!stylesNamespace.ok) {
+    assert.equal(
+      stylesNamespace.issues.some((entry) => entry.code === "LOCK_NAMESPACE"),
+      true,
+    );
+  }
+
+  const ancestor = parseKitLock(
+    base({ files: [fileRecord("src/lib/components")] }),
+    ".kit/kit.lock.json",
+    context,
+  );
+  assert.equal(ancestor.ok, false);
+  if (!ancestor.ok) {
+    assert.equal(
+      ancestor.issues.some((entry) => entry.code === "LOCK_RESERVED_STATE"),
+      true,
+    );
+  }
+});

@@ -18,7 +18,11 @@
  */
 import { lte as semverLte } from "semver";
 import { compareItemIds, isItemId } from "../project/requests.js";
-import { isSafeLogicalRelativePath, isSameOrBelow } from "../project/paths.js";
+import {
+  asciiFold,
+  isSafeLogicalRelativePath,
+  isSameOrBelow,
+} from "../project/paths.js";
 import {
   fail,
   issue,
@@ -131,6 +135,20 @@ export function parseKitLock(
     isSafeLockPath(path) &&
     isSameOrBelow(path, context.stateDir);
 
+  /** A managed record that claims a required namespace directory itself. */
+  const claimsNamespaceDirectory = (
+    path: string,
+    directory: string | undefined,
+  ): boolean =>
+    directory !== undefined && asciiFold(path) === asciiFold(directory);
+
+  /** A managed record that is an ancestor of the reserved state directory. */
+  const reservedStateAncestor = (path: string): boolean =>
+    context.stateDir !== undefined &&
+    isSafeLockPath(path) &&
+    asciiFold(path) !== asciiFold(context.stateDir) &&
+    isSameOrBelow(context.stateDir, path);
+
   const requested = (record["requested"] as string[])
     .slice()
     .sort(compareItemIds);
@@ -233,6 +251,27 @@ export function parseKitLock(
           ),
         );
       }
+      if (
+        claimsNamespaceDirectory(path, context.uiDir) ||
+        claimsNamespaceDirectory(path, context.stylesDir)
+      ) {
+        issues.push(
+          issue(
+            "LOCK_NAMESPACE",
+            `files[${index}].path ${JSON.stringify(path)} must not claim a namespace directory itself`,
+            `files[${index}].path`,
+          ),
+        );
+      }
+      if (reservedStateAncestor(path)) {
+        issues.push(
+          issue(
+            "LOCK_RESERVED_STATE",
+            `files[${index}].path ${JSON.stringify(path)} must not be an ancestor of the reserved state directory ${JSON.stringify(context.stateDir)}`,
+            `files[${index}].path`,
+          ),
+        );
+      }
     }
     const owner = file["owner"];
     if (typeof owner === "string" && !itemIds.has(owner)) {
@@ -329,6 +368,27 @@ export function parseKitLock(
           ),
         );
       }
+      if (
+        claimsNamespaceDirectory(block["path"] as string, context.stylesDir) ||
+        claimsNamespaceDirectory(block["path"] as string, context.uiDir)
+      ) {
+        issues.push(
+          issue(
+            "LOCK_NAMESPACE",
+            `cssBlocks[${index}].path ${JSON.stringify(block["path"])} must not claim a namespace directory itself`,
+            `cssBlocks[${index}].path`,
+          ),
+        );
+      }
+      if (reservedStateAncestor(block["path"] as string)) {
+        issues.push(
+          issue(
+            "LOCK_RESERVED_STATE",
+            `cssBlocks[${index}].path ${JSON.stringify(block["path"])} must not be an ancestor of the reserved state directory ${JSON.stringify(context.stateDir)}`,
+            `cssBlocks[${index}].path`,
+          ),
+        );
+      }
     }
     if (!isSemVer(block["itemVersion"])) {
       issues.push(
@@ -390,6 +450,15 @@ export function parseKitLock(
         issue(
           "LOCK_RESERVED_STATE",
           `integrations[${index}].path ${JSON.stringify(path)} must not live inside the reserved state directory ${JSON.stringify(context.stateDir)}`,
+          `integrations[${index}].path`,
+        ),
+      );
+    }
+    if (typeof path === "string" && reservedStateAncestor(path)) {
+      issues.push(
+        issue(
+          "LOCK_RESERVED_STATE",
+          `integrations[${index}].path ${JSON.stringify(path)} must not be an ancestor of the reserved state directory ${JSON.stringify(context.stateDir)}`,
           `integrations[${index}].path`,
         ),
       );

@@ -22,8 +22,9 @@ references.
   commits for S013–S032 to Pi, with independent Codex review after the sequence.
   RCLD-01/S001–S012 are independently accepted. Follow the current
   "Codex dispatch — complete RCLD-02 models and registry resolution" section,
-  including its current "Independent review 1 — complete RCLD-02 closure dispatch".
-  Complete all seven RCLD02-R1 closure groups before returning for acceptance;
+  including its current "Independent review 2 — finish the RCLD-02 validation boundary".
+  Complete all four RCLD02-R2 groups and remaining original criteria; preserve
+  the closed R1 findings and verified progress before returning for acceptance;
   S033 remains gated. The bounded batch authorization is already active.
   Follow the governing batch dispatch and its pending-review evidence rules;
   never label Pi self-review as Codex acceptance. Outside that explicit batch,
