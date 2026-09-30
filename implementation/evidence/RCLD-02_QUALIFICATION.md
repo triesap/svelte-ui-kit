@@ -154,6 +154,94 @@ temporary directory outside the repository and is not committed.
 This records implementation and verification only. None of the twenty
 checkpoints is Codex-accepted, and no acceptance hash or counter changes.
 
+## RCLD-02 review-3 repair batch
+
+Independent review 3 of candidate
+`49b12b25c66d1f2d9e5855f65c368a2a1cca8ea9` requested the three RCLD02-R3
+groups. The original S013-S032 implementation hashes and the review-1/review-2
+repair commits remain provenance; they are not acceptance. All twenty
+checkpoints remain `committed_pending_review`; no acceptance counter or
+accepted hash changed.
+
+| Group | Repair commit                              | Summary                                                         |
+| ----- | ------------------------------------------ | --------------------------------------------------------------- |
+| R3-1  | `1e7ae2ddb847a5e0f180b111b3055fc5646c9031` | intersect one constraint set over the complete selected closure |
+| R3-2  | `1e7ae2ddb847a5e0f180b111b3055fc5646c9031` | complete logical file-role/case/ancestry/integration ownership  |
+| R3-3  | this record                                | cumulative qualification, maintained controls and evidence      |
+
+R3-1 replaces the per-item compatibility intersection in
+`validateCompatibility` with one joint intersection per mapped axis built from
+the qualified root, every selected item's declared compatibility and every
+matching explicit npm requirement. Disjoint (`>=3.8.1 <3.10.0` vs
+`>=3.10.0 <4.0.0`) and cross-item explicit-peer cases that each overlap the
+root but not one another now fail both `validateRegistryHealth` and
+`validateResolvedInventory`, with diagnostics that name the package/axis and
+the involved owners and ranges in stable order. R3-2 completes the lexical
+ownership contract: resolved UI and style targets reject file/directory
+ancestry and case aliases, lock file/block records reject case aliases and
+ancestry, multiple uniquely owned blocks may still share one exact aggregate
+stylesheet, valid compound siblings and safe nested mappings stay valid, and no
+integration record may equal or contain a required namespace directory. Both
+repairs are exercised through the real parsers, loaded registry health and the
+resolved-operation path, including new installed-copy controls.
+
+### RCLD-02 review-3 cumulative lanes
+
+Run at repaired commit
+`1e7ae2ddb847a5e0f180b111b3055fc5646c9031` from this repository root with Node
+`24.21.0` / pnpm `11.22.0`. Raw lane logs are under the git-ignored
+`implementation/evidence/logs/r3-20260930/`.
+
+| Lane                   | Command                                                                     | Exit | Result                                             |
+| ---------------------- | --------------------------------------------------------------------------- | ---- | -------------------------------------------------- |
+| Frozen strict install  | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | 0    | already up to date                                 |
+| Format                 | `pnpm run format:check`                                                     | 0    | all matched files formatted                        |
+| Lint                   | `pnpm run lint`                                                             | 0    | no findings                                        |
+| Typecheck              | `pnpm run typecheck` (5 configs)                                            | 0    | exit 0                                             |
+| Unit                   | `pnpm run test:unit`                                                        | 0    | 194 tests, 194 pass                                |
+| Runner harness         | `pnpm run test:harness`                                                     | 0    | 37 tests, 37 pass                                  |
+| Integration            | `pnpm run test:integration`                                                 | 0    | 22 tests, 22 pass (7 installed-copy controls)      |
+| Components             | `pnpm run test:components`                                                  | 0    | 22 tests, 22 pass (17 strict-declaration controls) |
+| Registry               | `pnpm run test:registry`                                                    | 0    | 36 tests, 36 pass                                  |
+| CLI smoke              | `pnpm run test:cli-bootstrap`                                               | 0    | 52 tests, 52 pass                                  |
+| Consumer check         | `pnpm run fixture:check`                                                    | 0    | 0 errors, 0 warnings                               |
+| Consumer SSR/lifecycle | `pnpm run test:fixture`                                                     | 0    | 23 tests, 23 pass                                  |
+| Browser (Chromium)     | `pnpm run test:browser -- tests/browser/harness.spec.ts`                    | 0    | 23 passed                                          |
+| Contract validation    | `pnpm run check:contracts`                                                  | 0    | 0 error(s), 0 warning(s)                           |
+| Contract regressions   | `pnpm run test:contracts`                                                   | 0    | 117 tests, 117 pass                                |
+| Projection             | `node tools/check-contracts.mjs --generate`                                 | 0    | deterministic; no tracked change                   |
+| Whitespace             | `git diff --check`, `git diff --cached --check`                             | 0    | no diagnostics                                     |
+| Strict raw checker     | pinned `svelte-check` on the disposable strict fixture                      | 1    | exactly two Bits TS2590 errors, zero warnings      |
+| Workflow validation    | `actionlint .github/workflows/ci.yml` (v1.7.12)                             | 0    | no findings (shellcheck 0.11.0 on PATH)            |
+
+The strict raw checker remains the qualified fixture-only upstream exception:
+an unmodified `svelte-check 4.7.6` run over the strict fixture exits 1 with
+exactly the two genuine Bits 2.19.3 union-complexity `TS2590` errors and no
+warnings, classified `qualified-upstream-exception` with no rejection reasons.
+The release AC20 debt remains open.
+
+### RCLD-02 review-3 reference guard
+
+Fresh routed reference guard at clean reference
+`a10fbf06334f4648f5755e05a7147414e4e5fc98` on the same workstation, from the
+reference Rust workspace root, after `cargo extbuild doctor` reported no volume
+findings:
+
+| Command                                 | Exit | Result                                           |
+| --------------------------------------- | ---- | ------------------------------------------------ |
+| `cargo fmt --all -- --check`            | 0    | no diffs                                         |
+| `cargo check --workspace --all-targets` | 0    | Finished dev profile                             |
+| `cargo test --workspace --all-targets`  | 0    | 43 result lines; 578 passed, 0 failed, 4 ignored |
+
+The reference was clean at that hash before and after and was not modified.
+`actionlint 1.7.12` (darwin/arm64 release binary) with SHA-256
+`aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f`, matching
+the published checksum file, ran at exit 0; it was unpacked in an owned
+`/tmp` directory outside the repository and is not committed.
+
+This records implementation and verification only. None of the twenty
+checkpoints is Codex-accepted, and no acceptance hash or counter changes.
+
 ## Negative controls exercised
 
 - Schema/identity: duplicate IDs, identity mismatch, malformed compatibility,
@@ -172,6 +260,16 @@ checkpoints is Codex-accepted, and no acceptance hash or counter changes.
   npm requirements.
 - Collision: duplicate target/block/export, ASCII case-folded collisions,
   candidate exclusion, and distinct blocks sharing one aggregate stylesheet.
+- Joint closure (R3-1): fully parsed multi-item disjoint date ranges,
+  cross-item explicit npm peers, transitive closure items, pairwise-overlapping
+  but jointly empty OR ranges, order-permutation stability, valid joint overlap,
+  unselected-item exclusion and unregistered-candidate exclusion, asserted
+  through both registry health and the resolved-operation path.
+- Logical ownership (R3-2): fully parsed style file/directory ancestry, UI
+  file ancestry, lock ASCII case aliases, lock file ancestry, integration
+  namespace-directory claims, with valid shared aggregate stylesheets, compound
+  siblings, nested mappings and installed-copy positive/negative controls
+  retained.
 - Assets: traversal, symlink asset, escaping symlink ancestor, symlinked listing
   start, invalid UTF-8 source/style bytes, missing asset, no source-checkout
   fallback, and deeply frozen snapshots with defensive byte copies.
