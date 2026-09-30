@@ -1,6 +1,8 @@
-import { test, expect, type ConsoleMessage, type Page } from "@playwright/test";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
 
-import { DEFAULT_LAUNCHER, startOwnedServer } from "../smoke/owned-server.mjs";
+import { expect, test } from "./browser-issues";
+import { startFixtureServer, type OwnedServer } from "./fixture-server";
 
 /**
  * S008 production browser harness for the maintained consumer fixture.
@@ -9,59 +11,50 @@ import { DEFAULT_LAUNCHER, startOwnedServer } from "../smoke/owned-server.mjs";
  * shared owned-server boundary on an OS-assigned loopback port and drives the
  * real page with Playwright's bundled headless Chromium. It asserts the
  * accessible heading/labels, Tab and Shift+Tab focus order, native checkbox
- * keyboard activation, form navigation with a request-time query update, and a
- * real client-state interaction that only works after hydration executes.
+ * keyboard activation, form navigation with a request-time query update, a
+ * real client-state interaction that only works after hydration executes, and
+ * the pinned Bits switch semantics.
  *
- * Unexpected server stderr/exits, page exceptions, console errors and
- * hydration warnings fail the lane. A dedicated control proves the collector
- * detects those signals rather than ignoring them.
+ * The shared `browserIssues` fixture collects page exceptions, console errors
+ * and hydration warnings for the whole test lifecycle and fails teardown.
+ * Unexpected server stderr/exits also fail the lane. A dedicated end-to-end
+ * control runs the gate as a bounded child process with an injected fault and
+ * proves that the child run fails, rather than only asserting a collector.
  */
 
-let server: ReturnType<typeof startOwnedServer> | undefined;
+const PACKAGE_ROOT = process.cwd();
+const PLAYWRIGHT_CLI = path.join(
+  PACKAGE_ROOT,
+  "node_modules",
+  "@playwright/test",
+  "cli.js",
+);
+const PLAYWRIGHT_CONFIG = path.join(PACKAGE_ROOT, "playwright.config.ts");
+const FAULT_SPEC = "tests/browser/fault-run.spec.ts";
+const FAULT_OUTPUT_DIR = path.join(
+  PACKAGE_ROOT,
+  "tests/browser/.output/fault-control",
+);
+const NESTED_RUN_TIMEOUT_MS = 240_000;
+
+let server: OwnedServer | undefined;
 let baseURL = "";
 
 test.beforeAll(async () => {
-  server = startOwnedServer({ args: [DEFAULT_LAUNCHER] });
-  const port = await server.ready;
-  baseURL = `http://127.0.0.1:${port}/`;
-});
-
-test.afterEach(() => {
-  // The owned server must not have written stderr or exited during a test.
-  expect(server?.failure() ?? null).toBeNull();
+  const started = await startFixtureServer();
+  server = started.server;
+  baseURL = started.baseURL;
 });
 
 test.afterAll(async () => {
   if (!server) return;
-  const failure = server.failure();
+  // Drain stdio first so a shutdown-time exit or stderr is observed.
   await server.stop();
+  const failure = server.failure();
   if (failure) throw failure;
 });
 
-/** Attach a strict collector for page exceptions, console errors and hydration warnings. */
-function collectPageIssues(page: Page): string[] {
-  const issues: string[] = [];
-  page.on("pageerror", (error) => {
-    issues.push(`page error: ${error.message}`);
-  });
-  page.on("console", (message: ConsoleMessage) => {
-    const text = message.text();
-    if (message.type() === "error") {
-      issues.push(`console error: ${text}`);
-    }
-    if (message.type() === "warning" && /hydration/i.test(text)) {
-      issues.push(`hydration warning: ${text}`);
-    }
-  });
-  return issues;
-}
-
-function expectNoIssues(issues: string[]): void {
-  expect(issues, `browser issues:\n${issues.join("\n")}`).toEqual([]);
-}
-
-async function openHome(page: Page): Promise<string[]> {
-  const issues = collectPageIssues(page);
+async function openHome(page: import("@playwright/test").Page): Promise<void> {
   await page.goto(baseURL);
   await expect(
     page.getByRole("heading", { name: "Consumer fixture qualification" }),
@@ -69,36 +62,34 @@ async function openHome(page: Page): Promise<string[]> {
   // Wait for the client mount marker instead of a fixed sleep, so interactions
   // run only after hydration has completed.
   await expect(page.locator("main")).toHaveAttribute("data-hydrated", "true");
-  return issues;
 }
 
-async function openCompatibility(page: Page): Promise<string[]> {
-  const issues = collectPageIssues(page);
+async function openCompatibility(
+  page: import("@playwright/test").Page,
+): Promise<void> {
   await page.goto(`${baseURL}compatibility`);
   await expect(
     page.getByRole("heading", { name: "Compatibility qualification" }),
   ).toBeVisible();
   await expect(page.locator("main")).toHaveAttribute("data-hydrated", "true");
-  return issues;
 }
 
 test("the page renders its accessible heading and labelled controls", async ({
   page,
 }) => {
-  const issues = await openHome(page);
+  await openHome(page);
   await expect(page.getByLabel("Name")).toBeVisible();
   await expect(page.getByRole("button", { name: "Render name" })).toBeVisible();
   await expect(
     page.getByRole("checkbox", { name: "Enable notifications" }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Increment" })).toBeVisible();
-  expectNoIssues(issues);
 });
 
 test("Tab and Shift+Tab follow the documented focus order", async ({
   page,
 }) => {
-  const issues = await openHome(page);
+  await openHome(page);
 
   await page.keyboard.press("Tab");
   await expect(page.getByLabel("Name")).toBeFocused();
@@ -114,12 +105,10 @@ test("Tab and Shift+Tab follow the documented focus order", async ({
   await expect(
     page.getByRole("checkbox", { name: "Enable notifications" }),
   ).toBeFocused();
-
-  expectNoIssues(issues);
 });
 
 test("the native checkbox toggles with the keyboard", async ({ page }) => {
-  const issues = await openHome(page);
+  await openHome(page);
   const checkbox = page.getByRole("checkbox", {
     name: "Enable notifications",
   });
@@ -130,14 +119,12 @@ test("the native checkbox toggles with the keyboard", async ({ page }) => {
   await expect(checkbox).toBeChecked({ checked: !initial });
   await page.keyboard.press("Space");
   await expect(checkbox).toBeChecked({ checked: initial });
-
-  expectNoIssues(issues);
 });
 
 test("form submission navigates and renders the request-local server value", async ({
   page,
 }) => {
-  const issues = await openHome(page);
+  await openHome(page);
   await page.getByLabel("Name").fill("browser");
   await page.getByRole("button", { name: "Render name" }).click();
 
@@ -145,28 +132,24 @@ test("form submission navigates and renders the request-local server value", asy
   await expect(page.getByTestId("server-value")).toHaveText(
     "Server value: browser",
   );
-
-  expectNoIssues(issues);
 });
 
 test("hydration executes and client state updates the DOM", async ({
   page,
 }) => {
-  const issues = await openHome(page);
+  await openHome(page);
   await expect(page.getByTestId("click-count")).toHaveText("Clicks: 0");
 
   await page.getByTestId("counter").click();
   await expect(page.getByTestId("click-count")).toHaveText("Clicks: 1");
   await page.getByTestId("counter").click();
   await expect(page.getByTestId("click-count")).toHaveText("Clicks: 2");
-
-  expectNoIssues(issues);
 });
 
 test("the Bits switch exposes accessible semantics and a delegated child button", async ({
   page,
 }) => {
-  const issues = await openCompatibility(page);
+  await openCompatibility(page);
   const control = page.getByRole("switch", {
     name: "Enable compatibility notifications",
   });
@@ -180,11 +163,10 @@ test("the Bits switch exposes accessible semantics and a delegated child button"
   await expect(
     page.locator('input[type="checkbox"][name="notifications"]'),
   ).toHaveCount(1);
-  expectNoIssues(issues);
 });
 
 test("pointer activation updates the switch state", async ({ page }) => {
-  const issues = await openCompatibility(page);
+  await openCompatibility(page);
   const control = page.getByRole("switch", {
     name: "Enable compatibility notifications",
   });
@@ -193,11 +175,10 @@ test("pointer activation updates the switch state", async ({ page }) => {
   await expect(page.getByTestId("switch-state")).toHaveText("on");
   await control.click();
   await expect(control).toHaveAttribute("aria-checked", "false");
-  expectNoIssues(issues);
 });
 
 test("keyboard Space activation updates the switch state", async ({ page }) => {
-  const issues = await openCompatibility(page);
+  await openCompatibility(page);
   const control = page.getByRole("switch", {
     name: "Enable compatibility notifications",
   });
@@ -205,13 +186,12 @@ test("keyboard Space activation updates the switch state", async ({ page }) => {
   await page.keyboard.press("Space");
   await expect(control).toHaveAttribute("aria-checked", "true");
   await expect(page.getByTestId("switch-state")).toHaveText("on");
-  expectNoIssues(issues);
 });
 
 test("programmatic state updates flow back into the primitive", async ({
   page,
 }) => {
-  const issues = await openCompatibility(page);
+  await openCompatibility(page);
   const control = page.getByRole("switch", {
     name: "Enable compatibility notifications",
   });
@@ -220,44 +200,52 @@ test("programmatic state updates flow back into the primitive", async ({
   await expect(page.getByTestId("switch-state")).toHaveText("on");
   await page.getByTestId("toggle").click();
   await expect(control).toHaveAttribute("aria-checked", "false");
-  expectNoIssues(issues);
 });
 
 test("the bound ref is the delegated switch element and can take focus", async ({
   page,
 }) => {
-  const issues = await openCompatibility(page);
+  await openCompatibility(page);
   const control = page.getByRole("switch", {
     name: "Enable compatibility notifications",
   });
   await expect(control).not.toBeFocused();
   await page.getByTestId("focus").click();
   await expect(control).toBeFocused();
-  expectNoIssues(issues);
 });
 
-test("the browser gate detects page exceptions, console errors and hydration warnings", async ({
-  page,
-}) => {
-  const issues = collectPageIssues(page);
-  await page.goto(baseURL);
-
-  await page.evaluate(() => {
-    console.error("injected console error");
-    console.warn("hydration_mismatch: injected hydration warning");
-  });
-  await page.evaluate(() => {
-    setTimeout(() => {
-      throw new Error("injected page error");
-    }, 0);
-  });
-
-  await expect
-    .poll(() => issues.length, { message: "expected injected browser issues" })
-    .toBeGreaterThanOrEqual(3);
-  expect(issues.some((issue) => issue.includes("console error"))).toBe(true);
-  expect(issues.some((issue) => issue.includes("hydration warning"))).toBe(
-    true,
+test("an injected browser fault fails a bounded harness run", () => {
+  // Run the gate as a real, bounded child browser run with a deliberate fault
+  // injected by the fault spec. The child must exit nonzero, proving the gate
+  // fails an actual run rather than only recording a collector entry.
+  const result = spawnSync(
+    process.execPath,
+    [
+      PLAYWRIGHT_CLI,
+      "test",
+      "--config",
+      PLAYWRIGHT_CONFIG,
+      // A dedicated output directory prevents the nested run's artifacts from
+      // colliding with this run's while it executes.
+      "--output",
+      FAULT_OUTPUT_DIR,
+      FAULT_SPEC,
+    ],
+    {
+      cwd: PACKAGE_ROOT,
+      env: { ...process.env, SUIK_BROWSER_FAULT_RUN: "1" },
+      encoding: "utf8",
+      timeout: NESTED_RUN_TIMEOUT_MS,
+    },
   );
-  expect(issues.some((issue) => issue.includes("page error"))).toBe(true);
+  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  expect(
+    result.error,
+    `the nested browser run reported an error (possible timeout): ${String(result.error)}`,
+  ).toBeUndefined();
+  expect(
+    result.status,
+    `the faulted browser run must fail\n${output}`,
+  ).not.toBe(0);
+  expect(output).toContain("injected browser fault");
 });

@@ -11,6 +11,8 @@
  *   ok              respond 200 HTML (control)
  *   startup-failure write stderr and exit 1 before reporting a port
  *   stderr          write stderr once, then serve normally
+ *   stderr-on-term  write stderr while handling SIGTERM, then exit 0
+ *   ignore-term     ignore SIGTERM; the harness must force SIGKILL
  *   exit-after-ready serve one request, then exit 17
  *   stall-headers   accept the request and never send headers
  *   stall-body      send headers and a partial body, then never end
@@ -69,6 +71,14 @@ server.listen(0, "127.0.0.1", () => {
 
 for (const signal of ["SIGTERM", "SIGINT"]) {
   process.on(signal, () => {
+    // A fault that proves shutdown-time stderr is captured and reported.
+    if (fault === "stderr-on-term") {
+      process.stderr.write("fault-server: stderr during shutdown\n");
+      server.close(() => process.exit(0));
+      return;
+    }
+    // A fault that only SIGKILL can terminate, exercising forced shutdown.
+    if (fault === "ignore-term" && signal === "SIGTERM") return;
     server.close(() => process.exit(0));
   });
 }

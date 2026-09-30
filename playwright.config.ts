@@ -12,6 +12,11 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/browser",
   testMatch: /.*\.spec\.ts/,
+  // The fault control only runs when the harness spawns it deliberately with
+  // SUIK_BROWSER_FAULT_RUN set, so the default lane never fails on it.
+  testIgnore: process.env["SUIK_BROWSER_FAULT_RUN"]
+    ? []
+    : ["**/fault-run.spec.ts"],
   fullyParallel: false,
   forbidOnly: true,
   retries: 0,

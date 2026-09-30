@@ -183,8 +183,10 @@ afterEach(() => {
 
 after(async () => {
   if (server === undefined) return;
-  const healthError = server.failure();
+  // Sample health after teardown drains stdio, so shutdown-time stderr and a
+  // post-ready exit are both observed rather than missed.
   await server.stop();
+  const healthError = server.failure();
   if (healthError) throw healthError;
 });
 

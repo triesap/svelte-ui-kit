@@ -77,6 +77,19 @@ only writing modes.
 
 #### Owner-authorized RCLD-01 batch verification
 
+The 2026-09-30 "Codex takeover dispatch" in `COMMIT_SEQUENCE.md` governs the
+current complete repair/qualification batch. It requires lifecycle checks
+through teardown, physical containment, actual Switch.Thumb coverage, the
+shared CLI executor, historical validator compatibility and a synthetic atomic
+acceptance rehearsal. Keep original pending implementation hashes while adding
+repair evidence. Codex alone performs the later real acceptance transition.
+
+The fixture's temporary declaration-check exception is valid only with the
+mandatory strict audit and diagnostic controls specified in that dispatch.
+The raw strict audit currently exits 1 with two pinned upstream errors; report
+that failure and the qualified baseline separately. Authored diagnostics stay
+fatal. Resolving the upstream exception remains an open release AC20 obligation.
+
 The `pfc through RCLD-01` dispatch in the governing document permits Pi's
 green implementation commits for S007–S012, followed by independent Codex
 review of the sequence. Its explicit within-batch advancement and reference

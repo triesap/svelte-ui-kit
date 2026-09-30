@@ -1,16 +1,22 @@
 /**
  * Owned loopback server lifecycle boundary for the S007/S008 smoke suites.
  *
- * The maintained SSR suite and the lifecycle fault controls share this one
- * implementation so the verified behaviour is the behaviour under test. An
- * owned server is a child process launched here that reports its OS-assigned
- * loopback port as a single JSON line on stdout.
+ * The maintained SSR suite, the lifecycle fault controls and the browser
+ * harness share this one implementation so the verified behaviour is the
+ * behaviour under test. An owned server is a child process launched here that
+ * reports its OS-assigned loopback port as a single JSON line on stdout.
  *
  * The boundary:
- *   - records stderr continuously, including after readiness;
- *   - records the exit event even after readiness and distinguishes an
- *     intentional `stop()` shutdown from an unexpected exit;
- *   - bounds startup, requests (headers and full body) and teardown;
+ *   - settles a spawn failure (missing executable, invalid cwd) instead of
+ *     leaving `stop()` waiting forever;
+ *   - records stderr continuously, including stderr written while an
+ *     intentional SIGTERM shutdown runs, and drains stdio before `stop()`
+ *     resolves;
+ *   - retains the first observed failure so a later `stop()` call never
+ *     erases an already observed unexpected exit or error stderr;
+ *   - distinguishes an intentional `stop()` shutdown from a prior exit;
+ *   - bounds startup, requests (headers and full body) and the whole
+ *     termination path, including a forced SIGKILL fallback;
  *   - kills only the child it started, never an unrelated listener.
  */
 import { spawn } from "node:child_process";
@@ -21,6 +27,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 export const DEFAULT_START_TIMEOUT_MS = 30_000;
 export const DEFAULT_STOP_TIMEOUT_MS = 10_000;
+export const DEFAULT_KILL_GRACE_MS = 2_000;
 export const DEFAULT_REQUEST_TIMEOUT_MS = 15_000;
 
 /** The maintained production-server launcher for the consumer fixture. */
@@ -35,6 +42,21 @@ export const DEFAULT_HANDLER = path.join(
   "handler.js",
 );
 
+/** Human-readable exit description used in diagnostics. */
+function describeExit(info) {
+  if (info.error) return `spawn error: ${info.error.message}`;
+  return `code=${String(info.code)} signal=${String(info.signal)}`;
+}
+
+/** Resolve `promise`, or reject after `ms` so a stuck child cannot hang a test. */
+function settleWithin(promise, ms) {
+  let timer;
+  const timeout = new Promise((_resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 /**
  * Start an owned child server. Returns a handle whose `ready` promise resolves
  * to the assigned port. The caller owns the handle and must `stop()` it.
@@ -47,105 +69,90 @@ export function startOwnedServer(options = {}) {
     env = {},
     startTimeoutMs = DEFAULT_START_TIMEOUT_MS,
     stopTimeoutMs = DEFAULT_STOP_TIMEOUT_MS,
+    killGraceMs = DEFAULT_KILL_GRACE_MS,
   } = options;
 
-  const child = spawn(command, args, {
-    cwd,
-    env: { ...process.env, ...env },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  // A synchronous spawn throw (invalid options) and an asynchronous `error`
+  // event (missing executable, invalid cwd) are both settled into `exitInfo`
+  // so `stop()` can always resolve.
+  let child = null;
+  let spawnError = null;
+  try {
+    child = spawn(command, args, {
+      cwd,
+      env: { ...process.env, ...env },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    child.stderr.setEncoding("utf8");
+    child.stdout.setEncoding("utf8");
+  } catch (error) {
+    spawnError = error;
+  }
 
   let stderr = "";
   let stdout = "";
-  child.stderr.setEncoding("utf8");
-  child.stderr.on("data", (chunk) => {
-    stderr += chunk;
-  });
-  child.stdout.setEncoding("utf8");
-  child.stdout.on("data", (chunk) => {
-    stdout += chunk;
-  });
+  let exitInfo = spawnError
+    ? { code: null, signal: null, error: spawnError }
+    : null;
+  let closed = false;
+  let intentionalStop = false;
+  let firstFailure = null;
+  let stopPromise = null;
 
-  let exitInfo = null;
-  let settleExit;
-  const exited = new Promise((resolve) => {
-    settleExit = resolve;
-  });
-
-  let readyResolve;
-  let readyReject;
+  let readySettled = false;
+  let resolveReady;
+  let rejectReady;
   const ready = new Promise((resolve, reject) => {
-    readyResolve = resolve;
-    readyReject = reject;
+    resolveReady = resolve;
+    rejectReady = reject;
   });
   // Startup rejection must not surface as an unhandled rejection when a caller
   // inspects `failure()` instead of awaiting `ready`.
   ready.catch(() => {});
 
-  let settled = false;
-  const settle = (fn, value) => {
-    if (settled) return;
-    settled = true;
+  let resolveExited;
+  const exited = new Promise((resolve) => {
+    resolveExited = resolve;
+  });
+  let resolveClosed;
+  const closePromise = new Promise((resolve) => {
+    resolveClosed = resolve;
+  });
+
+  const settleReady = (fn, value) => {
+    if (readySettled) return;
+    readySettled = true;
     fn(value);
   };
 
-  const startTimer = setTimeout(() => {
-    settle(
-      readyReject,
-      new Error(
-        `owned server did not report a port within ${startTimeoutMs}ms\nstderr:\n${stderr}`,
-      ),
-    );
-  }, startTimeoutMs);
-
-  const tryParsePort = () => {
-    const newline = stdout.indexOf("\n");
-    if (newline === -1) return;
-    clearTimeout(startTimer);
-    try {
-      const parsed = JSON.parse(stdout.slice(0, newline));
-      if (typeof parsed.port !== "number") {
-        throw new Error("missing numeric port");
-      }
-      settle(readyResolve, parsed.port);
-    } catch (error) {
-      settle(
-        readyReject,
-        new Error(
-          `owned server reported an unreadable port line ${JSON.stringify(stdout)}: ${String(error)}`,
-        ),
-      );
-    }
+  const recordFailure = (error) => {
+    if (firstFailure === null) firstFailure = error;
   };
-  child.stdout.on("data", tryParsePort);
 
-  child.once("exit", (code, signal) => {
-    exitInfo = { code, signal };
-    settleExit(exitInfo);
-    clearTimeout(startTimer);
-    settle(
-      readyReject,
-      new Error(
-        `owned server exited before reporting a port (code=${String(code)} signal=${String(signal)})\nstderr:\n${stderr}`,
-      ),
+  const currentExitFailure = () => {
+    if (exitInfo === null || intentionalStop) return null;
+    return new Error(
+      `owned server exited unexpectedly (${describeExit(exitInfo)})\nstderr:\n${stderr}`,
     );
-  });
-  child.once("error", (error) => {
-    clearTimeout(startTimer);
-    settle(readyReject, error);
-  });
+  };
 
-  let intentionalStop = false;
+  const currentStderrFailure = () => {
+    if (stderr.trim() === "") return null;
+    return new Error(`owned server wrote unexpected stderr:\n${stderr}`);
+  };
 
-  /** A description of the first unexpected failure, or null while healthy. */
+  /** The first unexpected failure observed so far, or null while healthy. */
   const failure = () => {
-    if (exitInfo !== null && !intentionalStop) {
-      return new Error(
-        `owned server exited unexpectedly (code=${String(exitInfo.code)} signal=${String(exitInfo.signal)})\nstderr:\n${stderr}`,
-      );
+    if (firstFailure !== null) return firstFailure;
+    const exitFailure = currentExitFailure();
+    if (exitFailure !== null) {
+      recordFailure(exitFailure);
+      return exitFailure;
     }
-    if (stderr.trim() !== "") {
-      return new Error(`owned server wrote unexpected stderr:\n${stderr}`);
+    const stderrFailure = currentStderrFailure();
+    if (stderrFailure !== null) {
+      recordFailure(stderrFailure);
+      return stderrFailure;
     }
     return null;
   };
@@ -156,28 +163,148 @@ export function startOwnedServer(options = {}) {
     if (error) throw error;
   };
 
-  /** Stop the owned child: SIGTERM, bounded wait, then SIGKILL. */
-  const stop = async () => {
-    intentionalStop = true;
-    if (exitInfo !== null) return exitInfo;
-    child.kill("SIGTERM");
-    const killTimer = setTimeout(() => {
-      if (exitInfo === null) child.kill("SIGKILL");
-    }, stopTimeoutMs);
-    const info = await exited;
-    clearTimeout(killTimer);
-    return info;
+  // A synchronous spawn throw has no child events; settle immediately.
+  if (spawnError !== null) {
+    resolveExited(exitInfo);
+    closed = true;
+    resolveClosed(exitInfo);
+    settleReady(rejectReady, spawnError);
+  }
+
+  const startTimer = setTimeout(() => {
+    settleReady(
+      rejectReady,
+      new Error(
+        `owned server did not report a port within ${startTimeoutMs}ms\nstderr:\n${stderr}`,
+      ),
+    );
+  }, startTimeoutMs);
+  startTimer.unref?.();
+
+  const tryParsePort = () => {
+    const newline = stdout.indexOf("\n");
+    if (newline === -1) return;
+    clearTimeout(startTimer);
+    try {
+      const parsed = JSON.parse(stdout.slice(0, newline));
+      if (typeof parsed.port !== "number") {
+        throw new Error("missing numeric port");
+      }
+      settleReady(resolveReady, parsed.port);
+    } catch (error) {
+      settleReady(
+        rejectReady,
+        new Error(
+          `owned server reported an unreadable port line ${JSON.stringify(stdout)}: ${String(error)}`,
+        ),
+      );
+    }
+  };
+
+  if (child !== null) {
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+      tryParsePort();
+    });
+
+    child.once("exit", (code, signal) => {
+      if (exitInfo === null) exitInfo = { code, signal };
+      resolveExited(exitInfo);
+      clearTimeout(startTimer);
+      settleReady(
+        rejectReady,
+        new Error(
+          `owned server exited before reporting a port (${describeExit(exitInfo)})\nstderr:\n${stderr}`,
+        ),
+      );
+    });
+    // `close` fires after the stdio streams are drained, so stopping on it
+    // guarantees any shutdown-time stderr has been captured.
+    child.once("close", (code, signal) => {
+      if (exitInfo === null) exitInfo = { code, signal };
+      closed = true;
+      resolveExited(exitInfo);
+      resolveClosed(exitInfo);
+    });
+    child.once("error", (error) => {
+      if (exitInfo === null) {
+        exitInfo = { code: null, signal: null, error };
+      }
+      closed = true;
+      resolveExited(exitInfo);
+      resolveClosed(exitInfo);
+      clearTimeout(startTimer);
+      settleReady(rejectReady, error);
+    });
+  }
+
+  /**
+   * Stop the owned child: SIGTERM, a bounded wait, then SIGKILL. The whole
+   * termination path is bounded; a child that survives SIGKILL is recorded as
+   * a teardown failure rather than hanging the caller. Once a failure has been
+   * observed, `stop()` never erases it.
+   */
+  const stop = () => {
+    if (stopPromise !== null) return stopPromise;
+    stopPromise = (async () => {
+      const alreadyExited = exitInfo !== null;
+      if (!alreadyExited) {
+        intentionalStop = true;
+        try {
+          child.kill("SIGTERM");
+        } catch {
+          // The process may already be gone; the close wait below decides.
+        }
+        const killTimer = setTimeout(() => {
+          if (exitInfo === null) {
+            try {
+              child.kill("SIGKILL");
+            } catch {
+              // Nothing else can be signalled.
+            }
+          }
+        }, stopTimeoutMs);
+        killTimer.unref?.();
+        try {
+          await settleWithin(closePromise, stopTimeoutMs + killGraceMs);
+        } catch (error) {
+          recordFailure(
+            new Error(
+              `owned server teardown did not complete: ${error.message}\nstderr:\n${stderr}`,
+            ),
+          );
+        }
+        clearTimeout(killTimer);
+      } else {
+        try {
+          await settleWithin(closePromise, stopTimeoutMs + killGraceMs);
+        } catch (error) {
+          recordFailure(
+            new Error(
+              `owned server teardown did not complete: ${error.message}\nstderr:\n${stderr}`,
+            ),
+          );
+        }
+      }
+      return exitInfo;
+    })();
+    return stopPromise;
   };
 
   return {
     child,
     ready,
     exited,
+    closed: closePromise,
     stop,
     stderr: () => stderr,
     stdout: () => stdout,
     failure,
     assertAlive,
+    isClosed: () => closed,
   };
 }
 

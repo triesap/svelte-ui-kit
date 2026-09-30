@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: S001–S006 independently accepted; S007 review requests harness corrections. The owner authorizes `pfc through RCLD-01`: Pi fixes S007 then verifies and commits S007–S012 in order, returning the full sequence for Codex review. Updated 2026-09-29.
+Status: S001–S006 independently accepted; S007–S012 authored and committed pending review. Codex takeover review requests the complete RCLD-01 repair and qualification batch below under `pfc through RCLD-01`. S013 remains locked behind independent acceptance. Updated 2026-09-30.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S013** in **RCLD-02** — not_started; the owner-authorized `pfc through RCLD-01` batch is complete with S007–S012 committed pending independent Codex review. S013 remains blocked until S012 is independently accepted. No checkpoint is in progress.
+- Active implementation checkpoint: no new checkpoint; the S007–S012 repair batch below is authorized, starting with S007/S008 lifecycle qualification. **S013** in **RCLD-02** remains not_started and blocked until S012 is independently accepted. Keep the six original pending ledger entries while recording repair progress separately in this document and their reports.
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **6 / 203**. Remaining: **197 / 203**.
 - Committed pending review: **6 / 203**. Authored batch range: **S007–S012**.
@@ -29,7 +29,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - S004 evidence: `implementation/evidence/S004_REPORT.md` and `implementation/evidence/S004_REVIEW.md`. All review findings are closed; independent smoke 41/41 and contracts 83/83 pass, along with corrected metadata and mutation probes.
 - S005 evidence: `implementation/evidence/S005_REPORT.md` and `implementation/evidence/S005_REVIEW.md`. Review 2 accepts the correction: independent unit 5/5, harness 29/29, smoke 41/41 and contracts 84/84 pass; original boundary/filename/failure probes are corrected. No release acceptance is claimed.
 - S006 evidence: `implementation/evidence/S006_REPORT.md` and `implementation/evidence/S006_REVIEW.md`. Review 2 accepts recursive exclusions and maintained-source controls; independent unit 14/14, harness 29/29, smoke 41/41 and contracts 84/84 pass. Original nested probes are corrected; real lint/format preserve all 71 tracked/untracked authoring entries. Accepted and committed at the last safe hash above.
-- S007 review: `implementation/evidence/S007_REVIEW.md`. Ordinary build/SSR 5/5 and cumulative lanes pass, but fault probes show ignored server errors/exits and an SSR-negative control that accepts HTTP 500. No S007 acceptance is claimed. Batch implementation progress and independent completion must remain distinct.
+- S007 review: `implementation/evidence/S007_REVIEW.md` preserves the original changes-requested review. The later implementation addressed portions of it; the 2026-09-30 takeover findings below assess the returned batch. No S007 acceptance is claimed. Batch implementation progress and independent completion must remain distinct.
 - No checkpoint has been skipped or reordered. S001–S006 are complete. Codex recorded S006's real hash and S007 activation after the commit; these four factual bookkeeping files travel with S007 under the established rule. Earlier dispatches and correction records are historical.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. By default every checkpoint after S001 depends on the reviewed, verified, committed predecessor. The explicit owner-authorized batch below permits verified implementation commits pending Codex review to unlock successors only within S007–S012.
@@ -322,6 +322,165 @@ No owner decision remains unresolved. Return unstaged/uncommitted with S002
 still `in_progress`, report `candidate`, review `changes_requested`, null hashes
 and S003 untouched. Codex independently reviews and accepts before any target
 commit or successor dispatch. No human release test is due at this checkpoint.
+
+## Codex takeover dispatch — RCLD-01 repair and qualification
+
+Decision date: 2026-09-30. This is the current dispatch within the existing
+S007–S012 authorization, superseding stale pre-implementation instructions in
+the following historical dispatch. The original checkpoint definitions,
+R01–R34, AC01–AC22 and all eleven sequence gates remain intact. This section
+is part of the single governing execution plan, not a replacement backlog.
+
+### State, scope and endpoint
+
+The returned implementation is `9310790c9900f3cfdc516e4a8cf42b8095c7422a`.
+Only S001–S006 are accepted: 6/203; six further checkpoints are authored pending
+review; S013–S203 are not started. No sequence is accepted. The reference is
+unchanged and clean at `a10fbf06334f4648f5755e05a7147414e4e5fc98`.
+
+Execute `pfc through RCLD-01`: finish every eligible repair below, complete the
+remaining primitive and CLI-boundary implementation, and run cumulative
+qualification. Commit coherent green repair slices without rewriting original
+commits. Continue after each commit. The endpoint is the fully repaired,
+verified S007–S012 candidate returned for independent Codex review, before
+S013. RCLD-02 explicitly depends on S012 acceptance; this required gate makes
+a wider implementation batch ineligible. A single fix or green commit is not
+the endpoint. No hardware dependency prevents the identified software work.
+
+### Confirmed findings and ordered work
+
+1. **S007/S008 lifecycle and failure enforcement.** Isolated reviewer probes
+   confirm missing-command and invalid-cwd spawn failures leave `stop()`
+   unresolved past its configured deadline; stopping erases an already
+   observed exit 17; and SIGTERM stderr appears after callers sample health.
+   Settle spawn errors, preserve the first failure, distinguish an intentional
+   shutdown from a prior exit, await stdio close/drain, and bound the whole
+   termination path including forced shutdown. Both SSR and browser callers
+   must enforce health after teardown. Retain the original HTTP/status/HTML,
+   request-deadline, SSR-disabled, type-negative and cleanup controls. Cover
+   missing command/cwd, late stderr, prior exit, forced termination and
+   idempotent cleanup deterministically. Browser issue collection must span
+   the test lifecycle through teardown, with an end-to-end deliberately
+   failing browser control, not only a collector-array assertion.
+2. **S009 physical containment.** A disposable external sentinel was changed
+   by writes through ancestor and final symlinks; `writeDir` and symlink
+   creation also escaped through a linked parent. Reject these paths before
+   mutation, including dangling links and invalid non-directory ancestors.
+   Explicit creation of a fixture symlink is still supported, but subsequent
+   writes must never follow it. Cover bytes, modes, directory/link inventory,
+   cleanup after setup/assertion failure, and owned-root containment. Preserve
+   typed-runner suite isolation and strict selection. This does not introduce
+   product transactions or claim hostile concurrent-race resistance.
+3. **S010/S011 primitive qualification and dependency audit.** The current
+   ordinary span is not `Switch.Thumb`. Render and qualify the actual pinned
+   Root and Thumb, with real checked/ref/child types and merged props; retain
+   SSR, hydration, accessible semantics, pointer/keyboard/programmatic state
+   and ref/focus assertions. Close the dependency decision below and wire its
+   strict audit into the component lane and CI. Keep the initial platform
+   claims bounded to local Chromium and the specified CI configuration.
+4. **S012 real adapter boundary.** `main.ts` repeats the executor's dispatch.
+   Route the actual adapter through `runCli` (or its existing shared executor),
+   retaining package-relative metadata validation and process effects in the
+   adapter. Preserve all 41 CLI smoke behaviors, pure/nonmutating imports,
+   readonly interfaces and consumer import boundaries. Do not begin schemas,
+   registry implementation or new commands from S013 onward.
+5. **Governance compatibility and sequence closure.** A valid historical
+   fixture with no batch authorization and no pending checkpoints passes
+   before removing the new summary and fails solely for that missing summary
+   afterward. Restore old rules for this historical shape; present summaries
+   must still be accurate, and live batch/pending states must still require
+   valid authorization and summary evidence. Preserve malformed/fenced
+   evidence, real Git reachability, read-only checks and old completion
+   regressions. Add an atomic batch-acceptance rehearsal as described below.
+   Update command/compatibility/report claims, remove private host-tool
+   references from current public reports, and run all cumulative lanes.
+
+Run the narrow relevant verification before each repair commit; keep one
+repair slice active in this section. Current repair progress: not started.
+Later independent eligible repairs may continue if a slice has a genuine
+blocker, but no red slice may be committed or represented as accepted. Preserve
+original checkpoint IDs/order; these are follow-up repairs of authored work.
+
+### Dependency decision and bounded upstream exception
+
+Approve exact fixture dev dependency `csstype 3.1.3`: installed Bits and
+svelte-toolbelt declarations import it without a runtime dependency. Keep all
+other approved pins. An independent disposable check with `skipLibCheck:false`
+reproduced only two errors, zero warnings, exit 1: union-complexity diagnostics
+in Bits 2.19.3's `dist/bits/button/components/button.svelte.d.ts:2:23` and
+`dist/bits/calendar/components/calendar.svelte.d.ts:2:25`, under TypeScript
+6.0.3 / Svelte 5.57.1 / svelte-check 4.7.6.
+
+The fixture-only `skipLibCheck:true` is permitted for the RCLD-01 normal check
+only when paired with a mandatory strict declaration audit in `test:components`
+and CI. Run the real checker with `skipLibCheck:false` in an owned copy; retain
+its actual exit and full diagnostics. Qualify exactly the two pinned upstream
+diagnostics by package/version, package-relative path, location, diagnostic
+identity and count; reject unknown output, missing diagnostics, additional
+errors/warnings, changed pins, tool failure and timeout. Do not whitelist an
+entire dependency tree or accept a nonzero exit by itself. Add controls proving
+authored `.svelte`, `.ts` and `.d.ts` errors and an additional dependency error
+fail the audit, and restoration returns to the known baseline. Never modify
+shared installed packages to inject faults; use disposable owned copies.
+
+This is an explicit bootstrap compatibility exception, not a raw strict-check
+pass and not release acceptance. No authored diagnostic or API loss is waived.
+Keep the raw failure visible in compatibility evidence and carry its resolution
+as an open release AC20 obligation in this plan until a Codex-reviewed minimal
+compatibility repair removes it. Reevaluate at dependency changes and before
+qualifying generated/packed consumers. No dependency upgrade/downgrade, patch
+to upstream public APIs, broad suppression, SSR disable or `any` workaround is
+authorized. Pi reports genuinely new dependency decisions with evidence while
+continuing eligible work.
+
+### Repair evidence and later atomic independent acceptance
+
+Keep the original six implementation hashes in pending ledger/report metadata
+during repairs. Record each subsequent repair commit and its exact reviewed
+content/tests in report addenda and this section. These hashes identify the
+original authored snapshots; reports must not imply repairs existed there.
+Do not repoint an early pending hash beyond its still-pending successor, amend
+history, invent acceptance, or increment accepted counters. Regenerate JSON
+from Markdown explicitly; pending completion remains null.
+
+Codex independently reviews the final combined snapshot and all six checkpoint
+requirements. If review succeeds, Codex first records all six review paths,
+tested snapshot and per-checkpoint original/repair hashes in a green evidence
+commit E, retaining pending states and changes_requested/null review metadata
+until formal acceptance. Then Codex transitions all six entries atomically to
+complete, report implemented/E and review accepted/E, with ledger E, 12/203
+accepted and RCLD-01 complete. E contains both evidence paths for each checkpoint
+and all repaired source. A later bookkeeping commit records E without any
+self-referential hash or fabricated historical review. Retain original and
+repair hashes in report prose. No code changes may slip between the tested
+snapshot, E and acceptance; changed content needs new review.
+
+An isolated synthetic-history rehearsal confirmed this transition passes the
+existing validator. Add permanent positive/negative transition regressions;
+do not weaken complete-state semantics or add a bypass/status/schema for it.
+Pi may implement these synthetic tests but never author real Codex acceptance.
+Partial acceptance must not break remaining pending ancestry; the planned
+transition is the whole six-checkpoint batch. S013 authorization follows a
+separate Codex dispatch after successful independent acceptance.
+
+### Verification and report boundary
+
+Use all existing target lanes from `implementation/VERIFICATION.md`: strict
+frozen install; format/lint/four-config typecheck; unit/harness/integration/
+components; CLI smoke; fixture check/build/SSR; scoped Chromium browser;
+contracts/checker regressions; actionlint; diff health. Include new negative
+controls, audit failure classification, cleanup and nonmutation evidence.
+Keep failed attempts and exact exits/counts. Do not label the raw two-error
+upstream audit green; report the qualified exception separately.
+
+For this TS-only repair batch, reuse the previously recorded S012 reference
+guard at intermediate repair commits only while the reference remains clean
+at the recorded hash; label reuse. Run fresh reference fmt/check/test once at
+the repaired S012 milestone. This supersedes repeated intermediate reference
+runs, not the final guard or target checks. No remote CI, additional browser/OS
+matrix, package acceptance, human release test or publication is claimed now.
+Return all repair commits, task/requirement dispositions, exact checks and
+retained evidence, known failures/skips and the precise stopping reason.
 
 ## Owner-authorized batch — pfc through RCLD-01
 

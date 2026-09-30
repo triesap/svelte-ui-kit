@@ -20,6 +20,9 @@ references.
 - Complete one checkpoint at a time in the documented order. The owner's
   `pfc through RCLD-01` authorization delegates green implementation commits
   for S007–S012 to Pi, with independent Codex review after the sequence.
+  This includes the complete repair/qualification batch in the current
+  "Codex takeover dispatch" section, with original pending hashes preserved
+  and subsequent repair commits recorded separately until atomic acceptance.
   Follow the governing batch dispatch and its pending-review evidence rules;
   never label Pi self-review as Codex acceptance. Outside that explicit batch,
   return work unstaged/uncommitted and await predecessor acceptance/commit.
