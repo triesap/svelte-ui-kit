@@ -8,9 +8,9 @@
  * application/Svelte configuration.
  *
  * Absent optional fields receive the documented defaults; an explicit custom
- * safe mapping is honored. Lexical path safety, overlap and reserved-state
- * checks are separate later gates (S033/S034), so this checkpoint does not
- * pretend to perform them.
+ * safe mapping is honored. Lexical path safety and reserved-state overlap are
+ * enforced here; real filesystem containment and later project discovery
+ * remain a distinct later gate.
  */
 import {
   fail,
@@ -25,6 +25,7 @@ import {
   INITIAL_TOOL_VERSION,
   isSemVer,
 } from "../registry/versions.js";
+import { asciiFold, isSafeLogicalRelativePath, pathsOverlap } from "./paths.js";
 
 /** Schema document that owns the `kit.json` shape. */
 export const KIT_CONFIG_SCHEMA = "kit.schema.json";
@@ -97,6 +98,11 @@ export function deriveKitPaths(config: KitConfig): KitDerivedPaths {
   };
 }
 
+/** Strip a single trailing separator run, matching `deriveKitPaths`. */
+function trimTrailingSeparators(value: string): string {
+  return value.replace(/\/+$/, "");
+}
+
 function describe(value: unknown): string {
   if (typeof value === "string") return JSON.stringify(value);
   if (value === null) return "null";
@@ -108,8 +114,9 @@ function describe(value: unknown): string {
 
 /**
  * Parse and normalize a candidate `kit.json` value. Unknown/legacy fields, bad
- * types, unsupported schema versions and malformed values fail with typed
- * issues; a valid value is completed with the documented defaults.
+ * types, unsupported schema versions, malformed values, lexically unsafe roots
+ * and reserved-state/overlap collisions fail with typed issues; a valid value
+ * is completed with the documented defaults.
  */
 export function parseKitConfig(
   value: unknown,
@@ -131,6 +138,74 @@ export function parseKitConfig(
       ),
     );
   }
+
+  const roots: readonly (readonly [string, string, string])[] = [
+    ["uiDir", "UI root", DEFAULT_UI_DIR],
+    ["stylesDir", "styles root", DEFAULT_STYLES_DIR],
+    ["layoutFile", "layout file", DEFAULT_LAYOUT_FILE],
+  ];
+  const normalized = new Map<string, string>();
+  for (const [field, label, fallback] of roots) {
+    const raw = record[field];
+    if (raw === undefined) {
+      normalized.set(field, fallback);
+      continue;
+    }
+    const candidate = trimTrailingSeparators(raw as string);
+    if (!isSafeLogicalRelativePath(candidate)) {
+      issues.push(
+        issue(
+          "PATH_UNSAFE",
+          `${label} (${field}) must be a safe logical relative path, received ${describe(raw)}`,
+          field,
+        ),
+      );
+      continue;
+    }
+    normalized.set(field, candidate);
+  }
+  if (issues.length > 0) return fail(issues);
+
+  const uiDir = normalized.get("uiDir") as string;
+  const stylesDir = normalized.get("stylesDir") as string;
+  const layoutFile = normalized.get("layoutFile") as string;
+  const derived = deriveKitPaths({
+    ...DEFAULT_KIT_CONFIG,
+    uiDir,
+    stylesDir,
+    layoutFile,
+  });
+
+  if (pathsOverlap(stylesDir, derived.stateDir)) {
+    issues.push(
+      issue(
+        "PATH_OVERLAP",
+        `stylesDir ${JSON.stringify(stylesDir)} must not overlap the reserved state directory ${JSON.stringify(derived.stateDir)}`,
+        "stylesDir",
+      ),
+    );
+  }
+  if (
+    derived.stateDir === layoutFile ||
+    asciiFold(layoutFile).startsWith(`${asciiFold(derived.stateDir)}/`)
+  ) {
+    issues.push(
+      issue(
+        "PATH_OVERLAP",
+        `layoutFile ${JSON.stringify(layoutFile)} must not live inside the reserved state directory ${JSON.stringify(derived.stateDir)}`,
+        "layoutFile",
+      ),
+    );
+  }
+  if (asciiFold(layoutFile) === asciiFold(derived.rootExports)) {
+    issues.push(
+      issue(
+        "PATH_OVERLAP",
+        `layoutFile ${JSON.stringify(layoutFile)} must not collide with the root exports file ${JSON.stringify(derived.rootExports)}`,
+        "layoutFile",
+      ),
+    );
+  }
   if (issues.length > 0) return fail(issues);
 
   const requested = record["requested"];
@@ -139,16 +214,9 @@ export function parseKitConfig(
     toolVersion:
       typeof toolVersion === "string" ? toolVersion : INITIAL_TOOL_VERSION,
     registry: DEFAULT_REGISTRY,
-    uiDir:
-      typeof record["uiDir"] === "string" ? record["uiDir"] : DEFAULT_UI_DIR,
-    stylesDir:
-      typeof record["stylesDir"] === "string"
-        ? record["stylesDir"]
-        : DEFAULT_STYLES_DIR,
-    layoutFile:
-      typeof record["layoutFile"] === "string"
-        ? record["layoutFile"]
-        : DEFAULT_LAYOUT_FILE,
+    uiDir,
+    stylesDir,
+    layoutFile,
     requested: Array.isArray(requested)
       ? (requested as readonly string[]).slice()
       : [],

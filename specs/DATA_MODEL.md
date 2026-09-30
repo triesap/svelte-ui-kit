@@ -11,11 +11,13 @@ Track configuration/lock schema, CLI package, registry release/content digest, i
 Initial technical identities (recorded at S013, not user-provided constants):
 local schema, protocol and CSS-contract revisions start at the positive integer
 `1`; the tool/package release, the empty bundled registry release and an item
-version start at strict SemVer `0.1.0`; the advertised compatibility range is
-restricted to the qualified Svelte `^5.57.1` / Bits UI `^2.19.3` baseline with
-Bits UI's real `@internationalized/date` `^3.8.1` peer. Content identity is an
-exact-byte lowercase `sha256` 64-hex digest, named distinctly from a semantic
-hash.
+version start at strict SemVer `0.1.0`; the advertised tested-support
+compatibility is the exact qualified Svelte `5.57.1` / Bits UI `2.19.3`
+baseline with Bits UI's real `@internationalized/date` `^3.8.1` peer. Bits UI
+2.19.3's own non-optional Svelte peer is `^5.33.0`; that primitive requirement
+is recorded separately from the kit's narrower tested-support claim. Content
+identity is an exact-byte lowercase `sha256` 64-hex digest, named distinctly
+from a semantic hash.
 
 #### Kit configuration (desired state)
 
@@ -33,6 +35,21 @@ Resolve dependencies through a validated acyclic graph with stable ordering; rej
 
 Record schema/tool/registry provenance, configuration identity, requested-versus-transitive provenance, resolved item identities/versions, source-file owners and installed baseline digests, CSS-block owners and baseline digests, integration/contract references/digests, and reverse indexes if used. Validate reverse indexes against canonical records rather than trusting both independently.
 
+Implemented lock field spelling (v1, in `schema/v1/kit-lock.schema.json`):
+top-level `schemaVersion`, `toolVersion`, `registryVersion`, `registryHash`,
+`configHash`, `requested`, `items`, `files`, `cssBlocks`, `integrations`.
+`items[]` records carry `id`, `version`, `digest` and `origin`
+(`explicit`|`transitive`). `files[]` records carry `path`, `owner`, `baseHash`,
+`itemVersion` and `cohort`. `cssBlocks[]` records carry the same fields plus the
+unique `blockId`, and several blocks may share one aggregate `.css` `path`.
+`integrations[]` records carry `kind` (`layout`|`stylesheet`|`exports`),
+`path`, `baseline` (exact-byte 64-hex) and `contract`. `toolVersion` and
+`registryVersion` are strict SemVer; `baseHash`/`registryHash`/`configHash` and
+`baseline` are lowercase 64-hex SHA-256; `cohort` and `blockId` are lowercase
+kebab-case ids. When parsed with a validated configuration mapping, no lock
+record may live inside the reserved `_kit` state directory, `files[]` must live
+under the UI root and `cssBlocks[]` under the styles root.
+
 For each managed target distinguish the base last accepted upstream content, current local observation, and incoming registry content. Persistent base hash is required; local hash can be observed per plan. Do not invent an automatic merge requiring base bytes when only hashes exist. Transient transaction backups are not a general merge history database.
 
 A preserved customized target retains its legitimate upstream base so future incoming changes can still be detected. A current incoming version is not proof that every local target has adopted it. Track effective per-target/cohort lineage or block the mixed transition; never write misleading lock metadata.
@@ -40,6 +57,13 @@ A preserved customized target retains its legitimate upstream base so future inc
 #### Theme/integration metadata
 
 `token-contract.json` describes semantic token names/types/default expectations and a versioned contract identity. `theme-integration.json` identifies stylesheet path, layers, producer, relevant primitive compatibility, and actual portal integration characteristics. Preserve separation between theme tokens and component customization properties. Do not copy the Leptos identity/presence/portal ABI numbers or Rust type names into a Svelte claim.
+
+The three metadata contracts are independent and share only identity references.
+The `theme-integration` layer order is the exact ordered CSS cascade contract
+`["svelte-ui-kit.tokens", "svelte-ui-kit.themes", "svelte-ui-kit.components"]`
+(a sorted set is not cascade order); its `stylesheet` is a safe logical
+styles-relative path; and semantic token names and customization property names
+are unique within their contract.
 
 Version the component customization contract independently. Record property scope, intended CSS grammar and fallback relationships; preserve complete border-radius grammar, including multi-corner and elliptical forms, rather than narrowing it with a typed registration accidentally.
 

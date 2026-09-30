@@ -212,3 +212,70 @@ test("safe lock paths and owner ids are recognized", () => {
   assert.equal(isLockOwnerId("alert-dialog"), true);
   assert.equal(isLockOwnerId("Alert"), false);
 });
+
+test("release identities must be strict SemVer at the parse boundary", () => {
+  assert.equal(
+    codesFor(base({ toolVersion: "garbage" })).includes("SEMVER_INVALID"),
+    true,
+  );
+  assert.equal(
+    codesFor(base({ registryVersion: "1.2" })).includes("SEMVER_INVALID"),
+    true,
+  );
+});
+
+test("validated mapping context rejects reserved-state and out-of-namespace records", () => {
+  const context = {
+    stateDir: "src/lib/components/ui/_kit",
+    uiDir: "src/lib/components/ui",
+    stylesDir: "src/styles",
+  };
+  const reserved = parseKitLock(
+    base({
+      files: [
+        {
+          path: "src/lib/components/ui/_kit/kit.lock.json",
+          owner: "button",
+          baseHash: H("e"),
+          itemVersion: "0.1.0",
+          cohort: "core",
+        },
+      ],
+    }),
+    ".kit/kit.lock.json",
+    context,
+  );
+  assert.equal(reserved.ok, false);
+  if (!reserved.ok) {
+    assert.equal(
+      reserved.issues.some((entry) => entry.code === "LOCK_RESERVED_STATE"),
+      true,
+    );
+  }
+
+  const outside = parseKitLock(
+    base({
+      files: [
+        {
+          path: "elsewhere/button.svelte",
+          owner: "button",
+          baseHash: H("e"),
+          itemVersion: "0.1.0",
+          cohort: "core",
+        },
+      ],
+    }),
+    ".kit/kit.lock.json",
+    context,
+  );
+  assert.equal(outside.ok, false);
+  if (!outside.ok) {
+    assert.equal(
+      outside.issues.some((entry) => entry.code === "LOCK_NAMESPACE"),
+      true,
+    );
+  }
+
+  const good = parseKitLock(base(), ".kit/kit.lock.json", context);
+  assert.equal(good.ok, true, JSON.stringify(good));
+});

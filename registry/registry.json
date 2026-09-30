@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "registryVersion": "0.1.0",
-  "contentHash": "4b3b152fda0af46f8b9f0f86b5d40a8d551ec221febd251649d2604f4a48c6e9",
   "compatibility": {
-    "svelte": "^5.57.1",
-    "bits": "^2.19.3",
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
     "date": "^3.8.1"
   },
-  "items": []
+  "items": [],
+  "contentHash": "11d7567d9765056d40939b37c11be17e5b6dd511ec67ccdd81c2a444d74576aa"
 }

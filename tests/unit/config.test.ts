@@ -140,3 +140,63 @@ test("a non-object configuration fails without throwing", () => {
     assert.equal(result.ok, false);
   }
 });
+
+test("lexically unsafe roots are rejected", () => {
+  const cases: readonly [string, string][] = [
+    ["uiDir", "../outside"],
+    ["uiDir", "/tmp/out"],
+    ["uiDir", "C:\\out"],
+    ["stylesDir", "a/../b"],
+    ["layoutFile", "src\\routes\\+layout.svelte"],
+    ["uiDir", "src//ui"],
+  ];
+  for (const [field, value] of cases) {
+    const result = parseKitConfig({ schemaVersion: 1, [field]: value });
+    assert.equal(result.ok, false, `${field}=${value}`);
+    if (!result.ok) {
+      assert.equal(result.issues[0]?.code, "PATH_UNSAFE", `${field}=${value}`);
+    }
+  }
+});
+
+test("stylesDir cannot overlap the reserved state directory", () => {
+  const result = parseKitConfig({
+    schemaVersion: 1,
+    uiDir: "src/lib/components/ui",
+    stylesDir: "src/lib/components/ui/_kit",
+  });
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.issues[0]?.code, "PATH_OVERLAP");
+  }
+});
+
+test("layoutFile cannot live in the state dir or collide with root exports", () => {
+  const inState = parseKitConfig({
+    schemaVersion: 1,
+    uiDir: "src/lib/components/ui",
+    layoutFile: "src/lib/components/ui/_kit/kit.lock.json",
+  });
+  assert.equal(inState.ok, false);
+  if (!inState.ok) assert.equal(inState.issues[0]?.code, "PATH_OVERLAP");
+
+  const rootExports = parseKitConfig({
+    schemaVersion: 1,
+    uiDir: "src/lib/components/ui",
+    layoutFile: "src/lib/components/ui/index.ts",
+  });
+  assert.equal(rootExports.ok, false);
+  if (!rootExports.ok) {
+    assert.equal(rootExports.issues[0]?.code, "PATH_OVERLAP");
+  }
+});
+
+test("prefix siblings and nested safe roots are not rejected", () => {
+  const result = parseKitConfig({
+    schemaVersion: 1,
+    uiDir: "src/lib/components/ui",
+    stylesDir: "src/lib/components/ui-kit",
+    layoutFile: "src/routes/+layout.svelte",
+  });
+  assert.equal(result.ok, true, JSON.stringify(result));
+});

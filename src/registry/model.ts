@@ -20,6 +20,7 @@ import {
   INITIAL_REGISTRY_VERSION,
   INITIAL_SCHEMA_VERSION,
   validateCompatibilityRange,
+  validateSemVer,
 } from "./versions.js";
 
 /** Schema document that owns the registry-root shape. */
@@ -143,6 +144,13 @@ export function parseRegistryRoot(
     );
     if (!result.ok) issues.push(...result.issues);
   }
+
+  const registryVersion = validateSemVer(
+    record["registryVersion"],
+    "registry version",
+    "registryVersion",
+  );
+  if (!registryVersion.ok) issues.push(...registryVersion.issues);
 
   const rawItems = record["items"] as readonly Record<string, unknown>[];
   const seenIds = new Map<string, number>();

@@ -77,6 +77,27 @@ only writing modes.
 
 #### Current owner-authorized RCLD-02 batch verification
 
+Independent review of candidate `9b576117ac1e76b3e724921ca12405a8e079f05f`
+requests changes under all seven RCLD02-R1 groups in COMMIT_SEQUENCE.md.
+Fresh reviewer typecheck, unit148/148, registry8/8, CLI49/49, harness37/37,
+integration15/15 and contracts117/117 passed with zero skips, but built-module
+probes demonstrate unmet original criteria. Acceptance remains12/203; twenty
+checkpoints remain pending. Keep S033 locked and all accepted evidence intact.
+
+Required repair controls cover unsafe config/lock mappings and release identities;
+provider-bound schema compilation, missing/corrupt schemas and UTF-8 source;
+listing containment and deeply immutable snapshot observations; strict joint
+SemVer membership; healthy shared aggregate CSS plus integrated graph/ownership
+failure cases; spawned JSON usage/metadata failures; and canonical JSON/layer
+order validation. Exercise actual emitted modules in an isolated installed
+package from a different CWD, with explicit runtime dependencies and no source
+fallback. Record original failures and repaired controls separately, without
+host coordination paths or routing commands in this public repository.
+
+Pi must complete the full eligible RCLD-02 closure work and cumulative lane set
+before returning. Existing reports and pending hashes are provenance, not proof
+of acceptance; independent Codex review and atomic acceptance remain required.
+
 S001–S012 and RCLD-01 are independently accepted at the evidence anchor in
 COMMIT_SEQUENCE.md. The current dispatch authorizes the full S013–S032 sequence
 with green local Pi implementation commits pending Codex review. S033 remains

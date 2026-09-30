@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: S001–S012 independently accepted; RCLD-01 complete. S013–S032 are implemented, verified and committed pending independent Codex review under the owner-authorized `pfc through RCLD-02` dispatch below; S033 remains locked behind independent S032 acceptance. Updated 2026-09-30.
+Status: S001–S012 independently accepted; RCLD-01 complete. S013–S032 are authored and committed pending review; independent review 1 requests the complete closure batch below; S033 remains locked behind independent S032 acceptance. Updated 2026-09-30.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -333,6 +333,160 @@ report/review paths and the reviewed source from
 and independent prior-fault probes pass. RCLD-01 is complete; all its review
 findings are closed. Twelve checkpoints are accepted; 191 remain. The narrow
 fixture declaration exception remains an open release AC20 obligation.
+
+### Independent review 1 — complete RCLD-02 closure dispatch
+
+Decision date: 2026-09-30. Candidate `9b576117ac1e76b3e724921ca12405a8e079f05f`
+is **changes requested**. All twenty S013–S032 implementation commits remain
+`committed_pending_review`; no acceptance hashes, counters or original commit
+provenance change. S001–S012 remain accepted, RCLD-01 remains complete, and
+S033 remains `not_started` behind independent S032 acceptance. This subsection
+supersedes contrary implementation deferrals and report claims within this
+batch; the original checkpoint criteria and model decisions below remain in
+force. No owner-authority decision or external/hardware blocker is outstanding.
+
+Fresh reviewer checks passed: typecheck; unit 148/148; registry 8/8; CLI 49/49;
+runner harness 37/37; integration 15/15; contract validation with zero findings;
+and contract regressions 117/117, all with zero skips. Isolated reviewer probes
+against the built production modules nevertheless reproduce the failures below.
+Passing the existing helper tests does not establish whole-sequence acceptance.
+Author cumulative browser/component/SSR/reference evidence was inspected, not
+re-executed as fresh reviewer evidence. Previously accepted lifecycle, strict
+upstream audit, containment and historical/atomic acceptance repairs stand.
+The newly implemented bounded authorization, registry runner, explicit-root
+provenance and cleanup-error retention are useful verified progress; retain them.
+
+Execute **`pfc through RCLD-02`** for all seven closure groups below, maintained
+regressions, installed-artifact qualification, evidence reconciliation and green
+local repair commits. Continue after every green checkpoint through the full
+boundary. This is the complete remaining eligible models/registry work, not a
+single-defect batch. S033 cannot be combined because its predecessor acceptance
+gate has not passed. Preserve the one existing live batch record and task-store
+identity; no bypass or new status is needed.
+
+1. **RCLD02-R1-1 — Enforce model identities and safe mappings (S013–S020).**
+   `parseKitConfig` accepts `uiDir=../outside`, absolute UI roots, styles in
+   `uiDir/_kit`, and a layout colliding with state. The current comment/report
+   deferring these checks to S033 contradicts the approved dispatch. Enforce
+   lexical safety, overlap and reserved-state protection now; real filesystem
+   containment and later project discovery remain S033+ work. Apply the same
+   reserved-state ownership requirements to lock validation with explicit
+   validated mapping context where necessary; retain valid multiple CSS blocks
+   in one aggregate file. Root `registryVersion` and lock tool/registry versions
+   accept `garbage`; enforce strict SemVer on every release identity at actual
+   parse boundaries, not only a standalone helper. Advertised initial support
+   must be exact Svelte `5.57.1` and Bits `2.19.3`, not unqualified caret ranges.
+   Keep actual Bits peers Svelte `^5.33.0` and date `^3.8.1` distinct from tested
+   support and preserve all dependency pins. Record the remaining implemented
+   lock/integration field spelling in DATA_MODEL.md as previously required.
+
+2. **RCLD02-R1-2 — Use one validated package asset view (S025–S027).**
+   Snapshot loading succeeds without the supplied package's schemas, and health
+   accepts a supplied item schema changed to reject everything: `schema.ts`
+   still reads schemas independently beside its own module. Replace that stale
+   fallback with the same explicit, contained package/provider authority used
+   by the operation. Compile/cache only validated schema inputs with identities
+   that cannot cross-contaminate different providers. Missing, invalid UTF-8,
+   malformed/non-object (`null` currently throws), invalid or incompatible
+   schemas must fail with typed logical diagnostics. No remote schema loading.
+   Source/style bytes must be UTF-8 validated too; bytes `ff fe` currently pass
+   advertised health. `list("registry")` currently follows a symlinked starting
+   directory outside the package; validate traversal start and ancestors and
+   report filesystem failures through typed results. Keep trusted-local race
+   limits honest; no claim of hostile-race resistance is required.
+   Freeze the entire snapshot contract: root, manifests, nested arrays/records,
+   asset digests and owned bytes. Today mutating exposed bytes breaks their hash,
+   and pushing a dependency changes a previously resolved snapshot. Defensive
+   copies/read-only access are permitted; shallow Object.freeze and TypeScript
+   readonly alone are insufficient. Preserve provider-mutation isolation.
+   Add real package-copy/tarball execution from a different CWD, loading emitted
+   modules and schemas from that package with no authoring-tree fallback.
+
+3. **RCLD02-R1-3 — Compute a truthful joint npm constraint (S031).**
+   `intersectRanges(["*", ">=1.0.0-rc.1 <1.0.0"])` currently returns a
+   nonempty range even though the first operand excludes every prerelease and
+   the second permits only prereleases. Concatenating comparator sets loses
+   each operand's npm prerelease admission rules. The OR case
+   `["^1 || ^2", ">=1 <3"]` drops the entire valid 2.x branch by returning the
+   first satisfiable clause; a lone unsatisfiable range also returns success.
+   Preserve the full intersection, all original per-range semantics, all roles
+   and requiredBy provenance. Test membership in the result against membership
+   in every operand, with stable/release/prerelease, OR, zero-major, empty and
+   permuted/redundant operands. An internal complexity limit may yield a typed
+   inability-to-evaluate error, never a false dependency conflict; no arbitrary
+   512-combination acceptance restriction is approved. Do not add a dependency
+   or substitute pairwise overlap for joint intersection.
+
+4. **RCLD02-R1-4 — Complete integrated registry health and CSS ownership
+   (S027–S032).** Health currently declares an item with a missing registry
+   dependency installable, without invoking the graph/dependency/collision
+   checks. Compose the production validation path so advertised inventory and
+   resolved operations fail before planning on cycles/missing items, invalid
+   compatibility/dependency requirements and ownership/export collisions.
+   Retain candidates outside advertised claims, and preserve empty development
+   inventory rather than publishing fixture components. Test actual fully
+   parsed fixtures through this path, including valid multi-item inventory;
+   handcrafted partial objects cast as RegistryItem are insufficient alone.
+   Correct the ownership interpretation: distinct uniquely owned component
+   blocks **must share `kit.css`**. S032 currently rejects valid button/card
+   blocks solely for sharing that path. This clarifies "style ownership" in
+   decision 7 below: block ownership is unique; aggregate CSS is not wholly
+   owned by one item. Retain duplicate block/source-file/public symbol and ASCII
+   case-collision rejection. Use styles-namespace-relative `kit.css`, not a
+   second copy of the project's stylesDir inside manifest targets. Explicit
+   dependency order, exports and requested/transitive provenance must survive
+   the integrated healthy multi-item case.
+
+5. **RCLD02-R1-5 — Route every JSON failure through the real CLI (S022–S023).**
+   Built `--json view`, `info --json --bogus` and `--json nonsense` exit 2 with
+   empty stdout and a human stderr usage message. Preserve JSON intent through
+   parse failure and emit exactly one valid deterministic envelope, including
+   controlled bundled-metadata failures in the Node adapter. Keep human-mode
+   failures off stdout, the existing exit map, nonmutation and stable bare
+   help/version. For a recognized command use that command in the envelope;
+   absent/unknown command uses existing `command: "help"` with a usage
+   diagnostic. This is a protocol attribution decision, not an additional
+   product command. Never echo raw physical arguments as public locators or
+   include incidental stack traces/logging. Cover global flag ordering,
+   duplicate flags, missing values, invalid item IDs, unknown commands and
+   missing/invalid copied package metadata via spawned built executables.
+
+6. **RCLD02-R1-6 — Validate semantic metadata without losing meaning
+   (S021/S024).** Canonical serialization turns Date/Map into `{}` and a sparse
+   array into invalid JSON. Accept only JSON data, reject unsupported objects,
+   sparse/undefined entries and cycles with controlled typed diagnostics;
+   retain exact bytes, key sorting, meaningful array order and one LF.
+   Theme validation accepts reversed layer order and `../escape.css` as a
+   stylesheet. Enforce the existing exact ordered three-layer contract
+   (tokens, themes, components), safe logical stylesheet mapping and unique
+   semantic token/property identities; do not equate a sorted set with CSS
+   cascade order. Preserve independent contracts, full radius grammar and
+   qualified portal capabilities. Add schema/runtime agreement controls.
+
+7. **RCLD02-R1-7 — Reconcile evidence and finish the whole boundary.**
+   The cumulative public report contains a parent mount path and workstation
+   execution-router command. Remove those from public evidence; all public
+   commands/paths must be standalone and repository-relative. Retain exact
+   host execution details privately, without copying transcripts into plans
+   or issue records. Amend reports to distinguish original implementation,
+   repairs, known failures and fresh qualification; preserve every original
+   implementation hash. Add the missing production-path negative controls to
+   maintained repository lanes/CI and prove their sensitivity to the faults.
+   Include real installed-package loading evidence rather than only a tarball
+   inventory or an injected provider reading a directory from checkout code.
+   Keep the existing qualified two-upstream-error declaration exception and
+   its open release AC20 obligation; no broad suppression or dependency upgrade.
+   Run all original direct checks and cumulative target qualification, actual
+   actionlint and fresh final reference guard. Capture real exit codes. Pi
+   reports implementation/evidence only; Codex performs later independent
+   acceptance and any atomic twenty-checkpoint state transition.
+
+The legitimate endpoint is the full repaired S013–S032 candidate, with all seven
+groups and original criteria verified and recorded, before S033. A green commit,
+partial test run, report or conversation length is not a stop. Respect user
+stops, actual runtime limits and concrete external blockers; continue other
+eligible work if one part is blocked. No physical hardware or human-only gate
+prevents this software work.
 
 ### Batch boundary and execution authority
 

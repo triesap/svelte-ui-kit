@@ -61,15 +61,27 @@ export const INITIAL_REGISTRY_VERSION: SemVer = "0.1.0";
 export const INITIAL_ITEM_VERSION: SemVer = "0.1.0";
 
 /**
- * Initial advertised frame compatibility. The tested baseline is Svelte
- * 5.57.1 with Bits UI 2.19.3; the `date` range is Bits UI's real peer
- * requirement for `@internationalized/date`. This is a support claim, so it is
- * intentionally narrower than Bits UI's own `^5.33.0` Svelte peer.
+ * Bits UI's own non-optional peer requirements, recorded separately from the
+ * tested-support claim below. Bits 2.19.3 accepts Svelte `^5.33.0` and
+ * `@internationalized/date` `^3.8.1`; these are the primitive's real peers,
+ * not the kit's advertised/qualified baseline.
+ */
+export const BITS_UI_PEER_REQUIREMENTS = {
+  svelte: "^5.33.0",
+  date: "^3.8.1",
+} as const;
+
+/**
+ * Initial advertised frame compatibility: the exact qualified baseline Svelte
+ * `5.57.1` and Bits UI `2.19.3` (not unqualified caret ranges). The `date`
+ * range is Bits UI's real peer requirement for `@internationalized/date`. This
+ * support claim is deliberately narrower than Bits UI's own `^5.33.0` Svelte
+ * peer recorded above.
  */
 export const INITIAL_COMPATIBILITY: CompatibilityPolicy = {
-  svelte: "^5.57.1",
-  bits: "^2.19.3",
-  date: "^3.8.1",
+  svelte: "5.57.1",
+  bits: "2.19.3",
+  date: BITS_UI_PEER_REQUIREMENTS.date,
 };
 
 /** Exact-byte content digest format. */

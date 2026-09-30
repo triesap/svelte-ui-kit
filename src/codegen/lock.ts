@@ -18,6 +18,7 @@
  */
 import { lte as semverLte } from "semver";
 import { compareItemIds, isItemId } from "../project/requests.js";
+import { isSafeLogicalRelativePath, isSameOrBelow } from "../project/paths.js";
 import {
   fail,
   issue,
@@ -26,7 +27,11 @@ import {
   type ModelResult,
 } from "../registry/errors.js";
 import { validateWithSchema } from "../registry/schema.js";
-import { INITIAL_SCHEMA_VERSION, isSemVer } from "../registry/versions.js";
+import {
+  INITIAL_SCHEMA_VERSION,
+  isSemVer,
+  validateSemVer,
+} from "../registry/versions.js";
 
 /** Schema document that owns the lock shape. */
 export const KIT_LOCK_SCHEMA = "kit-lock.schema.json";
@@ -81,14 +86,19 @@ export interface KitLock {
 
 /** Interim safe logical path check (S033 centralizes lexical validation). */
 export function isSafeLockPath(value: unknown): value is string {
-  if (typeof value !== "string" || value.length === 0) return false;
-  if (value.startsWith("/") || value.includes("\\") || value.endsWith("/")) {
-    return false;
-  }
-  if (/^[A-Za-z]:/.test(value)) return false;
-  return value
-    .split("/")
-    .every((segment) => segment !== "" && segment !== "." && segment !== "..");
+  return isSafeLogicalRelativePath(value);
+}
+
+/**
+ * Explicit validated mapping context. When supplied (from a parsed `kit.json`),
+ * lock records are additionally checked against the reserved state directory and
+ * their declared UI/styles namespaces. Omitting it keeps the purely structural
+ * checks.
+ */
+export interface LockValidationContext {
+  readonly stateDir?: string;
+  readonly uiDir?: string;
+  readonly stylesDir?: string;
 }
 
 function sameIds(left: readonly string[], right: readonly string[]): boolean {
@@ -103,12 +113,23 @@ function sameIds(left: readonly string[], right: readonly string[]): boolean {
 export function parseKitLock(
   value: unknown,
   locator = ".kit/kit.lock.json",
+  context: LockValidationContext = {},
 ): ModelResult<KitLock> {
   const schemaResult = validateWithSchema(KIT_LOCK_SCHEMA, value, locator);
   if (!schemaResult.ok) return fail(schemaResult.issues);
 
   const record = value as Record<string, unknown>;
   const issues: ModelIssue[] = [];
+
+  for (const field of ["toolVersion", "registryVersion"] as const) {
+    const result = validateSemVer(record[field], field, field);
+    if (!result.ok) issues.push(...result.issues);
+  }
+
+  const inReservedState = (path: string): boolean =>
+    context.stateDir !== undefined &&
+    isSafeLockPath(path) &&
+    isSameOrBelow(path, context.stateDir);
 
   const requested = (record["requested"] as string[])
     .slice()
@@ -190,6 +211,28 @@ export function parseKitLock(
       } else {
         paths.set(path, index);
       }
+      if (inReservedState(path)) {
+        issues.push(
+          issue(
+            "LOCK_RESERVED_STATE",
+            `files[${index}].path ${JSON.stringify(path)} must not live inside the reserved state directory ${JSON.stringify(context.stateDir)}`,
+            `files[${index}].path`,
+          ),
+        );
+      }
+      if (
+        context.uiDir !== undefined &&
+        isSafeLockPath(path) &&
+        !isSameOrBelow(path, context.uiDir)
+      ) {
+        issues.push(
+          issue(
+            "LOCK_NAMESPACE",
+            `files[${index}].path ${JSON.stringify(path)} must live under the UI root ${JSON.stringify(context.uiDir)}`,
+            `files[${index}].path`,
+          ),
+        );
+      }
     }
     const owner = file["owner"];
     if (typeof owner === "string" && !itemIds.has(owner)) {
@@ -264,6 +307,28 @@ export function parseKitLock(
           `cssBlocks[${index}].path`,
         ),
       );
+    } else {
+      if (inReservedState(block["path"] as string)) {
+        issues.push(
+          issue(
+            "LOCK_RESERVED_STATE",
+            `cssBlocks[${index}].path ${JSON.stringify(block["path"])} must not live inside the reserved state directory ${JSON.stringify(context.stateDir)}`,
+            `cssBlocks[${index}].path`,
+          ),
+        );
+      }
+      if (
+        context.stylesDir !== undefined &&
+        !isSameOrBelow(block["path"] as string, context.stylesDir)
+      ) {
+        issues.push(
+          issue(
+            "LOCK_NAMESPACE",
+            `cssBlocks[${index}].path ${JSON.stringify(block["path"])} must live under the styles root ${JSON.stringify(context.stylesDir)}`,
+            `cssBlocks[${index}].path`,
+          ),
+        );
+      }
     }
     if (!isSemVer(block["itemVersion"])) {
       issues.push(
@@ -317,6 +382,14 @@ export function parseKitLock(
         issue(
           "LOCK_PATH_INVALID",
           `integrations[${index}].path must be a safe logical relative path`,
+          `integrations[${index}].path`,
+        ),
+      );
+    } else if (inReservedState(path)) {
+      issues.push(
+        issue(
+          "LOCK_RESERVED_STATE",
+          `integrations[${index}].path ${JSON.stringify(path)} must not live inside the reserved state directory ${JSON.stringify(context.stateDir)}`,
           `integrations[${index}].path`,
         ),
       );

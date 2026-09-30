@@ -5,6 +5,7 @@ import { ModelError } from "../../src/registry/errors.js";
 import {
   assertContentHash,
   assertVersionIdentities,
+  BITS_UI_PEER_REQUIREMENTS,
   changedVersionAxes,
   CONTENT_HASH_PATTERN,
   INITIAL_COMPATIBILITY,
@@ -46,6 +47,20 @@ test("initial identities validate and stay independent", () => {
   // The compatibility range is a range, never the integer schema identity.
   assert.notEqual(INITIAL_COMPATIBILITY.svelte, String(INITIAL_SCHEMA_VERSION));
   assert.equal(isCompatibilityRange(INITIAL_COMPATIBILITY.svelte), true);
+});
+
+test("advertised tested support is exact and Bits peers stay distinct", () => {
+  assert.equal(INITIAL_COMPATIBILITY.svelte, "5.57.1");
+  assert.equal(INITIAL_COMPATIBILITY.bits, "2.19.3");
+  assert.equal(INITIAL_COMPATIBILITY.date, "^3.8.1");
+  assert.equal(BITS_UI_PEER_REQUIREMENTS.svelte, "^5.33.0");
+  assert.equal(BITS_UI_PEER_REQUIREMENTS.date, "^3.8.1");
+  assert.notEqual(
+    BITS_UI_PEER_REQUIREMENTS.svelte,
+    INITIAL_COMPATIBILITY.svelte,
+  );
+  assert.equal(isCompatibilityRange(INITIAL_COMPATIBILITY.svelte), true);
+  assert.equal(isCompatibilityRange(INITIAL_COMPATIBILITY.bits), true);
 });
 
 test("a framework compatibility change does not imply a schema migration", () => {

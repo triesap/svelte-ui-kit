@@ -136,6 +136,15 @@ test("unsafe manifest paths are rejected", () => {
   );
 });
 
+test("a non-SemVer registry release fails at the parse boundary", () => {
+  assert.equal(
+    issueCodes(
+      withHash({ ...SAMPLE_BASIS, registryVersion: "garbage" }),
+    ).includes("SEMVER_INVALID"),
+    true,
+  );
+});
+
 test("unknown root fields and bad shapes fail the schema", () => {
   const codes = issueCodes({
     ...withHash(SAMPLE_BASIS),
