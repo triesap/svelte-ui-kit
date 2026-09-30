@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:svelte-ui-kit:schema:v1:registry",
+  "title": "svelte-ui-kit registry root (v1)",
+  "description": "Bundled registry inventory. Items are explicit {id, manifest} records so duplicate IDs are structural; the development root advertises no unimplemented items.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "registryVersion",
+    "contentHash",
+    "compatibility",
+    "items"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Local registry schema revision, independent of any framework release.",
+      "const": 1
+    },
+    "registryVersion": {
+      "description": "SemVer release of this bundled registry.",
+      "type": "string",
+      "minLength": 1
+    },
+    "contentHash": {
+      "description": "SHA-256 over the canonical registry identity without this field.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "compatibility": {
+      "description": "Advertised frame compatibility ranges.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["svelte", "bits", "date"],
+      "properties": {
+        "svelte": { "type": "string", "minLength": 1 },
+        "bits": { "type": "string", "minLength": 1 },
+        "date": { "type": "string", "minLength": 1 }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "manifest"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+          },
+          "manifest": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*\\.json$"
+          }
+        }
+      }
+    }
+  }
+}
