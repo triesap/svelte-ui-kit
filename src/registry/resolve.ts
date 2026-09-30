@@ -13,7 +13,6 @@
  * Every diagnostic names the registry identity (version + content hash) so a
  * failure is attributable to the packaged inventory it was resolved against.
  */
-import { compareItemIds } from "../project/requests.js";
 import {
   fail,
   issue,
@@ -22,6 +21,7 @@ import {
   type ModelResult,
 } from "./errors.js";
 import type { RegistrySnapshot, RegistrySnapshotItem } from "./load.js";
+import { orderDependencies, orderedUnique } from "./order.js";
 
 export interface ResolvedClosure {
   /** Sorted explicit roots. */
@@ -53,7 +53,7 @@ export function resolveClosure(
   requested: readonly string[],
 ): ModelResult<ResolvedClosure> {
   const identity = registryIdentity(snapshot);
-  const roots = [...new Set(requested)].sort(compareItemIds);
+  const roots = orderedUnique(requested);
   const issues: ModelIssue[] = [];
   const state = new Map<string, "visiting" | "done">();
   const stack: string[] = [];
@@ -87,9 +87,7 @@ export function resolveClosure(
     }
     state.set(id, "visiting");
     stack.push(id);
-    const dependencies = [...item.manifest.registryDependencies].sort(
-      compareItemIds,
-    );
+    const dependencies = orderDependencies(item.manifest.registryDependencies);
     for (const dependency of dependencies) visit(dependency);
     stack.pop();
     state.set(id, "done");
@@ -101,7 +99,7 @@ export function resolveClosure(
 
   return ok({
     roots,
-    items: [...order].sort(compareItemIds),
+    items: orderedUnique(order),
     order,
   });
 }

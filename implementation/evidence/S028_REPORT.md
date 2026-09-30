@@ -1,7 +1,7 @@
 # S028 step report — Resolve dependencies with cycle and missing-item diagnostics
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S028","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S028","kind":"report","commit":"23ad1cd7d042f31fa2597053e0e11cb9da68162e","disposition":"candidate"}
 -->
 
 Step ID and title: S028 — Resolve dependencies with cycle and missing-item
