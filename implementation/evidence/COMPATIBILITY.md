@@ -731,8 +731,7 @@ CI, other platforms and package release acceptance remain unproven.
 ### Closure-batch cumulative qualification
 
 Run at repaired revision `a71a6c44609cf26992eb57909ea5f30155348c90` on macOS with
-Node 24.21.0 / pnpm 11.22.0, routed through the extbuild runtime. Every target
-lane exited 0:
+Node 24.21.0 / pnpm 11.22.0. Every target lane exited 0:
 
 | Lane           | Command                                                                     | Exit | Result                                     |
 | -------------- | --------------------------------------------------------------------------- | ---- | ------------------------------------------ |
@@ -751,9 +750,9 @@ lane exited 0:
 | Contracts      | `pnpm run check:contracts`                                                  | 0    | 0 errors, 0 warnings                       |
 | Contract tests | `pnpm run test:contracts`                                                   | 0    | 108 / 108                                  |
 
-The one skip is the UNIX-socket control: the extbuild-remapped temporary path
-exceeds the local `sockaddr_un` limit (`EINVAL`); the FIFO control exercises the
-same regular-file rejection branch on this platform.
+The one skip is the UNIX-socket control: the temporary socket path exceeds the
+local `sockaddr_un` limit (`EINVAL`); the FIFO control exercises the same
+regular-file rejection branch on this platform.
 
 Fresh routed reference guard at clean `a10fbf06334f4648f5755e05a7147414e4e5fc98`
 (`cargo fmt --all -- --check`, `cargo check --workspace --all-targets`,
