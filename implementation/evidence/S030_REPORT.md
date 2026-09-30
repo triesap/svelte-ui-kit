@@ -1,7 +1,7 @@
 # S030 step report — Project requested versus transitive provenance
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S030","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S030","kind":"report","commit":"cb67f7cb6b70e5424b7e51258c631cc119db055e","disposition":"candidate"}
 -->
 
 Step ID and title: S030 — Project requested versus transitive provenance.
