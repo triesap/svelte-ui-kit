@@ -52,6 +52,25 @@ function contained(parent: string, child: string): boolean {
   );
 }
 
+/**
+ * Convert an ordinary filesystem failure into a typed logical diagnostic. Only
+ * the errno code is reported, never the host path or stack in `error.message`,
+ * so public output stays machine-independent and safe to print.
+ */
+function ioFailure(
+  logicalPath: string,
+  action: string,
+  error: unknown,
+): ModelIssue {
+  const code = (error as NodeJS.ErrnoException | undefined)?.code;
+  const cause = typeof code === "string" ? code : "UNKNOWN";
+  return issue(
+    "ASSET_IO_FAILURE",
+    `could not ${action} ${JSON.stringify(logicalPath)} (${cause})`,
+    logicalPath,
+  );
+}
+
 /** Locate the package root by walking up for `package.json` (no CWD use). */
 export function resolvePackageRoot(fromUrl: string | URL): string {
   let dir = dirname(fileURLToPath(fromUrl));
@@ -174,7 +193,12 @@ export function createAssetProvider(root: string): AssetProvider {
         ),
       ]);
     }
-    const stats = lstatSync(absolute);
+    let stats: ReturnType<typeof lstatSync>;
+    try {
+      stats = lstatSync(absolute);
+    } catch (error) {
+      return fail([ioFailure(logicalPath, "stat", error)]);
+    }
     if (stats.isSymbolicLink()) {
       return fail([
         issue(
@@ -197,13 +221,7 @@ export function createAssetProvider(root: string): AssetProvider {
     try {
       real = realpathSync(absolute);
     } catch (error) {
-      return fail([
-        issue(
-          "ASSET_SYMLINK_ESCAPE",
-          `asset could not be resolved: ${error instanceof Error ? error.message : String(error)}`,
-          logicalPath,
-        ),
-      ]);
+      return fail([ioFailure(logicalPath, "resolve", error)]);
     }
     if (!contained(realRoot(), real)) {
       return fail([
@@ -214,7 +232,13 @@ export function createAssetProvider(root: string): AssetProvider {
         ),
       ]);
     }
-    return ok(new Uint8Array(readFileSync(absolute)));
+    let bytes: Buffer;
+    try {
+      bytes = readFileSync(absolute);
+    } catch (error) {
+      return fail([ioFailure(logicalPath, "read", error)]);
+    }
+    return ok(new Uint8Array(bytes));
   };
 
   const readText = (logicalPath: string): ModelResult<string> => {
@@ -328,13 +352,7 @@ export function createAssetProvider(root: string): AssetProvider {
       walk(base, prefix);
       return ok(out.sort());
     } catch (error) {
-      return fail([
-        issue(
-          "ASSET_IO_FAILURE",
-          `could not list ${JSON.stringify(prefix)}: ${error instanceof Error ? error.message : String(error)}`,
-          prefix,
-        ),
-      ]);
+      return fail([ioFailure(prefix, "list", error)]);
     }
   };
 

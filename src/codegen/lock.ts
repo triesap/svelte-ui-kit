@@ -30,7 +30,10 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
-import { validateWithSchema } from "../registry/schema.js";
+import {
+  validateWithSchema,
+  type SchemaAuthority,
+} from "../registry/schema.js";
 import {
   INITIAL_SCHEMA_VERSION,
   isSemVer,
@@ -118,8 +121,14 @@ export function parseKitLock(
   value: unknown,
   locator = ".kit/kit.lock.json",
   context: LockValidationContext = {},
+  authority?: SchemaAuthority,
 ): ModelResult<KitLock> {
-  const schemaResult = validateWithSchema(KIT_LOCK_SCHEMA, value, locator);
+  const schemaResult = validateWithSchema(
+    KIT_LOCK_SCHEMA,
+    value,
+    locator,
+    authority,
+  );
   if (!schemaResult.ok) return fail(schemaResult.issues);
 
   const record = value as Record<string, unknown>;

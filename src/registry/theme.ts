@@ -22,7 +22,7 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "./errors.js";
-import { validateWithSchema } from "./schema.js";
+import { validateWithSchema, type SchemaAuthority } from "./schema.js";
 import { isSafeLogicalRelativePath } from "../project/paths.js";
 import {
   INITIAL_CONTRACT_VERSION,
@@ -156,11 +156,13 @@ function sameOrder(left: readonly string[], right: readonly string[]): boolean {
 export function parseTokenContract(
   value: unknown,
   locator = "token-contract.json",
+  authority?: SchemaAuthority,
 ): ModelResult<TokenContract> {
   const schema = validateWithSchema(
     "token-contract.schema.json",
     value,
     locator,
+    authority,
   );
   if (!schema.ok) return fail(schema.issues);
   const issues = rustIssues(value, locator);
@@ -207,11 +209,13 @@ export function parseTokenContract(
 export function parseComponentCustomization(
   value: unknown,
   locator = "component-customization.json",
+  authority?: SchemaAuthority,
 ): ModelResult<ComponentCustomization> {
   const schema = validateWithSchema(
     "component-customization.schema.json",
     value,
     locator,
+    authority,
   );
   if (!schema.ok) return fail(schema.issues);
   const issues = rustIssues(value, locator);
@@ -247,11 +251,13 @@ export function parseComponentCustomization(
 export function parseThemeIntegration(
   value: unknown,
   locator = "theme-integration.json",
+  authority?: SchemaAuthority,
 ): ModelResult<ThemeIntegration> {
   const schema = validateWithSchema(
     "theme-integration.schema.json",
     value,
     locator,
+    authority,
   );
   if (!schema.ok) return fail(schema.issues);
   const issues = rustIssues(value, locator);
@@ -308,20 +314,33 @@ export function parseThemeIntegration(
 }
 
 /** Cross-check the three contracts for identity/layer agreement. */
-export function parseThemeMetadata(bundle: {
-  readonly tokenContract: unknown;
-  readonly componentCustomization: unknown;
-  readonly themeIntegration: unknown;
-}): ModelResult<{
+export function parseThemeMetadata(
+  bundle: {
+    readonly tokenContract: unknown;
+    readonly componentCustomization: unknown;
+    readonly themeIntegration: unknown;
+  },
+  authority?: SchemaAuthority,
+): ModelResult<{
   tokenContract: TokenContract;
   componentCustomization: ComponentCustomization;
   themeIntegration: ThemeIntegration;
 }> {
-  const tokenResult = parseTokenContract(bundle.tokenContract);
+  const tokenResult = parseTokenContract(
+    bundle.tokenContract,
+    "token-contract.json",
+    authority,
+  );
   const customizationResult = parseComponentCustomization(
     bundle.componentCustomization,
+    "component-customization.json",
+    authority,
   );
-  const integrationResult = parseThemeIntegration(bundle.themeIntegration);
+  const integrationResult = parseThemeIntegration(
+    bundle.themeIntegration,
+    "theme-integration.json",
+    authority,
+  );
   const issues: ModelIssue[] = [];
   if (!tokenResult.ok) issues.push(...tokenResult.issues);
   if (!customizationResult.ok) issues.push(...customizationResult.issues);

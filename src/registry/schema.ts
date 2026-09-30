@@ -11,23 +11,29 @@
  * - `additionalProperties: false` in each schema makes unknown fields explicit
  *   validation failures instead.
  *
- * There is one explicit schema authority per asset provider. The authority
- * reads each schema through that provider (no CWD, source-checkout or network
- * fallback), validates its identity/format, compiles it once and caches it for
- * the provider root. Each authority owns its own `ajv` instance so two
- * providers that reuse a schema `$id` can never cross-contaminate each other.
+ * There is exactly one containment path: every default parser resolves a
+ * provider-scoped `SchemaAuthority` through the installed package provider, so
+ * a `kit.json`/lock/theme/envelope parse reads the same contained, validated
+ * schema bytes the registry snapshot does. There is no raw `readFileSync`
+ * fallback, no CWD or source-checkout lookup and no remote resolution.
+ *
+ * Each operation validates its own inputs. The authority is built by reading
+ * and validating every shipped schema through the supplied provider; only the
+ * *compilation* of already-verified content is reused, keyed by the exact
+ * validated schema text. A missing, malformed, non-object, wrongly identified
+ * or invalid-UTF8 schema therefore fails with typed logical diagnostics on
+ * every operation, while a compiled validator set is never reused across
+ * different content.
  *
  * `ajv` 6 is a CommonJS module whose `export =` is a constructable value. It is
  * loaded through `createRequire` so the ESM build does not depend on a
  * synthetic default import.
  */
 import type { ErrorObject, ValidateFunction } from "ajv";
-import { existsSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
-import type { AssetProvider } from "./assets.js";
+import { createInstalledAssetProvider, type AssetProvider } from "./assets.js";
 import {
   fail,
   issue,
@@ -83,75 +89,6 @@ function createAjv(): AjvInstance {
   return new Ajv(AJV_OPTIONS);
 }
 
-/**
- * Locate the package root by walking up for `package.json`. This works for the
- * emitted `dist/` tree and for the mirrored unit/integration build trees
- * without depending on the process CWD. It is only the default provider for
- * callers that do not supply an explicit asset provider.
- */
-function packageRootDir(): string {
-  let dir = dirname(fileURLToPath(import.meta.url));
-  for (;;) {
-    if (existsSync(join(dir, "package.json"))) return dir;
-    const parent = dirname(dir);
-    if (parent === dir) {
-      throw new Error("could not locate the svelte-ui-kit package root");
-    }
-    dir = parent;
-  }
-}
-
-let schemaRootDir: string | null = null;
-
-function schemaRoot(): string {
-  if (schemaRootDir === null) {
-    schemaRootDir = join(packageRootDir(), "schema", "v1");
-  }
-  return schemaRootDir;
-}
-
-const legacyCompiled = new Map<string, ValidateFunction>();
-let legacyAjvInstance: AjvInstance | null = null;
-
-function legacyAjv(): AjvInstance {
-  if (legacyAjvInstance === null) legacyAjvInstance = createAjv();
-  return legacyAjvInstance;
-}
-
-function legacyValidatorFor(schemaFile: string): ValidateFunction {
-  const existing = legacyCompiled.get(schemaFile);
-  if (existing !== undefined) return existing;
-  const text = readFileSync(join(schemaRoot(), schemaFile), "utf8");
-  const parsed: unknown = JSON.parse(text);
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new Error(`schema ${schemaFile} is not a JSON object`);
-  }
-  const created = legacyAjv().compile(parsed as object);
-  legacyCompiled.set(schemaFile, created);
-  return created;
-}
-
-/** Read and parse one local schema document (relative to `schema/v1/`). */
-export function loadSchemaDocument(
-  schemaFile: string,
-): Record<string, unknown> {
-  const text = readFileSync(join(schemaRoot(), schemaFile), "utf8");
-  const parsed: unknown = JSON.parse(text);
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new Error(`schema ${schemaFile} is not a JSON object`);
-  }
-  return parsed as Record<string, unknown>;
-}
-
-/**
- * Compile (once) and return the validator for a bundled schema document. This
- * is the default-package path; provider-scoped callers use a
- * `SchemaAuthority`.
- */
-export function validatorFor(schemaFile: string): ValidateFunction {
-  return legacyValidatorFor(schemaFile);
-}
-
 function toIssues(
   errors: readonly ErrorObject[],
   locator: string | undefined,
@@ -166,34 +103,7 @@ function toIssues(
   });
 }
 
-/**
- * Validate `data` against a bundled schema through the default package
- * provider. Provider-scoped callers should prefer `SchemaAuthority.validate`.
- */
-export function validateWithSchema(
-  schemaFile: string,
-  data: unknown,
-  locator?: string,
-): ModelResult<unknown> {
-  const validate = legacyValidatorFor(schemaFile);
-  if (validate(data)) return ok(data);
-  return fail(toIssues(validate.errors ?? [], locator));
-}
-
-/** A compiled, provider-scoped set of the shipped schemas. */
-export interface SchemaAuthority {
-  /** Absolute provider root this authority is pinned to. */
-  readonly root: string;
-  /** Validate `data` against one shipped schema file name. */
-  validate(
-    schemaFile: string,
-    data: unknown,
-    locator?: string,
-  ): ModelResult<unknown>;
-}
-
-const authorities = new Map<string, SchemaAuthority>();
-
+/** Describe a value for a typed diagnostic without echoing host state. */
 function describe(value: unknown): string {
   if (typeof value === "string") return JSON.stringify(value);
   if (value === null) return "null";
@@ -204,22 +114,106 @@ function describe(value: unknown): string {
 }
 
 /**
- * Build (or reuse) the schema authority for `provider`. Every shipped schema is
- * read through the provider, checked for a JSON object shape, the expected
- * local `$id` and a draft-07 meta-schema, then compiled. Missing, malformed,
- * non-object, invalid-UTF8 or incompatible schemas fail with typed logical
- * diagnostics rather than throwing. No remote resolution or checkout fallback
- * is used.
+ * Compilation cache keyed by the exact validated schema text. Reusing a
+ * compiled validator set is only safe for byte-identical, already-validated
+ * content, never for a directory string.
+ */
+const compiledSchemas = new Map<
+  string,
+  ReadonlyMap<string, ValidateFunction>
+>();
+
+function validateSchemaDocument(
+  logicalPath: string,
+  expectedId: string,
+  text: string,
+  issues: ModelIssue[],
+): boolean {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    issues.push(
+      issue(
+        "SCHEMA_INVALID_DOCUMENT",
+        `${logicalPath} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
+        logicalPath,
+      ),
+    );
+    return false;
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    issues.push(
+      issue(
+        "SCHEMA_INVALID_DOCUMENT",
+        `${logicalPath} must be a JSON object, received ${describe(parsed)}`,
+        logicalPath,
+      ),
+    );
+    return false;
+  }
+  const record = parsed as Record<string, unknown>;
+  if (record["$id"] !== expectedId) {
+    issues.push(
+      issue(
+        "SCHEMA_IDENTITY_MISMATCH",
+        `${logicalPath} must declare $id ${JSON.stringify(expectedId)}, found ${JSON.stringify(record["$id"])}`,
+        logicalPath,
+      ),
+    );
+    return false;
+  }
+  if (
+    typeof record["$schema"] !== "string" ||
+    !record["$schema"].includes("draft-07")
+  ) {
+    issues.push(
+      issue(
+        "SCHEMA_IDENTITY_MISMATCH",
+        `${logicalPath} must declare the local draft-07 meta-schema`,
+        logicalPath,
+      ),
+    );
+    return false;
+  }
+  return true;
+}
+
+function contentKey(entries: readonly (readonly [string, string])[]): string {
+  const hash = createHash("sha256");
+  for (const [file, text] of [...entries].sort((left, right) =>
+    left[0] < right[0] ? -1 : left[0] > right[0] ? 1 : 0,
+  )) {
+    hash.update(`${file}\u0000${text}\u0000`);
+  }
+  return hash.digest("hex");
+}
+
+/** A compiled, provider-scoped set of the shipped schemas. */
+export interface SchemaAuthority {
+  /** Absolute provider root this authority was built from (informational). */
+  readonly root: string;
+  /** Validate `data` against one shipped schema file name. */
+  validate(
+    schemaFile: string,
+    data: unknown,
+    locator?: string,
+  ): ModelResult<unknown>;
+}
+
+/**
+ * Build a schema authority from `provider`. Every shipped schema is read and
+ * validated through that provider; missing, malformed, non-object, wrongly
+ * identified, invalid-UTF8 or incompatible schemas fail with typed logical
+ * diagnostics rather than throwing. The returned authority is bound to the
+ * captured schema content, so a later provider mutation cannot change it and a
+ * second provider with different content is never shadowed by a cache.
  */
 export function createSchemaAuthority(
   provider: AssetProvider,
 ): ModelResult<SchemaAuthority> {
-  const cached = authorities.get(provider.root);
-  if (cached !== undefined) return ok(cached);
-
   const issues: ModelIssue[] = [];
-  const ajv = createAjv();
-  const validators = new Map<string, ValidateFunction>();
+  const captured: [string, string][] = [];
 
   for (const [schemaFile, expectedId] of Object.entries(SHIPPED_SCHEMAS)) {
     const logicalPath = `schema/v1/${schemaFile}`;
@@ -228,80 +222,45 @@ export function createSchemaAuthority(
       issues.push(...text.issues);
       continue;
     }
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(text.value);
-    } catch (error) {
-      issues.push(
-        issue(
-          "SCHEMA_INVALID_DOCUMENT",
-          `${logicalPath} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
-          logicalPath,
-        ),
-      );
-      continue;
-    }
-    if (
-      typeof parsed !== "object" ||
-      parsed === null ||
-      Array.isArray(parsed)
-    ) {
-      issues.push(
-        issue(
-          "SCHEMA_INVALID_DOCUMENT",
-          `${logicalPath} must be a JSON object, received ${describe(parsed)}`,
-          logicalPath,
-        ),
-      );
-      continue;
-    }
-    const record = parsed as Record<string, unknown>;
-    if (record["$id"] !== expectedId) {
-      issues.push(
-        issue(
-          "SCHEMA_IDENTITY_MISMATCH",
-          `${logicalPath} must declare $id ${JSON.stringify(expectedId)}, found ${JSON.stringify(record["$id"])}`,
-          logicalPath,
-        ),
-      );
-      continue;
-    }
-    if (
-      typeof record["$schema"] !== "string" ||
-      !record["$schema"].includes("draft-07")
-    ) {
-      issues.push(
-        issue(
-          "SCHEMA_IDENTITY_MISMATCH",
-          `${logicalPath} must declare the local draft-07 meta-schema`,
-          logicalPath,
-        ),
-      );
-      continue;
-    }
-    try {
-      validators.set(schemaFile, ajv.compile(record));
-    } catch (error) {
-      issues.push(
-        issue(
-          "SCHEMA_COMPILE_INVALID",
-          `${logicalPath} could not be compiled: ${error instanceof Error ? error.message : String(error)}`,
-          logicalPath,
-        ),
-      );
+    if (validateSchemaDocument(logicalPath, expectedId, text.value, issues)) {
+      captured.push([schemaFile, text.value]);
     }
   }
 
   if (issues.length > 0) return fail(issues);
 
-  const authority: SchemaAuthority = {
+  const key = contentKey(captured);
+  let validators = compiledSchemas.get(key);
+  if (validators === undefined) {
+    const ajv = createAjv();
+    const built = new Map<string, ValidateFunction>();
+    for (const [schemaFile, text] of captured) {
+      try {
+        built.set(schemaFile, ajv.compile(JSON.parse(text) as object));
+      } catch (error) {
+        issues.push(
+          issue(
+            "SCHEMA_COMPILE_INVALID",
+            `schema/v1/${schemaFile} could not be compiled: ${error instanceof Error ? error.message : String(error)}`,
+            `schema/v1/${schemaFile}`,
+          ),
+        );
+      }
+    }
+    if (issues.length > 0) return fail(issues);
+    validators = built;
+    compiledSchemas.set(key, validators);
+  }
+
+  const bound = validators;
+  return ok({
     root: provider.root,
     validate(
       schemaFile: string,
       data: unknown,
       locator?: string,
     ): ModelResult<unknown> {
-      const validate = validators.get(schemaFile);
+      const validate = bound.get(schemaFile);
       if (validate === undefined) {
         return fail([
           issue(
@@ -314,12 +273,43 @@ export function createSchemaAuthority(
       if (validate(data)) return ok(data);
       return fail(toIssues(validate.errors ?? [], locator));
     },
-  };
-  authorities.set(provider.root, authority);
-  return ok(authority);
+  });
 }
 
-/** Drop all cached authorities (tests that reuse a provider root). */
-export function resetSchemaAuthorities(): void {
-  authorities.clear();
+let installedProvider: AssetProvider | null = null;
+
+/**
+ * The safe default authority: the schemas shipped beside the running package.
+ * Lazy, so bare CLI help/version bootstrap never needs a schema read. Every
+ * call re-validates the installed schemas, so removing or replacing them after
+ * a successful parse still fails the next operation with typed diagnostics.
+ */
+export function defaultSchemaAuthority(): ModelResult<SchemaAuthority> {
+  if (installedProvider === null) {
+    installedProvider = createInstalledAssetProvider();
+  }
+  return createSchemaAuthority(installedProvider);
+}
+
+/**
+ * Validate `data` against one shipped schema through an explicit authority or,
+ * when none is supplied, the contained installed-package default. A caller
+ * never supplies a bare root string: config, lock, theme and envelope parsers
+ * therefore share the same provider-bound validation path as the registry
+ * snapshot.
+ */
+export function validateWithSchema(
+  schemaFile: string,
+  data: unknown,
+  locator?: string,
+  authority?: SchemaAuthority,
+): ModelResult<unknown> {
+  let resolved: ModelResult<SchemaAuthority>;
+  if (authority === undefined) {
+    resolved = defaultSchemaAuthority();
+  } else {
+    resolved = ok(authority);
+  }
+  if (!resolved.ok) return fail(resolved.issues);
+  return resolved.value.validate(schemaFile, data, locator);
 }

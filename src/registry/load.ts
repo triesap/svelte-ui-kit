@@ -28,7 +28,7 @@ import {
   type RegistryAssetDigest,
   type RegistryRoot,
 } from "./model.js";
-import { createSchemaAuthority, type SchemaAuthority } from "./schema.js";
+import { createSchemaAuthority } from "./schema.js";
 
 /** One resolved source/style asset with read-only bytes. */
 export interface RegistrySnapshotFile {
@@ -117,16 +117,15 @@ function readJson(
 export function loadRegistrySnapshot(
   provider: AssetProvider,
   locator = "registry/registry.json",
-  suppliedAuthority?: SchemaAuthority,
 ): ModelResult<RegistrySnapshot> {
   const issues: ModelIssue[] = [];
 
-  let authority = suppliedAuthority;
-  if (authority === undefined) {
-    const created = createSchemaAuthority(provider);
-    if (!created.ok) return fail(created.issues);
-    authority = created.value;
-  }
+  // The authority is derived internally from the same provider that supplied
+  // the assets. A caller cannot hand in another root's authority to load a
+  // schema-less package, and every operation re-validates its own schema bytes.
+  const createdAuthority = createSchemaAuthority(provider);
+  if (!createdAuthority.ok) return fail(createdAuthority.issues);
+  const authority = createdAuthority.value;
 
   const rootRaw = readJson(provider, locator, "REGISTRY_ROOT_INVALID", issues);
   if (rootRaw === undefined) return fail(issues);

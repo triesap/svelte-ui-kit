@@ -22,7 +22,10 @@
  */
 import { canonicalJson } from "../codegen/serialize.js";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
-import { validateWithSchema } from "../registry/schema.js";
+import {
+  validateWithSchema,
+  type SchemaAuthority,
+} from "../registry/schema.js";
 import { INITIAL_PROTOCOL_VERSION } from "../registry/versions.js";
 
 /** Schema document that owns the envelope shape. */
@@ -150,11 +153,13 @@ export function createEnvelope(input: {
 export function parseEnvelope(
   value: unknown,
   locator = "command envelope",
+  authority?: SchemaAuthority,
 ): ModelResult<CommandEnvelope> {
   const schemaResult = validateWithSchema(
     COMMAND_ENVELOPE_SCHEMA,
     value,
     locator,
+    authority,
   );
   if (!schemaResult.ok) return fail(schemaResult.issues);
 

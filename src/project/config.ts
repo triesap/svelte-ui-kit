@@ -19,7 +19,10 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
-import { validateWithSchema } from "../registry/schema.js";
+import {
+  validateWithSchema,
+  type SchemaAuthority,
+} from "../registry/schema.js";
 import {
   INITIAL_SCHEMA_VERSION,
   INITIAL_TOOL_VERSION,
@@ -125,8 +128,14 @@ function describe(value: unknown): string {
 export function parseKitConfig(
   value: unknown,
   locator = "kit.json",
+  authority?: SchemaAuthority,
 ): ModelResult<KitConfig> {
-  const schemaResult = validateWithSchema(KIT_CONFIG_SCHEMA, value, locator);
+  const schemaResult = validateWithSchema(
+    KIT_CONFIG_SCHEMA,
+    value,
+    locator,
+    authority,
+  );
   if (!schemaResult.ok) return fail(schemaResult.issues);
 
   const record = value as Record<string, unknown>;
