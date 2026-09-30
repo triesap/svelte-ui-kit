@@ -662,8 +662,12 @@ commits are appended separately as they land.
   the socket control runs from an owned short socket root. Integration lane
   15/15 with no skips.
 
-The cumulative RCLD-01 qualification for this final repaired revision, the
-fresh reference guard and the checksum-verified actionlint run are recorded in
+The cumulative RCLD-01 qualification for the final repaired revision
+`8cb5abaf72be02f5fdf5ff4c5484cf7ebc195c40` (all fourteen target lanes exit 0;
+integration 15/15 with no skips, components 22/22, browser 23/23, contract
+tests 108/108), the fresh reference guard at the clean reference
+`a10fbf06334f4648f5755e05a7147414e4e5fc98` and the checksum-verified
+`actionlint 1.7.12` run are recorded in
 `implementation/evidence/COMPATIBILITY.md` and the git-ignored lane logs. This
 is implementation and verification only: S007–S012 remain pending independent
 Codex review, completion stays null and S013 is not started.

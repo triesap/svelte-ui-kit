@@ -815,3 +815,53 @@ CI, other platforms and package release acceptance remain unproven.
 The full cumulative RCLD-01 qualification, the fresh reference guard and the
 checksum-verified actionlint run at the final repaired revision are recorded in
 the `RCLD01-R3 cumulative qualification` section below.
+
+### RCLD01-R3 cumulative qualification
+
+Run at repaired revision `8cb5abaf72be02f5fdf5ff4c5484cf7ebc195c40` on macOS
+(arm64) with Node 24.21.0 / pnpm 11.22.0. Every target lane exited 0:
+
+| Lane           | Command                                                                     | Exit | Result                               |
+| -------------- | --------------------------------------------------------------------------- | ---- | ------------------------------------ |
+| Frozen install | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | 0    | already up to date                   |
+| Format         | `pnpm run format:check`                                                     | 0    | all matched files                    |
+| Lint           | `pnpm run lint`                                                             | 0    | no findings                          |
+| Typecheck      | `pnpm run typecheck`                                                        | 0    | four compiler configurations         |
+| Unit           | `pnpm run test:unit`                                                        | 0    | 20 / 20                              |
+| Runner harness | `pnpm run test:harness`                                                     | 0    | 35 / 35                              |
+| Integration    | `pnpm run test:integration`                                                 | 0    | 15 / 15, no skips                    |
+| Components     | `pnpm run test:components`                                                  | 0    | 22 / 22                              |
+| CLI smoke      | `pnpm run test:cli-bootstrap`                                               | 0    | 41 / 41                              |
+| Fixture check  | `pnpm run fixture:check`                                                    | 0    | 0 errors, 0 warnings                 |
+| Consumer SSR   | `pnpm run test:fixture`                                                     | 0    | 23 / 23                              |
+| Browser        | `pnpm run test:browser -- tests/browser/harness.spec.ts`                    | 0    | 23 passed (7 fault children + clean) |
+| Contracts      | `pnpm run check:contracts`                                                  | 0    | 0 errors, 0 warnings                 |
+| Contract tests | `pnpm run test:contracts`                                                   | 0    | 108 / 108                            |
+
+Every new control ran through its maintained lane: the strict-audit summary,
+workspace-identity and owned-cleanup controls in `test:components`; the
+per-fault screenshot and trace assertions plus the ordinary body-assertion
+control in `test:browser -- tests/browser/harness.spec.ts`; and the bounded
+FIFO child, regressed-writer termination and short-root socket controls in
+`test:integration`. Raw lane logs are under the git-ignored
+`implementation/evidence/logs/r3-20260930T131704Z/`.
+
+Fresh routed reference guard at the clean reference
+`a10fbf06334f4648f5755e05a7147414e4e5fc98` on the same workstation
+(`cargo fmt --all -- --check`, `cargo check --workspace --all-targets`,
+`cargo test --workspace --all-targets`): all exit 0; the test lane reported 578
+passed, 0 failed, 4 ignored across 43 result blocks. The reference was clean at
+that hash and was not modified. Reference logs are under the git-ignored
+`implementation/evidence/logs/r3-20260930T132224Z-reference/`.
+
+`actionlint 1.7.12` (darwin/arm64) with SHA-256
+`aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f`, matching
+the published `actionlint_1.7.12_checksums.txt`, ran
+`actionlint .github/workflows/ci.yml` at exit 0 with no findings; `shellcheck
+0.11.0` was present. The tool was unpacked in an owned temporary directory
+outside the repository and is not committed.
+
+This records implementation and verification only. S007–S012 remain
+`committed_pending_review` with their original pending hashes and null
+completion; independent Codex acceptance and the atomic evidence-commit
+transition remain outstanding, and S013 is not started.
