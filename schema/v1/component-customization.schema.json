@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:svelte-ui-kit:schema:v1:component-customization",
+  "title": "svelte-ui-kit component customization contract (v1)",
+  "description": "Separately governed runtime CSS API for per-component properties, distinct from semantic theme tokens.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "contractVersion", "description", "properties"],
+  "properties": {
+    "id": { "const": "urn:svelte-ui-kit:component-customization:v1" },
+    "contractVersion": { "const": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "properties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "scope", "grammar", "fallback"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^--kit-[a-z0-9-]+$"
+          },
+          "scope": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+          },
+          "grammar": {
+            "description": "Intended CSS value grammar, for example a full border-radius form.",
+            "type": "string",
+            "minLength": 1
+          },
+          "fallback": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

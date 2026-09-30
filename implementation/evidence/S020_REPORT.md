@@ -1,7 +1,7 @@
 # S020 step report — Add CSS-block and integration lock records
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S020","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S020","kind":"report","commit":"b9cb6cc47313bb23614014f6562140ae89a42932","disposition":"candidate"}
 -->
 
 Step ID and title: S020 — Add CSS-block and integration lock records.
