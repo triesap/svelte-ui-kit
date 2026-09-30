@@ -1,7 +1,7 @@
 # S014 step report — Freeze and validate strict kit configuration
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S014","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S014","kind":"report","commit":"1dd359fbbd87e846d47558615a003659396ba7bc","disposition":"candidate"}
 -->
 
 Step ID and title: S014 — Freeze and validate strict kit configuration.
