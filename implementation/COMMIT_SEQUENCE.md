@@ -411,6 +411,16 @@ not the original pending implementation hashes recorded in the ledger):
   Adds an end-to-end browser fault control that fails a real bounded nested run.
   Verified: owned-server 16/16, `test:fixture` 23/23, browser 11/11,
   format/lint/typecheck green.
+- **RCLD01-REPAIR-2 — S009 physical containment.** Commit
+  `156f0104d5049162bfcce1921bf9b71bb7b6cb86`. Rejects symlinked or invalid
+  physical ancestry and final targets before mutation, keeps explicit fixture
+  symlink creation supported, and snapshots complete external trees. Verified:
+  integration 12/12.
+- **RCLD01-REPAIR-3 — S010/S011 primitive and strict-declaration audit.**
+  Commit `c9108c459d124e231430a382b21f198ed17eb5ae`. Renders the actual pinned
+  `Switch.Thumb`, adds the mandatory strict declaration audit with fault
+  controls, and reports the two pinned upstream diagnostics as a qualified
+  exception. Verified: components 7/7, fixture 23/23, browser 11/11.
 
 ### Dependency decision and bounded upstream exception
 

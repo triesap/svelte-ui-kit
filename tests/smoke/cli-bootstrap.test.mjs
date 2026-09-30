@@ -658,16 +658,17 @@ function existingFileWriteMutant(source) {
 
 /** Replace metadata-derived version output with a literal. */
 function hardCodedVersionMutant(source) {
-  const needle =
-    "process.stdout.write(`${metadata.name} ${metadata.version}\\n`);";
+  // After S012 the version string is produced by the shared `runCli` executor,
+  // so the mutant hard-codes it in the adapter before the metadata is read.
+  const needle = "const metadata = readPackageMetadata();";
   const mutated = source.replace(
     needle,
-    'process.stdout.write("svelte-ui-kit 0.1.0\\n");',
+    'if (argv.length === 1 && (argv[0] === "--version" || argv[0] === "-V")) { process.stdout.write("svelte-ui-kit 0.1.0\\n"); process.exit(0); } const metadata = readPackageMetadata();',
   );
   assert.notEqual(
     mutated,
     source,
-    "expected the built entrypoint to derive version output from metadata",
+    "expected the built entrypoint to read metadata and derive version output",
   );
   return mutated;
 }

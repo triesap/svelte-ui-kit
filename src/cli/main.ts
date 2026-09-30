@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 
-import { parseCliArgs } from "./args.js";
-import { HELP_TEXT, formatUsageDiagnostic } from "./run.js";
+import { runCli } from "./run.js";
 
 /**
  * Node adapter for the bootstrap `svelte-ui-kit` CLI.
  *
  * The adapter owns the only side effects: it reads and validates the bundled
- * package metadata next to the built module and applies the classified request
- * to the real stdout/stderr/exit. Argument classification and result handling
- * live in the pure `./args.js` and `./run.js` modules, which perform no I/O.
+ * package metadata next to the built module, then routes the classified
+ * request through the shared `runCli` executor with real stdout/stderr/exit
+ * effects. Argument classification and result handling live in the pure
+ * `./args.js` and `./run.js` modules, which perform no I/O; the adapter does
+ * not duplicate their dispatch.
  *
  * This entrypoint deliberately implements only help and version output. It
  * performs no project inspection, network access or filesystem writes, and it
@@ -99,17 +100,12 @@ function main(argv: readonly string[]): void {
   const metadata = readPackageMetadata();
   if (metadata === undefined) return;
 
-  const request = parseCliArgs(argv);
-  if (request.kind === "help") {
-    process.stdout.write(HELP_TEXT);
-    return;
-  }
-  if (request.kind === "version") {
-    process.stdout.write(`${metadata.name} ${metadata.version}\n`);
-    return;
-  }
-  process.stderr.write(formatUsageDiagnostic(request.argv));
-  process.exitCode = 2;
+  // The adapter keeps metadata validation and the real process effects; the
+  // shared executor performs the actual classified dispatch.
+  process.exitCode = runCli(argv, metadata, {
+    stdout: (text) => process.stdout.write(text),
+    stderr: (text) => process.stderr.write(text),
+  });
 }
 
 main(process.argv.slice(2));

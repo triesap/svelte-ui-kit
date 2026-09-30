@@ -109,3 +109,21 @@ Commit message: `test: isolate cli and filesystem integration fixtures`. The
 commit hash is recorded in this report's evidence after the commit. Next
 checkpoint: S010, authorized to proceed after the S009 green commit. Nothing
 was pushed or published and S013 was not started.
+
+## RCLD-01 repair addendum (2026-09-30)
+
+Repair commit: `156f0104d5049162bfcce1921bf9b71bb7b6cb86` (not the original
+pending hash above). The takeover dispatch's physical-containment finding is
+closed:
+
+- `createTempProject` verifies physical containment before every mutation: no
+  existing path component may be a symlink (live or dangling) and no
+  intermediate component may be a non-directory. Rejected writes never touch an
+  external sentinel.
+- Explicit fixture symlink creation is still supported, but a later write,
+  directory creation or symlink creation through it is rejected.
+- Regressions cover ancestor and final symlinks, dangling links, invalid
+  non-directory ancestors and cleanup after setup/assertion failure, comparing
+  complete external-tree snapshots (bytes, modes, kinds and link targets).
+
+Verified: integration 12/12, format/lint/typecheck green.

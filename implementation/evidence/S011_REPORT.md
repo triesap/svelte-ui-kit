@@ -124,3 +124,24 @@ Commit message: `test: qualify the pinned svelte and bits boundary`. The commit
 hash is recorded in this report's evidence after the commit. Next checkpoint:
 S012, authorized to proceed after the S011 green commit. Nothing was pushed or
 published and S013 was not started.
+
+## RCLD-01 repair addendum (2026-09-30)
+
+Repair commit: `c9108c459d124e231430a382b21f198ed17eb5ae` (not the original
+pending hash above). The takeover dispatch's primitive and dependency findings
+are closed:
+
+- `SwitchFixture.svelte` now renders the actual pinned `Switch.Thumb` instead of
+  an ordinary span; the merged props, checked/ref bindings and child snippet are
+  unchanged.
+- `tests/helpers/strict-audit.ts` runs the real `skipLibCheck: false` checker in
+  an owned copy and qualifies exactly the two pinned Bits 2.19.3 union-complexity
+  diagnostics by package/version, path, location, identity and count.
+- `tests/components/strict-declaration.test.ts` proves the baseline and that
+  authored `.svelte`, `.ts` and `.d.ts` errors plus an additional disposable
+  dependency error fail the audit, with restoration to the known baseline.
+
+The strict audit is a qualified upstream exception, not a raw strict-check pass.
+Raw output: exit 1, two errors, zero warnings. Resolving it remains an open
+release AC20 obligation. Verified: components 7/7, fixture 23/23, browser 11/11,
+format/lint/typecheck green.
