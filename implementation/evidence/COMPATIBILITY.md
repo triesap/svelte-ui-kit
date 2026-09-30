@@ -564,39 +564,50 @@ Installed `bits-ui/package.json` declares Svelte `^5.33.0` and
    `csstype`, but both declare it only under `devDependencies`. A strict pnpm
    consumer cannot resolve it. The fixture adds the exact direct pin
    `csstype 3.1.3` as a dev dependency to satisfy the published declarations.
-2. **TypeScript union-complexity limit.** With TypeScript `6.0.3`,
-   `svelte-check` raises `Expression produces a union type that is too complex
-to represent` (TS2590) inside the `bits-ui` barrel declarations
-   (`dist/bits/button/components/button.svelte.d.ts` and
-   `dist/bits/calendar/components/calendar.svelte.d.ts`), which cannot be
-   avoided because `bits-ui` exposes only its root entrypoint. The fixture sets
-   `skipLibCheck: true` so declaration-file complexity in the pinned dependency
-   does not fail the app check; authored fixture `.svelte`/`.ts` source remains
-   under `strict: true` and is fully checked.
+2. **TypeScript union-complexity limit (qualified upstream exception).** With
+   TypeScript `6.0.3`, `svelte-check` with `skipLibCheck: false` exits 1 with
+   exactly two errors and zero warnings: `Expression produces a union type that
+is too complex to represent` in the pinned `bits-ui 2.19.3` barrel
+   declarations `dist/bits/button/components/button.svelte.d.ts:2:23` and
+   `dist/bits/calendar/components/calendar.svelte.d.ts:2:25`. The fixture keeps
+   `skipLibCheck: true` for its ordinary `fixture:check` and is paired with a
+   mandatory strict declaration audit in `pnpm run test:components`. The audit
+   runs the real checker with `skipLibCheck: false` in an owned copy and
+   qualifies exactly those two pinned diagnostics by package/version,
+   package-relative path, location, diagnostic identity and count. It rejects
+   any additional or missing diagnostic, a warning, unknown output, a changed
+   pin, a timeout or a tool failure. Controls in
+   `tests/components/strict-declaration.test.ts` prove authored `.svelte`, `.ts`
+   and `.d.ts` errors and an additional disposable dependency error fail the
+   audit, and that removing them restores the known baseline.
 
-Both are reported for Codex review; neither changes an existing pin and neither
-weakens checking of authored product/fixture source.
+This is a bootstrap compatibility exception, not a raw strict-check pass. It
+does not reduce authored `strict: true` checking and no dependency pin changed.
+Resolving the exception remains an open release AC20 obligation until a
+reviewed minimal compatibility repair removes it.
 
 ### Fixture component and qualification results
 
-| Step          | Command                                                  | Exit | Result                                                  |
-| ------------- | -------------------------------------------------------- | ---- | ------------------------------------------------------- |
-| Fixture check | `pnpm run fixture:check`                                 | 0    | 0 errors, 0 warnings                                    |
-| Components    | `pnpm run test:components`                               | 0    | 1 file; 4 tests, 4 pass (positive + 3 negatives)        |
-| Consumer SSR  | `pnpm run test:fixture`                                  | 0    | 17 tests, 17 pass (includes the `/compatibility` route) |
-| Browser       | `pnpm run test:browser -- tests/browser/harness.spec.ts` | 0    | 11 passed (adds 5 Bits switch tests)                    |
+| Step          | Command                                                  | Exit  | Result                                                                                                  |
+| ------------- | -------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------- |
+| Fixture check | `pnpm run fixture:check`                                 | 0     | 0 errors, 0 warnings                                                                                    |
+| Components    | `pnpm run test:components`                               | 0     | 2 files; 7 tests, 7 pass (compatibility positive + 4 negatives; strict audit baseline + fault controls) |
+| Consumer SSR  | `pnpm run test:fixture`                                  | 0     | 23 tests, 23 pass (includes the `/compatibility` route)                                                 |
+| Browser       | `pnpm run test:browser -- tests/browser/harness.spec.ts` | 0     | 11 passed, including the nested failing-run control                                                     |
+| Strict audit  | `pnpm run test:components` (strict-declaration case)     | 1 raw | 2 errors, 0 warnings; qualified upstream exception                                                      |
 
 The compatibility component is `tests/fixtures/consumer/src/lib/compatibility/SwitchFixture.svelte`,
 served at the fixture `/compatibility` route. It binds `checked`/`ref`, uses a
 real `child` snippet that spreads the merged props onto a delegated native
-`<button>` (no nested button, events/props/ref retained), and exposes a
+`<button>` (no nested button, events/props/ref retained), and renders the
+actual pinned `Switch.Thumb` as its state-marked child span. It exposes a
 fixture-only programmatic toggle and focus control. The browser lane proves
 pointer and keyboard Space activation, programmatic state flowing back into the
 primitive, real ref identity/focus, accessible switch semantics and child
-forwarding, and hydration; the SSR lane proves the switch is server-rendered.
-The components lane proves incompatible `checked`, `ref` and `child` examples
-fail `svelte-check` with their intended diagnostics in disposable copies and
-restore to green. No `any` cast is used.
+forwarding, and hydration; the SSR lane proves the switch and thumb are
+server-rendered. The components lane proves incompatible `checked`, `ref`,
+`child` and `Switch.Thumb` examples fail `svelte-check` with their intended
+diagnostics in disposable copies and restore to green. No `any` cast is used.
 
 ### Not proven at S011
 

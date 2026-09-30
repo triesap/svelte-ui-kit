@@ -23,7 +23,7 @@
   <Switch.Root bind:checked bind:ref={switchRef} {name} value="on">
     {#snippet child({ props, checked: childChecked })}
       <button {...props} data-testid="switch" aria-label={label}>
-        <span data-testid="switch-thumb" data-checked={childChecked}></span>
+        <Switch.Thumb data-testid="switch-thumb" data-checked={childChecked} />
       </button>
     {/snippet}
   </Switch.Root>

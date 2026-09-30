@@ -163,6 +163,10 @@ test("the Bits switch exposes accessible semantics and a delegated child button"
   await expect(
     page.locator('input[type="checkbox"][name="notifications"]'),
   ).toHaveCount(1);
+  // The real pinned Switch.Thumb renders its own state-marked span.
+  const thumb = page.getByTestId("switch-thumb");
+  await expect(thumb).toHaveJSProperty("tagName", "SPAN");
+  await expect(thumb).toHaveAttribute("data-state", "unchecked");
 });
 
 test("pointer activation updates the switch state", async ({ page }) => {

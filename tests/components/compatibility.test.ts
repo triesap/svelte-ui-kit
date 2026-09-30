@@ -65,6 +65,15 @@ const NEGATIVES: ReadonlyArray<{
       ),
     diagnostic: /Property 'bogus' does not exist/,
   },
+  {
+    label: "Switch.Thumb with an unknown prop",
+    mutate: (source) =>
+      source.replace(
+        '<Switch.Thumb data-testid="switch-thumb" data-checked={childChecked} />',
+        '<Switch.Thumb data-testid="switch-thumb" bogus={childChecked} />',
+      ),
+    diagnostic: /bogus|SwitchThumbProps|does not exist|not assignable/,
+  },
 ];
 
 for (const { label, mutate, diagnostic } of NEGATIVES) {
