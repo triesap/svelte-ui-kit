@@ -119,41 +119,83 @@ function compareCodeUnit(left: string, right: string): number {
   return 0;
 }
 
-interface OwnershipPath {
+/**
+ * One normalized logical claim in the complete lock ownership set. Every
+ * managed source file, CSS block and integration record contributes a claim.
+ * Paths already share one project-relative coordinate system, so the whole set
+ * is compared together rather than as separate per-category subsets.
+ */
+interface LockClaim {
   readonly path: string;
+  readonly role: "file" | "css-block" | "integration";
+  readonly kind?: IntegrationKind;
   readonly label: string;
+  readonly locator: string;
 }
 
 /**
- * Validate one logical claim set: ASCII case aliases cannot name distinct
- * claims, and no claim may be a strict ancestor of another, because a managed
- * file cannot also be a directory. Exact equal paths are left to the caller's
- * duplicate rule (several CSS blocks may share one exact aggregate path).
- * Comparison is ASCII-folded and segment-aware, so `a/kit` and `a/kit-extra`
- * stay siblings.
+ * Whether two claims that are spelled identically down to case may share one
+ * exact path. Only distinct CSS blocks and a compatible stylesheet integration
+ * may share an aggregate target; every other pair is an incompatible role
+ * overlap. Duplicate diagnostics for identical block/integration identities
+ * are emitted separately and are not repeated here.
  */
-function checkOwnershipPaths(
-  entries: readonly OwnershipPath[],
+function exactSharingAllowed(left: LockClaim, right: LockClaim): boolean {
+  if (left.role === "file" || right.role === "file") return false;
+  if (left.role === "css-block" && right.role === "css-block") return true;
+  if (left.role === "css-block") return right.kind === "stylesheet";
+  if (right.role === "css-block") return left.kind === "stylesheet";
+  // Two integrations: identical kinds are a duplicate (handled elsewhere);
+  // differing kinds are an incompatible overlap of one exact path.
+  return left.kind === right.kind;
+}
+
+interface RequiredDirectory {
+  readonly directory: string | undefined;
+  readonly code: string;
+  readonly role: string;
+}
+
+/**
+ * Compare the complete normalized ownership inventory. Differently spelled
+ * ASCII case aliases always fail; a strict, segment-aware ancestor relationship
+ * always fails in either input order across every role pair; and an exact path
+ * shared by two claims must be explicitly compatible. Every file claim is also
+ * checked against every required UI/styles/state directory in the validated
+ * mapping context: a managed file cannot itself be, or be an ancestor of, a
+ * required directory.
+ */
+function checkLockClaims(
+  entries: readonly LockClaim[],
   issues: ModelIssue[],
-  aliasCode: string,
+  context: LockValidationContext,
 ): void {
   const sorted = [...entries].sort(
     (left, right) =>
       compareCodeUnit(asciiFold(left.path), asciiFold(right.path)) ||
-      compareCodeUnit(left.path, right.path),
+      compareCodeUnit(left.path, right.path) ||
+      compareCodeUnit(left.label, right.label),
   );
   for (let i = 0; i < sorted.length; i += 1) {
-    const left = sorted[i] as OwnershipPath;
+    const left = sorted[i] as LockClaim;
     const leftFold = asciiFold(left.path);
     for (let j = i + 1; j < sorted.length; j += 1) {
-      const right = sorted[j] as OwnershipPath;
+      const right = sorted[j] as LockClaim;
       const rightFold = asciiFold(right.path);
       if (leftFold === rightFold) {
         if (left.path !== right.path) {
           issues.push(
             issue(
-              aliasCode,
-              `${left.label} paths ${JSON.stringify(left.path)} and ${JSON.stringify(right.path)} are ASCII case aliases`,
+              "LOCK_CASE_ALIAS",
+              `${left.label} path ${JSON.stringify(left.path)} and ${right.label} path ${JSON.stringify(right.path)} are ASCII case aliases`,
+              left.path,
+            ),
+          );
+        } else if (!exactSharingAllowed(left, right)) {
+          issues.push(
+            issue(
+              "LOCK_PATH_OVERLAP",
+              `${left.label} and ${right.label} share path ${JSON.stringify(left.path)} with incompatible ownership roles`,
               left.path,
             ),
           );
@@ -166,6 +208,44 @@ function checkOwnershipPaths(
             "LOCK_PATH_OVERLAP",
             `${left.label} ${JSON.stringify(left.path)} cannot also be a directory containing ${right.label} ${JSON.stringify(right.path)}`,
             left.path,
+          ),
+        );
+      }
+    }
+  }
+
+  const requiredDirectories: readonly RequiredDirectory[] = [
+    { directory: context.uiDir, code: "LOCK_NAMESPACE", role: "UI" },
+    { directory: context.stylesDir, code: "LOCK_NAMESPACE", role: "styles" },
+    {
+      directory: context.stateDir,
+      code: "LOCK_RESERVED_STATE",
+      role: "reserved state",
+    },
+  ];
+
+  const seen = new Set<string>();
+  for (const claim of entries) {
+    if (seen.has(claim.path)) continue;
+    seen.add(claim.path);
+    const folded = asciiFold(claim.path);
+    for (const required of requiredDirectories) {
+      if (required.directory === undefined) continue;
+      const foldedDirectory = asciiFold(required.directory);
+      if (folded === foldedDirectory) {
+        issues.push(
+          issue(
+            required.code,
+            `${claim.locator} ${JSON.stringify(claim.path)} must not claim the required ${required.role} directory`,
+            claim.locator,
+          ),
+        );
+      } else if (foldedDirectory.startsWith(`${folded}/`)) {
+        issues.push(
+          issue(
+            required.code,
+            `${claim.locator} ${JSON.stringify(claim.path)} must not be an ancestor of the required ${required.role} directory ${JSON.stringify(required.directory)}`,
+            claim.locator,
           ),
         );
       }
@@ -203,20 +283,6 @@ export function parseKitLock(
     context.stateDir !== undefined &&
     isSafeLockPath(path) &&
     isSameOrBelow(path, context.stateDir);
-
-  /** A managed record that claims a required namespace directory itself. */
-  const claimsNamespaceDirectory = (
-    path: string,
-    directory: string | undefined,
-  ): boolean =>
-    directory !== undefined && asciiFold(path) === asciiFold(directory);
-
-  /** A managed record that is an ancestor of the reserved state directory. */
-  const reservedStateAncestor = (path: string): boolean =>
-    context.stateDir !== undefined &&
-    isSafeLockPath(path) &&
-    asciiFold(path) !== asciiFold(context.stateDir) &&
-    isSameOrBelow(context.stateDir, path);
 
   const requested = (record["requested"] as string[])
     .slice()
@@ -320,27 +386,6 @@ export function parseKitLock(
           ),
         );
       }
-      if (
-        claimsNamespaceDirectory(path, context.uiDir) ||
-        claimsNamespaceDirectory(path, context.stylesDir)
-      ) {
-        issues.push(
-          issue(
-            "LOCK_NAMESPACE",
-            `files[${index}].path ${JSON.stringify(path)} must not claim a namespace directory itself`,
-            `files[${index}].path`,
-          ),
-        );
-      }
-      if (reservedStateAncestor(path)) {
-        issues.push(
-          issue(
-            "LOCK_RESERVED_STATE",
-            `files[${index}].path ${JSON.stringify(path)} must not be an ancestor of the reserved state directory ${JSON.stringify(context.stateDir)}`,
-            `files[${index}].path`,
-          ),
-        );
-      }
     }
     const owner = file["owner"];
     if (typeof owner === "string" && !itemIds.has(owner)) {
@@ -377,12 +422,8 @@ export function parseKitLock(
     }
   }
 
-  // Every managed source-file claim, validated as one complete logical set.
-  const fileClaims: OwnershipPath[] = [...paths.keys()].map((path) => ({
-    path,
-    label: "managed file",
-  }));
-  checkOwnershipPaths(fileClaims, issues, "LOCK_CASE_ALIAS");
+  // The complete ownership claim set is compared once, after every source,
+  // block and integration record has been collected below.
 
   const blockIds = new Map<string, number>();
   const rawBlocks = record["cssBlocks"] as readonly Record<string, unknown>[];
@@ -444,27 +485,6 @@ export function parseKitLock(
           ),
         );
       }
-      if (
-        claimsNamespaceDirectory(block["path"] as string, context.stylesDir) ||
-        claimsNamespaceDirectory(block["path"] as string, context.uiDir)
-      ) {
-        issues.push(
-          issue(
-            "LOCK_NAMESPACE",
-            `cssBlocks[${index}].path ${JSON.stringify(block["path"])} must not claim a namespace directory itself`,
-            `cssBlocks[${index}].path`,
-          ),
-        );
-      }
-      if (reservedStateAncestor(block["path"] as string)) {
-        issues.push(
-          issue(
-            "LOCK_RESERVED_STATE",
-            `cssBlocks[${index}].path ${JSON.stringify(block["path"])} must not be an ancestor of the reserved state directory ${JSON.stringify(context.stateDir)}`,
-            `cssBlocks[${index}].path`,
-          ),
-        );
-      }
     }
     if (!isSemVer(block["itemVersion"])) {
       issues.push(
@@ -485,31 +505,6 @@ export function parseKitLock(
             "LOCK_LINEAGE_CONTRADICTION",
             `cssBlocks[${index}].itemVersion ${String(block["itemVersion"])} is newer than its owner ${owner} version ${ownerVersion}`,
             `cssBlocks[${index}].itemVersion`,
-          ),
-        );
-      }
-    }
-  }
-
-  const blockPaths: OwnershipPath[] = rawBlocks
-    .map((block) => block["path"])
-    .filter(
-      (path): path is string =>
-        typeof path === "string" &&
-        isSafeLockPath(path) &&
-        path.endsWith(".css"),
-    )
-    .map((path) => ({ path, label: "managed CSS block" }));
-  checkOwnershipPaths(blockPaths, issues, "LOCK_CASE_ALIAS");
-  // A managed logical path can never be both a source file and a CSS block.
-  for (const file of fileClaims) {
-    for (const block of blockPaths) {
-      if (asciiFold(file.path) === asciiFold(block.path)) {
-        issues.push(
-          issue(
-            "LOCK_PATH_OVERLAP",
-            `managed file and managed CSS block share path ${JSON.stringify(file.path)}`,
-            file.path,
           ),
         );
       }
@@ -555,44 +550,54 @@ export function parseKitLock(
         ),
       );
     }
-    if (typeof path === "string" && reservedStateAncestor(path)) {
-      issues.push(
-        issue(
-          "LOCK_RESERVED_STATE",
-          `integrations[${index}].path ${JSON.stringify(path)} must not be an ancestor of the reserved state directory ${JSON.stringify(context.stateDir)}`,
-          `integrations[${index}].path`,
-        ),
-      );
-    }
-    if (isSafeLockPath(path)) {
-      const requiredDirectory = [
-        context.uiDir,
-        context.stylesDir,
-        context.stateDir,
-      ].find(
-        (directory) =>
-          directory !== undefined && isSameOrBelow(directory, path),
-      );
-      if (requiredDirectory !== undefined) {
-        issues.push(
-          issue(
-            "LOCK_NAMESPACE",
-            `integrations[${index}].path ${JSON.stringify(path)} is a file and must not equal or contain the required directory ${JSON.stringify(requiredDirectory)}`,
-            `integrations[${index}].path`,
-          ),
-        );
-      }
-    }
   }
 
-  const integrationPaths: OwnershipPath[] = rawIntegrations
-    .map((integration) => integration["path"])
-    .filter(
-      (path): path is string =>
-        typeof path === "string" && isSafeLockPath(path),
-    )
-    .map((path) => ({ path, label: "integration" }));
-  checkOwnershipPaths(integrationPaths, issues, "LOCK_CASE_ALIAS");
+  const claims: LockClaim[] = [
+    ...[...paths.entries()].map(([path, index]): LockClaim => ({
+      path,
+      role: "file",
+      label: "managed file",
+      locator: `files[${index}].path`,
+    })),
+    ...[...rawBlocks.entries()].flatMap(([index, block]): LockClaim[] => {
+      const path = block["path"];
+      if (
+        typeof path !== "string" ||
+        !isSafeLockPath(path) ||
+        !path.endsWith(".css")
+      ) {
+        return [];
+      }
+      return [
+        {
+          path,
+          role: "css-block",
+          label: "managed CSS block",
+          locator: `cssBlocks[${index}].path`,
+        },
+      ];
+    }),
+    ...[...rawIntegrations.entries()].flatMap(
+      ([index, integration]): LockClaim[] => {
+        const path = integration["path"];
+        const kind = integration["kind"];
+        if (typeof path !== "string" || !isSafeLockPath(path)) return [];
+        if (kind !== "layout" && kind !== "stylesheet" && kind !== "exports") {
+          return [];
+        }
+        return [
+          {
+            path,
+            role: "integration",
+            kind,
+            label: `${kind} integration`,
+            locator: `integrations[${index}].path`,
+          },
+        ];
+      },
+    ),
+  ];
+  checkLockClaims(claims, issues, context);
 
   if (issues.length > 0) return fail(issues);
   return ok({

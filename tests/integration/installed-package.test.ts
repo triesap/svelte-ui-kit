@@ -367,3 +367,103 @@ test("the emitted copy rejects disjoint joint constraints and lock case aliases"
   assert.equal(output.lock.ok, false);
   assert.equal(output.lock.codes.includes("LOCK_CASE_ALIAS"), true);
 });
+
+/**
+ * RCLD02-R4 installed-copy controls: the complete cross-role ownership
+ * inventory must be present in the emitted modules and reject/accept the same
+ * cases as the authoring parser from an isolated package copy.
+ */
+const R4_RUNNER_SOURCE = `import { pathToFileURL } from "node:url";
+import path from "node:path";
+const installed = process.env.SUIK_INSTALLED;
+const imp = (relative) =>
+  import(pathToFileURL(path.join(installed, "dist", relative)).href);
+const lock = await imp("codegen/lock.js");
+const H = (c) => c.repeat(64);
+const base = (overrides) => ({
+  schemaVersion: 1,
+  toolVersion: "0.1.0",
+  registryVersion: "0.1.0",
+  registryHash: H("a"),
+  configHash: H("b"),
+  requested: ["button"],
+  items: [{ id: "button", version: "0.1.0", digest: H("c"), origin: "explicit" }],
+  files: [],
+  cssBlocks: [],
+  integrations: [],
+  ...overrides,
+});
+const file = (p) => ({ path: p, owner: "button", baseHash: H("e"), itemVersion: "0.1.0", cohort: "core" });
+const block = (p, id) => ({ path: p, owner: "button", blockId: id, baseHash: H("e"), itemVersion: "0.1.0", cohort: "core" });
+const integration = (p, kind) => ({ kind, path: p, baseline: H("e"), contract: "layout-v1" });
+const context = { uiDir: "src/ui", stylesDir: "src/ui/styles", stateDir: "src/ui/_kit" };
+const cases = [
+  { name: "file-vs-layout-exact", fields: { files: [file("src/ui/button.svelte")], integrations: [integration("src/ui/button.svelte", "layout")] }, expected: false, code: "LOCK_PATH_OVERLAP" },
+  { name: "file-vs-integration-alias", fields: { files: [file("src/ui/button.svelte")], integrations: [integration("src/ui/Button.svelte", "layout")] }, expected: false, code: "LOCK_CASE_ALIAS" },
+  { name: "file-ancestor-of-block", fields: { files: [file("src/ui/styles/family")], cssBlocks: [block("src/ui/styles/family/kit.css", "button")] }, expected: false, code: "LOCK_PATH_OVERLAP" },
+  { name: "block-ancestor-of-integration", fields: { cssBlocks: [block("src/ui/styles/kit.css", "button")], integrations: [integration("src/ui/styles/kit.css/layout.svelte", "layout")] }, expected: false, code: "LOCK_PATH_OVERLAP" },
+  { name: "layout-vs-stylesheet-integration", fields: { integrations: [integration("src/routes/+layout.svelte", "layout"), integration("src/routes/+layout.svelte", "stylesheet")] }, expected: false, code: "LOCK_PATH_OVERLAP" },
+  { name: "block-vs-layout-integration", fields: { cssBlocks: [block("src/ui/styles/kit.css", "button")], integrations: [integration("src/ui/styles/kit.css", "layout")] }, expected: false, code: "LOCK_PATH_OVERLAP" },
+  { name: "block-vs-stylesheet-alias", fields: { cssBlocks: [block("src/ui/styles/kit.css", "button")], integrations: [integration("src/ui/styles/Kit.css", "stylesheet")] }, expected: false, code: "LOCK_CASE_ALIAS" },
+  { name: "shared-aggregate", fields: { cssBlocks: [block("src/ui/styles/kit.css", "button"), block("src/ui/styles/kit.css", "card")], integrations: [integration("src/ui/styles/kit.css", "stylesheet")] }, expected: true },
+  { name: "disjoint-valid", fields: { files: [file("src/ui/button/root.svelte")], cssBlocks: [block("src/ui/styles/kit.css", "button")], integrations: [integration("src/routes/+layout.svelte", "layout")] }, expected: true },
+  { name: "file-ancestor-of-nested-styles-dir", fields: { files: [file("src/ui/styles")] }, expected: false, code: "LOCK_NAMESPACE", context: { uiDir: "src/ui", stylesDir: "src/ui/styles/nested", stateDir: "src/ui/_kit" } },
+];
+const results = cases.map((entry) => {
+  const result = lock.parseKitLock(base(entry.fields), "kit.lock.json", entry.context ?? context);
+  const codes = result.ok ? [] : result.issues.map((issue) => issue.code);
+  return {
+    name: entry.name,
+    expected: entry.expected,
+    ok: result.ok,
+    code: entry.code ?? null,
+    codes,
+  };
+});
+process.stdout.write(JSON.stringify({ cwd: process.cwd(), results }));
+`;
+
+interface R4CaseResult {
+  readonly name: string;
+  readonly expected: boolean;
+  readonly ok: boolean;
+  readonly code: string | null;
+  readonly codes: string[];
+}
+
+interface R4ChildResult {
+  readonly cwd: string;
+  readonly results: R4CaseResult[];
+}
+
+function runR4Child(
+  t: { after: (fn: () => void) => void },
+  installed: string,
+): R4ChildResult {
+  const runner = mkdtempSync(path.join(os.tmpdir(), "suik-r4-runner-"));
+  t.after(() => rmSync(runner, { recursive: true, force: true }));
+  const runnerScript = path.join(runner, "run.mjs");
+  writeFileSync(runnerScript, R4_RUNNER_SOURCE);
+  const result = spawnSync(process.execPath, [runnerScript], {
+    cwd: runner,
+    encoding: "utf8",
+    timeout: 60_000,
+    env: { ...process.env, SUIK_INSTALLED: installed },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout) as R4ChildResult;
+}
+
+test("the emitted copy enforces the complete cross-role ownership inventory", (t) => {
+  const installed = installedCopy(t);
+  const output = runR4Child(t, installed);
+  assert.notEqual(output.cwd, PKG_ROOT);
+  assert.equal(output.results.length, 10);
+  for (const entry of output.results) {
+    assert.equal(entry.ok, entry.expected, `${entry.name}: ${entry.codes}`);
+    assert.equal(entry.codes.includes("SCHEMA_INVALID"), false, entry.name);
+    if (entry.code !== null) {
+      assert.equal(entry.codes.includes(entry.code), true, entry.name);
+    }
+  }
+});

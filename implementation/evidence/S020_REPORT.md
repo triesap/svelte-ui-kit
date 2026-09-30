@@ -87,3 +87,21 @@ commit hash above are retained as provenance; they are not acceptance. The
 repaired candidate is committed as green local checkpoints and verified fresh in
 `implementation/evidence/RCLD-02_QUALIFICATION.md`. This checkpoint remains
 `committed_pending_review`; no acceptance counter or accepted hash changes.
+
+## RCLD-02 review-4 repair note
+
+Independent review 4 of the committed S013-S032 candidate requested both
+RCLD02-R4 groups. The original implementation hash above and the review-1/2/3
+repair notes remain provenance; they are not acceptance.
+
+R4-1 no longer describes per-category file/block/integration checks as complete
+ownership validation. `parseKitLock` now compares one normalized claim inventory
+across all roles: aliases always fail, strict ancestry always fails in either
+order, block/block and compatible block/stylesheet aggregate sharing remain
+valid, every other exact-path collision fails, and no file claim may equal or be
+an ancestor of a required UI/styles/state directory. The maintained matrix is
+`tests/unit/lock-ownership.test.ts`; the emitted-copy positive/negative control
+is in `tests/integration/installed-package.test.ts`.
+
+This checkpoint remains `committed_pending_review`; no acceptance counter or
+accepted hash changes.

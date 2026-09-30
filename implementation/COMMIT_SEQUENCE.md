@@ -334,6 +334,114 @@ and independent prior-fault probes pass. RCLD-01 is complete; all its review
 findings are closed. Twelve checkpoints are accepted; 191 remain. The narrow
 fixture declaration exception remains an open release AC20 obligation.
 
+### Independent review 4 — validate one complete lock ownership set
+
+Decision date: 2026-09-30. Candidate `e0a23bb3423fe88e109da8e11a52ae58251ae641`
+is **changes requested**. Preserve its four repair/evidence commits and all
+original pending hashes. RCLD02-R3-1 is closed: one constraint set now spans the
+qualified root, all selected item compatibility and all matching explicit npm
+requirements. Parsed disjoint-item, cross-item peer, transitive, OR-range,
+permutation and valid-overlap controls pass. Registry within-item/cross-item
+file ancestry, lock same-category case/ancestry and integration-directory
+repairs are verified progress. Prior closed schema/asset/CLI/config findings
+and accepted RCLD-01 remain intact. R3-2 is partial and R3-3 remains open for
+the implementation/evidence gaps below. This is the current dispatch; earlier
+reviews retain original criteria and historical findings, not current closure
+claims. No requirements, acceptance criteria or dependencies have been waived.
+
+Fresh reviewer typecheck, unit194/194, registry38/38, integration22/22,
+CLI52/52 and contracts117/117 pass, zero skips. Replayed prior-fault probes now reject the previously reproduced
+joint compatibility, registry ancestry and same-category lock cases while
+preserving valid overlap, compound siblings and exact shared CSS. However,
+nine new cross-role/directory negative cases still pass the actual lock parser.
+This prevents S019/S020 and whole-sequence acceptance. Twelve checkpoints remain
+accepted, twenty pending and 171 not_started; 191 checkpoints and ten sequences
+remain unfinished. S033 still requires independent S032 acceptance. No owner
+or external/hardware decision blocks the eligible software work.
+
+Execute **`pfc through RCLD-02`** for the complete remaining lock-model and
+qualification work below, plus every remaining original S013–S032 criterion.
+Continue after green checkpoints through integrated regressions, installed-copy
+controls, cumulative qualification, evidence and green local commits. S033
+cannot be combined because its independent acceptance gate remains unmet.
+Preserve the one existing live authorization and task-store authority.
+
+1. **RCLD02-R4-1 — Validate all lock roles together (remaining R3-2;
+   S019/S020, AC06/AC11).** `parseKitLock` invokes `checkOwnershipPaths`
+   separately for files, CSS blocks and integrations, with only an exact
+   file-versus-block check between categories. That misses the required whole
+   ownership set. Actual parsed locks still accept:
+   - source file versus layout integration at the same path or an ASCII alias;
+   - source-file ancestors of integration or CSS-block targets;
+   - a CSS target that is an ancestor of an integration target;
+   - layout and stylesheet integrations at the same exact path;
+   - CSS blocks sharing a target with a layout integration, or with an
+     ASCII-alias stylesheet integration;
+   - source file `src/ui/styles` when the validated required styles directory
+     is `src/ui/styles/nested` (UI `src/ui`, state `src/ui/_kit`).
+
+   Build one normalized claim inventory carrying safe path, role, identity and
+   record locator for every source file, CSS block and integration. Compare
+   the complete inventory, not separate per-category sets plus isolated special
+   cases. Evaluate all file claims against every required directory in the
+   supplied validated mapping context. The following matrix freezes the existing
+   ownership semantics; implementation details remain Pi's choice.
+
+   | Exact same-spelling file claims             | Decision                                                                     |
+   | ------------------------------------------- | ---------------------------------------------------------------------------- |
+   | CSS block and another CSS block             | Allow only distinct valid block identities, preserving existing owner checks |
+   | CSS block and stylesheet integration        | Allow compatible aggregate stylesheet sharing                                |
+   | Source file and any other file claim        | Reject duplicate/incompatible whole-file ownership                           |
+   | Two integrations, including different kinds | Reject; retain duplicate-integration diagnostics for identical kinds         |
+   | CSS block and layout or exports integration | Reject incompatible ownership roles                                          |
+
+   Differently spelled ASCII case aliases always fail, including otherwise
+   shareable roles. Strict file ancestry always fails across every role pair
+   and in either input order. Segment-prefix siblings remain valid. A file
+   cannot equal or be an ancestor of UI/styles/state required directories;
+   existing reserved-state and file/block namespace membership checks remain.
+   Directory nesting itself stays valid. The matrix applies to logical lock
+   paths, which already share one project-relative coordinate system. Do not
+   conflate registry UI-relative and styles-relative targets without a mapping.
+
+   Add a table-driven cross-role matrix through the actual parser: all role
+   pairs, exact/ASCII-alias/ancestor/reverse-ancestor/disjoint cases, with and
+   without optional mapping context as appropriate. Include same-item owners,
+   input permutations, nested required directories, valid compound siblings,
+   exact multi-block stylesheet integration sharing and prefix-confusion
+   controls. Exercise failing and successful cases from emitted installed
+   modules as well. Schema validity and unrelated namespace failures must not
+   mask the intended assertion; verify meaningful typed causes/locators.
+   Keep these tests in existing repository-owned lanes. No filesystem discovery,
+   transaction implementation, dependency change or S033 advancement is needed.
+
+2. **RCLD02-R4-2 — Finish caller integration and truthful qualification
+   (remaining R3-3; S013–S032, AC20/AC21).** Audit all original criteria and
+   unresolved findings against actual callers after the repair; complete any
+   other eligible omission before returning. Reconcile checkpoint and sequence
+   reports so same-category validation is not described as complete ownership
+   validation. Preserve all original implementation/repair hashes and pending
+   states; Codex alone performs the eventual independent acceptance transition.
+
+   Retain known intermediate failures accurately: the prior run's unit lane
+   initially reported193/194 because a custom-context fixture retained default
+   file paths, then passed after fixture correction; initial format checking
+   also failed before formatting. Final passing lanes do not mean no failed
+   attempts occurred. Separate final failures, repaired attempts, ignored tests
+   and the qualified strict-checker exception. Keep private runtime/tooling
+   details out of public evidence, including the operator-specific router
+   reference added to the review-3 reference-guard paragraph. Attribute the
+   published actionlint SHA-256 to the downloaded archive, not the extracted
+   binary, unless that binary's digest is actually measured separately.
+
+   Run all original direct and cumulative target lanes, fresh installed-copy
+   positives/negatives, actual actionlint and the final reference guard. Retain
+   exact commands, exits/counts, tested source/artifact/platform/configuration
+   and evidence locations. Earlier browser/component/SSR/reference evidence was
+   audited during this review, not newly executed by the reviewer. Preserve
+   the narrow upstream declaration qualification and open release AC20 debt.
+   No remote-CI, other-platform or full release-package acceptance is implied.
+
 ### Independent review 3 — complete joint constraints and ownership validation
 
 Decision date: 2026-09-30. Candidate `49b12b25c66d1f2d9e5855f65c368a2a1cca8ea9`
@@ -341,8 +449,8 @@ is **changes requested**. Preserve all five repair/evidence commits, original
 S013–S032 hashes and prior accepted work. Twelve checkpoints remain accepted,
 twenty remain `committed_pending_review`, and 171 remain `not_started`;
 191 checkpoints and ten sequences remain unfinished. S033 is still gated on
-independent S032 acceptance. This subsection is the current closure dispatch;
-reviews 1 and 2 below are historical findings and retained decisions. Original
+independent S032 acceptance. This historical review is superseded for current execution by review 4 above;
+reviews 1 and 2 below retain earlier findings and decisions. Original
 R01–R34, AC01–AC22 and all dependency gates remain unchanged. No owner decision,
 hardware requirement or external blocker prevents the remaining software work.
 

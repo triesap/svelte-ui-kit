@@ -88,3 +88,26 @@ commit hash above are retained as provenance; they are not acceptance. The
 repaired candidate is committed as green local checkpoints and verified fresh in
 `implementation/evidence/RCLD-02_QUALIFICATION.md`. This checkpoint remains
 `committed_pending_review`; no acceptance counter or accepted hash changes.
+
+## RCLD-02 review-4 repair note
+
+Independent review 4 of the committed S013-S032 candidate requested both
+RCLD02-R4 groups. The original implementation hash above and the review-1/2/3
+repair notes remain provenance; they are not acceptance.
+
+R4-1 replaces the three separate `checkOwnershipPaths` invocations (files, CSS
+blocks, integrations) and the isolated file-versus-block check with one
+normalized claim inventory that carries the safe path, role, identity and
+record locator of every source file, CSS block and integration. The complete
+inventory is compared once: differently spelled ASCII case aliases always fail,
+a strict segment-aware ancestor relationship always fails in either input order
+across every role pair, and an exact path shared by two claims must be an
+explicitly compatible block/block or block/stylesheet pair. Every file claim is
+also checked against the validated UI/styles/state directories, which rejects a
+source file `src/ui/styles` when the required styles directory is
+`src/ui/styles/nested`. The maintained table-driven matrix lives in
+`tests/unit/lock-ownership.test.ts` and the emitted-copy control in
+`tests/integration/installed-package.test.ts`.
+
+This checkpoint remains `committed_pending_review`; no acceptance counter or
+accepted hash changes.

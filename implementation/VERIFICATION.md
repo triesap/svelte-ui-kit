@@ -77,30 +77,35 @@ only writing modes.
 
 #### Current owner-authorized RCLD-02 batch verification
 
-Current independent review3 of `49b12b25c66d1f2d9e5855f65c368a2a1cca8ea9`
-requests the three RCLD02-R3 groups in COMMIT_SEQUENCE.md. The schema/asset
-R2-2 and CLI implementation part of R2-4 are closed; config derivation and
-exact CSS-case-alias repairs are verified progress. Prior accepted RCLD-01
-and closed R1-3/R1-6 remain intact. Fresh reviewer build/typecheck,
-unit191/191, registry22/22, integration20/20, CLI52/52 and contracts117/117
-pass with zero skips. Replayed old-fault probes pass, but new fully parsed
-multi-item probes expose per-item compatibility instead of joint closure
-validation and incomplete file-role/case/ancestry checks in registry/lock paths.
+Current independent review4 of `e0a23bb3423fe88e109da8e11a52ae58251ae641`
+requests both RCLD02-R4 groups in COMMIT_SEQUENCE.md. R3-1 joint compatibility
+is closed; registry within-item/cross-item ancestry, lock same-category
+case/ancestry and integration-directory checks are verified progress. Preserve
+previous closed findings and accepted RCLD-01. Fresh reviewer typecheck,
+unit194/194, registry38/38, integration22/22, CLI52/52 and contracts117/117
+pass without skips. Replayed original probes pass, but nine cross-role or
+required-directory lock negatives still pass the actual parser incorrectly.
 
-Maintain actual model/health/resolved-operation controls for joint constraints
-across all selected and transitive items, explicit peers, OR-range joint
-emptiness, stable diagnostics, valid overlap and unselected-candidate exclusion.
-Validate file/directory roles, segment ancestry, case aliases and integration
-namespace claims across complete logical ownership sets. Preserve compound
-siblings and compatible sharing of exact aggregate CSS targets. Retain installed
-schema/asset negative controls and whole-argv JSON/metadata coverage. Keep Node
-failures before ESM execution distinguished from controlled adapter failures.
-Full original cumulative qualification remains mandatory; no checkpoint counts
-or pending hashes change until Codex independently accepts. Audited author
-browser/component/SSR/reference/actionlint lanes are not fresh reviewer runs.
+Validate one complete normalized lock claim inventory against the current
+role-compatibility matrix. Cover exact sharing, ASCII aliases, strict ancestry
+in both directions, directory roles and safe siblings across all source/block/
+integration pairs, with parsed and emitted-installed controls. Only distinct
+CSS blocks and compatible stylesheet integration may share an exact aggregate
+path; preserve compound siblings and valid directory nesting. No separate
+per-category check establishes whole-set validation.
+
+Run all original direct and cumulative checks and the final reference guard.
+Keep repaired intermediate failures, final failures, ignored tests and the
+qualified upstream exception distinct. The prior native run had a193/194 unit
+attempt from a malformed custom-context fixture and an initial formatting
+failure; both were repaired before final green lanes. A final pass cannot be
+reported as no failed attempts. Public evidence must exclude operator-specific
+router metadata and distinguish archive checksums from extracted binary hashes.
+No acceptance counter/pending hash changes until Codex independently accepts;
+release AC20 debt and platform/package limitations remain explicit.
 
 The following review1 record is historical evidence and its unresolved original
-criteria remain in scope under the current review3 dispatch.
+criteria remain in scope under the current review4 dispatch.
 
 Independent review of candidate `9b576117ac1e76b3e724921ca12405a8e079f05f`
 requests changes under all seven RCLD02-R1 groups in COMMIT_SEQUENCE.md.
