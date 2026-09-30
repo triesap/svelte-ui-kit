@@ -87,6 +87,65 @@
           }
         }
       }
+    },
+    "registryDependencies": {
+      "description": "Registry item ids this item depends on; resolved by the dependency graph, never stored as requested roots.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+      },
+      "uniqueItems": true
+    },
+    "npmDependencies": {
+      "description": "Explicit npm plan entries; the CLI never installs them.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "range", "role"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^(@[a-z0-9-~][a-z0-9-._~]*/)?[a-z0-9-~][a-z0-9-._~]*$"
+          },
+          "range": { "type": "string", "minLength": 1 },
+          "role": { "enum": ["runtime", "tooling", "peer"] }
+        }
+      }
+    },
+    "accessibility": {
+      "description": "Descriptive accessibility obligations; never executable hooks or an accessibility claim.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requiredNames", "keyboard", "focus", "form", "tests"],
+      "properties": {
+        "requiredNames": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "keyboard": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "focus": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "form": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "tests": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
     }
   }
 }

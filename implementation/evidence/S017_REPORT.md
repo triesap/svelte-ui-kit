@@ -1,7 +1,7 @@
 # S017 step report — Define typed item targets and public exports
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S017","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S017","kind":"report","commit":"1fb85b7f80fcde988d494c1446e2487ed40e6899","disposition":"candidate"}
 -->
 
 Step ID and title: S017 — Define typed item targets and public exports.

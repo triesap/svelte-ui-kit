@@ -29,6 +29,7 @@ import { validateWithSchema } from "./schema.js";
 import {
   INITIAL_ITEM_VERSION,
   INITIAL_SCHEMA_VERSION,
+  isCompatibilityRange,
   isSemVer,
   validateCompatibilityRange,
 } from "./versions.js";
@@ -39,6 +40,7 @@ export const REGISTRY_ITEM_SCHEMA = "registry-item.schema.json";
 export type ItemKind = "component" | "foundation";
 export type FileKind = "svelte" | "typescript";
 export type ExportKind = "value" | "type";
+export type NpmRole = "runtime" | "tooling" | "peer";
 
 export interface ItemFile {
   readonly source: string;
@@ -60,6 +62,34 @@ export interface ItemStyle {
   readonly cohort: string;
 }
 
+/** One npm plan entry; the CLI reports it but never installs it. */
+export interface NpmRequirement {
+  readonly name: string;
+  readonly range: string;
+  readonly role: NpmRole;
+}
+
+/**
+ * Descriptive accessibility obligations. These are required names,
+ * keyboard/focus/form behaviors and their test obligations, never executable
+ * hooks and never a claim that an untested component is accessible.
+ */
+export interface AccessibilityMetadata {
+  readonly requiredNames: readonly string[];
+  readonly keyboard: readonly string[];
+  readonly focus: readonly string[];
+  readonly form: readonly string[];
+  readonly tests: readonly string[];
+}
+
+export const EMPTY_ACCESSIBILITY: AccessibilityMetadata = {
+  requiredNames: [],
+  keyboard: [],
+  focus: [],
+  form: [],
+  tests: [],
+};
+
 export interface RegistryItem {
   readonly schemaVersion: number;
   readonly id: string;
@@ -74,6 +104,9 @@ export interface RegistryItem {
   readonly files: readonly ItemFile[];
   readonly exports: readonly ItemExport[];
   readonly styles: readonly ItemStyle[];
+  readonly registryDependencies: readonly string[];
+  readonly npmDependencies: readonly NpmRequirement[];
+  readonly accessibility: AccessibilityMetadata;
 }
 
 const KEBAB = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
@@ -333,6 +366,67 @@ export function parseRegistryItem(
     }
   }
 
+  const registryDependencies = (record["registryDependencies"] ?? []) as
+    readonly unknown[] | undefined;
+  const registryDepIds: string[] = [];
+  for (const [index, dependency] of (registryDependencies ?? []).entries()) {
+    if (typeof dependency !== "string") continue;
+    registryDepIds.push(dependency);
+    if (dependency === id) {
+      issues.push(
+        issue(
+          "ITEM_SELF_DEPENDENCY",
+          `registryDependencies[${index}] must not reference the item itself (${JSON.stringify(id)})`,
+          `registryDependencies[${index}]`,
+        ),
+      );
+    }
+  }
+
+  const rawNpm = (record["npmDependencies"] ?? []) as readonly Record<
+    string,
+    unknown
+  >[];
+  const seenNpm = new Map<string, number>();
+  for (const [index, dependency] of rawNpm.entries()) {
+    const name = dependency["name"];
+    if (typeof name === "string") {
+      if (seenNpm.has(name)) {
+        issues.push(
+          issue(
+            "ITEM_DUPLICATE_NPM_DEPENDENCY",
+            `duplicate npm dependency ${JSON.stringify(name)} at npmDependencies[${index}] and npmDependencies[${seenNpm.get(name)}]`,
+            locator,
+          ),
+        );
+      } else {
+        seenNpm.set(name, index);
+      }
+    }
+    if (!isCompatibilityRange(dependency["range"])) {
+      issues.push(
+        issue(
+          "NPM_RANGE_INVALID",
+          `npmDependencies[${index}].range must be a registry npm range (not a git/file/url source), received ${describe(dependency["range"])}`,
+          `npmDependencies[${index}].range`,
+        ),
+      );
+    }
+  }
+
+  const rawAccessibility = record["accessibility"] as
+    Record<string, unknown> | undefined;
+  const accessibility: AccessibilityMetadata =
+    rawAccessibility === undefined
+      ? EMPTY_ACCESSIBILITY
+      : {
+          requiredNames: rawAccessibility["requiredNames"] as string[],
+          keyboard: rawAccessibility["keyboard"] as string[],
+          focus: rawAccessibility["focus"] as string[],
+          form: rawAccessibility["form"] as string[],
+          tests: rawAccessibility["tests"] as string[],
+        };
+
   if (issues.length > 0) return fail(issues);
   return ok({
     schemaVersion: INITIAL_SCHEMA_VERSION,
@@ -362,6 +456,13 @@ export function parseRegistryItem(
       blockId: style["blockId"] as string,
       cohort: style["cohort"] as string,
     })),
+    registryDependencies: registryDepIds,
+    npmDependencies: rawNpm.map((dependency) => ({
+      name: dependency["name"] as string,
+      range: dependency["range"] as string,
+      role: dependency["role"] as NpmRole,
+    })),
+    accessibility,
   });
 }
 
