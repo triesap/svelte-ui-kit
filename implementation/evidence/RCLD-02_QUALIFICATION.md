@@ -34,46 +34,75 @@ Prerequisite tooling commit: `fea1667c874e324671b9716b40e2e0acace530bf`.
 
 ## Final cumulative lanes
 
-All commands ran from the package root
-`/…/domains/triesap/svelte-ui-kit` via `cargo extbuild run -- …`.
+After the RCLD-02 review-1 repair batch, all commands ran from this
+repository root with the pinned local Node 24.21.0 and pnpm 11.22.0 toolchain.
+The counts below are the fresh repaired-candidate results.
 
-| Lane                   | Command                                                                     | Exit | Result                                  |
-| ---------------------- | --------------------------------------------------------------------------- | ---- | --------------------------------------- |
-| Frozen strict install  | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | 0    | already up to date                      |
-| Format                 | `pnpm run format:check`                                                     | 0    | all matched files formatted             |
-| Lint                   | `pnpm run lint`                                                             | 0    | no findings                             |
-| Typecheck              | `pnpm run typecheck` (5 configs)                                            | 0    | exit 0                                  |
-| Unit                   | `pnpm run test:unit`                                                        | 0    | 148 tests, 148 pass                     |
-| Runner harness         | `pnpm run test:harness`                                                     | 0    | 37 tests, 37 pass                       |
-| Integration            | `pnpm run test:integration`                                                 | 0    | 15 tests, 15 pass                       |
-| Components             | `pnpm run test:components`                                                  | 0    | 22 tests, 22 pass                       |
-| Registry               | `pnpm run test:registry`                                                    | 0    | 8 tests, 8 pass                         |
-| CLI smoke              | `pnpm run test:cli-bootstrap`                                               | 0    | 49 tests, 49 pass                       |
-| Consumer check         | `pnpm run fixture:check`                                                    | 0    | 0 errors, 0 warnings                    |
-| Consumer SSR/lifecycle | `pnpm run test:fixture`                                                     | 0    | 17 tests, 17 pass                       |
-| Browser (Chromium)     | `pnpm run test:browser -- tests/browser/harness.spec.ts`                    | 0    | 23 passed                               |
-| Contract validation    | `pnpm run check:contracts`                                                  | 0    | 0 error(s), 0 warning(s)                |
-| Contract regressions   | `pnpm run test:contracts`                                                   | 0    | 117 tests, 117 pass                     |
-| Workflow validation    | `actionlint .github/workflows/ci.yml` (v1.7.12)                             | 0    | no findings                             |
-| Package inventory      | `pnpm pack --pack-destination /tmp/suik-pack-final`                         | 0    | 41 files; schema/registry/dist included |
-| Whitespace             | `git diff --check`, `git diff --cached --check`                             | 0    | no diagnostics                          |
+| Lane                   | Command                                                                     | Exit | Result                                                           |
+| ---------------------- | --------------------------------------------------------------------------- | ---- | ---------------------------------------------------------------- |
+| Frozen strict install  | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | 0    | already up to date                                               |
+| Format                 | `pnpm run format:check`                                                     | 0    | all matched files formatted                                      |
+| Lint                   | `pnpm run lint`                                                             | 0    | no findings                                                      |
+| Typecheck              | `pnpm run typecheck` (5 configs)                                            | 0    | exit 0                                                           |
+| Unit                   | `pnpm run test:unit`                                                        | 0    | 179 tests, 179 pass                                              |
+| Runner harness         | `pnpm run test:harness`                                                     | 0    | 37 tests, 37 pass                                                |
+| Integration            | `pnpm run test:integration`                                                 | 0    | 16 tests, 16 pass                                                |
+| Components             | `pnpm run test:components`                                                  | 0    | 22 tests, 22 pass                                                |
+| Registry               | `pnpm run test:registry`                                                    | 0    | 18 tests, 18 pass                                                |
+| CLI smoke              | `pnpm run test:cli-bootstrap`                                               | 0    | 52 tests, 52 pass                                                |
+| Consumer check         | `pnpm run fixture:check`                                                    | 0    | 0 errors, 0 warnings                                             |
+| Consumer SSR/lifecycle | `pnpm run test:fixture`                                                     | 0    | 23 tests, 23 pass                                                |
+| Browser (Chromium)     | `pnpm run test:browser -- tests/browser/harness.spec.ts`                    | 0    | 23 passed                                                        |
+| Contract validation    | `pnpm run check:contracts`                                                  | 0    | 0 error(s), 0 warning(s)                                         |
+| Contract regressions   | `pnpm run test:contracts`                                                   | 0    | 117 tests, 117 pass                                              |
+| Installed package      | `pnpm run test:integration -- tests/integration/installed-package.test.ts`  | 0    | emitted modules load from an isolated copy under a different cwd |
+| Workflow validation    | `actionlint .github/workflows/ci.yml` (v1.7.12)                             | 0    | no findings (shellcheck 0.11.0 on PATH)                          |
+| Whitespace             | `git diff --check`, `git diff --cached --check`                             | 0    | no diagnostics                                                   |
+| Projection             | `node tools/check-contracts.mjs --generate`                                 | 0    | deterministic; no tracked change                                 |
 
-Unit totals shown are the pre-bookkeeping figure for the S032 implementation;
-the final pending-bookkeeping commit changes no code, so the lanes remain valid.
+## RCLD-02 review-1 repair batch
+
+The original S013–S032 implementation commits above remain unchanged and are
+retained as provenance. Independent review 1 requested changes under seven
+closure groups; the repairs were committed as green local checkpoints:
+
+| Group | Repair commit                              | Summary                                                    |
+| ----- | ------------------------------------------ | ---------------------------------------------------------- |
+| R1-1  | `e5256817b4f493836c18c87a5813fe1321b3c161` | enforce model identities and safe mappings                 |
+| R1-2  | `2aedcf7ea39cda88c78e44bcf0050688a9159d5f` | load schemas and assets through one package authority      |
+| R1-3  | `b7f717492cc5abd5b069f90af435e2b9caeaab52` | compute a truthful joint npm constraint                    |
+| R1-4  | `15689777325e1eac1a9df942784759e1835e0cf9` | compose integrated health and shared css ownership         |
+| R1-5  | `34bcbae12459c127f9d79f74f55e4f25b0ced2e4` | route every json failure through one envelope              |
+| R1-6  | `88e9bd7d0763b50720b00c081a6fe42c2c0206a6` | validate semantic metadata without losing meaning          |
+| R1-7  | this record                                | maintained controls, evidence and cumulative qualification |
+
+The repaired candidate is fresh local evidence only. None of the twenty
+checkpoints is Codex-accepted, and no acceptance hashes or counters change.
 
 ## Negative controls exercised
 
 - Schema/identity: duplicate IDs, identity mismatch, malformed compatibility,
   unknown/legacy fields, unsupported schema versions, unsafe manifest paths,
-  schema `$id` mismatch.
-- Protocol: exit map per status/cause, unsafe locators, planned-applied and
+  schema `$id` mismatch, missing/malformed/non-object provider schemas, and a
+  provider item schema that rejects everything.
+- Config/model safety: traversal, absolute/drive/UNC roots, `..` segments,
+  state-directory overlap, layout/state and layout/root-export collisions, and
+  strict-SemVer rejection for registry and lock release identities.
+- Protocol: exit map per status/cause, JSON usage/metadata failures with exactly
+  one envelope, human stderr preservation, unsafe locators, planned-applied and
   no-change invariants, single-document rendering.
 - Graph: self/multi-node cycles with paths, missing roots/dependencies, diamond
-  visited once, permuted-input stability, joint-empty range conflict.
+  visited once, permuted-input stability, joint-empty range conflict, and
+  integrated health rejection of missing dependencies, cycles and unsupported
+  npm requirements.
 - Collision: duplicate target/block/export, ASCII case-folded collisions,
-  candidate exclusion.
-- Assets: traversal, symlink asset, escaping symlink ancestor, invalid UTF-8,
-  missing asset, no source-checkout fallback.
+  candidate exclusion, and distinct blocks sharing one aggregate stylesheet.
+- Assets: traversal, symlink asset, escaping symlink ancestor, symlinked listing
+  start, invalid UTF-8 source/style bytes, missing asset, no source-checkout
+  fallback, and deeply frozen snapshots with defensive byte copies.
+- Serialization/theme: `Date`/`Map`/`Set`/class instances, sparse-array holes,
+  `undefined` entries and cycles; reversed/imprecise layer order, unsafe
+  stylesheet mappings and duplicate semantic token identities.
 
 ## Fresh reference guard
 

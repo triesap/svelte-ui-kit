@@ -64,3 +64,12 @@ This commit also records the bookkeeping that moves S026 to
 
 - Dependency resolution/cycle handling is S028. Pending independent Codex
   review.
+
+## RCLD-02 review-1 repair note
+
+Independent review 1 of the committed S013-S032 candidate requested changes
+under the seven RCLD02-R1 closure groups. The original implementation evidence
+and commit hash above are retained as provenance; they are not acceptance. The
+repaired candidate is committed as green local checkpoints and verified fresh in
+`implementation/evidence/RCLD-02_QUALIFICATION.md`. This checkpoint remains
+`committed_pending_review`; no acceptance counter or accepted hash changes.
