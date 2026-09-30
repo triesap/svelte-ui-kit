@@ -118,3 +118,12 @@ pending hash above). The takeover dispatch's browser finding is closed:
 
 Verified: browser 11/11 including the nested failure control; `test:fixture`
 23/23, format/lint/typecheck green.
+
+### RCLD-01 closure-batch addendum (2026-09-30)
+
+Repair commit `abeedd301c634461ae791618311462ffd575af23` moves browser issue
+enforcement after `page.close()` drains the page lifecycle and replaces the
+single fault control with bounded per-fault child runs: console error,
+hydration warning, page exception and their teardown emissions, each asserting
+its intended diagnostic with isolated outputs, followed by a clean restoration
+run. Verified: browser 22/22.

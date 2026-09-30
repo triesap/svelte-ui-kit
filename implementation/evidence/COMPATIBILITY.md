@@ -698,3 +698,32 @@ and records acceptance; no acceptance is claimed here.
 - No package/tarball acceptance, publication, deployment or remote CI execution
   is claimed.
 - Only macOS/Node 24.21.0 (and bundled Chromium) was exercised locally.
+
+## RCLD-01 closure-batch addendum (2026-09-30)
+
+The 2026-09-30 closure batch repaired four blocking findings against the
+committed-pending-review S007–S012 candidate while preserving the original
+pending hashes and every earlier repair.
+
+- **RCLD01-R2-1** — the strict declaration audit parses the pinned
+  `svelte-check --output machine-verbose` protocol completely and fails closed,
+  validates the executed compatibility pins and real installed-package paths,
+  and rejects authored `.svelte`/`.ts`/referenced `.d.ts`/additional-dependency
+  errors, including colon and space filenames. Component lane 19/19.
+- **RCLD01-R2-2** — browser issue enforcement runs after `page.close()` drains
+  the lifecycle; bounded per-fault child runs cover console, hydration,
+  page-exception and teardown emissions with a clean restoration run.
+- **RCLD01-R2-3** — `startFixtureServer` retains ownership and stops and drains
+  its child on every rejected readiness path before rethrowing, retaining
+  cleanup and observed failures; owned child environments drop a conflicting
+  `FORCE_COLOR` only when `NO_COLOR` is set. Browser lane 22/22.
+- **RCLD01-R2-4** — the owned temp project rejects non-regular final write
+  targets before opening, with a bounded real FIFO regression and a socket
+  control. Integration lane 14 tests (13 pass, 1 skipped for the remapped long
+  UNIX-socket path).
+
+The temporary fixture-only `skipLibCheck` exception remains valid only under
+the strict audit conditions above; the two genuine upstream Bits 2.19.3
+union-complexity errors remain an open release AC20 obligation. No new
+dependency, suppression, authored `any` or SSR-disable was introduced. Remote
+CI, other platforms and package release acceptance remain unproven.

@@ -284,3 +284,15 @@ missing executable, an invalid cwd, late stderr during shutdown, retention of
 an observed exit 17 across `stop()`, forced SIGKILL termination and idempotent
 `stop()`. Verified: owned-server 16/16, `test:fixture` 23/23, format/lint/
 typecheck green.
+
+### RCLD-01 closure-batch addendum (2026-09-30)
+
+Repair commit `abeedd301c634461ae791618311462ffd575af23` (with the RCLD01-R2-2
+browser work) makes `startFixtureServer` retain ownership of its child until
+readiness succeeds, stop and drain it on every rejected readiness path before
+rethrowing the original diagnostic, and retain cleanup and observed failures on
+an `AggregateError`. The owned-server child environment now drops a conflicting
+`FORCE_COLOR` only when `NO_COLOR` is present, preserving the parent and strict
+stderr checks. Added ownership controls cover malformed readiness, readiness
+timeout, spawn failure and successful startup/shutdown in the browser lane.
+Verified: browser 22/22, SSR/lifecycle 23/23.

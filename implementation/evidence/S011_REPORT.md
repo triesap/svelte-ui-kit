@@ -144,3 +144,16 @@ The strict audit is a qualified upstream exception, not a raw strict-check pass.
 Raw output: exit 1, two errors, zero warnings. Resolving it remains an open
 release AC20 obligation. Verified: components 7/7, fixture 23/23, browser 11/11,
 format/lint/typecheck green.
+
+### RCLD-01 closure-batch addendum (2026-09-30)
+
+Repair commit `9e1b397c7e3429a95178a2e227fcc6c5b525b452` replaces the
+human-output regex with a complete fail-closed parser for the pinned
+`svelte-check --output machine-verbose` protocol (START, timestamped JSON,
+COMPLETED, FAILURE). Qualification requires exit 1, empty checker stderr, the
+executed Bits/TypeScript/Svelte/svelte-check/csstype/date pins, exactly two
+error diagnostics in two problem files, and diagnostics that resolve to real
+files inside the installed Bits package. Pure parser, synthetic classifier and
+real authored `.svelte`/`.ts`/referenced `.d.ts`/additional-dependency controls
+(including colon and space filenames) prove normal plus strict qualification
+cannot admit a referenced declaration defect. Verified: components 19/19.

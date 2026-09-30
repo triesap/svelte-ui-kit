@@ -511,12 +511,19 @@ are appended separately as they land.
   retains ownership and stops and drains its child on every rejected readiness
   path, and owned child environments drop a conflicting `FORCE_COLOR` only
   when `NO_COLOR` is set. Browser lane 22/22; SSR/lifecycle lane 23/23.
-- RCLD01-R2-4 (committed in this repair): the owned temp-project write helper
-  requires an existing final target to be a regular file, rejecting FIFO,
-  socket and device targets before opening while preserving symlink and
-  ancestor protections, with a real bounded FIFO regression and a socket
-  control. Integration lane 14 tests (13 pass, 1 skipped only for the
-  remapped long UNIX-socket path).
+- `0c02a233e77c02850086cabd364e97a1fd83aa17` — RCLD01-R2-4: the owned
+  temp-project write helper requires an existing final target to be a regular
+  file, rejecting FIFO, socket and device targets before opening while
+  preserving symlink and ancestor protections, with a real bounded FIFO
+  regression and a socket control. Integration lane 14 tests (13 pass, 1
+  skipped only for the remapped long UNIX-socket path).
+- Lane/CI integration and documentation reconciliation (this repair): every
+  mandatory control lives in a maintained lane that CI already runs — strict
+  audit controls in `test:components`, per-fault and startup-ownership browser
+  controls in `test:browser -- tests/browser/harness.spec.ts`, and the
+  nonregular-target FIFO control in `test:integration`. Lane meanings are
+  updated in `implementation/VERIFICATION.md`; report and compatibility
+  addenda record the repair hashes and results.
 
 ## Codex takeover dispatch — RCLD-01 repair and qualification
 

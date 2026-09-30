@@ -125,3 +125,13 @@ closed:
   complete external-tree snapshots (bytes, modes, kinds and link targets).
 
 Verified: integration 12/12, format/lint/typecheck green.
+
+### RCLD-01 closure-batch addendum (2026-09-30)
+
+Repair commit `0c02a233e77c02850086cabd364e97a1fd83aa17` requires an existing
+final write target to be a regular file, rejecting FIFO, socket and device
+entries before opening while preserving the symlink and ancestor protections.
+A bounded real FIFO regression proves the rejection does not block on open and
+preserves the entry kind, mode and size with owned cleanup; a socket control
+skips only when the platform rejects the remapped long path. Verified:
+integration 14 tests (13 pass, 1 skipped).
