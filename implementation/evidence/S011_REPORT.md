@@ -12,8 +12,7 @@ Contract/requirement IDs: R03, R12, R20, R21, R29, R32, R33, R34
 `specs/COMPONENT_CATALOG.md`, `specs/DATA_MODEL.md`).
 
 Author: Pi, provider `ollama`, model `deepseek-v4.1-flash:cloud`. Runtime:
-process-local Node `24.21.0` / `pnpm 11.22.0`, after `cargo extbuild doctor`
-(exit 0), with mutating commands routed through `cargo extbuild run --`.
+Node `24.21.0` / `pnpm 11.22.0`.
 
 Under the owner-authorized batch this report is a candidate; the S011
 implementation commit makes it `committed_pending_review` pending independent

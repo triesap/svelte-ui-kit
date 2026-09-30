@@ -1914,11 +1914,16 @@ function validatePlanStructure(root, errors, batch) {
       /Committed pending review:\s*\*\*\s*(\d+)\s*\/\s*203\s*\*\*\.\s*Authored batch range:\s*\*\*\s*([^*]+?)\s*\*\*\./,
     );
   if (!pendingSummary) {
-    errors.push({
-      code: "INVALID_SUMMARY_COUNT",
-      path: PLAN_REL,
-      message: "missing the top-level committed-pending-review summary",
-    });
+    // Historical plans predate the batch feature: a plan with neither a batch
+    // authorization nor any pending-review checkpoint need not carry the new
+    // summary. A live batch or any pending-review state still requires it.
+    if (batch || pendingIds.length > 0) {
+      errors.push({
+        code: "INVALID_SUMMARY_COUNT",
+        path: PLAN_REL,
+        message: "missing the top-level committed-pending-review summary",
+      });
+    }
   } else {
     if (Number(pendingSummary[1]) !== pendingIds.length) {
       errors.push({

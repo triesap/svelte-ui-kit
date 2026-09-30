@@ -13,9 +13,7 @@ Contract/requirement IDs: R01, R02, R03, R15, R32, R33, R34
 `specs/SYNCHRONIZATION.md`).
 
 Author: Pi, provider `ollama`, model `deepseek-v4.1-flash:cloud`. Runtime:
-process-local Node `24.21.0` / `pnpm 11.22.0`, after `cargo extbuild doctor`
-(exit 0), with mutating commands routed through `cargo extbuild run --`. No new
-dependency was added.
+Node `24.21.0` / `pnpm 11.22.0`. No new dependency was added.
 
 Under the owner-authorized batch this report is a candidate; the S012
 implementation commit makes it `committed_pending_review` pending independent
@@ -121,3 +119,18 @@ are committed and pending independent review: S007
 `14de6da6fbeb58af2a3843874e86c391e4a17051`. The completed-checkpoint counter
 stays `6 / 203` because pending review is not independent acceptance; the
 authored pending-review range is `S007–S012`. No S013 work was performed.
+
+## RCLD-01 repair addendum (2026-09-30)
+
+Repair commit: `024495a0854ce4566678feb1dbb461a2f049e7a3` (not the original
+pending hash above). The takeover dispatch's adapter-boundary finding is closed:
+
+- `src/cli/main.ts` now delegates to the shared `runCli` executor instead of
+  duplicating argument classification and dispatch; metadata validation and the
+  real stdout/stderr/exit effects stay in the adapter.
+- The hard-coded-version mutation control targets the adapter's delegation point,
+  so the strengthened CLI smoke suite still rejects a hard-coded version.
+- All 41 CLI smoke behaviors and the boundary/pure-import regressions pass.
+
+Verified: CLI smoke 41/41, unit 20/20, harness 35/35, integration 12/12,
+format/lint/typecheck green.

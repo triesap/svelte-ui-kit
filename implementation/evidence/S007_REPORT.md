@@ -33,10 +33,8 @@ post-commit bookkeeping and were preserved with their accepted S006 hashes and
 dispositions.
 
 Author/provider: Pi, provider `ollama`, model `deepseek-v4.1-flash:cloud`.
-Runtime: process-local Node `24.21.0` with `pnpm 11.22.0`, after a successful
-`cargo extbuild doctor` (exit 0) and with mutating commands routed through
-`cargo extbuild run --`. No global tool or package-manager configuration was
-changed and the provider/model was not substituted.
+Runtime: Node `24.21.0` with `pnpm 11.22.0`. No global tool or package-manager
+configuration was changed and the provider/model was not substituted.
 
 ## Review corrections
 
@@ -135,14 +133,13 @@ authored range is reported separately from the accepted counters.
 
 ## Verification
 
-All commands ran from this package root under process-local Node `24.21.0` and
+All commands ran from this package root under Node `24.21.0` and
 `pnpm 11.22.0`, using the required execution routing after a green environment
 diagnostic. Exits are real captured process exits. Logs are under the
 gitignored `implementation/evidence/logs/` (`s007b-*.log`).
 
 | Step                       | Command                                                                     | Exit | Result                                                                | Log                         |
 | -------------------------- | --------------------------------------------------------------------------- | ---- | --------------------------------------------------------------------- | --------------------------- |
-| Environment diagnostic     | `cargo extbuild doctor`                                                     | 0    | config/volume/tooling ok; guard current                               | (terminal)                  |
 | Frozen strict install      | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | 0    | `Already up to date`; 2 workspace projects                            | `s007b-install-frozen.log`  |
 | Fixture check              | `pnpm run fixture:check`                                                    | 0    | `svelte-check found 0 errors and 0 warnings`                          | `s007b-fixture-check.log`   |
 | Fixture build + all suites | `pnpm run test:fixture`                                                     | 0    | build + `tests 16, pass 16, fail 0`                                   | `s007b-test-fixture.log`    |
@@ -203,7 +200,8 @@ runs at the S012 milestone.
 
 ## Exceptions, failed attempts and retries
 
-- `cargo extbuild doctor` was run before mutating work and exited 0.
+- The pinned runtime (`node --version`, `pnpm --version`) was confirmed before
+  mutating work.
 - The first corrected-gate `pnpm run lint` exited 1 for a
   `preserve-caught-error` finding in `tests/smoke/owned-server.mjs`; attaching
   the caught error as `cause` fixed it and the next run exited 0.

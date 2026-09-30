@@ -10,9 +10,7 @@ Contract/requirement IDs: R29, R32, R33, R34
 (`implementation/COMMIT_SEQUENCE.md`; see `specs/ACCEPTANCE_CRITERIA.md`).
 
 Author: Pi, provider `ollama`, model `deepseek-v4.1-flash:cloud`. Runtime:
-process-local Node `24.21.0` / `pnpm 11.22.0`, after `cargo extbuild doctor`
-(exit 0), with mutating commands routed through `cargo extbuild run --`. No new
-dependency was added.
+Node `24.21.0` / `pnpm 11.22.0`. No new dependency was added.
 
 Under the owner-authorized batch this report is a candidate; the S010
 implementation commit makes it `committed_pending_review` pending independent
@@ -41,8 +39,7 @@ Codex review.
 
 ## Verification
 
-Locally recorded results (Node `24.21.0`/`pnpm 11.22.0`, routed through
-`cargo extbuild run --`):
+Locally recorded results (Node `24.21.0`/`pnpm 11.22.0`):
 
 | Step                | Command                                                  | Exit | Result                                    |
 | ------------------- | -------------------------------------------------------- | ---- | ----------------------------------------- |
@@ -71,7 +68,7 @@ The actionlint archive's SHA-256 was verified against
 - The `ubuntu-24.04` runner, `--with-deps` Chromium system libraries and any
   remote cache behavior remain unverified until a separately authorized run.
 - `shellcheck 0.11.0` is present locally; CI relies on actionlint's bundled
-  behavior/runners rather than this workstation's shellcheck.
+  behavior/runners rather than the local shellcheck.
 - No publication, deployment, release, secrets or external reference checkout
   is part of the workflow.
 

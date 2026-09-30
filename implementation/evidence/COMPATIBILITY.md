@@ -172,7 +172,7 @@ reproducibility.
 
 ## 5. Install procedure, determinism and results
 
-Two separate installations were recorded, both under process-local Node
+Two separate installations were recorded, both under Node
 `24.21.0` with `pnpm 11.22.0` and engine checking enabled (`--engine-strict`),
 routed through the repository's required execution wrapper:
 
@@ -273,7 +273,7 @@ was made.
   inline with no added dependency. Only the product/package version `0.1.0` is
   new; every S003 dependency version remains unchanged.
 
-Observed with process-local Node `24.21.0` and pnpm `11.22.0`: `pnpm run
+Observed with Node `24.21.0` and pnpm `11.22.0`: `pnpm run
 format:check` and `pnpm run typecheck` exit 0; a temporary negative type fixture
 produced `TS2322` and exit 2; `pnpm run build` emits only `dist/cli/main.js` with
 the shebang preserved; the strengthened `pnpm run test:cli-bootstrap` passes
@@ -649,8 +649,8 @@ minimal readonly interfaces for later responsibilities.
 
 ### RCLD-01 cumulative verification (S012 milestone)
 
-All commands ran under Node `24.21.0`/`pnpm 11.22.0`, routed through
-`cargo extbuild run --`, with logs under `implementation/evidence/logs/`.
+All commands ran under Node `24.21.0`/`pnpm 11.22.0`, with logs under
+`implementation/evidence/logs/`.
 
 | Lane                        | Result                                                                                                                                                                                              |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

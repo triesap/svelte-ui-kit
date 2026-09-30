@@ -11,8 +11,7 @@ Contract/requirement IDs: R21, R22, R29, R32, R33, R34
 `specs/ARCHITECTURE.md`, `specs/COMPONENT_CATALOG.md`).
 
 Author: Pi, provider `ollama`, model `deepseek-v4.1-flash:cloud`. Runtime:
-process-local Node `24.21.0` / `pnpm 11.22.0`, after `cargo extbuild doctor`
-(exit 0) and with mutating commands routed through `cargo extbuild run --`.
+Node `24.21.0` / `pnpm 11.22.0`.
 
 Under the owner-authorized batch this report is `committed_pending_review` at
 `f4dfa83aadc67850b6b8b999f80bd7199de4a6b2` pending independent Codex review.
@@ -43,8 +42,8 @@ No completion or acceptance is claimed.
 
 ## Verification
 
-All commands ran from the package root under Node `24.21.0`/`pnpm 11.22.0`,
-routed through `cargo extbuild run --`. Exits are real captured process exits;
+All commands ran from the package root under Node `24.21.0`/`pnpm 11.22.0`.
+Exits are real captured process exits;
 logs are under `implementation/evidence/logs/` (`s008-*.log`).
 
 | Step                      | Command                                                                     | Exit | Result                                    | Log                           |

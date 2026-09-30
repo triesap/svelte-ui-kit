@@ -1803,3 +1803,200 @@ test("generation does not legitimize invalid pending evidence", () => {
     { scenario: "pendingBatch" },
   );
 });
+
+// ---------------------------------------------------------------------------
+// Governance compatibility and the atomic batch-acceptance transition
+// ---------------------------------------------------------------------------
+
+/** Remove the single live batch authorization block from a fixture plan. */
+function removeBatchAuthorization(root) {
+  const text = read(root, PLAN_REL);
+  const stripped = text.replace(/<!-- checkpoint-batch[\s\S]*?-->\n?/, "");
+  assert.notEqual(stripped, text, "the batch authorization must be removed");
+  write(root, PLAN_REL, stripped);
+}
+
+/** Remove the top-level committed-pending-review summary line. */
+function removePendingSummary(root) {
+  const text = read(root, PLAN_REL);
+  const stripped = text.replace(/^- Committed pending review:.*\n/m, "");
+  assert.notEqual(stripped, text, "the pending summary line must be removed");
+  write(root, PLAN_REL, stripped);
+}
+
+const BATCH_IDS = ["S007", "S008", "S009", "S010", "S011", "S012"];
+
+test("a historical plan without batch authorization or pending state needs no pending summary", () => {
+  withFixture(
+    (root) => {
+      removeBatchAuthorization(root);
+      removePendingSummary(root);
+      regenerate(root, 0);
+      const result = runCli(root);
+      assert.equal(result.status, 0, result.output);
+    },
+    { scenario: "two" },
+  );
+});
+
+test("a present pending summary must stay accurate even without a batch", () => {
+  withFixture(
+    (root) => {
+      removeBatchAuthorization(root);
+      write(
+        root,
+        PLAN_REL,
+        read(root, PLAN_REL).replace(
+          /Committed pending review: \*\*0 \/ 203\*\*/,
+          "Committed pending review: **3 / 203**",
+        ),
+      );
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /INVALID_SUMMARY_COUNT/);
+    },
+    { scenario: "two" },
+  );
+});
+
+test("synthetic atomic acceptance completes all six pending checkpoints", () => {
+  withFixture(
+    (root) => {
+      // 1. The pending batch validates.
+      assert.equal(runCli(root).status, 0, "pending batch must validate");
+
+      // 2. A green evidence commit E contains both evidence paths per
+      //    checkpoint (already present) and the pending records.
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "fixture: evidence commit E");
+      const evidence = git(root, "rev-parse", "HEAD").trim();
+
+      // 3. Atomic acceptance: all six become complete against E.
+      for (const id of BATCH_IDS) {
+        setLedgerCell(root, id, 4, "complete");
+        setLedgerCell(root, id, 5, evidence);
+        writeEvidencePair(root, id, {
+          commit: evidence,
+          report: "implemented",
+          review: "accepted",
+        });
+      }
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 0);
+      const result = runCli(root);
+      assert.equal(result.status, 0, result.output);
+
+      const plan = read(root, PLAN_REL);
+      assert.match(
+        plan,
+        /Completed implementation checkpoints: \*\*12 \/ 203\*\*/,
+      );
+      assert.match(
+        plan,
+        /Committed pending review: \*\*0 \/ 203\*\*\. Authored batch range: \*\*none\*\*\./,
+      );
+      const projection = JSON.parse(read(root, PLAN_JSON_REL));
+      const rcl01 = projection.sequences.find((seq) => seq.id === "RCLD-01");
+      assert.equal(rcl01.state, "complete");
+
+      // 4. S013 is now unlocked by the accepted S012.
+      setLedgerCell(root, "S013", 4, "in_progress");
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 0);
+      assert.equal(runCli(root).status, 0);
+    },
+    { scenario: "pendingAll" },
+  );
+});
+
+test("partial acceptance of a pending prefix preserves the remaining pending ancestry", () => {
+  withFixture(
+    (root) => {
+      // Accept S007 at its own already-committed pending implementation hash
+      // (the real implementation commit), not a later evidence commit, so the
+      // remaining pending commits stay descendants of the accepted predecessor.
+      const row = read(root, PLAN_REL)
+        .split("\n")
+        .find((line) => line.startsWith("| S007 |"));
+      const implementationHash = row.match(/\b[0-9a-f]{40}\b/)[0];
+      setLedgerCell(root, "S007", 4, "complete");
+      setLedgerCell(root, "S007", 5, implementationHash);
+      writeEvidencePair(root, "S007", {
+        commit: implementationHash,
+        report: "implemented",
+        review: "accepted",
+      });
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 0);
+      const result = runCli(root);
+      assert.equal(result.status, 0, result.output);
+      // S008–S012 remain pending and still validate.
+      const statuses = readLedgerStatuses(root);
+      for (const id of ["S008", "S009", "S010", "S011", "S012"]) {
+        assert.equal(statuses.get(id), "committed_pending_review", id);
+      }
+    },
+    { scenario: "pendingAll" },
+  );
+});
+
+test("accepted completion with an unresolvable hash is rejected", () => {
+  withFixture(
+    (root) => {
+      const fake = "f".repeat(40);
+      setLedgerCell(root, "S009", 4, "complete");
+      setLedgerCell(root, "S009", 5, fake);
+      writeEvidencePair(root, "S009", {
+        commit: fake,
+        report: "implemented",
+        review: "accepted",
+      });
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /does not resolve/);
+    },
+    { scenario: "pendingAll" },
+  );
+});
+
+test("accepted completion with a missing review record is rejected", () => {
+  withFixture(
+    (root) => {
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "fixture: evidence commit for S010");
+      const evidence = git(root, "rev-parse", "HEAD").trim();
+      unlinkSync(path.join(root, reviewRel("S010")));
+      setLedgerCell(root, "S010", 4, "complete");
+      setLedgerCell(root, "S010", 5, evidence);
+      writeEvidence(root, "S010", "report", {
+        commit: evidence,
+        disposition: "implemented",
+      });
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /MISSING_COMPLETION_EVIDENCE/);
+    },
+    { scenario: "pendingAll" },
+  );
+});
+
+test("accepted completion with a changes_requested review is rejected", () => {
+  withFixture(
+    (root) => {
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "fixture: evidence commit for S011");
+      const evidence = git(root, "rev-parse", "HEAD").trim();
+      setLedgerCell(root, "S011", 4, "complete");
+      setLedgerCell(root, "S011", 5, evidence);
+      writeEvidencePair(root, "S011", {
+        commit: evidence,
+        report: "implemented",
+        review: "changes_requested",
+      });
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /disposition must be "accepted"/);
+    },
+    { scenario: "pendingAll" },
+  );
+});

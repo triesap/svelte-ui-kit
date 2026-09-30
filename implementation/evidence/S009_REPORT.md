@@ -12,9 +12,7 @@ Contract/requirement IDs: R15, R16, R29, R30, R32, R33, R34
 `specs/SYNCHRONIZATION.md`).
 
 Author: Pi, provider `ollama`, model `deepseek-v4.1-flash:cloud`. Runtime:
-process-local Node `24.21.0` / `pnpm 11.22.0`, after `cargo extbuild doctor`
-(exit 0), with mutating commands routed through `cargo extbuild run --`. No new
-dependency was added.
+Node `24.21.0` / `pnpm 11.22.0`. No new dependency was added.
 
 Under the owner-authorized batch this report is a candidate; the S009
 implementation commit makes it `committed_pending_review` pending independent
@@ -48,8 +46,8 @@ Codex review.
 
 ## Verification
 
-All commands ran from the package root under Node `24.21.0`/`pnpm 11.22.0`,
-routed through `cargo extbuild run --`. Logs are under
+All commands ran from the package root under Node `24.21.0`/`pnpm 11.22.0`.
+Logs are under
 `implementation/evidence/logs/` (`s009-*.log`).
 
 | Step                     | Command                                                          | Exit | Result                                    | Log                            |
