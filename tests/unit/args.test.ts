@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { parseCliArgs, type CommandRequest } from "../../src/cli/args.js";
+import {
+  classifyArgvIntent,
+  parseCliArgs,
+  type CommandRequest,
+} from "../../src/cli/args.js";
 
 /**
  * S023 tests: only the approved grammar parses, rejected options fail before
@@ -111,6 +115,50 @@ test("options are scoped to their commands", () => {
   assert.deepEqual(commandOf(["add", "button", "--dry-run"]).dryRun, true);
   assert.deepEqual(commandOf(["view", "button", "--source"]).source, true);
   assert.deepEqual(commandOf(["doctor", "--strict"]).strict, true);
+});
+
+test("lexical intent classification inspects the whole argument list", () => {
+  assert.deepEqual(classifyArgvIntent([]), { json: false, command: "help" });
+  assert.deepEqual(classifyArgvIntent(["info", "--bogus", "--json"]), {
+    json: true,
+    command: "info",
+  });
+  assert.deepEqual(classifyArgvIntent(["--cwd", "--json", "info"]), {
+    json: true,
+    command: "info",
+  });
+  assert.deepEqual(classifyArgvIntent(["--bogus", "info", "--json"]), {
+    json: true,
+    command: "info",
+  });
+  assert.deepEqual(classifyArgvIntent(["--json", "--bogus", "info"]), {
+    json: true,
+    command: "info",
+  });
+  // A directory value is not the command and `--cwd=--json` is a value.
+  assert.deepEqual(classifyArgvIntent(["--cwd", "info", "--json"]), {
+    json: true,
+    command: "help",
+  });
+  assert.deepEqual(classifyArgvIntent(["--cwd=--json"]), {
+    json: false,
+    command: "help",
+  });
+  assert.deepEqual(classifyArgvIntent(["--cwd=--json", "--json"]), {
+    json: true,
+    command: "help",
+  });
+  assert.deepEqual(classifyArgvIntent(["nonsense", "--json"]), {
+    json: true,
+    command: "help",
+  });
+
+  const usage = parseCliArgs(["info", "--bogus", "--json"]);
+  assert.equal(usage.kind, "usage-error");
+  if (usage.kind === "usage-error") {
+    assert.equal(usage.json, true);
+    assert.equal(usage.command, "info");
+  }
 });
 
 test("parsing is pure and performs no writes", () => {

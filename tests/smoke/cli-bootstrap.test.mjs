@@ -730,10 +730,10 @@ function existingFileWriteMutant(source) {
 function hardCodedVersionMutant(source) {
   // After S012 the version string is produced by the shared `runCli` executor,
   // so the mutant hard-codes it in the adapter before the metadata is read.
-  const needle = "const metadata = readPackageMetadata();";
+  const needle = "const metadata = readPackageMetadata(intent);";
   const mutated = source.replace(
     needle,
-    'if (argv.length === 1 && (argv[0] === "--version" || argv[0] === "-V")) { process.stdout.write("svelte-ui-kit 0.1.0\\n"); process.exit(0); } const metadata = readPackageMetadata();',
+    'if (argv.length === 1 && (argv[0] === "--version" || argv[0] === "-V")) { process.stdout.write("svelte-ui-kit 0.1.0\\n"); process.exit(0); } const metadata = readPackageMetadata(intent);',
   );
   assert.notEqual(
     mutated,

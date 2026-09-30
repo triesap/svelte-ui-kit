@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 
+import { classifyArgvIntent, type ArgvIntent } from "./args.js";
 import { createEnvelope, renderEnvelope } from "./protocol.js";
 import { runCli } from "./run.js";
 
@@ -49,17 +50,21 @@ const EXPECTED_NAME = "svelte-ui-kit";
 const SEMVER_RE =
   /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 
-/** True when the invoked command line requested the JSON protocol. */
-function jsonRequested(): boolean {
-  return process.argv.slice(2).includes("--json");
-}
-
-function failMetadata(message: string, code: string): undefined {
-  if (jsonRequested()) {
+/**
+ * Emit one deterministic adapter-metadata failure. JSON intent and command
+ * attribution come from the shared lexical classification, so `--json info`
+ * reports `info` rather than `help`.
+ */
+function failMetadata(
+  intent: ArgvIntent,
+  message: string,
+  code: string,
+): undefined {
+  if (intent.json) {
     process.stdout.write(
       renderEnvelope(
         createEnvelope({
-          command: "help",
+          command: intent.command,
           status: "error",
           diagnostics: [
             {
@@ -81,12 +86,13 @@ function failMetadata(message: string, code: string): undefined {
 }
 
 /** Read and validate the bundled package metadata, independent of cwd. */
-function readPackageMetadata(): PackageMetadata | undefined {
+function readPackageMetadata(intent: ArgvIntent): PackageMetadata | undefined {
   let raw: string;
   try {
     raw = readFileSync(PACKAGE_METADATA_URL, "utf8");
   } catch {
     return failMetadata(
+      intent,
       "could not read the bundled package metadata next to this executable.",
       "PACKAGE_METADATA_READ",
     );
@@ -97,12 +103,14 @@ function readPackageMetadata(): PackageMetadata | undefined {
     value = JSON.parse(raw);
   } catch {
     return failMetadata(
+      intent,
       "the bundled package metadata is not valid JSON.",
       "PACKAGE_METADATA_JSON",
     );
   }
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return failMetadata(
+      intent,
       "the bundled package metadata is not a JSON object.",
       "PACKAGE_METADATA_SHAPE",
     );
@@ -112,12 +120,14 @@ function readPackageMetadata(): PackageMetadata | undefined {
   const name = record["name"];
   if (typeof name !== "string") {
     return failMetadata(
+      intent,
       'the bundled package metadata has no string "name".',
       "PACKAGE_METADATA_NAME",
     );
   }
   if (name !== EXPECTED_NAME) {
     return failMetadata(
+      intent,
       `this executable must be built from the "${EXPECTED_NAME}" package metadata.`,
       "PACKAGE_METADATA_NAME",
     );
@@ -126,12 +136,14 @@ function readPackageMetadata(): PackageMetadata | undefined {
   const version = record["version"];
   if (typeof version !== "string") {
     return failMetadata(
+      intent,
       'the bundled package metadata has no string "version".',
       "PACKAGE_METADATA_VERSION",
     );
   }
   if (!SEMVER_RE.test(version)) {
     return failMetadata(
+      intent,
       "the bundled package metadata version is not valid SemVer 2.0.0.",
       "PACKAGE_METADATA_VERSION",
     );
@@ -140,7 +152,8 @@ function readPackageMetadata(): PackageMetadata | undefined {
 }
 
 function main(argv: readonly string[]): void {
-  const metadata = readPackageMetadata();
+  const intent = classifyArgvIntent(argv);
+  const metadata = readPackageMetadata(intent);
   if (metadata === undefined) return;
 
   // The adapter keeps metadata validation and the real process effects; the

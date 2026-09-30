@@ -96,6 +96,36 @@ test("json usage failures emit exactly one safe envelope", () => {
       command: "view",
       message: /--strict is only valid/,
     },
+    {
+      argv: ["info", "--bogus", "--json"],
+      command: "info",
+      message: /unsupported option/,
+    },
+    {
+      argv: ["--cwd", "--json", "info"],
+      command: "info",
+      message: /requires a directory value/,
+    },
+    {
+      argv: ["--bogus", "info", "--json"],
+      command: "info",
+      message: /unsupported option/,
+    },
+    {
+      argv: ["--json", "--bogus", "info"],
+      command: "info",
+      message: /unsupported option/,
+    },
+    {
+      argv: ["--cwd", "info", "--json"],
+      command: "help",
+      message: /no command/,
+    },
+    {
+      argv: ["--cwd=--json", "--json"],
+      command: "help",
+      message: /no command/,
+    },
   ];
   for (const entry of cases) {
     const result = runCli(entry.argv);
@@ -113,7 +143,13 @@ test("json usage failures emit exactly one safe envelope", () => {
 });
 
 test("human usage failures stay on stderr with empty stdout", () => {
-  for (const argv of [["view"], ["info", "--bogus"], ["nonsense"], ["--cwd"]]) {
+  for (const argv of [
+    ["view"],
+    ["info", "--bogus"],
+    ["nonsense"],
+    ["--cwd"],
+    ["--cwd=--json"],
+  ]) {
     const result = runCli(argv);
     assert.equal(result.status, 2, JSON.stringify(argv));
     assert.equal(result.stdout, "", JSON.stringify(argv));
@@ -159,12 +195,31 @@ test("controlled metadata failures emit one json envelope", (t) => {
     assert.equal(result.status, 1, entry.manifest);
     assert.equal(result.stderr, "", entry.manifest);
     const envelope = envelopeOf(result.stdout);
-    assert.equal(envelope.command, "help");
+    assert.equal(envelope.command, "info");
     assert.equal(envelope.status, "error");
     assert.equal(envelope.diagnostics[0]?.code, entry.code);
     for (const diagnostic of envelope.diagnostics) {
       assert.equal(diagnostic.locator, undefined);
     }
+  }
+});
+
+test("metadata failures attribute the recognized command regardless of flag order", (t) => {
+  const { entrypoint, dir } = isolatedPackage(
+    t,
+    '{"type":"module","name":"other","version":"0.1.0"}\n',
+  );
+  for (const argv of [
+    ["--json", "info"],
+    ["info", "--json"],
+    ["--bogus", "info", "--json"],
+  ]) {
+    const result = runCli(argv, entrypoint, dir);
+    assert.equal(result.status, 1, JSON.stringify(argv));
+    assert.equal(result.stderr, "", JSON.stringify(argv));
+    const envelope = envelopeOf(result.stdout);
+    assert.equal(envelope.command, "info", JSON.stringify(argv));
+    assert.equal(envelope.diagnostics[0]?.code, "PACKAGE_METADATA_NAME");
   }
 });
 
