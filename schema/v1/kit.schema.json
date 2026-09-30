@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:svelte-ui-kit:schema:v1:kit",
+  "title": "svelte-ui-kit kit.json (v1)",
+  "description": "Desired installation configuration. Unknown fields, coercion, default injection and unknown-property removal are intentionally disabled; absent optional fields receive the documented defaults.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion"],
+  "properties": {
+    "schemaVersion": {
+      "description": "Local configuration schema revision. Independent of any framework release.",
+      "const": 1
+    },
+    "toolVersion": {
+      "description": "SemVer of the CLI that last wrote this configuration.",
+      "type": "string",
+      "minLength": 1
+    },
+    "registry": {
+      "description": "Only the bundled registry is supported.",
+      "const": "builtin"
+    },
+    "uiDir": {
+      "description": "Logical root for generated UI source, relative to the application package.",
+      "type": "string",
+      "minLength": 1
+    },
+    "stylesDir": {
+      "description": "Logical directory for kit/themes/app stylesheets.",
+      "type": "string",
+      "minLength": 1
+    },
+    "layoutFile": {
+      "description": "Logical SvelteKit root layout that imports the stylesheets.",
+      "type": "string",
+      "minLength": 1
+    },
+    "requested": {
+      "description": "Explicit root item requests only; dependency closure is never stored here.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+      },
+      "uniqueItems": true
+    }
+  }
+}

@@ -1,7 +1,7 @@
 # S013 step report — Model independent version identities
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S013","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S013","kind":"report","commit":"bbd3cf4b0f07ebb9f82f259577a5d1ff17ed6878","disposition":"candidate"}
 -->
 
 Step ID and title: S013 — Model independent version identities.
