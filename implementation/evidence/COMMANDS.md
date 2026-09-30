@@ -23,11 +23,11 @@ private tooling.
 | Frozen install      | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | Strict peers and engine enforcement; one root lockfile.                                                                                                       |
 | Format check        | `pnpm run format:check`                                                     | Nonmutating Prettier over the maintained authoring tree.                                                                                                      |
 | Lint                | `pnpm run lint`                                                             | `eslint . --max-warnings 0`.                                                                                                                                  |
-| Typecheck           | `pnpm run typecheck`                                                        | `tsconfig.json`, `tsconfig.unit.json`, `tsconfig.integration.json`.                                                                                           |
+| Typecheck           | `pnpm run typecheck`                                                        | `tsconfig.json`, `tsconfig.unit.json`, `tsconfig.integration.json`, `tsconfig.components.json`.                                                               |
 | Unit                | `pnpm run test:unit`                                                        | Builds, then runs typed `tests/unit` via the suite runner.                                                                                                    |
 | Runner harness      | `pnpm run test:harness`                                                     | Regression suite for `tools/run-unit-tests.mjs`.                                                                                                              |
 | Integration         | `pnpm run test:integration`                                                 | Builds, then runs typed `tests/integration` (`--suite integration`).                                                                                          |
-| Components          | `pnpm run test:components`                                                  | Runs typed `tests/components` (`--suite components`); drives real `svelte-check` on the maintained Bits compatibility fixture and disposable negative copies. |
+| Components          | `pnpm run test:components`                                                  | Runs typed `tests/components` (`--suite components`): the Bits compatibility fixture and disposable negative copies, plus the mandatory strict declaration audit. |
 | CLI smoke           | `pnpm run test:cli-bootstrap`                                               | Real `dist` CLI process assertions.                                                                                                                           |
 | Contract validation | `pnpm run check:contracts`                                                  | Read-only document/projection/evidence validation.                                                                                                            |
 | Contract tests      | `pnpm run test:contracts`                                                   | Focused validator regression suite.                                                                                                                           |
@@ -38,7 +38,12 @@ private tooling.
 | Diff health         | `git diff --check`                                                          | No whitespace diagnostics.                                                                                                                                    |
 
 The component qualification lane (`pnpm run test:components`) is established at
-S011; the workflow runs it after the integration lane.
+S011; the workflow runs it after the integration lane. It also runs the
+mandatory strict declaration audit that pairs with the fixture's temporary
+`skipLibCheck: true` exception: the real `skipLibCheck: false` checker runs in
+an owned copy and exactly the two pinned Bits 2.19.3 union-complexity
+diagnostics are qualified, with authored and additional-dependency errors
+rejected. Resolving that upstream exception remains an open release obligation.
 
 ## CI workflow
 
