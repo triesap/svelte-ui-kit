@@ -167,7 +167,12 @@ accepted hash changed.
 | ----- | ------------------------------------------ | --------------------------------------------------------------- |
 | R3-1  | `1e7ae2ddb847a5e0f180b111b3055fc5646c9031` | intersect one constraint set over the complete selected closure |
 | R3-2  | `1e7ae2ddb847a5e0f180b111b3055fc5646c9031` | complete logical file-role/case/ancestry/integration ownership  |
-| R3-3  | this record                                | cumulative qualification, maintained controls and evidence      |
+| R3-3  | `a14a80527b120f960ef58cbd46e00d7afd97ca36` | within-item controls, cumulative qualification and evidence     |
+
+`a14a80527b120f960ef58cbd46e00d7afd97ca36` is the final candidate tip: it adds
+the within-one-item output-set controls for owned source files and owned
+aggregate stylesheet targets on top of the `1e7ae2d` repairs, with no
+production behaviour change. Neither commit is Codex acceptance.
 
 R3-1 replaces the per-item compatibility intersection in
 `validateCompatibility` with one joint intersection per mapped axis built from
@@ -187,9 +192,10 @@ resolved-operation path, including new installed-copy controls.
 
 ### RCLD-02 review-3 cumulative lanes
 
-Run at repaired commit
-`1e7ae2ddb847a5e0f180b111b3055fc5646c9031` from this repository root with Node
-`24.21.0` / pnpm `11.22.0`. Raw lane logs are under the git-ignored
+Run at final candidate tip `a14a80527b120f960ef58cbd46e00d7afd97ca36`
+(the R3-1/R3-2 production repairs landed at `1e7ae2d`; the within-item controls
+are test-only) from this repository root with Node `24.21.0` / pnpm `11.22.0`.
+Raw lane logs are under the git-ignored
 `implementation/evidence/logs/r3-20260930/`.
 
 | Lane                   | Command                                                                     | Exit | Result                                             |
@@ -202,7 +208,7 @@ Run at repaired commit
 | Runner harness         | `pnpm run test:harness`                                                     | 0    | 37 tests, 37 pass                                  |
 | Integration            | `pnpm run test:integration`                                                 | 0    | 22 tests, 22 pass (7 installed-copy controls)      |
 | Components             | `pnpm run test:components`                                                  | 0    | 22 tests, 22 pass (17 strict-declaration controls) |
-| Registry               | `pnpm run test:registry`                                                    | 0    | 36 tests, 36 pass                                  |
+| Registry               | `pnpm run test:registry`                                                    | 0    | 38 tests, 38 pass                                  |
 | CLI smoke              | `pnpm run test:cli-bootstrap`                                               | 0    | 52 tests, 52 pass                                  |
 | Consumer check         | `pnpm run fixture:check`                                                    | 0    | 0 errors, 0 warnings                               |
 | Consumer SSR/lifecycle | `pnpm run test:fixture`                                                     | 0    | 23 tests, 23 pass                                  |
@@ -265,11 +271,11 @@ checkpoints is Codex-accepted, and no acceptance hash or counter changes.
   but jointly empty OR ranges, order-permutation stability, valid joint overlap,
   unselected-item exclusion and unregistered-candidate exclusion, asserted
   through both registry health and the resolved-operation path.
-- Logical ownership (R3-2): fully parsed style file/directory ancestry, UI
-  file ancestry, lock ASCII case aliases, lock file ancestry, integration
-  namespace-directory claims, with valid shared aggregate stylesheets, compound
-  siblings, nested mappings and installed-copy positive/negative controls
-  retained.
+- Logical ownership (R3-2): fully parsed within-item and cross-item style
+  file/directory ancestry, UI file ancestry, lock ASCII case aliases, lock file
+  ancestry, integration namespace-directory claims, with valid shared aggregate
+  stylesheets, compound siblings, nested mappings and installed-copy
+  positive/negative controls retained.
 - Assets: traversal, symlink asset, escaping symlink ancestor, symlinked listing
   start, invalid UTF-8 source/style bytes, missing asset, no source-checkout
   fallback, and deeply frozen snapshots with defensive byte copies.
