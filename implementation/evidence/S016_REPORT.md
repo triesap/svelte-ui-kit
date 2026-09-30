@@ -1,7 +1,7 @@
 # S016 step report — Define the registry-root schema
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S016","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S016","kind":"report","commit":"ddba4853d36f8eb1980c7caaa71b24ae26b9d30c","disposition":"candidate"}
 -->
 
 Step ID and title: S016 — Define the registry-root schema.
