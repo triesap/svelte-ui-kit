@@ -1,7 +1,7 @@
 # S026 step report — Build an immutable validated registry snapshot
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S026","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S026","kind":"report","commit":"466c6ea35b0997dcf57de479adc9d914e1d67bea","disposition":"candidate"}
 -->
 
 Step ID and title: S026 — Build an immutable validated registry snapshot.

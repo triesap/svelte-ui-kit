@@ -11,7 +11,13 @@
  * assets, non-files, symlinked assets and symlinked ancestors that resolve
  * outside the package root, and (for text) invalid UTF-8.
  */
-import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
+import {
+  existsSync,
+  lstatSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+} from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -32,6 +38,8 @@ export interface AssetProvider {
   readBytes(logicalPath: string): ModelResult<Uint8Array>;
   readText(logicalPath: string): ModelResult<string>;
   exists(logicalPath: string): boolean;
+  /** List regular files under an allowed directory prefix, sorted. */
+  list(prefix?: string): ModelResult<readonly string[]>;
 }
 
 function contained(parent: string, child: string): boolean {
@@ -112,6 +120,22 @@ export function normalizeAssetPath(value: unknown): ModelResult<string> {
   }
   if (issues.length > 0) return fail(issues);
   return ok(value);
+}
+
+function isSafeDirPrefix(value: string): boolean {
+  if (value === "") return true;
+  if (value.startsWith("/") || value.includes("\\")) return false;
+  const segments = value.split("/");
+  if (
+    !segments.every(
+      (segment) => segment !== "" && segment !== "." && segment !== "..",
+    )
+  ) {
+    return false;
+  }
+  return ASSET_ROOTS.some(
+    (root) => value === root || value.startsWith(`${root}/`),
+  );
 }
 
 /**
@@ -209,11 +233,49 @@ export function createAssetProvider(root: string): AssetProvider {
     }
   };
 
+  const list = (prefix = "registry"): ModelResult<readonly string[]> => {
+    if (!isSafeDirPrefix(prefix)) {
+      return fail([
+        issue(
+          "ASSET_PATH_INVALID",
+          `directory prefix must be under ${ASSET_ROOTS.join(" or ")}: ${JSON.stringify(prefix)}`,
+        ),
+      ]);
+    }
+    const base = prefix === "" ? resolvedRoot : resolve(resolvedRoot, prefix);
+    if (base !== resolvedRoot && !contained(resolvedRoot, base)) {
+      return fail([
+        issue(
+          "ASSET_PATH_INVALID",
+          `directory prefix escapes the package root: ${prefix}`,
+        ),
+      ]);
+    }
+    if (!existsSync(base)) return ok([]);
+    const out: string[] = [];
+    const walk = (dir: string, rel: string): void => {
+      const entries = readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
+        a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
+      );
+      for (const entry of entries) {
+        const abs = join(dir, entry.name);
+        const stats = lstatSync(abs);
+        if (stats.isSymbolicLink()) continue;
+        const logical = rel === "" ? entry.name : `${rel}/${entry.name}`;
+        if (stats.isDirectory()) walk(abs, logical);
+        else if (stats.isFile()) out.push(logical);
+      }
+    };
+    walk(base, prefix);
+    return ok(out.sort());
+  };
+
   return {
     root: resolvedRoot,
     readBytes,
     readText,
     exists: (logicalPath: string) => readBytes(logicalPath).ok,
+    list,
   };
 }
 

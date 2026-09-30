@@ -176,6 +176,7 @@ function makePackage(t) {
     "tsconfig.json",
     "tsconfig.unit.json",
     "tsconfig.integration.json",
+    "tsconfig.registry.json",
   ]) {
     cpSync(path.join(REPO_ROOT, rel), path.join(dir, rel));
   }
@@ -827,5 +828,42 @@ test("no discovered integration files is a suite-specific failure", (t) => {
   assert.match(
     result.stderr,
     /no integration test files were discovered under tests\/integration/,
+  );
+});
+
+test("the registry suite is selected explicitly and stays isolated", (t) => {
+  const pkg = makePackage(t);
+  writeTest(pkg, "tests/unit/unit-only.test.ts", PASS_TEST);
+  writeTest(pkg, "tests/registry/health-only.test.ts", PASS_TEST);
+
+  const unit = runRunner(pkg);
+  assert.equal(unit.status, 0, unit.stderr);
+  assert.deepEqual(selected(unit.stdout), ["tests/unit/unit-only.test.ts"]);
+
+  const registry = runRunner(pkg, ["--suite", "registry"]);
+  assert.equal(registry.status, 0, registry.stderr);
+  assert.deepEqual(selected(registry.stdout), [
+    "tests/registry/health-only.test.ts",
+  ]);
+  assert.ok(
+    existsSync(
+      path.join(
+        pkg,
+        ".unit-test-build",
+        "registry",
+        "tests/registry/health-only.test.js",
+      ),
+    ),
+    "the registry suite writes its own output tree",
+  );
+});
+
+test("an empty registry suite fails rather than passing with zero tests", (t) => {
+  const pkg = makePackage(t);
+  const result = runRunner(pkg, ["--suite", "registry"]);
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stderr,
+    /no registry test files were discovered under tests\/registry/,
   );
 });

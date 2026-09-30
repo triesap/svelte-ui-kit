@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".unit-test-build/registry"
+  },
+  "include": ["src/**/*.ts", "tests/registry/**/*.ts"]
+}

@@ -67,6 +67,9 @@ jobs:
       - name: Components
         run: pnpm run test:components
 
+      - name: Registry
+        run: pnpm run test:registry
+
       - name: CLI smoke
         run: pnpm run test:cli-bootstrap
 
