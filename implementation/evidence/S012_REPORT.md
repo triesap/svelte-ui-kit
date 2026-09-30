@@ -1,7 +1,13 @@
 # S012 step report — Separate orchestration and pure module interfaces
 
+Current disposition: independently accepted by Codex on 2026-09-30 at evidence
+anchor `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c`, containing both report and review
+paths and the tested combined implementation. The atomic S007–S012 transition
+closes RCLD-01 only; release AC20 and successor requirements remain open.
+Earlier pending/change-requested statements below are historical.
+
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S012","kind":"report","commit":"14de6da6fbeb58af2a3843874e86c391e4a17051","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S012","kind":"report","commit":"0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c","disposition":"implemented"}
 -->
 
 Step ID and title: S012 — Separate orchestration and pure module interfaces.

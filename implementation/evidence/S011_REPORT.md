@@ -1,7 +1,13 @@
 # S011 step report — Qualify the pinned primitive integration boundary
 
+Current disposition: independently accepted by Codex on 2026-09-30 at evidence
+anchor `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c`, containing both report and review
+paths and the tested combined implementation. The atomic S007–S012 transition
+closes RCLD-01 only; release AC20 and successor requirements remain open.
+Earlier pending/change-requested statements below are historical.
+
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S011","kind":"report","commit":"64a1acb48ad552b0c6097b34b7c58f0cdbcf0c6f","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S011","kind":"report","commit":"0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c","disposition":"implemented"}
 -->
 
 Step ID and title: S011 — Qualify the pinned primitive integration boundary.

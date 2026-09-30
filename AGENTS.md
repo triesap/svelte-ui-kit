@@ -18,11 +18,11 @@ references.
   contract/API decisions, dependency-selection approval, deviations,
   acceptance, checkpoint commits and dispatch between coding periods.
 - Complete one checkpoint at a time in the documented order. The owner's
-  `pfc through RCLD-01` authorization delegates green implementation commits
-  for S007–S012 to Pi, with independent Codex review after the sequence.
-  This includes the complete repair/qualification batch in the current
-  "Codex review dispatch" section, with original pending hashes preserved
-  and subsequent repair commits recorded separately until atomic acceptance.
+  current `pfc through RCLD-02` authorization delegates green implementation
+  commits for S013–S032 to Pi, with independent Codex review after the sequence.
+  RCLD-01/S001–S012 are independently accepted. Follow the current
+  "Codex dispatch — complete RCLD-02 models and registry resolution" section,
+  including the bounded batch-validator activation before S013's first commit.
   Follow the governing batch dispatch and its pending-review evidence rules;
   never label Pi self-review as Codex acceptance. Outside that explicit batch,
   return work unstaged/uncommitted and await predecessor acceptance/commit.

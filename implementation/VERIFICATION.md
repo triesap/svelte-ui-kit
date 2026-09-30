@@ -75,7 +75,27 @@ completion unlocks a successor. Unapproved `not_applicable` fails closed.
 Default validation is read-only; `--generate` and `--generate-sources` are the
 only writing modes.
 
-#### Owner-authorized RCLD-01 batch verification
+#### Current owner-authorized RCLD-02 batch verification
+
+S001–S012 and RCLD-01 are independently accepted at the evidence anchor in
+COMMIT_SEQUENCE.md. The current dispatch authorizes the full S013–S032 sequence
+with green local Pi implementation commits pending Codex review. S033 remains
+locked until independent S032 acceptance. Preserve all original direct and
+cumulative checks and the fixture-only upstream exception's release AC20 debt.
+
+Before the first S013 commit, implement the exact bounded authorization
+extension and activation defined in the governing dispatch. Keep one live
+record, historical fixtures, reachable pending hashes and existing acceptance
+semantics. Add registry selection to the typed runner/typecheck/CI at S027;
+verify real negative controls, selection containment and no false zero-test
+success. Schema, installed-asset, graph, dependency and collision tests must
+cover actual production callers. Resolve the known fixture cleanup diagnostic
+loss without hiding failed setup or broadening acceptance. Run all existing
+target lanes plus the new registry lane and local installed-package asset
+checks at the sequence boundary, with an actual actionlint run and fresh
+reference guard. Pi records implementation evidence; Codex alone accepts.
+
+#### Historical owner-authorized RCLD-01 batch verification
 
 The 2026-09-30 "Codex review dispatch" in `COMMIT_SEQUENCE.md` governs the
 current complete repair/qualification batch. Its current independent review

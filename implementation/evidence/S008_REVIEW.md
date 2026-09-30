@@ -1,7 +1,13 @@
 # S008 independent review
 
+Current disposition: independently accepted by Codex on 2026-09-30 at evidence
+anchor `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c`, containing both report and review
+paths and the tested combined implementation. The atomic S007–S012 transition
+closes RCLD-01 only; release AC20 and successor requirements remain open.
+Earlier pending/change-requested statements below are historical.
+
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S008","kind":"review","commit":null,"disposition":"changes_requested"}
+{"schemaVersion":1,"checkpoint":"S008","kind":"review","commit":"0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c","disposition":"accepted"}
 -->
 
 ## Final independent review preparation — 2026-09-30
