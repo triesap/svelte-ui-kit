@@ -16,6 +16,7 @@ import { startFixtureServer, type OwnedServer } from "./fixture-server";
  *   teardown-console     a console error during page-related fixture teardown
  *   teardown-hydration   a hydration warning during page-related teardown
  *   teardown-pageerror   a page exception during page-related teardown
+ *   body-assert          an ordinary body assertion failure (no collected issue)
  *
  * The teardown faults prove the collector assertion runs after dependent
  * fixtures are torn down. No product code is modified.
@@ -114,6 +115,12 @@ faultTest(
   async ({ page }) => {
     await page.goto(baseURL);
     await expect(page.locator("body")).toBeVisible();
+    if (FAULT_KIND === "body-assert") {
+      // An ordinary body assertion failure, distinct from a collected issue.
+      // Playwright's own failure artifacts must still be retained for it.
+      await expect(page.getByTestId("body-assert-probe")).toBeVisible();
+      return;
+    }
     await emitBodyFault(page);
   },
 );

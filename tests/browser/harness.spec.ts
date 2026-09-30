@@ -1,5 +1,12 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -282,6 +289,38 @@ function runFaultChild(kind: string): {
   };
 }
 
+interface FailureArtifacts {
+  readonly screenshots: string[];
+  readonly traces: string[];
+  readonly total: number;
+}
+
+/**
+ * List the nonempty failure artifacts an owned nested run left behind. Only
+ * `.png` screenshots and `.zip` traces are counted; empty files are ignored so
+ * a zero-byte placeholder can never satisfy the assertion.
+ */
+function listFailureArtifacts(dir: string): FailureArtifacts {
+  const screenshots: string[] = [];
+  const traces: string[] = [];
+  let total = 0;
+  const walk = (current: string): void => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const abs = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        walk(abs);
+      } else if (entry.isFile()) {
+        total += 1;
+        if (statSync(abs).size === 0) continue;
+        if (entry.name.endsWith(".png")) screenshots.push(abs);
+        else if (entry.name.endsWith(".zip")) traces.push(abs);
+      }
+    }
+  };
+  if (existsSync(dir)) walk(dir);
+  return { screenshots, traces, total };
+}
+
 interface FaultCase {
   readonly kind: string;
   readonly marker: string;
@@ -312,10 +351,18 @@ const FAULT_CASES: readonly FaultCase[] = [
     kind: "teardown-pageerror",
     marker: "page error: injected browser fault: page error",
   },
+  {
+    kind: "body-assert",
+    marker: "body-assert-probe",
+  },
 ];
 
 for (const fault of FAULT_CASES) {
   test(`the ${fault.kind} fault fails a bounded run for its diagnostic`, () => {
+    const outputDir = path.join(FAULT_OUTPUT_DIR, fault.kind);
+    // Own the artifact directory so a stale sibling run can never satisfy the
+    // evidence assertions below.
+    rmSync(outputDir, { recursive: true, force: true });
     const result = runFaultChild(fault.kind);
     expect(
       result.error,
@@ -330,10 +377,22 @@ for (const fault of FAULT_CASES) {
       `the ${fault.kind} fault must fail\n${result.output}`,
     ).not.toBe(0);
     expect(result.output).toContain(fault.marker);
+
+    const artifacts = listFailureArtifacts(outputDir);
+    expect(
+      artifacts.screenshots.length,
+      `the ${fault.kind} fault must retain a nonempty failure screenshot\n${result.output}`,
+    ).toBeGreaterThan(0);
+    expect(
+      artifacts.traces.length,
+      `the ${fault.kind} fault must retain a nonempty trace\n${result.output}`,
+    ).toBeGreaterThan(0);
   });
 }
 
 test("a clean restoration run passes after the injected faults", () => {
+  const outputDir = path.join(FAULT_OUTPUT_DIR, "clean");
+  rmSync(outputDir, { recursive: true, force: true });
   const result = runFaultChild("clean");
   expect(
     result.error,
@@ -344,6 +403,15 @@ test("a clean restoration run passes after the injected faults", () => {
     result.status,
     `the clean run must pass after the faults\n${result.output}`,
   ).toBe(0);
+  // A passing run restores a clean, artifact-free output directory.
+  const artifacts = listFailureArtifacts(outputDir);
+  expect(
+    artifacts.screenshots.length,
+    "a clean run must not retain a failure screenshot",
+  ).toBe(0);
+  expect(artifacts.traces.length, "a clean run must not retain a trace").toBe(
+    0,
+  );
 });
 
 // ---------------------------------------------------------------------------
