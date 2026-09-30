@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { satisfies } from "semver";
 
 import {
   intersectRanges,
+  intersectRangesDetailed,
   planDependencies,
 } from "../../src/registry/dependency-plan.js";
 import type { NpmRole, RegistryItem } from "../../src/registry/item.js";
@@ -142,4 +144,101 @@ test("unsupported source ranges are typed errors", () => {
     assert.equal(result.issues[0]?.code, "DEPENDENCY_SOURCE_UNSUPPORTED");
   }
   assert.deepEqual(codes(snapshot({ button: {}, card: {} })), []);
+});
+
+const MEMBERSHIP_CASES: readonly (readonly string[])[] = [
+  ["*", ">=1.0.0-rc.1 <1.0.0"],
+  ["^1 || ^2", ">=1 <3"],
+  [">2 <1"],
+  ["^0.1.0", "~0.1.0"],
+  ["^0.1.0", "^0.2.0"],
+  ["^1.0.0-rc.1", ">=1.0.0-rc.0 <1.0.0"],
+  ["^1 || ^2", "^2 || ^3"],
+  ["^1 || ^2", "^2 || ^3", "^1 || ^3"],
+  ["^1 || ^2", ">=1 <3", "^2"],
+  ["~1.2.3", "^1.2.0", ">=1.2.5"],
+  ["1.x", ">=1.0.0 <2.0.0"],
+  ["*", "*"],
+  [">=1.2.0", "^1.2.0", "~1.5.0"],
+];
+
+const MEMBERSHIP_PROBES: readonly string[] = [
+  "0.0.1",
+  "0.1.0",
+  "0.2.0",
+  "1.0.0-rc.0",
+  "1.0.0-rc.1",
+  "1.0.0-rc.2",
+  "1.0.0",
+  "1.2.3",
+  "1.2.5",
+  "1.5.0",
+  "1.9.9",
+  "2.0.0-0",
+  "2.0.0",
+  "2.5.0",
+  "3.0.0",
+  "3.1.0",
+  "4.0.0-alpha",
+  "4.0.0",
+];
+
+test("joint membership matches every original operand", () => {
+  for (const ranges of MEMBERSHIP_CASES) {
+    const result = intersectRangesDetailed(ranges);
+    for (const version of MEMBERSHIP_PROBES) {
+      const expected = ranges.every((range) => satisfies(version, range));
+      const label = `${JSON.stringify(ranges)} @ ${version}`;
+      if (result.kind === "range") {
+        assert.equal(
+          satisfies(version, result.range),
+          expected,
+          `${label} -> ${result.range}`,
+        );
+      } else if (result.kind === "empty") {
+        assert.equal(expected, false, `${label} should be empty`);
+      } else {
+        assert.fail(`${label} unexpectedly unable: ${result.reason}`);
+      }
+    }
+  }
+});
+
+test("permuted and redundant operands stay membership equivalent", () => {
+  const base = ["^1 || ^2", ">=1 <3"];
+  const permuted = [">=1 <3", "^1 || ^2", "^1 || ^2"];
+  const a = intersectRangesDetailed(base);
+  const b = intersectRangesDetailed(permuted);
+  assert.equal(a.kind, "range");
+  assert.equal(b.kind, "range");
+  if (a.kind === "range" && b.kind === "range") {
+    for (const version of MEMBERSHIP_PROBES) {
+      assert.equal(satisfies(version, a.range), satisfies(version, b.range));
+    }
+  }
+});
+
+test("a lone unsatisfiable range is a proven empty intersection", () => {
+  assert.deepEqual(intersectRangesDetailed([">2 <1"]), { kind: "empty" });
+  assert.equal(intersectRanges([">2 <1"]), null);
+  assert.equal(intersectRanges(["*", ">=1.0.0-rc.1 <1.0.0"]), null);
+});
+
+test("an invalid range yields a typed inability rather than a conflict", () => {
+  const detail = intersectRangesDetailed(["not a range"]);
+  assert.equal(detail.kind, "unable");
+  assert.throws(
+    () => intersectRanges(["not a range"]),
+    /could not be evaluated/,
+  );
+});
+
+test("the or-intersection retains the dropped major branch", () => {
+  const result = intersectRanges(["^1 || ^2", ">=1 <3"]);
+  assert.notEqual(result, null);
+  if (result !== null) {
+    assert.equal(satisfies("1.5.0", result), true);
+    assert.equal(satisfies("2.5.0", result), true);
+    assert.equal(satisfies("3.0.0", result), false);
+  }
 });
