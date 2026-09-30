@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { chmodSync, existsSync, readFileSync, statSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  readFileSync,
+  readlinkSync,
+  statSync,
+} from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 
@@ -158,12 +164,19 @@ test("cleanup after a setup or assertion failure leaves external state unchanged
   const external = createTempProject({ prefix: "suik-int-external-" });
   t.after(() => external.cleanup());
   const target = external.writeFile("target.txt", "target-bytes");
-  const targetMode = statSync(target).mode & 0o7777;
+  external.writeDir("empty");
+  external.symlink(target, "alias.txt");
+  const before = snapshotTree(external.root);
 
   const project = createTempProject();
   try {
     project.writeFile("data.txt", "data");
     project.symlink(target, "link.txt");
+    // A write through the fixture symlink is rejected before any mutation.
+    assert.throws(
+      () => project.writeFile("link.txt", "changed"),
+      /refusing to follow a symlink/,
+    );
     // A malformed setup path throws before any assertion runs.
     assert.throws(
       () => project.writeFile("../escape.txt", "x"),
@@ -180,10 +193,112 @@ test("cleanup after a setup or assertion failure leaves external state unchanged
   }
 
   assert.ok(!existsSync(project.root), "the owned root is removed");
-  assert.equal(
-    readFileSync(target, "utf8"),
-    "target-bytes",
-    "an external symlink target keeps its bytes",
+  assert.deepEqual(
+    snapshotTree(external.root),
+    before,
+    "the external tree keeps its bytes, modes and link inventory",
   );
+});
+
+test("writes must not follow an ancestor symlink into an external tree", (t) => {
+  const external = createTempProject({ prefix: "suik-int-external-" });
+  t.after(() => external.cleanup());
+  external.writeDir("sub");
+  external.writeFile("sub/sentinel.txt", "keep");
+  external.symlink(path.join(external.root, "sub"), "alias");
+  const before = snapshotTree(external.root);
+
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.symlink(external.root, "linked");
+
+  assert.throws(
+    () => project.writeFile("linked/sentinel.txt", "changed"),
+    /refusing to follow a symlink/,
+  );
+  assert.throws(
+    () => project.writeFile("linked/sub/new.txt", "changed"),
+    /refusing to follow a symlink/,
+  );
+  assert.throws(
+    () => project.writeDir("linked/newdir"),
+    /refusing to follow a symlink/,
+  );
+  assert.throws(
+    () => project.symlink(path.join(external.root, "x"), "linked/newlink"),
+    /refusing to follow a symlink/,
+  );
+
+  assert.deepEqual(
+    snapshotTree(external.root),
+    before,
+    "the external tree is unchanged after rejected writes",
+  );
+  const projectSnapshot = snapshotByPath(snapshotTree(project.root));
+  assert.equal(projectSnapshot.get("linked")?.kind, "symbolic-link");
+  assert.equal(
+    readlinkSync(path.join(project.root, "linked")),
+    external.root,
+    "the fixture symlink itself is preserved",
+  );
+});
+
+test("writes must not follow a final symlink", (t) => {
+  const external = createTempProject({ prefix: "suik-int-external-" });
+  t.after(() => external.cleanup());
+  const target = external.writeFile("target.txt", "keep");
+  const targetMode = statSync(target).mode & 0o7777;
+  const before = snapshotTree(external.root);
+
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.symlink(target, "link.txt");
+
+  assert.throws(
+    () => project.writeFile("link.txt", "changed"),
+    /refusing to follow a symlink/,
+  );
+  assert.throws(
+    () => project.writeDir("link.txt"),
+    /refusing to follow a symlink/,
+  );
+
+  assert.deepEqual(
+    snapshotTree(external.root),
+    before,
+    "the symlink target is unchanged",
+  );
+  assert.equal(readFileSync(target, "utf8"), "keep");
   assert.equal(statSync(target).mode & 0o7777, targetMode);
+});
+
+test("dangling links and invalid non-directory ancestors are rejected", (t) => {
+  const external = createTempProject({ prefix: "suik-int-external-" });
+  t.after(() => external.cleanup());
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+
+  project.symlink(path.join(external.root, "missing.txt"), "dangling.txt");
+  assert.throws(
+    () => project.writeFile("dangling.txt", "x"),
+    /refusing to follow a symlink/,
+  );
+  assert.throws(
+    () => project.writeFile("dangling.txt/child", "x"),
+    /refusing to follow a symlink/,
+  );
+
+  project.writeFile("file.txt", "x");
+  assert.throws(
+    () => project.writeFile("file.txt/child", "y"),
+    /invalid non-directory ancestor/,
+  );
+  assert.throws(
+    () => project.writeDir("file.txt/child"),
+    /invalid non-directory ancestor/,
+  );
+  assert.throws(
+    () => project.symlink("/tmp", "file.txt/child"),
+    /invalid non-directory ancestor/,
+  );
 });

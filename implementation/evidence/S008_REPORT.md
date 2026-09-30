@@ -102,3 +102,20 @@ is recorded in this report's evidence after the commit (no self-referential
 hash is amended before it exists). Next checkpoint: S009, authorized to proceed
 after the S008 green commit. Nothing was pushed or published and S013 was not
 started.
+
+## RCLD-01 repair addendum (2026-09-30)
+
+Repair commit: `8f58879f86b376252125aa52ca39db0384183c6d` (not the original
+pending hash above). The takeover dispatch's browser finding is closed:
+
+- Browser issue collection now spans the whole test lifecycle through fixture
+  teardown via the automatic `browserIssues` fixture; page exceptions, console
+  errors and hydration warnings fail teardown rather than only being asserted
+  inside a test body.
+- An end-to-end control runs the gate as a real bounded child Playwright run
+  with an injected console error, hydration warning and page exception, and
+  asserts the child exits nonzero. The captured fault output names all three.
+- The harness samples server health after teardown.
+
+Verified: browser 11/11 including the nested failure control; `test:fixture`
+23/23, format/lint/typecheck green.

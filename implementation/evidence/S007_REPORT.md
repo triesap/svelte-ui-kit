@@ -263,3 +263,26 @@ independent Codex review of the sequence follows S012.
 
 Is the next step safe to begin? Yes, within the authorized batch. Nothing was
 pushed or published and S013 was not started.
+
+## RCLD-01 repair addendum (2026-09-30)
+
+Repair commit: `8f58879f86b376252125aa52ca39db0384183c6d` (not the original
+pending hash above). The takeover dispatch's R1/R2 lifecycle findings are
+closed:
+
+- `startOwnedServer` now settles synchronous and asynchronous spawn failures
+  (missing executable, invalid cwd) so `ready` rejects and `stop()` resolves,
+  retains the first observed failure so a later `stop()` never erases a prior
+  unexpected exit or error stderr, drains stdio by waiting for `close`, and
+  bounds the entire termination path with a SIGKILL fallback.
+- The maintained SSR suite samples server health after teardown, so
+  shutdown-time stderr and post-ready exits are observed.
+- The launcher default and explicit operand paths remain covered, and the
+  SSR-disabled control still asserts HTTP 200 and an HTML content type outside
+  the expected missing-markup failure.
+
+Deterministic regressions in `tests/smoke/owned-server.test.mjs` cover a
+missing executable, an invalid cwd, late stderr during shutdown, retention of
+an observed exit 17 across `stop()`, forced SIGKILL termination and idempotent
+`stop()`. Verified: owned-server 16/16, `test:fixture` 23/23, format/lint/
+typecheck green.

@@ -396,10 +396,21 @@ the endpoint. No hardware dependency prevents the identified software work.
    references from current public reports, and run all cumulative lanes.
 
 Run the narrow relevant verification before each repair commit; keep one
-repair slice active in this section. Current repair progress: not started.
-Later independent eligible repairs may continue if a slice has a genuine
-blocker, but no red slice may be committed or represented as accepted. Preserve
-original checkpoint IDs/order; these are follow-up repairs of authored work.
+repair slice active in this section. Later independent eligible repairs may
+continue if a slice has a genuine blocker, but no red slice may be committed or
+represented as accepted. Preserve original checkpoint IDs/order; these are
+follow-up repairs of authored work.
+
+Repair progress (appended after each green commit; these are repair snapshots,
+not the original pending implementation hashes recorded in the ledger):
+
+- **RCLD01-REPAIR-1 — S007/S008 lifecycle and browser failure gate.** Commit
+  `8f58879f86b376252125aa52ca39db0384183c6d`. Settles spawn failures, retains
+  the first failure across `stop()`, drains stdio before teardown resolves,
+  forces SIGKILL within a bound, and samples SSR/browser health after teardown.
+  Adds an end-to-end browser fault control that fails a real bounded nested run.
+  Verified: owned-server 16/16, `test:fixture` 23/23, browser 11/11,
+  format/lint/typecheck green.
 
 ### Dependency decision and bounded upstream exception
 
