@@ -1,7 +1,7 @@
 # S025 step report — Load assets relative to the installed package
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S025","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S025","kind":"report","commit":"287e5f5b7f7be4ac87307bd45cd153f7f635ac7b","disposition":"candidate"}
 -->
 
 Step ID and title: S025 — Load assets relative to the installed package.
