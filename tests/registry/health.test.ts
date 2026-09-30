@@ -153,3 +153,56 @@ test("an advertised item missing its source fails health", (t) => {
     assert.equal(result.issues[0]?.code, "ASSET_MISSING");
   }
 });
+
+test("a provided item schema that rejects everything fails health", (t) => {
+  const root = buildHealthFixture(t);
+  writeFileSync(
+    path.join(root, "schema", "v1", "registry-item.schema.json"),
+    `${JSON.stringify(
+      {
+        $id: "urn:svelte-ui-kit:schema:v1:registry-item",
+        $schema: "http://json-schema.org/draft-07/schema#",
+        not: {},
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "SCHEMA_INVALID"),
+      true,
+    );
+  }
+});
+
+test("invalid UTF-8 advertised source bytes fail health", (t) => {
+  const root = buildHealthFixture(t);
+  writeFileSync(
+    path.join(root, "registry", "templates", "button.svelte"),
+    Uint8Array.from([0xff, 0xfe]),
+  );
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "ASSET_INVALID_UTF8"),
+      true,
+    );
+  }
+});
+
+test("a missing provider schema set fails health without throwing", (t) => {
+  const root = buildHealthFixture(t);
+  rmSync(path.join(root, "schema"), { recursive: true, force: true });
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "ASSET_MISSING"),
+      true,
+    );
+  }
+});

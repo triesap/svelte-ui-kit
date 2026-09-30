@@ -251,23 +251,91 @@ export function createAssetProvider(root: string): AssetProvider {
         ),
       ]);
     }
-    if (!existsSync(base)) return ok([]);
-    const out: string[] = [];
-    const walk = (dir: string, rel: string): void => {
-      const entries = readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
-        a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
-      );
-      for (const entry of entries) {
-        const abs = join(dir, entry.name);
-        const stats = lstatSync(abs);
-        if (stats.isSymbolicLink()) continue;
-        const logical = rel === "" ? entry.name : `${rel}/${entry.name}`;
-        if (stats.isDirectory()) walk(abs, logical);
-        else if (stats.isFile()) out.push(logical);
+    // The traversal start and every ancestor down from the package root must be
+    // real directories contained in the package: a symlinked start directory
+    // must never be followed outside it.
+    try {
+      const relativeStart = relative(resolvedRoot, base);
+      if (relativeStart !== "" && !relativeStart.startsWith("..")) {
+        let current = resolvedRoot;
+        for (const segment of relativeStart.split(sep)) {
+          current = join(current, segment);
+          let ancestor: ReturnType<typeof lstatSync>;
+          try {
+            ancestor = lstatSync(current);
+          } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+              return ok([]);
+            }
+            throw error;
+          }
+          if (ancestor.isSymbolicLink()) {
+            return fail([
+              issue(
+                "ASSET_SYMLINK_ESCAPE",
+                `directory prefix must not traverse a symlink: ${JSON.stringify(prefix)}`,
+                prefix,
+              ),
+            ]);
+          }
+        }
       }
-    };
-    walk(base, prefix);
-    return ok(out.sort());
+      if (!existsSync(base)) return ok([]);
+      const baseStats = lstatSync(base);
+      if (baseStats.isSymbolicLink()) {
+        return fail([
+          issue(
+            "ASSET_SYMLINK_ESCAPE",
+            `directory prefix must not be a symlink: ${JSON.stringify(prefix)}`,
+            prefix,
+          ),
+        ]);
+      }
+      if (!baseStats.isDirectory()) {
+        return fail([
+          issue(
+            "ASSET_NOT_DIRECTORY",
+            `directory prefix is not a directory: ${JSON.stringify(prefix)}`,
+            prefix,
+          ),
+        ]);
+      }
+      const realBase = realpathSync(base);
+      if (!contained(realRoot(), realBase) && realBase !== realRoot()) {
+        return fail([
+          issue(
+            "ASSET_SYMLINK_ESCAPE",
+            `directory prefix resolves outside the package root: ${JSON.stringify(prefix)}`,
+            prefix,
+          ),
+        ]);
+      }
+
+      const out: string[] = [];
+      const walk = (dir: string, rel: string): void => {
+        const entries = readdirSync(dir, { withFileTypes: true }).sort(
+          (a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0),
+        );
+        for (const entry of entries) {
+          const abs = join(dir, entry.name);
+          const stats = lstatSync(abs);
+          if (stats.isSymbolicLink()) continue;
+          const logical = rel === "" ? entry.name : `${rel}/${entry.name}`;
+          if (stats.isDirectory()) walk(abs, logical);
+          else if (stats.isFile()) out.push(logical);
+        }
+      };
+      walk(base, prefix);
+      return ok(out.sort());
+    } catch (error) {
+      return fail([
+        issue(
+          "ASSET_IO_FAILURE",
+          `could not list ${JSON.stringify(prefix)}: ${error instanceof Error ? error.message : String(error)}`,
+          prefix,
+        ),
+      ]);
+    }
   };
 
   return {

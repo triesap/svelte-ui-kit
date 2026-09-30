@@ -15,7 +15,7 @@
 import { canonicalContentHash } from "../codegen/digest.js";
 import { isItemId } from "../project/requests.js";
 import { fail, issue, ok, type ModelResult } from "./errors.js";
-import { validateWithSchema } from "./schema.js";
+import { validateWithSchema, type SchemaAuthority } from "./schema.js";
 import {
   INITIAL_REGISTRY_VERSION,
   INITIAL_SCHEMA_VERSION,
@@ -124,9 +124,14 @@ export function buildEmptyDevelopmentRegistry(
 export function parseRegistryRoot(
   value: unknown,
   locator = "registry/registry.json",
-  options: { readonly assets?: readonly RegistryAssetDigest[] } = {},
+  options: {
+    readonly assets?: readonly RegistryAssetDigest[];
+    readonly authority?: SchemaAuthority;
+  } = {},
 ): ModelResult<RegistryRoot> {
-  const schemaResult = validateWithSchema(REGISTRY_ROOT_SCHEMA, value, locator);
+  const schemaResult = options.authority
+    ? options.authority.validate(REGISTRY_ROOT_SCHEMA, value, locator)
+    : validateWithSchema(REGISTRY_ROOT_SCHEMA, value, locator);
   if (!schemaResult.ok) return fail(schemaResult.issues);
 
   const record = value as Record<string, unknown>;

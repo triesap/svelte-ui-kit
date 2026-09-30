@@ -157,3 +157,17 @@ test("the packaged asset inventory excludes authoring-only trees", () => {
     );
   }
 });
+
+test("a symlinked listing start directory is rejected", (t) => {
+  const root = tempRoot();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const outside = tempRoot("suik-assets-list-outside-");
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  writeFileSync(path.join(outside, "outside.json"), "{}\n");
+  symlinkSync(outside, path.join(root, "registry"));
+  const result = createAssetProvider(root).list("registry");
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.issues[0]?.code, "ASSET_SYMLINK_ESCAPE");
+  }
+});

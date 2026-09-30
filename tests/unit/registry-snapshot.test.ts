@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  cpSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -56,6 +57,9 @@ function buildFixture(
   const rootId = options.rootId ?? "button";
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-snapshot-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
+  cpSync(path.join(process.cwd(), "schema"), path.join(root, "schema"), {
+    recursive: true,
+  });
   mkdirSync(path.join(root, "registry", "ui"), { recursive: true });
   mkdirSync(path.join(root, "registry", "templates"), { recursive: true });
   const manifest = manifestText(manifestId);
@@ -192,5 +196,98 @@ test("the empty development registry loads with no assets", () => {
   if (result.ok) {
     assert.deepEqual(result.value.items, []);
     assert.deepEqual(result.value.assets, []);
+  }
+});
+
+test("a snapshot is deeply immutable and byte views are defensive copies", (t) => {
+  const root = buildFixture(t);
+  const result = loadRegistrySnapshot(createAssetProvider(root));
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  const snapshot = result.value;
+  const item = snapshot.items[0];
+  assert.ok(item);
+  const file = item.files[0];
+  assert.ok(file);
+
+  assert.equal(Object.isFrozen(snapshot), true);
+  assert.equal(Object.isFrozen(item), true);
+  assert.equal(Object.isFrozen(item.manifest), true);
+  assert.equal(Object.isFrozen(item.manifest.registryDependencies), true);
+  assert.equal(Object.isFrozen(item.files), true);
+  assert.equal(Object.isFrozen(file), true);
+  assert.equal(Object.isFrozen(snapshot.assets[0]), true);
+
+  // Mutating the exposed bytes must not change the stored copy or the digest.
+  const original = [...file.bytes];
+  file.bytes[0] = 0;
+  assert.deepEqual([...file.bytes], original);
+  assert.equal(sha256Hex(file.bytes), file.digest);
+
+  // Deeply frozen records reject later mutation attempts.
+  assert.equal(Reflect.set(snapshot.root, "registryVersion", "changed"), false);
+  assert.equal(snapshot.root.registryVersion, "0.1.0");
+});
+
+test("missing provider schemas fail the snapshot", (t) => {
+  const root = buildFixture(t);
+  rmSync(path.join(root, "schema"), { recursive: true, force: true });
+  const result = loadRegistrySnapshot(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "ASSET_MISSING"),
+      true,
+    );
+  }
+});
+
+test("a provider item schema that rejects everything fails the snapshot", (t) => {
+  const root = buildFixture(t);
+  writeFileSync(
+    path.join(root, "schema", "v1", "registry-item.schema.json"),
+    `${JSON.stringify(
+      {
+        $id: "urn:svelte-ui-kit:schema:v1:registry-item",
+        $schema: "http://json-schema.org/draft-07/schema#",
+        not: {},
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  const result = loadRegistrySnapshot(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "SCHEMA_INVALID"),
+      true,
+    );
+  }
+});
+
+test("a non-object provider schema fails without throwing", (t) => {
+  const root = buildFixture(t);
+  writeFileSync(path.join(root, "schema", "v1", "kit.schema.json"), "null");
+  const result = loadRegistrySnapshot(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.issues[0]?.code, "SCHEMA_INVALID_DOCUMENT");
+  }
+});
+
+test("invalid UTF-8 source bytes fail the snapshot", (t) => {
+  const root = buildFixture(t);
+  writeFileSync(
+    path.join(root, "registry", "templates", "button.svelte"),
+    Uint8Array.from([0xff, 0xfe]),
+  );
+  const result = loadRegistrySnapshot(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "ASSET_INVALID_UTF8"),
+      true,
+    );
   }
 });

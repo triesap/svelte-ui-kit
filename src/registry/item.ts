@@ -25,7 +25,7 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "./errors.js";
-import { validateWithSchema } from "./schema.js";
+import { validateWithSchema, type SchemaAuthority } from "./schema.js";
 import {
   INITIAL_ITEM_VERSION,
   INITIAL_SCHEMA_VERSION,
@@ -157,8 +157,11 @@ function describe(value: unknown): string {
 export function parseRegistryItem(
   value: unknown,
   locator = "registry item manifest",
+  authority?: SchemaAuthority,
 ): ModelResult<RegistryItem> {
-  const schemaResult = validateWithSchema(REGISTRY_ITEM_SCHEMA, value, locator);
+  const schemaResult = authority
+    ? authority.validate(REGISTRY_ITEM_SCHEMA, value, locator)
+    : validateWithSchema(REGISTRY_ITEM_SCHEMA, value, locator);
   if (!schemaResult.ok) return fail(schemaResult.issues);
 
   const record = value as Record<string, unknown>;

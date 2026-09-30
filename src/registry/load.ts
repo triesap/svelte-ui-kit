@@ -3,10 +3,14 @@
  *
  * `loadRegistrySnapshot` reads the registry root, every advertised manifest and
  * every referenced source/style asset through one `AssetProvider`, validates
- * identity and paths, computes the asset digest list, verifies the root content
- * identity, and returns a frozen snapshot with copied bytes. Later mutation of
- * the provider's files cannot change an already-built snapshot, and all missing
- * assets are surfaced together before any planning.
+ * identity, paths and text encoding, computes the asset digest list, verifies
+ * the root content identity, and returns a deeply frozen snapshot with copied
+ * bytes. Later mutation of the provider's files cannot change an already-built
+ * snapshot, mutation of the snapshot itself cannot break its digests or later
+ * resolution, and all missing assets are surfaced together before any planning.
+ *
+ * Schemas are compiled through a provider-scoped `SchemaAuthority`, so the
+ * supplied package is the single source of truth for both schemas and assets.
  */
 import { sha256Hex } from "../codegen/digest.js";
 import type { AssetProvider } from "./assets.js";
@@ -24,15 +28,16 @@ import {
   type RegistryAssetDigest,
   type RegistryRoot,
 } from "./model.js";
-import { validateWithSchema } from "./schema.js";
+import { createSchemaAuthority, type SchemaAuthority } from "./schema.js";
 
-/** One resolved source/style asset with frozen bytes. */
+/** One resolved source/style asset with read-only bytes. */
 export interface RegistrySnapshotFile {
   readonly logicalSource: string;
   readonly target: string;
   readonly owner: string;
   readonly cohort: string;
   readonly blockId: string | null;
+  /** A defensive copy; mutating it never changes the snapshot or its digest. */
   readonly bytes: Uint8Array;
   readonly digest: string;
 }
@@ -53,6 +58,31 @@ export interface RegistrySnapshot {
 /** Registry-relative asset reference to a package-root logical path. */
 export function registryAssetPath(relativePath: string): string {
   return `registry/${relativePath}`;
+}
+
+/**
+ * Recursively freeze plain objects and arrays. Typed arrays are left to the
+ * explicit read-only byte accessor below, because `Object.freeze` does not
+ * prevent element writes on a `Uint8Array`.
+ */
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== "object") return value;
+  if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) return value;
+  if (Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const key of Object.keys(value as Record<string, unknown>)) {
+    deepFreeze((value as Record<string, unknown>)[key]);
+  }
+  return value;
+}
+
+function utf8Valid(bytes: Uint8Array): boolean {
+  try {
+    new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function readJson(
@@ -87,12 +117,20 @@ function readJson(
 export function loadRegistrySnapshot(
   provider: AssetProvider,
   locator = "registry/registry.json",
+  suppliedAuthority?: SchemaAuthority,
 ): ModelResult<RegistrySnapshot> {
   const issues: ModelIssue[] = [];
 
+  let authority = suppliedAuthority;
+  if (authority === undefined) {
+    const created = createSchemaAuthority(provider);
+    if (!created.ok) return fail(created.issues);
+    authority = created.value;
+  }
+
   const rootRaw = readJson(provider, locator, "REGISTRY_ROOT_INVALID", issues);
   if (rootRaw === undefined) return fail(issues);
-  const rootSchema = validateWithSchema(REGISTRY_ROOT_SCHEMA, rootRaw, locator);
+  const rootSchema = authority.validate(REGISTRY_ROOT_SCHEMA, rootRaw, locator);
   if (!rootSchema.ok) {
     issues.push(...rootSchema.issues);
     return fail(issues);
@@ -127,7 +165,11 @@ export function loadRegistrySnapshot(
       );
       continue;
     }
-    const itemResult = parseRegistryItem(manifestRaw, manifestLogical);
+    const itemResult = parseRegistryItem(
+      manifestRaw,
+      manifestLogical,
+      authority,
+    );
     if (!itemResult.ok) {
       issues.push(...itemResult.issues);
       continue;
@@ -166,41 +208,57 @@ export function loadRegistrySnapshot(
         issues.push(...bytes.issues);
         continue;
       }
+      if (!utf8Valid(bytes.value)) {
+        issues.push(
+          issue(
+            "ASSET_INVALID_UTF8",
+            `${logicalSource} is not valid UTF-8`,
+            logicalSource,
+          ),
+        );
+        continue;
+      }
       const digest = sha256Hex(bytes.value);
       assetDigests.set(logicalSource, digest);
-      files.push({
+      const stored = new Uint8Array(bytes.value);
+      const record: RegistrySnapshotFile = {
         logicalSource,
         target: declaration.target,
         owner: item.id,
         cohort: declaration.cohort,
         blockId: declaration.blockId,
-        bytes: new Uint8Array(bytes.value),
+        get bytes(): Uint8Array {
+          return new Uint8Array(stored);
+        },
         digest,
-      });
+      };
+      files.push(deepFreeze(record));
     }
-    items.push({
-      id: entry.id,
-      manifestPath: manifestLogical,
-      manifest: item,
-      files,
-    });
+    items.push(
+      deepFreeze({
+        id: entry.id,
+        manifestPath: manifestLogical,
+        manifest: item,
+        files: Object.freeze(files),
+      }),
+    );
   }
 
   if (issues.length > 0) return fail(issues);
 
   const assets: RegistryAssetDigest[] = [...assetDigests.entries()]
-    .map(([path, digest]) => ({ path, digest }))
+    .map(([path, digest]) => Object.freeze({ path, digest }))
     .sort((left, right) =>
       left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
     );
 
-  const rootResult = parseRegistryRoot(rootRaw, locator, { assets });
+  const rootResult = parseRegistryRoot(rootRaw, locator, { assets, authority });
   if (!rootResult.ok) return fail(rootResult.issues);
 
-  const snapshot: RegistrySnapshot = {
-    root: rootResult.value,
-    items: Object.freeze(items.map((item) => Object.freeze(item))),
+  const snapshot: RegistrySnapshot = deepFreeze({
+    root: deepFreeze(rootResult.value),
+    items: Object.freeze(items),
     assets: Object.freeze(assets),
-  };
-  return ok(Object.freeze(snapshot));
+  });
+  return ok(snapshot);
 }
