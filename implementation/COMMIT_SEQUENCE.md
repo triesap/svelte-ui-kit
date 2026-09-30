@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: no new checkpoint; the S007–S012 repair batch below is authorized, starting with S007/S008 lifecycle qualification. **S013** in **RCLD-02** remains not_started and blocked until S012 is independently accepted. Keep the six original pending ledger entries while recording repair progress separately in this document and their reports.
+- Active implementation checkpoint: none. The S007–S012 repair and qualification batch is complete and returned for independent Codex review; **S013** in **RCLD-02** remains not_started and blocked until S012 is independently accepted. The six original pending ledger entries are preserved and repair progress is recorded separately in this document and their reports.
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **6 / 203**. Remaining: **197 / 203**.
 - Committed pending review: **6 / 203**. Authored batch range: **S007–S012**.
@@ -421,6 +421,28 @@ not the original pending implementation hashes recorded in the ledger):
   `Switch.Thumb`, adds the mandatory strict declaration audit with fault
   controls, and reports the two pinned upstream diagnostics as a qualified
   exception. Verified: components 7/7, fixture 23/23, browser 11/11.
+- **RCLD01-REPAIR-4 — S012 shared CLI executor.** Commit
+  `024495a0854ce4566678feb1dbb461a2f049e7a3`. Routes the adapter through the
+  shared `runCli` executor, keeps metadata validation and process effects in the
+  adapter, and retargets the hard-coded-version mutation control. Verified: CLI
+  smoke 41/41, unit 20/20, harness 35/35, integration 12/12.
+- **RCLD01-REPAIR-5 — governance compatibility and complete qualification.**
+  Commit `49a82eca2942bcad3cad0844419481076edca003`. Restores historical-plan
+  compatibility (no pending summary required without a batch or pending state)
+  while keeping present summaries accurate, adds synthetic atomic
+  batch-acceptance, partial-acceptance and negative regressions, and removes
+  private host-tooling references from public reports. Verified: contracts
+  108/108, the full cumulative lane set green, and a fresh reference guard
+  (fmt/check/test exit 0; 578 passes, 4 ignored) at
+  `a10fbf06334f4648f5755e05a7147414e4e5fc98`.
+
+Batch return: S001–S006 remain the only independently accepted checkpoints
+(6/203). S007–S012 remain `committed_pending_review` with `completion: null`;
+their original implementation hashes are unchanged and the repair commits above
+are recorded separately. No self-review is represented as Codex acceptance.
+This repair batch does not claim MVP, RCLD-01 acceptance or release readiness.
+S013 remains locked until a separate Codex dispatch follows successful
+independent S012 acceptance.
 
 ### Dependency decision and bounded upstream exception
 
