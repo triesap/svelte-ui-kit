@@ -80,3 +80,51 @@ test("no timestamp or random identifier enters semantic output", () => {
   assert.doesNotMatch(rendered, /\d{4}-\d{2}-\d{2}T/);
   assert.equal(canonicalJson(value), rendered);
 });
+
+function codeOf(value: unknown): string {
+  try {
+    canonicalJson(value);
+  } catch (error) {
+    assert.ok(error instanceof ModelError);
+    return error instanceof ModelError ? error.code : "";
+  }
+  assert.fail(`expected ${String(value)} to be rejected`);
+}
+
+test("non-JSON objects are rejected with typed diagnostics", () => {
+  for (const value of [
+    new Date(0),
+    new Map([["x", 1]]),
+    new Set([1]),
+    /pattern/,
+    new (class Widget {})(),
+  ]) {
+    assert.equal(codeOf({ value }), "JSON_VALUE_UNSUPPORTED");
+  }
+});
+
+test("sparse arrays and undefined entries are rejected, not mangled", () => {
+  const sparse = new Array(3) as unknown[];
+  sparse[1] = 1;
+  assert.equal(codeOf(sparse), "JSON_ARRAY_HOLE");
+  assert.equal(codeOf([1, undefined]), "JSON_VALUE_UNSUPPORTED");
+  assert.equal(codeOf({ a: [1, undefined] }), "JSON_VALUE_UNSUPPORTED");
+});
+
+test("reference cycles are rejected instead of overflowing the stack", () => {
+  const cycleObject: Record<string, unknown> = {};
+  cycleObject["self"] = cycleObject;
+  assert.equal(codeOf(cycleObject), "JSON_CYCLE");
+
+  const cycleArray: unknown[] = [];
+  cycleArray.push(cycleArray);
+  assert.equal(codeOf(cycleArray), "JSON_CYCLE");
+});
+
+test("plain null-prototype records and dense arrays stay valid JSON", () => {
+  const record = Object.create(null) as Record<string, unknown>;
+  record["a"] = 1;
+  assert.equal(canonicalJson(record), '{\n  "a": 1\n}\n');
+  const text = canonicalJson([1, [2, 3]]);
+  assert.deepEqual(JSON.parse(text), [1, [2, 3]]);
+});

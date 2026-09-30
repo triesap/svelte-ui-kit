@@ -23,6 +23,7 @@ import {
   type ModelResult,
 } from "./errors.js";
 import { validateWithSchema } from "./schema.js";
+import { isSafeLogicalRelativePath } from "../project/paths.js";
 import {
   INITIAL_CONTRACT_VERSION,
   validateCompatibilityRange,
@@ -145,13 +146,11 @@ function rustIssues(value: unknown, locator: string): ModelIssue[] {
   return issues;
 }
 
-function sortedEqual(
-  left: readonly string[],
-  right: readonly string[],
-): boolean {
-  const a = [...left].sort();
-  const b = [...right].sort();
-  return a.length === b.length && a.every((value, index) => value === b[index]);
+function sameOrder(left: readonly string[], right: readonly string[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
 }
 
 export function parseTokenContract(
@@ -165,13 +164,41 @@ export function parseTokenContract(
   );
   if (!schema.ok) return fail(schema.issues);
   const issues = rustIssues(value, locator);
-  if (issues.length > 0) return fail(issues);
   const record = value as Record<string, unknown>;
+  const layers = record["layers"] as string[];
+  if (!sameOrder(layers, KIT_LAYERS)) {
+    issues.push(
+      issue(
+        "TOKEN_LAYERS_ORDER",
+        `token contract layers must be exactly ${KIT_LAYERS.join(", ")} in cascade order`,
+        "layers",
+      ),
+    );
+  }
+  const tokenNames = new Set<string>();
+  for (const [index, token] of (
+    record["tokens"] as Record<string, unknown>[]
+  ).entries()) {
+    const name = token["name"];
+    if (typeof name === "string") {
+      if (tokenNames.has(name)) {
+        issues.push(
+          issue(
+            "TOKEN_DUPLICATE_NAME",
+            `duplicate semantic token ${JSON.stringify(name)} at tokens[${index}]`,
+            locator,
+          ),
+        );
+      }
+      tokenNames.add(name);
+    }
+  }
+  if (issues.length > 0) return fail(issues);
   return ok({
     id: record["id"] as string,
     contractVersion: INITIAL_CONTRACT_VERSION,
     description: record["description"] as string,
-    layers: record["layers"] as KitLayer[],
+    layers: layers as KitLayer[],
     tokens: record["tokens"] as TokenRole[],
     radiusGrammar: record["radiusGrammar"] as TokenContract["radiusGrammar"],
   });
@@ -238,13 +265,37 @@ export function parseThemeIntegration(
     );
     if (!result.ok) issues.push(...result.issues);
   }
+  const stylesheet = record["stylesheet"];
+  if (
+    typeof stylesheet !== "string" ||
+    !isSafeLogicalRelativePath(stylesheet) ||
+    !stylesheet.endsWith(".css")
+  ) {
+    issues.push(
+      issue(
+        "THEME_STYLESHEET_UNSAFE",
+        `theme stylesheet must be a safe logical styles-relative .css path, received ${JSON.stringify(stylesheet)}`,
+        "stylesheet",
+      ),
+    );
+  }
+  const layers = record["layers"] as string[];
+  if (!sameOrder(layers, KIT_LAYERS)) {
+    issues.push(
+      issue(
+        "THEME_LAYERS_ORDER",
+        `theme integration layers must be exactly ${KIT_LAYERS.join(", ")} in cascade order`,
+        "layers",
+      ),
+    );
+  }
   if (issues.length > 0) return fail(issues);
   return ok({
     id: record["id"] as string,
     contractVersion: INITIAL_CONTRACT_VERSION,
     description: record["description"] as string,
-    stylesheet: record["stylesheet"] as string,
-    layers: record["layers"] as KitLayer[],
+    stylesheet: stylesheet as string,
+    layers: layers as KitLayer[],
     producer: "svelte-ui-kit",
     compatibility: {
       svelte: compatibility["svelte"] as string,
@@ -291,15 +342,6 @@ export function parseThemeMetadata(bundle: {
         "THEME_CONTRACT_MISMATCH",
         "theme integration must reference the same token contract id/version",
         "tokenContract",
-      ),
-    );
-  }
-  if (!sortedEqual(themeIntegration.layers, tokenContract.layers)) {
-    issues.push(
-      issue(
-        "THEME_LAYERS_MISMATCH",
-        "theme integration layers must match the token contract layer set",
-        "layers",
       ),
     );
   }

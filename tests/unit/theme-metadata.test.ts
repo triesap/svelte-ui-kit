@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   parseComponentCustomization,
+  parseThemeIntegration,
   parseThemeMetadata,
   parseTokenContract,
   RUST_IDENTITY_PATTERN,
@@ -184,7 +185,12 @@ test("inconsistent theme contract ids and layers fail", () => {
   });
   assert.equal(mismatchLayers.ok, false);
   if (!mismatchLayers.ok) {
-    assert.equal(mismatchLayers.issues[0]?.code, "THEME_LAYERS_MISMATCH");
+    assert.equal(
+      mismatchLayers.issues.some(
+        (entry) => entry.code === "THEME_LAYERS_ORDER",
+      ),
+      true,
+    );
   }
 });
 
@@ -202,4 +208,91 @@ test("Rust and Leptos identity claims are rejected", () => {
   }
   assert.equal(RUST_IDENTITY_PATTERN.test("svelte-ui-kit"), false);
   assert.equal(RUST_IDENTITY_PATTERN.test("trust"), false);
+});
+
+test("layers must be the exact ordered three-layer contract", () => {
+  const reversed = parseThemeIntegration(
+    themeIntegration({ layers: [...LAYERS].reverse() }),
+  );
+  assert.equal(reversed.ok, false);
+  if (!reversed.ok) {
+    assert.equal(
+      reversed.issues.some((entry) => entry.code === "THEME_LAYERS_ORDER"),
+      true,
+    );
+  }
+
+  const reordered = parseTokenContract(
+    tokenContract({
+      layers: [
+        "svelte-ui-kit.components",
+        "svelte-ui-kit.tokens",
+        "svelte-ui-kit.themes",
+      ],
+    }),
+  );
+  assert.equal(reordered.ok, false);
+  if (!reordered.ok) {
+    assert.equal(
+      reordered.issues.some((entry) => entry.code === "TOKEN_LAYERS_ORDER"),
+      true,
+    );
+  }
+});
+
+test("unsafe stylesheet mappings are rejected", () => {
+  for (const stylesheet of [
+    "../escape.css",
+    "/absolute/kit.css",
+    "a/../../b.css",
+    "kit.svelte",
+    "a\\b.css",
+  ]) {
+    const result = parseThemeIntegration(themeIntegration({ stylesheet }));
+    assert.equal(result.ok, false, stylesheet);
+    if (!result.ok) {
+      assert.equal(
+        result.issues.some(
+          (entry) =>
+            entry.code === "THEME_STYLESHEET_UNSAFE" ||
+            entry.code === "SCHEMA_INVALID",
+        ),
+        true,
+        stylesheet,
+      );
+    }
+  }
+  assert.equal(
+    parseThemeIntegration(themeIntegration({ stylesheet: "themes/kit.css" }))
+      .ok,
+    true,
+  );
+});
+
+test("duplicate semantic token names are rejected", () => {
+  const duplicate = parseTokenContract(
+    tokenContract({
+      tokens: [
+        {
+          name: "--kit-shared",
+          role: "radius",
+          type: "length",
+          fallback: "1rem",
+        },
+        {
+          name: "--kit-shared",
+          role: "color",
+          type: "color",
+          fallback: "#fff",
+        },
+      ],
+    }),
+  );
+  assert.equal(duplicate.ok, false);
+  if (!duplicate.ok) {
+    assert.equal(
+      duplicate.issues.some((entry) => entry.code === "TOKEN_DUPLICATE_NAME"),
+      true,
+    );
+  }
 });
