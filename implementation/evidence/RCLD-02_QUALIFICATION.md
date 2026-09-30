@@ -146,10 +146,11 @@ reference Rust workspace root:
 | `cargo test --workspace --all-targets`  | 0    | 43 result lines; 578 passed, 0 failed, 4 ignored |
 
 The reference was clean at that hash before and after and was not modified.
-`actionlint 1.7.12` (darwin/arm64) with SHA-256
+`actionlint 1.7.12` (darwin/arm64, downloaded release archive) with SHA-256
 `aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f`, matching
-the published checksum file, ran at exit 0; it was unpacked in an owned
-temporary directory outside the repository and is not committed.
+the published checksum file for the archive, ran at exit 0; it was unpacked in
+an owned temporary directory outside the repository and is not committed. That
+SHA-256 identifies the downloaded archive, not the extracted binary.
 
 This records implementation and verification only. None of the twenty
 checkpoints is Codex-accepted, and no acceptance hash or counter changes.
@@ -166,7 +167,7 @@ accepted hash changed.
 | Group | Repair commit                              | Summary                                                         |
 | ----- | ------------------------------------------ | --------------------------------------------------------------- |
 | R3-1  | `1e7ae2ddb847a5e0f180b111b3055fc5646c9031` | intersect one constraint set over the complete selected closure |
-| R3-2  | `1e7ae2ddb847a5e0f180b111b3055fc5646c9031` | complete logical file-role/case/ancestry/integration ownership  |
+| R3-2  | `1e7ae2ddb847a5e0f180b111b3055fc5646c9031` | same-category lock file/block case and ancestry checks          |
 | R3-3  | `a14a80527b120f960ef58cbd46e00d7afd97ca36` | within-item controls, cumulative qualification and evidence     |
 
 `a14a80527b120f960ef58cbd46e00d7afd97ca36` is the final candidate tip: it adds
@@ -181,14 +182,18 @@ matching explicit npm requirement. Disjoint (`>=3.8.1 <3.10.0` vs
 `>=3.10.0 <4.0.0`) and cross-item explicit-peer cases that each overlap the
 root but not one another now fail both `validateRegistryHealth` and
 `validateResolvedInventory`, with diagnostics that name the package/axis and
-the involved owners and ranges in stable order. R3-2 completes the lexical
-ownership contract: resolved UI and style targets reject file/directory
-ancestry and case aliases, lock file/block records reject case aliases and
-ancestry, multiple uniquely owned blocks may still share one exact aggregate
-stylesheet, valid compound siblings and safe nested mappings stay valid, and no
-integration record may equal or contain a required namespace directory. Both
-repairs are exercised through the real parsers, loaded registry health and the
-resolved-operation path, including new installed-copy controls.
+the involved owners and ranges in stable order. R3-2 advanced the lexical
+ownership checks within each category: resolved UI and style targets reject
+file/directory ancestry and case aliases, lock file/block records reject case
+aliases and ancestry, multiple uniquely owned blocks may still share one exact
+aggregate stylesheet, valid compound siblings and safe nested mappings stay
+valid, and no integration record may equal or contain a required namespace
+directory. Those per-category checks were not a complete ownership validation:
+independent review 4 subsequently found nine cross-role/directory negatives
+still accepted by the actual lock parser, and R4-1 below replaced them with one
+normalized whole-inventory comparison. Both repairs are exercised through the
+real parsers, loaded registry health and the resolved-operation path, including
+new installed-copy controls.
 
 ### RCLD-02 review-3 cumulative lanes
 
@@ -226,12 +231,18 @@ exactly the two genuine Bits 2.19.3 union-complexity `TS2590` errors and no
 warnings, classified `qualified-upstream-exception` with no rejection reasons.
 The release AC20 debt remains open.
 
+The review-3 run had intermediate failures that are retained here rather than
+hidden by the final green table: the unit lane initially reported 193/194 while
+a custom-context fixture still carried the default file paths, and passed only
+after the fixture was corrected; the first format check also failed before the
+tree was formatted. A final passing lane does not mean no failed attempt
+occurred.
+
 ### RCLD-02 review-3 reference guard
 
-Fresh routed reference guard at clean reference
+Fresh reference guard at clean reference
 `a10fbf06334f4648f5755e05a7147414e4e5fc98` on the same workstation, from the
-reference Rust workspace root, after `cargo extbuild doctor` reported no volume
-findings:
+reference Rust workspace root:
 
 | Command                                 | Exit | Result                                           |
 | --------------------------------------- | ---- | ------------------------------------------------ |
@@ -240,10 +251,112 @@ findings:
 | `cargo test --workspace --all-targets`  | 0    | 43 result lines; 578 passed, 0 failed, 4 ignored |
 
 The reference was clean at that hash before and after and was not modified.
-`actionlint 1.7.12` (darwin/arm64 release binary) with SHA-256
+`actionlint 1.7.12` (darwin/arm64 release archive
+`actionlint_1.7.12_darwin_arm64.tar.gz`) with SHA-256
 `aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f`, matching
-the published checksum file, ran at exit 0; it was unpacked in an owned
-`/tmp` directory outside the repository and is not committed.
+the published checksum file for that archive, ran at exit 0; it was unpacked in
+an owned `/tmp` directory outside the repository and is not committed. That
+SHA-256 is the downloaded archive's, not the extracted binary's.
+
+This records implementation and verification only. None of the twenty
+checkpoints is Codex-accepted, and no acceptance hash or counter changes.
+
+## RCLD-02 review-4 repair batch
+
+Independent review 4 of candidate
+`e0a23bb3423fe88e109da8e11a52ae58251ae641` requested both RCLD02-R4 groups.
+The original S013-S032 implementation hashes and the review-1/2/3 repair commits
+remain provenance; they are not acceptance. All twenty checkpoints remain
+`committed_pending_review`; no acceptance counter or accepted hash changed.
+
+| Group | Repair commit                              | Summary                                                                          |
+| ----- | ------------------------------------------ | -------------------------------------------------------------------------------- |
+| R4-1  | `0636f9f1a59ca2c215552764ef0955a43f7fa4a3` | validate one complete normalized lock claim inventory                            |
+| R4-2  | this record                                | callers, installed-copy controls, cumulative qualification and truthful evidence |
+
+R4-1 removes the three separate `checkOwnershipPaths` invocations and the
+isolated file-versus-block check from `parseKitLock`. Every safe source file,
+CSS block and integration record now contributes one normalized claim carrying
+its path, role, identity and record locator, and the complete inventory is
+compared once: differently spelled ASCII case aliases always fail, a strict
+segment-aware ancestor relationship always fails in either input order across
+every role pair, and an exact path shared by two claims must be an explicitly
+compatible block/block or block/stylesheet pair. Source files never share an
+exact path, two integrations never share one, and a CSS block never shares one
+with a layout or exports integration. Every file claim is also checked against
+the validated UI/styles/state directories, so a source file `src/ui/styles`
+fails when the required styles directory is `src/ui/styles/nested`. Valid
+compound siblings, prefix siblings, safe directory nesting and compatible
+multi-block aggregate stylesheet sharing stay valid. The nine parsed negatives
+that independent review 4 reproduced now fail with typed causes and locators.
+
+R4-2 audits the original S013-S032 criteria and the retained review findings
+against actual callers after the repair, keeps the separate checkpoint and
+sequence reports from describing same-category checks as complete ownership
+validation, corrects the public qualification (removing private routing/tooling
+details and distinguishing the actionlint archive checksum from the extracted
+binary), retains the review-3 intermediate failures, and records the fresh
+cumulative qualification below. No pending hash, acceptance counter or
+checkpoint state changed.
+
+### RCLD-02 review-4 cumulative lanes
+
+Run at the R4-1 production repair
+`0636f9f1a59ca2c215552764ef0955a43f7fa4a3` from this repository root with Node
+`24.21.0` / pnpm `11.22.0`; this R4-2 record adds evidence only. Raw lane logs
+are under the git-ignored `implementation/evidence/logs/r4-20260930/`.
+
+| Lane                   | Command                                                                     | Exit | Result                                             |
+| ---------------------- | --------------------------------------------------------------------------- | ---- | -------------------------------------------------- |
+| Frozen strict install  | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | 0    | already up to date                                 |
+| Format                 | `pnpm run format:check`                                                     | 0    | all matched files formatted                        |
+| Lint                   | `pnpm run lint`                                                             | 0    | no findings                                        |
+| Typecheck              | `pnpm run typecheck` (5 configs)                                            | 0    | exit 0                                             |
+| Unit                   | `pnpm run test:unit`                                                        | 0    | 203 tests, 203 pass                                |
+| Runner harness         | `pnpm run test:harness`                                                     | 0    | 37 tests, 37 pass                                  |
+| Integration            | `pnpm run test:integration`                                                 | 0    | 23 tests, 23 pass (8 installed-copy controls)      |
+| Components             | `pnpm run test:components`                                                  | 0    | 22 tests, 22 pass (17 strict-declaration controls) |
+| Registry               | `pnpm run test:registry`                                                    | 0    | 38 tests, 38 pass                                  |
+| CLI smoke              | `pnpm run test:cli-bootstrap`                                               | 0    | 52 tests, 52 pass                                  |
+| Consumer check         | `pnpm run fixture:check`                                                    | 0    | 0 errors, 0 warnings                               |
+| Consumer SSR/lifecycle | `pnpm run test:fixture`                                                     | 0    | 23 tests, 23 pass                                  |
+| Browser (Chromium)     | `pnpm run test:browser -- tests/browser/harness.spec.ts`                    | 0    | 23 passed                                          |
+| Contract validation    | `pnpm run check:contracts`                                                  | 0    | 0 error(s), 0 warning(s)                           |
+| Contract regressions   | `pnpm run test:contracts`                                                   | 0    | 117 tests, 117 pass                                |
+| Projection             | `node tools/check-contracts.mjs --generate`                                 | 0    | deterministic; no tracked change                   |
+| Whitespace             | `git diff --check`, `git diff --cached --check`                             | 0    | no diagnostics                                     |
+| Strict raw checker     | pinned `svelte-check` on the disposable strict fixture                      | 1    | exactly two Bits TS2590 errors, zero warnings      |
+| Workflow validation    | `actionlint .github/workflows/ci.yml` (v1.7.12)                             | 0    | no findings (shellcheck 0.11.0 on PATH)            |
+
+The strict raw checker remains the qualified fixture-only upstream exception:
+an unmodified `svelte-check 4.7.6` run over the strict fixture exits 1 with
+exactly the two genuine Bits 2.19.3 union-complexity `TS2590` errors and no
+warnings. The `test:components` lane re-ran that maintained strict-declaration
+audit (17 controls) and requalified it; the historical raw output is retained
+under `implementation/evidence/logs/rcld01-strict-audit-raw.log`. The release
+AC20 debt remains open.
+
+### RCLD-02 review-4 reference guard
+
+Fresh reference guard at clean reference
+`a10fbf06334f4648f5755e05a7147414e4e5fc98` on the same workstation, from the
+reference Rust workspace root:
+
+| Command                                 | Exit | Result                                           |
+| --------------------------------------- | ---- | ------------------------------------------------ |
+| `cargo fmt --all -- --check`            | 0    | no diffs                                         |
+| `cargo check --workspace --all-targets` | 0    | Finished dev profile                             |
+| `cargo test --workspace --all-targets`  | 0    | 43 result lines; 578 passed, 0 failed, 4 ignored |
+
+The reference was clean at that hash before and after and was not modified.
+`actionlint 1.7.12` ran against `.github/workflows/ci.yml` at exit 0 with no
+findings. The downloaded darwin/arm64 release archive
+(`actionlint_1.7.12_darwin_arm64.tar.gz`) has SHA-256
+`aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f`, matching
+the published checksum file for that archive; the binary extracted from it has
+SHA-256 `8db11704dc296f096216db4db65d86cd7f0ebfdf4c38453a1da276b137b88388`. The
+archive checksum is not the extracted binary's digest. The tool was unpacked in
+an owned `/tmp` directory outside the repository and is not committed.
 
 This records implementation and verification only. None of the twenty
 checkpoints is Codex-accepted, and no acceptance hash or counter changes.
@@ -271,11 +384,18 @@ checkpoints is Codex-accepted, and no acceptance hash or counter changes.
   but jointly empty OR ranges, order-permutation stability, valid joint overlap,
   unselected-item exclusion and unregistered-candidate exclusion, asserted
   through both registry health and the resolved-operation path.
-- Logical ownership (R3-2): fully parsed within-item and cross-item style
-  file/directory ancestry, UI file ancestry, lock ASCII case aliases, lock file
-  ancestry, integration namespace-directory claims, with valid shared aggregate
-  stylesheets, compound siblings, nested mappings and installed-copy
-  positive/negative controls retained.
+- Ownership (R3-2, superseded by R4-1): same-category resolved style/UI
+  file/directory ancestry, lock per-category ASCII case aliases and lock file
+  ancestry, and integration namespace-directory claims, with valid shared
+  aggregate stylesheets, compound siblings and nested mappings. Those checks
+  did not compare roles against one another; the complete normalized
+  cross-role matrix below supersedes them for whole-set validation.
+- Cross-role ownership (R4-1): one normalized claim inventory across source
+  files, CSS blocks and integrations covering every role pair at exact, ASCII
+  alias, ancestor, reverse-ancestor and disjoint paths; required UI/styles/state
+  directory equality and ancestry; input permutations; valid compound and prefix
+  siblings; and compatible multi-block aggregate stylesheet sharing, asserted
+  from the authoring parser and from emitted installed modules.
 - Assets: traversal, symlink asset, escaping symlink ancestor, symlinked listing
   start, invalid UTF-8 source/style bytes, missing asset, no source-checkout
   fallback, and deeply frozen snapshots with defensive byte copies.
