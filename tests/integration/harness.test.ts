@@ -4,11 +4,14 @@ import { createHash } from "node:crypto";
 import {
   chmodSync,
   existsSync,
+  mkdtempSync,
   readFileSync,
   readlinkSync,
+  rmSync,
   statSync,
 } from "node:fs";
 import { createServer } from "node:net";
+import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
@@ -17,6 +20,13 @@ import { createTempProject } from "../helpers/project.js";
 import { snapshotByPath, snapshotTree } from "../helpers/tree-snapshot.js";
 
 const PACKAGE_ROOT = process.cwd();
+
+// Owned, deliberately short socket root: the platform `sockaddr_un` limit is
+// much smaller than the ordinary temporary directory, and the configured
+// temporary directory can itself be long.
+const SOCKET_PARENT = "/tmp";
+const NONREGULAR_CONTROL_SPEC =
+  "tests/integration/nonregular-writer-control.mjs";
 
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
@@ -305,70 +315,133 @@ test("dangling links and invalid non-directory ancestors are rejected", (t) => {
   );
 });
 
-test("writes reject a FIFO final target without opening it", (t) => {
-  const project = createTempProject();
-  t.after(() => project.cleanup());
-  project.writeDir("pipes");
-  const fifo = path.join(project.root, "pipes", "input");
-  const created = spawnSync("mkfifo", [fifo], { encoding: "utf8" });
-  if (created.error || created.status !== 0) {
-    t.skip(`mkfifo unavailable: ${created.error?.message ?? created.stderr}`);
-    return;
-  }
+interface NonregularChildResult {
+  readonly parent: string;
+  readonly root: string | null;
+  readonly report: Record<string, unknown> | null;
+  readonly status: number | null;
+  readonly signal: NodeJS.Signals | null;
+  readonly error: NodeJS.ErrnoException | undefined;
+  readonly output: string;
+  cleanup(): void;
+}
 
-  const before = snapshotByPath(snapshotTree(project.root));
+/**
+ * Run the nonregular-target control as an owned child under an enforceable
+ * external deadline. The parent owns the temporary tree; the child only writes
+ * inside it, reports its result on stdout and never cleans up. A `blocking`
+ * child deliberately opens the FIFO raw and is expected to be terminated by
+ * the deadline.
+ */
+function runNonregularChild(
+  mode: "guarded" | "blocking",
+  timeoutMs = 5_000,
+): NonregularChildResult {
+  const parent = mkdtempSync(path.join(os.tmpdir(), "suik-nonregular-"));
+  const result = spawnSync(process.execPath, [NONREGULAR_CONTROL_SPEC], {
+    cwd: PACKAGE_ROOT,
+    env: {
+      ...process.env,
+      SUIK_PROJECT_MODULE: new URL("../helpers/project.js", import.meta.url)
+        .href,
+      SUIK_FIFO_PARENT: parent,
+      SUIK_NONREGULAR_MODE: mode,
+    },
+    encoding: "utf8",
+    timeout: timeoutMs,
+  });
+  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  const root = /SUIK_FIFO_ROOT:([^\n]+)/.exec(output);
+  const report = /SUIK_FIFO_REPORT:(.*)/.exec(output);
+  return {
+    parent,
+    root: root ? root[1].trim() : null,
+    report: report ? (JSON.parse(report[1]) as Record<string, unknown>) : null,
+    status: result.status,
+    signal: result.signal,
+    error: result.error as NodeJS.ErrnoException | undefined,
+    output,
+    cleanup: () => rmSync(parent, { recursive: true, force: true }),
+  };
+}
+
+test("the real write helper rejects a nonregular FIFO target before opening it", (t) => {
+  const child = runNonregularChild("guarded");
+  t.after(() => child.cleanup());
   assert.equal(
-    before.get("pipes/input")?.kind,
-    "other",
-    "the FIFO must be recorded as a non-regular entry",
+    child.error,
+    undefined,
+    `the bounded child reported an error: ${String(child.error)}\n${child.output}`,
   );
-
-  const started = Date.now();
-  assert.throws(
-    () => project.writeFile("pipes/input", "x"),
-    /non-regular entry/,
+  assert.equal(child.signal, null, "the bounded child was signalled");
+  assert.equal(
+    child.status,
+    0,
+    `the helper must reject the FIFO cleanly\n${child.output}`,
   );
-  assert.ok(
-    Date.now() - started < 1_000,
-    "the rejection must not block on opening the FIFO",
+  const report = child.report;
+  assert.ok(report, `the child must report its result\n${child.output}`);
+  assert.equal(
+    report["mkfifoFailed"],
+    false,
+    `mkfifo must be available\n${child.output}`,
   );
-  assert.throws(
-    () => project.writeDir("pipes/input"),
+  assert.equal(
+    report["writeRejected"],
+    true,
+    `the FIFO write must be rejected\n${child.output}`,
+  );
+  assert.match(String(report["writeMessage"]), /non-regular entry/);
+  assert.equal(report["dirRejected"], true);
+  assert.match(
+    String(report["dirMessage"]),
     /cannot create a directory over a non-directory/,
   );
-
-  const after = snapshotByPath(snapshotTree(project.root));
-  assert.deepEqual(
-    after.get("pipes/input"),
-    before.get("pipes/input"),
-    "the FIFO kind, mode and size are preserved",
-  );
-
-  project.cleanup();
-  assert.ok(!existsSync(project.root), "owned cleanup removes the FIFO root");
+  assert.equal(report["kindPreserved"], true);
+  assert.equal(report["modePreserved"], true);
+  assert.equal(report["sizePreserved"], true);
 });
 
-test("writes reject a socket final target without side effects", async (t) => {
-  const project = createTempProject();
+test("a regressed blocking FIFO writer is terminated by the external deadline", (t) => {
+  const child = runNonregularChild("blocking");
+  t.after(() => child.cleanup());
+  const error = child.error;
+  assert.ok(
+    error,
+    `the external deadline must report an error\n${child.output}`,
+  );
+  assert.equal(error.code, "ETIMEDOUT");
+  assert.equal(child.signal, "SIGTERM");
+  assert.equal(child.status, null);
+  const root = child.root;
+  assert.ok(
+    root,
+    `the child must report its owned root before blocking\n${child.output}`,
+  );
+  assert.ok(
+    existsSync(root),
+    "the parent-owned tree still exists before cleanup",
+  );
+  child.cleanup();
+  assert.ok(!existsSync(child.parent), "the parent-owned tree is removed");
+});
+
+test("writes reject a socket final target without side effects", async () => {
+  // A short owned socket root keeps the path within the platform limits even
+  // when the configured temporary directory is long. A genuine setup failure
+  // (including a missing platform capability) fails the test rather than
+  // skipping it.
+  const project = createTempProject({ parent: SOCKET_PARENT, prefix: "s" });
   const socketPath = path.join(project.root, "control.sock");
   const server = createServer();
   let listening = false;
   try {
-    try {
-      await new Promise<void>((resolve, reject) => {
-        server.once("listening", () => resolve());
-        server.once("error", reject);
-        server.listen(socketPath);
-      });
-      listening = true;
-    } catch (error) {
-      const code = (error as NodeJS.ErrnoException).code;
-      if (code === "EINVAL" || code === "ENAMETOOLONG") {
-        t.skip(`UNIX socket path unsupported here: ${code}`);
-        return;
-      }
-      throw error;
-    }
+    await new Promise<void>((resolve, reject) => {
+      server.once("listening", () => resolve());
+      server.once("error", reject);
+      server.listen(socketPath);
+    });
+    listening = true;
 
     const before = snapshotByPath(snapshotTree(project.root));
     assert.equal(before.get("control.sock")?.kind, "other");
