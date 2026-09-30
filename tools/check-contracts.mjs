@@ -69,18 +69,32 @@ export const BATCH_KEYS = [
 ];
 
 /**
- * The single owner-authorized batch. `committed_pending_review` is legal only
- * for exactly this range; there is deliberately no general policy engine or
- * free-form bypass. A live record that does not match exactly is rejected.
+ * The two owner-authorized batch tuples. `committed_pending_review` is legal
+ * only for exactly one of these ranges; there is deliberately no general
+ * policy engine or free-form bypass. A live record must match one tuple
+ * exactly, and the plan may carry only one live record at a time. The
+ * historical RCLD-01 tuple stays approved so historical fixtures and the
+ * accepted RCLD-01 batch evidence remain valid; the current live payload is
+ * the RCLD-02 tuple.
  */
-export const AUTHORIZED_BATCH = {
-  schemaVersion: BATCH_SCHEMA_VERSION,
-  sequence: "RCLD-01",
-  first: "S007",
-  last: "S012",
-  mode: "pfc",
-  review: "codex-after-sequence",
-};
+export const AUTHORIZED_BATCHES = [
+  {
+    schemaVersion: BATCH_SCHEMA_VERSION,
+    sequence: "RCLD-01",
+    first: "S007",
+    last: "S012",
+    mode: "pfc",
+    review: "codex-after-sequence",
+  },
+  {
+    schemaVersion: BATCH_SCHEMA_VERSION,
+    sequence: "RCLD-02",
+    first: "S013",
+    last: "S032",
+    mode: "pfc",
+    review: "codex-after-sequence",
+  },
+];
 
 /** Structured completion-evidence schema. */
 export const EVIDENCE_SCHEMA_VERSION = 1;
@@ -780,31 +794,27 @@ export function readBatchAuthorization(root, errors) {
     });
     return null;
   }
-  const mismatches = [];
-  for (const key of BATCH_KEYS) {
-    if (record[key] !== AUTHORIZED_BATCH[key]) {
-      mismatches.push(
-        `${key} must be ${JSON.stringify(AUTHORIZED_BATCH[key])}, found ${JSON.stringify(record[key])}`,
-      );
-    }
-  }
-  if (mismatches.length > 0) {
-    for (const message of mismatches) {
-      errors.push({
-        code: "INVALID_BATCH_AUTHORIZATION",
-        path: PLAN_REL,
-        message: `checkpoint-batch ${message}`,
-      });
-    }
+  const approved = AUTHORIZED_BATCHES.find((candidate) =>
+    BATCH_KEYS.every((key) => record[key] === candidate[key]),
+  );
+  if (!approved) {
+    errors.push({
+      code: "INVALID_BATCH_AUTHORIZATION",
+      path: PLAN_REL,
+      message: `checkpoint-batch must exactly match one approved authorization tuple (${AUTHORIZED_BATCHES.map(
+        (candidate) =>
+          `${candidate.sequence} ${candidate.first}-${candidate.last}`,
+      ).join(", ")}); found ${JSON.stringify(record)}`,
+    });
     return null;
   }
-  const firstIndex = EXPECTED_STEP_IDS.indexOf(AUTHORIZED_BATCH.first);
-  const lastIndex = EXPECTED_STEP_IDS.indexOf(AUTHORIZED_BATCH.last);
+  const firstIndex = EXPECTED_STEP_IDS.indexOf(approved.first);
+  const lastIndex = EXPECTED_STEP_IDS.indexOf(approved.last);
   const ids = new Set(EXPECTED_STEP_IDS.slice(firstIndex, lastIndex + 1));
   return {
-    sequence: AUTHORIZED_BATCH.sequence,
-    first: AUTHORIZED_BATCH.first,
-    last: AUTHORIZED_BATCH.last,
+    sequence: approved.sequence,
+    first: approved.first,
+    last: approved.last,
     ids,
   };
 }

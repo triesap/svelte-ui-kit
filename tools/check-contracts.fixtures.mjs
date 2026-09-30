@@ -59,7 +59,30 @@ for (const seq of EXPECTED_SEQUENCES) {
 }
 
 /**
- * Fixed, fixture-owned lifecycle scenarios. `s001` is the canonical negative
+ * The two approved owner-authorized batch tuples. A fixture explicitly sets the
+ * batch record its scenario needs instead of inheriting whatever live record
+ * the copied governing document currently carries, so historical RCLD-01
+ * fixtures stay valid after the live payload transitions to RCLD-02.
+ */
+export const BATCH_RCLD01 = {
+  schemaVersion: 1,
+  sequence: "RCLD-01",
+  first: "S007",
+  last: "S012",
+  mode: "pfc",
+  review: "codex-after-sequence",
+};
+
+export const BATCH_RCLD02 = {
+  schemaVersion: 1,
+  sequence: "RCLD-02",
+  first: "S013",
+  last: "S032",
+  mode: "pfc",
+  review: "codex-after-sequence",
+};
+
+/** Fixed, fixture-owned lifecycle scenarios. `s001` is the canonical negative
  * baseline (one complete checkpoint plus the active candidate); `two` and
  * `boundary` are positive states used to prove the suite is independent of how
  * far the real repository has progressed.
@@ -72,19 +95,51 @@ export const SCENARIOS = {
     candidates: ["S014"],
     accepted: [],
   },
-  // Owner-authorized batch states: S001–S006 accepted, then one or all of the
-  // S007–S012 implementation commits pending independent review.
+  // Owner-authorized historical RCLD-01 batch states: S001–S006 accepted,
+  // then one or all of the S007–S012 implementation commits pending review.
   pendingBatch: {
     complete: EXPECTED_STEP_IDS.slice(0, 6),
     candidates: [],
     accepted: [],
     pendingReview: ["S007"],
+    batch: BATCH_RCLD01,
   },
   pendingAll: {
     complete: EXPECTED_STEP_IDS.slice(0, 6),
     candidates: [],
     accepted: [],
     pendingReview: EXPECTED_STEP_IDS.slice(6, 12),
+    batch: BATCH_RCLD01,
+  },
+  // Current RCLD-02 batch states: S001–S012 accepted, then one, several or all
+  // of the S013–S032 implementation commits pending independent review.
+  rcld02First: {
+    complete: EXPECTED_STEP_IDS.slice(0, 12),
+    candidates: [],
+    accepted: [],
+    pendingReview: ["S013"],
+    batch: BATCH_RCLD02,
+  },
+  rcld02Prefix: {
+    complete: EXPECTED_STEP_IDS.slice(0, 12),
+    candidates: [],
+    accepted: [],
+    pendingReview: EXPECTED_STEP_IDS.slice(12, 16),
+    batch: BATCH_RCLD02,
+  },
+  rcld02All: {
+    complete: EXPECTED_STEP_IDS.slice(0, 12),
+    candidates: [],
+    accepted: [],
+    pendingReview: EXPECTED_STEP_IDS.slice(12, 32),
+    batch: BATCH_RCLD02,
+  },
+  rcld02Last: {
+    complete: EXPECTED_STEP_IDS.slice(0, 31),
+    candidates: [],
+    accepted: [],
+    pendingReview: ["S032"],
+    batch: BATCH_RCLD02,
   },
 };
 
@@ -288,6 +343,19 @@ export function normalizePlan(root, statuses) {
   writeDerivedState(root, statuses);
 }
 
+/**
+ * Replace any live `checkpoint-batch` record in a fixture plan with `payload`.
+ * Exactly one live record is written, so a fixture scenario never depends on
+ * the live governing document's current authorization.
+ */
+export function writeBatchAuthorization(root, payload) {
+  const abs = path.join(root, PLAN_REL);
+  const text = readFileSync(abs, "utf8");
+  const withoutLive = text.replace(/<!-- checkpoint-batch[\s\S]*?-->\n?/, "");
+  const record = `<!-- checkpoint-batch\n${JSON.stringify(payload)}\n-->\n`;
+  writeFileSync(abs, `${withoutLive}\n${record}`);
+}
+
 function copyFixtureInputs(sourceRoot, dir) {
   for (const rel of FIXTURE_FILES) {
     const src = path.join(sourceRoot, rel);
@@ -306,6 +374,56 @@ export function runTool(toolPath, root, extraArgs = []) {
   });
 }
 
+/** Cleanup error codes that a bounded retry can plausibly resolve. */
+const TRANSIENT_CLEANUP_CODES = new Set([
+  "ENOTEMPTY",
+  "EBUSY",
+  "EMFILE",
+  "ENFILE",
+  "EPERM",
+]);
+
+function sleepSync(milliseconds) {
+  const buffer = new Int32Array(new SharedArrayBuffer(4));
+  Atomics.wait(buffer, 0, 0, milliseconds);
+}
+
+/**
+ * Remove an owned fixture directory with a bounded number of retries for
+ * transient directory errors. Returns normally on success and rethrows the
+ * last cleanup error otherwise; it never silently swallows a failure.
+ */
+export function removeOwnedDir(
+  dir,
+  { attempts = 5, delayMs = 25, remove = rmSync } = {},
+) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      remove(dir, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      lastError = error;
+      const code = error && error.code;
+      if (!TRANSIENT_CLEANUP_CODES.has(code) || attempt === attempts) break;
+      sleepSync(delayMs * attempt);
+    }
+  }
+  throw lastError ?? new Error(`could not remove owned fixture: ${dir}`);
+}
+
+/**
+ * Attach a cleanup failure to the original construction error without
+ * replacing or losing the original message, so a masked setup failure can
+ * never be mistaken for a successful construction.
+ */
+function withCleanupFailure(error, dir, cleanupError) {
+  const wrapped = error instanceof Error ? error : new Error(String(error));
+  wrapped.cleanupError = cleanupError;
+  wrapped.message = `${wrapped.message}\n[cleanup] failed to remove owned fixture ${dir}: ${cleanupError && cleanupError.message ? cleanupError.message : String(cleanupError)}`;
+  return wrapped;
+}
+
 /**
  * Build a fixture into a fresh temporary directory. Returns the directory.
  * The caller owns cleanup. On any construction failure the partial fixture is
@@ -318,6 +436,12 @@ export function buildFixture({
   git: useGit = true,
   statusOverrides = null,
   ownedTempParent = os.tmpdir(),
+  // Test-only seams: a caller may override directory removal or inject a
+  // construction failure after the fixture inputs are copied. The production
+  // path uses `removeOwnedDir` with its bounded transient retries.
+  cleanupRemove = rmSync,
+  cleanupAttempts = 5,
+  failAfterCopy = null,
 } = {}) {
   const spec = SCENARIOS[scenario];
   if (!spec) throw new Error(`unknown fixture scenario: ${scenario}`);
@@ -328,6 +452,7 @@ export function buildFixture({
   const dir = mkdtempSync(path.join(ownedTempParent, "suik-contracts-"));
   try {
     copyFixtureInputs(sourceRoot, dir);
+    if (typeof failAfterCopy === "function") failAfterCopy(dir);
     const statuses = new Map(
       EXPECTED_STEP_IDS.map((id) => [id, "not_started"]),
     );
@@ -341,6 +466,7 @@ export function buildFixture({
       for (const [id, status] of statusOverrides) statuses.set(id, status);
     }
     normalizePlan(dir, statuses);
+    if (spec.batch) writeBatchAuthorization(dir, spec.batch);
     for (const id of spec.candidates) {
       writeEvidencePair(dir, id, {
         commit: null,
@@ -431,7 +557,14 @@ export function buildFixture({
     }
     return dir;
   } catch (error) {
-    rmSync(dir, { recursive: true, force: true });
+    try {
+      removeOwnedDir(dir, {
+        attempts: cleanupAttempts,
+        remove: cleanupRemove,
+      });
+    } catch (cleanupError) {
+      throw withCleanupFailure(error, dir, cleanupError);
+    }
     throw error;
   }
 }

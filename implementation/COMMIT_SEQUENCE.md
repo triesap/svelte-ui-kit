@@ -349,8 +349,8 @@ Codex. No intermediate return for ordinary engineering decisions is required.
 S033 and all later checkpoints stay locked. No push, publication, deployment,
 reference mutation or new task store is authorized.
 
-The current validator deliberately permits only the historical RCLD-01 tuple.
-As the first S013 prerequisite, Pi must extend and test its existing bounded
+The validator originally permitted only the historical RCLD-01 tuple. As the
+first S013 prerequisite, Pi extends and tests its existing bounded
 authorization mechanism for exactly one of these two approved tuples: the
 historical RCLD-01/S007–S012 tuple or RCLD-02/S013–S032. Keep one live record;
 do not introduce a generic bypass, another status/schema, or relax completion
@@ -369,7 +369,17 @@ regressions are implemented:
 }
 ```
 
-This JSON is the replacement payload, not a second live authorization. Test accepted S012 required
+This JSON is the replacement payload, not a second live authorization. The
+live record below was atomically transitioned from the completed RCLD-01 tuple
+to RCLD-02 before the first S013 implementation commit. The validator still
+recognizes the historical RCLD-01 tuple so historical fixtures and accepted
+RCLD-01 evidence remain valid, but only one record is live in this plan.
+
+<!-- checkpoint-batch
+{"schemaVersion":1,"sequence":"RCLD-02","first":"S013","last":"S032","mode":"pfc","review":"codex-after-sequence"}
+-->
+
+Test accepted S012 required
 before S013, ordered reachable pending hashes/reports, exact range matching,
 malformed/duplicate/fenced/widened authorizations, no S033 advancement, unchanged
 complete-state semantics, historical fixtures, and atomic whole-batch acceptance.
@@ -1079,9 +1089,11 @@ retained evidence, known failures/skips and the precise stopping reason.
 
 ## Owner-authorized batch — pfc through RCLD-01
 
-<!-- checkpoint-batch
-{"schemaVersion":1,"sequence":"RCLD-01","first":"S007","last":"S012","mode":"pfc","review":"codex-after-sequence"}
--->
+This historical dispatch authorized S007–S012 only; that batch is complete and
+independently accepted. Its tuple remains an approved validator fixture, but it
+is no longer the live plan record. The single live authorization now sits in
+the current "Codex dispatch — complete RCLD-02 models and registry resolution"
+section above.
 
 The owner explicitly requested entire-sequence authorization on 2026-09-29.
 This section supersedes conflicting per-checkpoint return, commit-ownership

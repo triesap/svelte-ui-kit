@@ -52,6 +52,7 @@ import {
 } from "./check-contracts.fixtures.mjs";
 import {
   computeFenceMask,
+  EXPECTED_STEP_IDS,
   extractAnchorData,
   extractLinks,
   parseDefinitions,
@@ -384,12 +385,25 @@ test("fixture construction failure cleans only its owned temporary allocation", 
   const unrelated = mkdtempSync(path.join(os.tmpdir(), "suik-contracts-"));
   t.after(() => rmSync(unrelated, { recursive: true, force: true }));
 
-  assert.throws(() =>
-    makeFixture({
-      scenario: "s001",
-      statusOverrides: new Map([["S001", "bogus"]]),
-      ownedTempParent: parent,
-    }),
+  assert.throws(
+    () =>
+      makeFixture({
+        scenario: "s001",
+        statusOverrides: new Map([["S001", "bogus"]]),
+        ownedTempParent: parent,
+      }),
+    (error) => {
+      assert.ok(
+        error instanceof Error,
+        "construction failure must surface an Error",
+      );
+      assert.match(
+        error.message,
+        /valid fixture scenario|bogus/,
+        "the original construction error must be retained",
+      );
+      return true;
+    },
   );
 
   assert.deepEqual(
@@ -400,6 +414,53 @@ test("fixture construction failure cleans only its owned temporary allocation", 
   assert.ok(
     existsSync(unrelated),
     "an unrelated live fixture must not be removed by another invocation's cleanup",
+  );
+});
+
+test("a cleanup failure never replaces the original construction error", (t) => {
+  const parent = mkdtempSync(path.join(os.tmpdir(), "suik-contracts-owner-"));
+  t.after(() => rmSync(parent, { recursive: true, force: true }));
+
+  assert.throws(
+    () =>
+      makeFixture({
+        scenario: "s001",
+        ownedTempParent: parent,
+        failAfterCopy: () => {
+          throw new Error("injected construction failure");
+        },
+        cleanupRemove: () => {
+          throw Object.assign(new Error("injected cleanup failure"), {
+            code: "ENOTEMPTY",
+          });
+        },
+        cleanupAttempts: 1,
+      }),
+    (error) => {
+      assert.match(
+        error.message,
+        /injected construction failure/,
+        "the original construction error must be preserved",
+      );
+      assert.match(
+        error.message,
+        /\[cleanup\] failed to remove owned fixture/,
+        "the cleanup failure must be attached to the original error",
+      );
+      assert.ok(
+        error.cleanupError instanceof Error,
+        "the underlying cleanup error must be retained",
+      );
+      return true;
+    },
+  );
+
+  // The injected cleanup failure intentionally left the allocation behind.
+  assert.equal(
+    readdirSync(parent).filter((name) => name.startsWith("suik-contracts-"))
+      .length,
+    1,
+    "a failed cleanup must not be reported as a removed fixture",
   );
 });
 
@@ -1801,6 +1862,248 @@ test("generation does not legitimize invalid pending evidence", () => {
       assert.match(result.output, /does not resolve/);
     },
     { scenario: "pendingBatch" },
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Current RCLD-02 batch — S013–S032 pending review
+// ---------------------------------------------------------------------------
+
+const RCLD02_BATCH_IDS = EXPECTED_STEP_IDS.slice(12, 32);
+
+test("every RCLD-02 checkpoint validates as pending review", () => {
+  withFixture(
+    (root) => {
+      const result = runCli(root);
+      assert.equal(result.status, 0, result.output);
+      const projection = JSON.parse(read(root, PLAN_JSON_REL));
+      const pending = projection.steps.filter(
+        (step) => step.status === "committed_pending_review",
+      );
+      assert.equal(pending.length, 20);
+      for (const step of pending) {
+        assert.ok(RCLD02_BATCH_IDS.includes(step.id), step.id);
+        assert.equal(step.completion, null, `${step.id} completion`);
+      }
+      const plan = read(root, PLAN_REL);
+      assert.match(
+        plan,
+        /Completed implementation checkpoints: \*\*12 \/ 203\*\*/,
+      );
+      assert.match(
+        plan,
+        /Committed pending review: \*\*20 \/ 203\*\*\. Authored batch range: \*\*S013–S032\*\*\./,
+      );
+    },
+    { scenario: "rcld02All" },
+  );
+});
+
+test("accepted S012 is required before S013 may be pending review", () => {
+  withFixture(
+    (root) => {
+      setLedgerCell(root, "S012", 4, "in_progress");
+      writeEvidencePair(root, "S012", {
+        commit: null,
+        report: "candidate",
+        review: "changes_requested",
+      });
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 1);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /PREMATURE_ADVANCEMENT/);
+    },
+    { scenario: "rcld02First" },
+  );
+});
+
+test("an unreachable RCLD-02 pending implementation hash is rejected", () => {
+  withFixture(
+    (root) => {
+      git(root, "checkout", "-q", "-b", "side");
+      append(root, "specs/SCOPE_AND_ASSUMPTIONS.md", "side change");
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "side change");
+      const side = git(root, "rev-parse", "HEAD").trim();
+      git(root, "checkout", "-q", "master");
+      setLedgerCell(root, "S013", 5, side);
+      writeEvidence(root, "S013", "report", {
+        commit: side,
+        disposition: "candidate",
+      });
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /not reachable from HEAD/);
+    },
+    { scenario: "rcld02First" },
+  );
+});
+
+test("RCLD-02 pending commits must respect predecessor order", () => {
+  withFixture(
+    (root) => {
+      const base = (() => {
+        git(root, "add", "-A");
+        git(root, "commit", "-q", "-m", "settle pending evidence");
+        return git(root, "rev-parse", "HEAD").trim();
+      })();
+      const writeS014 = () => {
+        writeEvidence(root, "S014", "report", {
+          commit: null,
+          disposition: "candidate",
+        });
+        writeEvidence(root, "S014", "review", {
+          commit: null,
+          disposition: "changes_requested",
+        });
+      };
+      // Two parallel commits off the settled base, each containing S014's
+      // report alongside the already-committed S013 evidence.
+      git(root, "checkout", "-q", "-b", "left", base);
+      writeS014();
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "left evidence");
+      const left = git(root, "rev-parse", "HEAD").trim();
+      git(root, "checkout", "-q", "master");
+      git(root, "checkout", "-q", "-b", "right", base);
+      writeS014();
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "right evidence");
+      const right = git(root, "rev-parse", "HEAD").trim();
+      git(root, "checkout", "-q", "master");
+      git(root, "merge", "-q", "--no-ff", "-m", "merge", "left", "right");
+
+      // S013 resolves to `left`; S014 resolves to the parallel `right`, which
+      // is reachable and contains its report but is not a descendant of S013.
+      setLedgerCell(root, "S013", 5, left);
+      writeEvidence(root, "S013", "report", {
+        commit: left,
+        disposition: "candidate",
+      });
+      setLedgerCell(root, "S014", 4, "committed_pending_review");
+      setLedgerCell(root, "S014", 5, right);
+      writeEvidence(root, "S014", "report", {
+        commit: right,
+        disposition: "candidate",
+      });
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 1);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /is not a descendant of predecessor/);
+    },
+    { scenario: "rcld02First" },
+  );
+});
+
+test("S033 cannot be recorded as pending review within the RCLD-02 batch", () => {
+  withFixture(
+    (root) => {
+      setLedgerCell(root, "S033", 4, "committed_pending_review");
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /INVALID_STATUS/);
+      assert.match(result.output, /authorized batch/);
+    },
+    { scenario: "rcld02All" },
+  );
+});
+
+test("S033 cannot advance while S032 is only pending review", () => {
+  withFixture(
+    (root) => {
+      setLedgerCell(root, "S033", 4, "in_progress");
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 1);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /PREMATURE_ADVANCEMENT/);
+    },
+    { scenario: "rcld02Last" },
+  );
+});
+
+test("malformed or non-approved RCLD-02 authorizations are rejected", () => {
+  const mutations = [
+    ["widened range", (text) => text.replace('"last":"S032"', '"last":"S033"')],
+    [
+      "narrowed range",
+      (text) => text.replace('"first":"S013"', '"first":"S014"'),
+    ],
+    [
+      "wrong sequence",
+      (text) => text.replace('"sequence":"RCLD-02"', '"sequence":"RCLD-03"'),
+    ],
+    ["wrong mode", (text) => text.replace('"mode":"pfc"', '"mode":"batch"')],
+    [
+      "unknown field",
+      (text) =>
+        text.replace(
+          '"review":"codex-after-sequence"',
+          '"review":"codex-after-sequence","extra":true',
+        ),
+    ],
+    [
+      "malformed JSON",
+      (text) => text.replace(/\{"schemaVersion":1[^}]*\}/, "{not json}"),
+    ],
+  ];
+  for (const [label, mutate] of mutations) {
+    withFixture(
+      (root) => {
+        const text = read(root, PLAN_REL);
+        const mutated = mutate(text);
+        assert.notEqual(mutated, text, `${label} mutation must apply`);
+        write(root, PLAN_REL, mutated);
+        const result = runCli(root);
+        assert.equal(result.status, 1, `${label}: ${result.output}`);
+        assert.match(result.output, /INVALID_BATCH_AUTHORIZATION/, label);
+      },
+      { scenario: "rcld02First" },
+    );
+  }
+});
+
+test("synthetic atomic acceptance completes every RCLD-02 pending checkpoint", () => {
+  withFixture(
+    (root) => {
+      assert.equal(runCli(root).status, 0, "pending batch must validate");
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "fixture: RCLD-02 evidence commit");
+      const evidence = git(root, "rev-parse", "HEAD").trim();
+      for (const id of RCLD02_BATCH_IDS) {
+        setLedgerCell(root, id, 4, "complete");
+        setLedgerCell(root, id, 5, evidence);
+        writeEvidencePair(root, id, {
+          commit: evidence,
+          report: "implemented",
+          review: "accepted",
+        });
+      }
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 0);
+      const result = runCli(root);
+      assert.equal(result.status, 0, result.output);
+      const plan = read(root, PLAN_REL);
+      assert.match(
+        plan,
+        /Completed implementation checkpoints: \*\*32 \/ 203\*\*/,
+      );
+      assert.match(
+        plan,
+        /Committed pending review: \*\*0 \/ 203\*\*\. Authored batch range: \*\*none\*\*\./,
+      );
+      const projection = JSON.parse(read(root, PLAN_JSON_REL));
+      const rcl02 = projection.sequences.find((seq) => seq.id === "RCLD-02");
+      assert.equal(rcl02.state, "complete");
+      // S033 is now unlocked by the accepted S032.
+      setLedgerCell(root, "S033", 4, "in_progress");
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 0);
+      assert.equal(runCli(root).status, 0);
+    },
+    { scenario: "rcld02All" },
   );
 });
 
