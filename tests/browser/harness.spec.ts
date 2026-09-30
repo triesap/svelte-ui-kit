@@ -1,8 +1,11 @@
 import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import { expect, test } from "./browser-issues";
 import { startFixtureServer, type OwnedServer } from "./fixture-server";
+import { fetchRoute } from "../smoke/owned-server.mjs";
 
 /**
  * S008 production browser harness for the maintained consumer fixture.
@@ -15,11 +18,12 @@ import { startFixtureServer, type OwnedServer } from "./fixture-server";
  * real client-state interaction that only works after hydration executes, and
  * the pinned Bits switch semantics.
  *
- * The shared `browserIssues` fixture collects page exceptions, console errors
- * and hydration warnings for the whole test lifecycle and fails teardown.
- * Unexpected server stderr/exits also fail the lane. A dedicated end-to-end
- * control runs the gate as a bounded child process with an injected fault and
- * proves that the child run fails, rather than only asserting a collector.
+ * The shared `page` override collects page exceptions, console errors and
+ * hydration warnings for the whole lifecycle and asserts them after the page
+ * is closed and drained. Bounded child runs prove each fault class fails the
+ * gate with its intended diagnostic, including faults emitted during teardown,
+ * followed by a clean restoration run. Startup-ownership controls prove a
+ * rejected `startFixtureServer` readiness stops its owned child.
  */
 
 const PACKAGE_ROOT = process.cwd();
@@ -31,6 +35,12 @@ const PLAYWRIGHT_CLI = path.join(
 );
 const PLAYWRIGHT_CONFIG = path.join(PACKAGE_ROOT, "playwright.config.ts");
 const FAULT_SPEC = "tests/browser/fault-run.spec.ts";
+const FIXTURE_FAULT_SERVER = path.join(
+  PACKAGE_ROOT,
+  "tests",
+  "browser",
+  "fixture-fault-server.mjs",
+);
 const FAULT_OUTPUT_DIR = path.join(
   PACKAGE_ROOT,
   "tests/browser/.output/fault-control",
@@ -218,10 +228,29 @@ test("the bound ref is the delegated switch element and can take focus", async (
   await expect(control).toBeFocused();
 });
 
-test("an injected browser fault fails a bounded harness run", () => {
-  // Run the gate as a real, bounded child browser run with a deliberate fault
-  // injected by the fault spec. The child must exit nonzero, proving the gate
-  // fails an actual run rather than only recording a collector entry.
+// ---------------------------------------------------------------------------
+// Bounded real-run browser fault controls
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the environment for an owned child process. When NO_COLOR is present,
+ * the conflicting FORCE_COLOR is removed from the child copy only; the parent
+ * environment is never mutated and stderr is never filtered.
+ */
+function ownedChildEnv(extra: Record<string, string>): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env, ...extra };
+  if (env["NO_COLOR"] !== undefined) {
+    delete env["FORCE_COLOR"];
+  }
+  return env;
+}
+
+function runFaultChild(kind: string): {
+  readonly output: string;
+  readonly status: number | null;
+  readonly signal: NodeJS.Signals | null;
+  readonly error: Error | undefined;
+} {
   const result = spawnSync(
     process.execPath,
     [
@@ -229,27 +258,232 @@ test("an injected browser fault fails a bounded harness run", () => {
       "test",
       "--config",
       PLAYWRIGHT_CONFIG,
-      // A dedicated output directory prevents the nested run's artifacts from
-      // colliding with this run's while it executes.
+      // A dedicated output directory per kind prevents nested-run artifact
+      // collisions with this run and with sibling fault runs.
       "--output",
-      FAULT_OUTPUT_DIR,
+      path.join(FAULT_OUTPUT_DIR, kind),
       FAULT_SPEC,
     ],
     {
       cwd: PACKAGE_ROOT,
-      env: { ...process.env, SUIK_BROWSER_FAULT_RUN: "1" },
+      env: ownedChildEnv({
+        SUIK_BROWSER_FAULT_RUN: "1",
+        SUIK_BROWSER_FAULT_KIND: kind,
+      }),
       encoding: "utf8",
       timeout: NESTED_RUN_TIMEOUT_MS,
     },
   );
-  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  return {
+    output: `${result.stdout ?? ""}\n${result.stderr ?? ""}`,
+    status: result.status,
+    signal: result.signal,
+    error: result.error,
+  };
+}
+
+interface FaultCase {
+  readonly kind: string;
+  readonly marker: string;
+}
+
+const FAULT_CASES: readonly FaultCase[] = [
+  {
+    kind: "console",
+    marker: "console error: injected browser fault: console error",
+  },
+  {
+    kind: "hydration",
+    marker: "hydration warning: hydration mismatch: injected browser fault",
+  },
+  {
+    kind: "pageerror",
+    marker: "page error: injected browser fault: page error",
+  },
+  {
+    kind: "teardown-console",
+    marker: "console error: injected browser fault: console error",
+  },
+  {
+    kind: "teardown-hydration",
+    marker: "hydration warning: hydration mismatch: injected browser fault",
+  },
+  {
+    kind: "teardown-pageerror",
+    marker: "page error: injected browser fault: page error",
+  },
+];
+
+for (const fault of FAULT_CASES) {
+  test(`the ${fault.kind} fault fails a bounded run for its diagnostic`, () => {
+    const result = runFaultChild(fault.kind);
+    expect(
+      result.error,
+      `the nested ${fault.kind} run reported an error (possible timeout): ${String(result.error)}`,
+    ).toBeUndefined();
+    expect(
+      result.signal,
+      `the nested ${fault.kind} run was signalled`,
+    ).toBeNull();
+    expect(
+      result.status,
+      `the ${fault.kind} fault must fail\n${result.output}`,
+    ).not.toBe(0);
+    expect(result.output).toContain(fault.marker);
+  });
+}
+
+test("a clean restoration run passes after the injected faults", () => {
+  const result = runFaultChild("clean");
   expect(
     result.error,
-    `the nested browser run reported an error (possible timeout): ${String(result.error)}`,
+    `the clean run reported an error (possible timeout): ${String(result.error)}`,
   ).toBeUndefined();
+  expect(result.signal).toBeNull();
   expect(
     result.status,
-    `the faulted browser run must fail\n${output}`,
-  ).not.toBe(0);
-  expect(output).toContain("injected browser fault");
+    `the clean run must pass after the faults\n${result.output}`,
+  ).toBe(0);
+});
+
+// ---------------------------------------------------------------------------
+// Startup ownership controls
+// ---------------------------------------------------------------------------
+
+function isPidAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
+
+async function waitForPidExit(
+  pid: number,
+  timeoutMs = 5_000,
+): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (!isPidAlive(pid)) return true;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  return !isPidAlive(pid);
+}
+
+interface FaultReport {
+  readonly pid: number;
+  readonly port: number;
+}
+
+function readFaultReport(reportPath: string): FaultReport {
+  return JSON.parse(readFileSync(reportPath, "utf8")) as FaultReport;
+}
+
+for (const fault of ["malformed", "silent"] as const) {
+  test(`startFixtureServer stops its owned child after a ${fault} rejection`, async () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "suik-fixture-fault-"));
+    const reportPath = path.join(dir, "report.json");
+    // An unrelated owned server must keep running and healthy throughout.
+    const unrelated = await startFixtureServer();
+    try {
+      let thrown: unknown;
+      try {
+        await startFixtureServer({
+          launcher: FIXTURE_FAULT_SERVER,
+          env: {
+            SUIK_FIXTURE_FAULT: fault,
+            SUIK_FIXTURE_REPORT: reportPath,
+          },
+          startTimeoutMs: 2_000,
+        });
+      } catch (error) {
+        thrown = error;
+      }
+      const message = thrown instanceof Error ? thrown.message : String(thrown);
+      expect(message).toMatch(
+        fault === "malformed"
+          ? /unreadable port line/
+          : /did not report a port/,
+      );
+
+      expect(unrelated.server.failure()).toBeNull();
+      const probe = await fetchRoute(unrelated.baseURL);
+      expect(probe.status).toBe(200);
+
+      const report = readFaultReport(reportPath);
+      expect(await waitForPidExit(report.pid)).toBe(true);
+      await expect(
+        fetch(`http://127.0.0.1:${report.port}/`, {
+          signal: AbortSignal.timeout(1_000),
+        }),
+      ).rejects.toThrow();
+    } finally {
+      await unrelated.server.stop();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+}
+
+test("a malformed readiness retains the observed child failure", async () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "suik-fixture-fault-"));
+  const reportPath = path.join(dir, "report.json");
+  try {
+    let thrown: unknown;
+    try {
+      await startFixtureServer({
+        launcher: FIXTURE_FAULT_SERVER,
+        env: {
+          SUIK_FIXTURE_FAULT: "malformed",
+          SUIK_FIXTURE_REPORT: reportPath,
+        },
+        startTimeoutMs: 2_000,
+      });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(AggregateError);
+    expect((thrown as Error).message).toMatch(/unreadable port line/);
+    expect((thrown as AggregateError).errors.length).toBeGreaterThanOrEqual(2);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a spawn failure leaves an unrelated owned server untouched", async () => {
+  const unrelated = await startFixtureServer();
+  try {
+    let thrown: unknown;
+    try {
+      await startFixtureServer({
+        command: path.join(
+          PACKAGE_ROOT,
+          "tests",
+          "browser",
+          "no-such-executable",
+        ),
+      });
+    } catch (error) {
+      thrown = error;
+    }
+    const message = thrown instanceof Error ? thrown.message : String(thrown);
+    expect(message).toMatch(/ENOENT|spawn/i);
+    expect(unrelated.server.failure()).toBeNull();
+  } finally {
+    await unrelated.server.stop();
+  }
+});
+
+test("startFixtureServer returns a live handle on success and stops it cleanly", async () => {
+  const started = await startFixtureServer();
+  try {
+    const response = await fetchRoute(started.baseURL);
+    expect(response.status).toBe(200);
+    expect(started.server.failure()).toBeNull();
+  } finally {
+    const info = await started.server.stop();
+    expect(info).not.toBeNull();
+  }
+  expect(started.server.isClosed()).toBe(true);
+  expect(started.server.failure()).toBeNull();
 });

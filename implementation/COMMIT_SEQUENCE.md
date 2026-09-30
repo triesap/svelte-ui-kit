@@ -491,6 +491,27 @@ passing run is not an endpoint. Genuine external blockers, user stops, actual
 runtime limits and the required independent acceptance gate remain legitimate
 stops. No owner decision is outstanding for these repairs.
 
+### Closure-batch progress
+
+S007–S012 remain `committed_pending_review` with their original pending
+hashes; completion stays null and no acceptance state changes. Repair commits
+are appended separately as they land.
+
+- `9e1b397c7e3429a95178a2e227fcc6c5b525b452` — RCLD01-R2-1: the strict
+  declaration audit parses the pinned `svelte-check --output machine-verbose`
+  protocol fail-closed (START, timestamped diagnostic JSON, COMPLETED,
+  FAILURE), validates the executed compatibility pins and real
+  installed-package paths, and adds pure parser, synthetic classifier and real
+  authored `.svelte`/`.ts`/referenced `.d.ts`/additional-dependency controls
+  including colon and space filenames. Components lane 19/19.
+- RCLD01-R2-2/R2-3 (committed in this repair): browser issue enforcement runs
+  after `page.close()` drains the lifecycle, per-fault bounded child runs
+  cover console, hydration, page-exception and their teardown emissions with a
+  clean restoration run, `startFixtureServer` retains ownership and stops and
+  drains its child on every rejected readiness path, and owned child
+  environments drop a conflicting `FORCE_COLOR` only when `NO_COLOR` is set.
+  Browser lane 22/22; SSR/lifecycle lane 23/23.
+
 ## Codex takeover dispatch — RCLD-01 repair and qualification
 
 Decision date: 2026-09-30. This is the current dispatch within the existing

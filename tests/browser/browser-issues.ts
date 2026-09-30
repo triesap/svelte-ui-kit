@@ -30,23 +30,26 @@ export function createIssueCollector(page: Page): string[] {
 /**
  * Shared Playwright test object.
  *
- * The `browserIssues` fixture is automatic: collection starts before the test
- * navigates and the assertion runs in fixture teardown, so a fault observed
- * only after the test body (for example during teardown) still fails the run.
- * It never blanket-ignores a browser message.
+ * The built-in `page` fixture is overridden so enforcement runs after the page
+ * lifecycle completes: collection starts before the test navigates, the test
+ * body and every dependent fixture teardown finish, `page.close()` drains the
+ * page's events, and only then are the collected page exceptions, console
+ * errors and hydration warnings asserted. Closing the page here (rather than
+ * asserting in an automatic fixture that depends on `page`) closes the gap
+ * where a fault emitted during page/context teardown was previously missed.
+ * It never blanket-ignores a browser message, and the assertion failure keeps
+ * Playwright's normal trace/screenshot capture for the failing test.
  */
-export const test = base.extend<{ browserIssues: string[] }>({
-  browserIssues: [
-    async ({ page }, use) => {
-      const issues = createIssueCollector(page);
-      await use(issues);
-      expect(
-        issues,
-        `browser issues detected during the test lifecycle:\n${issues.join("\n")}`,
-      ).toEqual([]);
-    },
-    { auto: true },
-  ],
+export const test = base.extend<{ page: Page }>({
+  page: async ({ page }, use) => {
+    const issues = createIssueCollector(page);
+    await use(page);
+    await page.close();
+    expect(
+      issues,
+      `browser issues detected during the test lifecycle:\n${issues.join("\n")}`,
+    ).toEqual([]);
+  },
 });
 
 export { expect };

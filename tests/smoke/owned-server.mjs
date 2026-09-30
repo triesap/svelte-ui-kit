@@ -58,6 +58,20 @@ function settleWithin(promise, ms) {
 }
 
 /**
+ * Build the owned child environment. When NO_COLOR is present, the conflicting
+ * FORCE_COLOR is removed from the child copy only; the parent environment is
+ * never mutated. This prevents Node's conflicting-color warning from polluting
+ * an owned child's stderr without filtering or suppressing anything.
+ */
+function ownedChildEnvironment(overrides) {
+  const merged = { ...process.env, ...overrides };
+  if (merged.NO_COLOR !== undefined) {
+    delete merged.FORCE_COLOR;
+  }
+  return merged;
+}
+
+/**
  * Start an owned child server. Returns a handle whose `ready` promise resolves
  * to the assigned port. The caller owns the handle and must `stop()` it.
  */
@@ -80,7 +94,7 @@ export function startOwnedServer(options = {}) {
   try {
     child = spawn(command, args, {
       cwd,
-      env: { ...process.env, ...env },
+      env: ownedChildEnvironment(env),
       stdio: ["ignore", "pipe", "pipe"],
     });
     child.stderr.setEncoding("utf8");
