@@ -634,6 +634,40 @@ command/exit/count evidence is recorded in
 is implementation and verification only: S007–S012 remain pending independent
 Codex review, completion stays null and S013 is not started.
 
+### RCLD01-R3 closure-batch progress (2026-09-30)
+
+The current review's three remaining groups are repaired on top of the earlier
+closure batch. S007–S012 remain `committed_pending_review` with their original
+pending hashes; completion stays null and no acceptance state changes. Repair
+commits are appended separately as they land.
+
+- `a5422fe26bf671a613959949dd3954bfbad9db46` — RCLD01-R3-1: every COMPLETED
+  summary count must be a finite nonnegative safe integer and the total file
+  count must be at least the problem-file count (the legitimate total is not
+  frozen to any checked-in value); START's workspace must resolve to the real
+  audited fixture root; and every owned strict-audit copy registers cleanup
+  immediately, with a bounded child control proving cleanup after success and
+  after a deliberate assertion failure. Components lane 22/22.
+- `6a973b4514d99549fd41dc69a9c3d068f3f12e29` — RCLD01-R3-2: a failure
+  screenshot is captured while the page is still available and retained as a
+  real output artifact for collector-detected faults, enforcement stays after
+  page close and event draining, an ordinary body-assertion fault kind keeps
+  Playwright's own artifacts, and every bounded fault control asserts nonempty
+  screenshot and trace artifacts. Browser lane 23/23.
+- `e8b402311ba8994d3bfea7a1ba77bb38ae48626b` — RCLD01-R3-3: the potentially
+  blocking FIFO write runs in an owned child under an enforceable external
+  deadline with explicit exit/signal/error checks and parent-owned cleanup, a
+  regressed blocking writer is terminated and reported as a failure, missing
+  mkfifo or fixture setup failures no longer skip on supported platforms, and
+  the socket control runs from an owned short socket root. Integration lane
+  15/15 with no skips.
+
+The cumulative RCLD-01 qualification for this final repaired revision, the
+fresh reference guard and the checksum-verified actionlint run are recorded in
+`implementation/evidence/COMPATIBILITY.md` and the git-ignored lane logs. This
+is implementation and verification only: S007–S012 remain pending independent
+Codex review, completion stays null and S013 is not started.
+
 ## Codex takeover dispatch — RCLD-01 repair and qualification
 
 Decision date: 2026-09-30. This is the current dispatch within the existing

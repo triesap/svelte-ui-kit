@@ -127,3 +127,17 @@ single fault control with bounded per-fault child runs: console error,
 hydration warning, page exception and their teardown emissions, each asserting
 its intended diagnostic with isolated outputs, followed by a clean restoration
 run. Verified: browser 22/22.
+
+### RCLD-01 R3 closure addendum (2026-09-30)
+
+Repair commit `6a973b4514d99549fd41dc69a9c3d068f3f12e29` closes the remaining
+screenshot-retention evidence gap. A failure screenshot is captured while the
+page is still available (before `page.close()`), written into the test output
+directory and attached by path, so collector-detected body/teardown faults keep
+a usable PNG while enforcement still runs after page close and event draining.
+Every bounded fault control now asserts nonempty screenshot and trace
+artifacts; a new `body-assert` fault kind proves an ordinary body assertion
+failure keeps Playwright's own artifacts; and the clean restoration run must
+leave an artifact-free output directory. Capture and attachment errors are
+swallowed so they never replace the original diagnostic. Verified: browser
+23/23.

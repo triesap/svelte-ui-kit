@@ -769,3 +769,49 @@ This records implementation and verification only. S007–S012 remain
 `committed_pending_review` with their original pending hashes and null
 completion; independent Codex acceptance and the atomic evidence-commit
 transition remain outstanding, and S013 is not started.
+
+## RCLD-01 R3 closure-batch addendum (2026-09-30)
+
+The current review's three remaining groups are repaired on top of the earlier
+RCLD-01 closure batch. The original S007–S012 pending hashes, the earlier repair
+commits and every prior result remain; these repair commits are appended
+separately and S007–S012 stay `committed_pending_review` with null completion.
+
+- **RCLD01-R3-1** (`a5422fe26bf671a613959949dd3954bfbad9db46`) — the strict
+  declaration audit now requires every `COMPLETED` summary count to be a finite
+  nonnegative safe integer and requires the total file count to be at least the
+  problem-file count; the legitimate total is not frozen to any checked-in
+  value. START's workspace must resolve to the real audited fixture root:
+  equivalent real paths pass and absent or different roots fail. Every owned
+  strict-audit copy registers cleanup immediately, and a bounded `node --test`
+  child proves cleanup after a successful test and after a deliberate assertion
+  failure without removing unrelated trees. Components lane 22/22.
+- **RCLD01-R3-2** (`6a973b4514d99549fd41dc69a9c3d068f3f12e29`) — collector
+  detected body/teardown faults retain a nonempty failure screenshot captured
+  while the page is still available (before `page.close()`), written into the
+  test output directory and attached by path; enforcement still runs after
+  page close and event draining, and a capture or attachment error is swallowed
+  so it can never replace the original diagnostic. Every bounded fault control
+  asserts nonempty screenshot and trace artifacts, a new ordinary
+  body-assertion fault kind proves Playwright's own failure artifacts are
+  preserved, and the clean restoration run leaves an artifact-free output
+  directory. Browser lane 23/23.
+- **RCLD01-R3-3** (`e8b402311ba8994d3bfea7a1ba77bb38ae48626b`) — the
+  potentially blocking FIFO write now runs in an owned child under an
+  enforceable external deadline with explicit exit/signal/error checks and
+  parent-owned cleanup. A regressed blocking writer is terminated
+  (`ETIMEDOUT`/`SIGTERM`) and reported as a failure; the real helper is proven
+  to reject before opening and preserve the FIFO kind, mode and size; a missing
+  `mkfifo` or fixture setup failure fails rather than skips on supported
+  platforms; and the socket control runs from an owned short socket root with
+  no skip. Integration lane 15/15 with no skips.
+
+The temporary fixture-only `skipLibCheck` exception remains valid only under
+the strict audit conditions above; the two genuine upstream Bits 2.19.3
+union-complexity errors remain an open release AC20 obligation. No new
+dependency, suppression, authored `any` or SSR-disable was introduced. Remote
+CI, other platforms and package release acceptance remain unproven.
+
+The full cumulative RCLD-01 qualification, the fresh reference guard and the
+checksum-verified actionlint run at the final repaired revision are recorded in
+the `RCLD01-R3 cumulative qualification` section below.

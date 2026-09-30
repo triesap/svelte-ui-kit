@@ -157,3 +157,17 @@ files inside the installed Bits package. Pure parser, synthetic classifier and
 real authored `.svelte`/`.ts`/referenced `.d.ts`/additional-dependency controls
 (including colon and space filenames) prove normal plus strict qualification
 cannot admit a referenced declaration defect. Verified: components 19/19.
+
+### RCLD-01 R3 closure addendum (2026-09-30)
+
+Repair commit `a5422fe26bf671a613959949dd3954bfbad9db46` closes the remaining
+strict-audit consistency and fixture-ownership gaps. Every `COMPLETED` summary
+count must now be a finite nonnegative safe integer and the total file count
+must be at least the problem-file count (the legitimate total is not frozen).
+START's workspace must resolve to the real audited fixture root, accepting
+equivalent real paths and rejecting absent or different roots. Every owned
+strict-audit copy registers cleanup immediately, and a bounded `node --test`
+child proves cleanup after a successful test and after a deliberate assertion
+failure without touching unrelated trees. All existing parser, classifier,
+authored/dependency, pin and package-path controls are preserved. Verified:
+components 22/22.

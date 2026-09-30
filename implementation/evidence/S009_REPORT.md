@@ -135,3 +135,18 @@ A bounded real FIFO regression proves the rejection does not block on open and
 preserves the entry kind, mode and size with owned cleanup; a socket control
 skips only when the platform rejects the remapped long path. Verified:
 integration 14 tests (13 pass, 1 skipped).
+
+### RCLD-01 R3 closure addendum (2026-09-30)
+
+Repair commit `e8b402311ba8994d3bfea7a1ba77bb38ae48626b` makes the
+nonregular-target controls genuinely bounded. The potentially blocking FIFO
+write runs in an owned child under an enforceable external deadline
+(`spawnSync` timeout) with explicit exit/signal/error assertions and
+parent-owned cleanup of the child's tree. A regressed raw blocking writer is
+terminated (`ETIMEDOUT`/`SIGTERM`) and reported as a failure instead of hanging;
+the real helper is proven to reject before opening and preserve the FIFO kind,
+mode and size. A missing `mkfifo` or fixture setup failure now fails rather
+than skipping on supported platforms, and the socket control runs from an owned
+short socket root so it no longer skips. Verified: integration 15/15 with no
+skips. This supersedes the earlier closure-batch "integration 14 tests (13
+pass, 1 skipped)" result.
