@@ -213,3 +213,157 @@ test("an escaping copied registry asset symlink is rejected", (t) => {
   assert.equal(output.snapshot.ok, false);
   assert.equal(output.snapshot.codes.includes("ASSET_SYMLINK_ESCAPE"), true);
 });
+
+/**
+ * RCLD02-R3 installed-copy controls: the joint-compatibility and complete
+ * ownership repairs must be present in the emitted modules and exercised
+ * through real parsers from an isolated package copy and a different CWD.
+ */
+const R3_RUNNER_SOURCE = `import { pathToFileURL } from "node:url";
+import path from "node:path";
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+const installed = process.env.SUIK_INSTALLED;
+const mode = process.env.SUIK_R3_MODE;
+const imp = (relative) =>
+  import(pathToFileURL(path.join(installed, "dist", relative)).href);
+const assets = await imp("registry/assets.js");
+const validate = await imp("registry/validate.js");
+const lock = await imp("codegen/lock.js");
+const digest = await imp("codegen/digest.js");
+const model = await imp("registry/model.js");
+const root = mkdtempSync(path.join(os.tmpdir(), "suik-r3-"));
+cpSync(path.join(installed, "schema"), path.join(root, "schema"), { recursive: true });
+mkdirSync(path.join(root, "registry", "ui"), { recursive: true });
+mkdirSync(path.join(root, "registry", "templates"), { recursive: true });
+const compat = { svelte: "5.57.1", bits: "2.19.3", date: "^3.8.1" };
+const itemManifest = (id, date) => ({
+  schemaVersion: 1,
+  id,
+  kind: "component",
+  version: "0.1.0",
+  description: "probe",
+  compatibility: { ...compat, date },
+  files: [
+    { source: "templates/" + id + ".svelte", target: id + ".svelte", kind: "svelte", cohort: "core" },
+  ],
+  exports: [{ name: id[0].toUpperCase() + id.slice(1), target: id + ".svelte", kind: "value" }],
+  styles: [],
+  registryDependencies: [],
+  npmDependencies: [],
+  accessibility: { requiredNames: [], keyboard: [], focus: [], form: [], tests: [] },
+});
+const items =
+  mode === "compatible"
+    ? [itemManifest("button", ">=3.8.1 <3.10.0"), itemManifest("card", ">=3.9.0 <3.11.0")]
+    : [itemManifest("button", ">=3.8.1 <3.10.0"), itemManifest("card", ">=3.10.0 <4.0.0")];
+const assetList = [];
+for (const item of items) {
+  const text = JSON.stringify(item);
+  writeFileSync(path.join(root, "registry", "ui", item.id + ".json"), text);
+  assetList.push({ path: "registry/ui/" + item.id + ".json", digest: digest.sha256Hex(text) });
+  const bytes = Buffer.from("<script>export interface X {}</script>\\n");
+  writeFileSync(path.join(root, "registry", item.files[0].source), bytes);
+  assetList.push({ path: "registry/" + item.files[0].source, digest: digest.sha256Hex(bytes) });
+}
+const basis = {
+  schemaVersion: 1,
+  registryVersion: "0.1.0",
+  compatibility: compat,
+  items: items.map((item) => ({ id: item.id, manifest: "ui/" + item.id + ".json" })),
+};
+writeFileSync(
+  path.join(root, "registry", "registry.json"),
+  JSON.stringify({ ...basis, contentHash: model.computeRegistryContentHash(basis, assetList) }),
+);
+const health = validate.validateRegistryHealth(assets.createAssetProvider(root));
+const fileRecord = (p, owner) => ({
+  path: p,
+  owner,
+  baseHash: "d".repeat(64),
+  itemVersion: "0.1.0",
+  cohort: "core",
+});
+const lockValue = {
+  schemaVersion: 1,
+  toolVersion: "0.1.0",
+  registryVersion: "0.1.0",
+  registryHash: "a".repeat(64),
+  configHash: "b".repeat(64),
+  requested: ["button", "card"],
+  items: [
+    { id: "button", version: "0.1.0", digest: "c".repeat(64), origin: "explicit" },
+    { id: "card", version: "0.1.0", digest: "c".repeat(64), origin: "explicit" },
+  ],
+  files:
+    mode === "compatible"
+      ? [
+          fileRecord("src/ui/button/root.svelte", "button"),
+          fileRecord("src/ui/button/trigger.svelte", "card"),
+        ]
+      : [
+          fileRecord("src/ui/button.svelte", "button"),
+          fileRecord("src/ui/Button.svelte", "card"),
+        ],
+  cssBlocks: [],
+  integrations: [],
+};
+const lockResult = lock.parseKitLock(lockValue, "kit.lock.json", {
+  uiDir: "src/ui",
+  stylesDir: "src/ui/styles",
+  stateDir: "src/ui/_kit",
+});
+const codes = (result) => (result.ok ? [] : result.issues.map((issue) => issue.code));
+process.stdout.write(
+  JSON.stringify({
+    cwd: process.cwd(),
+    root,
+    health: { ok: health.ok, codes: codes(health) },
+    lock: { ok: lockResult.ok, codes: codes(lockResult) },
+  }),
+);
+rmSync(root, { recursive: true, force: true });
+`;
+
+interface R3ChildResult {
+  readonly cwd: string;
+  readonly root: string;
+  readonly health: { ok: boolean; codes: string[] };
+  readonly lock: { ok: boolean; codes: string[] };
+}
+
+function runR3Child(
+  t: { after: (fn: () => void) => void },
+  installed: string,
+  mode: "compatible" | "conflicting",
+): R3ChildResult {
+  const runner = mkdtempSync(path.join(os.tmpdir(), "suik-r3-runner-"));
+  t.after(() => rmSync(runner, { recursive: true, force: true }));
+  const runnerScript = path.join(runner, "run.mjs");
+  writeFileSync(runnerScript, R3_RUNNER_SOURCE);
+  const result = spawnSync(process.execPath, [runnerScript], {
+    cwd: runner,
+    encoding: "utf8",
+    timeout: 60_000,
+    env: { ...process.env, SUIK_INSTALLED: installed, SUIK_R3_MODE: mode },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout) as R3ChildResult;
+}
+
+test("the emitted copy accepts a valid joint overlap and valid lock ownership", (t) => {
+  const installed = installedCopy(t);
+  const output = runR3Child(t, installed, "compatible");
+  assert.notEqual(output.cwd, PKG_ROOT);
+  assert.deepEqual(output.health, { ok: true, codes: [] });
+  assert.deepEqual(output.lock, { ok: true, codes: [] });
+});
+
+test("the emitted copy rejects disjoint joint constraints and lock case aliases", (t) => {
+  const installed = installedCopy(t);
+  const output = runR3Child(t, installed, "conflicting");
+  assert.equal(output.health.ok, false);
+  assert.equal(output.health.codes.includes("COMPATIBILITY_CONFLICT"), true);
+  assert.equal(output.lock.ok, false);
+  assert.equal(output.lock.codes.includes("LOCK_CASE_ALIAS"), true);
+});

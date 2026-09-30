@@ -336,3 +336,130 @@ test("managed files cannot claim a namespace directory or reserve state ancestry
     );
   }
 });
+
+/**
+ * RCLD02-R3-2: the complete logical lock claim set is validated for ASCII case
+ * aliases, file/directory role conflicts and integration namespace claims.
+ */
+test("ASCII case-alias lock records and file ancestors are rejected", () => {
+  const fileRecord = (
+    path: string,
+    owner: string,
+  ): Record<string, unknown> => ({
+    path,
+    owner,
+    baseHash: H("e"),
+    itemVersion: "0.1.0",
+    cohort: "core",
+  });
+
+  const alias = parseKitLock(
+    base({
+      files: [
+        fileRecord("src/lib/components/ui/button.svelte", "button"),
+        fileRecord("src/lib/components/ui/Button.svelte", "spinner"),
+      ],
+    }),
+  );
+  assert.equal(alias.ok, false, JSON.stringify(alias));
+  if (!alias.ok) {
+    assert.equal(
+      alias.issues.some((entry) => entry.code === "LOCK_CASE_ALIAS"),
+      true,
+    );
+  }
+
+  const ancestor = parseKitLock(
+    base({
+      files: [
+        fileRecord("src/lib/components/ui/button.svelte", "button"),
+        fileRecord(
+          "src/lib/components/ui/button.svelte/card.svelte",
+          "spinner",
+        ),
+      ],
+    }),
+  );
+  assert.equal(ancestor.ok, false, JSON.stringify(ancestor));
+  if (!ancestor.ok) {
+    assert.equal(
+      ancestor.issues.some((entry) => entry.code === "LOCK_PATH_OVERLAP"),
+      true,
+    );
+  }
+});
+
+test("valid compound siblings and multiple blocks in one aggregate remain valid", () => {
+  const good = parseKitLock(
+    base({
+      files: [
+        {
+          path: "src/lib/components/ui/button/root.svelte",
+          owner: "button",
+          baseHash: H("e"),
+          itemVersion: "0.1.0",
+          cohort: "core",
+        },
+        {
+          path: "src/lib/components/ui/button/trigger.svelte",
+          owner: "spinner",
+          baseHash: H("f"),
+          itemVersion: "0.1.0",
+          cohort: "core",
+        },
+      ],
+      cssBlocks: [
+        {
+          path: "src/styles/kit.css",
+          owner: "button",
+          blockId: "button",
+          baseHash: H("1"),
+          itemVersion: "0.1.0",
+          cohort: "core",
+        },
+        {
+          path: "src/styles/kit.css",
+          owner: "spinner",
+          blockId: "spinner",
+          baseHash: H("2"),
+          itemVersion: "0.1.0",
+          cohort: "core",
+        },
+      ],
+    }),
+  );
+  assert.equal(good.ok, true, JSON.stringify(good));
+});
+
+test("an integration path cannot claim a required namespace directory", () => {
+  const context = {
+    stateDir: "src/ui/_kit",
+    uiDir: "src/ui",
+    stylesDir: "src/ui/styles",
+  };
+  const integration = (path: string): Record<string, unknown> => ({
+    kind: "layout",
+    path,
+    baseline: H("e"),
+    contract: "layout-v1",
+  });
+
+  for (const path of ["src/ui/styles", "src/ui", "src/ui/_kit"]) {
+    const result = parseKitLock(
+      base({ files: [], integrations: [integration(path)] }),
+      ".kit/kit.lock.json",
+      context,
+    );
+    assert.equal(result.ok, false, path);
+  }
+
+  const valid = parseKitLock(
+    base({
+      files: [],
+      integrations: [integration("src/routes/+layout.svelte")],
+    }),
+    ".kit/kit.lock.json",
+    context,
+  );
+  assert.equal(valid.ok, true, JSON.stringify(valid));
+});

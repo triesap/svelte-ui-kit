@@ -13,6 +13,7 @@ import { test } from "node:test";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
+import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { computeRegistryContentHash } from "../../src/registry/model.js";
 import { resolveClosure } from "../../src/registry/resolve.js";
 import { transitiveRequests } from "../../src/project/requests.js";
@@ -212,6 +213,7 @@ test("a missing provider schema set fails health without throwing", (t) => {
 
 interface InventoryItem {
   readonly id: string;
+  readonly kind?: string;
   readonly compatibility?: {
     svelte: string;
     bits: string;
@@ -279,7 +281,7 @@ function buildInventoryFixture(
     const manifest = {
       schemaVersion: 1,
       id: spec.id,
-      kind: "component",
+      kind: spec.kind ?? "component",
       version: "0.1.0",
       description: "inventory item",
       compatibility: spec.compatibility ?? COMPATIBILITY,
@@ -520,5 +522,358 @@ test("ASCII case-alias style targets fail integrated health", (t) => {
       ),
       true,
     );
+  }
+});
+
+/**
+ * RCLD02-R3-1: the joint compatibility intersection must span the complete
+ * selected closure (root + every item + every explicit peer), not one item at a
+ * time. These are fully parsed multi-item fixtures with real schemas and
+ * content hashes.
+ */
+function withFramework(
+  compatibility: NonNullable<InventoryItem["compatibility"]>,
+  date: string,
+): NonNullable<InventoryItem["compatibility"]> {
+  return { ...compatibility, date };
+}
+
+function operationResult(
+  root: string,
+  roots: readonly string[],
+): ReturnType<typeof validateResolvedInventory> {
+  const snapshot = loadRegistrySnapshot(createAssetProvider(root));
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) throw new Error("snapshot failed");
+  const closure = resolveClosure(snapshot.value, roots);
+  assert.equal(closure.ok, true, JSON.stringify(closure));
+  if (!closure.ok) throw new Error("closure failed");
+  return validateResolvedInventory(snapshot.value, closure.value.items);
+}
+
+test("jointly disjoint multi-item date compatibility fails health and the operation path", (t) => {
+  const specs: InventoryItem[] = [
+    {
+      id: "button",
+      compatibility: withFramework(COMPATIBILITY, ">=3.8.1 <3.10.0"),
+    },
+    {
+      id: "card",
+      compatibility: withFramework(COMPATIBILITY, ">=3.10.0 <4.0.0"),
+    },
+  ];
+  const root = buildInventoryFixture(t, specs);
+  const health = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(health.ok, false, JSON.stringify(health));
+  if (!health.ok) {
+    assert.equal(
+      health.issues.some((entry) => entry.code === "COMPATIBILITY_CONFLICT"),
+      true,
+    );
+  }
+  const operation = operationResult(root, ["button", "card"]);
+  assert.equal(operation.ok, false);
+  if (!operation.ok) {
+    assert.equal(
+      operation.issues.some((entry) => entry.code === "COMPATIBILITY_CONFLICT"),
+      true,
+    );
+  }
+});
+
+test("a cross-item explicit npm peer that empties the joint date range fails", (t) => {
+  const specs: InventoryItem[] = [
+    {
+      id: "button",
+      compatibility: withFramework(COMPATIBILITY, ">=3.8.1 <3.10.0"),
+    },
+    {
+      id: "card",
+      npmDependencies: [
+        {
+          name: "@internationalized/date",
+          range: ">=3.10.0 <4.0.0",
+          role: "peer",
+        },
+      ],
+    },
+  ];
+  const root = buildInventoryFixture(t, specs);
+  const health = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(health.ok, false, JSON.stringify(health));
+  if (!health.ok) {
+    assert.equal(
+      health.issues.some((entry) => entry.code === "COMPATIBILITY_CONFLICT"),
+      true,
+    );
+  }
+  assert.equal(operationResult(root, ["button", "card"]).ok, false);
+});
+
+test("a transitive closure item participates in the joint compatibility check", (t) => {
+  const specs: InventoryItem[] = [
+    {
+      id: "button",
+      registryDependencies: ["card"],
+      compatibility: withFramework(COMPATIBILITY, ">=3.8.1 <3.10.0"),
+    },
+    {
+      id: "card",
+      compatibility: withFramework(COMPATIBILITY, ">=3.10.0 <4.0.0"),
+    },
+  ];
+  const root = buildInventoryFixture(t, specs);
+  const health = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(health.ok, false, JSON.stringify(health));
+  if (!health.ok) {
+    assert.equal(
+      health.issues.some((entry) => entry.code === "COMPATIBILITY_CONFLICT"),
+      true,
+    );
+  }
+  assert.equal(operationResult(root, ["button"]).ok, false);
+});
+
+test("pairwise-overlapping but jointly empty OR ranges fail the closure", (t) => {
+  const specs: InventoryItem[] = [
+    {
+      id: "button",
+      compatibility: withFramework(
+        COMPATIBILITY,
+        ">=3.8.1 <3.9.0 || >=4.1.0 <5.0.0",
+      ),
+    },
+    {
+      id: "card",
+      compatibility: withFramework(
+        COMPATIBILITY,
+        ">=3.9.0 <4.0.0 || >=4.1.0 <5.0.0",
+      ),
+    },
+  ];
+  const root = buildInventoryFixture(t, specs);
+  const health = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(health.ok, false, JSON.stringify(health));
+  if (!health.ok) {
+    assert.equal(
+      health.issues.some((entry) => entry.code === "COMPATIBILITY_CONFLICT"),
+      true,
+    );
+  }
+});
+
+test("a valid joint overlap across items passes health and the operation path", (t) => {
+  const specs: InventoryItem[] = [
+    {
+      id: "button",
+      compatibility: withFramework(COMPATIBILITY, ">=3.8.1 <3.10.0"),
+    },
+    {
+      id: "card",
+      compatibility: withFramework(COMPATIBILITY, ">=3.9.0 <3.11.0"),
+    },
+  ];
+  const root = buildInventoryFixture(t, specs);
+  const health = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(health.ok, true, JSON.stringify(health));
+  assert.equal(operationResult(root, ["button", "card"]).ok, true);
+});
+
+test("joint compatibility diagnostics are stable under item order permutations", (t) => {
+  const button: InventoryItem = {
+    id: "button",
+    compatibility: withFramework(COMPATIBILITY, ">=3.8.1 <3.10.0"),
+  };
+  const card: InventoryItem = {
+    id: "card",
+    compatibility: withFramework(COMPATIBILITY, ">=3.10.0 <4.0.0"),
+  };
+  const forward = buildInventoryFixture(t, [button, card]);
+  const reverse = buildInventoryFixture(t, [card, button]);
+  const forwardHealth = validateRegistryHealth(createAssetProvider(forward));
+  const reverseHealth = validateRegistryHealth(createAssetProvider(reverse));
+  assert.equal(forwardHealth.ok, false);
+  assert.equal(reverseHealth.ok, false);
+  if (!forwardHealth.ok && !reverseHealth.ok) {
+    assert.deepEqual(
+      forwardHealth.issues.map((entry) => entry.message),
+      reverseHealth.issues.map((entry) => entry.message),
+    );
+  }
+});
+
+test("an unselected registered item is excluded from the operation closure", (t) => {
+  const specs: InventoryItem[] = [
+    {
+      id: "button",
+      compatibility: withFramework(COMPATIBILITY, ">=3.8.1 <3.10.0"),
+    },
+    {
+      id: "card",
+      compatibility: withFramework(COMPATIBILITY, ">=3.10.0 <4.0.0"),
+    },
+  ];
+  const root = buildInventoryFixture(t, specs);
+  const snapshot = loadRegistrySnapshot(createAssetProvider(root));
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (snapshot.ok) {
+    const selected = validateResolvedInventory(snapshot.value, ["button"]);
+    assert.equal(selected.ok, true, JSON.stringify(selected));
+    const both = validateResolvedInventory(snapshot.value, ["button", "card"]);
+    assert.equal(both.ok, false);
+  }
+});
+
+test("a fully parsed style file/directory role conflict fails health and the operation path", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "button",
+      styles: [
+        {
+          source: "templates/button.css",
+          target: "kit.css",
+          blockId: "button",
+          cohort: "core",
+        },
+      ],
+    },
+    {
+      id: "card",
+      styles: [
+        {
+          source: "templates/card.css",
+          target: "kit.css/card.css",
+          blockId: "card",
+          cohort: "core",
+        },
+      ],
+    },
+  ]);
+  const health = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(health.ok, false, JSON.stringify(health));
+  if (!health.ok) {
+    assert.equal(
+      health.issues.some(
+        (entry) => entry.code === "COLLISION_STYLE_TARGET_ANCESTRY",
+      ),
+      true,
+    );
+  }
+  const operation = operationResult(root, ["button", "card"]);
+  assert.equal(operation.ok, false);
+  if (!operation.ok) {
+    assert.equal(
+      operation.issues.some(
+        (entry) => entry.code === "COLLISION_STYLE_TARGET_ANCESTRY",
+      ),
+      true,
+    );
+  }
+});
+
+test("a fully parsed cross-item UI file ancestor conflict fails health", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "alpha",
+      kind: "foundation",
+      files: [
+        {
+          source: "templates/alpha.svelte",
+          target: "shared.svelte",
+          kind: "svelte",
+          cohort: "core",
+        },
+      ],
+      exports: [],
+    },
+    {
+      id: "beta",
+      kind: "foundation",
+      files: [
+        {
+          source: "templates/beta.svelte",
+          target: "shared.svelte/inner.svelte",
+          kind: "svelte",
+          cohort: "core",
+        },
+      ],
+      exports: [],
+    },
+  ]);
+  const health = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(health.ok, false, JSON.stringify(health));
+  if (!health.ok) {
+    assert.equal(
+      health.issues.some((entry) => entry.code === "COLLISION_TARGET_ANCESTRY"),
+      true,
+    );
+  }
+});
+
+test("a fully parsed shared aggregate stylesheet with its blocks stays valid", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "button",
+      styles: [
+        {
+          source: "templates/button.css",
+          target: "kit.css",
+          blockId: "button",
+          cohort: "core",
+        },
+      ],
+    },
+    {
+      id: "card",
+      styles: [
+        {
+          source: "templates/card.css",
+          target: "kit.css",
+          blockId: "card",
+          cohort: "core",
+        },
+      ],
+    },
+  ]);
+  const health = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(health.ok, true, JSON.stringify(health));
+  assert.equal(operationResult(root, ["button", "card"]).ok, true);
+});
+
+test("an unregistered candidate never joins the compatibility closure", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "button",
+      compatibility: withFramework(COMPATIBILITY, ">=3.8.1 <3.10.0"),
+    },
+  ]);
+  // Authoring candidate on disk but deliberately not registered in the root.
+  const candidate = `${JSON.stringify(
+    {
+      schemaVersion: 1,
+      id: "ghost",
+      kind: "component",
+      version: "0.1.0",
+      description: "candidate",
+      compatibility: withFramework(COMPATIBILITY, ">=3.10.0 <4.0.0"),
+      files: [
+        {
+          source: "templates/ghost.svelte",
+          target: "ghost.svelte",
+          kind: "svelte",
+          cohort: "core",
+        },
+      ],
+      exports: [],
+      styles: [],
+    },
+    null,
+    2,
+  )}\n`;
+  writeFileSync(path.join(root, "registry", "ui", "ghost.json"), candidate);
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (result.ok) {
+    assert.deepEqual(result.value.candidates, ["registry/ui/ghost.json"]);
   }
 });

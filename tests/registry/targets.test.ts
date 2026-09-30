@@ -261,3 +261,58 @@ test("unregistered candidates make no public collision claim", () => {
     );
   }
 });
+
+/**
+ * RCLD02-R3-2: the complete logical claim set is validated for file/directory
+ * role conflicts, not just exact/case duplicates.
+ */
+test("a style target cannot also be an ancestor directory of another style target", () => {
+  const result = codes(
+    snapshot({
+      button: {
+        files: [file("button.svelte")],
+        styles: [block("button", "kit.css")],
+      },
+      card: {
+        files: [file("card.svelte")],
+        styles: [block("card", "kit.css/card.css")],
+      },
+    }),
+    ["button", "card"],
+  );
+  assert.equal(result.includes("COLLISION_STYLE_TARGET_ANCESTRY"), true);
+});
+
+test("a UI file target cannot also be an ancestor directory of another UI target", () => {
+  const result = codes(
+    snapshot({
+      button: { files: [file("shared.svelte")] },
+      card: { files: [file("shared.svelte/inner.svelte")] },
+    }),
+    ["button", "card"],
+  );
+  assert.equal(result.includes("COLLISION_TARGET_ANCESTRY"), true);
+});
+
+test("valid compound siblings and safe nested directories remain allowed", () => {
+  const result = validateResolvedTargets(
+    snapshot({
+      dialog: {
+        files: [
+          file("dialog/index.ts"),
+          file("dialog/root.svelte"),
+          file("dialog/parts/trigger.svelte"),
+        ],
+        exports: [exported("DialogRoot", "dialog/index.ts")],
+      },
+    }),
+    ["dialog"],
+  );
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (result.ok) {
+    assert.deepEqual(
+      result.value.files.map((entry) => entry.path),
+      ["dialog/index.ts", "dialog/parts/trigger.svelte", "dialog/root.svelte"],
+    );
+  }
+});

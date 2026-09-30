@@ -334,14 +334,113 @@ and independent prior-fault probes pass. RCLD-01 is complete; all its review
 findings are closed. Twelve checkpoints are accepted; 191 remain. The narrow
 fixture declaration exception remains an open release AC20 obligation.
 
+### Independent review 3 — complete joint constraints and ownership validation
+
+Decision date: 2026-09-30. Candidate `49b12b25c66d1f2d9e5855f65c368a2a1cca8ea9`
+is **changes requested**. Preserve all five repair/evidence commits, original
+S013–S032 hashes and prior accepted work. Twelve checkpoints remain accepted,
+twenty remain `committed_pending_review`, and 171 remain `not_started`;
+191 checkpoints and ten sequences remain unfinished. S033 is still gated on
+independent S032 acceptance. This subsection is the current closure dispatch;
+reviews 1 and 2 below are historical findings and retained decisions. Original
+R01–R34, AC01–AC22 and all dependency gates remain unchanged. No owner decision,
+hardware requirement or external blocker prevents the remaining software work.
+
+Fresh reviewer build/typecheck pass, as do unit191/191, registry22/22,
+integration20/20 (including five installed-copy controls), CLI52/52 and
+contracts117/117, zero skips. Replayed production probes now reject the prior config overlaps,
+same-root provider substitution, removed schemas, independently supplied wrong
+snapshot authority, escaping default schema reads, incompatible single items,
+CSS case aliases and JSON-order failures. An unreadable owned asset returns a
+typed EACCES diagnostic without a physical path. Snapshot immutability and the
+previous SemVer/serialization repairs remain intact. The schema/asset R2-2
+finding and the CLI implementation part of R2-4 are closed. Config derivation
+and exact CSS-alias repairs are also verified progress. R2-1 and R2-3 remain
+partial for the failures below; cumulative evidence is not whole acceptance.
+Author browser23/components22/SSR23/harness37 and fresh reference578 pass,
+zero fail/four ignored plus checksum-verified actionlint evidence were audited;
+they are not new reviewer browser/Rust runs. Release/platform and upstream
+AC20 obligations remain open.
+
+Execute **`pfc through RCLD-02`** for the entire remaining validation boundary:
+the groups below, all remaining original S013–S032 work, integrated maintained
+controls, installed-copy verification, evidence reconciliation and cumulative
+qualification in green local commits. Continue after each green checkpoint.
+Do not stop at one repaired assertion. S033 cannot be combined with this batch
+because independent S032 acceptance is a hard dependency. Preserve the single
+live authorization record; no new plan, tracker or authorization mechanism.
+
+1. **RCLD02-R3-1 — Intersect constraints over the complete selected closure
+   (remaining R2-3; S016–S018/S027/S031/S032).** `validateCompatibility`
+   currently intersects root, item and npm constraints separately for each item.
+   That is not joint closure validation. Under root date `^3.8.1`, item A date
+   `>=3.8.1 <3.10.0` and item B date `>=3.10.0 <4.0.0` pass both
+   `validateRegistryHealth` and `validateResolvedInventory`. Replacing B's
+   compatibility restriction with an explicit `@internationalized/date` peer
+   requirement `>=3.10.0 <4.0.0` also passes. Fully parsed fixtures reproduce
+   both failures with validated schemas and content hashes.
+
+   Build one complete constraint set per mapped axis from the qualified root,
+   every selected item's compatibility and all selected explicit npm records
+   for that package. Evaluate one true joint intersection using the already
+   qualified SemVer implementation. Do not substitute pairwise or per-item
+   overlap, rewrite root support, drop peer roles, or manufacture runtime
+   dependencies from support metadata. Preserve pinned Svelte/Bits admission.
+   Diagnostics identify the package/axis and involved item IDs/ranges in stable
+   order. Apply this same validation to health and resolved-operation callers.
+   Cover disjoint items, cross-item peer conflicts, transitive closure items,
+   pairwise-overlapping but jointly empty OR ranges, order permutations, valid
+   overlap and exclusion of unselected candidates. Keep these as parsed
+   multi-item fixtures, with both success and rejection assertions.
+
+2. **RCLD02-R3-2 — Complete logical file-role ownership validation
+   (remaining R2-1/R2-3; S019/S020/S027/S032).** Fully parsed advertised styles
+   targeting `kit.css` and `kit.css/card.css` pass health and operation
+   validation, although the first target must be a file and the second needs it
+   to be a directory. `parseKitLock` accepts case-alias source records
+   `src/ui/button.svelte` and `src/ui/Button.svelte`, and accepts a source file
+   together with a descendant of that same file. With validated mapping
+   UI=`src/ui`, styles=`src/ui/styles`, state=`src/ui/_kit`, it also accepts
+   a layout integration whose file path is exactly `src/ui/styles`.
+
+   Finish the existing lexical ownership contract now, before filesystem work.
+   Validate the whole set of logical file claims and required directory roles,
+   using ASCII case folding and segment-aware ancestry. Apply consistent rules
+   to source files, aggregate stylesheet targets and integration records, within
+   their actual namespace/context, including within one item's output set and
+   across selected items. A file cannot also be a directory or ancestor of
+   another file; differently spelled case aliases cannot name distinct owners.
+   Every integration path is a file and cannot claim a required namespace
+   directory. Reject incompatible overlapping ownership roles across lock
+   records; preserve explicitly compatible sharing of one exact aggregate
+   stylesheet by distinct blocks and its stylesheet integration. Preserve valid
+   compound siblings, safe nested directory mappings and source/style namespace
+   separation. Do not ban every shared CSS path or every directory nesting.
+   No on-disk project discovery, transaction work or S033 advancement is needed.
+   Exercise actual parsers, loaded registry health and resolved inventory, not
+   just partial cast objects. Original config/schema/CLI controls must stay green.
+
+3. **RCLD02-R3-3 — Complete integration, qualification and evidence.** After
+   the repairs, audit every original S013–S032 criterion and unresolved R1/R2
+   finding against actual callers; finish any remaining eligible work within
+   this sequence. Run all original direct and cumulative lanes, installed-copy
+   positive/negative controls, actionlint and the final reference guard as
+   specified below. Retain failed attempts and exact commands/exits/counts,
+   tested revision/configuration and evidence paths. Reconcile qualification
+   and checkpoint reports without claiming the previous green lanes covered
+   these new failure cases. Keep original pending hashes and accepted counters;
+   only Codex may promote acceptance atomically. Preserve the narrow upstream
+   declaration qualification and release AC20 debt. Public evidence stays
+   standalone; runtime/session/coordination metadata belongs outside this repo.
+
 ### Independent review 2 — finish the RCLD-02 validation boundary
 
 Decision date: 2026-09-30. Candidate `baebed721b88afa48f6c3af489cb6daa193088ee`
 is **changes requested**. Preserve the seven repair commits and all original
 S013–S032 hashes. All twenty checkpoints remain `committed_pending_review`;
-S001–S012 stay accepted and S033 remains `not_started`. This is the current
-closure dispatch; review 1 below remains the record of its original findings
-and decisions. No original requirement, acceptance criterion or dependency
+S001–S012 stay accepted and S033 remains `not_started`. This historical review
+is superseded for current execution by review 3 above; review 1 below retains
+the original findings and decisions. No original requirement, acceptance criterion or dependency
 has been waived. No owner decision or external/hardware blocker is outstanding.
 
 Fresh reviewer checks pass: typecheck, unit179/179, registry18/18,

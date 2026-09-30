@@ -65,6 +65,49 @@ interface Claim {
   readonly label: string;
 }
 
+interface OwnershipPath {
+  readonly path: string;
+  readonly owner: string;
+  readonly label: string;
+}
+
+/**
+ * Reject file/directory role conflicts among logical file claims: no claim may
+ * be a strict ancestor of another, because a file cannot also be a directory.
+ * Exact sharing of one aggregate stylesheet is deliberately permitted by the
+ * caller, so equal folded paths are skipped here (the case-alias check handles
+ * differently spelled aliases). Comparison is ASCII-folded and segment-aware.
+ */
+function checkAncestry(
+  entries: readonly OwnershipPath[],
+  code: string,
+  issues: ModelIssue[],
+): void {
+  const sorted = [...entries].sort(
+    (left, right) =>
+      compareCodeUnit(asciiFold(left.path), asciiFold(right.path)) ||
+      compareCodeUnit(left.path, right.path),
+  );
+  for (let i = 0; i < sorted.length; i += 1) {
+    const left = sorted[i] as OwnershipPath;
+    const leftFold = asciiFold(left.path);
+    for (let j = i + 1; j < sorted.length; j += 1) {
+      const right = sorted[j] as OwnershipPath;
+      const rightFold = asciiFold(right.path);
+      if (leftFold === rightFold) continue;
+      if (rightFold.startsWith(`${leftFold}/`)) {
+        issues.push(
+          issue(
+            code,
+            `${left.label} ${JSON.stringify(left.path)} (owned by ${left.owner}) cannot also be a directory containing ${right.label} ${JSON.stringify(right.path)} (owned by ${right.owner})`,
+            left.path,
+          ),
+        );
+      }
+    }
+  }
+}
+
 function checkClaims(
   claims: readonly Claim[],
   code: string,
@@ -157,6 +200,8 @@ export function validateResolvedTargets(
   const blockClaims: Claim[] = [];
   const exportClaims: Claim[] = [];
   const styleTargetClaims: Claim[] = [];
+  const filePaths: OwnershipPath[] = [];
+  const stylePaths: OwnershipPath[] = [];
 
   for (const item of [...snapshot.items]
     .filter((entry) => closureSet.has(entry.id))
@@ -165,6 +210,11 @@ export function validateResolvedTargets(
       files.push({ namespace: "ui", path: file.target, owner: item.id });
       fileClaims.push({
         exact: `ui:${file.target}`,
+        owner: item.id,
+        label: "UI target",
+      });
+      filePaths.push({
+        path: file.target,
         owner: item.id,
         label: "UI target",
       });
@@ -182,6 +232,11 @@ export function validateResolvedTargets(
       });
       styleTargetClaims.push({
         exact: style.target,
+        owner: item.id,
+        label: "CSS target",
+      });
+      stylePaths.push({
+        path: style.target,
         owner: item.id,
         label: "CSS target",
       });
@@ -208,6 +263,10 @@ export function validateResolvedTargets(
   // Distinct uniquely owned blocks may share one exact aggregate stylesheet
   // target; only differently spelled ASCII case aliases collide.
   checkCaseAliases(styleTargetClaims, "COLLISION_STYLE_TARGET_CASE", issues);
+  // A claimed file can never also be a directory/ancestor of another claimed
+  // file, within one item or across selected items.
+  checkAncestry(filePaths, "COLLISION_TARGET_ANCESTRY", issues);
+  checkAncestry(stylePaths, "COLLISION_STYLE_TARGET_ANCESTRY", issues);
   if (issues.length > 0) return fail(issues);
 
   return ok({

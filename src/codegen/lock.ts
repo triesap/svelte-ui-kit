@@ -113,6 +113,66 @@ function sameIds(left: readonly string[], right: readonly string[]): boolean {
   return left.every((id, index) => id === right[index]);
 }
 
+function compareCodeUnit(left: string, right: string): number {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
+}
+
+interface OwnershipPath {
+  readonly path: string;
+  readonly label: string;
+}
+
+/**
+ * Validate one logical claim set: ASCII case aliases cannot name distinct
+ * claims, and no claim may be a strict ancestor of another, because a managed
+ * file cannot also be a directory. Exact equal paths are left to the caller's
+ * duplicate rule (several CSS blocks may share one exact aggregate path).
+ * Comparison is ASCII-folded and segment-aware, so `a/kit` and `a/kit-extra`
+ * stay siblings.
+ */
+function checkOwnershipPaths(
+  entries: readonly OwnershipPath[],
+  issues: ModelIssue[],
+  aliasCode: string,
+): void {
+  const sorted = [...entries].sort(
+    (left, right) =>
+      compareCodeUnit(asciiFold(left.path), asciiFold(right.path)) ||
+      compareCodeUnit(left.path, right.path),
+  );
+  for (let i = 0; i < sorted.length; i += 1) {
+    const left = sorted[i] as OwnershipPath;
+    const leftFold = asciiFold(left.path);
+    for (let j = i + 1; j < sorted.length; j += 1) {
+      const right = sorted[j] as OwnershipPath;
+      const rightFold = asciiFold(right.path);
+      if (leftFold === rightFold) {
+        if (left.path !== right.path) {
+          issues.push(
+            issue(
+              aliasCode,
+              `${left.label} paths ${JSON.stringify(left.path)} and ${JSON.stringify(right.path)} are ASCII case aliases`,
+              left.path,
+            ),
+          );
+        }
+        continue;
+      }
+      if (rightFold.startsWith(`${leftFold}/`)) {
+        issues.push(
+          issue(
+            "LOCK_PATH_OVERLAP",
+            `${left.label} ${JSON.stringify(left.path)} cannot also be a directory containing ${right.label} ${JSON.stringify(right.path)}`,
+            left.path,
+          ),
+        );
+      }
+    }
+  }
+}
+
 /**
  * Validate a lock: identity/version provenance, unique owners/paths, valid
  * hashes/versions/cohorts and requested-vs-explicit origin agreement.
@@ -317,6 +377,13 @@ export function parseKitLock(
     }
   }
 
+  // Every managed source-file claim, validated as one complete logical set.
+  const fileClaims: OwnershipPath[] = [...paths.keys()].map((path) => ({
+    path,
+    label: "managed file",
+  }));
+  checkOwnershipPaths(fileClaims, issues, "LOCK_CASE_ALIAS");
+
   const blockIds = new Map<string, number>();
   const rawBlocks = record["cssBlocks"] as readonly Record<string, unknown>[];
   for (const [index, block] of rawBlocks.entries()) {
@@ -424,6 +491,31 @@ export function parseKitLock(
     }
   }
 
+  const blockPaths: OwnershipPath[] = rawBlocks
+    .map((block) => block["path"])
+    .filter(
+      (path): path is string =>
+        typeof path === "string" &&
+        isSafeLockPath(path) &&
+        path.endsWith(".css"),
+    )
+    .map((path) => ({ path, label: "managed CSS block" }));
+  checkOwnershipPaths(blockPaths, issues, "LOCK_CASE_ALIAS");
+  // A managed logical path can never be both a source file and a CSS block.
+  for (const file of fileClaims) {
+    for (const block of blockPaths) {
+      if (asciiFold(file.path) === asciiFold(block.path)) {
+        issues.push(
+          issue(
+            "LOCK_PATH_OVERLAP",
+            `managed file and managed CSS block share path ${JSON.stringify(file.path)}`,
+            file.path,
+          ),
+        );
+      }
+    }
+  }
+
   const integrationKeys = new Map<string, number>();
   const rawIntegrations = record["integrations"] as readonly Record<
     string,
@@ -472,7 +564,35 @@ export function parseKitLock(
         ),
       );
     }
+    if (isSafeLockPath(path)) {
+      const requiredDirectory = [
+        context.uiDir,
+        context.stylesDir,
+        context.stateDir,
+      ].find(
+        (directory) =>
+          directory !== undefined && isSameOrBelow(directory, path),
+      );
+      if (requiredDirectory !== undefined) {
+        issues.push(
+          issue(
+            "LOCK_NAMESPACE",
+            `integrations[${index}].path ${JSON.stringify(path)} is a file and must not equal or contain the required directory ${JSON.stringify(requiredDirectory)}`,
+            `integrations[${index}].path`,
+          ),
+        );
+      }
+    }
   }
+
+  const integrationPaths: OwnershipPath[] = rawIntegrations
+    .map((integration) => integration["path"])
+    .filter(
+      (path): path is string =>
+        typeof path === "string" && isSafeLockPath(path),
+    )
+    .map((path) => ({ path, label: "integration" }));
+  checkOwnershipPaths(integrationPaths, issues, "LOCK_CASE_ALIAS");
 
   if (issues.length > 0) return fail(issues);
   return ok({
