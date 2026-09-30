@@ -761,6 +761,9 @@ passed, 0 failed, 4 ignored across 43 result blocks. `actionlint 1.7.12` with
 SHA-256 `aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f`
 verified and ran over `.github/workflows/ci.yml` at exit 0. Raw lane logs are
 under the git-ignored `implementation/evidence/logs/closure-20260930T120500Z/`.
+The full lane set was re-confirmed at doc-only final revision
+`a5f90746152a1dfe508b4b47a516f92d6b76de81` with the same exits and counts;
+those logs are under `implementation/evidence/logs/closure-20260930T123142Z/`.
 
 This records implementation and verification only. S007–S012 remain
 `committed_pending_review` with their original pending hashes and null
