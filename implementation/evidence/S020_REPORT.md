@@ -69,3 +69,12 @@ and commit hash above are retained as provenance; they are not acceptance. The
 repaired candidate is committed as green local checkpoints and verified fresh in
 `implementation/evidence/RCLD-02_QUALIFICATION.md`. This checkpoint remains
 `committed_pending_review`; no acceptance counter or accepted hash changes.
+
+## RCLD-02 review-2 repair note
+
+Independent review 2 of the committed S013-S032 candidate requested changes
+under the four RCLD02-R2 groups. The original implementation evidence and commit
+hash above are retained as provenance; they are not acceptance. The repaired
+candidate is committed as green local checkpoints and verified fresh in
+`implementation/evidence/RCLD-02_QUALIFICATION.md`. This checkpoint remains
+`committed_pending_review`; no acceptance counter or accepted hash changes.

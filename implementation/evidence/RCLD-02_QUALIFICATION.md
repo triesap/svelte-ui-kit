@@ -32,7 +32,7 @@ Codex-accepted. S033 was not started.
 
 Prerequisite tooling commit: `fea1667c874e324671b9716b40e2e0acace530bf`.
 
-## Final cumulative lanes
+## RCLD-02 review-1 cumulative lanes
 
 After the RCLD-02 review-1 repair batch, all commands ran from this
 repository root with the pinned local Node 24.21.0 and pnpm 11.22.0 toolchain.
@@ -78,6 +78,81 @@ closure groups; the repairs were committed as green local checkpoints:
 
 The repaired candidate is fresh local evidence only. None of the twenty
 checkpoints is Codex-accepted, and no acceptance hashes or counters change.
+
+## RCLD-02 review-2 repair batch
+
+Independent review 2 of candidate
+`baebed721b88afa48f6c3af489cb6daa193088ee` requested the four RCLD02-R2 groups.
+The original S013-S032 implementation hashes above and the review-1 repair
+commits remain provenance; they are not acceptance. The repairs were committed
+as green local checkpoints, each with its direct controls plus format, lint and
+typecheck:
+
+| Group | Repair commit                              | Summary                                                 |
+| ----- | ------------------------------------------ | ------------------------------------------------------- |
+| R2-1  | `4250f63644f1b0343c57ba1c3a9ad041515575b8` | role-aware mapping/ownership overlap validation         |
+| R2-2  | `c726e49315f6a0adb589fdd7ba66b85a6557abae` | one contained provider authority for every schema parse |
+| R2-3  | `f3e7ea6bbe8a7b2a2aaf06a25dc19d6baa2e3b96` | joint compatibility and style-target case validation    |
+| R2-4  | `9860ce100c5968dd601e41180f94a4d21ed44d29` | whole-argv JSON intent and command attribution          |
+
+### RCLD-02 review-2 cumulative lanes
+
+Run at repaired commit
+`9860ce100c5968dd601e41180f94a4d21ed44d29` from this repository root with Node
+`24.21.0` / pnpm `11.22.0`. Raw lane logs are under the git-ignored
+`implementation/evidence/logs/r2-20260930/`.
+
+| Lane                   | Command                                                                     | Exit | Result                                        |
+| ---------------------- | --------------------------------------------------------------------------- | ---- | --------------------------------------------- |
+| Frozen strict install  | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | 0    | already up to date                            |
+| Format                 | `pnpm run format:check`                                                     | 0    | all matched files formatted                   |
+| Lint                   | `pnpm run lint`                                                             | 0    | no findings                                   |
+| Typecheck              | `pnpm run typecheck` (5 configs)                                            | 0    | exit 0                                        |
+| Unit                   | `pnpm run test:unit`                                                        | 0    | 191 tests, 191 pass                           |
+| Runner harness         | `pnpm run test:harness`                                                     | 0    | 37 tests, 37 pass                             |
+| Integration            | `pnpm run test:integration`                                                 | 0    | 20 tests, 20 pass                             |
+| Components             | `pnpm run test:components`                                                  | 0    | 22 tests, 22 pass                             |
+| Registry               | `pnpm run test:registry`                                                    | 0    | 22 tests, 22 pass                             |
+| CLI smoke              | `pnpm run test:cli-bootstrap`                                               | 0    | 52 tests, 52 pass                             |
+| Consumer check         | `pnpm run fixture:check`                                                    | 0    | 0 errors, 0 warnings                          |
+| Consumer SSR/lifecycle | `pnpm run test:fixture`                                                     | 0    | 23 tests, 23 pass                             |
+| Browser (Chromium)     | `pnpm run test:browser -- tests/browser/harness.spec.ts`                    | 0    | 23 passed                                     |
+| Contract validation    | `pnpm run check:contracts`                                                  | 0    | 0 error(s), 0 warning(s)                      |
+| Contract regressions   | `pnpm run test:contracts`                                                   | 0    | 117 tests, 117 pass                           |
+| Installed package      | `pnpm run test:integration` (installed-package suite)                       | 0    | 5 controls pass from an isolated emitted copy |
+| Workflow validation    | `actionlint .github/workflows/ci.yml` (v1.7.12)                             | 0    | no findings (shellcheck 0.11.0 on PATH)       |
+| Whitespace             | `git diff --check`, `git diff --cached --check`                             | 0    | no diagnostics                                |
+| Projection             | `node tools/check-contracts.mjs --generate`                                 | 0    | deterministic; no tracked change              |
+
+Every RCLD02-R2 group has a maintained production-path control in an existing
+CI lane: file/directory role collisions and namespace/reserved-state claims
+(`test:unit`), contained schema authority, cold/warm, same-root-different-
+provider, removal/replacement, escaping-symlink and I/O faults (`test:unit`),
+installed-copy config/lock/theme/envelope/snapshot plus missing/corrupt/escaping
+asset negatives (`test:integration`), joint compatibility and CSS case aliases
+(`test:registry`) and whole-argv JSON/attribution permutations (`test:unit` and
+`test:cli-bootstrap`).
+
+### RCLD-02 review-2 reference guard
+
+Fresh routed reference guard at clean reference
+`a10fbf06334f4648f5755e05a7147414e4e5fc98` on the same workstation, from the
+reference Rust workspace root:
+
+| Command                                 | Exit | Result                                           |
+| --------------------------------------- | ---- | ------------------------------------------------ |
+| `cargo fmt --all -- --check`            | 0    | no diffs                                         |
+| `cargo check --workspace --all-targets` | 0    | Finished dev profile                             |
+| `cargo test --workspace --all-targets`  | 0    | 43 result lines; 578 passed, 0 failed, 4 ignored |
+
+The reference was clean at that hash before and after and was not modified.
+`actionlint 1.7.12` (darwin/arm64) with SHA-256
+`aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f`, matching
+the published checksum file, ran at exit 0; it was unpacked in an owned
+temporary directory outside the repository and is not committed.
+
+This records implementation and verification only. None of the twenty
+checkpoints is Codex-accepted, and no acceptance hash or counter changes.
 
 ## Negative controls exercised
 
