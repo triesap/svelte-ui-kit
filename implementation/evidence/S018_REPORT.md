@@ -1,7 +1,7 @@
 # S018 step report — Add accessibility and dependency manifest metadata
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S018","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S018","kind":"report","commit":"43d59e1f63fb95ce75eb10f6c38eca888a6de361","disposition":"candidate"}
 -->
 
 Step ID and title: S018 — Add accessibility and dependency manifest metadata.
