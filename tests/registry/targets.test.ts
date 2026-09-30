@@ -33,7 +33,7 @@ const exported = (name: string, target: string): ItemExport => ({
   kind: "value",
 });
 
-const block = (blockId: string, target = "src/styles/kit.css"): ItemStyle => ({
+const block = (blockId: string, target = "kit.css"): ItemStyle => ({
   source: `styles/${blockId}.css`,
   target,
   blockId,
@@ -172,6 +172,45 @@ test("ASCII case-folded collisions are detected on a case-sensitive system", () 
     ["button", "card"],
   );
   assert.equal(exportCollision.includes("COLLISION_EXPORT_CASE"), true);
+});
+
+test("distinct uniquely owned blocks may share the aggregate stylesheet", () => {
+  const graph = snapshot({
+    button: {
+      files: [file("button.svelte")],
+      styles: [
+        {
+          source: "styles/button.css",
+          target: "kit.css",
+          blockId: "button",
+          cohort: "core",
+        },
+      ],
+    },
+    card: {
+      files: [file("card.svelte")],
+      styles: [
+        {
+          source: "styles/card.css",
+          target: "kit.css",
+          blockId: "card",
+          cohort: "core",
+        },
+      ],
+    },
+  });
+  const result = validateResolvedTargets(graph, ["button", "card"]);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (result.ok) {
+    assert.deepEqual(
+      result.value.blocks.map((entry) => entry.blockId),
+      ["button", "card"],
+    );
+    assert.deepEqual(
+      result.value.files.map((entry) => entry.path),
+      ["button.svelte", "card.svelte"],
+    );
+  }
 });
 
 test("unregistered candidates make no public collision claim", () => {

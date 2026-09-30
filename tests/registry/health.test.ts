@@ -14,6 +14,8 @@ import { test } from "node:test";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { computeRegistryContentHash } from "../../src/registry/model.js";
+import { resolveClosure } from "../../src/registry/resolve.js";
+import { transitiveRequests } from "../../src/project/requests.js";
 import {
   isInstallable,
   validateRegistryHealth,
@@ -204,5 +206,237 @@ test("a missing provider schema set fails health without throwing", (t) => {
       result.issues.some((entry) => entry.code === "ASSET_MISSING"),
       true,
     );
+  }
+});
+
+interface InventoryItem {
+  readonly id: string;
+  readonly registryDependencies?: readonly string[];
+  readonly npmDependencies?: readonly {
+    name: string;
+    range: string;
+    role: string;
+  }[];
+  readonly files?: readonly {
+    source: string;
+    target: string;
+    kind: string;
+    cohort: string;
+  }[];
+  readonly exports?: readonly {
+    name: string;
+    target: string;
+    kind: string;
+  }[];
+  readonly styles?: readonly {
+    source: string;
+    target: string;
+    blockId: string;
+    cohort: string;
+  }[];
+}
+
+/** Build a fully parsed multi-item inventory fixture and register every part. */
+function buildInventoryFixture(
+  t: { after: (fn: () => void) => void },
+  specs: readonly InventoryItem[],
+): string {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-inventory-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  cpSync(path.join(process.cwd(), "schema"), path.join(root, "schema"), {
+    recursive: true,
+  });
+  mkdirSync(path.join(root, "registry", "ui"), { recursive: true });
+  mkdirSync(path.join(root, "registry", "templates"), { recursive: true });
+
+  const assets: { path: string; digest: string }[] = [];
+  const items: { id: string; manifest: string }[] = [];
+  for (const spec of specs) {
+    const files = spec.files ?? [
+      {
+        source: `templates/${spec.id}.svelte`,
+        target: `${spec.id}.svelte`,
+        kind: "svelte",
+        cohort: "core",
+      },
+    ];
+    const exports = spec.exports ?? [
+      {
+        name: spec.id
+          .split("-")
+          .map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`)
+          .join(""),
+        target: `${spec.id}.svelte`,
+        kind: "value",
+      },
+    ];
+    const manifest = {
+      schemaVersion: 1,
+      id: spec.id,
+      kind: "component",
+      version: "0.1.0",
+      description: "inventory item",
+      compatibility: COMPATIBILITY,
+      files,
+      exports,
+      styles: spec.styles ?? [],
+      registryDependencies: spec.registryDependencies ?? [],
+      npmDependencies: spec.npmDependencies ?? [],
+    };
+    const text = `${JSON.stringify(manifest, null, 2)}\n`;
+    writeFileSync(path.join(root, "registry", "ui", `${spec.id}.json`), text);
+    assets.push({
+      path: `registry/ui/${spec.id}.json`,
+      digest: sha256Hex(text),
+    });
+    for (const file of files) {
+      writeFileSync(path.join(root, "registry", file.source), SOURCE_TEXT);
+      assets.push({
+        path: `registry/${file.source}`,
+        digest: sha256Hex(SOURCE_TEXT),
+      });
+    }
+    for (const style of spec.styles ?? []) {
+      const css = `.${style.blockId} {}\n`;
+      writeFileSync(path.join(root, "registry", style.source), css);
+      assets.push({
+        path: `registry/${style.source}`,
+        digest: sha256Hex(css),
+      });
+    }
+    items.push({ id: spec.id, manifest: `ui/${spec.id}.json` });
+  }
+  const basis = {
+    schemaVersion: 1,
+    registryVersion: "0.1.0",
+    compatibility: COMPATIBILITY,
+    items,
+  };
+  writeFileSync(
+    path.join(root, "registry", "registry.json"),
+    `${JSON.stringify({ ...basis, contentHash: computeRegistryContentHash(basis, assets) }, null, 2)}\n`,
+  );
+  return root;
+}
+
+test("a missing registry dependency fails integrated health", (t) => {
+  const root = buildInventoryFixture(t, [
+    { id: "button", registryDependencies: ["missing"] },
+  ]);
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "RESOLVE_MISSING_ITEM"),
+      true,
+    );
+  }
+});
+
+test("a registry cycle fails integrated health", (t) => {
+  const root = buildInventoryFixture(t, [
+    { id: "button", registryDependencies: ["card"] },
+    { id: "card", registryDependencies: ["button"] },
+  ]);
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "RESOLVE_CYCLE"),
+      true,
+    );
+  }
+});
+
+test("a public export collision fails integrated health", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "button",
+      exports: [{ name: "Widget", target: "button.svelte", kind: "value" }],
+    },
+    {
+      id: "card",
+      exports: [{ name: "Widget", target: "card.svelte", kind: "value" }],
+    },
+  ]);
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "COLLISION_EXPORT"),
+      true,
+    );
+  }
+});
+
+test("an unsupported npm requirement fails integrated health", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "button",
+      npmDependencies: [{ name: "x", range: "file:../x", role: "runtime" }],
+    },
+  ]);
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "NPM_RANGE_INVALID"),
+      true,
+    );
+  }
+});
+
+test("distinct component blocks may share one aggregate stylesheet", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "button",
+      styles: [
+        {
+          source: "templates/button.css",
+          target: "kit.css",
+          blockId: "button",
+          cohort: "core",
+        },
+      ],
+    },
+    {
+      id: "card",
+      styles: [
+        {
+          source: "templates/card.css",
+          target: "kit.css",
+          blockId: "card",
+          cohort: "core",
+        },
+      ],
+    },
+  ]);
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, true, JSON.stringify(result));
+});
+
+test("a healthy multi-item inventory keeps dependency order and provenance", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "button",
+      registryDependencies: ["card"],
+      npmDependencies: [{ name: "svelte", range: "5.57.1", role: "peer" }],
+    },
+    {
+      id: "card",
+      npmDependencies: [{ name: "svelte", range: "^5.33.0", role: "peer" }],
+    },
+  ]);
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  const closure = resolveClosure(result.value.snapshot, ["button"]);
+  assert.equal(closure.ok, true, JSON.stringify(closure));
+  if (closure.ok) {
+    assert.deepEqual(closure.value.order, ["card", "button"]);
+    assert.deepEqual(closure.value.roots, ["button"]);
+    assert.deepEqual(transitiveRequests(["button"], closure.value.items), [
+      "card",
+    ]);
   }
 });

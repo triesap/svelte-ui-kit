@@ -4,14 +4,17 @@
  * Validates ownership across the resolved (advertised) inventory before any
  * consumer is touched:
  *
- * - a UI or style target has exactly one owning item;
+ * - a UI target has exactly one owning item;
  * - a managed CSS block id has exactly one owner;
  * - a public export name has exactly one owning item.
  *
- * Collisions are detected with ASCII case folding as well, so a collision that
- * would only appear on a case-insensitive filesystem is caught even on a
- * case-sensitive development machine. Unregistered candidate items are not part
- * of the resolved inventory and therefore make no public collision claim.
+ * Distinct uniquely owned component blocks may share one aggregate stylesheet
+ * (for example `kit.css`): block ownership is unique, but the aggregate file is
+ * not wholly owned by one item. Collisions are detected with ASCII case folding
+ * as well, so a collision that would only appear on a case-insensitive
+ * filesystem is caught even on a case-sensitive development machine.
+ * Unregistered candidate items are not part of the resolved inventory and
+ * therefore make no public collision claim.
  */
 import {
   fail,
@@ -138,11 +141,6 @@ export function validateResolvedTargets(
         blockId: style.blockId,
         path: style.target,
         owner: item.id,
-      });
-      fileClaims.push({
-        exact: `styles:${style.target}`,
-        owner: item.id,
-        label: "style target",
       });
       blockClaims.push({
         exact: style.blockId,

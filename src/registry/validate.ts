@@ -16,6 +16,9 @@
 import type { AssetProvider } from "./assets.js";
 import { fail, ok, type ModelIssue, type ModelResult } from "./errors.js";
 import { loadRegistrySnapshot, type RegistrySnapshot } from "./load.js";
+import { planDependencies } from "./dependency-plan.js";
+import { resolveClosure } from "./resolve.js";
+import { validateResolvedTargets } from "./validate-targets.js";
 import { createSchemaAuthority, SHIPPED_SCHEMAS } from "./schema.js";
 
 /** Fixed local schema identities the parser compiles. */
@@ -83,9 +86,22 @@ export function validateRegistryHealth(
   );
   if (issues.length > 0) return fail(issues);
 
+  // Compose the same production validation the planner relies on: the
+  // advertised inventory must resolve without missing items or cycles, its
+  // resolved targets/blocks/exports must have unambiguous ownership, and every
+  // joint npm requirement must be evaluable before anything is installable.
+  const advertised = snapshot.items.map((item) => item.id);
+  const closure = resolveClosure(snapshot, advertised);
+  if (!closure.ok) return fail(closure.issues);
+  const targets = validateResolvedTargets(snapshot, closure.value.items);
+  if (!targets.ok) issues.push(...targets.issues);
+  const plan = planDependencies(snapshot, closure.value.items);
+  if (!plan.ok) issues.push(...plan.issues);
+  if (issues.length > 0) return fail(issues);
+
   return ok({
     snapshot,
-    advertised: snapshot.items.map((item) => item.id),
+    advertised,
     candidates,
   });
 }
