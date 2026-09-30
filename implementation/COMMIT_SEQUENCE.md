@@ -338,7 +338,25 @@ clean at independent review. The current disposition and execution instructions
 below supersede the earlier unfinished-work narrative while preserving its
 requirements, historical evidence and original pending hashes.
 
-### Current independent review and remaining closure batch
+### Final independent review — evidence preparation
+
+Codex reviewed the combined candidate `7d3401c9a19ca7915ff7f0c9c0280760c81b5509` on
+2026-09-30 against S007–S012 and every prior finding. All RCLD01-R2 and R3
+findings are closed. Fresh cumulative target lanes pass, including components
+22/22, browser23/23, integration15/15 without skips and contracts108/108.
+Independent audit/workspace/cleanup and browser-artifact probes pass. Each
+checkpoint report and review records the exact original and repair revisions,
+coverage, checks and remaining release limitations. The masked ENOTEMPTY
+author attempt is retained and does not recur in the fresh full suite.
+
+The next acceptance action is the previously approved atomic evidence-commit
+transition. Until its anchor exists, all six remain pending with original
+hashes and changes_requested/null structured review metadata. This paragraph
+supersedes the following historical changes-requested disposition; no product
+code changes are part of the evidence/acceptance commits. The strict upstream
+exception remains a release AC20 obligation; this is not full MVP acceptance.
+
+### Preceding independent review and remaining closure batch
 
 Changes requested on the complete candidate; no checkpoint promotion. Keep
 6/203 accepted, six pending, 191 not started and all eleven sequences unfinished.
