@@ -77,8 +77,11 @@ only writing modes.
 
 #### Owner-authorized RCLD-01 batch verification
 
-The 2026-09-30 "Codex takeover dispatch" in `COMMIT_SEQUENCE.md` governs the
-current complete repair/qualification batch. It requires lifecycle checks
+The 2026-09-30 "Codex review dispatch" in `COMMIT_SEQUENCE.md` governs the
+current complete repair/qualification batch and its four remaining findings.
+It requires a fail-closed machine-readable strict audit, browser enforcement
+after page teardown, ownership cleanup on startup rejection, and nonregular
+write-target rejection. It preserves the earlier requirements: lifecycle checks
 through teardown, physical containment, actual Switch.Thumb coverage, the
 shared CLI executor, historical validator compatibility and a synthetic atomic
 acceptance rehearsal. Keep original pending implementation hashes while adding

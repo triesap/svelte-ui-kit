@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: S001–S006 independently accepted; S007–S012 authored and committed pending review. Codex takeover review requests the complete RCLD-01 repair and qualification batch below under `pfc through RCLD-01`. S013 remains locked behind independent acceptance. Updated 2026-09-30.
+Status: S001–S006 independently accepted; S007–S012 authored and committed pending review. Independent review of the returned repair batch requests the complete RCLD-01 closure batch in the current review dispatch below under `pfc through RCLD-01`. S013 remains locked behind independent acceptance. Updated 2026-09-30.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: none. The S007–S012 repair and qualification batch is complete and returned for independent Codex review; **S013** in **RCLD-02** remains not_started and blocked until S012 is independently accepted. The six original pending ledger entries are preserved and repair progress is recorded separately in this document and their reports.
+- Active implementation checkpoint: no new checkpoint; the current RCLD-01 review dispatch authorizes all remaining diagnostic, browser lifecycle and nonregular-target repairs plus cumulative qualification. **S013** in **RCLD-02** remains not_started and blocked until S012 is independently accepted. Keep the six original pending ledger entries while recording repair progress separately in this document and their reports.
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **6 / 203**. Remaining: **197 / 203**.
 - Committed pending review: **6 / 203**. Authored batch range: **S007–S012**.
@@ -322,6 +322,174 @@ No owner decision remains unresolved. Return unstaged/uncommitted with S002
 still `in_progress`, report `candidate`, review `changes_requested`, null hashes
 and S003 untouched. Codex independently reviews and accepts before any target
 commit or successor dispatch. No human release test is due at this checkpoint.
+
+## Codex review dispatch — RCLD-01 closure after repair review
+
+This is the current dispatch, dated 2026-09-30. It supersedes the earlier
+takeover's current-work narrative without changing product scope, checkpoint
+IDs/order, R01–R34, AC01–AC22 or any sequence dependency. Reviewed candidate:
+`206d5dd5ca373dcdb30647390d10f720759bc289`, clean at review, with eight local
+repair/bookkeeping commits after `9310790c9900f3cfdc516e4a8cf42b8095c7422a`.
+The original S007–S012 pending hashes remain unchanged.
+
+Follow-up inspection on 2026-09-30 found the same candidate revision and only
+the three existing governance amendments in the working tree. No further
+implementation or repair evidence is available. All four findings below remain
+open in unchanged source and its maintained callers; closure-batch progress is
+still not started. Reissue the complete closure batch under the same decisions
+and endpoint. The independent test results below belong to the preceding
+review, not a new execution of those suites. No acceptance state changes.
+
+### Independent disposition and preserved progress
+
+Changes requested; no additional checkpoint or sequence is accepted. Keep
+S001–S006 complete (6/203), S007–S012 pending (6/203), S013–S203 not started
+(191), and all eleven RCLDs unfinished. The earlier spawn-error/prior-exit/
+shutdown-stderr regressions, symlink containment, actual Thumb rendering/types,
+shared CLI executor and historical-plan compatibility have substantive repairs.
+Preserve them. Successful tests do not close the remaining failures below.
+
+Fresh independent checks passed: four-config typecheck; unit 20/20;
+integration 12/12; component 7/7; CLI smoke 41/41; production build and
+SSR/lifecycle 23/23; contract regressions 108/108. Chromium passed 11/11 on
+the freshly built fixture with the inherited NO_COLOR/FORCE_COLOR conflict
+removed from the command environment. The initial unnormalized browser run
+failed 1/11 because the owned server emitted Node's conflicting-color warning;
+the strict stderr gate correctly rejected it. No warning suppression is an
+acceptable repair. Formatting must be checked again after governance changes.
+
+The reference remains clean at
+`a10fbf06334f4648f5755e05a7147414e4e5fc98`. The author-run fresh reference
+fmt/check/test exits were audited, with 578 passed, zero failed, four ignored;
+these are not fresh reviewer Rust runs. Remote CI, other browser/OS lanes,
+package acceptance and human release testing remain unproven and are not due
+at this bootstrap gate.
+
+### Remaining findings and resolved implementation decisions
+
+1. **RCLD01-R2-1 — strict audit admits extra authored errors (blocking).**
+   In an owned copy, a real `src/audit:extra.ts` error produces three checker
+   errors but the audit parses only two and qualifies the upstream exception.
+   More decisively, a referenced `src/audit:extra.d.ts` with invalid declarations
+   passes the normal fixture check with zero diagnostics, while the strict
+   checker reports four errors in three files and is still qualified. The
+   human-output parser excludes colons from paths; summary errors/files are
+   never reconciled with parsed diagnostics. Appending unknown fatal output
+   also still qualifies. Only the Bits version is checked and suffix matching
+   does not establish that the diagnostic names the installed package file.
+
+   Use the pinned svelte-check 4.7.6 `--output machine-verbose` protocol,
+   documented in its installed README, rather than broadening a human-output
+   regex. Parse the actual START, timestamped diagnostic JSON, COMPLETED and
+   FAILURE records completely and fail closed on malformed, unknown, duplicate,
+   truncated or inconsistent output. Keep sync/check outcomes and stderr
+   separately attributable. Require expected exit 1, no signal/timeout/tool
+   failure, exactly two error diagnostics, zero warnings, exactly two problem
+   files and consistent summary totals. Validate numeric TypeScript code 2590,
+   source, message, positions and actual resolved package-relative paths in
+   the installed Bits root. Check the executed compatibility versions (Bits
+   2.19.3, TypeScript 6.0.3, Svelte 5.57.1, svelte-check 4.7.6) and preserve
+   existing fixture pins, including csstype/date. Changed compatibility must
+   require a new decision, not inherit the exception silently.
+
+   Add independent parser controls for unknown/truncated output, summary
+   mismatch, duplicates, warnings, tool errors/signals/timeouts, changed pins
+   and misleading path suffixes. Add real separate authored `.svelte`, `.ts`,
+   referenced `.d.ts` and additional-dependency controls, including valid local
+   filenames containing colons/spaces. Prove normal plus strict qualification
+   cannot together admit the declaration probe. Restore and requalify the
+   baseline; never mutate shared installed dependencies. The temporary
+   skipLibCheck exception is not accepted at this candidate until these audit
+   conditions hold. The two genuine upstream errors remain a release AC20
+   obligation; no broader exception or dependency change is approved.
+
+2. **RCLD01-R2-2 — browser errors after the collector assertion pass
+   (blocking).** The automatic issue fixture depends on `page`, so its
+   assertion runs before page-fixture teardown. An isolated real Chromium test
+   using the maintained fixture emitted `console.error` during page teardown
+   and still passed 1/1, exit 0. Move the enforcement boundary so the relevant
+   page/context hooks and teardown complete, close/drain events, and only then
+   assert collected errors. Preserve Playwright trace/screenshot artifacts and
+   assertion failures. Do not use arbitrary sleeps to approximate closure.
+
+   Add bounded real-run controls for console errors, hydration warnings and
+   page exceptions separately, including an event emitted during teardown;
+   each must fail for the intended diagnostic. A nonzero child exit or a test
+   title substring alone is insufficient proof. Include a clean restoration
+   run, check child exit/signal/timeout and preserve output isolation. When
+   NO_COLOR is present, remove conflicting FORCE_COLOR only from owned child
+   environments and preserve the parent environment. Do not filter stderr or
+   disable warnings.
+
+3. **RCLD01-R2-3 — browser startup rejection loses ownership (blocking).**
+   `startFixtureServer()` awaits readiness before returning its handle. Both
+   callers assign their server only after that await. A disposable copy with
+   a controlled malformed-readiness launcher rejects but leaves its owned
+   child alive; the caller's afterAll cannot reach it. Ensure the startup helper
+   retains ownership and stops/drains the child on every rejected readiness
+   path before rethrowing the original diagnostic, with cleanup failures
+   retained. A small injected launcher boundary for tests is authorized; no
+   product API or general service abstraction. Cover malformed readiness,
+   bounded readiness timeout, spawn failure and successful startup/shutdown,
+   proving the owned PID/listener is gone and unrelated resources untouched.
+4. **RCLD01-R2-4 — nonregular final write target can hang (blocking).**
+   `writeFile` rejects directories/symlinks but opens a FIFO. An isolated real
+   FIFO probe blocked until its 800 ms child deadline (ETIMEDOUT/SIGTERM).
+   Require an existing final file target to be a regular file before opening
+   it. Reject FIFO/socket/device targets without side effects, retaining the
+   existing symlink/ancestor/cleanup protections and trusted-local threat model.
+   Use a real bounded FIFO regression on supported local/CI platforms; verify
+   rejection before opening, preserved kinds/modes/bytes and owned cleanup.
+   Do not test against actual devices or claim hostile-race resistance.
+
+The native run also records a red formatting check immediately followed by
+commit `2c39906c40c5063b816ddf561465ce793d527f53`; the pipeline returned the
+tail command's success. `206d5dd` repaired formatting. Preserve history and
+disclose this workflow violation, but do not repeat it. Capture each underlying
+command's exit explicitly (or use checked pipefail), fail before committing,
+and never infer success from a trailing command. Preserve failed attempts,
+including the earlier browser artifact collision and declaration-test repair.
+
+### Whole-batch execution, evidence and endpoint
+
+Execute `pfc through RCLD-01`. Implement all four findings, their real negative
+controls, caller integration, current documentation and cumulative qualification
+as one authorized batch of coherent green commits. Start with RCLD01-R2-1;
+then close the coupled browser findings and nonregular-target safety. Continue
+other independent eligible work if a slice has a genuine blocker. Current
+closure-batch progress: not started. Reconcile this section and report addenda
+after every green commit; do not stop after one fix or passing subset.
+
+This is the full remaining eligible implementation within the required review
+boundary. RCLD-02 explicitly requires independent S012 acceptance, which the
+four failures prevent. S013 stays locked; no hardware or human-only blocker
+prevents these software repairs. No new product requirements, wrappers,
+schemas or commands are introduced by this dispatch.
+
+Preserve the original six pending ledger/report hashes and all prior repair
+hashes. Append the new actual repair commits without rewriting history; keep
+completion null and accepted counts unchanged. Regenerate JSON from Markdown
+explicitly. The previously approved atomic evidence-commit acceptance design
+remains unchanged and belongs to Codex alone. Do not perform real acceptance,
+partial promotion or S013 activation based on synthetic transition tests.
+
+Run narrow affected checks before each commit, then the full cumulative target
+lane set in VERIFICATION.md: strict frozen install, format/lint/typecheck,
+unit/harness/integration/components/CLI smoke, fixture check/production SSR,
+Chromium including real failing controls, contract validation/regressions,
+actionlint and diff health. Add the new mandatory controls to the actual lanes
+and CI, not optional manual probes. Keep raw upstream failure evidence distinct
+from successful exception classification. At intermediate commits, reuse the
+audited unchanged reference guard with clean-hash checks; run fresh reference
+fmt/check/test once at the final repaired milestone as previously required.
+
+Return the entire verified candidate for independent review before S013, with
+actual runtime, original/repair revisions, per-finding and per-requirement
+dispositions, commands/exits/counts, retained evidence, failures/skips, remaining
+work and exact stopping reason. A report, commit, context length or partial
+passing run is not an endpoint. Genuine external blockers, user stops, actual
+runtime limits and the required independent acceptance gate remain legitimate
+stops. No owner decision is outstanding for these repairs.
 
 ## Codex takeover dispatch — RCLD-01 repair and qualification
 
