@@ -294,6 +294,32 @@ test("a UI file target cannot also be an ancestor directory of another UI target
   assert.equal(result.includes("COLLISION_TARGET_ANCESTRY"), true);
 });
 
+test("one item's own output set cannot combine a file with its descendant", () => {
+  const fileResult = codes(
+    snapshot({
+      button: {
+        files: [file("button.svelte"), file("button.svelte/inner.svelte")],
+      },
+    }),
+    ["button"],
+  );
+  assert.equal(fileResult.includes("COLLISION_TARGET_ANCESTRY"), true);
+
+  const styleResult = codes(
+    snapshot({
+      button: {
+        files: [file("button.svelte")],
+        styles: [
+          block("button", "kit.css"),
+          block("button-extra", "kit.css/card.css"),
+        ],
+      },
+    }),
+    ["button"],
+  );
+  assert.equal(styleResult.includes("COLLISION_STYLE_TARGET_ANCESTRY"), true);
+});
+
 test("valid compound siblings and safe nested directories remain allowed", () => {
   const result = validateResolvedTargets(
     snapshot({

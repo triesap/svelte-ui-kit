@@ -771,6 +771,39 @@ test("a fully parsed style file/directory role conflict fails health and the ope
   }
 });
 
+test("a fully parsed within-item UI file ancestor conflict fails health", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "alpha",
+      kind: "foundation",
+      files: [
+        {
+          source: "templates/alpha.svelte",
+          target: "shared.svelte",
+          kind: "svelte",
+          cohort: "core",
+        },
+        {
+          source: "templates/alpha-inner.svelte",
+          target: "shared.svelte/inner.svelte",
+          kind: "svelte",
+          cohort: "core",
+        },
+      ],
+      exports: [],
+    },
+  ]);
+  const health = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(health.ok, false, JSON.stringify(health));
+  if (!health.ok) {
+    assert.equal(
+      health.issues.some((entry) => entry.code === "COLLISION_TARGET_ANCESTRY"),
+      true,
+    );
+  }
+  assert.equal(operationResult(root, ["alpha"]).ok, false);
+});
+
 test("a fully parsed cross-item UI file ancestor conflict fails health", (t) => {
   const root = buildInventoryFixture(t, [
     {
