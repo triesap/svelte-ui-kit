@@ -26,7 +26,6 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { fail, issue, ok, type ModelResult } from "./errors.js";
-
 interface AjvOptions {
   allErrors?: boolean;
   coerceTypes?: boolean;
@@ -41,7 +40,6 @@ interface AjvInstance {
 type AjvConstructor = new (options?: AjvOptions) => AjvInstance;
 
 const nodeRequire = createRequire(import.meta.url);
-const Ajv = nodeRequire("ajv") as AjvConstructor;
 
 /**
  * Locate the package root by walking up for `package.json`. This works for the
@@ -61,13 +59,21 @@ function packageRootDir(): string {
   }
 }
 
-const SCHEMA_ROOT_DIR = join(packageRootDir(), "schema", "v1");
+let schemaRootDir: string | null = null;
+
+function schemaRoot(): string {
+  if (schemaRootDir === null) {
+    schemaRootDir = join(packageRootDir(), "schema", "v1");
+  }
+  return schemaRootDir;
+}
 
 let ajvInstance: AjvInstance | null = null;
 const compiled = new Map<string, ValidateFunction>();
 
 function getAjv(): AjvInstance {
   if (ajvInstance === null) {
+    const Ajv = nodeRequire("ajv") as AjvConstructor;
     ajvInstance = new Ajv({
       allErrors: true,
       coerceTypes: false,
@@ -82,7 +88,7 @@ function getAjv(): AjvInstance {
 export function loadSchemaDocument(
   schemaFile: string,
 ): Record<string, unknown> {
-  const text = readFileSync(join(SCHEMA_ROOT_DIR, schemaFile), "utf8");
+  const text = readFileSync(join(schemaRoot(), schemaFile), "utf8");
   const parsed: unknown = JSON.parse(text);
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new Error(`schema ${schemaFile} is not a JSON object`);

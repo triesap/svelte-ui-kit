@@ -176,7 +176,7 @@ test("no arguments prints help to stdout and exits 0", () => {
   assert.match(result.stdout, /Usage:/);
   assert.match(result.stdout, /--help/);
   assert.match(result.stdout, /--version/);
-  assert.match(result.stdout, /bootstrap/i);
+  assert.match(result.stdout, /Commands:/);
 });
 
 for (const args of [["--help"], ["-h"]]) {
@@ -209,8 +209,7 @@ const rejectedArguments = [
   ["--cwd", "."],
   ["--json", "--version"],
   ["add"],
-  ["init"],
-  ["view", "button"],
+  ["view"],
   ["--"],
   [""],
   ["-v"],
@@ -227,6 +226,42 @@ for (const args of rejectedArguments) {
     assert.match(result.stderr, /Usage:/);
   });
 }
+
+const unsupportedCommands = [
+  ["info"],
+  ["init"],
+  ["view", "button"],
+  ["add", "button"],
+  ["sync"],
+  ["doctor"],
+  ["doctor", "--strict"],
+  ["add", "button", "--dry-run"],
+];
+
+for (const args of unsupportedCommands) {
+  test(`unimplemented command ${JSON.stringify(args)} exits 2 honestly`, () => {
+    const result = runCli(args);
+    assert.equal(result.status, 2);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /not implemented yet/);
+    assert.match(result.stderr, /svelte-ui-kit:/);
+  });
+}
+
+test("json mode emits exactly one unsupported envelope", () => {
+  const result = runCli(["info", "--json"]);
+  assert.equal(result.status, 2);
+  assert.equal(result.stderr, "");
+  const envelope = JSON.parse(result.stdout);
+  assert.equal(envelope.command, "info");
+  assert.equal(envelope.status, "unsupported");
+  assert.equal(envelope.schemaVersion, 1);
+  assert.ok(
+    Array.isArray(envelope.diagnostics) && envelope.diagnostics.length > 0,
+    "expected at least one diagnostic",
+  );
+  assert.equal((result.stdout.match(/^\}$/gm) ?? []).length, 1);
+});
 
 test("help, version and rejected argument lists never write to a seeded cwd", (t) => {
   const dir = seedProbeFixture(t);
@@ -245,6 +280,11 @@ test("help, version and rejected argument lists never write to a seeded cwd", (t
     ["add"],
     [""],
     ["--"],
+    ["info", "--json"],
+    ["init"],
+    ["add", "button"],
+    ["sync"],
+    ["doctor", "--strict"],
   ];
   for (const args of invocations) {
     const result = runCli(args, { cwd: dir });

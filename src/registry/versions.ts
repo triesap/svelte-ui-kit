@@ -21,9 +21,24 @@
  * live here; these constants record technical initial choices, not
  * user-provided configuration.
  */
-import { valid as semverValid, validRange as semverValidRange } from "semver";
+import { createRequire } from "node:module";
 
 import { fail, issue, ok, ModelError, type ModelResult } from "./errors.js";
+
+/**
+ * `semver` is loaded on first use. The bootstrap CLI surface (help, version,
+ * usage and unsupported outcomes) never evaluates a range, so a
+ * dependency-free built copy still runs those paths.
+ */
+type SemverModule = typeof import("semver");
+const nodeRequire = createRequire(import.meta.url);
+let semverModule: SemverModule | null = null;
+function semver(): SemverModule {
+  if (semverModule === null) {
+    semverModule = nodeRequire("semver") as SemverModule;
+  }
+  return semverModule;
+}
 
 /** Positive integer identity for a local schema (draft-07) revision. */
 export type SchemaVersion = number;
@@ -153,7 +168,7 @@ export function isSemVer(value: unknown): value is SemVer {
   return (
     typeof value === "string" &&
     SEMVER_RE.test(value) &&
-    semverValid(value) !== null
+    semver().valid(value) !== null
   );
 }
 
@@ -177,7 +192,7 @@ export function isCompatibilityRange(
     return false;
   }
   if (/^[./]/.test(trimmed) || /^[A-Za-z]:[\\/]/.test(trimmed)) return false;
-  return semverValidRange(trimmed) !== null;
+  return semver().validRange(trimmed) !== null;
 }
 
 function validatePositiveInteger(

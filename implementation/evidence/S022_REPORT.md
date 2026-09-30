@@ -1,7 +1,7 @@
 # S022 step report — Freeze CLI envelopes and exit outcomes
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S022","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S022","kind":"report","commit":"0e399f17b1e7bb913a5e84ea93a5e9600cff338a","disposition":"candidate"}
 -->
 
 Step ID and title: S022 — Freeze CLI envelopes and exit outcomes.

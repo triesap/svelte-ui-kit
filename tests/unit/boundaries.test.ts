@@ -57,20 +57,22 @@ function listTree(root: string): string[] {
   return entries;
 }
 
-test("parseCliArgs classifies help, version and unsupported arguments", () => {
+test("parseCliArgs classifies help, version, commands and unsupported arguments", () => {
   assert.deepEqual(parseCliArgs([]), { kind: "help" });
   assert.deepEqual(parseCliArgs(["--help"]), { kind: "help" });
   assert.deepEqual(parseCliArgs(["-h"]), { kind: "help" });
   assert.deepEqual(parseCliArgs(["--version"]), { kind: "version" });
   assert.deepEqual(parseCliArgs(["-V"]), { kind: "version" });
-  assert.deepEqual(parseCliArgs(["--help", "extra"]), {
-    kind: "usage-error",
-    argv: ["--help", "extra"],
-  });
-  assert.deepEqual(parseCliArgs(["--json"]), {
-    kind: "usage-error",
-    argv: ["--json"],
-  });
+  const helpExtra = parseCliArgs(["--help", "extra"]);
+  assert.equal(helpExtra.kind, "usage-error");
+  if (helpExtra.kind === "usage-error") {
+    assert.deepEqual(helpExtra.argv, ["--help", "extra"]);
+  }
+  const jsonOnly = parseCliArgs(["--json"]);
+  assert.equal(jsonOnly.kind, "usage-error");
+  const info = parseCliArgs(["info"]);
+  assert.equal(info.kind, "command");
+  if (info.kind === "command") assert.equal(info.command, "info");
 });
 
 test("pure execution writes only through the injected effects", () => {
@@ -214,10 +216,8 @@ test("consumer fixture sources never import CLI, Node or registry internals", ()
 });
 
 test("formatUsageDiagnostic renders the argv-independent prefix", () => {
-  const diagnostic = formatUsageDiagnostic(["-x"]);
-  assert.match(diagnostic, /^svelte-ui-kit: unsupported argument list: "-x"/);
-  assert.match(
-    diagnostic,
-    /svelte-ui-kit --help, -h or svelte-ui-kit --version, -V/,
-  );
+  const diagnostic = formatUsageDiagnostic("unsupported option: -x", ["-x"]);
+  assert.match(diagnostic, /^svelte-ui-kit: unsupported option: -x/);
+  assert.match(diagnostic, /Argument list: "-x"/);
+  assert.match(diagnostic, /Usage: svelte-ui-kit/);
 });

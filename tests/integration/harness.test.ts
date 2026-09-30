@@ -145,7 +145,7 @@ test("runCli captures stderr and exit 2 for an unsupported argument", () => {
   const result = runCli(["--not-a-command"]);
   assert.equal(result.status, 2);
   assert.equal(result.stdout, "");
-  assert.match(result.stderr, /unsupported argument list/);
+  assert.match(result.stderr, /unsupported option/);
 });
 
 test("runCli works from a working directory containing spaces", (t) => {
@@ -155,7 +155,7 @@ test("runCli works from a working directory containing spaces", (t) => {
 
   const result = runCli(["--help"], { cwd: spaced });
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /svelte-ui-kit — bootstrap CLI/);
+  assert.match(result.stdout, /svelte-ui-kit — source-first UI kit generator/);
 });
 
 test("runCli bounds a non-terminating child process", (t) => {

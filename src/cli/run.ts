@@ -1,4 +1,5 @@
 import { parseCliArgs, type CliRequest } from "./args.js";
+import { createEnvelope, exitCodeFor, renderEnvelope } from "./protocol.js";
 
 /**
  * Pure CLI result handling.
@@ -7,6 +8,11 @@ import { parseCliArgs, type CliRequest } from "./args.js";
  * injected output effects. It performs no filesystem access, no metadata
  * reading and no direct process writes; the Node adapter in `main.ts` owns the
  * package-relative metadata read and the real stdout/stderr/exit effects.
+ *
+ * Only help and version have handlers. The approved product commands
+ * (`info`/`init`/`view`/`add`/`sync`/`doctor`) return an honest `unsupported`
+ * outcome: a single JSON envelope in `--json` mode, or a human diagnostic on
+ * stderr otherwise. They never fabricate a successful plan or write.
  */
 export interface CliMetadata {
   readonly name: string;
@@ -18,24 +24,47 @@ export interface CliIo {
   readonly stderr: (text: string) => void;
 }
 
-export const HELP_TEXT = `svelte-ui-kit — bootstrap CLI
+export const HELP_TEXT = `svelte-ui-kit — source-first UI kit generator
 
 Usage:
-  svelte-ui-kit --help, -h     Show this help text.
-  svelte-ui-kit --version, -V  Print the package name and version.
+  svelte-ui-kit [--json] [--cwd <path>] <command> [options] [item]
 
-This is a bootstrap build. Component install/inspect/update commands are not
-implemented yet, and no project inspection, network access or writes are
-performed.
+Commands:
+  info                 Inspect the project, paths and registry readiness.
+  init                 Plan or apply kit configuration and integration.
+  view <item>          Show bundled item metadata (--source for source).
+  add <item>           Add one explicit item request (--dry-run to plan).
+  sync                 Reconcile the project with the packaged registry.
+  doctor               Report installation consistency (--strict to fail CI).
+
+Global options:
+  --json               Emit exactly one structured result envelope.
+  --cwd <path>         Select the application package explicitly.
+  --help, -h           Show this help text.
+  --version, -V        Print the package name and version.
+
+The product commands are not implemented yet; they return an honest
+unsupported result and never plan or write fabricated changes.
 `;
 
-export function formatUsageDiagnostic(argv: readonly string[]): string {
+export function formatUsageDiagnostic(
+  message: string,
+  argv: readonly string[],
+): string {
   const rendered = argv.map((arg) => JSON.stringify(arg)).join(" ");
   return [
-    `svelte-ui-kit: unsupported argument list: ${rendered}`,
-    "Usage: svelte-ui-kit --help, -h or svelte-ui-kit --version, -V.",
-    "Only help and version are implemented in this bootstrap; other flags and",
-    "commands (including --json and --cwd) are not yet supported.",
+    `svelte-ui-kit: ${message}`,
+    `Argument list: ${rendered}`,
+    "Usage: svelte-ui-kit [--json] [--cwd <path>] <command> [options] [item].",
+    "Run svelte-ui-kit --help for the command list.",
+    "",
+  ].join("\n");
+}
+
+export function formatUnsupportedDiagnostic(command: string): string {
+  return [
+    `svelte-ui-kit: the "${command}" command is not implemented yet.`,
+    "No project files were changed. See svelte-ui-kit --help for the surface.",
     "",
   ].join("\n");
 }
@@ -54,8 +83,29 @@ export function applyRequest(
     io.stdout(`${metadata.name} ${metadata.version}\n`);
     return 0;
   }
-  io.stderr(formatUsageDiagnostic(request.argv));
-  return 2;
+  if (request.kind === "usage-error") {
+    io.stderr(formatUsageDiagnostic(request.message, request.argv));
+    return exitCodeFor("unsupported");
+  }
+  // Approved but not-yet-implemented product command: honest unsupported.
+  const envelope = createEnvelope({
+    command: request.command,
+    status: "unsupported",
+    diagnostics: [
+      {
+        code: "COMMAND_NOT_IMPLEMENTED",
+        level: "error",
+        message: `the "${request.command}" command is not implemented yet`,
+        guidance: "run svelte-ui-kit --help for the approved command surface",
+      },
+    ],
+  });
+  if (request.json) {
+    io.stdout(renderEnvelope(envelope));
+  } else {
+    io.stderr(formatUnsupportedDiagnostic(request.command));
+  }
+  return exitCodeFor("unsupported");
 }
 
 /** Parse and apply `argv` with validated metadata and injected output. */
