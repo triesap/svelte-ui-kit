@@ -109,6 +109,38 @@ function checkClaims(
   }
 }
 
+function checkCaseAliases(
+  claims: readonly Claim[],
+  code: string,
+  issues: ModelIssue[],
+): void {
+  const byFolded = new Map<string, Claim[]>();
+  for (const claim of claims) {
+    const key = asciiFold(claim.exact);
+    const list = byFolded.get(key) ?? [];
+    list.push(claim);
+    byFolded.set(key, list);
+  }
+  for (const [, list] of [...byFolded.entries()].sort((left, right) =>
+    compareCodeUnit(left[0], right[0]),
+  )) {
+    const spellings = [...new Set(list.map((claim) => claim.exact))].sort(
+      compareCodeUnit,
+    );
+    if (spellings.length < 2) continue;
+    const owners = [...new Set(list.map((claim) => claim.owner))].sort(
+      compareCodeUnit,
+    );
+    issues.push(
+      issue(
+        code,
+        `${list[0]?.label}s ${spellings.map((value) => JSON.stringify(value)).join(", ")} are ASCII case aliases (owned by ${owners.join(", ")})`,
+        spellings[0],
+      ),
+    );
+  }
+}
+
 /**
  * Validate uniqueness across the resolved inventory. `closure` is the resolved
  * item id set; only those items are considered.
@@ -124,6 +156,7 @@ export function validateResolvedTargets(
   const fileClaims: Claim[] = [];
   const blockClaims: Claim[] = [];
   const exportClaims: Claim[] = [];
+  const styleTargetClaims: Claim[] = [];
 
   for (const item of [...snapshot.items]
     .filter((entry) => closureSet.has(entry.id))
@@ -147,6 +180,11 @@ export function validateResolvedTargets(
         owner: item.id,
         label: "CSS block id",
       });
+      styleTargetClaims.push({
+        exact: style.target,
+        owner: item.id,
+        label: "CSS target",
+      });
     }
     for (const entry of item.manifest.exports) {
       exports.push({ name: entry.name, target: entry.target, owner: item.id });
@@ -167,6 +205,9 @@ export function validateResolvedTargets(
     "COLLISION_EXPORT_CASE",
     issues,
   );
+  // Distinct uniquely owned blocks may share one exact aggregate stylesheet
+  // target; only differently spelled ASCII case aliases collide.
+  checkCaseAliases(styleTargetClaims, "COLLISION_STYLE_TARGET_CASE", issues);
   if (issues.length > 0) return fail(issues);
 
   return ok({

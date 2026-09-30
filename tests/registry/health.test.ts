@@ -19,6 +19,7 @@ import { transitiveRequests } from "../../src/project/requests.js";
 import {
   isInstallable,
   validateRegistryHealth,
+  validateResolvedInventory,
   validateSchemaIdentities,
 } from "../../src/registry/validate.js";
 
@@ -211,6 +212,11 @@ test("a missing provider schema set fails health without throwing", (t) => {
 
 interface InventoryItem {
   readonly id: string;
+  readonly compatibility?: {
+    svelte: string;
+    bits: string;
+    date: string;
+  };
   readonly registryDependencies?: readonly string[];
   readonly npmDependencies?: readonly {
     name: string;
@@ -276,7 +282,7 @@ function buildInventoryFixture(
       kind: "component",
       version: "0.1.0",
       description: "inventory item",
-      compatibility: COMPATIBILITY,
+      compatibility: spec.compatibility ?? COMPATIBILITY,
       files,
       exports,
       styles: spec.styles ?? [],
@@ -438,5 +444,81 @@ test("a healthy multi-item inventory keeps dependency order and provenance", (t)
     assert.deepEqual(transitiveRequests(["button"], closure.value.items), [
       "card",
     ]);
+    const operation = validateResolvedInventory(
+      result.value.snapshot,
+      closure.value.items,
+    );
+    assert.equal(operation.ok, true, JSON.stringify(operation));
+  }
+});
+
+test("an advertised item incompatible with the qualified root fails health", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "button",
+      compatibility: { svelte: "^4", bits: "^1", date: "^2" },
+    },
+  ]);
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "COMPATIBILITY_CONFLICT"),
+      true,
+    );
+  }
+});
+
+test("an advertised peer requirement conflicting with root support fails health", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "button",
+      npmDependencies: [{ name: "svelte", range: "^4", role: "peer" }],
+    },
+  ]);
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some((entry) => entry.code === "COMPATIBILITY_CONFLICT"),
+      true,
+    );
+  }
+});
+
+test("ASCII case-alias style targets fail integrated health", (t) => {
+  const root = buildInventoryFixture(t, [
+    {
+      id: "button",
+      styles: [
+        {
+          source: "templates/button.css",
+          target: "kit.css",
+          blockId: "button",
+          cohort: "core",
+        },
+      ],
+    },
+    {
+      id: "card",
+      styles: [
+        {
+          source: "templates/card.css",
+          target: "Kit.css",
+          blockId: "card",
+          cohort: "core",
+        },
+      ],
+    },
+  ]);
+  const result = validateRegistryHealth(createAssetProvider(root));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(
+      result.issues.some(
+        (entry) => entry.code === "COLLISION_STYLE_TARGET_CASE",
+      ),
+      true,
+    );
   }
 });

@@ -16,9 +16,13 @@
 import type { AssetProvider } from "./assets.js";
 import { fail, ok, type ModelIssue, type ModelResult } from "./errors.js";
 import { loadRegistrySnapshot, type RegistrySnapshot } from "./load.js";
-import { planDependencies } from "./dependency-plan.js";
+import { planDependencies, type DependencyPlan } from "./dependency-plan.js";
 import { resolveClosure } from "./resolve.js";
-import { validateResolvedTargets } from "./validate-targets.js";
+import {
+  validateResolvedTargets,
+  type ResolvedTargets,
+} from "./validate-targets.js";
+import { validateCompatibility } from "./compatibility.js";
 import { createSchemaAuthority, SHIPPED_SCHEMAS } from "./schema.js";
 
 /** Fixed local schema identities the parser compiles. */
@@ -52,6 +56,33 @@ export function validateSchemaIdentities(
   const authority = createSchemaAuthority(provider);
   if (!authority.ok) return fail(authority.issues);
   return ok([...SCHEMA_PATHS]);
+}
+
+/** Validated resolved inventory for one registry operation. */
+export interface ResolvedInventoryValidation {
+  readonly targets: ResolvedTargets;
+  readonly plan: DependencyPlan;
+}
+
+/**
+ * Compose the production validation path for a resolved closure: target/block/
+ * export ownership, the joint npm dependency plan, and the joint framework
+ * compatibility of the root and every selected item. Planning must not proceed
+ * when any of these fail.
+ */
+export function validateResolvedInventory(
+  snapshot: RegistrySnapshot,
+  closure: readonly string[],
+): ModelResult<ResolvedInventoryValidation> {
+  const issues: ModelIssue[] = [];
+  const targets = validateResolvedTargets(snapshot, closure);
+  const plan = planDependencies(snapshot, closure);
+  const compatibility = validateCompatibility(snapshot, closure);
+  if (!targets.ok) issues.push(...targets.issues);
+  if (!plan.ok) issues.push(...plan.issues);
+  if (!compatibility.ok) issues.push(...compatibility.issues);
+  if (!targets.ok || !plan.ok || issues.length > 0) return fail(issues);
+  return ok({ targets: targets.value, plan: plan.value });
 }
 
 /**
@@ -88,15 +119,14 @@ export function validateRegistryHealth(
 
   // Compose the same production validation the planner relies on: the
   // advertised inventory must resolve without missing items or cycles, its
-  // resolved targets/blocks/exports must have unambiguous ownership, and every
-  // joint npm requirement must be evaluable before anything is installable.
+  // resolved targets/blocks/exports must have unambiguous ownership, every
+  // joint npm requirement must be evaluable, and every item must be jointly
+  // compatible with the qualified root support before anything is installable.
   const advertised = snapshot.items.map((item) => item.id);
   const closure = resolveClosure(snapshot, advertised);
   if (!closure.ok) return fail(closure.issues);
-  const targets = validateResolvedTargets(snapshot, closure.value.items);
-  if (!targets.ok) issues.push(...targets.issues);
-  const plan = planDependencies(snapshot, closure.value.items);
-  if (!plan.ok) issues.push(...plan.issues);
+  const resolved = validateResolvedInventory(snapshot, closure.value.items);
+  if (!resolved.ok) issues.push(...resolved.issues);
   if (issues.length > 0) return fail(issues);
 
   return ok({

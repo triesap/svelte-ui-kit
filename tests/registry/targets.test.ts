@@ -213,6 +213,39 @@ test("distinct uniquely owned blocks may share the aggregate stylesheet", () => 
   }
 });
 
+test("exact aggregate sharing passes while ASCII case-alias targets fail", () => {
+  const alias = codes(
+    snapshot({
+      button: {
+        files: [file("button.svelte")],
+        styles: [block("button", "kit.css")],
+      },
+      card: {
+        files: [file("card.svelte")],
+        styles: [block("card", "Kit.css")],
+      },
+    }),
+    ["button", "card"],
+  );
+  assert.equal(alias.includes("COLLISION_STYLE_TARGET_CASE"), true);
+  assert.equal(alias.includes("COLLISION_BLOCK"), false);
+
+  const shared = validateResolvedTargets(
+    snapshot({
+      button: {
+        files: [file("button.svelte")],
+        styles: [block("button", "kit.css")],
+      },
+      card: {
+        files: [file("card.svelte")],
+        styles: [block("card", "kit.css")],
+      },
+    }),
+    ["button", "card"],
+  );
+  assert.equal(shared.ok, true, JSON.stringify(shared));
+});
+
 test("unregistered candidates make no public collision claim", () => {
   const graph = snapshot({
     button: { files: [file("button.svelte")] },
