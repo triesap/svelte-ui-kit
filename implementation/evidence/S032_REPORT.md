@@ -1,7 +1,7 @@
 # S032 step report — Validate cross-item target and public symbol uniqueness
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S032","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S032","kind":"report","commit":"14851a26a8c161d9b2ec87bc0633ced533c3e085","disposition":"candidate"}
 -->
 
 Step ID and title: S032 — Validate cross-item target and public symbol
