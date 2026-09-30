@@ -1,7 +1,7 @@
 # S024 step report — Implement exact-byte hashing and deterministic serialization
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S024","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S024","kind":"report","commit":"00faf8b4feb863da211136f925e357031c14494c","disposition":"candidate"}
 -->
 
 Step ID and title: S024 — Implement exact-byte hashing and deterministic

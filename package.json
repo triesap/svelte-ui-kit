@@ -24,6 +24,16 @@
     "ajv": "6.15.0",
     "semver": "7.8.5"
   },
+  "files": [
+    "dist",
+    "schema",
+    "registry",
+    "README.md",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
+  ],
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
