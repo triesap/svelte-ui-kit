@@ -727,3 +727,43 @@ the strict audit conditions above; the two genuine upstream Bits 2.19.3
 union-complexity errors remain an open release AC20 obligation. No new
 dependency, suppression, authored `any` or SSR-disable was introduced. Remote
 CI, other platforms and package release acceptance remain unproven.
+
+### Closure-batch cumulative qualification
+
+Run at repaired revision `a71a6c44609cf26992eb57909ea5f30155348c90` on macOS with
+Node 24.21.0 / pnpm 11.22.0, routed through the extbuild runtime. Every target
+lane exited 0:
+
+| Lane           | Command                                                                     | Exit | Result                                     |
+| -------------- | --------------------------------------------------------------------------- | ---- | ------------------------------------------ |
+| Frozen install | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | 0    | already up to date                         |
+| Format         | `pnpm run format:check`                                                     | 0    | all matched files                          |
+| Lint           | `pnpm run lint`                                                             | 0    | no findings                                |
+| Typecheck      | `pnpm run typecheck`                                                        | 0    | four compiler configurations               |
+| Unit           | `pnpm run test:unit`                                                        | 0    | 20 / 20                                    |
+| Runner harness | `pnpm run test:harness`                                                     | 0    | 35 / 35                                    |
+| Integration    | `pnpm run test:integration`                                                 | 0    | 14 tests: 13 pass, 1 skipped               |
+| Components     | `pnpm run test:components`                                                  | 0    | 19 / 19                                    |
+| CLI smoke      | `pnpm run test:cli-bootstrap`                                               | 0    | 41 / 41                                    |
+| Fixture check  | `pnpm run fixture:check`                                                    | 0    | 0 errors, 0 warnings                       |
+| Consumer SSR   | `pnpm run test:fixture`                                                     | 0    | 23 / 23                                    |
+| Browser        | `pnpm run test:browser -- tests/browser/harness.spec.ts`                    | 0    | 22 passed (incl. 6 fault children + clean) |
+| Contracts      | `pnpm run check:contracts`                                                  | 0    | 0 errors, 0 warnings                       |
+| Contract tests | `pnpm run test:contracts`                                                   | 0    | 108 / 108                                  |
+
+The one skip is the UNIX-socket control: the extbuild-remapped temporary path
+exceeds the local `sockaddr_un` limit (`EINVAL`); the FIFO control exercises the
+same regular-file rejection branch on this platform.
+
+Fresh routed reference guard at clean `a10fbf06334f4648f5755e05a7147414e4e5fc98`
+(`cargo fmt --all -- --check`, `cargo check --workspace --all-targets`,
+`cargo test --workspace --all-targets`): all exit 0; the test lane reported 578
+passed, 0 failed, 4 ignored across 43 result blocks. `actionlint 1.7.12` with
+SHA-256 `aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f`
+verified and ran over `.github/workflows/ci.yml` at exit 0. Raw lane logs are
+under the git-ignored `implementation/evidence/logs/closure-20260930T120500Z/`.
+
+This records implementation and verification only. S007–S012 remain
+`committed_pending_review` with their original pending hashes and null
+completion; independent Codex acceptance and the atomic evidence-commit
+transition remain outstanding, and S013 is not started.

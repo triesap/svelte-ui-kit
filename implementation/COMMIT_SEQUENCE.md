@@ -517,13 +517,25 @@ are appended separately as they land.
   preserving symlink and ancestor protections, with a real bounded FIFO
   regression and a socket control. Integration lane 14 tests (13 pass, 1
   skipped only for the remapped long UNIX-socket path).
-- Lane/CI integration and documentation reconciliation (this repair): every
+- `a71a6c44609cf26992eb57909ea5f30155348c90` — lane/CI integration and
+  documentation reconciliation: every
   mandatory control lives in a maintained lane that CI already runs — strict
   audit controls in `test:components`, per-fault and startup-ownership browser
   controls in `test:browser -- tests/browser/harness.spec.ts`, and the
   nonregular-target FIFO control in `test:integration`. Lane meanings are
   updated in `implementation/VERIFICATION.md`; report and compatibility
   addenda record the repair hashes and results.
+
+Closure-batch cumulative qualification ran at `a71a6c4` with all fourteen
+target lanes exiting 0 (unit 20/20, harness 35/35, integration 14 tests with
+one documented UNIX-socket path skip, components 19/19, CLI smoke 41/41,
+SSR/lifecycle 23/23, browser 22/22, contract tests 108/108, `check:contracts`
+clean), a fresh reference `cargo fmt`/`check`/`test` guard at the clean
+reference revision, and a checksum-verified `actionlint 1.7.12` run. Full
+command/exit/count evidence is recorded in
+`implementation/evidence/COMPATIBILITY.md` and the git-ignored lane logs. This
+is implementation and verification only: S007–S012 remain pending independent
+Codex review, completion stays null and S013 is not started.
 
 ## Codex takeover dispatch — RCLD-01 repair and qualification
 
