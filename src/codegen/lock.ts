@@ -16,6 +16,7 @@
  *
  * Managed CSS blocks and integration records are S020.
  */
+import { lte as semverLte } from "semver";
 import { compareItemIds, isItemId } from "../project/requests.js";
 import {
   fail,
@@ -47,6 +48,24 @@ export interface LockFileRecord {
   readonly cohort: string;
 }
 
+export interface LockCssBlock {
+  readonly path: string;
+  readonly owner: string;
+  readonly blockId: string;
+  readonly baseHash: string;
+  readonly itemVersion: string;
+  readonly cohort: string;
+}
+
+export type IntegrationKind = "layout" | "stylesheet" | "exports";
+
+export interface LockIntegration {
+  readonly kind: IntegrationKind;
+  readonly path: string;
+  readonly baseline: string;
+  readonly contract: string;
+}
+
 export interface KitLock {
   readonly schemaVersion: number;
   readonly toolVersion: string;
@@ -56,6 +75,8 @@ export interface KitLock {
   readonly requested: readonly string[];
   readonly items: readonly LockItem[];
   readonly files: readonly LockFileRecord[];
+  readonly cssBlocks: readonly LockCssBlock[];
+  readonly integrations: readonly LockIntegration[];
 }
 
 /** Interim safe logical path check (S033 centralizes lexical validation). */
@@ -188,6 +209,117 @@ export function parseKitLock(
           `files[${index}].itemVersion`,
         ),
       );
+    } else if (typeof owner === "string" && itemIndex.has(owner)) {
+      const ownerVersion = rawItems[itemIndex.get(owner) as number]["version"];
+      if (
+        isSemVer(ownerVersion) &&
+        !semverLte(file["itemVersion"] as string, ownerVersion)
+      ) {
+        issues.push(
+          issue(
+            "LOCK_LINEAGE_CONTRADICTION",
+            `files[${index}].itemVersion ${String(file["itemVersion"])} is newer than its owner ${owner} version ${ownerVersion}`,
+            `files[${index}].itemVersion`,
+          ),
+        );
+      }
+    }
+  }
+
+  const blockIds = new Map<string, number>();
+  const rawBlocks = record["cssBlocks"] as readonly Record<string, unknown>[];
+  for (const [index, block] of rawBlocks.entries()) {
+    const blockId = block["blockId"];
+    if (typeof blockId === "string") {
+      if (blockIds.has(blockId)) {
+        issues.push(
+          issue(
+            "LOCK_DUPLICATE_BLOCK",
+            `CSS block ${JSON.stringify(blockId)} is owned more than once (cssBlocks[${index}] and cssBlocks[${blockIds.get(blockId)}])`,
+            locator,
+          ),
+        );
+      } else {
+        blockIds.set(blockId, index);
+      }
+    }
+    const owner = block["owner"];
+    if (typeof owner === "string" && !itemIds.has(owner)) {
+      issues.push(
+        issue(
+          "LOCK_OWNER_UNKNOWN",
+          `cssBlocks[${index}].owner ${JSON.stringify(owner)} is not a lock item`,
+          `cssBlocks[${index}].owner`,
+        ),
+      );
+    }
+    if (
+      !isSafeLockPath(block["path"]) ||
+      !String(block["path"]).endsWith(".css")
+    ) {
+      issues.push(
+        issue(
+          "LOCK_PATH_INVALID",
+          `cssBlocks[${index}].path must be a safe logical .css path`,
+          `cssBlocks[${index}].path`,
+        ),
+      );
+    }
+    if (!isSemVer(block["itemVersion"])) {
+      issues.push(
+        issue(
+          "LOCK_ITEM_VERSION_INVALID",
+          `cssBlocks[${index}].itemVersion must be strict SemVer`,
+          `cssBlocks[${index}].itemVersion`,
+        ),
+      );
+    } else if (typeof owner === "string" && itemIndex.has(owner)) {
+      const ownerVersion = rawItems[itemIndex.get(owner) as number]["version"];
+      if (
+        isSemVer(ownerVersion) &&
+        !semverLte(block["itemVersion"] as string, ownerVersion)
+      ) {
+        issues.push(
+          issue(
+            "LOCK_LINEAGE_CONTRADICTION",
+            `cssBlocks[${index}].itemVersion ${String(block["itemVersion"])} is newer than its owner ${owner} version ${ownerVersion}`,
+            `cssBlocks[${index}].itemVersion`,
+          ),
+        );
+      }
+    }
+  }
+
+  const integrationKeys = new Map<string, number>();
+  const rawIntegrations = record["integrations"] as readonly Record<
+    string,
+    unknown
+  >[];
+  for (const [index, integration] of rawIntegrations.entries()) {
+    const kind = integration["kind"];
+    const path = integration["path"];
+    if (typeof kind === "string" && typeof path === "string") {
+      const key = `${kind}:${path}`;
+      if (integrationKeys.has(key)) {
+        issues.push(
+          issue(
+            "LOCK_DUPLICATE_INTEGRATION",
+            `integration ${key} is recorded more than once (integrations[${index}] and integrations[${integrationKeys.get(key)}])`,
+            locator,
+          ),
+        );
+      } else {
+        integrationKeys.set(key, index);
+      }
+    }
+    if (!isSafeLockPath(path)) {
+      issues.push(
+        issue(
+          "LOCK_PATH_INVALID",
+          `integrations[${index}].path must be a safe logical relative path`,
+          `integrations[${index}].path`,
+        ),
+      );
     }
   }
 
@@ -212,7 +344,50 @@ export function parseKitLock(
       itemVersion: file["itemVersion"] as string,
       cohort: file["cohort"] as string,
     })),
+    cssBlocks: rawBlocks.map((block) => ({
+      path: block["path"] as string,
+      owner: block["owner"] as string,
+      blockId: block["blockId"] as string,
+      baseHash: block["baseHash"] as string,
+      itemVersion: block["itemVersion"] as string,
+      cohort: block["cohort"] as string,
+    })),
+    integrations: rawIntegrations.map((integration) => ({
+      kind: integration["kind"] as IntegrationKind,
+      path: integration["path"] as string,
+      baseline: integration["baseline"] as string,
+      contract: integration["contract"] as string,
+    })),
   });
+}
+
+/** CSS blocks owned by one item, in deterministic path/block order. */
+export function blocksOwnedBy(
+  lock: KitLock,
+  itemId: string,
+): readonly LockCssBlock[] {
+  return lock.cssBlocks
+    .filter((block) => block.owner === itemId)
+    .sort((left, right) => {
+      if (left.path !== right.path) return left.path < right.path ? -1 : 1;
+      return left.blockId < right.blockId
+        ? -1
+        : left.blockId > right.blockId
+          ? 1
+          : 0;
+    });
+}
+
+/** Integration records of one kind, in deterministic path order. */
+export function integrationsOfKind(
+  lock: KitLock,
+  kind: IntegrationKind,
+): readonly LockIntegration[] {
+  return lock.integrations
+    .filter((integration) => integration.kind === kind)
+    .sort((left, right) =>
+      left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+    );
 }
 
 /** Canonical owner index derived from the records (never independently stored). */

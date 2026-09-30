@@ -1,7 +1,7 @@
 # S019 step report — Define source-file ownership lock records
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S019","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S019","kind":"report","commit":"58ee9b84c9ee99c225e69e386c477ea344308d61","disposition":"candidate"}
 -->
 
 Step ID and title: S019 — Define source-file ownership lock records.

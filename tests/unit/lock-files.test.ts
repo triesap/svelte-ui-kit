@@ -50,6 +50,8 @@ function base(
         cohort: "core",
       },
     ],
+    cssBlocks: [],
+    integrations: [],
     ...overrides,
   };
 }
