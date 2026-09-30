@@ -1,7 +1,7 @@
 # S023 step report — Parse only the approved CLI arguments
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S023","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S023","kind":"report","commit":"7625796a1bf7b7865f25fc4192a794fed8f4749a","disposition":"candidate"}
 -->
 
 Step ID and title: S023 — Parse only the approved CLI arguments.
