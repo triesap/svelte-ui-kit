@@ -865,3 +865,17 @@ This records implementation and verification only. S007–S012 remain
 `committed_pending_review` with their original pending hashes and null
 completion; independent Codex acceptance and the atomic evidence-commit
 transition remain outstanding, and S013 is not started.
+
+### RCLD01-R3 final-revision re-confirmation
+
+The full fourteen-lane set was re-run at the doc-only final revision
+`1f323ff58686b774aece7efa7c62edae01367304`. Thirteen lanes exited 0 with the
+same counts as at `8cb5abaf72be02f5fdf5ff4c5484cf7ebc195c40`. The first
+`test:contracts` run in that batch failed one fixture while removing a
+temporary fixture directory on the build volume (`ENOTEMPTY`), which masked the
+original error inside the fixture cleanup; the same test had passed in the
+`8cb5aba` qualification and passed on an immediate re-run of the complete
+108-test suite. No product or contract source changed between the two
+revisions, so the failure is recorded as a transient filesystem/cleanup flake,
+not a regression. Raw logs, including the failed attempt, are under the
+git-ignored `implementation/evidence/logs/r3final-20260930T134035Z/`.
