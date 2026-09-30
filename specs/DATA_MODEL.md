@@ -8,6 +8,15 @@ This file fixes semantic responsibilities. Exact JSON spelling not already appro
 
 Track configuration/lock schema, CLI package, registry release/content digest, individual item/template versions, Svelte/Bits compatibility ranges, and token/customization contracts independently. A framework bump is not automatically a schema migration. Item version/digest identifies incoming content; baseline content must not be relabeled as updated when preserved due to customization/conflict.
 
+Initial technical identities (recorded at S013, not user-provided constants):
+local schema, protocol and CSS-contract revisions start at the positive integer
+`1`; the tool/package release, the empty bundled registry release and an item
+version start at strict SemVer `0.1.0`; the advertised compatibility range is
+restricted to the qualified Svelte `^5.57.1` / Bits UI `^2.19.3` baseline with
+Bits UI's real `@internationalized/date` `^3.8.1` peer. Content identity is an
+exact-byte lowercase `sha256` 64-hex digest, named distinctly from a semantic
+hash.
+
 #### Kit configuration (desired state)
 
 Contains schema identity/version, tool provenance as applicable, supported project and integration roots, UI/export/style mappings, built-in registry selection, and **explicit root item requests only**. Validate unknown fields, malformed values, unsafe/overlapping paths, duplicate requests, unsupported modes, and invalid names. Default state directory is under the UI root. Root requests are not replaced by the full dependency closure.
