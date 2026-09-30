@@ -1,7 +1,7 @@
 # S029 step report — Make closure and export order deterministic
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S029","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S029","kind":"report","commit":"3720ea8702e96c293feec91950313623f8e1b6ba","disposition":"candidate"}
 -->
 
 Step ID and title: S029 — Make closure and export order deterministic.
