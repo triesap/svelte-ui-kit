@@ -205,9 +205,7 @@ const rejectedArguments = [
   ["-V", "-h"],
   ["--version", "--version"],
   ["--help", "extra"],
-  ["--json"],
   ["--cwd", "."],
-  ["--json", "--version"],
   ["add"],
   ["view"],
   ["--"],
@@ -224,6 +222,31 @@ for (const args of rejectedArguments) {
     assert.ok(result.stderr.length > 0, "expected a stderr diagnostic");
     assert.match(result.stderr, /svelte-ui-kit:/);
     assert.match(result.stderr, /Usage:/);
+  });
+}
+
+const jsonUsageFailures = [
+  ["--json"],
+  ["--json", "--version"],
+  ["--json", "view"],
+  ["info", "--json", "--bogus"],
+  ["--json", "nonsense"],
+];
+
+for (const args of jsonUsageFailures) {
+  test(`json usage failure ${JSON.stringify(args)} emits one envelope`, () => {
+    const result = runCli(args);
+    assert.equal(result.status, 2, JSON.stringify(args));
+    assert.equal(result.stderr, "", JSON.stringify(args));
+    const envelope = JSON.parse(result.stdout);
+    assert.equal(envelope.schemaVersion, 1);
+    assert.equal(envelope.status, "error");
+    assert.ok(
+      Array.isArray(envelope.diagnostics) && envelope.diagnostics.length > 0,
+      "expected at least one error diagnostic",
+    );
+    assert.equal(envelope.diagnostics[0].level, "error");
+    assert.equal((result.stdout.match(/^\}$/gm) ?? []).length, 1);
   });
 }
 
@@ -575,12 +598,19 @@ test("valid metadata with unsupported arguments still exits 2", (t) => {
     "svelte-ui-kit valid-args ",
   );
 
-  for (const args of [["--json"], ["add"], ["--help", "--version"]]) {
+  for (const args of [["add"], ["--help", "--version"]]) {
     const result = runEntry(entry, args, dir);
     assert.equal(result.status, 2, JSON.stringify(args));
     assert.equal(result.stdout, "", JSON.stringify(args));
     assert.match(result.stderr, /svelte-ui-kit:/, JSON.stringify(args));
   }
+
+  const jsonResult = runEntry(entry, ["--json"], dir);
+  assert.equal(jsonResult.status, 2);
+  assert.equal(jsonResult.stderr, "");
+  const envelope = JSON.parse(jsonResult.stdout);
+  assert.equal(envelope.command, "help");
+  assert.equal(envelope.status, "error");
 });
 
 test("metadata validation precedes argument handling", (t) => {
@@ -590,20 +620,20 @@ test("metadata validation precedes argument handling", (t) => {
     "svelte-ui-kit meta-first ",
   );
 
-  for (const args of [
-    [],
-    ["--help"],
-    ["-h"],
-    ["--version"],
-    ["-V"],
-    ["add"],
-    ["--json"],
-  ]) {
+  for (const args of [[], ["--help"], ["-h"], ["--version"], ["-V"], ["add"]]) {
     const result = runEntry(entry, args, dir);
     assert.equal(result.status, 1, JSON.stringify(args));
     assert.equal(result.stdout, "", JSON.stringify(args));
     assert.match(result.stderr, /svelte-ui-kit:/, JSON.stringify(args));
   }
+
+  const jsonResult = runEntry(entry, ["--json"], dir);
+  assert.equal(jsonResult.status, 1);
+  assert.equal(jsonResult.stderr, "");
+  const envelope = JSON.parse(jsonResult.stdout);
+  assert.equal(envelope.command, "help");
+  assert.equal(envelope.status, "error");
+  assert.equal(envelope.diagnostics[0].code, "PACKAGE_METADATA_VERSION");
 });
 
 test("syntactically invalid package metadata is rejected with exit 1", (t) => {

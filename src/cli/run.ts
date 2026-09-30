@@ -84,8 +84,28 @@ export function applyRequest(
     return 0;
   }
   if (request.kind === "usage-error") {
-    io.stderr(formatUsageDiagnostic(request.message, request.argv));
-    return exitCodeFor("unsupported");
+    if (request.json) {
+      io.stdout(
+        renderEnvelope(
+          createEnvelope({
+            command: request.command,
+            status: "error",
+            diagnostics: [
+              {
+                code: "CLI_USAGE_ERROR",
+                level: "error",
+                message: request.message,
+                guidance:
+                  "run svelte-ui-kit --help for the approved command surface",
+              },
+            ],
+          }),
+        ),
+      );
+    } else {
+      io.stderr(formatUsageDiagnostic(request.message, request.argv));
+    }
+    return exitCodeFor("error", "usage");
   }
   // Approved but not-yet-implemented product command: honest unsupported.
   const envelope = createEnvelope({

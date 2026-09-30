@@ -110,8 +110,13 @@ function schemaRoot(): string {
   return schemaRootDir;
 }
 
-const legacyAjv: AjvInstance = createAjv();
 const legacyCompiled = new Map<string, ValidateFunction>();
+let legacyAjvInstance: AjvInstance | null = null;
+
+function legacyAjv(): AjvInstance {
+  if (legacyAjvInstance === null) legacyAjvInstance = createAjv();
+  return legacyAjvInstance;
+}
 
 function legacyValidatorFor(schemaFile: string): ValidateFunction {
   const existing = legacyCompiled.get(schemaFile);
@@ -121,7 +126,7 @@ function legacyValidatorFor(schemaFile: string): ValidateFunction {
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new Error(`schema ${schemaFile} is not a JSON object`);
   }
-  const created = legacyAjv.compile(parsed as object);
+  const created = legacyAjv().compile(parsed as object);
   legacyCompiled.set(schemaFile, created);
   return created;
 }

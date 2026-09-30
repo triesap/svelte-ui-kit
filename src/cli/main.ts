@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 
+import { createEnvelope, renderEnvelope } from "./protocol.js";
 import { runCli } from "./run.js";
 
 /**
@@ -17,6 +18,10 @@ import { runCli } from "./run.js";
  * performs no project inspection, network access or filesystem writes, and it
  * exposes no consumer import surface. Product commands are added by later
  * checkpoints (S022–S023 freeze the command envelope).
+ *
+ * When `--json` was requested, a controlled metadata failure still emits
+ * exactly one deterministic JSON envelope instead of leaving stdout empty; the
+ * human path is unchanged.
  */
 
 /** Package metadata is read next to the built module, never from the cwd. */
@@ -44,8 +49,33 @@ const EXPECTED_NAME = "svelte-ui-kit";
 const SEMVER_RE =
   /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 
-function failMetadata(message: string): undefined {
-  process.stderr.write(`svelte-ui-kit: ${message}\n`);
+/** True when the invoked command line requested the JSON protocol. */
+function jsonRequested(): boolean {
+  return process.argv.slice(2).includes("--json");
+}
+
+function failMetadata(message: string, code: string): undefined {
+  if (jsonRequested()) {
+    process.stdout.write(
+      renderEnvelope(
+        createEnvelope({
+          command: "help",
+          status: "error",
+          diagnostics: [
+            {
+              code,
+              level: "error",
+              message,
+              guidance:
+                "run svelte-ui-kit --help for the approved command surface",
+            },
+          ],
+        }),
+      ),
+    );
+  } else {
+    process.stderr.write(`svelte-ui-kit: ${message}\n`);
+  }
   process.exitCode = 1;
   return undefined;
 }
@@ -58,6 +88,7 @@ function readPackageMetadata(): PackageMetadata | undefined {
   } catch {
     return failMetadata(
       "could not read the bundled package metadata next to this executable.",
+      "PACKAGE_METADATA_READ",
     );
   }
 
@@ -65,20 +96,30 @@ function readPackageMetadata(): PackageMetadata | undefined {
   try {
     value = JSON.parse(raw);
   } catch {
-    return failMetadata("the bundled package metadata is not valid JSON.");
+    return failMetadata(
+      "the bundled package metadata is not valid JSON.",
+      "PACKAGE_METADATA_JSON",
+    );
   }
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return failMetadata("the bundled package metadata is not a JSON object.");
+    return failMetadata(
+      "the bundled package metadata is not a JSON object.",
+      "PACKAGE_METADATA_SHAPE",
+    );
   }
 
   const record = value as Record<string, unknown>;
   const name = record["name"];
   if (typeof name !== "string") {
-    return failMetadata('the bundled package metadata has no string "name".');
+    return failMetadata(
+      'the bundled package metadata has no string "name".',
+      "PACKAGE_METADATA_NAME",
+    );
   }
   if (name !== EXPECTED_NAME) {
     return failMetadata(
       `this executable must be built from the "${EXPECTED_NAME}" package metadata.`,
+      "PACKAGE_METADATA_NAME",
     );
   }
 
@@ -86,11 +127,13 @@ function readPackageMetadata(): PackageMetadata | undefined {
   if (typeof version !== "string") {
     return failMetadata(
       'the bundled package metadata has no string "version".',
+      "PACKAGE_METADATA_VERSION",
     );
   }
   if (!SEMVER_RE.test(version)) {
     return failMetadata(
       "the bundled package metadata version is not valid SemVer 2.0.0.",
+      "PACKAGE_METADATA_VERSION",
     );
   }
   return { name, version };
