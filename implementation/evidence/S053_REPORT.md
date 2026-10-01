@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S053","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S053","kind":"report","commit":"3c961b73fbddf0da44b77278f526aa0736c5c2cc","disposition":"candidate"}
 -->
 
 Step ID and title: S053 — Generate the root UI export region.

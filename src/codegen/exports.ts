@@ -88,3 +88,43 @@ export function patchExportRegion(
       source.slice(region.contentEnd),
   );
 }
+
+/**
+ * Whether a compound barrel should be generated for an item. A simple
+ * (single-part) item stays a flat file and must not grow an unnecessary parent
+ * `index.ts`.
+ */
+export function shouldGenerateCompoundBarrel(
+  parts: readonly ExportDeclaration[],
+): boolean {
+  return parts.length > 1;
+}
+
+/**
+ * Render a compound item's own barrel from its declared part exports. Targets
+ * are direct sibling files, never the root UI barrel, so no import cycle is
+ * introduced.
+ */
+export function renderCompoundBarrel(
+  parts: readonly ExportDeclaration[],
+): string {
+  return renderExportLines(parts);
+}
+
+/**
+ * Find import/export specifiers that reference the root UI barrel. Generated
+ * sources must use direct sibling imports; a root-barrel reference is reported
+ * so the caller can fail before writing.
+ */
+export function findRootBarrelImports(
+  source: string,
+  rootBarrelSpecifiers: ReadonlySet<string>,
+): readonly string[] {
+  const offenders = new Set<string>();
+  const pattern = /(?:from\s*|import\s*|require\s*\()\s*["']([^"']+)["']/g;
+  for (const match of source.matchAll(pattern)) {
+    const specifier = match[1] as string;
+    if (rootBarrelSpecifiers.has(specifier)) offenders.add(specifier);
+  }
+  return [...offenders].sort();
+}
