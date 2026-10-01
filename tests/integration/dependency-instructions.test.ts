@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 
 import {
@@ -10,9 +11,11 @@ import { createTempProject, type TempProject } from "../helpers/project.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 /**
- * S040 tests: instructions match the detected manager and requirements, are
- * safely quoted, separate consumer dependencies from CLI tooling, and report
- * without executing a package manager or changing the tree.
+ * S040 tests (repaired): instructions match the detected manager and
+ * requirements, every operand is POSIX single-quoted, unsafe specs are
+ * rejected, and reporting never executes a package manager or changes the tree.
+ * A controlled shell stub proves the exact literal argv for shell-operator
+ * ranges rather than comparing strings alone.
  */
 
 function codes(result: ModelResult<unknown>): string[] {
@@ -43,8 +46,8 @@ test("the packageManager field selects the instruction manager", (t) => {
   const after = snapshotTree(project.root);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
-  assert.equal(result.value.runtimeCommand, "pnpm add bits-ui@2.19.3");
-  assert.equal(result.value.peerCommand, "pnpm add svelte@5.57.1");
+  assert.equal(result.value.runtimeCommand, "pnpm add 'bits-ui@2.19.3'");
+  assert.equal(result.value.peerCommand, "pnpm add 'svelte@5.57.1'");
   // The CLI's own tooling is never part of the consumer instruction.
   assert.ok(!result.value.runtimeCommand?.includes("typescript"));
   assert.deepEqual(after, before, "reporting must not write");
@@ -64,7 +67,7 @@ test("one unambiguous lockfile family is detected", (t) => {
   const result = render(project, ["bits-ui@2.19.3"], []);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (result.ok)
-    assert.equal(result.value.runtimeCommand, "npm install bits-ui@2.19.3");
+    assert.equal(result.value.runtimeCommand, "npm install 'bits-ui@2.19.3'");
 });
 
 test("yarn lockfile selects yarn", (t) => {
@@ -76,7 +79,7 @@ test("yarn lockfile selects yarn", (t) => {
   const result = render(project, ["bits-ui@2.19.3"], []);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (result.ok)
-    assert.equal(result.value.runtimeCommand, "yarn add bits-ui@2.19.3");
+    assert.equal(result.value.runtimeCommand, "yarn add 'bits-ui@2.19.3'");
 });
 
 test("conflicting lockfiles produce an actionable diagnostic", (t) => {
@@ -91,7 +94,7 @@ test("conflicting lockfiles produce an actionable diagnostic", (t) => {
   assert.deepEqual(codes(result), ["DEPENDENCY_MANAGER_CONFLICTING"]);
 });
 
-test("no manager evidence yields a manual instruction, not a guess", (t) => {
+test("no manager evidence yields null manager and manual guidance", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());
   project.writeFile("package.json", JSON.stringify({ name: "none" }));
@@ -99,10 +102,97 @@ test("no manager evidence yields a manual instruction, not a guess", (t) => {
   const result = render(project, ["bits-ui@2.19.3"], ["svelte@5.57.1"]);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
+  assert.equal(result.value.manager, null);
   assert.equal(result.value.runtimeCommand, null);
   assert.equal(result.value.peerCommand, null);
+  assert.deepEqual(result.value.runtimePackages, ["bits-ui@2.19.3"]);
   assert.match(result.value.manual ?? "", /bits-ui@2\.19\.3/);
   assert.match(result.value.manual ?? "", /svelte@5\.57\.1/);
+});
+
+test("a malformed explicit packageManager is not accepted", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ name: "bad-manager", packageManager: "pnpm@garbage" }),
+  );
+  project.writeFile("package-lock.json", "{}\n");
+
+  const evidence = detectPackageManager(project.root);
+  assert.equal(evidence.ok, true);
+  if (!evidence.ok) return;
+  assert.equal(evidence.value.manager, null);
+  assert.equal(evidence.value.source, "unsupported");
+  const result = render(project, ["bits-ui@2.19.3"], []);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (result.ok) assert.equal(result.value.runtimeCommand, null);
+});
+
+test("a bare packageManager name is not accepted", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ name: "bare-manager", packageManager: "pnpm" }),
+  );
+
+  const evidence = detectPackageManager(project.root);
+  assert.equal(evidence.ok, true);
+  if (!evidence.ok) return;
+  assert.equal(evidence.value.manager, null);
+  assert.equal(evidence.value.source, "unsupported");
+});
+
+test("an unsupported explicit manager does not fall back to a stale lockfile", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ name: "bun", packageManager: "bun@1.2.0" }),
+  );
+  project.writeFile("package-lock.json", "{}\n");
+
+  const evidence = detectPackageManager(project.root);
+  assert.equal(evidence.ok, true);
+  if (!evidence.ok) return;
+  assert.equal(evidence.value.manager, null);
+  assert.equal(evidence.value.source, "unsupported");
+});
+
+test("shell-operator ranges are single-quoted and delivered as one argv", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ packageManager: "pnpm@11.22.0" }),
+  );
+
+  for (const [spec, expected] of [
+    ["svelte@>=5", "svelte@>=5"],
+    ["svelte@^5||^6", "svelte@^5||^6"],
+    ["svelte@*", "svelte@*"],
+  ] as const) {
+    const result = render(project, [spec], []);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (!result.ok || result.value.runtimeCommand === null) return;
+    const rendered = result.value.runtimeCommand;
+    // A harmless test-owned stub captures the exact argv the shell builds.
+    const probe = spawnSync(
+      "/bin/sh",
+      ["-c", `pnpm() { printf "ARG:%s\\n" "$@"; }; ${rendered}`],
+      { cwd: project.root, encoding: "utf8", timeout: 2000 },
+    );
+    assert.equal(probe.status, 0, probe.stderr);
+    assert.equal(probe.stdout, `ARG:add\nARG:${expected}\n`, `${spec} argv`);
+  }
+  // No shell redirection or OR expression created stray files.
+  assert.deepEqual(
+    snapshotTree(project.root)
+      .map((entry) => entry.path)
+      .sort(),
+    ["", "package.json"].sort(),
+  );
 });
 
 test("specs with spaces are single-quoted and unsafe specs are rejected", (t) => {
@@ -122,9 +212,37 @@ test("specs with spaces are single-quoted and unsafe specs are rejected", (t) =>
     );
   }
 
-  const unsafe = render(project, ["bits-ui'; rm -rf /"], []);
-  assert.equal(unsafe.ok, false);
-  assert.deepEqual(codes(unsafe), ["DEPENDENCY_SPEC_UNSAFE"]);
+  for (const unsafe of [
+    "bits-ui'; rm -rf /",
+    "--save-dev",
+    "svelte@not a range",
+    "svelte\u0000x",
+  ]) {
+    const result = render(project, [unsafe], []);
+    assert.equal(result.ok, false, unsafe);
+    assert.deepEqual(codes(result), ["DEPENDENCY_SPEC_UNSAFE"]);
+  }
+});
+
+test("an unestablished shell yields structured operands, not fabricated quoting", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ packageManager: "pnpm@11.22.0" }),
+  );
+
+  const result = renderDependencyInstructions(project.root, {
+    runtime: ["svelte@>=5"],
+    peers: [],
+    shell: "unsupported",
+  });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.manager, "pnpm");
+  assert.equal(result.value.runtimeCommand, null);
+  assert.deepEqual(result.value.runtimePackages, ["svelte@>=5"]);
+  assert.match(result.value.manual ?? "", /svelte@>=5/);
 });
 
 test("reporting never executes a manager or changes the tree", (t) => {

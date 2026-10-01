@@ -7,13 +7,21 @@
  * `node_modules`. Consumer runtime/peer requirements are separated from the
  * CLI's own tooling requirements, which are never installed into the consumer.
  *
+ * Every operand is validated (package name plus npm SemVer range) and encoded
+ * with a proven POSIX single-quote encoding, so `>=`, `||`, `*` and spaces are
+ * always passed as one literal argument rather than shell operators. A shell
+ * that cannot be established (for example Windows `cmd.exe`/PowerShell) is
+ * never quoted for; the caller receives the validated structured operands plus
+ * manual guidance instead.
+ *
  * Manager evidence is the valid `packageManager` field when present; otherwise
- * exactly one recognized lockfile family in the selected package. Unsupported
- * or conflicting evidence returns an actionable manual instruction instead of a
- * guessed executable command.
+ * exactly one recognized lockfile family in the selected package. A malformed or
+ * unsupported explicit `packageManager` yields typed manual guidance, never a
+ * guessed executable or a fallback to a stale lockfile.
  */
-import { lstatSync, readFileSync, type Stats } from "node:fs";
 import path from "node:path";
+
+import { valid, validRange } from "semver";
 
 import {
   fail,
@@ -22,6 +30,7 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
+import { isRegularFile, readJsonObject } from "./io.js";
 
 export const PACKAGE_MANAGERS = ["pnpm", "npm", "yarn"] as const;
 export type PackageManager = (typeof PACKAGE_MANAGERS)[number];
@@ -34,66 +43,96 @@ export const LOCKFILE_MANAGERS = [
 
 export interface ManagerEvidence {
   readonly manager: PackageManager | null;
-  readonly source: "packageManager" | "lockfile" | "none";
+  readonly source: "packageManager" | "lockfile" | "none" | "unsupported";
+  /** Human-readable reason when the explicit evidence is unusable. */
+  readonly reason: string | null;
 }
 
 export interface DependencyInstruction {
-  readonly manager: PackageManager;
+  readonly manager: PackageManager | null;
   readonly runtimeCommand: string | null;
   readonly peerCommand: string | null;
-  /** Manual guidance when no supported manager could be proven. */
+  /** Validated structured runtime operands (`name@range`). */
+  readonly runtimePackages: readonly string[];
+  /** Validated structured peer operands (`name@range`). */
+  readonly peerPackages: readonly string[];
+  /** Manual guidance when no supported manager/shell could be established. */
   readonly manual: string | null;
-}
-
-function lstatOrNull(abs: string): Stats | null {
-  try {
-    return lstatSync(abs);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
-    throw error;
-  }
-}
-
-function isRegularFile(abs: string): boolean {
-  const stats = lstatOrNull(abs);
-  return stats !== null && stats.isFile();
 }
 
 function isManager(value: string): value is PackageManager {
   return (PACKAGE_MANAGERS as readonly string[]).includes(value);
 }
 
-/** Read the `packageManager` field from a manifest, if it names a supported one. */
-function manifestManager(root: string): PackageManager | null {
-  const manifestAbs = path.join(root, "package.json");
-  if (!isRegularFile(manifestAbs)) return null;
-  try {
-    const parsed: unknown = JSON.parse(readFileSync(manifestAbs, "utf8"));
-    const field =
-      typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
-        ? (parsed as Record<string, unknown>)["packageManager"]
-        : undefined;
-    if (typeof field !== "string") return null;
-    const name = field.split("@")[0];
-    return isManager(name) ? name : null;
-  } catch {
-    return null;
+/**
+ * Validate an explicit `packageManager` field. The npm spec requires
+ * `name@version`; a missing/invalid version or an unsupported manager is
+ * reported rather than accepted or silently ignored.
+ */
+function explicitManager(value: unknown): ManagerEvidence {
+  if (typeof value !== "string") {
+    return {
+      manager: null,
+      source: "unsupported",
+      reason: "the packageManager field is not a string",
+    };
   }
+  const at = value.indexOf("@", 1);
+  if (at <= 0 || at === value.length - 1) {
+    return {
+      manager: null,
+      source: "unsupported",
+      reason: `the packageManager field ${JSON.stringify(value)} is not of the form name@version`,
+    };
+  }
+  const name = value.slice(0, at);
+  const version = value.slice(at + 1);
+  if (valid(version) === null) {
+    return {
+      manager: null,
+      source: "unsupported",
+      reason: `the packageManager version ${JSON.stringify(version)} is not a valid SemVer version`,
+    };
+  }
+  if (!isManager(name)) {
+    return {
+      manager: null,
+      source: "unsupported",
+      reason: `the package manager ${JSON.stringify(name)} is not supported (pnpm, npm or yarn)`,
+    };
+  }
+  return { manager: name, source: "packageManager", reason: null };
 }
 
-/** Proof that reads the packageManager field without a manifest write. */
+/** Detect the selected package manager from explicit or lockfile evidence. */
 export function detectPackageManager(
   root: string,
 ): ModelResult<ManagerEvidence> {
-  const declared = manifestManager(root);
-  if (declared) return ok({ manager: declared, source: "packageManager" });
+  const manifest = readJsonObject(path.join(root, "package.json"));
+  if (manifest.kind === "unreadable") {
+    return fail([
+      issue(
+        "DEPENDENCY_MANIFEST_UNREADABLE",
+        `package.json could not be read (${manifest.code})`,
+        "package.json",
+      ),
+    ]);
+  }
+  if (manifest.kind === "value" && "packageManager" in manifest.value) {
+    const evidence = explicitManager(manifest.value["packageManager"]);
+    return ok(evidence);
+  }
 
   const found = LOCKFILE_MANAGERS.filter((entry) =>
     isRegularFile(path.join(root, entry.file)),
   ).map((entry) => entry.manager);
   const unique = [...new Set(found)];
   if (unique.length === 1) {
-    return ok({ manager: unique[0] as PackageManager, source: "lockfile" });
+    return ok({
+      manager: unique[0] as PackageManager,
+      source: "lockfile",
+      reason: null,
+    });
   }
   if (unique.length > 1) {
     return fail([
@@ -104,49 +143,104 @@ export function detectPackageManager(
       ),
     ]);
   }
-  return ok({ manager: null, source: "none" });
+  return ok({ manager: null, source: "none", reason: null });
 }
 
-const SAFE_SPEC = /^[A-Za-z0-9@/._^~<>=|*:+-]+$/;
+const PACKAGE_NAME =
+  /^(?:@[A-Za-z0-9][A-Za-z0-9._-]*\/)?[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
-/** Validate and shell-quote one `name@range` install spec. */
-function quoteSpec(spec: string): string | null {
+type ParsedOperand =
+  | { readonly kind: "ok"; readonly spec: string }
+  | { readonly kind: "invalid"; readonly reason: string };
+
+/**
+ * Parse and validate one `name`/`name@range` operand. A malformed name, an
+ * option-like operand, a control byte or an invalid npm range is rejected.
+ */
+export function parseOperand(spec: string): ParsedOperand {
   // eslint-disable-next-line no-control-regex
-  if (spec.length === 0 || /[\u0000-\u001f\u007f]/.test(spec)) return null;
-  if (SAFE_SPEC.test(spec)) return spec;
-  if (spec.includes("'")) return null;
+  if (spec.length === 0 || /[\u0000-\u001f\u007f]/.test(spec)) {
+    return { kind: "invalid", reason: "empty or contains a control byte" };
+  }
+  if (spec.startsWith("-")) {
+    return {
+      kind: "invalid",
+      reason: "looks like an option rather than a package",
+    };
+  }
+  const at = spec.indexOf("@", 1);
+  const name = at === -1 ? spec : spec.slice(0, at);
+  const range = at === -1 ? null : spec.slice(at + 1);
+  if (!PACKAGE_NAME.test(name)) {
+    return {
+      kind: "invalid",
+      reason: `invalid package name ${JSON.stringify(name)}`,
+    };
+  }
+  if (range !== null && validRange(range) === null) {
+    return {
+      kind: "invalid",
+      reason: `invalid npm range ${JSON.stringify(range)} for ${JSON.stringify(name)}`,
+    };
+  }
+  return { kind: "ok", spec };
+}
+
+/** Proven POSIX single-quote encoding (validated specs contain no quote). */
+function posixQuote(spec: string): string {
   return `'${spec}'`;
 }
 
 function commandFor(
   manager: PackageManager,
   specs: readonly string[],
-  dev: boolean,
 ): string | null {
-  const quoted: string[] = [];
-  for (const spec of specs) {
-    const value = quoteSpec(spec);
-    if (value === null) return null;
-    quoted.push(value);
-  }
-  if (quoted.length === 0) return null;
-  const suffix = quoted.join(" ");
+  if (specs.length === 0) return null;
+  const suffix = specs.map(posixQuote).join(" ");
   switch (manager) {
     case "pnpm":
-      return `pnpm add${dev ? " -D" : ""} ${suffix}`;
+      return `pnpm add ${suffix}`;
     case "npm":
-      return `npm install${dev ? " -D" : ""} ${suffix}`;
+      return `npm install ${suffix}`;
     case "yarn":
-      return `yarn add${dev ? " -D" : ""} ${suffix}`;
+      return `yarn add ${suffix}`;
   }
 }
 
 export interface DependencyInstructionRequest {
-  /** Consumer runtime dependency specs (`name@range`). */
+  /** Consumer runtime dependency specs (`name`/`name@range`). */
   readonly runtime: readonly string[];
-  /** Consumer peer dependency specs (`name@range`). */
+  /** Consumer peer dependency specs (`name`/`name@range`). */
   readonly peers: readonly string[];
+  /** Established shell; defaults to POSIX on non-Windows hosts. */
+  readonly shell?: "posix" | "unsupported";
 }
+
+function validateAll(specs: readonly string[]): {
+  readonly specs: readonly string[];
+  readonly issues: readonly ModelIssue[];
+} {
+  const validated: string[] = [];
+  const issues: ModelIssue[] = [];
+  for (const spec of specs) {
+    const parsed = parseOperand(spec);
+    if (parsed.kind === "invalid") {
+      issues.push(
+        issue(
+          "DEPENDENCY_SPEC_UNSAFE",
+          `dependency operand ${JSON.stringify(spec)} cannot be rendered safely: ${parsed.reason}`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+    validated.push(parsed.spec);
+  }
+  return { specs: validated, issues };
+}
+
+const TOOLING_NOTE =
+  "Do not install the CLI's tooling dependencies into the consumer.";
 
 /**
  * Render the explicit installation instructions for the selected package.
@@ -159,44 +253,54 @@ export function renderDependencyInstructions(
   const evidence = detectPackageManager(root);
   if (!evidence.ok) return evidence;
   const manager = evidence.value.manager;
-  const issues: ModelIssue[] = [];
+
+  const runtime = validateAll(request.runtime);
+  const peers = validateAll(request.peers);
+  const issues = [...runtime.issues, ...peers.issues];
+  if (issues.length > 0) return fail(issues);
+
+  const shell =
+    request.shell ?? (process.platform === "win32" ? "unsupported" : "posix");
+  const manualFor = (lead: string): string => {
+    const runtimeList = runtime.specs.join(" ") || "none";
+    const peerList = peers.specs.join(" ") || "none";
+    return `${lead} Install the consumer runtime dependencies manually: ${runtimeList}. Consumer peers: ${peerList}. ${TOOLING_NOTE}`;
+  };
 
   if (manager === null) {
-    const all = [...request.runtime, ...request.peers];
+    const lead =
+      evidence.value.source === "unsupported"
+        ? `${evidence.value.reason}.`
+        : "No supported package manager was proven for this package.";
     return ok({
-      manager: "npm",
+      manager: null,
       runtimeCommand: null,
       peerCommand: null,
-      manual: `No supported package manager was proven for this package. Install the required consumer dependencies manually: ${all.join(", ") || "none"}. Do not install the CLI's tooling dependencies into the consumer.`,
+      runtimePackages: runtime.specs,
+      peerPackages: peers.specs,
+      manual: manualFor(lead),
     });
   }
 
-  const runtimeCommand = commandFor(manager, request.runtime, false);
-  const peerCommand = commandFor(manager, request.peers, false);
-  if (request.runtime.length > 0 && runtimeCommand === null) {
-    issues.push(
-      issue(
-        "DEPENDENCY_SPEC_UNSAFE",
-        "a runtime dependency spec contains unsupported characters and cannot be rendered safely",
-        "package.json",
+  if (shell === "unsupported") {
+    return ok({
+      manager,
+      runtimeCommand: null,
+      peerCommand: null,
+      runtimePackages: runtime.specs,
+      peerPackages: peers.specs,
+      manual: manualFor(
+        `The shell could not be established, so no command is quoted for it; run the ${manager} command yourself.`,
       ),
-    );
+    });
   }
-  if (request.peers.length > 0 && peerCommand === null) {
-    issues.push(
-      issue(
-        "DEPENDENCY_SPEC_UNSAFE",
-        "a peer dependency spec contains unsupported characters and cannot be rendered safely",
-        "package.json",
-      ),
-    );
-  }
-  if (issues.length > 0) return fail(issues);
 
   return ok({
     manager,
-    runtimeCommand,
-    peerCommand,
+    runtimeCommand: commandFor(manager, runtime.specs),
+    peerCommand: commandFor(manager, peers.specs),
+    runtimePackages: runtime.specs,
+    peerPackages: peers.specs,
     manual: null,
   });
 }
