@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S033","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S033","kind":"report","commit":"ab3e9c5de3d6c0642427cfda4dee00e11a1163f8","disposition":"candidate"}
 -->
 
 Step ID and title: S033 — Validate lexical logical paths.
