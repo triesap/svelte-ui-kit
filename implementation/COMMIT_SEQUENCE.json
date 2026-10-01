@@ -733,7 +733,7 @@
       "sequence": "RCLD-03",
       "dependsOn": "S055",
       "requirements": ["R05", "R17", "R23", "R32", "R33", "R34"],
-      "status": "not_started",
+      "status": "committed_pending_review",
       "completion": null
     },
     {

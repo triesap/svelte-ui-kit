@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S056","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S056","kind":"report","commit":"b5c7f65682b380a85bcf63ef7f3999008c881093","disposition":"candidate"}
 -->
 
 Step ID and title: S056 — Patch ordered stylesheet imports minimally.
