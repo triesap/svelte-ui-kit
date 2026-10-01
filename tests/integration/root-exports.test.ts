@@ -16,16 +16,25 @@ import {
 const DECLARATIONS: ExportDeclaration[] = [
   { name: "Button", target: "./button.svelte", kind: "value" },
   { name: "Card", target: "./card.svelte", kind: "value" },
-  { name: "ButtonProps", target: "./button.svelte", kind: "type" },
+  { name: "ButtonProps", target: "./button.types.ts", kind: "type" },
 ];
 
 test("rendered exports use exact declared names and direct targets", () => {
   const lines = renderExportLines(DECLARATIONS);
   assert.equal(
     lines,
-    'export { Button } from "./button.svelte";\n' +
-      'export type { ButtonProps } from "./button.svelte";\n' +
-      'export { Card } from "./card.svelte";\n',
+    'export { default as Button } from "./button.svelte";\n' +
+      'export type { ButtonProps } from "./button.types.ts";\n' +
+      'export { default as Card } from "./card.svelte";\n',
+  );
+});
+
+test("a plain TypeScript value target keeps its named export", () => {
+  assert.equal(
+    renderExportLines([
+      { name: "helper", target: "./helper.ts", kind: "value" },
+    ]),
+    'export { helper } from "./helper.ts";\n',
   );
 });
 
@@ -35,7 +44,11 @@ test("a marker-free barrel receives a minimal managed region", () => {
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
   assert.ok(result.value.startsWith(source), "application bytes preserved");
-  assert.ok(result.value.includes('export { Button } from "./button.svelte";'));
+  assert.ok(
+    result.value.includes(
+      'export { default as Button } from "./button.svelte";',
+    ),
+  );
 });
 
 test("patching the managed region is idempotent", () => {

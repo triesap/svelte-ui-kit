@@ -29,11 +29,25 @@ test("simple and compound items produce different shapes", () => {
   assert.equal(shouldGenerateCompoundBarrel([]), false);
 });
 
+/**
+ * RCLD03-R2-3: a flat component plus its type export is not a compound item,
+ * even though more than one export declaration is present.
+ */
+test("a flat component plus a type export is not compound", () => {
+  assert.equal(
+    shouldGenerateCompoundBarrel([
+      { name: "Button", target: "./button.svelte", kind: "value" },
+      { name: "ButtonProps", target: "./button.types.ts", kind: "type" },
+    ]),
+    false,
+  );
+});
+
 test("a compound barrel re-exports its parts with direct sibling imports", () => {
   assert.equal(
     renderCompoundBarrel(COMPOUND),
-    'export { Root } from "./root.svelte";\n' +
-      'export { Trigger } from "./trigger.svelte";\n',
+    'export { default as Root } from "./root.svelte";\n' +
+      'export { default as Trigger } from "./trigger.svelte";\n',
   );
 });
 

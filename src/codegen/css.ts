@@ -31,9 +31,13 @@ export function compareManagedBlockIds(left: string, right: string): number {
 }
 
 /**
- * Compose `existing` with the desired block bodies. Existing blocks keep their
- * position and unmanaged neighbours; a desired block that is not present is
- * appended in canonical order.
+ * Compose `existing` with the desired block bodies. Managed spans are emitted
+ * in canonical order (the `tokens` foundation layer first, then a stable
+ * non-token order), so a newly introduced `tokens` block or a previously wrong
+ * order is corrected. Each managed block keeps its original marker bytes when
+ * its body is unchanged, so a satisfied composition is byte-identical. The
+ * leading/trailing unmanaged regions stay at the ends and every interleaved
+ * application region is copied byte-for-byte next to its original block.
  */
 export function composeManagedCss(
   existing: string,
@@ -43,37 +47,52 @@ export function composeManagedCss(
   if (!parsed.ok) return parsed;
   const managed = parsed.value;
   const desiredById = new Map(desired.map((block) => [block.id, block.body]));
-  const existingIds = new Set(managed.blocks.map((block) => block.id));
+  const existingById = new Map(
+    managed.blocks.map((block, index) => [block.id, { block, index }]),
+  );
 
-  let output = "";
-  for (let index = 0; index < managed.blocks.length; index += 1) {
-    const region = managed.unmanaged[index];
-    const block = managed.blocks[index];
-    if (region === undefined || block === undefined) {
-      return fail([
-        {
-          code: "CSS_COMPOSE_INCONSISTENT",
-          message: "the parsed managed regions are internally inconsistent",
-        },
-      ]);
-    }
-    output += existing.slice(region.start, region.end);
-    const body =
-      desiredById.get(block.id) ??
-      existing.slice(block.contentStart, block.contentEnd);
-    output += renderManagedBlock(block.id, body);
-  }
+  const leading = managed.unmanaged[0];
   const trailing = managed.unmanaged[managed.blocks.length];
-  if (trailing !== undefined) {
-    output += existing.slice(trailing.start, trailing.end);
+  if (leading === undefined || trailing === undefined) {
+    return fail([
+      {
+        code: "CSS_COMPOSE_INCONSISTENT",
+        message: "the parsed managed regions are internally inconsistent",
+      },
+    ]);
   }
 
-  const newIds = desired
-    .map((block) => block.id)
-    .filter((id) => !existingIds.has(id))
-    .sort(compareManagedBlockIds);
-  for (const id of newIds) {
-    output += renderManagedBlock(id, desiredById.get(id) as string);
+  // The unmanaged region immediately after an existing block, except the final
+  // block whose following region is the global trailing region.
+  const followingFor = (index: number): string => {
+    if (index === managed.blocks.length - 1) return "";
+    const region = managed.unmanaged[index + 1];
+    return region === undefined ? "" : existing.slice(region.start, region.end);
+  };
+
+  const ids = [
+    ...new Set([...existingById.keys(), ...desiredById.keys()]),
+  ].sort(compareManagedBlockIds);
+
+  let output = existing.slice(leading.start, leading.end);
+  for (const id of ids) {
+    const existingEntry = existingById.get(id);
+    const desiredBody = desiredById.get(id);
+    if (existingEntry === undefined) {
+      output += renderManagedBlock(id, desiredBody as string);
+      continue;
+    }
+    const { block, index } = existingEntry;
+    const existingBody = existing.slice(block.contentStart, block.contentEnd);
+    if (desiredBody === undefined || desiredBody === existingBody) {
+      // Preserve the original marker bytes exactly; a satisfied block must not
+      // be canonicalized just because it was re-read.
+      output += existing.slice(block.startOffset, block.endOffset);
+    } else {
+      output += renderManagedBlock(id, desiredBody);
+    }
+    output += followingFor(index);
   }
+  output += existing.slice(trailing.start, trailing.end);
   return ok(output);
 }

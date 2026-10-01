@@ -7,11 +7,12 @@
  *   // svelte-ui-kit:start exports
  *   // svelte-ui-kit:end exports
  *
- * The exact marker syntax is distinct from the CSS comments and is only
- * recognized when the whole line is the marker (no leading indentation). The
- * pinned TypeScript compiler parses the file so existing application export
- * declarations can be inspected for collisions; marker-like strings or template
- * contents never create a region.
+ * Markers are recognized from the actual TypeScript scanner tokens, so a
+ * marker-like sequence inside a string, template literal or block comment never
+ * creates a region. The pinned TypeScript compiler also parses the file, so a
+ * source with a syntax error fails closed and a malformed reserved comment is a
+ * typed failure. Existing application export declarations (including
+ * destructured and aliased names) are inspected for collisions.
  */
 import ts from "typescript";
 
@@ -19,6 +20,7 @@ import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 
 export const EXPORT_START = "// svelte-ui-kit:start exports";
 export const EXPORT_END = "// svelte-ui-kit:end exports";
+const RESERVED_PREFIX = "// svelte-ui-kit:";
 
 export interface ExportRegion {
   /** Offset of the first character of the start marker line. */
@@ -27,7 +29,7 @@ export interface ExportRegion {
   readonly contentStart: number;
   /** Offset of the first character of the end marker line. */
   readonly contentEnd: number;
-  /** Offset just past the end marker line. */
+  /** Offset just past the end marker line (including its newline). */
   readonly endOffset: number;
 }
 
@@ -45,34 +47,98 @@ export interface ExportRegionParse {
   readonly hasWildcardReexport: boolean;
 }
 
-interface LineSpan {
-  readonly text: string;
+function scriptKindFor(fileName: string): ts.ScriptKind {
+  if (
+    fileName.endsWith(".ts") ||
+    fileName.endsWith(".mts") ||
+    fileName.endsWith(".cts")
+  ) {
+    return ts.ScriptKind.TS;
+  }
+  return ts.ScriptKind.JS;
+}
+
+function parseDiagnostics(sourceFile: ts.SourceFile): readonly ts.Diagnostic[] {
+  const internal = sourceFile as ts.SourceFile & {
+    parseDiagnostics?: readonly ts.Diagnostic[];
+  };
+  return internal.parseDiagnostics ?? [];
+}
+
+/** Index just past the newline that terminates the line starting at `pos`. */
+function lineEnd(source: string, pos: number): number {
+  const newline = source.indexOf("\n", pos);
+  return newline === -1 ? source.length : newline + 1;
+}
+
+interface MarkerSpan {
   readonly start: number;
-  readonly end: number;
+  readonly contentStart: number;
+  readonly contentEnd: number;
+  readonly endOffset: number;
 }
 
-function lineSpans(source: string): LineSpan[] {
-  const lines: LineSpan[] = [];
-  let start = 0;
-  for (let index = 0; index <= source.length; index += 1) {
-    if (index === source.length || source[index] === "\n") {
-      const end = index;
-      const raw = source.slice(start, end);
-      lines.push({ text: raw.replace(/\r$/, ""), start, end });
-      start = index + 1;
+/**
+ * Locate the managed region from standalone column-zero scanner comments. A
+ * reserved comment that is not a valid start/end marker is a typed failure.
+ */
+function markerRegion(
+  fileName: string,
+  source: string,
+): ModelResult<ExportRegion | null> {
+  const sourceFile = ts.createSourceFile(
+    fileName,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    scriptKindFor(fileName),
+  );
+  const diagnostics = parseDiagnostics(sourceFile);
+  if (diagnostics.length > 0) {
+    const first = diagnostics[0];
+    const detail =
+      first === undefined
+        ? "a syntax error"
+        : ts.flattenDiagnosticMessageText(first.messageText, " ");
+    return fail([
+      issue(
+        "EXPORT_PARSE_INVALID",
+        `the export source has a static parse error: ${detail}`,
+      ),
+    ]);
+  }
+
+  const starts: number[] = [];
+  const ends: number[] = [];
+  const scanner = ts.createScanner(
+    ts.ScriptTarget.Latest,
+    false,
+    ts.LanguageVariant.Standard,
+    source,
+  );
+  let token = scanner.scan();
+  while (token !== ts.SyntaxKind.EndOfFileToken) {
+    if (token === ts.SyntaxKind.SingleLineCommentTrivia) {
+      const pos = scanner.getTokenPos();
+      const text = scanner.getTokenText();
+      const atLineStart = pos === 0 || source[pos - 1] === "\n";
+      const trimmed = text.replace(/\r$/, "").trimEnd();
+      if (atLineStart && trimmed.startsWith(RESERVED_PREFIX)) {
+        if (trimmed === EXPORT_START) starts.push(pos);
+        else if (trimmed === EXPORT_END) ends.push(pos);
+        else {
+          return fail([
+            issue(
+              "EXPORT_MARKER_MALFORMED",
+              `reserved marker comment ${JSON.stringify(trimmed)} is not a valid start/end marker`,
+            ),
+          ]);
+        }
+      }
     }
+    token = scanner.scan();
   }
-  return lines;
-}
 
-function markerRegion(source: string): ModelResult<ExportRegion | null> {
-  const lines = lineSpans(source);
-  const starts: LineSpan[] = [];
-  const ends: LineSpan[] = [];
-  for (const line of lines) {
-    if (line.text.trimEnd() === EXPORT_START) starts.push(line);
-    if (line.text.trimEnd() === EXPORT_END) ends.push(line);
-  }
   if (starts.length === 0 && ends.length === 0) return ok(null);
   if (starts.length !== 1 || ends.length !== 1) {
     return fail([
@@ -82,23 +148,43 @@ function markerRegion(source: string): ModelResult<ExportRegion | null> {
       ),
     ]);
   }
-  const startLine = starts[0] as LineSpan;
-  const endLine = ends[0] as LineSpan;
-  if (endLine.start <= startLine.end) {
+  const startPos = starts[0] as number;
+  const endPos = ends[0] as number;
+  if (endPos <= startPos) {
     return fail([
       issue(
         "EXPORT_REGION_ORDER",
         "the export end marker appears before the start marker",
-        undefined,
       ),
     ]);
   }
+  const region: MarkerSpan = {
+    start: startPos,
+    contentStart: lineEnd(source, startPos),
+    contentEnd: endPos,
+    endOffset: lineEnd(source, endPos),
+  };
   return ok({
-    startOffset: startLine.start,
-    contentStart: startLine.end + 1,
-    contentEnd: endLine.start,
-    endOffset: endLine.end + 1,
+    startOffset: region.start,
+    contentStart: region.contentStart,
+    contentEnd: region.contentEnd,
+    endOffset: region.endOffset,
   });
+}
+
+/** Collect every identifier bound by a binding name (including destructuring). */
+function collectBindingNames(
+  name: ts.BindingName,
+  push: (name: string) => void,
+): void {
+  if (ts.isIdentifier(name)) {
+    push(name.text);
+    return;
+  }
+  for (const element of name.elements) {
+    if (ts.isOmittedExpression(element)) continue;
+    collectBindingNames(element.name, push);
+  }
 }
 
 /** Collect application export names from a TypeScript/JavaScript source file. */
@@ -111,7 +197,7 @@ function collectAppExports(
     source,
     ts.ScriptTarget.Latest,
     true,
-    fileName.endsWith(".ts") ? ts.ScriptKind.TS : ts.ScriptKind.JS,
+    scriptKindFor(fileName),
   );
   const exports: AppExport[] = [];
   let wildcard = false;
@@ -163,9 +249,7 @@ function collectAppExports(
     }
     if (ts.isVariableStatement(statement)) {
       for (const declaration of statement.declarationList.declarations) {
-        if (ts.isIdentifier(declaration.name)) {
-          push(declaration.name.text, "value");
-        }
+        collectBindingNames(declaration.name, (name) => push(name, "value"));
       }
     }
   }
@@ -185,14 +269,14 @@ function hasExportModifier(statement: ts.Statement): boolean {
 
 /**
  * Parse the managed export region and the application's own export
- * declarations. Returns a typed failure for duplicate, misordered or ambiguous
- * marker structure.
+ * declarations. Returns a typed failure for a syntax error, a malformed
+ * reserved comment or duplicate/misordered marker structure.
  */
 export function parseExportRegion(
   fileName: string,
   source: string,
 ): ModelResult<ExportRegionParse> {
-  const region = markerRegion(source);
+  const region = markerRegion(fileName, source);
   if (!region.ok) return region;
   // Application exports are collected outside the managed region only, so a
   // previously generated region is never mistaken for application ownership.

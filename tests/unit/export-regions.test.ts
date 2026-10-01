@@ -113,3 +113,65 @@ test("generated names that collide with app exports are reported", () => {
   );
   assert.deepEqual(collisions, ["Button", "Local"]);
 });
+
+/**
+ * RCLD03-R2-3: markers inside a template literal or block comment are not a
+ * managed region and application bytes stay identifiable.
+ */
+test("markers inside a template or block comment do not create a region", () => {
+  const template =
+    "const text = `\n" + EXPORT_START + "\nAPP TEXT\n" + EXPORT_END + "\n`;\n";
+  const block =
+    "/*\n" + EXPORT_START + "\nAPP COMMENT\n" + EXPORT_END + "\n*/\n";
+  for (const source of [template, block]) {
+    const result = parseExportRegion("index.ts", source);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (!result.ok) continue;
+    assert.equal(result.value.region, null);
+  }
+});
+
+/**
+ * RCLD03-R2-3: a malformed reserved marker and a syntax error fail closed.
+ */
+test("a malformed reserved marker and a syntax error fail closed", () => {
+  assert.deepEqual(
+    codes(parseExportRegion("index.ts", "// svelte-ui-kit:start typo\n")),
+    ["EXPORT_MARKER_MALFORMED"],
+  );
+  assert.deepEqual(codes(parseExportRegion("index.ts", "export const = ;\n")), [
+    "EXPORT_PARSE_INVALID",
+  ]);
+});
+
+/**
+ * RCLD03-R2-3: destructured application bindings are collected for collision
+ * checks.
+ */
+test("destructured application exports are collected", () => {
+  const result = parseExportRegion(
+    "index.ts",
+    "export const { Button, Card: Renamed } = source;\n",
+  );
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  const names = result.value.appExports.map((entry) => entry.name).sort();
+  assert.deepEqual(names, ["Button", "Renamed"]);
+  assert.deepEqual(
+    findExportCollisions(result.value.appExports, [
+      { name: "Button", kind: "value" },
+    ]),
+    ["Button"],
+  );
+});
+
+/**
+ * RCLD03-R2-3: a wildcard re-export is reported so generated names are not
+ * claimed collision-free.
+ */
+test("a wildcard re-export is reported", () => {
+  const result = parseExportRegion("index.ts", 'export * from "./other";\n');
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.hasWildcardReexport, true);
+});

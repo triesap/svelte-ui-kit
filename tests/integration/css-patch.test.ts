@@ -89,3 +89,56 @@ test("a malformed existing stylesheet fails without producing output", () => {
   ]);
   assert.equal(result.ok, false);
 });
+
+/**
+ * RCLD03-R2-3: a newly introduced tokens block is ordered before a dependent
+ * block even when the dependent already exists.
+ */
+test("a new tokens block is ordered before a dependent block", () => {
+  const button =
+    "/* svelte-ui-kit:start button */\nB\n/* svelte-ui-kit:end button */";
+  const result = composeManagedCss(button, [
+    { id: "button", body: "\nB\n" },
+    { id: "tokens", body: "\nT\n" },
+  ]);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.ok(
+    result.value.indexOf("start tokens") < result.value.indexOf("start button"),
+    result.value,
+  );
+});
+
+/**
+ * RCLD03-R2-3: a previously wrong block order is corrected on the next
+ * composition.
+ */
+test("a previously wrong tokens order is corrected", () => {
+  const existing =
+    "/* svelte-ui-kit:start button */\nB\n/* svelte-ui-kit:end button */" +
+    "/* svelte-ui-kit:start tokens */\nT\n/* svelte-ui-kit:end tokens */";
+  const result = composeManagedCss(existing, [
+    { id: "tokens", body: "\nT\n" },
+    { id: "button", body: "\nB\n" },
+  ]);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.ok(
+    result.value.indexOf("start tokens") < result.value.indexOf("start button"),
+    result.value,
+  );
+});
+
+/**
+ * RCLD03-R2-3: a satisfied block keeps its exact (noncanonical) marker bytes.
+ */
+test("a satisfied block keeps its noncanonical marker bytes", () => {
+  const noncanonical =
+    "/*  svelte-ui-kit:start tokens  */\r\n:root{}\r\n/*  svelte-ui-kit:end tokens  */";
+  const result = composeManagedCss(noncanonical, [
+    { id: "tokens", body: "\r\n:root{}\r\n" },
+  ]);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value, noncanonical);
+});

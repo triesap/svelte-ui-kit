@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { parse } from "svelte/compiler";
 
 import { patchLayoutImports } from "../../src/codegen/svelte.js";
 import type { ModelResult } from "../../src/registry/errors.js";
@@ -88,4 +89,78 @@ test("an out-of-order existing import set is a safe conflict", () => {
   const result = patchLayoutImports(source, IMPORTS);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(codes(result), ["LAYOUT_IMPORT_ORDER"]);
+});
+
+function astInstanceImports(source: string): string[] {
+  const ast = parse(source, { modern: true }) as {
+    instance?: {
+      content: { body: { type: string; source: { value: string } }[] };
+    };
+  };
+  return (ast.instance?.content.body ?? [])
+    .filter((node) => node.type === "ImportDeclaration")
+    .map((node) => node.source.value);
+}
+
+/**
+ * RCLD03-R2-3: an app-only import is reordered into the kit/themes/app order,
+ * and the resulting AST has exactly the approved imports.
+ */
+test("an app-only import is completed in the correct order", () => {
+  const source =
+    '<script>\nimport "$lib/styles/app.css";\n</script>\n<main />\n';
+  const result = patchLayoutImports(source, IMPORTS);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.deepEqual(astInstanceImports(result.value), [
+    "$lib/styles/kit.css",
+    "$lib/styles/themes.css",
+    "$lib/styles/app.css",
+  ]);
+});
+
+/**
+ * RCLD03-R2-3: an inline one-line import list is not duplicated.
+ */
+test("an inline one-line import list is not duplicated", () => {
+  const source =
+    '<script>import "$lib/styles/kit.css"; import "$lib/styles/themes.css"; import "$lib/styles/app.css";</script>\n';
+  const result = patchLayoutImports(source, IMPORTS);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.deepEqual(astInstanceImports(result.value), [
+    "$lib/styles/kit.css",
+    "$lib/styles/themes.css",
+    "$lib/styles/app.css",
+  ]);
+});
+
+/**
+ * RCLD03-R2-3: import-like text inside a comment or template does not
+ * suppress a real insertion.
+ */
+test("import-like text in a comment or template does not suppress insertion", () => {
+  const source =
+    '<script>\n/*\nimport "$lib/styles/kit.css";\n*/\nlet t = `\nimport "$lib/styles/app.css";\n`;\n</script>\n';
+  const result = patchLayoutImports(source, IMPORTS);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.deepEqual(astInstanceImports(result.value), [
+    "$lib/styles/kit.css",
+    "$lib/styles/themes.css",
+    "$lib/styles/app.css",
+  ]);
+  assert.ok(result.value.includes("/*"));
+});
+
+/**
+ * RCLD03-R2-3: an approved import that lives in the module script is a precise
+ * conflict, not a silent duplicate.
+ */
+test("an approved import in the module script is a conflict", () => {
+  const source =
+    '<script module>\nimport "$lib/styles/kit.css";\n</script>\n<slot />\n';
+  const result = patchLayoutImports(source, IMPORTS);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(codes(result), ["LAYOUT_IMPORT_MODULE_CONFLICT"]);
 });
