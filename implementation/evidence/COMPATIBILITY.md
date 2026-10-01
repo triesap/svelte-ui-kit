@@ -922,3 +922,48 @@ Verified against the pinned `bits-ui@2.19.3` metadata
 The repaired direct suites are `tests/integration/peer-dependencies.test.ts`
 (10/10) and `tests/integration/dependency-state.test.ts` (14/14). No release
 AC20 waiver is created by this addendum.
+
+## RCLD-03 independent review 3 qualification (2026-10-01)
+
+Candidate repair series through S063 at `451c13a` on Node `24.21.0` /
+`pnpm 11.22.0`. This addendum reconciles the reports and this file with the
+actual source and reruns; it supersedes the review-2 qualification prose, not
+the original criteria.
+
+### Repair dispositions
+
+- RCLD03-R3-1: static `config.kit` alias/CJS-overwrite proof, malformed member
+  classification, unsupported-exclusion manager proof, joint runtime/peer
+  constraint assessment, selected-root canonicalization and root/ancestry
+  observations — implemented and verified.
+- RCLD03-R3-2: unmanaged CSS emitted exactly once in original order, parser-aware
+  template-tail marker scanning, and manifest-authoritative export/layout
+  handling — implemented and verified.
+- RCLD03-R3-3: coherent, replayable initialization with lock publication and
+  preserved installed/customized state; S058–S063 planners (add, cohorts, sync,
+  truthful lineage, retirement, purity) — implemented and verified.
+- RCLD03-R3-4: cumulative evidence reconciliation and this addendum.
+
+### Cumulative lanes (all exit 0, zero skips)
+
+| Lane                                                                                   | Result                                                           |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Frozen strict install (`--frozen-lockfile --strict-peer-dependencies --engine-strict`) | pass                                                             |
+| `format:check` / `lint` / `typecheck`                                                  | pass                                                             |
+| `test:unit`                                                                            | 265 / 265                                                        |
+| `test:harness`                                                                         | 29 / 29                                                          |
+| `test:registry`                                                                        | 38 / 38                                                          |
+| `test:integration`                                                                     | 196 / 196                                                        |
+| `test:cli-bootstrap`                                                                   | 52 / 52                                                          |
+| `test:components`                                                                      | 22 / 22 (strict declaration 17 / 17, two qualified TS2590)       |
+| `test:contracts` / `check:contracts`                                                   | 127 / 127 and 0 errors / 0 warnings                              |
+| `fixture:check`                                                                        | svelte-check 0 errors / 0 warnings                               |
+| `test:fixture`                                                                         | 23 / 23                                                          |
+| `test:browser`                                                                         | 23 / 23 chromium (fault + teardown controls)                     |
+| `actionlint 1.7.12` (checksum-verified)                                                | `actionlint .github/workflows/ci.yml` exit 0                     |
+| Fresh `leptos_ui_kit` reference guard                                                  | fmt exit 0; check exit 0; test 578 passed / 0 failed / 4 ignored |
+
+S033–S063 remain `committed_pending_review`; S064 stays gated by independent
+Codex S063 acceptance. The qualified Bits 2.19.3 declaration exception remains
+fixture-only release AC20 debt. No remote workflow, publication, deployment or
+platform-matrix acceptance is claimed.
