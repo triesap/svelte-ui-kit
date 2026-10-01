@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S050","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S050","kind":"report","commit":"e43e941d885b44eab8e28a7899a038c6f9a480c4","disposition":"candidate"}
 -->
 
 Step ID and title: S050 — Compose stable stylesheet patches.
