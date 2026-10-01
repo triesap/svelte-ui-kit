@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S044","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S044","kind":"report","commit":"a4080db4d5a43f19933e70ed76a62eaf0d5bc606","disposition":"candidate"}
 -->
 
 Step ID and title: S044 — Implement source base/local/incoming classification.
