@@ -36,14 +36,9 @@ import { classifyCssBlocks } from "./css-compare.js";
 import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
 import { parseManagedCss } from "./css-parse.js";
 import { patchExportRegion, type ExportDeclaration } from "./exports.js";
-import type {
-  KitLock,
-  LockCssBlock,
-  LockFileRecord,
-  LockItem,
-  LockOrigin,
-} from "./lock.js";
+import type { KitLock, LockOrigin } from "./lock.js";
 import { parseKitLock } from "./lock.js";
+import { buildLockProjection } from "./lock-projection.js";
 import type { PlannedWrite } from "./plan-init.js";
 import { assembleSourcePlan, type SourcePlan } from "./source-plan.js";
 import { planSourceTargets, type IncomingSource } from "./source-targets.js";
@@ -519,19 +514,27 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       writes.push({ path: config.layoutFile, bytes: utf8(plannedLayout) });
     }
 
-    const built = buildAddLock({
-      config: desiredConfig,
+    const built = buildLockProjection({
+      items: desired.items.map((entry) => ({
+        id: entry.id,
+        version: itemVersion(registry, entry.id),
+        digest: manifestDigest(registry, entry.id),
+        origin: (entry.provenance === "explicit"
+          ? "explicit"
+          : "transitive") as LockOrigin,
+      })),
       desired,
       lock,
-      sourceMeta,
       sourcePlan,
+      sourceMeta,
       cssOutcomes,
-      registry,
       registryVersion: input.registryVersion,
       registryHash: input.registryHash,
+      configHash: hashBytes(utf8(configJson)) as string,
+      toolVersion: INITIAL_TOOL_VERSION,
     });
     const lockPath = joinLogical(config.uiDir, "_kit/kit.lock.json");
-    const validated = parseKitLock(built, lockPath, {
+    const validated = parseKitLock(built.lock, lockPath, {
       stateDir: joinLogical(config.uiDir, "_kit"),
       uiDir: config.uiDir,
       stylesDir: config.stylesDir,
@@ -561,95 +564,4 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     lock: projectedLock,
     diagnostics: diagnostics.sort(),
   });
-}
-
-interface BuildLockInput {
-  readonly config: KitConfig;
-  readonly desired: RequestProjection;
-  readonly lock: KitLock | null;
-  readonly sourceMeta: Map<string, SourceMeta>;
-  readonly sourcePlan: SourcePlan;
-  readonly cssOutcomes: {
-    path: string;
-    blocks: {
-      id: string;
-      owner: string;
-      cohort: string;
-      version: string;
-      baseHash: string;
-    }[];
-  }[];
-  readonly registry: RegistrySnapshot;
-  readonly registryVersion: string;
-  readonly registryHash: string;
-}
-
-function buildAddLock(input: BuildLockInput): KitLock {
-  const items: LockItem[] = input.desired.items.map((entry) => ({
-    id: entry.id,
-    version: itemVersion(input.registry, entry.id),
-    digest: manifestDigest(input.registry, entry.id),
-    origin: (entry.provenance === "explicit"
-      ? "explicit"
-      : "transitive") as LockOrigin,
-  }));
-
-  const files: LockFileRecord[] = [];
-  for (const change of input.sourcePlan.changes) {
-    if (change.disposition === "customized") continue;
-    const meta = input.sourceMeta.get(change.path);
-    if (meta === undefined) continue;
-    files.push({
-      path: change.path,
-      owner: meta.owner,
-      baseHash: change.candidateHash as string,
-      itemVersion: meta.version,
-      cohort: meta.cohort,
-    });
-  }
-  for (const record of input.lock?.files ?? []) {
-    if (files.some((entry) => entry.path === record.path)) continue;
-    files.push(record);
-  }
-
-  const cssBlocks: LockCssBlock[] = [];
-  for (const outcome of input.cssOutcomes) {
-    for (const block of outcome.blocks) {
-      cssBlocks.push({
-        path: outcome.path,
-        owner: block.owner,
-        blockId: block.id,
-        baseHash: block.baseHash,
-        itemVersion: block.version,
-        cohort: block.cohort,
-      });
-    }
-  }
-  for (const record of input.lock?.cssBlocks ?? []) {
-    if (
-      cssBlocks.some(
-        (entry) =>
-          entry.path === record.path && entry.blockId === record.blockId,
-      )
-    ) {
-      continue;
-    }
-    cssBlocks.push(record);
-  }
-
-  const configJson = `${JSON.stringify(input.config, null, 2)}\n`;
-  return {
-    schemaVersion: 1,
-    toolVersion: INITIAL_TOOL_VERSION,
-    registryVersion: input.registryVersion,
-    registryHash: input.registryHash,
-    configHash: hashBytes(utf8(configJson)) as string,
-    requested: input.desired.requested,
-    items,
-    files: files.sort((left, right) =>
-      left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
-    ),
-    cssBlocks,
-    integrations: [],
-  };
 }

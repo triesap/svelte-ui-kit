@@ -20,7 +20,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - Active implementation checkpoint: **none** (repairing pending S033–S057 under independent review 3, then complete S058 through S063).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **32 / 203**. Remaining: **171 / 203**.
-- Committed pending review: **27 / 203**. Authored batch range: **S033–S059**.
+- Committed pending review: **28 / 203**. Authored batch range: **S033–S060**.
 - Completed RCLD sequences: **2 / 11**. Remaining: **9 / 11**.
 - Last safe target commit: `0e5b1852d02e15159f2ee4dd885152230457e119`, branch `master` (independently accepted S013–S032 combined evidence anchor).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
@@ -32,7 +32,8 @@ Keep all repository content standalone and repository-relative. Record this targ
 - S007–S012 reviews: each conventional report/review path records the tested combined candidate, original/repair provenance and independent acceptance. All RCLD-01 review findings are closed; the strict upstream declaration exception remains release AC20 debt.
 - S058 evidence: `implementation/evidence/S058_REPORT.md` records the pure add-request planner candidate at `7a87786571cf3cb5513e86639fd977e1d1d419e9`; independent review pending. Original S058 acceptance criteria apply.
 - S059 evidence: `implementation/evidence/S059_REPORT.md` records the frozen cohort rule candidate at `a1762984ac319f31319370a3ceecff0652287a72`; independent review pending.
-- No checkpoint has been skipped or reordered. S001–S032 are complete; S033–S059 are committed_pending_review with repairs required; S060–S203 remain not_started (144 checkpoints). The current RCLD-03 review 3 dispatch governs corrections and continuation to S063.
+- S060 evidence: `implementation/evidence/S060_REPORT.md` records the full synchronization planner candidate at `8b45bc90038b21b9ab6b789b921b1fa6e217c022`; independent review pending.
+- No checkpoint has been skipped or reordered. S001–S032 are complete; S033–S060 are committed_pending_review with repairs required; S061–S203 remain not_started (143 checkpoints). The current RCLD-03 review 3 dispatch governs corrections and continuation to S063.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. By default every checkpoint after S001 depends on the reviewed, verified, committed predecessor. The explicit owner-authorized batch below permits verified implementation commits pending Codex review to unlock successors only within the currently dispatched sequence; the current RCLD-03 activation prerequisite governs the transition from the completed RCLD-02 batch.
 
@@ -3488,7 +3489,7 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S057 | RCLD-03  | S056       | committed_pending_review | `ba870579ef1c9e862869e4dfe1b6a47f65d4a045` |
 | S058 | RCLD-03  | S057       | committed_pending_review | `7a87786571cf3cb5513e86639fd977e1d1d419e9` |
 | S059 | RCLD-03  | S058       | committed_pending_review | `a1762984ac319f31319370a3ceecff0652287a72` |
-| S060 | RCLD-03  | S059       | not_started              | —                                          |
+| S060 | RCLD-03  | S059       | committed_pending_review | `8b45bc90038b21b9ab6b789b921b1fa6e217c022` |
 | S061 | RCLD-03  | S060       | not_started              | —                                          |
 | S062 | RCLD-03  | S061       | not_started              | —                                          |
 | S063 | RCLD-03  | S062       | not_started              | —                                          |

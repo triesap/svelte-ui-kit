@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S060","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S060","kind":"report","commit":"8b45bc90038b21b9ab6b789b921b1fa6e217c022","disposition":"candidate"}
 -->
 
 Step ID and title: S060 — Build the full synchronization plan.

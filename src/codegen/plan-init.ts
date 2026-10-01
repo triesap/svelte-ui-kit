@@ -383,10 +383,12 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
     registryVersion: input.registryVersion,
     registryHash: input.registryHash,
     configHash,
-    requested: [],
-    items: [],
-    files: [],
-    cssBlocks: [],
+    // Preserve the recorded lineage. Initialization establishes the baseline;
+    // it must never reset an installed/customized lock to empty.
+    requested: existingLock?.requested ?? [],
+    items: existingLock?.items ?? [],
+    files: existingLock?.files ?? [],
+    cssBlocks: existingLock?.cssBlocks ?? [],
     integrations,
   };
 
