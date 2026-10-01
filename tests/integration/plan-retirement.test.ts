@@ -303,3 +303,55 @@ test("application exports are not silently erased", (t) => {
   assert.ok(text.includes("AppThing"), text);
   assert.ok(!text.includes("Card"), text);
 });
+
+test("a CSS retirement finalizes the lock baseline against the applied stylesheet", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  seed(project, "CARD", CARD_BODY);
+  const result = sync(project);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(
+    result.value.executable,
+    true,
+    JSON.stringify(result.value.diagnostics),
+  );
+  const write = result.value.writes.find((entry) => entry.path === KIT_CSS);
+  assert.ok(write);
+  const finalText = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+    write.bytes,
+  );
+  const integration = result.value.lock?.integrations.find(
+    (entry) => entry.kind === "stylesheet" && entry.path === KIT_CSS,
+  );
+  assert.ok(integration);
+  assert.equal(
+    integration.baseline,
+    hashBytes(new TextEncoder().encode(finalText)),
+    "the serialized baseline must describe the final applied stylesheet",
+  );
+  assert.ok(!finalText.includes("svelte-ui-kit:start card"), finalText);
+});
+
+test("a byte-order mark survives a clean retired block removal", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  seed(project, "CARD", CARD_BODY);
+  const existing = readFileSync(path.join(project.root, KIT_CSS), "utf8");
+  project.writeFile(KIT_CSS, `\uFEFF${existing}`);
+  const result = sync(project);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(
+    result.value.executable,
+    true,
+    JSON.stringify(result.value.diagnostics),
+  );
+  const write = result.value.writes.find((entry) => entry.path === KIT_CSS);
+  assert.ok(write);
+  assert.deepEqual(Array.from(write.bytes.slice(0, 3)), [0xef, 0xbb, 0xbf]);
+  const text = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+    write.bytes,
+  );
+  assert.ok(!text.includes("svelte-ui-kit:start card"), text);
+});

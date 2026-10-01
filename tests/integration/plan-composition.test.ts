@@ -127,6 +127,42 @@ function applyWrites(
   }
 }
 
+/**
+ * A test-only applier that enforces the declared operation meaning: `create`
+ * requires an absent target, `update` requires an existing one and `retire`
+ * removes an existing one. A planner that mislabels an operation fails here.
+ */
+function strictApply(
+  project: ReturnType<typeof createTempProject>,
+  writes: readonly {
+    path: string;
+    bytes: Uint8Array;
+    operation?: string;
+  }[],
+): void {
+  for (const write of writes) {
+    const abs = path.join(project.root, write.path);
+    const exists = existsSync(abs);
+    assert.ok(write.operation, `write ${write.path} must declare an operation`);
+    if (write.operation === "retire") {
+      assert.equal(exists, true, `retire target must exist: ${write.path}`);
+      rmSync(abs, { force: true });
+      continue;
+    }
+    if (write.operation === "create") {
+      assert.equal(
+        exists,
+        false,
+        `create target must be absent: ${write.path}`,
+      );
+    } else {
+      assert.equal(exists, true, `update target must exist: ${write.path}`);
+    }
+    mkdirSync(path.dirname(abs), { recursive: true });
+    writeFileSync(abs, write.bytes);
+  }
+}
+
 for (const target of [
   derived.rootExports,
   CONFIG.layoutFile,
@@ -834,4 +870,92 @@ test("a comment outside the managed export region does not block a clean update"
   const text = new TextDecoder().decode(write?.bytes);
   assert.ok(text.includes("RenamedButton"), text);
   assert.ok(text.includes("AppThing"), text);
+});
+
+test("planned operations are truthful across create, update and retire", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const reg = registryOf([
+    componentItem("button", {
+      files: [
+        sourceFile("button.svelte", "<button>button</button>\n", "button"),
+      ],
+      exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
+    }),
+    componentItem("spinner", {
+      files: [sourceFile("spinner.svelte", "<spinner/>\n", "spinner")],
+      exports: [{ name: "Spinner", target: "spinner.svelte", kind: "value" }],
+    }),
+  ]);
+  const spinnerPath = `${derived.rootExportsDir}/spinner.svelte`;
+  const paths = [...targetPaths(), spinnerPath];
+
+  const first = planAdd({
+    registry: reg,
+    config: CONFIG,
+    addedRoots: ["button"],
+    snapshot: snapshotOf(project, paths),
+    lock: null,
+    registryVersion: reg.root.registryVersion,
+    registryHash: reg.root.contentHash,
+  });
+  assert.equal(first.ok, true, JSON.stringify(first));
+  if (!first.ok || !first.value.executable) return;
+  const firstOps = new Map(
+    first.value.writes.map((w) => [w.path, w.operation]),
+  );
+  assert.equal(firstOps.get(`${derived.stateDir}/kit.json`), "create");
+  assert.equal(
+    firstOps.get(`${derived.rootExportsDir}/button.svelte`),
+    "create",
+  );
+  assert.equal(firstOps.get(derived.kitCss), "create");
+  strictApply(project, first.value.writes);
+
+  const second = planAdd({
+    registry: reg,
+    config: { ...CONFIG, requested: ["button"] },
+    addedRoots: ["spinner"],
+    snapshot: snapshotOf(project, paths),
+    lock: first.value.lock,
+    registryVersion: reg.root.registryVersion,
+    registryHash: reg.root.contentHash,
+  });
+  assert.equal(second.ok, true, JSON.stringify(second));
+  if (!second.ok || !second.value.executable) return;
+  const secondOps = new Map(
+    second.value.writes.map((w) => [w.path, w.operation]),
+  );
+  assert.equal(secondOps.get(spinnerPath), "create");
+  assert.equal(secondOps.get(`${derived.stateDir}/kit.json`), "update");
+  strictApply(project, second.value.writes);
+
+  const sync = planSync({
+    registry: reg,
+    config: { ...CONFIG, requested: ["button"] },
+    snapshot: snapshotOf(project, paths),
+    lock: second.value.lock,
+    registryVersion: reg.root.registryVersion,
+    registryHash: reg.root.contentHash,
+  });
+  assert.equal(sync.ok, true, JSON.stringify(sync));
+  if (!sync.ok || !sync.value.executable) return;
+  const retire = sync.value.writes.find((w) => w.path === spinnerPath);
+  assert.ok(retire);
+  assert.equal(retire.operation, "retire");
+  strictApply(project, sync.value.writes);
+  assert.equal(existsSync(path.join(project.root, spinnerPath)), false);
+
+  const replay = planSync({
+    registry: reg,
+    config: { ...CONFIG, requested: ["button"] },
+    snapshot: snapshotOf(project, paths),
+    lock: sync.value.lock,
+    registryVersion: reg.root.registryVersion,
+    registryHash: reg.root.contentHash,
+  });
+  assert.equal(replay.ok, true, JSON.stringify(replay));
+  if (!replay.ok) return;
+  assert.deepEqual(replay.value.writes, []);
+  strictApply(project, replay.value.writes);
 });

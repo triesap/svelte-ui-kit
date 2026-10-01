@@ -935,7 +935,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     const configJson = `${JSON.stringify(desiredConfig, null, 2)}\n`;
     if (kitJsonState.status !== "file" || kitJsonState.text !== configJson) {
       writes.push({
-        operation: "create",
+        operation: kitJsonState.status === "file" ? "update" : "create",
         path: kitJsonPath,
         bytes: utf8(configJson),
       });
@@ -944,8 +944,9 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       if (!change.producesBytes) continue;
       const meta = sourceMeta.get(change.path);
       if (meta === undefined) continue;
+      const prior = observeText(snapshot, change.path);
       writes.push({
-        operation: "update",
+        operation: prior.status === "absent" ? "create" : "update",
         path: change.path,
         bytes: meta.bytes,
       });

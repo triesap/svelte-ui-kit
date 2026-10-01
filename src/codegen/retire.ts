@@ -119,7 +119,9 @@ function decodeFile(observation: {
 }): string | null {
   if (observation.kind !== "file" || observation.bytes === null) return null;
   try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(observation.bytes);
+    return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(
+      observation.bytes,
+    );
   } catch {
     return null;
   }

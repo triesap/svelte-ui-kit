@@ -26,13 +26,15 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
+import { deriveKitPaths } from "../project/config.js";
 import type { DependencyPlan } from "../registry/dependency-plan.js";
 import type { RequestProjection } from "../registry/projection.js";
 import type { DependencyInstruction } from "../project/dependency-instructions.js";
 import type { DependencyStateEntry } from "../project/dependencies.js";
 import { planAdd, type AddPlanInput } from "./plan-add.js";
+import { hashBytes } from "./compare.js";
 import { retireManagedCss } from "./css-retire.js";
-import type { KitLock } from "./lock.js";
+import { parseKitLock, type KitLock } from "./lock.js";
 import type { PlannedWrite } from "./plan-init.js";
 import {
   planCssRetirement,
@@ -71,7 +73,7 @@ function observedText(
   const observation = snapshot.entries.get(logicalPath);
   if (observation === undefined || observation.kind !== "file") return null;
   try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(
+    return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(
       observation.bytes as Uint8Array,
     );
   } catch {
@@ -124,6 +126,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
   }
 
   const writes: PlannedWrite[] = executable ? [...base.value.writes] : [];
+  let finalLock = base.value.lock;
   if (executable) {
     // Compose clean CSS-block removals into the already-planned stylesheet (or
     // the observed text). Customized retired spans are left byte-for-byte.
@@ -147,8 +150,15 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
       if (!retired.ok) return fail(retired.issues);
       if (retired.value.text !== current) {
         const bytes = utf8(retired.value.text);
-        if (index >= 0) writes[index] = { path: stylesheetPath, bytes };
-        else writes.push({ path: stylesheetPath, bytes });
+        const operation =
+          input.snapshot.entries.get(stylesheetPath)?.kind === "absent"
+            ? "create"
+            : "update";
+        if (index >= 0) {
+          writes[index] = { path: stylesheetPath, operation, bytes };
+        } else {
+          writes.push({ path: stylesheetPath, operation, bytes });
+        }
       }
     }
     for (const record of retirement) {
@@ -162,6 +172,68 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
         bytes: new Uint8Array(),
       });
     }
+
+    // Finalize the lock only after every retirement effect is applied: the
+    // serialized integration baselines must describe the final planned bytes,
+    // not the pre-retirement stylesheet. Re-validate after the adjustment.
+    if (finalLock !== null) {
+      const derived = deriveKitPaths(input.config);
+      const lockPath = `${derived.stateDir}/kit.lock.json`;
+      const integrations = finalLock.integrations
+        .map((integration) => {
+          if (integration.kind !== "stylesheet") return integration;
+          const write = writes.find((entry) => entry.path === integration.path);
+          const text =
+            write !== undefined
+              ? new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+                  write.bytes,
+                )
+              : observedText(input.snapshot, integration.path);
+          if (text === null) return integration;
+          return {
+            ...integration,
+            baseline: hashBytes(utf8(text)) as string,
+          };
+        })
+        .sort((left, right) => {
+          if (left.path !== right.path) return left.path < right.path ? -1 : 1;
+          if (left.kind === right.kind) return 0;
+          return left.kind < right.kind ? -1 : 1;
+        });
+      const validated = parseKitLock({ ...finalLock, integrations }, lockPath, {
+        stateDir: derived.stateDir,
+        uiDir: input.config.uiDir,
+        stylesDir: input.config.stylesDir,
+      });
+      if (!validated.ok) return fail(validated.issues);
+      finalLock = validated.value;
+
+      const lockJson = `${JSON.stringify(finalLock, null, 2)}\n`;
+      const lockIndex = writes.findIndex((entry) => entry.path === lockPath);
+      if (lockIndex >= 0) {
+        writes[lockIndex] = {
+          path: lockPath,
+          operation: writes[lockIndex]?.operation ?? "update",
+          bytes: utf8(lockJson),
+        };
+      } else {
+        const observedLock = input.snapshot.entries.get(lockPath);
+        const observedLockText =
+          observedLock?.kind === "file" && observedLock.bytes !== null
+            ? new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+                observedLock.bytes,
+              )
+            : null;
+        if (observedLockText !== lockJson) {
+          writes.push({
+            path: lockPath,
+            operation: observedLock?.kind === "absent" ? "create" : "update",
+            bytes: utf8(lockJson),
+          });
+        }
+      }
+    }
+
     writes.sort((left, right) =>
       left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
     );
@@ -178,7 +250,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
     retirement,
     cssRetirement,
     writes,
-    lock: base.value.lock,
+    lock: finalLock,
     diagnostics: diagnostics.sort(),
   });
 }
