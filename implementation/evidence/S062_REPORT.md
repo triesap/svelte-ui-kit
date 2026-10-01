@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S062","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S062","kind":"report","commit":"9ffbf9e3fa502eff09345e7707f6767002edb512","disposition":"candidate"}
 -->
 
 Step ID and title: S062 — Integrate configuration-driven retirement.
