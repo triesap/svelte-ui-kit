@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S051","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S051","kind":"report","commit":"a747fc58d317f5c7ec6bac80bd36e6f8a61f580c","disposition":"candidate"}
 -->
 
 Step ID and title: S051 — Retire CSS blocks without deleting custom rules.
