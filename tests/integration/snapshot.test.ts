@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
+import { writeFileSync } from "node:fs";
+import path from "node:path";
 import { test } from "node:test";
 
 import {
   captureSnapshot,
+  decodeObservedText,
   observedText,
   observationOf,
 } from "../../src/codegen/snapshot.js";
@@ -91,4 +94,92 @@ test("capturing a snapshot writes nothing", (t) => {
   const before = snapshotTree(project.root);
   captureSnapshot(project.root, ["a.txt", "src/b.txt", "missing.txt"]);
   assert.deepEqual(snapshotTree(project.root), before);
+});
+
+/**
+ * RCLD03-R2-2: the entry lookup is genuinely immutable, so captured evidence
+ * cannot be cleared, replaced or deleted.
+ */
+test("the captured entry lookup is immutable", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile("a.txt", "a");
+
+  const result = captureSnapshot(project.root, ["a.txt", "missing.txt"]);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+
+  assert.equal(result.value.entries.size, 2);
+  const mutable = result.value.entries as unknown as Record<string, unknown>;
+  assert.equal(typeof mutable["clear"], "undefined");
+  assert.equal(typeof mutable["set"], "undefined");
+  assert.equal(typeof mutable["delete"], "undefined");
+  assert.equal(result.value.entries.size, 2);
+});
+
+/**
+ * RCLD03-R2-2: an intermediate symlink is a typed unsafe observation, and the
+ * external target is never read.
+ */
+test("a symlinked ancestor is a typed unsafe observation", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const external = createTempProject({ prefix: "suik-snapshot-external-" });
+  t.after(() => external.cleanup());
+  external.writeFile("secret", "OUTSIDE");
+  project.symlink(external.root, "linked");
+
+  const result = captureSnapshot(project.root, ["linked/secret"]);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  const observation = observationOf(result.value, "linked/secret");
+  assert.equal(observation?.kind, "unsafe");
+  assert.equal(observation?.errorCode, "UNSAFE_ANCESTRY");
+  assert.equal(observation?.bytes, null);
+});
+
+/**
+ * RCLD03-R2-2: a byte-order mark is preserved and invalid UTF-8 is rejected
+ * instead of being replaced lossily.
+ */
+test("text decoding preserves a BOM and rejects invalid UTF-8", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  writeFileSync(
+    path.join(project.root, "bom.ts"),
+    new Uint8Array([0xef, 0xbb, 0xbf, 0x2f, 0x2f, 0x41, 0x50, 0x50, 0x0a]),
+  );
+  writeFileSync(
+    path.join(project.root, "invalid.ts"),
+    new Uint8Array([0x2f, 0x2f, 0xff, 0x0a]),
+  );
+
+  const result = captureSnapshot(project.root, ["bom.ts", "invalid.ts"]);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  const bom = observationOf(result.value, "bom.ts");
+  const invalid = observationOf(result.value, "invalid.ts");
+  assert.equal(observedText(bom!), "\uFEFF//APP\n");
+  assert.deepEqual(decodeObservedText(invalid!), {
+    kind: "invalid",
+    code: "INVALID_UTF8",
+  });
+});
+
+/**
+ * RCLD03-R2-2: a symlinked project root is rejected rather than followed.
+ */
+test("a symlinked project root is a typed failure", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const external = createTempProject({ prefix: "suik-root-external-" });
+  t.after(() => external.cleanup());
+  external.writeFile("f", "x");
+  project.symlink(external.root, "linked-root");
+
+  const result = captureSnapshot(path.join(project.root, "linked-root"), ["f"]);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(result.ok ? [] : result.issues.map((entry) => entry.code), [
+    "SNAPSHOT_ROOT_UNSAFE",
+  ]);
 });

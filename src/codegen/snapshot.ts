@@ -8,19 +8,33 @@
  *
  * Observations keep absence distinct from empty content: a missing target has
  * `kind: "absent"` and no bytes, while an empty file has `kind: "file"` and a
- * zero-length `bytes`. Bytes are defensively copied and the result is deeply
- * frozen, so a later filesystem change cannot mutate an already captured
- * snapshot.
+ * zero-length `bytes`. Bytes are defensively copied, the result is deeply
+ * frozen and the entry lookup is a truly immutable view (it exposes only
+ * read-only accessors, so `clear`/`set`/`delete` cannot remove captured
+ * evidence).
+ *
+ * A target is observed through its *physical* ancestry: the canonical root is
+ * resolved, and an intermediate symlink, non-directory or unreadable ancestor
+ * is a typed `unsafe`/`unreadable` observation rather than being followed
+ * outside the project. A missing intermediate is a genuine absence. Text
+ * decoding is strict UTF-8 and preserves a byte-order mark, so application
+ * bytes are never replaced lossily.
  */
 import { createHash } from "node:crypto";
-import { lstatSync, readFileSync, readlinkSync } from "node:fs";
+import { lstatSync, readFileSync, readlinkSync, realpathSync } from "node:fs";
 import path from "node:path";
 
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { isSafeLogicalRelativePath } from "../project/paths.js";
 
 export type ObservedKind =
-  "absent" | "file" | "directory" | "symlink" | "other" | "unreadable";
+  | "absent"
+  | "file"
+  | "directory"
+  | "symlink"
+  | "other"
+  | "unsafe"
+  | "unreadable";
 
 export interface TargetObservation {
   readonly path: string;
@@ -31,7 +45,7 @@ export interface TargetObservation {
   readonly size: number | null;
   readonly linkTarget: string | null;
   readonly hash: string | null;
-  /** Stable I/O error code for `kind: "unreadable"`. */
+  /** Stable I/O or ancestry code for `kind: "unreadable"`/`"unsafe"`. */
   readonly errorCode: string | null;
 }
 
@@ -41,6 +55,61 @@ export interface ProjectSnapshot {
   readonly entries: ReadonlyMap<string, TargetObservation>;
   /** The logical paths captured, in request order. */
   readonly paths: readonly string[];
+}
+
+/**
+ * A genuinely immutable lookup over captured observations. It implements the
+ * read-only subset of `ReadonlyMap`; there is no `set`, `delete` or `clear`, so
+ * a caller cannot remove or replace captured evidence.
+ */
+class FrozenObservations implements ReadonlyMap<string, TargetObservation> {
+  readonly #map: Map<string, TargetObservation>;
+
+  constructor(source: Map<string, TargetObservation>) {
+    this.#map = new Map(source);
+    Object.freeze(this);
+  }
+
+  get size(): number {
+    return this.#map.size;
+  }
+
+  get(key: string): TargetObservation | undefined {
+    return this.#map.get(key);
+  }
+
+  has(key: string): boolean {
+    return this.#map.has(key);
+  }
+
+  forEach(
+    callbackfn: (
+      value: TargetObservation,
+      key: string,
+      map: ReadonlyMap<string, TargetObservation>,
+    ) => void,
+    thisArg?: unknown,
+  ): void {
+    this.#map.forEach((value, key) => {
+      callbackfn.call(thisArg, value, key, this);
+    });
+  }
+
+  keys(): MapIterator<string> {
+    return this.#map.keys();
+  }
+
+  values(): MapIterator<TargetObservation> {
+    return this.#map.values();
+  }
+
+  entries(): MapIterator<[string, TargetObservation]> {
+    return this.#map.entries();
+  }
+
+  [Symbol.iterator](): MapIterator<[string, TargetObservation]> {
+    return this.#map.entries();
+  }
 }
 
 function sha256(bytes: Buffer): string {
@@ -60,40 +129,109 @@ function makeObservation(
   return Object.freeze(observation);
 }
 
+function absentObservation(logicalPath: string): TargetObservation {
+  return makeObservation(
+    {
+      path: logicalPath,
+      kind: "absent",
+      mode: null,
+      size: null,
+      linkTarget: null,
+      hash: null,
+      errorCode: null,
+    },
+    null,
+  );
+}
+
+function unsafeObservation(
+  logicalPath: string,
+  code: string,
+): TargetObservation {
+  return makeObservation(
+    {
+      path: logicalPath,
+      kind: "unsafe",
+      mode: null,
+      size: null,
+      linkTarget: null,
+      hash: null,
+      errorCode: code,
+    },
+    null,
+  );
+}
+
+function unreadableObservation(
+  logicalPath: string,
+  code: string,
+): TargetObservation {
+  return makeObservation(
+    {
+      path: logicalPath,
+      kind: "unreadable",
+      mode: null,
+      size: null,
+      linkTarget: null,
+      hash: null,
+      errorCode: code,
+    },
+    null,
+  );
+}
+
+type AncestorObservation =
+  | { readonly kind: "ok" }
+  | { readonly kind: "absent" }
+  | { readonly kind: "unsafe" }
+  | { readonly kind: "unreadable"; readonly code: string };
+
+/**
+ * Walk the non-final components of `logicalPath`, rejecting a symlinked or
+ * non-directory ancestor before the final target is ever read. A missing
+ * ancestor is a real absence; an unreadable ancestor is a typed I/O cause.
+ */
+function observeAncestors(
+  root: string,
+  logicalPath: string,
+): AncestorObservation {
+  const segments = logicalPath.split("/");
+  let current = root;
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    current = path.join(current, segments[index] as string);
+    let stats;
+    try {
+      stats = lstatSync(current);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException | null)?.code;
+      if (code === "ENOENT") return { kind: "absent" };
+      return { kind: "unreadable", code: code ?? "EIO" };
+    }
+    if (stats.isSymbolicLink()) return { kind: "unsafe" };
+    if (!stats.isDirectory()) return { kind: "unsafe" };
+  }
+  return { kind: "ok" };
+}
+
 /** Observe one logical target beneath `root` without following a final link. */
 function observeOne(root: string, logicalPath: string): TargetObservation {
+  const ancestors = observeAncestors(root, logicalPath);
+  if (ancestors.kind === "absent") return absentObservation(logicalPath);
+  if (ancestors.kind === "unsafe") {
+    return unsafeObservation(logicalPath, "UNSAFE_ANCESTRY");
+  }
+  if (ancestors.kind === "unreadable") {
+    return unreadableObservation(logicalPath, ancestors.code);
+  }
+
   const abs = path.join(root, ...logicalPath.split("/"));
   let stats;
   try {
     stats = lstatSync(abs);
   } catch (error) {
     const code = (error as NodeJS.ErrnoException | null)?.code;
-    if (code === "ENOENT") {
-      return makeObservation(
-        {
-          path: logicalPath,
-          kind: "absent",
-          mode: null,
-          size: null,
-          linkTarget: null,
-          hash: null,
-          errorCode: null,
-        },
-        null,
-      );
-    }
-    return makeObservation(
-      {
-        path: logicalPath,
-        kind: "unreadable",
-        mode: null,
-        size: null,
-        linkTarget: null,
-        hash: null,
-        errorCode: code ?? "EIO",
-      },
-      null,
-    );
+    if (code === "ENOENT") return absentObservation(logicalPath);
+    return unreadableObservation(logicalPath, code ?? "EIO");
   }
   const base = {
     path: logicalPath,
@@ -124,10 +262,7 @@ function observeOne(root: string, logicalPath: string): TargetObservation {
       buffer = readFileSync(abs);
     } catch (error) {
       const code = (error as NodeJS.ErrnoException | null)?.code;
-      return makeObservation(
-        { ...base, kind: "unreadable", errorCode: code ?? "EIO" },
-        null,
-      );
+      return unreadableObservation(logicalPath, code ?? "EIO");
     }
     const copy = new Uint8Array(buffer);
     return makeObservation(
@@ -144,9 +279,47 @@ function observeOne(root: string, logicalPath: string): TargetObservation {
 }
 
 /**
+ * Resolve the canonical root identity and reject a root that is not a real
+ * directory (a symlink or nonregular entry could otherwise redirect every
+ * subsequent observation).
+ */
+function canonicalRoot(root: string): ModelResult<string> {
+  let stats;
+  try {
+    stats = lstatSync(root);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException | null)?.code;
+    return fail([
+      issue(
+        "SNAPSHOT_ROOT_UNREADABLE",
+        `the project root could not be observed (${code ?? "EIO"})`,
+      ),
+    ]);
+  }
+  if (stats.isSymbolicLink() || !stats.isDirectory()) {
+    return fail([
+      issue(
+        "SNAPSHOT_ROOT_UNSAFE",
+        "the project root is not a real directory; refusing to observe through a symlink or nonregular root",
+      ),
+    ]);
+  }
+  try {
+    return ok(realpathSync(root));
+  } catch (error) {
+    return fail([
+      issue(
+        "SNAPSHOT_ROOT_UNREADABLE",
+        `the project root could not be canonicalized (${(error as NodeJS.ErrnoException | null)?.code ?? "EIO"})`,
+      ),
+    ]);
+  }
+}
+
+/**
  * Capture read-only observations for the given logical paths. A lexically
- * unsafe path is a typed failure; every safe path yields exactly one
- * observation. No write of any kind occurs.
+ * unsafe path or unsafe root is a typed failure; every safe path yields exactly
+ * one observation. No write of any kind occurs.
  */
 export function captureSnapshot(
   root: string,
@@ -165,15 +338,17 @@ export function captureSnapshot(
   }
   if (issues.length > 0) return fail(issues);
 
-  const canonicalRoot = path.resolve(root);
+  const canonical = canonicalRoot(root);
+  if (!canonical.ok) return canonical;
+
   const entries = new Map<string, TargetObservation>();
   for (const logicalPath of logicalPaths) {
-    entries.set(logicalPath, observeOne(canonicalRoot, logicalPath));
+    entries.set(logicalPath, observeOne(canonical.value, logicalPath));
   }
   return ok(
     Object.freeze({
-      root: canonicalRoot,
-      entries,
+      root: canonical.value,
+      entries: new FrozenObservations(entries),
       paths: Object.freeze([...logicalPaths]),
     }),
   );
@@ -192,9 +367,39 @@ export function isObservedFile(observation: TargetObservation): boolean {
   return observation.kind === "file";
 }
 
-/** Decode observed bytes as UTF-8, or `null` when there are no bytes. */
+/** Typed text-decoding outcome for an observed regular file. */
+export type ObservedText =
+  | { readonly kind: "none" }
+  | { readonly kind: "text"; readonly text: string }
+  | { readonly kind: "invalid"; readonly code: string };
+
+/**
+ * Decode observed bytes as strict UTF-8, preserving any byte-order mark. An
+ * unrepresentable byte sequence is `invalid` rather than lossily replaced.
+ */
+export function decodeObservedText(
+  observation: TargetObservation,
+): ObservedText {
+  const bytes = observation.bytes;
+  if (bytes === null) return { kind: "none" };
+  try {
+    return {
+      kind: "text",
+      text: new TextDecoder("utf-8", {
+        fatal: true,
+        ignoreBOM: true,
+      }).decode(bytes),
+    };
+  } catch {
+    return { kind: "invalid", code: "INVALID_UTF8" };
+  }
+}
+
+/**
+ * Decode observed bytes as UTF-8, or `null` when there are no bytes or the
+ * bytes are not valid UTF-8.
+ */
 export function observedText(observation: TargetObservation): string | null {
-  return observation.bytes === null
-    ? null
-    : new TextDecoder().decode(observation.bytes);
+  const decoded = decodeObservedText(observation);
+  return decoded.kind === "text" ? decoded.text : null;
 }

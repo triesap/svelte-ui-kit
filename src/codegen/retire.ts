@@ -17,7 +17,7 @@ import type { ProjectSnapshot } from "./snapshot.js";
 export interface RetirementRecord {
   readonly path: string;
   readonly owner: string;
-  readonly action: "delete" | "retain";
+  readonly action: "delete" | "retain" | "conflict";
   /** Always true: a retired target is removed from lock ownership. */
   readonly detachOwnership: boolean;
   readonly reason: string;
@@ -26,7 +26,8 @@ export interface RetirementRecord {
 /**
  * Plan retirement for every lock file whose owner is no longer in the effective
  * closure. A file whose owner remains (including a shared transitive
- * dependency) is untouched.
+ * dependency) is untouched. A retired file that was never observed is
+ * incomplete evidence and becomes a conflict, never a silent detach.
  */
 export function planSourceRetirement(
   snapshot: ProjectSnapshot,
@@ -37,7 +38,18 @@ export function planSourceRetirement(
   for (const file of lockFiles) {
     if (retainedOwners.has(file.owner)) continue;
     const observation = snapshot.entries.get(file.path);
-    if (observation === undefined || observation.kind === "absent") {
+    if (observation === undefined) {
+      records.push({
+        path: file.path,
+        owner: file.owner,
+        action: "conflict",
+        detachOwnership: false,
+        reason:
+          "retired target was not observed; the snapshot is incomplete and retirement cannot be decided",
+      });
+      continue;
+    }
+    if (observation.kind === "absent") {
       records.push({
         path: file.path,
         owner: file.owner,

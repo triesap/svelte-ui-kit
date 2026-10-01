@@ -111,3 +111,23 @@ test("a missing retired target is detached without deletion", (t) => {
   assert.equal(records[0]?.action, "retain");
   assert.equal(records[0]?.detachOwnership, true);
 });
+
+/**
+ * RCLD03-R2-2: an uncaptured retired target is incomplete evidence, not an
+ * observed absence, so retirement conflicts instead of detaching.
+ */
+test("an unobserved retired target is an incomplete-evidence conflict", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const snapshot = captureSnapshot(project.root, []);
+  assert.equal(snapshot.ok, true);
+  if (!snapshot.ok) return;
+  const records = planSourceRetirement(
+    snapshot.value,
+    [lockRecord("src/gone.svelte", "button", hashBytes(bytes("B")) as string)],
+    new Set(),
+  );
+  assert.equal(records[0]?.action, "conflict");
+  assert.equal(records[0]?.detachOwnership, false);
+  assert.match(records[0]?.reason ?? "", /not observed/);
+});

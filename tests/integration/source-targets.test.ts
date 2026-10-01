@@ -141,3 +141,41 @@ test("a nonregular local target is a conflict", (t) => {
   );
   assert.equal(records[0]?.disposition, "conflict");
 });
+
+/**
+ * RCLD03-R2-2: a source target with no captured observation is incomplete
+ * evidence, never an observed absence to create.
+ */
+test("an unobserved source target is an incomplete-evidence conflict", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const snapshot = captureSnapshot(project.root, []);
+  assert.equal(snapshot.ok, true);
+  if (!snapshot.ok) return;
+
+  const records = planSourceTargets(
+    snapshot.value,
+    [],
+    [{ path: "src/keep.svelte", bytes: bytes("I") }],
+  );
+  assert.equal(records[0]?.disposition, "conflict");
+  assert.match(records[0]?.reason ?? "", /not observed/);
+});
+
+/**
+ * RCLD03-R2-2: unrelated observations are not claimed as source targets.
+ */
+test("metadata observations are not claimed as source targets", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile("src/styles/kit.css", ".a{}");
+  project.writeFile("src/routes/+layout.svelte", "<main/>");
+
+  const snapshot = captureSnapshot(project.root, [
+    "src/styles/kit.css",
+    "src/routes/+layout.svelte",
+  ]);
+  assert.equal(snapshot.ok, true);
+  if (!snapshot.ok) return;
+  assert.deepEqual(planSourceTargets(snapshot.value, [], []), []);
+});

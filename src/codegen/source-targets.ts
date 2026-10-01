@@ -60,8 +60,11 @@ function reasonFor(
 }
 
 /**
- * Classify every source target in the union of the snapshot, the lock and the
- * incoming set. The result is deterministic and sorted by logical path.
+ * Classify every source target in the union of the lock and the incoming set.
+ * Metadata/CSS/layout observations are not source targets and are never
+ * claimed as one. A source target with no captured observation is incomplete
+ * evidence, not an observed absence, and becomes a conflict. The result is
+ * deterministic and sorted by logical path.
  */
 export function planSourceTargets(
   snapshot: ProjectSnapshot,
@@ -73,11 +76,7 @@ export function planSourceTargets(
     incoming.map((entry) => [entry.path, entry.bytes]),
   );
   const paths = [
-    ...new Set([
-      ...lockByPath.keys(),
-      ...incomingByPath.keys(),
-      ...snapshot.paths,
-    ]),
+    ...new Set([...lockByPath.keys(), ...incomingByPath.keys()]),
   ].sort();
 
   const records: SourceTargetRecord[] = [];
@@ -86,13 +85,25 @@ export function planSourceTargets(
     const observation = snapshot.entries.get(logicalPath);
     const incomingBytes = incomingByPath.get(logicalPath) ?? null;
 
-    const localHash =
-      observation && observation.kind === "file" ? observation.hash : null;
-    const localPresent = observation?.kind === "file";
+    if (observation === undefined) {
+      records.push({
+        path: logicalPath,
+        tracked: lockRecord !== undefined,
+        owner: lockRecord?.owner ?? null,
+        disposition: "conflict",
+        baseHash: lockRecord?.baseHash ?? null,
+        localHash: null,
+        incomingHash: hashBytes(incomingBytes),
+        reason:
+          "source target was not observed; the snapshot is incomplete and cannot be classified",
+      });
+      continue;
+    }
+
+    const localHash = observation.kind === "file" ? observation.hash : null;
+    const localPresent = observation.kind === "file";
     const unsafeLocal =
-      observation !== undefined &&
-      observation.kind !== "file" &&
-      observation.kind !== "absent";
+      observation.kind !== "file" && observation.kind !== "absent";
 
     let disposition: OwnershipDisposition;
     if (unsafeLocal) {
