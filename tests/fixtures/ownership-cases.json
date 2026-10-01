@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "description": "Frozen ownership disposition matrix (S043/Q08). Values are literal byte sequences encoded as UTF-8 strings; null means the target is absent.",
+  "cases": [
+    {
+      "id": "untracked-new-create",
+      "tracked": false,
+      "base": null,
+      "local": null,
+      "incoming": "I",
+      "disposition": "create"
+    },
+    {
+      "id": "untracked-new-no-incoming",
+      "tracked": false,
+      "base": null,
+      "local": null,
+      "incoming": null,
+      "disposition": "no_change"
+    },
+    {
+      "id": "untracked-existing-equal",
+      "tracked": false,
+      "base": null,
+      "local": "I",
+      "incoming": "I",
+      "disposition": "untracked_conflict"
+    },
+    {
+      "id": "untracked-existing-different",
+      "tracked": false,
+      "base": null,
+      "local": "L",
+      "incoming": "I",
+      "disposition": "untracked_conflict"
+    },
+    {
+      "id": "tracked-local-equals-incoming",
+      "tracked": true,
+      "base": "B",
+      "local": "I",
+      "incoming": "I",
+      "disposition": "no_change"
+    },
+    {
+      "id": "tracked-local-equals-incoming-missing-base",
+      "tracked": true,
+      "base": null,
+      "local": "I",
+      "incoming": "I",
+      "disposition": "no_change"
+    },
+    {
+      "id": "tracked-all-equal",
+      "tracked": true,
+      "base": "B",
+      "local": "B",
+      "incoming": "B",
+      "disposition": "no_change"
+    },
+    {
+      "id": "tracked-untouched-update",
+      "tracked": true,
+      "base": "B",
+      "local": "B",
+      "incoming": "I",
+      "disposition": "update"
+    },
+    {
+      "id": "tracked-customized",
+      "tracked": true,
+      "base": "B",
+      "local": "L",
+      "incoming": "B",
+      "disposition": "customized"
+    },
+    {
+      "id": "tracked-all-distinct-conflict",
+      "tracked": true,
+      "base": "B",
+      "local": "L",
+      "incoming": "I",
+      "disposition": "conflict"
+    },
+    {
+      "id": "tracked-missing-local-conflict",
+      "tracked": true,
+      "base": "B",
+      "local": null,
+      "incoming": "I",
+      "disposition": "conflict"
+    },
+    {
+      "id": "tracked-missing-base-distinct-conflict",
+      "tracked": true,
+      "base": null,
+      "local": "L",
+      "incoming": "I",
+      "disposition": "conflict"
+    }
+  ]
+}

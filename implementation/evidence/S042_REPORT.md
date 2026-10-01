@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S042","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S042","kind":"report","commit":"07ecd02dc892db63483c30add165eb265967ce96","disposition":"candidate"}
 -->
 
 Step ID and title: S042 — Validate filesystem ancestry and symlinks.

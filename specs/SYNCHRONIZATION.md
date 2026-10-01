@@ -16,6 +16,31 @@ Evaluate ownership before content equality. For a tracked target, let B be the b
 
 The equality-to-incoming case precedes conflict classification. Identical untracked content does not grant silent deletion rights; exact adoption policy is frozen/tested before implementation. Do not reset base hashes to arbitrary local bytes just to silence drift.
 
+#### Frozen disposition matrix (S043, closes Q08)
+
+This table is the frozen, data-driven policy implemented by
+`src/codegen/ownership-policy.ts` and `tests/fixtures/ownership-cases.json`.
+Evaluate it in this exact order:
+
+1. **Untracked, absent local:** a new absent target with incoming content is a
+   planned `create`; with no incoming content it is `no_change`. Untracked
+   absence is not a baseline.
+2. **Untracked, existing local:** always `untracked_conflict`, even when the
+   local bytes equal incoming. Untracked content is application-owned and
+   confers no silent adoption or deletion rights.
+3. **Tracked, missing local:** always a visible `conflict`. Absence never
+   becomes a baseline; there is no silent restoration and no partial batch.
+4. **Tracked, L = I:** `no_change`, including when the recorded base is
+   missing. This precedence is evaluated before any conflict classification.
+5. **Tracked, L = B:** safe incoming `update`.
+6. **Tracked, I = B:** `customized`; preserve the local edit and its legitimate
+   base.
+7. **Tracked, otherwise:** `conflict`.
+
+A conflict in any source, managed CSS block or integration record prevents the
+entire batch, including config and lock updates. Report every deterministic
+conflict cause rather than only the first.
+
 #### Missing targets and removal
 
 Absence is not a hash. The review did not fully define whether deletion of a tracked file is intentional. At its contract step choose a conservative, visible behavior: report the missing target and planned restoration or conflict explicitly; never silently adopt absence as an upstream baseline. The source tool restores missing tracked files, but target policy must be documented.
