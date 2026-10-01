@@ -1,17 +1,35 @@
 /**
- * Consumer dependency state inspection (S038).
+ * Consumer dependency state and peer inspection (S038–S039).
  *
- * Reads the selected package's declared dependency ranges and the *installed*
- * package metadata separately, then reports whether each requirement is ready,
- * merely undeclared, not installed or incompatible. The inspection uses the
- * package resolution context (a hoisted `node_modules/<name>/package.json`);
- * pnpm/hoisting links are read as evidence only and never authorize generated
- * target traversal or writes. It never executes a package manager, edits a
- * manifest/lockfile or requires hidden source-checkout state.
+ * Reads the selected package's declared ranges and the *installed* package
+ * metadata separately, then reports whether each requirement is ready, merely
+ * undeclared, not installed, declaration-incompatible or install-incompatible.
+ * Readiness requires all three of:
+ *
+ * 1. explicit declaration evidence in the selected package (an installed or
+ *    hoisted dependency does not itself declare the dependency);
+ * 2. a genuine compatible intersection between the required range and the
+ *    declared range (the declared range need not be a subset); and
+ * 3. an installed version that satisfies that joint intersection, using
+ *    ordinary strict npm prerelease semantics (a `-beta` never satisfies `^5`
+ *    just because prereleases were globally enabled).
+ *
+ * Installed lookup walks the selected package's actual resolution context
+ * (nearest `node_modules`, then ancestors), so a hoisted or pnpm-linked install
+ * is found without executing package code or falling back to the CLI author's
+ * checkout. Malformed installed metadata and package-identity mismatches are
+ * typed invalid evidence, never absence.
+ *
+ * `validatePeerDependencies` combines the resolved registry peer requirements
+ * with the *actual* installed upstream `peerDependencies` metadata of every
+ * selected package; a required peer that is missing or incompatible is a typed
+ * conflict, and a missing upstream installation never fabricates a successful
+ * audit. Actual optional upstream peers are only required when the registry
+ * does not independently require that package.
  */
-import { lstatSync, readFileSync, type Stats } from "node:fs";
 import path from "node:path";
-import { satisfies, validRange } from "semver";
+
+import { satisfies, valid, validRange } from "semver";
 
 import {
   fail,
@@ -20,7 +38,9 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
+import { intersectRangesDetailed } from "../registry/dependency-plan.js";
 import type { DependencyPlan } from "../registry/dependency-plan.js";
+import { readJsonObject } from "./io.js";
 
 export const DECLARATION_FIELDS = [
   "dependencies",
@@ -36,7 +56,11 @@ export interface DependencyRequirement {
 }
 
 export type DependencyStatus =
-  "ready" | "missing_install" | "missing_declaration" | "incompatible";
+  | "ready"
+  | "missing_declaration"
+  | "missing_install"
+  | "declaration_incompatible"
+  | "install_incompatible";
 
 export interface DependencyStateEntry {
   readonly name: string;
@@ -47,80 +71,159 @@ export interface DependencyStateEntry {
   readonly status: DependencyStatus;
 }
 
-function lstatOrNull(abs: string): Stats | null {
-  try {
-    return lstatSync(abs);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
-    throw error;
+/** A typed observation of one installed package in the resolution context. */
+export type InstalledObservation =
+  | { readonly kind: "absent" }
+  | { readonly kind: "unsafe" }
+  | { readonly kind: "unreadable"; readonly code: string }
+  | { readonly kind: "malformed" }
+  | {
+      readonly kind: "value";
+      readonly version: string;
+      readonly manifest: Record<string, unknown>;
+    };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Find the nearest installed manifest for `name` in the selected package's
+ * resolution context. The walk starts at `root/node_modules/<name>` and
+ * proceeds to each ancestor's `node_modules`, matching npm/hoisting/pnpm
+ * resolution. Only the final `package.json` component is observed for
+ * regularity; a symlinked `node_modules/<name>` directory (a pnpm link) is
+ * followed read-only by the operating system.
+ */
+export function observeInstalled(
+  root: string,
+  name: string,
+): InstalledObservation {
+  const segments = name.split("/").filter((segment) => segment !== "");
+  if (
+    segments.length === 0 ||
+    segments.some((segment) => segment === ".." || segment === ".")
+  ) {
+    return { kind: "malformed" };
+  }
+  let current = path.resolve(root);
+  for (;;) {
+    const observation = readJsonObject(
+      path.join(current, "node_modules", ...segments, "package.json"),
+    );
+    if (observation.kind === "value") {
+      const manifest = observation.value;
+      const version = manifest["version"];
+      const manifestName = manifest["name"];
+      if (typeof manifestName !== "string" || manifestName !== name) {
+        return { kind: "malformed" };
+      }
+      if (typeof version !== "string" || valid(version) === null) {
+        return { kind: "malformed" };
+      }
+      return { kind: "value", version, manifest };
+    }
+    if (observation.kind !== "absent") return observation;
+    const parent = path.dirname(current);
+    if (parent === current) return { kind: "absent" };
+    current = parent;
   }
 }
 
-function isRegularFile(abs: string): boolean {
-  const stats = lstatOrNull(abs);
-  return stats !== null && stats.isFile();
+/** The installed version found in the resolution context, if any. */
+export function installedVersion(root: string, name: string): string | null {
+  const observation = observeInstalled(root, name);
+  return observation.kind === "value" ? observation.version : null;
 }
 
-function readJsonObject(abs: string): Record<string, unknown> | null {
-  if (!isRegularFile(abs)) return null;
-  try {
-    const parsed: unknown = JSON.parse(readFileSync(abs, "utf8"));
-    return typeof parsed === "object" &&
-      parsed !== null &&
-      !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
+interface Declaration {
+  readonly range: string | null;
+  readonly field: DeclarationField | null;
+  readonly malformed: boolean;
 }
 
 /** Read the selected package's declared range for `name`, with its field. */
 function declaredRange(
   manifest: Record<string, unknown> | null,
   name: string,
-): { range: string | null; field: DeclarationField | null } {
+): Declaration {
   if (manifest) {
     for (const field of DECLARATION_FIELDS) {
       const record = manifest[field];
-      if (
-        typeof record === "object" &&
-        record !== null &&
-        !Array.isArray(record)
-      ) {
-        const value = (record as Record<string, unknown>)[name];
-        if (typeof value === "string") return { range: value, field };
+      if (!isRecord(record)) continue;
+      if (!(name in record)) continue;
+      const value = record[name];
+      if (typeof value !== "string") {
+        return { range: null, field, malformed: true };
       }
+      return { range: value, field, malformed: false };
     }
   }
-  return { range: null, field: null };
-}
-
-/** Read an installed package version from the resolution context, if present. */
-export function installedVersion(root: string, name: string): string | null {
-  const manifest = readJsonObject(
-    path.join(root, "node_modules", ...name.split("/"), "package.json"),
-  );
-  const version = manifest?.["version"];
-  return typeof version === "string" ? version : null;
+  return { range: null, field: null, malformed: false };
 }
 
 /**
- * Inspect declared/installed state for every requirement. An installed version
- * that does not satisfy the required range is `incompatible`; a declared but
- * uninstalled package is `missing_install`; an undeclared, uninstalled package
- * is `missing_declaration`; otherwise `ready`. A malformed required range or an
- * unparseable installed version is reported as a typed issue.
+ * Inspect declared/installed state for every requirement. Readiness needs an
+ * explicit declaration, a compatible declared/required intersection and an
+ * installed version inside that intersection. Invalid required/declared ranges
+ * and invalid installed metadata are typed issues.
  */
 export function inspectDependencyState(
   root: string,
   requirements: readonly DependencyRequirement[],
 ): ModelResult<readonly DependencyStateEntry[]> {
-  const manifest = readJsonObject(path.join(root, "package.json"));
+  const manifestObservation = readJsonObject(path.join(root, "package.json"));
   const issues: ModelIssue[] = [];
+  if (manifestObservation.kind === "unreadable") {
+    return fail([
+      issue(
+        "DEPENDENCY_MANIFEST_UNREADABLE",
+        `package.json could not be read (${manifestObservation.code})`,
+        "package.json",
+      ),
+    ]);
+  }
+  if (manifestObservation.kind === "unsafe") {
+    return fail([
+      issue(
+        "DEPENDENCY_MANIFEST_UNSAFE",
+        "package.json is not a regular file; refusing to read a symlink or nonregular manifest",
+        "package.json",
+      ),
+    ]);
+  }
+  if (manifestObservation.kind === "malformed") {
+    return fail([
+      issue(
+        "DEPENDENCY_MANIFEST_INVALID",
+        "package.json is not valid JSON or is not an object",
+        "package.json",
+      ),
+    ]);
+  }
+  if (manifestObservation.kind === "absent") {
+    return fail([
+      issue(
+        "DEPENDENCY_MANIFEST_MISSING",
+        "no package.json was found in the selected package",
+        "package.json",
+      ),
+    ]);
+  }
+  const manifest = manifestObservation.value;
   const entries: DependencyStateEntry[] = [];
 
   for (const requirement of requirements) {
+    if (typeof requirement.name !== "string" || requirement.name.length === 0) {
+      issues.push(
+        issue(
+          "DEPENDENCY_NAME_INVALID",
+          `requirement name ${JSON.stringify(requirement.name)} is not a valid package name`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
     if (validRange(requirement.range) === null) {
       issues.push(
         issue(
@@ -132,25 +235,96 @@ export function inspectDependencyState(
       continue;
     }
     const declared = declaredRange(manifest, requirement.name);
-    const installed = installedVersion(root, requirement.name);
-    let status: DependencyStatus;
-    if (declared.range === null && installed === null) {
-      status = "missing_declaration";
-    } else if (installed === null) {
-      status = "missing_install";
-    } else if (
-      !satisfies(installed, requirement.range, { includePrerelease: true })
-    ) {
-      status = "incompatible";
-    } else {
-      status = "ready";
+    if (declared.malformed) {
+      issues.push(
+        issue(
+          "DEPENDENCY_DECLARED_INVALID",
+          `declared ${declared.field} entry for ${JSON.stringify(requirement.name)} is not a string range`,
+          "package.json",
+        ),
+      );
+      continue;
     }
+    if (declared.range !== null && validRange(declared.range) === null) {
+      issues.push(
+        issue(
+          "DEPENDENCY_DECLARED_INVALID",
+          `declared range ${JSON.stringify(declared.range)} for ${JSON.stringify(requirement.name)} is not a valid npm SemVer range`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+
+    const installed = observeInstalled(root, requirement.name);
+    if (installed.kind === "unreadable") {
+      issues.push(
+        issue(
+          "DEPENDENCY_INSTALLED_UNREADABLE",
+          `installed metadata for ${JSON.stringify(requirement.name)} could not be read (${installed.code})`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+    if (installed.kind === "unsafe") {
+      issues.push(
+        issue(
+          "DEPENDENCY_INSTALLED_INVALID",
+          `installed metadata for ${JSON.stringify(requirement.name)} is not a regular file`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+    if (installed.kind === "malformed") {
+      issues.push(
+        issue(
+          "DEPENDENCY_INSTALLED_INVALID",
+          `installed metadata for ${JSON.stringify(requirement.name)} is malformed or names the wrong package`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+    const installedVersion =
+      installed.kind === "value" ? installed.version : null;
+
+    let status: DependencyStatus;
+    if (declared.range === null) {
+      status = "missing_declaration";
+    } else {
+      const joint = intersectRangesDetailed([
+        requirement.range,
+        declared.range,
+      ]);
+      if (joint.kind === "unable") {
+        issues.push(
+          issue(
+            "DEPENDENCY_RANGE_UNSUPPORTED",
+            `could not evaluate the joint range for ${JSON.stringify(requirement.name)}: ${joint.reason}`,
+            "package.json",
+          ),
+        );
+        continue;
+      }
+      if (joint.kind === "empty") {
+        status = "declaration_incompatible";
+      } else if (installedVersion === null) {
+        status = "missing_install";
+      } else if (!satisfies(installedVersion, joint.range)) {
+        status = "install_incompatible";
+      } else {
+        status = "ready";
+      }
+    }
+
     entries.push({
       name: requirement.name,
       requiredRange: requirement.range,
       declaredRange: declared.range,
       declaredField: declared.field,
-      installedVersion: installed,
+      installedVersion,
       status,
     });
   }
@@ -175,37 +349,194 @@ export function peerRequirementsFromPlan(
     .map(([name, range]) => ({ name, range }));
 }
 
+interface PeerConstraint {
+  readonly name: string;
+  readonly ranges: readonly string[];
+  readonly requiredBy: readonly string[];
+}
+
+/**
+ * Combine registry peer requirements with the actual installed upstream
+ * `peerDependencies`. A selected runtime dependency such as `bits-ui` supplies
+ * its own required peers even though those names are absent from the registry
+ * plan. Optional upstream peers are skipped unless the registry independently
+ * requires that name.
+ */
+function collectPeerConstraints(
+  root: string,
+  plan: DependencyPlan,
+  issues: ModelIssue[],
+): readonly PeerConstraint[] {
+  const byName = new Map<
+    string,
+    {
+      ranges: string[];
+      requiredBy: Set<string>;
+      optional: boolean;
+      required: boolean;
+    }
+  >();
+  const ensure = (name: string) => {
+    const existing = byName.get(name);
+    if (existing) return existing;
+    const created = {
+      ranges: [] as string[],
+      requiredBy: new Set<string>(),
+      optional: false,
+      required: false,
+    };
+    byName.set(name, created);
+    return created;
+  };
+
+  for (const entry of plan.entries) {
+    if (!entry.roles.includes("peer")) continue;
+    const constraint = ensure(entry.name);
+    constraint.ranges.push(entry.range);
+    constraint.required = true;
+    for (const owner of entry.requiredBy) constraint.requiredBy.add(owner);
+  }
+
+  for (const entry of plan.entries) {
+    const observation = observeInstalled(root, entry.name);
+    if (observation.kind === "absent") {
+      if (!entry.roles.includes("peer")) {
+        issues.push(
+          issue(
+            "PEER_UPSTREAM_NOT_INSTALLED",
+            `${entry.name} is not installed, so its required peer metadata cannot be verified`,
+            "package.json",
+          ),
+        );
+      }
+      continue;
+    }
+    if (observation.kind === "unreadable") {
+      issues.push(
+        issue(
+          "PEER_UPSTREAM_UNREADABLE",
+          `installed metadata for ${entry.name} could not be read (${observation.code})`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+    if (observation.kind !== "value") {
+      issues.push(
+        issue(
+          "PEER_UPSTREAM_INVALID",
+          `installed metadata for ${entry.name} is malformed or is not a regular file`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+    const peerDependencies = observation.manifest["peerDependencies"];
+    if (!isRecord(peerDependencies)) continue;
+    const meta = observation.manifest["peerDependenciesMeta"];
+    for (const peerName of Object.keys(peerDependencies).sort()) {
+      const range = peerDependencies[peerName];
+      if (typeof range !== "string" || validRange(range) === null) {
+        issues.push(
+          issue(
+            "PEER_UPSTREAM_INVALID",
+            `${entry.name} declares invalid peer range ${JSON.stringify(range)} for ${peerName}`,
+            "package.json",
+          ),
+        );
+        continue;
+      }
+      const optional =
+        isRecord(meta) &&
+        isRecord(meta[peerName]) &&
+        (meta[peerName] as Record<string, unknown>)["optional"] === true;
+      const constraint = ensure(peerName);
+      const independentlyRequired = constraint.required;
+      if (optional && !independentlyRequired) {
+        constraint.optional = true;
+        continue;
+      }
+      constraint.ranges.push(range);
+      constraint.requiredBy.add(entry.name);
+    }
+  }
+  return [...byName.entries()]
+    .filter(([, value]) => value.ranges.length > 0)
+    .map(([name, value]) => ({
+      name,
+      ranges: [...new Set(value.ranges)],
+      requiredBy: [...value.requiredBy].sort(),
+    }))
+    .sort((left, right) =>
+      left.name < right.name ? -1 : left.name > right.name ? 1 : 0,
+    );
+}
+
 /**
  * Validate every resolved peer requirement against the selected package's
- * actual declared/installed metadata. All peer requirements from the resolved
- * closure are assessed, so a peer that one wrapper does not itself use is not
- * silently ignored. A conflict never adds a dependency; it reports a typed
- * diagnostic for the developer to resolve.
+ * actual declared/installed metadata and the actual installed upstream
+ * `peerDependencies`. All peers are assessed, so a peer that one wrapper does
+ * not itself import is not silently ignored. A conflict never adds a
+ * dependency; it reports a typed diagnostic for the developer to resolve.
  */
 export function validatePeerDependencies(
   root: string,
   plan: DependencyPlan,
 ): ModelResult<readonly DependencyStateEntry[]> {
-  const requirements = peerRequirementsFromPlan(plan);
-  if (requirements.length === 0) return ok([]);
-  const inspected = inspectDependencyState(root, requirements);
-  if (!inspected.ok) return inspected;
-  const conflicts: ModelIssue[] = [];
-  for (const entry of inspected.value) {
+  const issues: ModelIssue[] = [];
+  const constraints = collectPeerConstraints(root, plan, issues);
+  if (issues.length > 0) return fail(issues);
+  if (constraints.length === 0) return ok([]);
+
+  const results: DependencyStateEntry[] = [];
+  for (const constraint of constraints) {
+    const joint = intersectRangesDetailed(constraint.ranges);
+    if (joint.kind === "unable") {
+      issues.push(
+        issue(
+          "PEER_RANGE_UNSUPPORTED",
+          `could not evaluate the joint peer range for ${constraint.name}: ${joint.reason}`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+    if (joint.kind === "empty") {
+      issues.push(
+        issue(
+          "PEER_RANGE_CONFLICT",
+          `incompatible peer ranges for ${constraint.name}: ${constraint.ranges.join(", ")} (required by ${constraint.requiredBy.join(", ")})`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+    const inspected = inspectDependencyState(root, [
+      { name: constraint.name, range: joint.range },
+    ]);
+    if (!inspected.ok) {
+      for (const entry of inspected.issues) issues.push(entry);
+      continue;
+    }
+    const entry = inspected.value[0] as DependencyStateEntry;
+    results.push(entry);
     if (entry.status === "ready") continue;
     const code =
-      entry.status === "incompatible"
+      entry.status === "install_incompatible" ||
+      entry.status === "declaration_incompatible"
         ? "PEER_INCOMPATIBLE"
         : entry.status === "missing_install"
           ? "PEER_NOT_INSTALLED"
           : "PEER_MISSING";
     const detail =
-      entry.status === "incompatible"
-        ? `installed ${entry.installedVersion} does not satisfy ${entry.requiredRange}`
-        : entry.status === "missing_install"
-          ? `declared ${entry.declaredRange} but not installed`
-          : "neither declared nor installed";
-    conflicts.push(
+      entry.status === "install_incompatible"
+        ? `installed ${entry.installedVersion} does not satisfy ${joint.range}`
+        : entry.status === "declaration_incompatible"
+          ? `declared ${entry.declaredRange} is disjoint from the required ${joint.range}`
+          : entry.status === "missing_install"
+            ? `declared ${entry.declaredRange} but not installed`
+            : "neither declared nor installed";
+    issues.push(
       issue(
         code,
         `peer ${entry.name} is not satisfied: ${detail}`,
@@ -213,6 +544,6 @@ export function validatePeerDependencies(
       ),
     );
   }
-  if (conflicts.length > 0) return fail(conflicts);
-  return ok(inspected.value);
+  if (issues.length > 0) return fail(issues);
+  return ok(results);
 }

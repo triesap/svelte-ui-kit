@@ -29,6 +29,18 @@ function install(project: TempProject, name: string, version: string): void {
   );
 }
 
+function installWith(
+  project: TempProject,
+  name: string,
+  version: string,
+  extra: Record<string, unknown>,
+): void {
+  project.writeFile(
+    `node_modules/${name}/package.json`,
+    JSON.stringify({ name, version, ...extra }),
+  );
+}
+
 function plan(
   entries: readonly {
     name: string;
@@ -162,4 +174,125 @@ test("an empty peer plan is trivially satisfied", (t) => {
   // Base inspection remains available independently of peer validation.
   const base = inspectDependencyState(project.root, []);
   assert.equal(base.ok, true);
+});
+
+test("actual installed upstream peers are assessed even when absent from the plan", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ dependencies: { "bits-ui": "2.19.3" } }),
+  );
+  installWith(project, "bits-ui", "2.19.3", {
+    peerDependencies: {
+      "@internationalized/date": "^3.8.1",
+      svelte: "^5.33.0",
+    },
+  });
+
+  const runtimePlan = plan([
+    {
+      name: "bits-ui",
+      range: "2.19.3",
+      roles: ["runtime"],
+      requiredBy: ["button"],
+    },
+  ]);
+  const result = validatePeerDependencies(project.root, runtimePlan);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  const issues = result.ok ? [] : result.issues;
+  assert.ok(
+    issues.some(
+      (entry) =>
+        entry.code === "PEER_MISSING" &&
+        entry.message.includes("@internationalized/date"),
+    ),
+    JSON.stringify(result),
+  );
+  assert.ok(
+    issues.some(
+      (entry) =>
+        entry.code === "PEER_MISSING" && entry.message.includes("svelte"),
+    ),
+    JSON.stringify(result),
+  );
+});
+
+test("satisfied actual upstream peers pass", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      dependencies: {
+        "bits-ui": "2.19.3",
+        "@internationalized/date": "^3.8.1",
+        svelte: "^5.33.0",
+      },
+    }),
+  );
+  installWith(project, "bits-ui", "2.19.3", {
+    peerDependencies: {
+      "@internationalized/date": "^3.8.1",
+      svelte: "^5.33.0",
+    },
+  });
+  install(project, "@internationalized/date", "3.12.4");
+  install(project, "svelte", "5.57.1");
+
+  const runtimePlan = plan([
+    {
+      name: "bits-ui",
+      range: "2.19.3",
+      roles: ["runtime"],
+      requiredBy: ["button"],
+    },
+  ]);
+  const result = validatePeerDependencies(project.root, runtimePlan);
+  assert.equal(result.ok, true, JSON.stringify(result));
+});
+
+test("a missing upstream installation never fabricates a peer audit", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ dependencies: { "bits-ui": "2.19.3" } }),
+  );
+
+  const runtimePlan = plan([
+    {
+      name: "bits-ui",
+      range: "2.19.3",
+      roles: ["runtime"],
+      requiredBy: ["button"],
+    },
+  ]);
+  const result = validatePeerDependencies(project.root, runtimePlan);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.ok(codes(result).includes("PEER_UPSTREAM_NOT_INSTALLED"));
+});
+
+test("an optional upstream peer is skipped when not independently required", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ dependencies: { "bits-ui": "2.19.3" } }),
+  );
+  installWith(project, "bits-ui", "2.19.3", {
+    peerDependencies: { "@internationalized/date": "^3.8.1" },
+    peerDependenciesMeta: { "@internationalized/date": { optional: true } },
+  });
+
+  const runtimePlan = plan([
+    {
+      name: "bits-ui",
+      range: "2.19.3",
+      roles: ["runtime"],
+      requiredBy: ["button"],
+    },
+  ]);
+  const result = validatePeerDependencies(project.root, runtimePlan);
+  assert.equal(result.ok, true, JSON.stringify(result));
 });
