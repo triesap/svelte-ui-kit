@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S039","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S039","kind":"report","commit":"3e16d8f4874a4ca2699aa14d1fd818a3250afe25","disposition":"candidate"}
 -->
 
 Step ID and title: S039 — Validate peer dependencies in the consumer plan.
