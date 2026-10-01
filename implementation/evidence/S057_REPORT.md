@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S057","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S057","kind":"report","commit":"ba870579ef1c9e862869e4dfe1b6a47f65d4a045","disposition":"candidate"}
 -->
 
 Step ID and title: S057 — Build a pure initialization plan.
