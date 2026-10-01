@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S049","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S049","kind":"report","commit":"00d2424e6e8ad8a092f4c8dd5dcf471e8dbb8ffb","disposition":"candidate"}
 -->
 
 Step ID and title: S049 — Apply three-way classification to CSS blocks.
