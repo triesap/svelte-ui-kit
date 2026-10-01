@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S041","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S041","kind":"report","commit":"ba7eb15e79c96faf8c7478e7e7ee4c7a53e770be","disposition":"candidate"}
 -->
 
 Step ID and title: S041 — Capture read-only project snapshots.
