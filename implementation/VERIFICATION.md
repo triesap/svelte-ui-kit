@@ -92,7 +92,7 @@ The author's existing fixture/browser/reference lanes remain evidence for the
 artifacts they actually tested, not generated consumers or installed parsers.
 
 Repair progress (Pi implementation evidence, not acceptance): commit series
-`4a6952a`–`27aed65` composes one validated planning entry. Add/sync now reject unobserved,
+`4a6952a`–`e60b909` composes one validated planning entry. Add/sync now reject unobserved,
 nonregular, unreadable and invalid-UTF-8 targets with logical causes, parse
 observed config/lock metadata instead of ignoring it, preserve byte-order marks
 by reusing the strict decoder, derive registry identity from the validated
@@ -100,10 +100,11 @@ snapshot, emit minimal kit/themes/app stylesheet prerequisites, retain
 init/add/sync integration records, enforce export/integration ownership, fold
 effective export-surface changes into compatibility cohorts, represent clean
 deletion as an explicit `retire` operation in the plan and envelope, conflict on
-lock-owned integrations whose target is missing, and reconcile a supplied lock
-with the observed lock bytes. New
+lock-owned integrations whose target is missing, reconcile a supplied lock
+with the observed lock bytes, and carry declared/installed/peer readiness in the
+composed result. New
 integration lanes `plan-composition.test.ts`, `plan-purity.test.ts`,
-`planned-consumer.test.ts` and the installed planner/parser
+`planned-consumer.test.ts` (simple and compound) and the installed planner/parser
 `installed-package.test.ts` R5 runner cover the positive plans and negative
 controls. These are committed pending review; Codex still owns acceptance and
 the cumulative qualification below is not yet rerun on this revision.

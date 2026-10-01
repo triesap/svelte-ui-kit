@@ -13,6 +13,8 @@ and does not close S033–S063.
 - `5f57eb4` — lock-owned missing integration conflicts, complete-observation
   purity/conflict controls and metadata-only discrimination.
 - `27aed65` — supplied lock lineage reconciled with the observed lock bytes.
+- `3e0d712` — dependency declared/installed/peer readiness carried in the plan.
+- `e60b909` — a compound generated consumer built from the exact plan.
 
 ## What the repair implements (Pi implementation, pending review)
 
@@ -48,6 +50,9 @@ and does not close S033–S063.
 - **Supplied/observed reconciliation.** A supplied lock that disagrees with the
   observed `kit.lock.json` bytes is a conflict; observed absence stays
   authoritative over an in-memory lineage.
+- **Dependency readiness.** The composed plan carries declared/installed/peer
+  state (original S038/S039 status semantics) alongside manager instructions;
+  no install runs.
 
 ## New verification lanes
 
@@ -60,14 +65,14 @@ and does not close S033–S063.
 - `tests/integration/installed-package.test.ts` (R5) — the emitted planner and
   TypeScript/Svelte parser/planner paths import and run outside the checkout.
 
-## Verified results at `27aed65` (Node 24.21.0 / pnpm 11.22.0)
+## Verified results at `e60b909` (Node 24.21.0 / pnpm 11.22.0)
 
 | Lane                                                                        | Result                                 |
 | --------------------------------------------------------------------------- | -------------------------------------- |
 | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | exit 0                                 |
 | `format:check`, `lint`, `typecheck`                                         | exit 0                                 |
 | `test:unit`                                                                 | 265 pass / 0 fail                      |
-| `test:integration`                                                          | 217 pass / 0 fail                      |
+| `test:integration`                                                          | 219 pass / 0 fail                      |
 | `test:registry`                                                             | 38 pass / 0 fail                       |
 | `test:harness`                                                              | 37 pass / 0 fail                       |
 | `test:cli-bootstrap`                                                        | 52 pass / 0 fail                       |
