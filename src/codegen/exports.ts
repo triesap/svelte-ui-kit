@@ -98,6 +98,23 @@ export function exportDeclarationKey(declaration: ExportDeclaration): string {
 }
 
 /**
+ * The exact bytes of the managed export region, or the empty string when the
+ * source has no managed region. `null` reports a parse failure. The exports
+ * integration baseline is computed over this region alone, so application bytes
+ * outside the markers never mark the owned region customized.
+ */
+export function exportRegionContent(
+  fileName: string,
+  source: string,
+): string | null {
+  const parsed = parseExportRegion(fileName, source);
+  if (!parsed.ok) return null;
+  const region = parsed.value.region;
+  if (region === null) return "";
+  return source.slice(region.contentStart, region.contentEnd);
+}
+
+/**
  * Patch only the managed export region of `source` with the rendered
  * declarations. When no region exists, a minimal managed region is appended;
  * application bytes are never reformatted.

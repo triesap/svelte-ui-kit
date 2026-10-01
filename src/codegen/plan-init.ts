@@ -30,7 +30,7 @@ import {
 } from "../project/config.js";
 import { hashBytes } from "./compare.js";
 import { composeManagedCss } from "./css.js";
-import { patchExportRegion } from "./exports.js";
+import { patchExportRegion, exportRegionContent } from "./exports.js";
 import { parseManagedCss } from "./css-parse.js";
 import { parseExportRegion } from "./export-parse.js";
 import { parseKitLock, type KitLock, type LockIntegration } from "./lock.js";
@@ -429,7 +429,9 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
     {
       kind: "exports",
       path: targets.rootExports,
-      baseline: hashBytes(utf8(plannedExports)) as string,
+      baseline: hashBytes(
+        utf8(exportRegionContent(targets.rootExports, plannedExports) ?? ""),
+      ) as string,
       contract: "exports-v1",
     },
   ];

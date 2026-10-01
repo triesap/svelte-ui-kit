@@ -63,6 +63,7 @@ import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
 import { parseManagedCss } from "./css-parse.js";
 import {
   exportDeclarationKey,
+  exportRegionContent,
   findRootBarrelImports,
   parseGeneratedDeclarations,
   patchExportRegion,
@@ -564,9 +565,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     const registryProvidesTokens = (cssBlocksByTarget.get(cssPath) ?? []).some(
       (block) => block.id === "tokens",
     );
-    const isFoundationTokens = (blockId: string): boolean =>
+    // The foundation `tokens` layer is owned by the stylesheet integration, not
+    // by a registry item. Markers or an identical body alone confer nothing:
+    // the integration record must prove ownership first.
+    const integrationOwnsTokens = (blockId: string): boolean =>
       blockId === "tokens" &&
-      !registryProvidesTokens &&
+      stylesheetIntegration !== undefined &&
       !lockByBlock.has(blockId) &&
       !allLockByBlock.has(blockId);
     const existingBodies = new Map(
@@ -578,9 +582,10 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     // An existing managed block the lock does not own is application-owned;
     // markers alone never confer ownership. It is a conflict even when it is
     // byte-identical to incoming. The foundation `tokens` layer is owned by the
-    // stylesheet integration rather than an item, so it is exempt.
+    // stylesheet integration rather than an item, so proven integration
+    // ownership exempts only that layer.
     for (const block of parsedBlocks) {
-      if (isFoundationTokens(block.id)) continue;
+      if (integrationOwnsTokens(block.id)) continue;
       if (!lockByBlock.has(block.id) && !allLockByBlock.has(block.id)) {
         diagnostics.push(
           `css conflict at ${cssPath}#${block.id}: a managed block is present that the lock does not own; markers alone do not confer ownership`,
@@ -596,22 +601,6 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       );
       hasConflict = true;
     }
-    // A whole-file customization that the recorded stylesheet baseline no
-    // longer matches and that would still need a change cannot be overwritten.
-    if (
-      stylesheetIntegration !== undefined &&
-      state.status === "file" &&
-      state.hash !== stylesheetIntegration.baseline &&
-      desiredWithFoundation.some((block) => {
-        const local = existingBodies.get(block.id);
-        return local === undefined || local !== block.body;
-      })
-    ) {
-      diagnostics.push(
-        `css conflict at ${cssPath}: the recorded stylesheet baseline does not match the observed bytes and incoming blocks would change it`,
-      );
-      hasConflict = true;
-    }
     const ids = new Set([...existingBodies.keys(), ...desiredById.keys()]);
     const effective: ManagedBlockInput[] = [];
     const outcomeBlocks: (typeof cssOutcomes)[number]["blocks"] = [];
@@ -624,20 +613,31 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         continue;
       }
       const record = lockByBlock.get(blockId);
-      if (isFoundationTokens(blockId) && record === undefined) {
-        // The foundation layer is owned by the stylesheet integration. Preserve
-        // an existing body and create the canonical layer only when absent.
+      const tokensOwned = integrationOwnsTokens(blockId);
+      if (tokensOwned && !registryProvidesTokens) {
+        // The registry does not provide tokens: the integration-owned foundation
+        // layer is preserved byte-for-byte, whether or not it was customized.
         effective.push({
           id: blockId,
           body: local ?? incomingBody ?? TOKENS_BODY,
         });
         continue;
       }
+      // When the registry starts providing `tokens`, a clean, integration-owned
+      // foundation layer is adopted with the canonical foundation body as its
+      // legitimate base, so an identical transition is a no_change/update and a
+      // customized foundation layer still conflicts under the original policy.
+      const adoptFoundation = tokensOwned && registryProvidesTokens;
+      const adoptMeta = cssMeta.get(cssPath)?.get(blockId);
       const classification = classifyCssBlocks([
         {
           id: blockId,
-          owner: record?.owner ?? null,
-          baseHash: record?.baseHash ?? null,
+          owner: adoptFoundation
+            ? (adoptMeta?.owner ?? null)
+            : (record?.owner ?? null),
+          baseHash: adoptFoundation
+            ? (hashBytes(utf8(TOKENS_BODY)) as string)
+            : (record?.baseHash ?? null),
           localBody: local,
           incomingBody,
         },
@@ -743,39 +743,28 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       diagnostics.push(...parsedRegion.issues.map((entry) => entry.message));
       hasConflict = true;
     } else {
-      if (parsedRegion.value.region !== null) {
+      const region = parsedRegion.value.region;
+      const observedRegionContent =
+        region === null
+          ? ""
+          : existing.slice(region.contentStart, region.contentEnd);
+      if (region !== null) {
         observedExportDeclarations = parseGeneratedDeclarations(
-          existing.slice(
-            parsedRegion.value.region.contentStart,
-            parsedRegion.value.region.contentEnd,
-          ),
+          observedRegionContent,
         );
       }
-      if (
-        parsedRegion.value.region !== null &&
-        exportsIntegration === undefined
-      ) {
+      // The owned region is customized only when its own content differs from
+      // the recorded region baseline; application edits outside the markers
+      // never mark the region customized.
+      const regionCustomized =
+        exportsIntegration !== undefined &&
+        (hashBytes(utf8(observedRegionContent)) as string) !==
+          exportsIntegration.baseline;
+      if (region !== null && exportsIntegration === undefined) {
         diagnostics.push(
           `export conflict at ${rootExports}: a managed export region is present that the lock does not own; markers alone do not confer ownership`,
         );
         hasConflict = true;
-      } else if (
-        exportsIntegration !== undefined &&
-        exportsState.status === "file" &&
-        exportsState.hash !== exportsIntegration.baseline
-      ) {
-        // The owned region was customized; it may only be preserved, never
-        // overwritten with new generated declarations.
-        const rendered = patchExportRegion(rootExports, existing, []);
-        if (!rendered.ok) {
-          diagnostics.push(...rendered.issues.map((entry) => entry.message));
-          hasConflict = true;
-        } else if (
-          rendered.value.slice(0, rendered.value.length) !== existing
-        ) {
-          // No declaration change requested; preserve. A requested change is a
-          // conflict handled by the cohort/ownership rule below.
-        }
       }
       const patched = patchExportRegion(
         rootExports,
@@ -787,12 +776,11 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         hasConflict = true;
       } else if (
         exportsIntegration !== undefined &&
-        exportsState.status === "file" &&
-        exportsState.hash !== exportsIntegration.baseline &&
+        regionCustomized &&
         patched.value !== existing
       ) {
         diagnostics.push(
-          `export conflict at ${rootExports}: the recorded export baseline does not match the observed customized region and incoming declarations would change it`,
+          `export conflict at ${rootExports}: the owned export region does not match its canonical baseline and incoming declarations would change it`,
         );
         hasConflict = true;
       } else if (patched.value !== existing) {
@@ -1024,7 +1012,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         baseline: integrationBaseline(
           priorIntegration("exports", rootExports),
           plannedExports !== null,
-          finalExports,
+          exportRegionContent(rootExports, finalExports) ?? "",
         ),
         contract: "exports-v1",
       },

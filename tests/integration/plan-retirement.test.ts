@@ -5,6 +5,7 @@ import { test } from "node:test";
 
 import { hashBytes } from "../../src/codegen/compare.js";
 import { renderManagedBlock } from "../../src/codegen/css.js";
+import { exportRegionContent } from "../../src/codegen/exports.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import type { KitLock } from "../../src/codegen/lock.js";
@@ -270,7 +271,11 @@ test("application exports are not silently erased", (t) => {
       {
         kind: "exports",
         path: ROOT_EXPORTS,
-        baseline: hashBytes(new TextEncoder().encode(region)) as string,
+        baseline: hashBytes(
+          new TextEncoder().encode(
+            exportRegionContent(ROOT_EXPORTS, region) ?? "",
+          ),
+        ) as string,
         contract: "exports-v1",
       },
     ],

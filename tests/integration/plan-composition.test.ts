@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  appendFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -11,7 +12,7 @@ import { test } from "node:test";
 
 import { hashBytes } from "../../src/codegen/compare.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
-import { planInit } from "../../src/codegen/plan-init.js";
+import { TOKENS_BODY, planInit } from "../../src/codegen/plan-init.js";
 import { toPlanningEnvelope } from "../../src/codegen/plan.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
@@ -20,7 +21,12 @@ import {
   deriveKitPaths,
 } from "../../src/project/config.js";
 import { createTempProject } from "../helpers/project.js";
-import { componentItem, registryOf } from "../helpers/registry.js";
+import {
+  componentItem,
+  registryOf,
+  sourceFile,
+  styleFile,
+} from "../helpers/registry.js";
 
 /**
  * RCLD03-R4 composed planner tests: one validated planning entry, complete
@@ -664,4 +670,168 @@ test("a clean retirement is an explicit operation whose application removes the 
     readFileSync(path.join(project.root, derived.kitCss), "utf8").length > 0,
     true,
   );
+});
+
+function cssRegistry(cssBody: string, version = "0.1.0") {
+  const source = sourceFile(
+    "button.svelte",
+    "<button>button</button>\n",
+    "button",
+  );
+  const customStyle = styleFile("kit.css", cssBody, "button", "button");
+  const item = componentItem("button", {
+    files: [source, customStyle],
+    styles: [
+      {
+        source: "registry/styles/button-button.css",
+        target: "kit.css",
+        blockId: "button",
+        cohort: "core",
+      },
+    ],
+    exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
+  });
+  return registryOf([{ ...item, manifest: { ...item.manifest, version } }]);
+}
+
+test("unowned tokens markers do not acquire stylesheet integration ownership", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    derived.kitCss,
+    `/* svelte-ui-kit:start tokens */${TOKENS_BODY}/* svelte-ui-kit:end tokens */`,
+  );
+  const result = add(project);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.executable, false);
+  assert.ok(
+    result.value.diagnostics.some((entry) =>
+      entry.includes("markers alone do not confer ownership"),
+    ),
+    JSON.stringify(result.value.diagnostics),
+  );
+});
+
+test("a clean minimal initialization adopts identical registry tokens", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const init = planInit({
+    config: CONFIG,
+    layoutFile: CONFIG.layoutFile,
+    layoutSource: "<main />",
+    snapshot: snapshotOf(project),
+    registryVersion: "0.1.0",
+    registryHash: "a".repeat(64),
+    configHash: "b".repeat(64),
+  });
+  assert.equal(init.ok, true, JSON.stringify(init));
+  if (!init.ok) return;
+  applyWrites(project, init.value.writes);
+  const tokenStyle = styleFile("kit.css", TOKENS_BODY, "tokens", "tokens");
+  const item = componentItem("tokens", {
+    files: [tokenStyle],
+    styles: [
+      {
+        source: "registry/styles/tokens-tokens.css",
+        target: "kit.css",
+        blockId: "tokens",
+        cohort: "core",
+      },
+    ],
+  });
+  const reg = registryOf([item]);
+  const result = planAdd({
+    registry: reg,
+    config: CONFIG,
+    addedRoots: ["tokens"],
+    snapshot: snapshotOf(project),
+    lock: init.value.lock,
+    registryVersion: reg.root.registryVersion,
+    registryHash: reg.root.contentHash,
+  });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(
+    result.value.executable,
+    true,
+    JSON.stringify(result.value.diagnostics),
+  );
+  assert.ok(
+    !result.value.diagnostics.some((entry) => entry.includes("css conflict")),
+    JSON.stringify(result.value.diagnostics),
+  );
+  const record = result.value.lock?.cssBlocks.find(
+    (block) => block.blockId === "tokens",
+  );
+  assert.ok(record, JSON.stringify(result.value.lock?.cssBlocks));
+  assert.equal(record.owner, "tokens");
+});
+
+test("unmanaged CSS outside managed blocks does not block a clean block update", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const first = add(project, cssRegistry(".button { color: red; }\n"));
+  assert.equal(first.ok, true, JSON.stringify(first));
+  if (!first.ok || !first.value.executable) return;
+  applyWrites(project, first.value.writes);
+  appendFileSync(
+    path.join(project.root, derived.kitCss),
+    "\n.app { color: blue; }\n",
+  );
+  const second = add(project, cssRegistry(".button { color: green; }\n"), {
+    lock: first.value.lock,
+  });
+  assert.equal(second.ok, true, JSON.stringify(second));
+  if (!second.ok) return;
+  assert.equal(
+    second.value.executable,
+    true,
+    JSON.stringify(second.value.diagnostics),
+  );
+  const write = second.value.writes.find(
+    (entry) => entry.path === derived.kitCss,
+  );
+  assert.ok(write);
+  const text = new TextDecoder().decode(write?.bytes);
+  assert.ok(text.includes(".button { color: green; }"), text);
+  assert.ok(text.includes(".app { color: blue; }"), text);
+});
+
+test("a comment outside the managed export region does not block a clean update", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const first = add(project);
+  assert.equal(first.ok, true, JSON.stringify(first));
+  if (!first.ok || !first.value.executable) return;
+  applyWrites(project, first.value.writes);
+  appendFileSync(
+    path.join(project.root, derived.rootExports),
+    "\n// app comment\nexport const AppThing = 1;\n",
+  );
+  const renamed = registryOf([
+    componentItem("button", {
+      files: [
+        sourceFile("button.svelte", "<button>button</button>\n", "button"),
+      ],
+      exports: [
+        { name: "RenamedButton", target: "button.svelte", kind: "value" },
+      ],
+    }),
+  ]);
+  const second = add(project, renamed, { lock: first.value.lock });
+  assert.equal(second.ok, true, JSON.stringify(second));
+  if (!second.ok) return;
+  assert.equal(
+    second.value.executable,
+    true,
+    JSON.stringify(second.value.diagnostics),
+  );
+  const write = second.value.writes.find(
+    (entry) => entry.path === derived.rootExports,
+  );
+  assert.ok(write);
+  const text = new TextDecoder().decode(write?.bytes);
+  assert.ok(text.includes("RenamedButton"), text);
+  assert.ok(text.includes("AppThing"), text);
 });
