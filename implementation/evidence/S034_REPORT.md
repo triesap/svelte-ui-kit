@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S034","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S034","kind":"report","commit":"98336763f3970c9a77af9a772af816431813ff04","disposition":"candidate"}
 -->
 
 Step ID and title: S034 — Reject overlapping and reserved output roots.
