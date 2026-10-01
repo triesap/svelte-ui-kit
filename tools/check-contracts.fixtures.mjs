@@ -59,10 +59,11 @@ for (const seq of EXPECTED_SEQUENCES) {
 }
 
 /**
- * The two approved owner-authorized batch tuples. A fixture explicitly sets the
- * batch record its scenario needs instead of inheriting whatever live record
- * the copied governing document currently carries, so historical RCLD-01
- * fixtures stay valid after the live payload transitions to RCLD-02.
+ * The three approved owner-authorized batch tuples. A fixture explicitly sets
+ * the batch record its scenario needs instead of inheriting whatever live
+ * record the copied governing document currently carries, so historical
+ * RCLD-01/RCLD-02 fixtures stay valid after the live payload transitions to
+ * RCLD-03.
  */
 export const BATCH_RCLD01 = {
   schemaVersion: 1,
@@ -78,6 +79,15 @@ export const BATCH_RCLD02 = {
   sequence: "RCLD-02",
   first: "S013",
   last: "S032",
+  mode: "pfc",
+  review: "codex-after-sequence",
+};
+
+export const BATCH_RCLD03 = {
+  schemaVersion: 1,
+  sequence: "RCLD-03",
+  first: "S033",
+  last: "S063",
   mode: "pfc",
   review: "codex-after-sequence",
 };
@@ -140,6 +150,36 @@ export const SCENARIOS = {
     accepted: [],
     pendingReview: ["S032"],
     batch: BATCH_RCLD02,
+  },
+  // Current RCLD-03 batch states: S001–S032 accepted, then one, several or all
+  // of the S033–S063 implementation commits pending independent review.
+  rcld03First: {
+    complete: EXPECTED_STEP_IDS.slice(0, 32),
+    candidates: [],
+    accepted: [],
+    pendingReview: ["S033"],
+    batch: BATCH_RCLD03,
+  },
+  rcld03Prefix: {
+    complete: EXPECTED_STEP_IDS.slice(0, 32),
+    candidates: [],
+    accepted: [],
+    pendingReview: EXPECTED_STEP_IDS.slice(32, 36),
+    batch: BATCH_RCLD03,
+  },
+  rcld03All: {
+    complete: EXPECTED_STEP_IDS.slice(0, 32),
+    candidates: [],
+    accepted: [],
+    pendingReview: EXPECTED_STEP_IDS.slice(32, 63),
+    batch: BATCH_RCLD03,
+  },
+  rcld03Last: {
+    complete: EXPECTED_STEP_IDS.slice(0, 62),
+    candidates: [],
+    accepted: [],
+    pendingReview: ["S063"],
+    batch: BATCH_RCLD03,
   },
 };
 

@@ -1078,7 +1078,7 @@ recognizes the historical RCLD-01 tuple so historical fixtures and accepted
 RCLD-01 evidence remain valid, but only one record is live in this plan.
 
 <!-- checkpoint-batch
-{"schemaVersion":1,"sequence":"RCLD-02","first":"S013","last":"S032","mode":"pfc","review":"codex-after-sequence"}
+{"schemaVersion":1,"sequence":"RCLD-03","first":"S033","last":"S063","mode":"pfc","review":"codex-after-sequence"}
 -->
 
 Test accepted S012 required
