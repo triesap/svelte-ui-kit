@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S054","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S054","kind":"report","commit":"a0b5f7f5b9306cf38bc1ac3926b545dcb9800071","disposition":"candidate"}
 -->
 
 Step ID and title: S054 — Generate compound barrels and validate sibling imports.
