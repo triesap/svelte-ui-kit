@@ -103,6 +103,15 @@ function unsafeTargetIssue(
 export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   const { config, snapshot } = input;
   const derived = deriveKitPaths(config);
+  if (input.layoutFile !== config.layoutFile) {
+    return fail([
+      issue(
+        "INIT_LAYOUT_MISMATCH",
+        `the supplied layout ${JSON.stringify(input.layoutFile)} does not match the configured layout ${JSON.stringify(config.layoutFile)}`,
+        input.layoutFile,
+      ),
+    ]);
+  }
   const kitJsonPath = `${derived.stateDir}/kit.json`;
   const lockPath = `${derived.stateDir}/kit.lock.json`;
   const targets = {
@@ -267,6 +276,18 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   );
   if (!patchedExports.ok) return patchedExports;
   const plannedExports = patchedExports.value;
+  if (
+    plannedExports !== existingExports &&
+    ownedIntegration("exports", targets.rootExports)
+  ) {
+    return fail([
+      issue(
+        "INIT_OWNERSHIP_CONFLICT",
+        `the owned ${targets.rootExports} export region differs from the recorded baseline; initialization will not overwrite customized bytes`,
+        targets.rootExports,
+      ),
+    ]);
+  }
   if (plannedExports !== existingExports) {
     writes.push({ path: targets.rootExports, bytes: utf8(plannedExports) });
   }
@@ -277,6 +298,18 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   ]);
   if (!composed.ok) return composed;
   const plannedKitCss = composed.value;
+  if (
+    plannedKitCss !== existingKitCss &&
+    ownedIntegration("stylesheet", targets.kitCss)
+  ) {
+    return fail([
+      issue(
+        "INIT_OWNERSHIP_CONFLICT",
+        `the owned ${targets.kitCss} managed stylesheet differs from the recorded baseline; initialization will not overwrite customized bytes`,
+        targets.kitCss,
+      ),
+    ]);
+  }
   if (plannedKitCss !== existingKitCss) {
     writes.push({ path: targets.kitCss, bytes: utf8(plannedKitCss) });
   }
@@ -304,7 +337,11 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   const patchedLayout = patchLayoutImports(layoutSource, importSpecifiers);
   if (!patchedLayout.ok) return patchedLayout;
   const plannedLayout = patchedLayout.value;
-  if (plannedLayout !== layoutSource) {
+  // An absent layout must still be created even when the supplied source
+  // already contains the imports; otherwise a baseline would be claimed for a
+  // file that does not exist. Only when the layout is an existing, unchanged
+  // file are the bytes left alone.
+  if (layoutObservation.kind === "absent" || plannedLayout !== layoutSource) {
     writes.push({ path: input.layoutFile, bytes: utf8(plannedLayout) });
   }
 
@@ -359,6 +396,20 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
     stylesDir: config.stylesDir,
   });
   if (!validated.ok) return fail(validated.issues);
+  const finalLock = validated.value;
 
-  return ok({ writes, lock: validated.value, diagnostics });
+  // Lock metadata is part of the explicit plan: write the deterministic lock
+  // unless the effective lock is already exactly the recorded one (a satisfied
+  // replay is a no_change).
+  const lockChanged =
+    existingLock === null ||
+    JSON.stringify(existingLock) !== JSON.stringify(finalLock);
+  if (lockChanged) {
+    writes.push({
+      path: lockPath,
+      bytes: utf8(`${JSON.stringify(finalLock, null, 2)}\n`),
+    });
+  }
+
+  return ok({ writes, lock: finalLock, diagnostics });
 }

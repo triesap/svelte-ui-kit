@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 
@@ -87,6 +87,7 @@ test("a layout already importing the styles is not rewritten", (t) => {
   t.after(() => project.cleanup());
   const layout =
     '<script>\n  import "../styles/kit.css";\n  import "../styles/themes.css";\n  import "../styles/app.css";\n</script>\n<slot />\n';
+  project.writeFile("src/routes/+layout.svelte", layout);
   const result = plan(project, layout);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
@@ -95,6 +96,122 @@ test("a layout already importing the styles is not rewritten", (t) => {
       (entry) => entry.path === "src/routes/+layout.svelte",
     ),
   );
+});
+
+/**
+ * RCLD03-R3-3: an absent layout is created even when the supplied source
+ * already contains the imports; a baseline is never claimed for a missing file.
+ */
+test("an absent layout is created even when its source is pre-integrated", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const layout =
+    '<script>import "../styles/kit.css";import "../styles/themes.css";import "../styles/app.css";</script><main/>';
+  const result = plan(project, layout);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  const write = result.value.writes.find(
+    (entry) => entry.path === "src/routes/+layout.svelte",
+  );
+  assert.ok(write, "the absent layout must be created");
+  assert.equal(
+    result.value.lock.integrations.some(
+      (entry) => entry.kind === "layout" && entry.baseline.length === 64,
+    ),
+    true,
+  );
+});
+
+/**
+ * RCLD03-R3-3: a layout path that disagrees with the configured layout is a
+ * typed mismatch, not a plan against a different file.
+ */
+test("a layout path disagreeing with the config is rejected", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const snapshot = captureSnapshot(project.root, [
+    ...PATHS,
+    "other/+layout.svelte",
+  ]);
+  assert.equal(snapshot.ok, true);
+  if (!snapshot.ok) return;
+  const result = planInit({
+    config: DEFAULT_KIT_CONFIG,
+    layoutFile: "other/+layout.svelte",
+    layoutSource: "<main />",
+    snapshot: snapshot.value,
+    registryVersion: "0.1.0",
+    registryHash: "a".repeat(64),
+    configHash: "b".repeat(64),
+  });
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.ok ? [] : result.issues.map((entry) => entry.code), [
+    "INIT_LAYOUT_MISMATCH",
+  ]);
+});
+
+/**
+ * RCLD03-R3-3: applying exactly the planned effects yields a satisfied
+ * no_change replay, and the lock publication is part of the plan.
+ */
+test("the plan includes the lock and replays as no_change", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const first = plan(project, "<main />");
+  assert.equal(first.ok, true, JSON.stringify(first));
+  if (!first.ok) return;
+  const lockPath = `${deriveKitPaths(DEFAULT_KIT_CONFIG).stateDir}/kit.lock.json`;
+  assert.ok(
+    first.value.writes.some((entry) => entry.path === lockPath),
+    "the initial lock publication is part of the plan",
+  );
+  for (const write of first.value.writes) {
+    const abs = path.join(project.root, write.path);
+    mkdirSync(path.dirname(abs), { recursive: true });
+    writeFileSync(abs, write.bytes);
+  }
+  const layout = readFileSync(
+    path.join(project.root, "src/routes/+layout.svelte"),
+    "utf8",
+  );
+  const replay = plan(project, layout);
+  assert.equal(replay.ok, true, JSON.stringify(replay));
+  if (!replay.ok) return;
+  assert.deepEqual(
+    replay.value.writes,
+    [],
+    "a satisfied replay writes nothing",
+  );
+});
+
+/**
+ * RCLD03-R3-3: an owned, customized managed region is not overwritten by
+ * initialization.
+ */
+test("an owned customized export region is not overwritten", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const first = plan(project, "<main />");
+  assert.equal(first.ok, true, JSON.stringify(first));
+  if (!first.ok) return;
+  for (const write of first.value.writes) {
+    const abs = path.join(project.root, write.path);
+    mkdirSync(path.dirname(abs), { recursive: true });
+    writeFileSync(abs, write.bytes);
+  }
+  project.writeFile(
+    "src/lib/components/ui/index.ts",
+    "// svelte-ui-kit:start exports\nexport const Local = 42;\n// svelte-ui-kit:end exports\n",
+  );
+  const layout = readFileSync(
+    path.join(project.root, "src/routes/+layout.svelte"),
+    "utf8",
+  );
+  const result = plan(project, layout);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(result.ok ? [] : result.issues.map((entry) => entry.code), [
+    "INIT_OWNERSHIP_CONFLICT",
+  ]);
 });
 
 function codes(result: ReturnType<typeof plan>): string[] {

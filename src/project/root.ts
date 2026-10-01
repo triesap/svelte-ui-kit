@@ -335,19 +335,58 @@ function memberMatches(root: string, pattern: string, abs: string): boolean {
 }
 
 /**
+ * Classify a workspace member candidate. A proven application is a real
+ * (non-symlink) directory whose regular `package.json` proves `@sveltejs/kit`.
+ * A valid manifest without that evidence and a directory without any manifest
+ * are proven non-applications. A present-but-unreadable, malformed or
+ * nonregular manifest is *invalid evidence* rather than a proven non-app, so it
+ * can never be silently filtered out to leave one "unique" application.
+ */
+type MemberClassification =
+  | { readonly kind: "app" }
+  | { readonly kind: "non-app" }
+  | { readonly kind: "invalid"; readonly detail: string };
+
+function classifyMember(abs: string): MemberClassification {
+  if (observeEntry(abs).kind !== "directory") return { kind: "non-app" };
+  const manifest = readJsonObject(path.join(abs, "package.json"));
+  switch (manifest.kind) {
+    case "absent":
+      return { kind: "non-app" };
+    case "malformed":
+      return { kind: "invalid", detail: "its package.json is not valid JSON" };
+    case "unreadable":
+      return {
+        kind: "invalid",
+        detail: `its package.json could not be read (${manifest.code})`,
+      };
+    case "unsafe":
+      return {
+        kind: "invalid",
+        detail: "its package.json is not a regular file",
+      };
+    case "value": {
+      for (const field of [
+        "dependencies",
+        "devDependencies",
+        "peerDependencies",
+      ]) {
+        const record = manifest.value[field];
+        if (isRecord(record) && "@sveltejs/kit" in record)
+          return { kind: "app" };
+      }
+      return { kind: "non-app" };
+    }
+  }
+}
+
+/**
  * A proven application package: a real (non-symlink) directory containing a
  * regular `package.json` that declares `@sveltejs/kit`. An ordinary library
  * package does not count.
  */
 function isApplicationPackage(abs: string): boolean {
-  if (observeEntry(abs).kind !== "directory") return false;
-  const manifest = readJsonObject(path.join(abs, "package.json"));
-  if (manifest.kind !== "value") return false;
-  for (const field of ["dependencies", "devDependencies", "peerDependencies"]) {
-    const record = manifest.value[field];
-    if (isRecord(record) && "@sveltejs/kit" in record) return true;
-  }
-  return false;
+  return classifyMember(abs).kind === "app";
 }
 
 interface WorkspaceResolution {
@@ -376,7 +415,18 @@ function workspaceMembers(
       continue;
     }
     for (const candidate of expanded.members) {
-      if (!isApplicationPackage(candidate)) continue;
+      const classification = classifyMember(candidate);
+      if (classification.kind === "invalid") {
+        issues.push(
+          issue(
+            "PROJECT_WORKSPACE_UNSUPPORTED",
+            `workspace member ${JSON.stringify(path.relative(root, candidate))} cannot be classified because ${classification.detail}; pass --cwd for the exact application package`,
+            "package.json",
+          ),
+        );
+        continue;
+      }
+      if (classification.kind !== "app") continue;
       if (!isPhysicallyContained(physicalRoot, candidate)) {
         issues.push(
           issue(
@@ -415,6 +465,12 @@ function workspaceDeclaresMember(
   config: WorkspacePatterns,
   target: string,
 ): boolean {
+  // Membership cannot be proven when any include or exclusion uses unsupported
+  // glob grammar: an unrecognized `!pattern` must not silently leave the member
+  // selected (which could otherwise wrongly prove an owning-workspace manager).
+  for (const pattern of [...config.include, ...config.exclude]) {
+    if (globUnsupportedReason(pattern) !== null) return false;
+  }
   const canonical = canonicalRoot(root);
   if (!canonical.ok) return false;
   for (const pattern of config.include) {

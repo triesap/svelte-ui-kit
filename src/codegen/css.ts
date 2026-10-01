@@ -9,7 +9,7 @@
  * output.
  */
 import { fail, ok, type ModelResult } from "../registry/errors.js";
-import { parseManagedCss } from "./css-parse.js";
+import { parseManagedCss, type CssRegion } from "./css-parse.js";
 
 export interface ManagedBlockInput {
   readonly id: string;
@@ -35,9 +35,15 @@ export function compareManagedBlockIds(left: string, right: string): number {
  * in canonical order (the `tokens` foundation layer first, then a stable
  * non-token order), so a newly introduced `tokens` block or a previously wrong
  * order is corrected. Each managed block keeps its original marker bytes when
- * its body is unchanged, so a satisfied composition is byte-identical. The
- * leading/trailing unmanaged regions stay at the ends and every interleaved
- * application region is copied byte-for-byte next to its original block.
+ * its body is unchanged, so a satisfied composition is byte-identical.
+ *
+ * The unmanaged regions are the fixed skeleton: they are emitted exactly once,
+ * in their original document order and byte content, and only the owned spans
+ * are reordered. A newly inserted block consumes no application region, so the
+ * leading region stays first, the trailing region stays last, and no
+ * application rule is duplicated or moved. When the stylesheet has no managed
+ * block at all, its single unmanaged region is the leading text and there is no
+ * separate trailing region.
  */
 export function composeManagedCss(
   existing: string,
@@ -51,9 +57,9 @@ export function composeManagedCss(
     managed.blocks.map((block, index) => [block.id, { block, index }]),
   );
 
-  const leading = managed.unmanaged[0];
-  const trailing = managed.unmanaged[managed.blocks.length];
-  if (leading === undefined || trailing === undefined) {
+  const observed = managed.blocks.length;
+  const regions = managed.unmanaged;
+  if (regions.length !== observed + 1) {
     return fail([
       {
         code: "CSS_COMPOSE_INCONSISTENT",
@@ -62,37 +68,45 @@ export function composeManagedCss(
     ]);
   }
 
-  // The unmanaged region immediately after an existing block, except the final
-  // block whose following region is the global trailing region.
-  const followingFor = (index: number): string => {
-    if (index === managed.blocks.length - 1) return "";
-    const region = managed.unmanaged[index + 1];
-    return region === undefined ? "" : existing.slice(region.start, region.end);
-  };
-
   const ids = [
     ...new Set([...existingById.keys(), ...desiredById.keys()]),
   ].sort(compareManagedBlockIds);
 
-  let output = existing.slice(leading.start, leading.end);
-  for (const id of ids) {
+  const regionText = (region: CssRegion | undefined): string =>
+    region === undefined ? "" : existing.slice(region.start, region.end);
+
+  // The unmanaged region emitted in output gap `index` (0 .. ids.length). The
+  // leading region is always first, the trailing region always last, and the
+  // interleaved regions keep their original order. Gaps with no corresponding
+  // observed region stay empty, so a newly inserted block never shifts or
+  // duplicates application bytes.
+  const gap = (index: number): string => {
+    if (index === 0) return regionText(regions[0]);
+    if (index === ids.length) {
+      return observed === 0 ? "" : regionText(regions[observed]);
+    }
+    if (index <= observed - 1) return regionText(regions[index]);
+    return "";
+  };
+
+  let output = gap(0);
+  ids.forEach((id, position) => {
     const existingEntry = existingById.get(id);
     const desiredBody = desiredById.get(id);
     if (existingEntry === undefined) {
       output += renderManagedBlock(id, desiredBody as string);
-      continue;
-    }
-    const { block, index } = existingEntry;
-    const existingBody = existing.slice(block.contentStart, block.contentEnd);
-    if (desiredBody === undefined || desiredBody === existingBody) {
-      // Preserve the original marker bytes exactly; a satisfied block must not
-      // be canonicalized just because it was re-read.
-      output += existing.slice(block.startOffset, block.endOffset);
     } else {
-      output += renderManagedBlock(id, desiredBody);
+      const { block } = existingEntry;
+      const existingBody = existing.slice(block.contentStart, block.contentEnd);
+      if (desiredBody === undefined || desiredBody === existingBody) {
+        // Preserve the original marker bytes exactly; a satisfied block must
+        // not be canonicalized just because it was re-read.
+        output += existing.slice(block.startOffset, block.endOffset);
+      } else {
+        output += renderManagedBlock(id, desiredBody);
+      }
     }
-    output += followingFor(index);
-  }
-  output += existing.slice(trailing.start, trailing.end);
+    output += gap(position + 1);
+  });
   return ok(output);
 }

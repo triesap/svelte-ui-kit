@@ -21,7 +21,13 @@
  * bytes are never replaced lossily.
  */
 import { createHash } from "node:crypto";
-import { lstatSync, readFileSync, readlinkSync, realpathSync } from "node:fs";
+import {
+  lstatSync,
+  readFileSync,
+  readlinkSync,
+  realpathSync,
+  statSync,
+} from "node:fs";
 import path from "node:path";
 
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
@@ -52,9 +58,33 @@ export interface TargetObservation {
 export interface ProjectSnapshot {
   /** Canonical absolute root (runtime value, never used as a diagnostic locator). */
   readonly root: string;
+  /** Observed identity of the canonical root, for a later coordinated recheck. */
+  readonly rootIdentity: RootIdentity;
   readonly entries: ReadonlyMap<string, TargetObservation>;
+  /** Observed non-final ancestors, keyed by logical path. */
+  readonly ancestors: ReadonlyMap<string, AncestorObservation>;
   /** The logical paths captured, in request order. */
   readonly paths: readonly string[];
+}
+
+/** Stable identity of the canonical project root. */
+export interface RootIdentity {
+  readonly device: number;
+  readonly inode: number;
+}
+
+/**
+ * Observation of one non-final path component. A missing ancestor is recorded
+ * as `absent` (with no identity), an existing directory carries its device and
+ * inode, and an unsafe/unreadable ancestor carries a stable code. These are
+ * retained so a later recheck can prove the same ancestry still holds.
+ */
+export interface AncestorObservation {
+  readonly path: string;
+  readonly kind: "directory" | "absent" | "symlink" | "other" | "unreadable";
+  readonly device: number | null;
+  readonly inode: number | null;
+  readonly errorCode: string | null;
 }
 
 /**
@@ -62,10 +92,10 @@ export interface ProjectSnapshot {
  * read-only subset of `ReadonlyMap`; there is no `set`, `delete` or `clear`, so
  * a caller cannot remove or replace captured evidence.
  */
-class FrozenObservations implements ReadonlyMap<string, TargetObservation> {
-  readonly #map: Map<string, TargetObservation>;
+class FrozenMap<V> implements ReadonlyMap<string, V> {
+  readonly #map: Map<string, V>;
 
-  constructor(source: Map<string, TargetObservation>) {
+  constructor(source: Map<string, V>) {
     this.#map = new Map(source);
     Object.freeze(this);
   }
@@ -74,7 +104,7 @@ class FrozenObservations implements ReadonlyMap<string, TargetObservation> {
     return this.#map.size;
   }
 
-  get(key: string): TargetObservation | undefined {
+  get(key: string): V | undefined {
     return this.#map.get(key);
   }
 
@@ -83,11 +113,7 @@ class FrozenObservations implements ReadonlyMap<string, TargetObservation> {
   }
 
   forEach(
-    callbackfn: (
-      value: TargetObservation,
-      key: string,
-      map: ReadonlyMap<string, TargetObservation>,
-    ) => void,
+    callbackfn: (value: V, key: string, map: ReadonlyMap<string, V>) => void,
     thisArg?: unknown,
   ): void {
     this.#map.forEach((value, key) => {
@@ -99,15 +125,15 @@ class FrozenObservations implements ReadonlyMap<string, TargetObservation> {
     return this.#map.keys();
   }
 
-  values(): MapIterator<TargetObservation> {
+  values(): MapIterator<V> {
     return this.#map.values();
   }
 
-  entries(): MapIterator<[string, TargetObservation]> {
+  entries(): MapIterator<[string, V]> {
     return this.#map.entries();
   }
 
-  [Symbol.iterator](): MapIterator<[string, TargetObservation]> {
+  [Symbol.iterator](): MapIterator<[string, V]> {
     return this.#map.entries();
   }
 }
@@ -180,48 +206,94 @@ function unreadableObservation(
   );
 }
 
-type AncestorObservation =
-  | { readonly kind: "ok" }
-  | { readonly kind: "absent" }
-  | { readonly kind: "unsafe" }
-  | { readonly kind: "unreadable"; readonly code: string };
+function ancestorObservation(
+  path: string,
+  kind: AncestorObservation["kind"],
+  device: number | null,
+  inode: number | null,
+  errorCode: string | null,
+): AncestorObservation {
+  return Object.freeze({ path, kind, device, inode, errorCode });
+}
+
+interface AncestryWalk {
+  readonly status: "ok" | "absent" | "unsafe" | "unreadable";
+  readonly code: string | null;
+  readonly observations: readonly AncestorObservation[];
+}
 
 /**
  * Walk the non-final components of `logicalPath`, rejecting a symlinked or
  * non-directory ancestor before the final target is ever read. A missing
- * ancestor is a real absence; an unreadable ancestor is a typed I/O cause.
+ * ancestor is a real absence; an unreadable ancestor is a typed I/O cause. The
+ * observed non-final components are returned for a later coordinated recheck.
  */
-function observeAncestors(
-  root: string,
-  logicalPath: string,
-): AncestorObservation {
+function observeAncestors(root: string, logicalPath: string): AncestryWalk {
   const segments = logicalPath.split("/");
+  const observations: AncestorObservation[] = [];
   let current = root;
   for (let index = 0; index < segments.length - 1; index += 1) {
     current = path.join(current, segments[index] as string);
+    const logical = segments.slice(0, index + 1).join("/");
     let stats;
     try {
       stats = lstatSync(current);
     } catch (error) {
       const code = (error as NodeJS.ErrnoException | null)?.code;
-      if (code === "ENOENT") return { kind: "absent" };
-      return { kind: "unreadable", code: code ?? "EIO" };
+      if (code === "ENOENT") {
+        observations.push(
+          ancestorObservation(logical, "absent", null, null, null),
+        );
+        return { status: "absent", code: null, observations };
+      }
+      observations.push(
+        ancestorObservation(logical, "unreadable", null, null, code ?? "EIO"),
+      );
+      return { status: "unreadable", code: code ?? "EIO", observations };
     }
-    if (stats.isSymbolicLink()) return { kind: "unsafe" };
-    if (!stats.isDirectory()) return { kind: "unsafe" };
+    if (stats.isSymbolicLink()) {
+      observations.push(
+        ancestorObservation(
+          logical,
+          "symlink",
+          stats.dev,
+          stats.ino,
+          "UNSAFE_ANCESTRY",
+        ),
+      );
+      return { status: "unsafe", code: "UNSAFE_ANCESTRY", observations };
+    }
+    if (!stats.isDirectory()) {
+      observations.push(
+        ancestorObservation(
+          logical,
+          "other",
+          stats.dev,
+          stats.ino,
+          "UNSAFE_ANCESTRY",
+        ),
+      );
+      return { status: "unsafe", code: "UNSAFE_ANCESTRY", observations };
+    }
+    observations.push(
+      ancestorObservation(logical, "directory", stats.dev, stats.ino, null),
+    );
   }
-  return { kind: "ok" };
+  return { status: "ok", code: null, observations };
 }
 
 /** Observe one logical target beneath `root` without following a final link. */
-function observeOne(root: string, logicalPath: string): TargetObservation {
-  const ancestors = observeAncestors(root, logicalPath);
-  if (ancestors.kind === "absent") return absentObservation(logicalPath);
-  if (ancestors.kind === "unsafe") {
+function observeOne(
+  root: string,
+  logicalPath: string,
+  ancestors: AncestryWalk,
+): TargetObservation {
+  if (ancestors.status === "absent") return absentObservation(logicalPath);
+  if (ancestors.status === "unsafe") {
     return unsafeObservation(logicalPath, "UNSAFE_ANCESTRY");
   }
-  if (ancestors.kind === "unreadable") {
-    return unreadableObservation(logicalPath, ancestors.code);
+  if (ancestors.status === "unreadable") {
+    return unreadableObservation(logicalPath, ancestors.code ?? "EIO");
   }
 
   const abs = path.join(root, ...logicalPath.split("/"));
@@ -279,41 +351,48 @@ function observeOne(root: string, logicalPath: string): TargetObservation {
 }
 
 /**
- * Resolve the canonical root identity and reject a root that is not a real
- * directory (a symlink or nonregular entry could otherwise redirect every
- * subsequent observation).
+ * Resolve the canonical root identity. An explicitly selected root alias is
+ * canonicalized once; only links *below* the root remain unsupported. A root
+ * that does not resolve to a real directory is a typed failure.
  */
-function canonicalRoot(root: string): ModelResult<string> {
-  let stats;
+function canonicalRoot(
+  root: string,
+): ModelResult<{ readonly path: string; readonly identity: RootIdentity }> {
+  let canonicalPath: string;
   try {
-    stats = lstatSync(root);
+    canonicalPath = realpathSync(root);
   } catch (error) {
     const code = (error as NodeJS.ErrnoException | null)?.code;
     return fail([
       issue(
         "SNAPSHOT_ROOT_UNREADABLE",
-        `the project root could not be observed (${code ?? "EIO"})`,
+        `the project root could not be observed or canonicalized (${code ?? "EIO"})`,
       ),
     ]);
   }
-  if (stats.isSymbolicLink() || !stats.isDirectory()) {
-    return fail([
-      issue(
-        "SNAPSHOT_ROOT_UNSAFE",
-        "the project root is not a real directory; refusing to observe through a symlink or nonregular root",
-      ),
-    ]);
-  }
+  let stats;
   try {
-    return ok(realpathSync(root));
+    stats = statSync(canonicalPath);
   } catch (error) {
     return fail([
       issue(
         "SNAPSHOT_ROOT_UNREADABLE",
-        `the project root could not be canonicalized (${(error as NodeJS.ErrnoException | null)?.code ?? "EIO"})`,
+        `the project root could not be observed (${(error as NodeJS.ErrnoException | null)?.code ?? "EIO"})`,
       ),
     ]);
   }
+  if (!stats.isDirectory()) {
+    return fail([
+      issue(
+        "SNAPSHOT_ROOT_UNSAFE",
+        "the project root does not resolve to a real directory; refusing to observe a nonregular root",
+      ),
+    ]);
+  }
+  return ok({
+    path: canonicalPath,
+    identity: Object.freeze({ device: stats.dev, inode: stats.ino }),
+  });
 }
 
 /**
@@ -342,13 +421,25 @@ export function captureSnapshot(
   if (!canonical.ok) return canonical;
 
   const entries = new Map<string, TargetObservation>();
+  const ancestorMap = new Map<string, AncestorObservation>();
   for (const logicalPath of logicalPaths) {
-    entries.set(logicalPath, observeOne(canonical.value, logicalPath));
+    const ancestors = observeAncestors(canonical.value.path, logicalPath);
+    for (const observation of ancestors.observations) {
+      if (!ancestorMap.has(observation.path)) {
+        ancestorMap.set(observation.path, observation);
+      }
+    }
+    entries.set(
+      logicalPath,
+      observeOne(canonical.value.path, logicalPath, ancestors),
+    );
   }
   return ok(
     Object.freeze({
-      root: canonical.value,
-      entries: new FrozenObservations(entries),
+      root: canonical.value.path,
+      rootIdentity: canonical.value.identity,
+      entries: new FrozenMap(entries),
+      ancestors: new FrozenMap(ancestorMap),
       paths: Object.freeze([...logicalPaths]),
     }),
   );

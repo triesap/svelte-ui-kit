@@ -353,6 +353,11 @@ interface PeerConstraint {
   readonly name: string;
   readonly ranges: readonly string[];
   readonly requiredBy: readonly string[];
+  /**
+   * Registry runtime ranges for the same package. They are not peer ranges, but
+   * they constrain the same package and must hold alongside the peer evidence.
+   */
+  readonly runtimeRanges: readonly string[];
 }
 
 /**
@@ -395,6 +400,16 @@ function collectPeerConstraints(
     constraint.ranges.push(entry.range);
     constraint.required = true;
     for (const owner of entry.requiredBy) constraint.requiredBy.add(owner);
+  }
+
+  // A registry runtime requirement on the same package still constrains the
+  // joint audit, so it is retained per name and verified with the peer ranges.
+  const runtimeRanges = new Map<string, string[]>();
+  for (const entry of plan.entries) {
+    if (!entry.roles.includes("runtime")) continue;
+    const ranges = runtimeRanges.get(entry.name) ?? [];
+    if (!ranges.includes(entry.range)) ranges.push(entry.range);
+    runtimeRanges.set(entry.name, ranges);
   }
 
   // Any registry requirement the consumer needs at runtime or as a peer makes
@@ -506,6 +521,7 @@ function collectPeerConstraints(
       name,
       ranges: [...new Set(value.ranges)],
       requiredBy: [...value.requiredBy].sort(),
+      runtimeRanges: [...new Set(runtimeRanges.get(name) ?? [])],
     }))
     .sort((left, right) =>
       left.name < right.name ? -1 : left.name > right.name ? 1 : 0,
@@ -560,29 +576,71 @@ export function validatePeerDependencies(
     }
     const entry = inspected.value[0] as DependencyStateEntry;
     results.push(entry);
-    if (entry.status === "ready") continue;
-    const code =
-      entry.status === "install_incompatible" ||
-      entry.status === "declaration_incompatible"
-        ? "PEER_INCOMPATIBLE"
-        : entry.status === "missing_install"
-          ? "PEER_NOT_INSTALLED"
-          : "PEER_MISSING";
-    const detail =
-      entry.status === "install_incompatible"
-        ? `installed ${entry.installedVersion} does not satisfy ${joint.range}`
-        : entry.status === "declaration_incompatible"
-          ? `declared ${entry.declaredRange} is disjoint from the required ${joint.range}`
+    if (entry.status !== "ready") {
+      const code =
+        entry.status === "install_incompatible" ||
+        entry.status === "declaration_incompatible"
+          ? "PEER_INCOMPATIBLE"
           : entry.status === "missing_install"
-            ? `declared ${entry.declaredRange} but not installed`
-            : "neither declared nor installed";
-    issues.push(
-      issue(
-        code,
-        `peer ${entry.name} is not satisfied: ${detail}`,
-        "package.json",
-      ),
-    );
+            ? "PEER_NOT_INSTALLED"
+            : "PEER_MISSING";
+      const detail =
+        entry.status === "install_incompatible"
+          ? `installed ${entry.installedVersion} does not satisfy ${joint.range}`
+          : entry.status === "declaration_incompatible"
+            ? `declared ${entry.declaredRange} is disjoint from the required ${joint.range}`
+            : entry.status === "missing_install"
+              ? `declared ${entry.declaredRange} but not installed`
+              : "neither declared nor installed";
+      issues.push(
+        issue(
+          code,
+          `peer ${entry.name} is not satisfied: ${detail}`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+    // Combined audit: a registry runtime requirement on the same package is
+    // part of the joint constraint set. A standalone peer result must not be
+    // reported as overall readiness when the runtime range cannot also hold.
+    for (const range of constraint.runtimeRanges) {
+      if (constraint.ranges.includes(range)) continue;
+      const runtimeInspection = inspectDependencyState(root, [
+        { name: constraint.name, range },
+      ]);
+      if (!runtimeInspection.ok) {
+        for (const runtimeIssue of runtimeInspection.issues) {
+          issues.push(runtimeIssue);
+        }
+        continue;
+      }
+      const runtimeEntry = runtimeInspection.value[0] as DependencyStateEntry;
+      results.push(runtimeEntry);
+      if (runtimeEntry.status === "ready") continue;
+      const code =
+        runtimeEntry.status === "install_incompatible" ||
+        runtimeEntry.status === "declaration_incompatible"
+          ? "PEER_INCOMPATIBLE"
+          : runtimeEntry.status === "missing_install"
+            ? "PEER_NOT_INSTALLED"
+            : "PEER_MISSING";
+      const detail =
+        runtimeEntry.status === "install_incompatible"
+          ? `installed ${runtimeEntry.installedVersion} does not satisfy runtime range ${range}`
+          : runtimeEntry.status === "declaration_incompatible"
+            ? `declared ${runtimeEntry.declaredRange} is disjoint from the runtime range ${range}`
+            : runtimeEntry.status === "missing_install"
+              ? `declared ${runtimeEntry.declaredRange} but not installed`
+              : "neither declared nor installed";
+      issues.push(
+        issue(
+          code,
+          `runtime dependency ${entry.name} is not satisfied: ${detail}`,
+          "package.json",
+        ),
+      );
+    }
   }
   if (issues.length > 0) return fail(issues);
   return ok(results);

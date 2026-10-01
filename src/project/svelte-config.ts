@@ -103,21 +103,53 @@ function resolveExpression(
   }
 }
 
-/** The base identifier of an assignment target, or `null`. */
-function rootIdentifierName(node: ts.Expression): string | null {
-  let current: ts.Expression = node;
-  for (;;) {
-    if (ts.isIdentifier(current)) return current.text;
-    if (
-      ts.isPropertyAccessExpression(current) ||
-      ts.isElementAccessExpression(current) ||
-      ts.isNonNullExpression(current) ||
-      ts.isParenthesizedExpression(current)
-    ) {
-      current = current.expression;
-      continue;
+/**
+ * Collect the identifiers whose binding is targeted by an assignment. Unlike a
+ * plain text scan this follows the assignment *target* shape: property/element
+ * access walks to its base object, array and object destructuring patterns
+ * contribute their bound names, and spread elements recurse. A computed key is
+ * not a bound binding, so it is not added.
+ */
+function collectAssignmentTargets(
+  node: ts.Expression,
+  into: Set<string>,
+): void {
+  if (ts.isIdentifier(node)) {
+    into.add(node.text);
+    return;
+  }
+  if (
+    ts.isPropertyAccessExpression(node) ||
+    ts.isNonNullExpression(node) ||
+    ts.isParenthesizedExpression(node)
+  ) {
+    collectAssignmentTargets(node.expression, into);
+    return;
+  }
+  if (ts.isElementAccessExpression(node)) {
+    collectAssignmentTargets(node.expression, into);
+    return;
+  }
+  if (ts.isArrayLiteralExpression(node)) {
+    for (const element of node.elements) {
+      collectAssignmentTargets(element, into);
     }
-    return null;
+    return;
+  }
+  if (ts.isObjectLiteralExpression(node)) {
+    for (const property of node.properties) {
+      if (ts.isShorthandPropertyAssignment(property)) {
+        into.add(property.name.text);
+      } else if (ts.isPropertyAssignment(property)) {
+        collectAssignmentTargets(property.initializer, into);
+      } else if (ts.isSpreadAssignment(property)) {
+        collectAssignmentTargets(property.expression, into);
+      }
+    }
+    return;
+  }
+  if (ts.isSpreadElement(node)) {
+    collectAssignmentTargets(node.expression, into);
   }
 }
 
@@ -159,21 +191,26 @@ function collectScope(sourceFile: ts.SourceFile): Scope {
   const mark = (name: string | null): void => {
     if (name !== null && declared.has(name)) unsafe.add(name);
   };
+  const markTarget = (target: ts.Expression): void => {
+    const names = new Set<string>();
+    collectAssignmentTargets(target, names);
+    for (const name of names) mark(name);
+  };
 
   const visit = (node: ts.Node): void => {
     if (
       ts.isBinaryExpression(node) &&
       isAssignmentOperator(node.operatorToken.kind)
     ) {
-      mark(rootIdentifierName(node.left));
+      markTarget(node.left);
     } else if (
       (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
       (node.operator === ts.SyntaxKind.PlusPlusToken ||
         node.operator === ts.SyntaxKind.MinusMinusToken)
     ) {
-      mark(rootIdentifierName(node.operand));
+      markTarget(node.operand);
     } else if (ts.isDeleteExpression(node)) {
-      mark(rootIdentifierName(node.expression));
+      markTarget(node.expression);
     } else if (ts.isSpreadElement(node) || ts.isSpreadAssignment(node)) {
       const names = new Set<string>();
       collectReferencedNames(node.expression, names);
@@ -198,6 +235,27 @@ function collectScope(sourceFile: ts.SourceFile): Scope {
     ts.forEachChild(node, visit);
   };
   visit(sourceFile);
+
+  // A binding whose value is derived from a mutated/escaping binding can no
+  // longer be proven either (for example `const alias = config.kit` followed by
+  // `alias.files = …`). Propagate uncertainty through initializer references to
+  // a fixed point so the underlying configuration object is rejected too.
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const name of [...unsafe]) {
+      const initializer = initializers.get(name);
+      if (initializer === undefined) continue;
+      const referenced = new Set<string>();
+      collectReferencedNames(initializer, referenced);
+      for (const reference of referenced) {
+        if (declared.has(reference) && !unsafe.has(reference)) {
+          unsafe.add(reference);
+          changed = true;
+        }
+      }
+    }
+  }
 
   return { initializers, unsafe };
 }
@@ -325,29 +383,29 @@ function inspectRootObject(
   return result ?? { kind: "static", mapping: NO_MAPPING };
 }
 
-/** Find the default-exported expression (`export default` / `module.exports`). */
-function defaultExportExpression(
-  sourceFile: ts.SourceFile,
-): ts.Expression | null {
+/** Find every default-export candidate (`export default` / `module.exports =`). */
+function defaultExportExpressions(sourceFile: ts.SourceFile): ts.Expression[] {
+  const found: ts.Expression[] = [];
   for (const statement of sourceFile.statements) {
     if (ts.isExportAssignment(statement)) {
       if (statement.isExportEquals) continue;
-      return statement.expression;
+      found.push(statement.expression);
+      continue;
     }
-    if (ts.isExpressionStatement(statement)) {
-      const expression = statement.expression;
-      if (
-        ts.isBinaryExpression(expression) &&
-        expression.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-        ts.isPropertyAccessExpression(expression.left) &&
-        expression.left.expression.getText(sourceFile) === "module" &&
-        expression.left.name.getText(sourceFile) === "exports"
-      ) {
-        return expression.right;
-      }
+    if (!ts.isExpressionStatement(statement)) continue;
+    const expression = statement.expression;
+    if (
+      ts.isBinaryExpression(expression) &&
+      expression.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      ts.isPropertyAccessExpression(expression.left) &&
+      ts.isIdentifier(expression.left.expression) &&
+      expression.left.expression.text === "module" &&
+      expression.left.name.text === "exports"
+    ) {
+      found.push(expression.right);
     }
   }
-  return null;
+  return found;
 }
 
 function scriptKindFor(fileName: string): ts.ScriptKind {
@@ -396,12 +454,18 @@ export function inspectSvelteConfigSource(
         : ts.flattenDiagnosticMessageText(first.messageText, " ");
     return unsupported(`the configuration has a static parse error: ${detail}`);
   }
-  const expression = defaultExportExpression(sourceFile);
-  if (expression === null) {
+  const expressions = defaultExportExpressions(sourceFile);
+  if (expressions.length === 0) {
     return unsupported(
       "the configuration has no statically analysable default export",
     );
   }
+  if (expressions.length > 1) {
+    return unsupported(
+      "the configuration assigns its default export more than once, so the effective mapping cannot be proven",
+    );
+  }
+  const expression = expressions[0] as ts.Expression;
   const scope = collectScope(sourceFile);
   const resolved = resolveExpression(expression, scope, new Set());
   if (resolved.kind === "unsupported") return unsupported(resolved.reason);

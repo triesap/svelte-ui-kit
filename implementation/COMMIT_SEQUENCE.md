@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **none** (repairing pending S033–S057 under independent review 2, then complete S058 through S063).
+- Active implementation checkpoint: **none** (repairing pending S033–S057 under independent review 3, then complete S058 through S063).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **32 / 203**. Remaining: **171 / 203**.
 - Committed pending review: **25 / 203**. Authored batch range: **S033–S057**.
@@ -30,7 +30,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - S005 evidence: `implementation/evidence/S005_REPORT.md` and `implementation/evidence/S005_REVIEW.md`. Review 2 accepts the correction: independent unit 5/5, harness 29/29, smoke 41/41 and contracts 84/84 pass; original boundary/filename/failure probes are corrected. No release acceptance is claimed.
 - S006 evidence: `implementation/evidence/S006_REPORT.md` and `implementation/evidence/S006_REVIEW.md`. Review 2 accepts recursive exclusions and maintained-source controls; independent unit 14/14, harness 29/29, smoke 41/41 and contracts 84/84 pass. Original nested probes are corrected; real lint/format preserve all 71 tracked/untracked authoring entries. Accepted and committed at the last safe hash above.
 - S007–S012 reviews: each conventional report/review path records the tested combined candidate, original/repair provenance and independent acceptance. All RCLD-01 review findings are closed; the strict upstream declaration exception remains release AC20 debt.
-- No checkpoint has been skipped or reordered. S001–S032 are complete; S033–S057 are committed_pending_review with repairs required; S058–S203 remain not_started (146 checkpoints). The current RCLD-03 review 2 dispatch governs corrections and continuation to S063.
+- No checkpoint has been skipped or reordered. S001–S032 are complete; S033–S057 are committed_pending_review with repairs required; S058–S203 remain not_started (146 checkpoints). The current RCLD-03 review 3 dispatch governs corrections and continuation to S063.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. By default every checkpoint after S001 depends on the reviewed, verified, committed predecessor. The explicit owner-authorized batch below permits verified implementation commits pending Codex review to unlock successors only within the currently dispatched sequence; the current RCLD-03 activation prerequisite governs the transition from the completed RCLD-02 batch.
 
@@ -67,7 +67,144 @@ bypassing dependencies. There is no current owner, external or hardware blocker.
 Pi writes product/tooling code and tests; Codex owns acceptance and consequential
 decisions. No push, publication, deployment, reference mutation or second tracker.
 
+### Independent review 3 — preserve application data and complete composed planning
+
+Codex reviewed clean candidate `b5423b2413c9e91900d3194e88483e3acf3df995`,
+six repair commits after review 2. **Changes requested.** S058–S063 were not
+started. Keep 32 independently accepted checkpoints, 25 pending S033–S057 and
+146 not started; preserve original pending hashes and RCLD-01/02 acceptance.
+This review supersedes review 2's current disposition, not its requirements.
+All original checkpoint definitions, contracts and the S064 gate remain intact.
+
+Verified progress includes immutable observation lookup and defensive bytes,
+rejection of intermediate target links and uncaptured source/retirement evidence,
+BOM preservation and strict UTF-8 decoding, ordinary static-config override
+checks, workspace ancestry and explicit-app precedence, actual import-node
+layout patches, simple-template/block-comment marker protection, component
+default exports, and rejection of nonregular/unowned initialization targets.
+Public S033–S057 reports no longer contain the previously identified operator
+routing. Preserve those repairs; they do not establish full feature acceptance.
+
+Fresh independent build, format, lint and typecheck pass; unit 259/259,
+integration 173/173, registry 38/38, CLI 52/52 and contract regressions 127/127
+pass with zero skips. Emitted-module probes nevertheless reproduce the defects
+below. Full installed-parser, planned-consumer and S063 milestone qualification
+remains due. The author again returned after repairs, citing context/runtime
+capacity; a normal final response is not evidence of an external runtime limit.
+No owner decision or external/hardware blocker prevents the remaining work.
+
+#### RCLD03-R3-1 — complete project proof and observation identity
+
+- A referenced `config.kit` can escape through an alias and be mutated after
+  its declaration; repeated `module.exports` assignment can override the first
+  mapping. Both currently certify stale defaults. Reject unproven relevant
+  aliases, mutations and export overrides conservatively. Preserve supported
+  static fixture configurations; do not build a general evaluator.
+- Workspace selection filters malformed member manifests and then calls the
+  remaining app unique. Manager lookup separately ignores unsupported exclusion
+  syntax while proving an owning workspace. Share complete validated membership
+  evidence: distinguish a proven non-app from malformed/unreadable/unsafe input;
+  validate includes and excludes before uniqueness or manager fallback. Retain
+  explicit-app precedence and logical diagnostics, including absolute --cwd.
+- The peer audit now recognizes runtime-required packages as nonoptional, but
+  still omits their registry runtime range from the combined range. With runtime
+  Svelte `^5`, upstream optional peer `^4`, and consumer declared/installed v4,
+  it reports peer readiness. The composed dependency audit must assess one joint
+  set of runtime/peer constraints and provenance before reporting readiness.
+  Preserve genuine optionality, packages with no peer map, installed metadata
+  validation and CLI-tooling separation; do not treat this isolated helper's
+  success as whole dependency readiness.
+- Snapshot capture rejects an explicitly selected root alias instead of
+  canonicalizing it once, and still carries no stable root identity or ancestry
+  observations for later coordinated recheck. Compose the existing root/ancestry
+  authority into the actual project/snapshot/planner entry; retain observed
+  root device/inode and relevant existing/missing ancestors. Preserve immutable
+  bytes and complete target evidence. A selected root may canonicalize once;
+  symlinks below that root remain unsupported. Test root replacement and actual
+  callers under the already-approved trusted local-checkout model. Do not add
+  product writer coordination early.
+
+#### RCLD03-R3-2 — preserve unmanaged bytes through structural patches
+
+- With marker-free application CSS, inserting tokens currently copies the
+  entire application stylesheet both before and after the block. Reordering
+  existing owned blocks also moves their trailing unmanaged regions, reversing
+  application rule order. Emit every unmanaged region exactly once and retain
+  its original order and byte content; reorder only owned spans into approved
+  tokens-first order. Preserve satisfied marker spelling and retained custom
+  retired spans. Do not interpret ownership markers as permission to replace.
+- The raw TypeScript scanner does not rescan interpolated template tails.
+  Marker-looking lines after `${expression}` become comments and application
+  template text is deleted. Use parser-aware lexical comment locations or
+  correctly coordinated token scanning, including nested/interpolated templates
+  and regex literals. Only actual reserved standalone comments may delimit the
+  managed region. Preserve parse-error, malformed marker, collision, CRLF/BOM
+  and no-final-newline controls.
+- Complete the original manifest-authoritative export/layout qualification.
+  The flat component plus Props case is repaired, but counting non-type exports
+  is still not the existing `isCompoundComponent` authority. Use actual manifest
+  file/target semantics, structural cycle checks and real consumer check/build;
+  preserve repaired default aliases and Svelte import-node handling.
+
+#### RCLD03-R3-3 — coherent initialization followed by all remaining planners
+
+Initialization still returns a lock object without a planned `kit.lock.json`
+write. Applying exactly its reported writes makes replay fail ownership checks.
+Even when the returned lock is separately seeded, customized owned export/token
+regions are erased and requested/item/file/CSS lock collections reset. A supplied
+layout path may disagree with config, and supplied already-integrated text for
+an absent layout suppresses its creation while a lock baseline is claimed.
+
+Resolve these at the composed planning boundary: consume validated config,
+actual registry identity and complete observed project state; reject mismatched
+layout/path/source inputs. Include every config/integration/lock effect in one
+plan, with final schema/cross-record validation and truthful owned baselines.
+Recorded ownership alone is not permission to overwrite customized content.
+Existing initialized installations must preserve effective state or report a
+precise conflict; no implicit empty reset. Applying exactly all planned effects
+in a test-owned consumer must yield a satisfied `no_change` replay.
+
+Finish prerequisite repairs with green commits, then continue in original order:
+S058 explicit add roots/registry closure/source/CSS/exports/dependency data;
+S059 conservative component and affected-dependency cohorts;
+S060 complete deterministic customization-aware sync/conflicts;
+S061 effective per-target lineage and explicit metadata-only lock projection;
+S062 config-driven retirement/shared dependencies/custom retention;
+S063 composed planner determinism, complete-tree zero writes and real planned
+consumer qualification. S061 must finish shared lock projection for init/add/sync;
+do not call the provisional init repair complete before that integration.
+Preserve every resolved ownership, cohort, retirement and lineage decision below.
+One conflict blocks the entire invocation, including config and lock effects.
+No implicit catalog, auto-install/merge, remove/force API or early product writer.
+
+#### RCLD03-R3-4 — finish cumulative evidence and the dispatched endpoint
+
+Reconcile reports and COMPATIBILITY with actual source, failed attempts, repaired
+reruns and remaining work. Operator-routing cleanup is verified progress;
+milestone evidence is still missing. Retain intermediate missing-import,
+fixture-setup and lint failures rather than presenting filtered output as clean
+history. Capture raw stdout/stderr and the underlying exit before tail/grep/tee.
+Add repository regressions for these findings without weakening original tests.
+
+Run every original checkpoint check and the complete milestone lane set in
+VERIFICATION, including installed emitted TS/Svelte parsers outside the checkout,
+planned consumers, fixture/components/browser, strict declaration controls,
+frozen strict install, actual workflow validation and fresh reference guards.
+No additional dependency promotion is approved. The narrowly qualified upstream
+Bits declaration exception remains fixture-only release AC20 debt.
+
+The batch remains `pfc through RCLD-03`: all R3 corrections, S058–S063 and full
+qualification. Continue after every green checkpoint; repair completion alone,
+a report, conversation length or anticipated difficulty is not the endpoint.
+Stop at the completed S063 candidate before independent acceptance/S064, an
+actual runtime limit, user stop or concrete external blocker after other eligible
+work. Report a real limit precisely; never rename unfinished software a hardware
+blocker. Pi records implementation/evidence; Codex independently accepts.
+
 ### Independent review 2 — integrate safe observations and finish composed planning
+
+This review is historical; review 3 above records repaired cases and remaining
+requirements. Preserve the original findings as provenance.
 
 Codex reviewed clean candidate `69f5fc00007f33c6fd756c9fdec690ab0a1d9ff2`,
 including the three early repair commits and S041–S057, against original criteria

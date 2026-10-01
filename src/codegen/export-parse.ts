@@ -71,6 +71,38 @@ function lineEnd(source: string, pos: number): number {
   return newline === -1 ? source.length : newline + 1;
 }
 
+/**
+ * Tokens after which a `/` is division rather than the start of a regular
+ * expression literal. Any other preceding token (or none) begins an expression
+ * context, so a slash there starts a regex.
+ */
+const DIVISION_PRECEDING_TOKENS: ReadonlySet<ts.SyntaxKind> = new Set([
+  ts.SyntaxKind.Identifier,
+  ts.SyntaxKind.PrivateIdentifier,
+  ts.SyntaxKind.NumericLiteral,
+  ts.SyntaxKind.BigIntLiteral,
+  ts.SyntaxKind.StringLiteral,
+  ts.SyntaxKind.NoSubstitutionTemplateLiteral,
+  ts.SyntaxKind.RegularExpressionLiteral,
+  ts.SyntaxKind.TemplateTail,
+  ts.SyntaxKind.TrueKeyword,
+  ts.SyntaxKind.FalseKeyword,
+  ts.SyntaxKind.NullKeyword,
+  ts.SyntaxKind.ThisKeyword,
+  ts.SyntaxKind.SuperKeyword,
+  ts.SyntaxKind.CloseParenToken,
+  ts.SyntaxKind.CloseBracketToken,
+  ts.SyntaxKind.CloseBraceToken,
+  ts.SyntaxKind.PlusPlusToken,
+  ts.SyntaxKind.MinusMinusToken,
+]);
+
+function expectsRegularExpression(
+  previous: ts.SyntaxKind | undefined,
+): boolean {
+  return previous === undefined || !DIVISION_PRECEDING_TOKENS.has(previous);
+}
+
 interface MarkerSpan {
   readonly start: number;
   readonly contentStart: number;
@@ -116,9 +148,45 @@ function markerRegion(
     ts.LanguageVariant.Standard,
     source,
   );
+  // Open template-substitution braces. A `true` entry is a `${`; a nested
+  // object/block brace is `false`. While a substitution is open its contents are
+  // expression code (where a standalone comment is real); the raw text inside a
+  // template is a single scanner token, so marker-like lines that only appear in
+  // that raw text are never tokenized as comments.
+  const templateStack: boolean[] = [];
+  let previous: ts.SyntaxKind | undefined;
   let token = scanner.scan();
   while (token !== ts.SyntaxKind.EndOfFileToken) {
-    if (token === ts.SyntaxKind.SingleLineCommentTrivia) {
+    if (
+      (token === ts.SyntaxKind.SlashToken ||
+        token === ts.SyntaxKind.SlashEqualsToken) &&
+      expectsRegularExpression(previous)
+    ) {
+      // Rescan the slash in expression context so a regular expression literal
+      // is one token and its body cannot be mistaken for a comment.
+      token = scanner.reScanSlashToken();
+    }
+    if (token === ts.SyntaxKind.TemplateHead) {
+      templateStack.push(true);
+    } else if (token === ts.SyntaxKind.OpenBraceToken) {
+      templateStack.push(false);
+    } else if (token === ts.SyntaxKind.CloseBraceToken) {
+      const closesTemplate = templateStack.pop();
+      if (closesTemplate === true) {
+        // The brace closes a `${`; rescan as the template middle/tail so the
+        // following raw text is consumed as template bytes, not as code.
+        const rescanned = scanner.reScanTemplateToken(false);
+        if (rescanned === ts.SyntaxKind.TemplateMiddle) {
+          templateStack.push(true);
+        }
+        previous = rescanned;
+        token = scanner.scan();
+        continue;
+      }
+    } else if (
+      token === ts.SyntaxKind.SingleLineCommentTrivia &&
+      templateStack.length === 0
+    ) {
       const pos = scanner.getTokenPos();
       const text = scanner.getTokenText();
       const atLineStart = pos === 0 || source[pos - 1] === "\n";
@@ -136,6 +204,7 @@ function markerRegion(
         }
       }
     }
+    previous = token;
     token = scanner.scan();
   }
 

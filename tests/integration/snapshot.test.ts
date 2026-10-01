@@ -167,9 +167,11 @@ test("text decoding preserves a BOM and rejects invalid UTF-8", (t) => {
 });
 
 /**
- * RCLD03-R2-2: a symlinked project root is rejected rather than followed.
+ * RCLD03-R3-1: an explicitly selected root alias is canonicalized once, so a
+ * root that is a symlink to a directory is observed; a root that does not
+ * resolve to a real directory is still a typed failure.
  */
-test("a symlinked project root is a typed failure", (t) => {
+test("a root alias canonicalizes once and a non-directory root is unsafe", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());
   const external = createTempProject({ prefix: "suik-root-external-" });
@@ -178,8 +180,21 @@ test("a symlinked project root is a typed failure", (t) => {
   project.symlink(external.root, "linked-root");
 
   const result = captureSnapshot(path.join(project.root, "linked-root"), ["f"]);
-  assert.equal(result.ok, false, JSON.stringify(result));
-  assert.deepEqual(result.ok ? [] : result.issues.map((entry) => entry.code), [
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  const observation = observationOf(result.value, "f");
+  assert.equal(observation?.kind, "file");
+  assert.equal(observedText(observation!), "x");
+  assert.equal(result.value.root, external.root);
+
+  // A root that resolves to a non-directory is unsafe, not followed.
+  project.writeFile("plain.txt", "x");
+  project.symlink(path.join(project.root, "plain.txt"), "file-link");
+  const unsafe = captureSnapshot(path.join(project.root, "file-link"), [
+    "plain.txt",
+  ]);
+  assert.equal(unsafe.ok, false);
+  assert.deepEqual(unsafe.ok ? [] : unsafe.issues.map((entry) => entry.code), [
     "SNAPSHOT_ROOT_UNSAFE",
   ]);
 });

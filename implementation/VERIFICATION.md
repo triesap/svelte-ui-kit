@@ -77,23 +77,25 @@ only writing modes.
 
 #### Current owner-authorized RCLD-03 batch verification
 
-Independent review 2 of candidate `69f5fc00007f33c6fd756c9fdec690ab0a1d9ff2`
-requests RCLD03-R2-1/2/3/4/5 corrections and continuation through S063. Fresh
-reviewer build/format/lint/typecheck, unit 255/255, integration 138/138,
-registry 38/38, CLI 52/52 and contracts 127/127 pass with zero skips. All 27 original
-probe cases now match their expected outcomes; preserve that verified progress.
-New emitted-module probes expose unsafe config/workspace/peer evidence,
-mutable or incomplete snapshots, literal/comment corruption, invalid generated
-exports, wrong/absent/duplicate CSS imports and unsafe incomplete initialization.
-The governing RCLD records exact findings and decisions. These are eligible
-software work; keep 32 accepted and 25 pending, with S058–S063 unimplemented.
+Independent review 3 of candidate `b5423b2413c9e91900d3194e88483e3acf3df995`
+requests RCLD03-R3-1/2/3/4 corrections and continuation through S063. Fresh
+reviewer build/format/lint/typecheck, unit 259/259, integration 173/173,
+registry 38/38, CLI 52/52 and contracts 127/127 pass with zero skips. Preserve
+immutable lookup/bytes, strict UTF-8/BOM, ancestry and uncaptured-evidence checks,
+ordinary static proof, import-node patches and simple marker/parser repairs.
+New emitted-module probes expose CSS duplication and changed unmanaged order,
+interpolated-template text deletion, unsafe aliases/workspace/peer proof,
+missing snapshot identity and incomplete/destructive initialization. The exact
+planned effects must include lock publication and replay as no_change without
+resetting initialized/customized state. The governing RCLD records findings and
+decisions. Keep 32 accepted and 25 pending, with S058–S063 unimplemented.
 
 Use actual composed callers, AST imports/exports and planned-consumer check/build;
 helper/string assertions do not prove integration. Qualify installed TS/Svelte
 parser runtime dependencies outside the checkout. Keep observed absence distinct
 from missing/unsafe/unreadable evidence and test complete-tree purity.
-Record all intermediate failures and remove operator routing from all affected
-public reports. Capture underlying command exits before filtering output. No
+Record all intermediate failures; retain the verified operator-routing cleanup
+in affected public reports. Capture underlying command exits before filtering output. No
 new acceptance, release-AC20 waiver or additional dependency approval.
 
 S001–S032 are independently accepted at the anchors in COMMIT_SEQUENCE.md.
