@@ -8,6 +8,7 @@
  * conflict.
  */
 import ts from "typescript";
+import path from "node:path";
 
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { isCompoundComponent, type RegistryItem } from "../registry/item.js";
@@ -18,6 +19,7 @@ import {
   parseExportRegion,
   type AppExport,
 } from "./export-parse.js";
+import { parseSvelteLayout } from "./svelte-parse.js";
 
 export interface ExportDeclaration {
   readonly name: string;
@@ -35,6 +37,19 @@ function compareDeclarations(
   return 0;
 }
 
+/**
+ * The runtime module specifier for a generated target. A `.ts`/`.tsx` source
+ * compiles to `.js` (`.mts`/`.cts` to `.mjs`/`.cjs`), so an emitted re-export
+ * uses a spelling the consumer's TypeScript accepts without
+ * `allowImportingTsExtensions`. Non-TS targets are unchanged.
+ */
+export function runtimeSpecifier(target: string): string {
+  return target
+    .replace(/\.tsx?$/i, ".js")
+    .replace(/\.mts$/i, ".mjs")
+    .replace(/\.cts$/i, ".cjs");
+}
+
 /** Render deterministic `export ... from` lines for the given declarations. */
 export function renderExportLines(
   declarations: readonly ExportDeclaration[],
@@ -42,15 +57,16 @@ export function renderExportLines(
   return [...declarations]
     .sort(compareDeclarations)
     .map((declaration) => {
+      const target = runtimeSpecifier(declaration.target);
       if (declaration.kind === "type") {
-        return `export type { ${declaration.name} } from "${declaration.target}";`;
+        return `export type { ${declaration.name} } from "${target}";`;
       }
       // An ordinary Svelte component module exports the component as its
       // default binding, so the public name is an alias of `default`.
       if (declaration.target.endsWith(".svelte")) {
-        return `export { default as ${declaration.name} } from "${declaration.target}";`;
+        return `export { default as ${declaration.name} } from "${target}";`;
       }
-      return `export { ${declaration.name} } from "${declaration.target}";`;
+      return `export { ${declaration.name} } from "${target}";`;
     })
     .join("\n")
     .concat("\n");
@@ -229,5 +245,86 @@ export function findRootBarrelImports(
     ts.forEachChild(node, visit);
   };
   visit(sourceFile);
+  return [...offenders].sort();
+}
+
+const MODULE_EXTENSIONS = [
+  ".js",
+  ".ts",
+  ".mjs",
+  ".cjs",
+  ".jsx",
+  ".tsx",
+] as const;
+
+function addBarrelForms(target: Set<string>, stem: string): void {
+  target.add(stem);
+  for (const extension of MODULE_EXTENSIONS) target.add(`${stem}${extension}`);
+}
+
+/**
+ * Every supported resolved spelling of the generated root UI barrel as seen
+ * from `fromPath`: the relative directory/index forms with module-extension
+ * variants, the bare relative directory, and the `$lib` SvelteKit alias when
+ * the configured UI root lives under `src/lib`. Custom UI mappings are honored
+ * because the relative forms are computed from the actual configured paths.
+ */
+export function rootBarrelSpecifiers(
+  fromPath: string,
+  rootExports: string,
+): ReadonlySet<string> {
+  const specifiers = new Set<string>();
+  const relative = path.posix
+    .relative(path.posix.dirname(fromPath), rootExports)
+    .replace(/\.ts$/, "");
+  const relativeStem = relative.startsWith(".") ? relative : `./${relative}`;
+  addBarrelForms(specifiers, relativeStem);
+  if (relativeStem === "./index") specifiers.add(".");
+  else specifiers.add(relativeStem.replace(/\/index$/, ""));
+
+  if (rootExports.startsWith("src/lib/")) {
+    const aliasStem = rootExports
+      .replace(/^src\/lib\//, "$lib/")
+      .replace(/\.ts$/, "");
+    addBarrelForms(specifiers, aliasStem);
+    specifiers.add(aliasStem.replace(/\/index$/, ""));
+  }
+  return specifiers;
+}
+
+function scriptBodies(fileName: string, source: string): readonly string[] {
+  if (!fileName.endsWith(".svelte")) return [source];
+  const parsed = parseSvelteLayout(source);
+  if (!parsed.ok) return [source];
+  const bodies: string[] = [];
+  if (parsed.value.instance !== null) {
+    bodies.push(
+      source.slice(parsed.value.instance.start, parsed.value.instance.end),
+    );
+  }
+  if (parsed.value.module !== null) {
+    bodies.push(
+      source.slice(parsed.value.module.start, parsed.value.module.end),
+    );
+  }
+  return bodies;
+}
+
+/**
+ * Find root-barrel references using the actual script structure: a `.svelte`
+ * source is reduced to its instance/module script bodies before the TypeScript
+ * scanner runs, so markup text can never create or hide a cycle finding.
+ */
+export function findRootBarrelImportsInSource(
+  fileName: string,
+  source: string,
+  rootBarrelSpecifiers: ReadonlySet<string>,
+): readonly string[] {
+  const offenders = new Set<string>();
+  for (const body of scriptBodies(fileName, source)) {
+    for (const specifier of findRootBarrelImports(body, rootBarrelSpecifiers)) {
+      offenders.add(specifier);
+    }
+  }
   return [...offenders].sort();
 }

@@ -484,6 +484,36 @@ const exportsModule = await imp("codegen/exports.js");
 const exportParse = await imp("codegen/export-parse.js");
 const svelteModule = await imp("codegen/svelte.js");
 const plan = await imp("codegen/plan.js");
+const snapshotModule = await imp("codegen/snapshot.js");
+const configModule = await imp("project/config.js");
+const assetsModule = await imp("registry/assets.js");
+const loadModule = await imp("registry/load.js");
+const fsModule = await import("node:fs");
+const osModule = await import("node:os");
+const provider = assetsModule.createInstalledAssetProvider();
+const registryResult = loadModule.loadRegistrySnapshot(provider);
+const configResult = configModule.parseKitConfig({ schemaVersion: 1 });
+const projectRoot = fsModule.mkdtempSync(path.join(osModule.tmpdir(), "suik-installed-plan-"));
+const derived = configModule.deriveKitPaths(configResult.value);
+const observed = snapshotModule.captureSnapshot(projectRoot, [
+  derived.stateDir + "/kit.json",
+  derived.stateDir + "/kit.lock.json",
+  derived.rootExports,
+  derived.kitCss,
+  derived.themesCss,
+  derived.appCss,
+  configResult.value.layoutFile,
+]);
+const planned = planAdd.planAdd({
+  registry: registryResult.value,
+  config: configResult.value,
+  addedRoots: [],
+  snapshot: observed.value,
+  lock: null,
+  registryVersion: registryResult.value.root.registryVersion,
+  registryHash: registryResult.value.root.contentHash,
+});
+fsModule.rmSync(projectRoot, { recursive: true, force: true });
 const patched = exportsModule.patchExportRegion("index.ts", "", [
   { name: "Button", target: "./button.svelte", kind: "value" },
 ]);
@@ -506,6 +536,9 @@ process.stdout.write(
     cwd: process.cwd(),
     root: installed,
     planAddType: typeof planAdd.planAdd,
+    planAddOk: planned.ok,
+    planAddExecutable: planned.ok ? planned.value.executable : false,
+    planAddWrites: planned.ok ? planned.value.writes.length : -1,
     exportRegionOk: patched.ok,
     regionFound: region.ok ? region.value.region !== null : false,
     compound,
@@ -523,6 +556,9 @@ interface R5ChildResult {
   readonly cwd: string;
   readonly root: string;
   readonly planAddType: string;
+  readonly planAddOk: boolean;
+  readonly planAddExecutable: boolean;
+  readonly planAddWrites: number;
   readonly exportRegionOk: boolean;
   readonly regionFound: boolean;
   readonly compound: boolean;
@@ -555,6 +591,9 @@ test("the emitted planners and TS/Svelte parsers run outside the checkout", (t) 
   assert.notEqual(output.cwd, PKG_ROOT);
   assert.notEqual(output.root, PKG_ROOT);
   assert.equal(output.planAddType, "function");
+  assert.equal(output.planAddOk, true);
+  assert.equal(output.planAddExecutable, true);
+  assert.ok(output.planAddWrites > 0);
   assert.equal(output.exportRegionOk, true);
   assert.equal(output.regionFound, true);
   assert.equal(output.compound, true);

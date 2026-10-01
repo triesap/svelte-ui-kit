@@ -574,6 +574,37 @@ test("a registry source importing the root barrel is a cycle conflict", (t) => {
   );
 });
 
+test("a svelte source importing ./index.js is a cycle conflict", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const body =
+    '<script lang="ts">\nimport { Button } from "./index.js";\n</script>\n<button>hi</button>\n';
+  const reg = registryOf([
+    componentItem("button", {
+      files: [
+        {
+          logicalSource: "registry/templates/button.svelte",
+          target: "button.svelte",
+          owner: "button",
+          cohort: "core",
+          blockId: null,
+          bytes: utf8(body),
+          digest: hashBytes(utf8(body)) as string,
+        },
+      ],
+      exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
+    }),
+  ]);
+  const result = add(project, reg);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.executable, false);
+  assert.ok(
+    result.value.diagnostics.some((entry) => entry.includes("root UI barrel")),
+    JSON.stringify(result.value.diagnostics),
+  );
+});
+
 test("a supplied lock that disagrees with the observed bytes conflicts", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());

@@ -64,9 +64,11 @@ import { parseManagedCss } from "./css-parse.js";
 import {
   exportDeclarationKey,
   exportRegionContent,
-  findRootBarrelImports,
+  findRootBarrelImportsInSource,
   parseGeneratedDeclarations,
   patchExportRegion,
+  rootBarrelSpecifiers,
+  runtimeSpecifier,
   type ExportDeclaration,
 } from "./exports.js";
 import { parseExportRegion } from "./export-parse.js";
@@ -427,13 +429,15 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       ) {
         const text = decodeText(file.bytes);
         if (text !== null) {
-          const relative = path.posix
-            .relative(path.posix.dirname(logicalPath), derived.rootExports)
-            .replace(/\.ts$/, "");
-          const specifier = relative.startsWith(".")
-            ? relative
-            : `./${relative}`;
-          const offenders = findRootBarrelImports(text, new Set([specifier]));
+          const specifiers = rootBarrelSpecifiers(
+            logicalPath,
+            derived.rootExports,
+          );
+          const offenders = findRootBarrelImportsInSource(
+            logicalPath,
+            text,
+            specifiers,
+          );
           if (offenders.length > 0) {
             diagnostics.push(
               `registry source ${logicalPath} imports the root UI barrel ${JSON.stringify(offenders[0])}; generated sources must use direct sibling imports to avoid a cycle`,
@@ -472,9 +476,9 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     for (const entry of item.manifest.exports) {
       exportDeclarations.push({
         name: entry.name,
-        target: entry.target.startsWith(".")
-          ? entry.target
-          : `./${entry.target}`,
+        target: runtimeSpecifier(
+          entry.target.startsWith(".") ? entry.target : `./${entry.target}`,
+        ),
         kind: entry.kind,
       });
     }
@@ -840,18 +844,18 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     if (item === undefined) continue;
     for (const file of item.files) {
       if (file.blockId !== null) continue;
-      const target = file.target.startsWith(".")
-        ? file.target
-        : `./${file.target}`;
+      const target = runtimeSpecifier(
+        file.target.startsWith(".") ? file.target : `./${file.target}`,
+      );
       if (!exportOwnerByTarget.has(target)) exportOwnerByTarget.set(target, id);
     }
     incomingByOwner.set(
       id,
       item.manifest.exports.map((entry) => ({
         name: entry.name,
-        target: entry.target.startsWith(".")
-          ? entry.target
-          : `./${entry.target}`,
+        target: runtimeSpecifier(
+          entry.target.startsWith(".") ? entry.target : `./${entry.target}`,
+        ),
         kind: entry.kind,
       })),
     );

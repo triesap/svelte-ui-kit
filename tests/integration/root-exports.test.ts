@@ -24,7 +24,7 @@ test("rendered exports use exact declared names and direct targets", () => {
   assert.equal(
     lines,
     'export { default as Button } from "./button.svelte";\n' +
-      'export type { ButtonProps } from "./button.types.ts";\n' +
+      'export type { ButtonProps } from "./button.types.js";\n' +
       'export { default as Card } from "./card.svelte";\n',
   );
 });
@@ -34,7 +34,7 @@ test("a plain TypeScript value target keeps its named export", () => {
     renderExportLines([
       { name: "helper", target: "./helper.ts", kind: "value" },
     ]),
-    'export { helper } from "./helper.ts";\n',
+    'export { helper } from "./helper.js";\n',
   );
 });
 

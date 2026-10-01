@@ -199,6 +199,15 @@ function applyWrites(
   }
 }
 
+function runPnpm(args: readonly string[], cwd: string) {
+  return spawnSync("pnpm", args, {
+    cwd,
+    encoding: "utf8",
+    timeout: 150_000,
+    env: { ...process.env, CI: "1" },
+  });
+}
+
 test(
   "a consumer built from exactly the planned add operations check/build passes",
   { timeout: 180_000 },
@@ -264,12 +273,9 @@ test(
     );
     applyWrites(consumer, planned.value.writes);
 
-    const built = spawnSync("pnpm", ["run", "build"], {
-      cwd: consumer,
-      encoding: "utf8",
-      timeout: 150_000,
-      env: { ...process.env, CI: "1" },
-    });
+    const checked = runPnpm(["run", "check"], consumer);
+    assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
+    const built = runPnpm(["run", "build"], consumer);
     assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
   },
 );
@@ -349,16 +355,78 @@ test(
     assert.ok(exportWrite);
     assert.match(
       new TextDecoder().decode(exportWrite.bytes),
-      /export \{ DialogRoot \} from "\.\/dialog\/index\.ts";/,
+      /export \{ DialogRoot \} from "\.\/dialog\/index\.js";/,
     );
     applyWrites(consumer, planned.value.writes);
 
-    const built = spawnSync("pnpm", ["run", "build"], {
-      cwd: consumer,
-      encoding: "utf8",
-      timeout: 150_000,
-      env: { ...process.env, CI: "1" },
-    });
+    const checked = runPnpm(["run", "check"], consumer);
+    assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
+    const built = runPnpm(["run", "build"], consumer);
     assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+  },
+);
+
+test(
+  "the planned-consumer check lane rejects an injected type error",
+  { timeout: 180_000 },
+  (t) => {
+    const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-negreg-"));
+    const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-pr-negapp-"));
+    t.after(() => {
+      rmSync(registryRoot, { recursive: true, force: true });
+      rmSync(consumer, { recursive: true, force: true });
+    });
+    for (const file of [
+      "package.json",
+      "vite.config.ts",
+      "svelte.config.js",
+      "tsconfig.json",
+      "src/app.html",
+    ]) {
+      cpSync(path.join(FIXTURE, file), path.join(consumer, file));
+    }
+    symlinkSync(
+      path.join(FIXTURE, "node_modules"),
+      path.join(consumer, "node_modules"),
+      "dir",
+    );
+    write(
+      consumer,
+      "src/routes/+page.svelte",
+      '<script lang="ts">import { Button } from "$lib/components/ui/index.js";\nconst broken: number = "not a number";\n</script>\n<Button />\n',
+    );
+    const registry = realRegistry(registryRoot);
+    assert.equal(registry.ok, true, JSON.stringify(registry));
+    if (!registry.ok) return;
+    const snapshot = captureSnapshot(consumer, [
+      `${derived.stateDir}/kit.json`,
+      `${derived.stateDir}/kit.lock.json`,
+      derived.rootExports,
+      derived.kitCss,
+      derived.themesCss,
+      derived.appCss,
+      DEFAULT_KIT_CONFIG.layoutFile,
+      `${derived.rootExportsDir}/button.svelte`,
+    ]);
+    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+    if (!snapshot.ok) return;
+    const planned = planAdd({
+      registry: registry.value,
+      config: DEFAULT_KIT_CONFIG,
+      addedRoots: ["button"],
+      snapshot: snapshot.value,
+      lock: null,
+      registryVersion: registry.value.root.registryVersion,
+      registryHash: registry.value.root.contentHash,
+    });
+    assert.equal(planned.ok, true, JSON.stringify(planned));
+    if (!planned.ok) return;
+    applyWrites(consumer, planned.value.writes);
+    const checked = runPnpm(["run", "check"], consumer);
+    assert.notEqual(
+      checked.status,
+      0,
+      `the check lane must fail on a real type error:\n${checked.stdout}\n${checked.stderr}`,
+    );
   },
 );

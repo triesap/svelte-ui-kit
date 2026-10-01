@@ -3,7 +3,9 @@ import { test } from "node:test";
 
 import {
   findRootBarrelImports,
+  findRootBarrelImportsInSource,
   renderCompoundBarrel,
+  rootBarrelSpecifiers,
   shouldGenerateCompoundBarrel,
   type ExportDeclaration,
 } from "../../src/codegen/exports.js";
@@ -126,4 +128,44 @@ test("imports through the root ui barrel are reported", () => {
 test("a compound barrel without a root-barrel import is clean", () => {
   const source = 'export { Trigger } from "./trigger.svelte";\n';
   assert.deepEqual(findRootBarrelImports(source, new Set(["../index"])), []);
+});
+
+test("root-barrel specifiers cover extension, directory and $lib spellings", () => {
+  const from = "src/lib/components/ui/button.svelte";
+  const set = rootBarrelSpecifiers(from, "src/lib/components/ui/index.ts");
+  for (const specifier of [
+    "./index",
+    "./index.js",
+    "./index.ts",
+    ".",
+    "$lib/components/ui",
+    "$lib/components/ui/index.js",
+  ]) {
+    assert.ok(set.has(specifier), `${specifier} must be recognized`);
+  }
+  const nested = rootBarrelSpecifiers(
+    "src/lib/components/ui/dialog/root.svelte",
+    "src/lib/components/ui/index.ts",
+  );
+  assert.ok(nested.has("../index"));
+  assert.ok(nested.has("../index.js"));
+});
+
+test("svelte script imports of the root barrel are detected structurally", () => {
+  const set = rootBarrelSpecifiers(
+    "src/lib/components/ui/button.svelte",
+    "src/lib/components/ui/index.ts",
+  );
+  const svelte =
+    '<script lang="ts">\nimport { Button } from "./index.js";\n</script>\n<button>hi</button>\n';
+  assert.deepEqual(
+    findRootBarrelImportsInSource("button.svelte", svelte, set),
+    ["./index.js"],
+  );
+  const markupOnly =
+    "<script>export let x;</script>\n<p>not an import: ./index.js</p>\n";
+  assert.deepEqual(
+    findRootBarrelImportsInSource("button.svelte", markupOnly, set),
+    [],
+  );
 });
