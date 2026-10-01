@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S047","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S047","kind":"report","commit":"aa84b8078ccc8c0ff173bad41fb72c6a654c51b1","disposition":"candidate"}
 -->
 
 Step ID and title: S047 — Assemble source-file change plans.
