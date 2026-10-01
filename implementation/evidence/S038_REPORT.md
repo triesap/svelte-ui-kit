@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S038","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S038","kind":"report","commit":"e9b8c168cd19998d5bcaf833eef4e0fdc02b96d8","disposition":"candidate"}
 -->
 
 Step ID and title: S038 — Inspect installed and declared dependency state.

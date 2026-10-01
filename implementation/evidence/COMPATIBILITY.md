@@ -879,3 +879,24 @@ original error inside the fixture cleanup; the same test had passed in the
 revisions, so the failure is recorded as a transient filesystem/cleanup flake,
 not a regression. Raw logs, including the failed attempt, are under the
 git-ignored `implementation/evidence/logs/r3final-20260930T134035Z/`.
+
+## S039 addendum — consumer peer assessment
+
+`src/project/dependencies.ts` assesses every peer requirement of the resolved
+closure against the selected package's actual declared and installed metadata.
+Peer requirements are derived from the registry dependency plan (role `peer`);
+duplicates collapse by name. The assessment is read-only and never adds a
+dependency.
+
+Evidence recorded by the focused fixture (`tests/integration/peer-dependencies.test.ts`):
+
+- Installed `svelte` `5.57.1` satisfies the real Bits peer `^5.33.0`, and
+  installed `@internationalized/date` `3.12.4` satisfies `^3.8.1` (ready).
+- Installed `svelte` `5.32.0` against `^5.33.0` is `PEER_INCOMPATIBLE`.
+- A closure peer not consumed by the particular requested wrapper (date when
+  only a button-like wrapper is requested) is still assessed and reported as
+  `PEER_MISSING` / `PEER_NOT_INSTALLED`, so it is never silently ignored.
+- Declared-but-uninstalled peers are `PEER_NOT_INSTALLED`; undeclared and
+  uninstalled peers are `PEER_MISSING`.
+
+These are author-run fixture results, not a fresh independent acceptance.

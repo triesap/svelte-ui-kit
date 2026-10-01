@@ -20,6 +20,7 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
+import type { DependencyPlan } from "../registry/dependency-plan.js";
 
 export const DECLARATION_FIELDS = [
   "dependencies",
@@ -156,4 +157,62 @@ export function inspectDependencyState(
 
   if (issues.length > 0) return fail(issues);
   return ok(entries);
+}
+
+/** Unique peer (name, range) requirements from a resolved dependency plan. */
+export function peerRequirementsFromPlan(
+  plan: DependencyPlan,
+): readonly DependencyRequirement[] {
+  const seen = new Map<string, string>();
+  for (const entry of plan.entries) {
+    if (!entry.roles.includes("peer")) continue;
+    if (!seen.has(entry.name)) seen.set(entry.name, entry.range);
+  }
+  return [...seen.entries()]
+    .sort((left, right) =>
+      left[0] < right[0] ? -1 : left[0] > right[0] ? 1 : 0,
+    )
+    .map(([name, range]) => ({ name, range }));
+}
+
+/**
+ * Validate every resolved peer requirement against the selected package's
+ * actual declared/installed metadata. All peer requirements from the resolved
+ * closure are assessed, so a peer that one wrapper does not itself use is not
+ * silently ignored. A conflict never adds a dependency; it reports a typed
+ * diagnostic for the developer to resolve.
+ */
+export function validatePeerDependencies(
+  root: string,
+  plan: DependencyPlan,
+): ModelResult<readonly DependencyStateEntry[]> {
+  const requirements = peerRequirementsFromPlan(plan);
+  if (requirements.length === 0) return ok([]);
+  const inspected = inspectDependencyState(root, requirements);
+  if (!inspected.ok) return inspected;
+  const conflicts: ModelIssue[] = [];
+  for (const entry of inspected.value) {
+    if (entry.status === "ready") continue;
+    const code =
+      entry.status === "incompatible"
+        ? "PEER_INCOMPATIBLE"
+        : entry.status === "missing_install"
+          ? "PEER_NOT_INSTALLED"
+          : "PEER_MISSING";
+    const detail =
+      entry.status === "incompatible"
+        ? `installed ${entry.installedVersion} does not satisfy ${entry.requiredRange}`
+        : entry.status === "missing_install"
+          ? `declared ${entry.declaredRange} but not installed`
+          : "neither declared nor installed";
+    conflicts.push(
+      issue(
+        code,
+        `peer ${entry.name} is not satisfied: ${detail}`,
+        "package.json",
+      ),
+    );
+  }
+  if (conflicts.length > 0) return fail(conflicts);
+  return ok(inspected.value);
 }
