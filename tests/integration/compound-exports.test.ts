@@ -7,40 +7,99 @@ import {
   shouldGenerateCompoundBarrel,
   type ExportDeclaration,
 } from "../../src/codegen/exports.js";
+import {
+  parseRegistryItem,
+  type RegistryItem,
+} from "../../src/registry/item.js";
 
 /**
  * S054 tests: simple and compound items produce different shapes, compound
  * barrels use direct sibling imports, and no unrequested parent barrel is
- * created.
+ * created. RCLD03-R4-2 makes the compound decision manifest-authoritative.
  */
-
-const SIMPLE: ExportDeclaration[] = [
-  { name: "Switch", target: "./switch.svelte", kind: "value" },
-];
 
 const COMPOUND: ExportDeclaration[] = [
   { name: "Trigger", target: "./trigger.svelte", kind: "value" },
   { name: "Root", target: "./root.svelte", kind: "value" },
 ];
 
+function item(overrides: Record<string, unknown>): RegistryItem {
+  const result = parseRegistryItem({
+    schemaVersion: 1,
+    id: "button",
+    kind: "component",
+    version: "0.1.0",
+    description: "A component.",
+    compatibility: { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" },
+    files: [
+      {
+        source: "templates/button.svelte",
+        target: "button.svelte",
+        kind: "svelte",
+        cohort: "core",
+      },
+    ],
+    exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
+    styles: [],
+    ...overrides,
+  });
+  if (!result.ok) throw new Error(JSON.stringify(result.issues));
+  return result.value;
+}
+
 test("simple and compound items produce different shapes", () => {
-  assert.equal(shouldGenerateCompoundBarrel(SIMPLE), false);
-  assert.equal(shouldGenerateCompoundBarrel(COMPOUND), true);
-  assert.equal(shouldGenerateCompoundBarrel([]), false);
+  const simple = item({});
+  assert.equal(shouldGenerateCompoundBarrel(simple), false);
+  const compound = item({
+    id: "dialog",
+    description: "A dialog family.",
+    files: [
+      {
+        source: "templates/dialog/index.ts",
+        target: "dialog/index.ts",
+        kind: "typescript",
+        cohort: "dialog",
+      },
+      {
+        source: "templates/dialog/root.svelte",
+        target: "dialog/root.svelte",
+        kind: "svelte",
+        cohort: "dialog",
+      },
+    ],
+    exports: [{ name: "DialogRoot", target: "dialog/index.ts", kind: "value" }],
+  });
+  assert.equal(shouldGenerateCompoundBarrel(compound), true);
 });
 
 /**
- * RCLD03-R2-3: a flat component plus its type export is not a compound item,
- * even though more than one export declaration is present.
+ * RCLD03-R2-3/R4-2: a flat component plus its type export is not a compound
+ * item, and a component with no public exports never generates a barrel.
  */
 test("a flat component plus a type export is not compound", () => {
-  assert.equal(
-    shouldGenerateCompoundBarrel([
-      { name: "Button", target: "./button.svelte", kind: "value" },
-      { name: "ButtonProps", target: "./button.types.ts", kind: "type" },
-    ]),
-    false,
-  );
+  const flat = item({
+    files: [
+      {
+        source: "templates/button.svelte",
+        target: "button.svelte",
+        kind: "svelte",
+        cohort: "core",
+      },
+      {
+        source: "templates/button.types.ts",
+        target: "button.types.ts",
+        kind: "typescript",
+        cohort: "core",
+      },
+    ],
+    exports: [
+      { name: "Button", target: "button.svelte", kind: "value" },
+      { name: "ButtonProps", target: "button.types.ts", kind: "type" },
+    ],
+  });
+  assert.equal(shouldGenerateCompoundBarrel(flat), false);
+  const noExports = item({ exports: [] });
+  assert.equal(shouldGenerateCompoundBarrel(noExports), false);
 });
 
 test("a compound barrel re-exports its parts with direct sibling imports", () => {

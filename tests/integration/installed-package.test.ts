@@ -490,10 +490,12 @@ const patched = exportsModule.patchExportRegion("index.ts", "", [
 const region = patched.ok
   ? exportParse.parseExportRegion("index.ts", patched.value)
   : { ok: false };
-const compound = exportsModule.shouldGenerateCompoundBarrel([
-  { name: "Root", target: "./root.svelte", kind: "value" },
-  { name: "Trigger", target: "./trigger.svelte", kind: "value" },
-]);
+const compound = exportsModule
+  .renderCompoundBarrel([
+    { name: "Root", target: "./root.svelte", kind: "value" },
+    { name: "Trigger", target: "./trigger.svelte", kind: "value" },
+  ])
+  .includes("default as Root");
 const layout = svelteModule.patchLayoutImports("<main />", [
   { specifier: "./kit.css" },
   { specifier: "./themes.css" },

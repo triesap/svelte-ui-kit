@@ -10,6 +10,7 @@
 import ts from "typescript";
 
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
+import { isCompoundComponent, type RegistryItem } from "../registry/item.js";
 import {
   EXPORT_END,
   EXPORT_START,
@@ -96,11 +97,6 @@ export function exportDeclarationKey(declaration: ExportDeclaration): string {
   return `${declaration.name}|${declaration.kind}|${declaration.target}`;
 }
 
-function hasDirectoryTarget(declaration: ExportDeclaration): boolean {
-  const target = declaration.target.replace(/^\.\//, "");
-  return target.includes("/");
-}
-
 /**
  * Patch only the managed export region of `source` with the rendered
  * declarations. When no region exists, a minimal managed region is appended;
@@ -154,15 +150,14 @@ export function patchExportRegion(
 }
 
 /**
- * Whether a compound barrel should be generated for an item. A flat component
- * plus its type export is not a compound: only more than one *component* value
- * part (or a directory target layout) requires a parent barrel.
+ * Whether a compound barrel should be generated for an item. The decision is
+ * manifest-authoritative: it uses the item's declared file layout
+ * (`isCompoundComponent`) and public exports, never an inferred count of
+ * export declarations or a heuristic on their targets. A flat component plus
+ * its type export stays simple; a directory-layout family gets a barrel.
  */
-export function shouldGenerateCompoundBarrel(
-  parts: readonly ExportDeclaration[],
-): boolean {
-  const valueParts = parts.filter((part) => part.kind === "value");
-  return valueParts.length > 1 || parts.some(hasDirectoryTarget);
+export function shouldGenerateCompoundBarrel(item: RegistryItem): boolean {
+  return isCompoundComponent(item) && item.exports.length > 0;
 }
 
 /**
