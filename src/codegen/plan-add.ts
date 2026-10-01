@@ -92,6 +92,7 @@ import {
   type TargetObservation,
 } from "./snapshot.js";
 import { patchLayoutImports, materializePassthroughLayout } from "./svelte.js";
+import { validateInvocation } from "./invocation.js";
 
 export interface AddPlanInput {
   readonly registry: RegistrySnapshot;
@@ -218,6 +219,11 @@ function itemVersion(registry: RegistrySnapshot, id: string): string | null {
  */
 export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   const { registry, config, snapshot, lock } = input;
+  // One validated selected-project/manager boundary shared with init and sync:
+  // a missing/malformed/unsupported manifest or an ambiguous manager is a
+  // logical failure with no executable writes, not a fabricated default plan.
+  const invocation = validateInvocation(snapshot);
+  if (!invocation.ok) return fail(invocation.issues);
   const diagnostics: string[] = [];
   const derived = deriveKitPaths(config);
   let hasConflict = false;

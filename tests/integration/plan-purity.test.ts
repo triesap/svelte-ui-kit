@@ -14,7 +14,7 @@ import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
 } from "../../src/project/config.js";
-import { createTempProject } from "../helpers/project.js";
+import { createSupportedProject } from "../helpers/project.js";
 import { componentItem, registryOf } from "../helpers/registry.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
@@ -47,7 +47,7 @@ function paths(): string[] {
   ];
 }
 
-function snapshotOf(project: ReturnType<typeof createTempProject>) {
+function snapshotOf(project: ReturnType<typeof createSupportedProject>) {
   const result = captureSnapshot(project.root, paths());
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) throw new Error("snapshot failed");
@@ -55,7 +55,7 @@ function snapshotOf(project: ReturnType<typeof createTempProject>) {
 }
 
 function initPlan(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   layout: string,
 ) {
   return planInit({
@@ -69,7 +69,7 @@ function initPlan(
 }
 
 function apply(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   writes: readonly { path: string; bytes: Uint8Array; operation?: string }[],
 ): void {
   for (const write of writes) {
@@ -95,7 +95,7 @@ function sampleRegistry(registryVersion = "0.1.0") {
 }
 
 test("initialization planning is side-effect-free and repeats as no_change", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const before = snapshotTree(project.root);
   const first = initPlan(project, "<main />");
@@ -114,7 +114,7 @@ test("initialization planning is side-effect-free and repeats as no_change", (t)
 });
 
 test("add planning is executable, side-effect-free and order-independent", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   // A hidden empty directory and a symlink must survive planning untouched.
   project.writeDir(".cache/empty");
@@ -178,7 +178,7 @@ test("add planning is executable, side-effect-free and order-independent", (t) =
 });
 
 test("sync planning reaches the intended B/L/I conflict with complete observations", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const source = `${derived.rootExportsDir}/button.svelte`;
   project.writeFile(source, "CUSTOM");
@@ -256,7 +256,7 @@ test("sync planning reaches the intended B/L/I conflict with complete observatio
 });
 
 test("a metadata-only lock transition is distinct from a satisfied no_change", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const registry = sampleRegistry("0.1.0");
   const first = planAdd({
@@ -310,7 +310,7 @@ test("a metadata-only lock transition is distinct from a satisfied no_change", (
 });
 
 test("initialization preserves a complete tree with hidden/empty directories and links", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeDir(".cache/empty");
   project.symlink("package.json", "linked.json");
@@ -347,7 +347,7 @@ test("initialization preserves a complete tree with hidden/empty directories and
 });
 
 test("sync planning is executable, side-effect-free and replays as no_change", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeDir(".cache/empty");
   project.symlink("package.json", "linked.json");

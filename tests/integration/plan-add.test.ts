@@ -17,7 +17,7 @@ import type {
   RegistrySnapshotItem,
 } from "../../src/registry/load.js";
 import type { RegistryItem } from "../../src/registry/item.js";
-import { createTempProject } from "../helpers/project.js";
+import { createSupportedProject } from "../helpers/project.js";
 
 /**
  * S058 tests: a pure add-request plan resolves the explicit root and its
@@ -178,7 +178,7 @@ function snapshotPaths(): string[] {
   ];
 }
 
-function snapshotOf(project: ReturnType<typeof createTempProject>) {
+function snapshotOf(project: ReturnType<typeof createSupportedProject>) {
   const result = captureSnapshot(project.root, snapshotPaths());
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) throw new Error("snapshot failed");
@@ -196,7 +196,7 @@ function baseInput(registry: RegistrySnapshot, lock: KitLock | null) {
 }
 
 test("a sample button adds spinner and tokens transitively only", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const registry = registryOf([
     componentItem("button", { dependencies: ["spinner", "tokens"] }),
@@ -230,7 +230,7 @@ test("a sample button adds spinner and tokens transitively only", (t) => {
 });
 
 test("a repeated add creates no duplicate request, block or export", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const registry = registryOf([
     componentItem("button", { dependencies: ["spinner", "tokens"] }),
@@ -273,7 +273,7 @@ test("a repeated add creates no duplicate request, block or export", (t) => {
 });
 
 test("a source conflict prevents the executable config-only change", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const sourceTarget = `${derived.rootExportsDir}/button.svelte`;
   project.writeFile(sourceTarget, "// locally customized\n");

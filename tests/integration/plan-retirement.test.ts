@@ -14,7 +14,7 @@ import {
   deriveKitPaths,
 } from "../../src/project/config.js";
 import type { RegistrySnapshot } from "../../src/registry/load.js";
-import { createTempProject } from "../helpers/project.js";
+import { createSupportedProject } from "../helpers/project.js";
 import {
   componentItem,
   registryOf,
@@ -54,7 +54,7 @@ function snapshotPaths(): string[] {
   ];
 }
 
-function snapshotOf(project: ReturnType<typeof createTempProject>) {
+function snapshotOf(project: ReturnType<typeof createSupportedProject>) {
   const result = captureSnapshot(project.root, snapshotPaths());
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) throw new Error("snapshot failed");
@@ -175,7 +175,7 @@ function lockFor(): KitLock {
 }
 
 function seed(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   cardSource: string,
   cardCss: string,
 ): void {
@@ -193,7 +193,7 @@ function seed(
   );
 }
 
-function sync(project: ReturnType<typeof createTempProject>) {
+function sync(project: ReturnType<typeof createSupportedProject>) {
   return planSync({
     registry: registry(),
     config: { ...DEFAULT_KIT_CONFIG, requested: ["button"] },
@@ -205,7 +205,7 @@ function sync(project: ReturnType<typeof createTempProject>) {
 }
 
 test("a removed root retains a still-shared dependency", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   seed(project, "CARD", CARD_BODY);
   const result = sync(project);
@@ -227,7 +227,7 @@ test("a removed root retains a still-shared dependency", (t) => {
 });
 
 test("a clean retired CSS block is removed", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   seed(project, "CARD", CARD_BODY);
   const result = sync(project);
@@ -243,7 +243,7 @@ test("a clean retired CSS block is removed", (t) => {
 });
 
 test("a customized retired asset is retained and detached", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   seed(project, "CUSTOM CARD", "CUSTOM CSS");
   const before = snapshotTree(project.root);
@@ -257,7 +257,7 @@ test("a customized retired asset is retained and detached", (t) => {
 });
 
 test("application exports are not silently erased", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   seed(project, "CARD", CARD_BODY);
   const region =
@@ -305,7 +305,7 @@ test("application exports are not silently erased", (t) => {
 });
 
 test("a CSS retirement finalizes the lock baseline against the applied stylesheet", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   seed(project, "CARD", CARD_BODY);
   const result = sync(project);
@@ -334,7 +334,7 @@ test("a CSS retirement finalizes the lock baseline against the applied styleshee
 });
 
 test("a byte-order mark survives a clean retired block removal", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   seed(project, "CARD", CARD_BODY);
   const existing = readFileSync(path.join(project.root, KIT_CSS), "utf8");

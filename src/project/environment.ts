@@ -20,12 +20,14 @@
 import { readdirSync } from "node:fs";
 import path from "node:path";
 
-import type { ModelIssue } from "../registry/errors.js";
+import type { ModelIssue, ModelResult } from "../registry/errors.js";
 import {
   detectPackageManager,
   type ManagerEvidence,
 } from "./dependency-instructions.js";
 import { observeInstalled, type InstalledObservation } from "./dependencies.js";
+import { detectDefaultProject, type DetectedProject } from "./detect.js";
+import { deepFreeze, FrozenMap } from "./immutable.js";
 import { readJsonObject, type JsonObservation } from "./io.js";
 
 export interface CapturedEnvironment {
@@ -43,6 +45,12 @@ export interface CapturedEnvironment {
   readonly manager: ManagerEvidence;
   /** Typed manager conflict that blocks planning (for example two lockfiles). */
   readonly managerIssues: readonly ModelIssue[];
+  /**
+   * Captured static project-selection evidence (S035). It was observed at the
+   * same instant as the target bytes, so a later disk edit cannot change an
+   * invocation decision derived from the snapshot.
+   */
+  readonly project: ModelResult<DetectedProject>;
 }
 
 /**
@@ -91,19 +99,22 @@ function enumerateInstalledNames(root: string): {
 }
 
 /**
- * Capture the complete read-only dependency/manager evidence for one selected
- * package root. The result is plain immutable data; no closure or handle is
- * retained.
+ * Capture the complete read-only dependency/manager/project evidence for one
+ * selected package root. The result is plain deeply-immutable data; no closure
+ * or handle is retained, and no captured value can be mutated through a lookup,
+ * iterator or nested reference.
  */
 export function captureEnvironment(root: string): CapturedEnvironment {
   const manifest = readJsonObject(path.join(root, "package.json"));
   const { names, complete } = enumerateInstalledNames(root);
-  const installed = new Map<string, InstalledObservation>();
-  for (const name of [...names].sort()) {
-    installed.set(name, observeInstalled(root, name));
-  }
+  const installed = new FrozenMap<InstalledObservation>(
+    [...names]
+      .sort()
+      .map((name) => [name, deepFreeze(observeInstalled(root, name))] as const),
+  );
   const managerResult = detectPackageManager(root);
-  return Object.freeze({
+  const project = deepFreeze(detectDefaultProject(root));
+  return deepFreeze({
     manifest,
     installed,
     enumerationComplete: complete,
@@ -115,5 +126,6 @@ export function captureEnvironment(root: string): CapturedEnvironment {
           reason: null,
         } satisfies ManagerEvidence),
     managerIssues: managerResult.ok ? [] : managerResult.issues,
+    project,
   });
 }

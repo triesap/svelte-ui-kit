@@ -10,7 +10,7 @@ import {
   deriveKitPaths,
 } from "../../src/project/config.js";
 import type { RegistrySnapshot } from "../../src/registry/load.js";
-import { createTempProject } from "../helpers/project.js";
+import { createSupportedProject } from "../helpers/project.js";
 import { componentItem, registryOf, sourceFile } from "../helpers/registry.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
@@ -37,7 +37,7 @@ function snapshotPaths(): string[] {
   ];
 }
 
-function snapshotOf(project: ReturnType<typeof createTempProject>) {
+function snapshotOf(project: ReturnType<typeof createSupportedProject>) {
   const result = captureSnapshot(project.root, snapshotPaths());
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) throw new Error("snapshot failed");
@@ -75,7 +75,7 @@ function lockWithBase(base: string): KitLock {
 }
 
 function seedLock(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   lock: KitLock,
 ): void {
   project.writeFile(
@@ -85,7 +85,7 @@ function seedLock(
 }
 
 function syncInput(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   registry: RegistrySnapshot,
   lock: KitLock,
 ) {
@@ -101,7 +101,7 @@ function syncInput(
 }
 
 test("an untouched source is safely upgraded", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(SOURCE, "BASE");
   const registry = registryOf([
@@ -118,7 +118,7 @@ test("an untouched source is safely upgraded", (t) => {
 });
 
 test("a local-only customization is preserved", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(SOURCE, "CUSTOM");
   const registry = registryOf([
@@ -138,7 +138,7 @@ test("a local-only customization is preserved", (t) => {
 });
 
 test("a real conflict leaves every project target unchanged", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(SOURCE, "CUSTOM");
   const registry = registryOf([
@@ -157,7 +157,7 @@ test("a real conflict leaves every project target unchanged", (t) => {
 });
 
 test("already-incoming content is a no_change", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(SOURCE, "NEW");
   const registry = registryOf([
@@ -173,7 +173,7 @@ test("already-incoming content is a no_change", (t) => {
 });
 
 test("requested roots stay separate from the transitive closure", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const registry = registryOf([
     componentItem("button", {

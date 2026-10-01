@@ -42,6 +42,7 @@ import {
 import type { RegistrySnapshot } from "../registry/load.js";
 import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
 import { patchLayoutImports, materializePassthroughLayout } from "./svelte.js";
+import { validateInvocation } from "./invocation.js";
 
 /** The frozen foundation layer declaration. */
 export const TOKENS_BODY =
@@ -119,6 +120,11 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
       ),
     ]);
   }
+  // One validated selected-project/manager boundary shared with add and sync:
+  // an empty directory, a malformed manifest, a non-SvelteKit package or an
+  // ambiguous manager is a logical failure, never a fabricated default plan.
+  const invocation = validateInvocation(snapshot);
+  if (!invocation.ok) return fail(invocation.issues);
   const registryVersion = input.registry.root.registryVersion;
   const registryHash = input.registry.root.contentHash;
 

@@ -24,7 +24,7 @@ import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
 } from "../../src/project/config.js";
-import { createTempProject } from "../helpers/project.js";
+import { createSupportedProject } from "../helpers/project.js";
 import { componentItem, registryOf, sourceFile } from "../helpers/registry.js";
 
 /**
@@ -57,7 +57,7 @@ function targetPaths(): string[] {
 }
 
 function snapshotOf(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   paths: readonly string[] = targetPaths(),
 ) {
   const result = captureSnapshot(project.root, paths);
@@ -116,7 +116,7 @@ function buttonRegistry(
 
 /** Test-only applier that enforces each declared operation meaning. */
 function strictApply(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   writes: readonly { path: string; bytes: Uint8Array; operation?: string }[],
 ): void {
   for (const write of writes) {
@@ -143,7 +143,7 @@ function strictApply(
 }
 
 function add(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   registry: ReturnType<typeof registryOf>,
   overrides: Record<string, unknown> = {},
 ) {
@@ -160,7 +160,7 @@ function add(
 }
 
 function sync(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   registry: ReturnType<typeof registryOf>,
   lock: KitLock | null,
   config = CONFIG,
@@ -183,7 +183,7 @@ function good<T>(result: ModelResult<T>): T {
 }
 
 function readText(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   rel: string,
 ): string {
   return readFileSync(path.join(project.root, rel), "utf8");
@@ -194,7 +194,7 @@ function readText(
 // ---------------------------------------------------------------------------
 
 test("a fresh add records the foundation tokens contract with the owned body baseline", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const result = add(project, buttonRegistry());
   assert.equal(result.ok, true, JSON.stringify(result));
@@ -218,7 +218,7 @@ test("a fresh add records the foundation tokens contract with the owned body bas
 });
 
 test("a missing foundation tokens block conflicts instead of being silently restored", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = good(add(project, buttonRegistry()));
   strictApply(project, first.writes);
@@ -239,7 +239,7 @@ test("a missing foundation tokens block conflicts instead of being silently rest
 });
 
 test("initialize/add/customize/retire/re-add/retire never reacquires detached tokens", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const tokens = buttonRegistry({
     styleBody: ".tokens { color: red; }\n",
@@ -283,7 +283,7 @@ test("initialize/add/customize/retire/re-add/retire never reacquires detached to
 });
 
 test("a clean registry tokens retirement establishes the minimal foundation once", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const tokens = buttonRegistry({
     styleBody: ".tokens { color: red; }\n",
@@ -310,7 +310,7 @@ test("a clean registry tokens retirement establishes the minimal foundation once
 });
 
 test("a customized foundation baseline is preserved rather than reset to local bytes", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = good(add(project, buttonRegistry()));
   strictApply(project, first.writes);
@@ -338,7 +338,7 @@ test("a customized foundation baseline is preserved rather than reset to local b
 });
 
 test("legacy aggregate-only stylesheet evidence does not confer tokens ownership", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(KIT_CSS, renderManagedBlock("tokens", TOKENS_BODY));
   const lock: KitLock = {
@@ -377,7 +377,7 @@ test("legacy aggregate-only stylesheet evidence does not confer tokens ownership
 });
 
 test("a customized foundation transfers to a registry item within one plan", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = good(add(project, buttonRegistry()));
   strictApply(project, first.writes);
@@ -407,7 +407,7 @@ test("a customized foundation transfers to a registry item within one plan", (t)
 // ---------------------------------------------------------------------------
 
 test("initialization refuses unverifiable scalar registry identity", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const result = planInit({
     config: CONFIG,
@@ -425,7 +425,7 @@ test("initialization refuses unverifiable scalar registry identity", (t) => {
 });
 
 test("initialization records the validated registry identity, not a spoofed scalar", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const registry = registryOf([]);
   const result = planInit({
@@ -448,7 +448,7 @@ test("initialization records the validated registry identity, not a spoofed scal
 });
 
 test("initialization preserves a valid observed custom styles mapping", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const custom = {
     ...CONFIG,
@@ -487,7 +487,7 @@ test("initialization preserves a valid observed custom styles mapping", (t) => {
 });
 
 test("initialization requires a complete snapshot for the effective mapping", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     `${derived.stateDir}/kit.json`,
@@ -512,13 +512,14 @@ test("initialization requires a complete snapshot for the effective mapping", (t
 // ---------------------------------------------------------------------------
 
 test("a captured snapshot does not mix later live dependency metadata", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
     JSON.stringify({
       name: "consumer",
       packageManager: "pnpm@11.22.0",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
       dependencies: { "bits-ui": "^2.19.3", svelte: "5.57.1" },
     }),
   );
@@ -559,7 +560,7 @@ test("a captured snapshot does not mix later live dependency metadata", (t) => {
 // ---------------------------------------------------------------------------
 
 test("an absent layout is materialized as a rendering passthrough", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = good(add(project, buttonRegistry()));
   strictApply(project, first.writes);
@@ -570,7 +571,7 @@ test("an absent layout is materialized as a rendering passthrough", (t) => {
 });
 
 test("an existing layout keeps its exact rendering and is not given a second render", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const existing = [
     '<script lang="ts">',

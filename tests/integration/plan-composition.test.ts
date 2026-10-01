@@ -20,7 +20,7 @@ import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
 } from "../../src/project/config.js";
-import { createTempProject } from "../helpers/project.js";
+import { createSupportedProject } from "../helpers/project.js";
 import {
   componentItem,
   registryOf,
@@ -59,7 +59,7 @@ function targetPaths(): string[] {
 }
 
 function snapshotOf(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   paths: readonly string[] = targetPaths(),
 ) {
   const result = captureSnapshot(project.root, paths);
@@ -92,7 +92,7 @@ function registry(
 }
 
 function add(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   reg = registry(),
   overrides: Record<string, unknown> = {},
 ) {
@@ -109,7 +109,7 @@ function add(
 }
 
 function applyWrites(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   writes: readonly {
     path: string;
     bytes: Uint8Array;
@@ -133,7 +133,7 @@ function applyWrites(
  * removes an existing one. A planner that mislabels an operation fails here.
  */
 function strictApply(
-  project: ReturnType<typeof createTempProject>,
+  project: ReturnType<typeof createSupportedProject>,
   writes: readonly {
     path: string;
     bytes: Uint8Array;
@@ -171,7 +171,7 @@ for (const target of [
   `${derived.stateDir}/kit.lock.json`,
 ]) {
   test(`add refuses to plan a file over a directory at ${target}`, (t) => {
-    const project = createTempProject();
+    const project = createSupportedProject();
     t.after(() => project.cleanup());
     project.writeDir(target);
     const result = add(project);
@@ -183,7 +183,7 @@ for (const target of [
 }
 
 test("add rejects an incomplete snapshot for config and lock metadata", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const incomplete = targetPaths().filter(
     (entry) =>
@@ -207,7 +207,7 @@ test("add rejects an incomplete snapshot for config and lock metadata", (t) => {
 });
 
 test("add rejects malformed observed config and lock metadata", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(`${derived.stateDir}/kit.json`, "not json");
   project.writeFile(`${derived.stateDir}/kit.lock.json`, "not json");
@@ -219,7 +219,7 @@ test("add rejects malformed observed config and lock metadata", (t) => {
 });
 
 test("add rejects a schema-invalid observed config", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     `${derived.stateDir}/kit.json`,
@@ -237,7 +237,7 @@ test("add rejects a schema-invalid observed config", (t) => {
 });
 
 test("add rejects a supplied mapping that disagrees with the observed config", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     `${derived.stateDir}/kit.json`,
@@ -256,7 +256,7 @@ test("add rejects a supplied mapping that disagrees with the observed config", (
 });
 
 test("a supplied lock without an observed lock file is a conflict", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = add(project);
   assert.equal(first.ok, true, JSON.stringify(first));
@@ -276,12 +276,13 @@ test("a supplied lock without an observed lock file is a conflict", (t) => {
 });
 
 test("an installed runtime dependency with an absent required peer is a typed conflict", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
     JSON.stringify({
       name: "consumer",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
       dependencies: { "bits-ui": "^2.19.3" },
     }),
   );
@@ -326,12 +327,13 @@ test("malformed installed metadata and a missing install are distinct typed conf
       npm: [{ name: "bits-ui", range: "^2.19.3", role: "runtime" }],
     }),
   ]);
-  const malformedProject = createTempProject();
+  const malformedProject = createSupportedProject();
   t.after(() => malformedProject.cleanup());
   malformedProject.writeFile(
     "package.json",
     JSON.stringify({
       name: "consumer",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
       dependencies: { "bits-ui": "^2.19.3" },
     }),
   );
@@ -355,12 +357,13 @@ test("malformed installed metadata and a missing install are distinct typed conf
     JSON.stringify(malformed.value.dependencyIssues),
   );
 
-  const missingProject = createTempProject();
+  const missingProject = createSupportedProject();
   t.after(() => missingProject.cleanup());
   missingProject.writeFile(
     "package.json",
     JSON.stringify({
       name: "consumer",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
       dependencies: { "bits-ui": "^2.19.3" },
     }),
   );
@@ -391,7 +394,7 @@ test("malformed installed metadata and a missing install are distinct typed conf
 });
 
 test("an observed lock without a supplied lock is a typed conflict", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     `${derived.stateDir}/kit.lock.json`,
@@ -404,7 +407,7 @@ test("an observed lock without a supplied lock is a typed conflict", (t) => {
 });
 
 test("add preserves a byte-order mark in a composed export region", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(derived.rootExports, "\uFEFF// APP\n");
   const result = add(project);
@@ -419,7 +422,7 @@ test("add preserves a byte-order mark in a composed export region", (t) => {
 });
 
 test("add derives the registry identity from the snapshot, not a spoofed scalar", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const reg = registry();
   const result = add(project, reg, {
@@ -433,7 +436,7 @@ test("add derives the registry identity from the snapshot, not a spoofed scalar"
 });
 
 test("a fresh add emits the minimal initialization prerequisites and integrations", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const result = add(project);
   assert.equal(result.ok, true, JSON.stringify(result));
@@ -454,7 +457,7 @@ test("a fresh add emits the minimal initialization prerequisites and integration
 });
 
 test("initialization followed by add retains every integration record", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const init = planInit({
     config: CONFIG,
@@ -479,7 +482,7 @@ test("initialization followed by add retains every integration record", (t) => {
 });
 
 test("an unowned managed export region conflicts instead of being erased", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     derived.rootExports,
@@ -493,7 +496,7 @@ test("an unowned managed export region conflicts instead of being erased", (t) =
 });
 
 test("a customized source with a renamed public export blocks the whole batch", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = add(project);
   assert.equal(first.ok, true, JSON.stringify(first));
@@ -520,7 +523,7 @@ test("a customized source with a renamed public export blocks the whole batch", 
 });
 
 test("a registry source importing the root barrel is a cycle conflict", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const barrel = 'import { Button } from "../index";\nexport default Button;\n';
   const part = "<div></div>\n";
@@ -574,7 +577,7 @@ test("a registry source importing the root barrel is a cycle conflict", (t) => {
 });
 
 test("a svelte source importing ./index.js is a cycle conflict", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const body =
     '<script lang="ts">\nimport { Button } from "./index.js";\n</script>\n<button>hi</button>\n';
@@ -605,7 +608,7 @@ test("a svelte source importing ./index.js is a cycle conflict", (t) => {
 });
 
 test("a compound barrel is generated from manifest part exports", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const stale = "// stale pre-authored barrel\n";
   const raw = (target: string, body: string) => ({
@@ -688,7 +691,7 @@ test("a compound barrel is generated from manifest part exports", (t) => {
 });
 
 test("a supplied lock that disagrees with the observed bytes conflicts", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = add(project);
   assert.equal(first.ok, true, JSON.stringify(first));
@@ -708,13 +711,14 @@ test("a supplied lock that disagrees with the observed bytes conflicts", (t) => 
 });
 
 test("the composed plan carries declared/installed/peer readiness evidence", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
     JSON.stringify({
       name: "consumer",
       type: "module",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
       dependencies: { svelte: "5.57.1" },
     }),
   );
@@ -750,7 +754,7 @@ test("a lock-owned integration whose target is missing conflicts", (t) => {
     derived.rootExports,
     CONFIG.layoutFile,
   ]) {
-    const project = createTempProject();
+    const project = createSupportedProject();
     t.after(() => project.cleanup());
     const first = add(project);
     assert.equal(first.ok, true, JSON.stringify(first));
@@ -771,7 +775,7 @@ test("a lock-owned integration whose target is missing conflicts", (t) => {
 });
 
 test("a clean retirement is an explicit operation whose application removes the file", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = add(project);
   assert.equal(first.ok, true, JSON.stringify(first));
@@ -844,7 +848,7 @@ function cssRegistry(cssBody: string, version = "0.1.0") {
 }
 
 test("unowned tokens markers do not acquire stylesheet integration ownership", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     derived.kitCss,
@@ -863,7 +867,7 @@ test("unowned tokens markers do not acquire stylesheet integration ownership", (
 });
 
 test("a clean minimal initialization adopts identical registry tokens", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const init = planInit({
     config: CONFIG,
@@ -917,7 +921,7 @@ test("a clean minimal initialization adopts identical registry tokens", (t) => {
 });
 
 test("unmanaged CSS outside managed blocks does not block a clean block update", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = add(project, cssRegistry(".button { color: red; }\n"));
   assert.equal(first.ok, true, JSON.stringify(first));
@@ -947,7 +951,7 @@ test("unmanaged CSS outside managed blocks does not block a clean block update",
 });
 
 test("a comment outside the managed export region does not block a clean update", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = add(project);
   assert.equal(first.ok, true, JSON.stringify(first));
@@ -985,7 +989,7 @@ test("a comment outside the managed export region does not block a clean update"
 });
 
 test("planned operations are truthful across create, update and retire", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const reg = registryOf([
     componentItem("button", {

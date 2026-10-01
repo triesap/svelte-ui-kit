@@ -77,55 +77,44 @@ only writing modes.
 
 #### Current owner-authorized RCLD-03 batch verification
 
-Independent review 6 of candidate `8927c4476741de32c280cb18d0e713fa0482a9fa`
-requests RCLD03-R6-1/2/3/4 completion and every unfinished S033–S063 criterion.
+Independent review 7 of candidate `f9f829f56d90883612525416c545f126c29e3b5a`
+requests RCLD03-R7-1/2/3 and every unfinished S033–S063 criterion together.
 Fresh independent build/typecheck/format/lint pass; unit 265/265, integration
-238/238, registry 38/38, CLI 52/52, harness 37/37 and contracts 127/127 pass,
-all without skips. All twelve previous real-registry probes now satisfy their
-expected outcomes. Preserve repaired metadata, peer, operation, export/token,
-retirement projection and structural import behavior; real planned consumers
-check/build and installed emitted planning now execute.
+255/255, registry 38/38, CLI 52/52, harness 37/37 and contracts 127/127 pass
+without skips. All eight previous review probes meet their bounded expectations,
+including the exact-plan production page and missing-render negative control.
+Preserve the working token retirement/replay, baseline, mapping, registry and
+rendering behavior. This is verified progress, not S063 acceptance.
 
-Eight new independent lifecycle/entry/artifact probes find remaining original
-requirements: detached customized tokens can be reclaimed then deleted; missing
-owned tokens are restored; clean token retirement needs a second sync; preserved
-custom foundation baselines are reset; init trusts supplied registry scalars and
-overrides observed mappings; dependency evidence is reread outside the supplied
-snapshot. A real planned fresh application builds and returns HTTP 200 but hides
-its page. A children-rendering-only control restores visible SSR output. These
-are software failures, not external/hardware blockers or independent acceptance.
+Remaining failures are demonstrated through real validated registries and exact
+applied state: mutable captured environment data changes executable readiness;
+init accepts invalid project/manager evidence; add accepts absent/unsupported
+projects; init can reacquire detached application tokens and enable later
+overwrite. Complete one deeply immutable validated invocation boundary across
+all planners, then qualify full init/add/sync ownership lifecycles and the
+original complete-tree success/conflict matrix. Use supported positive fixtures,
+intended-cause negative controls, exact operations and complete result comparisons.
 
-Qualify the full validated entry and original pure lifecycle requirements using
-actual config/registry/dependency evidence. Enforce explicit foundation versus
-aggregate integration contract semantics, legitimate exact owned baselines,
-tracked missing conflicts, custom detachment and no silent reacquisition. Apply
-exact operations in test-owned consumers; compare final lineage, then replay and
-re-add/retire. Use the complete-tree helper in success and intended-cause conflict
-cases including modes/kinds/links/hidden/empty entries; never begin writer or
-manager work. Preserve all prior controls and custom mapping coverage.
+Run the full S063 set after all eligible implementation: strict frozen install,
+format/lint/typecheck, unit, harness, registry, integration, CLI, components,
+fixture check/SSR/browser, contracts, planned simple/compound check/build/SSR,
+emitted parsers/planning, strict declaration controls, actual workflow validation
+and fresh conditional reference guard. Serialize shared fixture writers. Capture
+underlying exits, retain failed attempts and distinguish actual artifacts and
+platforms. Current author component/fixture/browser/workflow/reference evidence
+was audited, not freshly rerun by Codex on the rejected candidate. The full
+reference log has 578 passes, zero failures and four ignored tests as named in
+governing review 6; none of the ignored tests passed.
 
-Run actual check/build AND production-handler SSR assertions for freshly planned
-simple/compound consumers, with a missing-child-rendering negative control.
-Exercise absent layout creation and preservation of existing layouts separately.
-Use owned-server cleanup; keep maintained-fixture and planned-artifact evidence
-separate. Pi must update candidate report prose/COMPATIBILITY and progress while
-preserving original pending hashes, structured statuses and accepted reviews.
-This is authorized evidence maintenance, not assignment of Codex acceptance.
+Reconcile factual report prose and COMPATIBILITY while preserving original
+pending hashes, structured statuses and accepted reviews. Public records must
+not refer to private coordination or runtime routing. Release AC20's fixture-only
+qualified upstream declaration exception remains open.
 
-After completing every eligible implementation requirement, run the full S063
-set: strict frozen install, format, lint, typecheck, unit, harness, registry,
-integration, CLI, components, fixture check/SSR/browser, contracts, planned
-consumers, emitted parsers/planning, strict declaration controls, actual workflow
-validation and fresh conditional reference Rust guard. Capture underlying exits
-before filtering, retain failed attempts and serialize shared fixture writers.
-The retained author reference log has 578 passes, zero failures and four ignored
-tests; reporting one ignored test from a tail excerpt is incorrect. Record all
-four as listed in governing review 6. Author logs remain bounded artifact evidence.
-Release AC20's fixture-only qualified upstream exception remains open.
-
-S001–S032 remain accepted; S033–S063 remain pending; S064–S203 remain not_started.
-No new dependencies, schema fields, product writer/CLI completion or other
-platform acceptance. Pi records evidence; Codex accepts independently before S064.
+No intermediate stop divides this full remaining planning batch. S001–S032
+remain accepted, S033–S063 pending and S064–S203 not_started. Independent S063
+acceptance is required before guarded transaction work at S064. No new dependency,
+schema field, product writer or other platform acceptance is authorized.
 
 #### Historical owner-authorized RCLD-02 batch verification
 

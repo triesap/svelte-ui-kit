@@ -495,6 +495,10 @@ const registryResult = loadModule.loadRegistrySnapshot(provider);
 const configResult = configModule.parseKitConfig({ schemaVersion: 1 });
 const projectRoot = fsModule.mkdtempSync(path.join(osModule.tmpdir(), "suik-installed-plan-"));
 const derived = configModule.deriveKitPaths(configResult.value);
+fsModule.writeFileSync(
+  path.join(projectRoot, "package.json"),
+  JSON.stringify({ name: "consumer", private: true, devDependencies: { "@sveltejs/kit": "2.70.3" } }),
+);
 const observed = snapshotModule.captureSnapshot(projectRoot, [
   derived.stateDir + "/kit.json",
   derived.stateDir + "/kit.lock.json",

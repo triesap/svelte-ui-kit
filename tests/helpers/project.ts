@@ -103,6 +103,39 @@ function assertPhysicalWithin(root: string, abs: string): void {
   }
 }
 
+/**
+ * A manifest for a supported SvelteKit application. Tests that exercise the
+ * complete planning entries must seed this so the shared validated invocation
+ * boundary accepts the project; an empty directory is deliberately invalid.
+ */
+export const SUPPORTED_MANIFEST = `${JSON.stringify(
+  {
+    name: "consumer",
+    private: true,
+    type: "module",
+    packageManager: "pnpm@11.22.0",
+    devDependencies: { "@sveltejs/kit": "2.70.3" },
+  },
+  null,
+  2,
+)}\n`;
+
+/** Seed a supported SvelteKit manifest into an owned temp project. */
+export function seedSupportedManifest(project: TempProject): TempProject {
+  project.writeFile("package.json", SUPPORTED_MANIFEST);
+  return project;
+}
+
+/**
+ * Create an owned temp project that represents a supported SvelteKit
+ * application (a minimal manifest declaring `@sveltejs/kit`).
+ */
+export function createSupportedProject(
+  options: TempProjectOptions = {},
+): TempProject {
+  return seedSupportedManifest(createTempProject(options));
+}
+
 export function createTempProject(
   options: TempProjectOptions = {},
 ): TempProject {

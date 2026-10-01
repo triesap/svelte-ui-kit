@@ -32,6 +32,7 @@ import path from "node:path";
 
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { isSafeLogicalRelativePath } from "../project/paths.js";
+import { FrozenMap } from "../project/immutable.js";
 import {
   captureEnvironment,
   type CapturedEnvironment,
@@ -96,57 +97,6 @@ export interface AncestorObservation {
   readonly device: number | null;
   readonly inode: number | null;
   readonly errorCode: string | null;
-}
-
-/**
- * A genuinely immutable lookup over captured observations. It implements the
- * read-only subset of `ReadonlyMap`; there is no `set`, `delete` or `clear`, so
- * a caller cannot remove or replace captured evidence.
- */
-class FrozenMap<V> implements ReadonlyMap<string, V> {
-  readonly #map: Map<string, V>;
-
-  constructor(source: Map<string, V>) {
-    this.#map = new Map(source);
-    Object.freeze(this);
-  }
-
-  get size(): number {
-    return this.#map.size;
-  }
-
-  get(key: string): V | undefined {
-    return this.#map.get(key);
-  }
-
-  has(key: string): boolean {
-    return this.#map.has(key);
-  }
-
-  forEach(
-    callbackfn: (value: V, key: string, map: ReadonlyMap<string, V>) => void,
-    thisArg?: unknown,
-  ): void {
-    this.#map.forEach((value, key) => {
-      callbackfn.call(thisArg, value, key, this);
-    });
-  }
-
-  keys(): MapIterator<string> {
-    return this.#map.keys();
-  }
-
-  values(): MapIterator<V> {
-    return this.#map.values();
-  }
-
-  entries(): MapIterator<[string, V]> {
-    return this.#map.entries();
-  }
-
-  [Symbol.iterator](): MapIterator<[string, V]> {
-    return this.#map.entries();
-  }
 }
 
 function sha256(bytes: Buffer): string {

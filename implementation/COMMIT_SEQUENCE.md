@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: S001–S032 independently accepted; RCLD-01/02 complete. S033–S063 are committed pending review with changes requested under independent review 6; finish safe composed planning and actual artifact qualification. S064 requires independent S063 acceptance. Updated 2026-10-01.
+Status: S001–S032 independently accepted; RCLD-01/02 complete. S033–S063 are committed pending review with changes requested under independent review 7; finish the shared validated planning boundary, cross-command ownership and complete qualification. S064 requires independent S063 acceptance. Updated 2026-10-01.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **none** (repair and finish pending S033–S063 under independent review 6; S064 remains gated).
+- Active implementation checkpoint: **none** (repair and finish pending S033–S063 under independent review 7; S064 remains gated).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **32 / 203**. Remaining: **171 / 203**.
 - Committed pending review: **31 / 203**. Authored batch range: **S033–S063**.
@@ -38,7 +38,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - S063 evidence: `implementation/evidence/S063_REPORT.md` records the deterministic purity candidate at `451c13a48a9d0b0866811bd3c94fc0c53bcc8ffc` and the cumulative review-3 qualification (`implementation/evidence/COMPATIBILITY.md`). S064 is gated by independent S063 acceptance.
 - RCLD-03 review-5 implementation series: six commits through `8927c4476741de32c280cb18d0e713fa0482a9fa` repair all twelve prior probe cases and add actual consumer check/build and emitted planning. Independent review 6 preserves that progress but finds incomplete initialization evidence, unsafe token retirement/reacquisition, false baseline advancement, unsatisfied replay and suppressed page rendering. Full lifecycle integration, purity coverage and factual report reconciliation remain software work; S064 stays gated.
 - RCLD-03 review-6 implementation series: `6ec7262b15c825aaf7d31c29bc6ef1599b31af94` completes validated invocation evidence, truthful foundation-token ownership and rendered-layout materialization, with the R6-4 purity/report reconciliation recorded in the same series. These commits are Pi implementation evidence; independent review 6 acceptance is still pending and S064 stays gated.
-- S001–S032 are complete; S033–S063 are committed_pending_review with changes requested; S064–S203 remain not_started (140 checkpoints). Independent review 6 governs completion of the existing RCLD-03 batch; no acceptance or sequence gate is bypassed.
+- S001–S032 are complete; S033–S063 are committed_pending_review with changes requested; S064–S203 remain not_started (140 checkpoints). Independent review 7 governs completion of the existing RCLD-03 batch; no acceptance or sequence gate is bypassed.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. By default every checkpoint after S001 depends on the reviewed, verified, committed predecessor. The explicit owner-authorized batch below permits verified implementation commits pending Codex review to unlock successors only within the currently dispatched sequence; the current RCLD-03 activation prerequisite governs the transition from the completed RCLD-02 batch.
 
@@ -75,7 +75,129 @@ bypassing dependencies. There is no current owner, external or hardware blocker.
 Pi writes product/tooling code and tests; Codex owns acceptance and consequential
 decisions. No push, publication, deployment, reference mutation or second tracker.
 
+### Independent review 7 — finish the complete planning boundary as one batch
+
+Codex reviewed all three commits through clean candidate
+`f9f829f56d90883612525416c545f126c29e3b5a`. Disposition: **changes requested**.
+S001–S032 remain accepted; S033–S063 remain committed_pending_review; S064–S203
+remain not_started. No original R01–R34, AC01–AC22 or checkpoint criterion changes.
+
+Verified progress: all eight review-6 probes now satisfy their bounded expected
+outcomes, including the actual planned application: build succeeds, HTTP 200
+contains the page, and a missing-render control still builds/returns 200 but
+omits the page. Preserve the repaired add/sync token transitions, clean retirement
+replay, legitimate customized foundation baseline, observed init mapping and
+validated registry identity. Fresh independent build/typecheck/format/lint pass;
+unit 265/265, integration 255/255, registry 38/38, CLI 52/52, harness 37/37 and
+contracts 127/127 pass with zero skips. The integration run includes actual
+planned simple/compound check/build/SSR and emitted planner execution.
+
+These checks do not accept the whole sequence. Additional independent probes
+show initialization can reclaim detached application tokens, then allow a later
+add to overwrite them; captured environment data is mutable; and executable
+plans still bypass required selected-project evidence. The complete-tree
+conflict matrix also remains incomplete. These are remaining software criteria,
+not owner, external or hardware blockers. Author component/fixture/browser,
+workflow and reference evidence was audited, not represented as a fresh Codex
+run. Its full reference result is 578 passed, zero failed, four ignored.
+
+**Batch decision:** execute `pfc through RCLD-03` for the entire remaining
+S033–S063 integration and qualification work below, with no intermediate review
+or correction-only stop. Complete the shared entry, all command compositions,
+full lifecycles, required regression matrix, factual evidence and cumulative
+S063 qualification together. This is all currently eligible implementation:
+S064 starts guarded transactions and explicitly requires independent S063
+acceptance. Do not start that writer against an unaccepted ownership planner.
+After that acceptance, select the largest eligible subsequent implementation
+range; do not introduce artificial per-repair review boundaries here.
+
+#### RCLD03-R7-1 — complete one validated, deeply immutable invocation boundary
+
+The new environment is only shallow-frozen: its installed lookup exposes Map
+mutators, and manifest values, installed observations, manager data and issue
+arrays remain mutable. A review probe changes the captured manifest's dependency
+value without touching disk; the identical snapshot changes from executable to
+DEPENDENCY_DECLARED_INVALID with no writes. This regresses the already required
+deep immutable observation contract. Preserve captured values against mutation
+through every exposed lookup, iterator and nested value, and verify full plan,
+readiness, diagnostics and instruction stability rather than only write paths.
+
+Complete selected-project validation across init/add/sync using captured evidence.
+Init presently produces seven writes for a missing or malformed package manifest,
+an unsupported non-SvelteKit package and ambiguous manager evidence. Add still
+produces eight writes for a missing manifest or unsupported package, explicitly
+suppressing DEPENDENCY_MANIFEST_MISSING. No production caller currently composes
+the existing project detector with these planners. The earlier R4-1/R6-1 shared
+validated entry requirement is not satisfied by separate detector helper tests.
+
+Decision: compose the existing project selection/detection, explicit mapping,
+config/lock/registry and dependency/manager rules into one read-only validated
+invocation boundary used by all three complete planning entry points. Internal
+helpers may consume validated data, but there must be no executable complete
+entry that silently assumes an empty directory or fabricated default config is
+a supported application. Reuse existing static detection and explicit-mapping
+semantics; do not execute application configuration, add flags/schema fields,
+install packages or defer this composition to future CLI wiring. Capture evidence
+once and derive plans from it; later disk changes require a fresh observation,
+not mixed live reads. Adapt positive fixtures to supported applications rather
+than suppressing failures to retain empty-directory tests. Test default and
+explicit supported mappings plus missing/malformed/unsafe/ambiguous evidence
+through the complete entries and emitted distribution.
+
+#### RCLD03-R7-2 — enforce ownership through initialization as well as add/sync
+
+A full applied sequence installs registry tokens, customizes their body to the
+minimal foundation text, then retires them. Sync correctly preserves this text
+as application-owned and leaves only stylesheet-v1 aggregate bookkeeping. Init
+then emits a lock-only update that changes the contract to foundation-tokens-v1.
+The next add is executable and overwrites those detached application bytes.
+The add-only equality regression test therefore does not close the cross-command
+ownership requirement. This remains R6-2's existing policy, not new scope.
+
+Decision: initialization must use the same explicit ownership and legitimate
+baseline rules as add/sync. Mere aggregate integration presence, markers or
+content equality cannot grant ownership. Preserve detached content and refuse
+unverifiable reconciliation without changing bytes or lineage. Do not convert
+stylesheet-v1 into foundation ownership merely because current text equals
+TOKENS_BODY; no automatic legacy migration is authorized. Keep valid existing
+item/integration lineage and customized bases. Inspect all init/add/sync
+transitions under these shared rules, including init after installation,
+customization and retirement, tracked missing content, clean transfers and
+satisfied replay. Use actual applied state and operation-enforcing test helpers.
+Preserve already verified rendering and token repairs.
+
+#### RCLD03-R7-3 — finish original S063 coverage and cumulative acceptance evidence
+
+The new purity tests improve successful init/sync coverage and fix the source
+B/L/I conflict cause, but do not complete the original all-conflict-cases tree
+matrix. Exercise successful and intended-cause conflicting init/add/sync paths
+through the shared entry with complete-tree before/after comparisons, including
+hidden/empty entries, bytes, modes, kinds and links. Assert that no writer or
+package-manager process starts, and that equivalent observations yield identical
+complete plans/envelopes. Include the new project/environment and cross-command
+ownership failures alongside existing source/CSS/export/cohort conflicts. Keep
+real-registry, exact-operation, emitted-package and rendered-consumer controls.
+
+After implementation, run the full existing S063 qualification, including strict
+frozen install, all maintained suites, planned simple/compound check/build/SSR,
+strict declaration controls, workflow validation and conditional reference guard.
+Capture underlying exits before filtering; retain failed attempts and exact
+artifact/configuration identity. Correct the broad completion claims in S063,
+COMPATIBILITY and the R6 report to match evidence, preserving pending hashes and
+Codex acceptance ownership. Remove the R6 report's private handoff/routing
+reference; public evidence must remain standalone. Do not copy private probes,
+operator paths, session records or task-store identifiers into this repository.
+The fixture-only upstream declaration exception remains release AC20 debt.
+
+Continue after every green checkpoint through this complete batch. A commit,
+progress report, context length or partial passing suite is not an endpoint.
+Stop at the fully qualified S063 candidate for independent Codex review, a real
+runtime limit, user stop or concrete external blocker after completing other
+eligible work. No acceptance is delegated and no dependency gate is bypassed.
+
 ### Independent review 6 — complete planner lifecycle and preserve rendered applications
+
+Historical review: independent review 7 above governs current execution.
 
 Codex reviewed clean candidate `8927c4476741de32c280cb18d0e713fa0482a9fa`,
 including all six implementation/evidence commits after review 5. Disposition:

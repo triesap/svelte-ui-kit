@@ -10,7 +10,7 @@ import {
 import { TOKENS_BODY, planInit } from "../../src/codegen/plan-init.js";
 import { renderManagedBlock } from "../../src/codegen/css.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import { createTempProject } from "../helpers/project.js";
+import { createSupportedProject } from "../helpers/project.js";
 import { registryOf } from "../helpers/registry.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
@@ -30,7 +30,10 @@ const PATHS = [
   "src/routes/+layout.svelte",
 ];
 
-function plan(project: ReturnType<typeof createTempProject>, layout: string) {
+function plan(
+  project: ReturnType<typeof createSupportedProject>,
+  layout: string,
+) {
   const snapshot = captureSnapshot(project.root, PATHS);
   assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
   if (!snapshot.ok) throw new Error("snapshot failed");
@@ -45,7 +48,7 @@ function plan(project: ReturnType<typeof createTempProject>, layout: string) {
 }
 
 test("an empty supported app plans explicit minimal targets", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const before = snapshotTree(project.root);
   const result = plan(project, "<slot />\n");
@@ -70,7 +73,7 @@ test("an empty supported app plans explicit minimal targets", (t) => {
 });
 
 test("existing application styles are preserved", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile("src/styles/themes.css", ":root { --app: 1; }\n");
   project.writeFile("src/styles/app.css", "body { margin: 0; }\n");
@@ -83,7 +86,7 @@ test("existing application styles are preserved", (t) => {
 });
 
 test("a layout already importing the styles is not rewritten", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const layout =
     '<script>\n  import "../styles/kit.css";\n  import "../styles/themes.css";\n  import "../styles/app.css";\n</script>\n<slot />\n';
@@ -103,7 +106,7 @@ test("a layout already importing the styles is not rewritten", (t) => {
  * already contains the imports; a baseline is never claimed for a missing file.
  */
 test("an absent layout is created even when its source is pre-integrated", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const layout =
     '<script>import "../styles/kit.css";import "../styles/themes.css";import "../styles/app.css";</script><main/>';
@@ -127,7 +130,7 @@ test("an absent layout is created even when its source is pre-integrated", (t) =
  * typed mismatch, not a plan against a different file.
  */
 test("a layout path disagreeing with the config is rejected", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const snapshot = captureSnapshot(project.root, [
     ...PATHS,
@@ -154,7 +157,7 @@ test("a layout path disagreeing with the config is rejected", (t) => {
  * no_change replay, and the lock publication is part of the plan.
  */
 test("the plan includes the lock and replays as no_change", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = plan(project, "<main />");
   assert.equal(first.ok, true, JSON.stringify(first));
@@ -188,7 +191,7 @@ test("the plan includes the lock and replays as no_change", (t) => {
  * initialization.
  */
 test("an owned customized export region is not overwritten", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const first = plan(project, "<main />");
   assert.equal(first.ok, true, JSON.stringify(first));
@@ -214,7 +217,7 @@ test("an owned customized export region is not overwritten", (t) => {
 });
 
 test("malformed observed configuration is refused, never overwritten", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile("src/lib/components/ui/_kit/kit.json", "not json");
   assert.deepEqual(codes(plan(project, "<main />")), ["INIT_CONFIG_INVALID"]);
@@ -226,7 +229,7 @@ test("malformed observed configuration is refused, never overwritten", (t) => {
 });
 
 test("a schema-invalid observed configuration is refused", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     "src/lib/components/ui/_kit/kit.json",
@@ -244,7 +247,7 @@ function codes(result: ReturnType<typeof plan>): string[] {
  * absence to overwrite.
  */
 test("a directory at a generated target is a typed conflict", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeDir("src/styles/themes.css");
   assert.deepEqual(codes(plan(project, "<main />")), ["INIT_TARGET_UNSAFE"]);
@@ -254,7 +257,7 @@ test("a directory at a generated target is a typed conflict", (t) => {
  * RCLD03-R2-4: managed markers alone do not confer ownership.
  */
 test("an unowned managed export region conflicts", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     "src/lib/components/ui/index.ts",
@@ -266,7 +269,7 @@ test("an unowned managed export region conflicts", (t) => {
 });
 
 test("an unowned managed css block conflicts", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   project.writeFile(
     "src/styles/kit.css",
@@ -286,7 +289,7 @@ test("a byte-order mark is preserved and invalid UTF-8 is refused", (t) => {
     mkdirSync(path.dirname(abs), { recursive: true });
     writeFileSync(abs, bytes);
   };
-  const bom = createTempProject();
+  const bom = createSupportedProject();
   t.after(() => bom.cleanup());
   writeBytes(
     bom.root,
@@ -305,7 +308,7 @@ test("a byte-order mark is preserved and invalid UTF-8 is refused", (t) => {
     );
   }
 
-  const invalid = createTempProject();
+  const invalid = createSupportedProject();
   t.after(() => invalid.cleanup());
   writeBytes(
     invalid.root,
@@ -322,7 +325,7 @@ test("a byte-order mark is preserved and invalid UTF-8 is refused", (t) => {
  * stylesheet record and the canonical config identity.
  */
 test("the initial lock records real baselines and a stylesheet record", (t) => {
-  const project = createTempProject();
+  const project = createSupportedProject();
   t.after(() => project.cleanup());
   const result = plan(project, "<main />");
   assert.equal(result.ok, true, JSON.stringify(result));
