@@ -20,7 +20,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - Active implementation checkpoint: **none** (repairing pending S033–S040 under independent review 1, then resume S041 through S063).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **32 / 203**. Remaining: **171 / 203**.
-- Committed pending review: **10 / 203**. Authored batch range: **S033–S042**.
+- Committed pending review: **11 / 203**. Authored batch range: **S033–S043**.
 - Completed RCLD sequences: **2 / 11**. Remaining: **9 / 11**.
 - Last safe target commit: `0e5b1852d02e15159f2ee4dd885152230457e119`, branch `master` (independently accepted S013–S032 combined evidence anchor).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
@@ -3145,7 +3145,7 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S040 | RCLD-03  | S039       | committed_pending_review | `95833391745ed23512f2bbccf63b676030c4e222` |
 | S041 | RCLD-03  | S040       | committed_pending_review | `ba7eb15e79c96faf8c7478e7e7ee4c7a53e770be` |
 | S042 | RCLD-03  | S041       | committed_pending_review | `07ecd02dc892db63483c30add165eb265967ce96` |
-| S043 | RCLD-03  | S042       | not_started              | —                                          |
+| S043 | RCLD-03  | S042       | committed_pending_review | `a2d9d5a26ee2964bfed69d6810e7351dfeb5579c` |
 | S044 | RCLD-03  | S043       | not_started              | —                                          |
 | S045 | RCLD-03  | S044       | not_started              | —                                          |
 | S046 | RCLD-03  | S045       | not_started              | —                                          |

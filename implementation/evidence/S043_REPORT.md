@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S043","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S043","kind":"report","commit":"a2d9d5a26ee2964bfed69d6810e7351dfeb5579c","disposition":"candidate"}
 -->
 
 Step ID and title: S043 — Freeze the complete ownership disposition matrix.
