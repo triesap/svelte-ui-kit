@@ -7,12 +7,19 @@
  * parses the source into a TypeScript AST and interprets only statically
  * provable, literal `kit.files.routes`/`kit.files.lib` mappings.
  *
- * It is deliberately conservative: a spread, computed key, environment
- * access, import reference, call or any other non-literal value that could
- * affect the resolved mapping yields an `unsupported` result (a typed manual
- * diagnostic), never an assumed default. Unrelated fields such as
- * `preprocess`, `kit.adapter` or `vitePlugin` are ignored entirely; their
- * values are never executed or interpreted.
+ * It is deliberately conservative and inspects the *complete* relevant
+ * structure: every property of the exported object and of its `kit`/`kit.files`
+ * objects is examined, so a later spread, a duplicate key or a value that
+ * overrides the mapping is rejected rather than silently ignored. Parse
+ * diagnostics make an incomplete or malformed source unsupported instead of
+ * falling back to a default. A referenced binding that is reassigned, mutated
+ * or allowed to escape (assigned to another identifier, spread, or passed to a
+ * call) is rejected because its final value cannot be proven.
+ *
+ * Unrelated fields such as `preprocess`, `kit.adapter` or `vitePlugin` are
+ * ignored entirely; their values are never executed or interpreted, so an
+ * ordinary static configuration with adapter/preprocessor calls remains
+ * supported.
  *
  * The pinned TypeScript compiler is the approved static parser (see the
  * S052/decision-4 runtime-promotion approval); no additional parser dependency
@@ -52,108 +59,239 @@ function isStringLiteralExpression(
   return ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node);
 }
 
-/** Resolve a `const`/`let`/`var` identifier to its initializer, cycle-safe. */
+/** Top-level bindings and the identifiers whose final value cannot be proven. */
+interface Scope {
+  readonly initializers: ReadonlyMap<string, ts.Expression>;
+  readonly unsafe: ReadonlySet<string>;
+}
+
+type Resolution =
+  | { readonly kind: "expression"; readonly expression: ts.Expression }
+  | { readonly kind: "unsupported"; readonly reason: string };
+
+/** Follow a chain of identifiers to the final expression, cycle-safe. */
 function resolveExpression(
   node: ts.Expression,
-  scope: ReadonlyMap<string, ts.Expression>,
+  scope: Scope,
   seen: ReadonlySet<string>,
-): ts.Expression {
+): Resolution {
   let current = node;
+  let visited = seen;
   for (;;) {
-    if (!ts.isIdentifier(current)) return current;
+    if (!ts.isIdentifier(current)) {
+      return { kind: "expression", expression: current };
+    }
     const name = current.text;
-    if (seen.has(name)) return current;
-    const initializer = scope.get(name);
-    if (initializer === undefined) return current;
-    seen = new Set([...seen, name]);
+    if (scope.unsafe.has(name)) {
+      return {
+        kind: "unsupported",
+        reason: `the referenced binding ${JSON.stringify(name)} may be reassigned or otherwise escape, so its final value cannot be proven`,
+      };
+    }
+    if (visited.has(name)) {
+      return {
+        kind: "unsupported",
+        reason: `the binding ${JSON.stringify(name)} is part of a reference cycle`,
+      };
+    }
+    const initializer = scope.initializers.get(name);
+    if (initializer === undefined) {
+      return { kind: "expression", expression: current };
+    }
+    visited = new Set([...visited, name]);
     current = initializer;
   }
 }
 
+/** The base identifier of an assignment target, or `null`. */
+function rootIdentifierName(node: ts.Expression): string | null {
+  let current: ts.Expression = node;
+  for (;;) {
+    if (ts.isIdentifier(current)) return current.text;
+    if (
+      ts.isPropertyAccessExpression(current) ||
+      ts.isElementAccessExpression(current) ||
+      ts.isNonNullExpression(current) ||
+      ts.isParenthesizedExpression(current)
+    ) {
+      current = current.expression;
+      continue;
+    }
+    return null;
+  }
+}
+
+/** True when `node` is an assignment operator (`=`, `+=`, …). */
+function isAssignmentOperator(kind: ts.SyntaxKind): boolean {
+  return (
+    kind >= ts.SyntaxKind.FirstAssignment &&
+    kind <= ts.SyntaxKind.LastAssignment
+  );
+}
+
+/** Collect every identifier name referenced inside `node`. */
+function collectReferencedNames(node: ts.Node, into: Set<string>): void {
+  if (ts.isIdentifier(node)) into.add(node.text);
+  ts.forEachChild(node, (child) => collectReferencedNames(child, into));
+}
+
 /**
- * Interpret a resolved `kit` object literal, collecting literal file mappings.
- * A spread or computed key makes the mapping unprovable.
+ * Collect top-level `const`/`let`/`var` initializers and identify bindings
+ * whose value can no longer be proven: ones that are reassigned, updated or
+ * deleted, aliased to another identifier, spread, or passed to a call.
+ */
+function collectScope(sourceFile: ts.SourceFile): Scope {
+  const initializers = new Map<string, ts.Expression>();
+  const declared = new Set<string>();
+  for (const statement of sourceFile.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (ts.isIdentifier(declaration.name)) {
+        declared.add(declaration.name.text);
+        if (declaration.initializer !== undefined) {
+          initializers.set(declaration.name.text, declaration.initializer);
+        }
+      }
+    }
+  }
+
+  const unsafe = new Set<string>();
+  const mark = (name: string | null): void => {
+    if (name !== null && declared.has(name)) unsafe.add(name);
+  };
+
+  const visit = (node: ts.Node): void => {
+    if (
+      ts.isBinaryExpression(node) &&
+      isAssignmentOperator(node.operatorToken.kind)
+    ) {
+      mark(rootIdentifierName(node.left));
+    } else if (
+      (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+      (node.operator === ts.SyntaxKind.PlusPlusToken ||
+        node.operator === ts.SyntaxKind.MinusMinusToken)
+    ) {
+      mark(rootIdentifierName(node.operand));
+    } else if (ts.isDeleteExpression(node)) {
+      mark(rootIdentifierName(node.expression));
+    } else if (ts.isSpreadElement(node) || ts.isSpreadAssignment(node)) {
+      const names = new Set<string>();
+      collectReferencedNames(node.expression, names);
+      for (const name of names) mark(name);
+    } else if (
+      ts.isCallExpression(node) ||
+      ts.isNewExpression(node) ||
+      ts.isTaggedTemplateExpression(node)
+    ) {
+      const names = new Set<string>();
+      ts.forEachChild(node, (child) => collectReferencedNames(child, names));
+      for (const name of names) mark(name);
+    } else if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.initializer !== undefined &&
+      ts.isIdentifier(node.initializer)
+    ) {
+      // `const alias = config;` — the original binding escapes.
+      mark(node.initializer.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+
+  return { initializers, unsafe };
+}
+
+/** Inspect a `kit.files` object literal, reading only path-relevant keys. */
+function inspectFilesObject(
+  object: ts.ObjectLiteralExpression,
+  scope: Scope,
+): SvelteConfigInspection {
+  let routesDir: string | null = null;
+  let libDir: string | null = null;
+  const seen = new Set<string>();
+  for (const property of object.properties) {
+    if (ts.isSpreadAssignment(property)) {
+      return unsupported(
+        "`kit.files` contains a spread whose keys cannot be proven",
+      );
+    }
+    const name = literalPropertyName(property.name);
+    if (name === null) {
+      return unsupported("`kit.files` contains a computed key");
+    }
+    if (seen.has(name)) {
+      return unsupported(
+        `\`kit.files\` declares ${JSON.stringify(name)} more than once, so the effective mapping cannot be proven`,
+      );
+    }
+    seen.add(name);
+    if (name !== "routes" && name !== "lib") continue;
+    if (!ts.isPropertyAssignment(property)) {
+      return unsupported(
+        `\`kit.files.${name}\` is not a static property assignment`,
+      );
+    }
+    const resolved = resolveExpression(property.initializer, scope, new Set());
+    if (resolved.kind === "unsupported") return unsupported(resolved.reason);
+    if (!isStringLiteralExpression(resolved.expression)) {
+      return unsupported(
+        `\`kit.files.${name}\` must be a literal string to prove the mapping`,
+      );
+    }
+    if (name === "routes") routesDir = resolved.expression.text;
+    else libDir = resolved.expression.text;
+  }
+  return { kind: "static", mapping: { routesDir, libDir } };
+}
+
+/**
+ * Inspect a `kit` object literal, collecting literal file mappings. A spread,
+ * duplicate key or computed key makes the mapping unprovable.
  */
 function inspectKitObject(
   object: ts.ObjectLiteralExpression,
-  scope: ReadonlyMap<string, ts.Expression>,
+  scope: Scope,
 ): SvelteConfigInspection {
-  let mapping = NO_MAPPING;
+  let mapping: StaticKitMapping | null = null;
+  const seen = new Set<string>();
   for (const property of object.properties) {
     if (ts.isSpreadAssignment(property)) {
       return unsupported("`kit` contains a spread whose keys cannot be proven");
     }
     const name = literalPropertyName(property.name);
     if (name === null) {
-      // A computed or otherwise non-literal key could name any kit field.
       return unsupported("`kit` contains a computed key");
     }
+    if (seen.has(name)) {
+      return unsupported(
+        `\`kit\` declares ${JSON.stringify(name)} more than once, so the effective mapping cannot be proven`,
+      );
+    }
+    seen.add(name);
     if (name !== "files") continue;
     if (!ts.isPropertyAssignment(property)) {
       return unsupported("`kit.files` is not a static property assignment");
     }
     const resolved = resolveExpression(property.initializer, scope, new Set());
-    if (!ts.isObjectLiteralExpression(resolved)) {
+    if (resolved.kind === "unsupported") return unsupported(resolved.reason);
+    if (!ts.isObjectLiteralExpression(resolved.expression)) {
       return unsupported("`kit.files` is not a static object literal");
     }
-    const files = inspectFilesObject(resolved, scope);
+    const files = inspectFilesObject(resolved.expression, scope);
     if (files.kind === "unsupported") return files;
     mapping = files.mapping;
   }
-  return { kind: "static", mapping };
+  return { kind: "static", mapping: mapping ?? NO_MAPPING };
 }
 
-/** Interpret a `kit.files` object literal, reading only path-relevant keys. */
-function inspectFilesObject(
-  object: ts.ObjectLiteralExpression,
-  scope: ReadonlyMap<string, ts.Expression>,
-):
-  | { readonly kind: "static"; readonly mapping: StaticKitMapping }
-  | {
-      readonly kind: "unsupported";
-      readonly reason: string;
-    } {
-  let routesDir: string | null = null;
-  let libDir: string | null = null;
-  for (const property of object.properties) {
-    if (ts.isSpreadAssignment(property)) {
-      return {
-        kind: "unsupported",
-        reason: "`kit.files` contains a spread whose keys cannot be proven",
-      };
-    }
-    const name = literalPropertyName(property.name);
-    if (name === null) {
-      return {
-        kind: "unsupported",
-        reason: "`kit.files` contains a computed key",
-      };
-    }
-    if (name !== "routes" && name !== "lib") continue;
-    if (!ts.isPropertyAssignment(property)) {
-      return {
-        kind: "unsupported",
-        reason: `\`kit.files.${name}\` is not a static property assignment`,
-      };
-    }
-    const resolved = resolveExpression(property.initializer, scope, new Set());
-    if (!isStringLiteralExpression(resolved)) {
-      return {
-        kind: "unsupported",
-        reason: `\`kit.files.${name}\` must be a literal string to prove the mapping`,
-      };
-    }
-    if (name === "routes") routesDir = resolved.text;
-    else libDir = resolved.text;
-  }
-  return { kind: "static", mapping: { routesDir, libDir } };
-}
-
-/** Interpret the top-level exported configuration object literal. */
+/** Inspect the complete top-level exported configuration object literal. */
 function inspectRootObject(
   object: ts.ObjectLiteralExpression,
-  scope: ReadonlyMap<string, ts.Expression>,
+  scope: Scope,
 ): SvelteConfigInspection {
+  let result: SvelteConfigInspection | null = null;
+  const seen = new Set<string>();
   for (const property of object.properties) {
     if (ts.isSpreadAssignment(property)) {
       return unsupported(
@@ -164,36 +302,27 @@ function inspectRootObject(
     if (name === null) {
       return unsupported("the exported config contains a computed key");
     }
+    if (seen.has(name)) {
+      return unsupported(
+        `the exported config declares ${JSON.stringify(name)} more than once, so the effective mapping cannot be proven`,
+      );
+    }
+    seen.add(name);
     if (name !== "kit") continue;
     if (!ts.isPropertyAssignment(property)) {
       return unsupported("`kit` is not a static property assignment");
     }
     const resolved = resolveExpression(property.initializer, scope, new Set());
-    if (!ts.isObjectLiteralExpression(resolved)) {
+    if (resolved.kind === "unsupported") return unsupported(resolved.reason);
+    if (!ts.isObjectLiteralExpression(resolved.expression)) {
       return unsupported(
         "`kit` is not a static object literal; the mapping cannot be proven",
       );
     }
-    return inspectKitObject(resolved, scope);
+    result = inspectKitObject(resolved.expression, scope);
+    if (result.kind === "unsupported") return result;
   }
-  return { kind: "static", mapping: NO_MAPPING };
-}
-
-/** Collect top-level `const`/`let`/`var` initializers by identifier name. */
-function collectScope(sourceFile: ts.SourceFile): Map<string, ts.Expression> {
-  const scope = new Map<string, ts.Expression>();
-  for (const statement of sourceFile.statements) {
-    if (!ts.isVariableStatement(statement)) continue;
-    for (const declaration of statement.declarationList.declarations) {
-      if (
-        ts.isIdentifier(declaration.name) &&
-        declaration.initializer !== undefined
-      ) {
-        scope.set(declaration.name.text, declaration.initializer);
-      }
-    }
-  }
-  return scope;
+  return result ?? { kind: "static", mapping: NO_MAPPING };
 }
 
 /** Find the default-exported expression (`export default` / `module.exports`). */
@@ -229,6 +358,14 @@ function scriptKindFor(fileName: string): ts.ScriptKind {
   return ts.ScriptKind.JS;
 }
 
+/** Read the TypeScript parser's own recovered syntax diagnostics. */
+function parseDiagnostics(sourceFile: ts.SourceFile): readonly ts.Diagnostic[] {
+  const internal = sourceFile as ts.SourceFile & {
+    parseDiagnostics?: readonly ts.Diagnostic[];
+  };
+  return internal.parseDiagnostics ?? [];
+}
+
 /**
  * Inspect a `svelte.config.*` source without executing it. Returns a literal
  * path mapping or an `unsupported` reason for anything that cannot be proven
@@ -250,6 +387,15 @@ export function inspectSvelteConfigSource(
   } catch {
     return unsupported("the configuration could not be parsed statically");
   }
+  const diagnostics = parseDiagnostics(sourceFile);
+  if (diagnostics.length > 0) {
+    const first = diagnostics[0];
+    const detail =
+      first === undefined
+        ? "a syntax error"
+        : ts.flattenDiagnosticMessageText(first.messageText, " ");
+    return unsupported(`the configuration has a static parse error: ${detail}`);
+  }
   const expression = defaultExportExpression(sourceFile);
   if (expression === null) {
     return unsupported(
@@ -258,10 +404,11 @@ export function inspectSvelteConfigSource(
   }
   const scope = collectScope(sourceFile);
   const resolved = resolveExpression(expression, scope, new Set());
-  if (!ts.isObjectLiteralExpression(resolved)) {
+  if (resolved.kind === "unsupported") return unsupported(resolved.reason);
+  if (!ts.isObjectLiteralExpression(resolved.expression)) {
     return unsupported(
       "the default export is not a static object literal; the mapping cannot be proven",
     );
   }
-  return inspectRootObject(resolved, scope);
+  return inspectRootObject(resolved.expression, scope);
 }

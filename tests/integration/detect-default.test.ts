@@ -248,3 +248,84 @@ test("a spread in the exported config is unsupported, not defaulted", (t) => {
     "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
   ]);
 });
+
+function writeConfigFixture(
+  t: import("node:test").TestContext,
+  source: string,
+): string {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "static-config",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
+    }),
+  );
+  project.writeFile("svelte.config.js", source);
+  return project.root;
+}
+
+/**
+ * RCLD03-R2-1: the complete relevant structure is inspected, so a later spread
+ * cannot silently override an earlier valid `kit` mapping.
+ */
+test("a later spread overriding a proven kit mapping is unsupported", (t) => {
+  const root = writeConfigFixture(
+    t,
+    "export default { kit: { files: { routes: 'app/routes' } }, ...dynamic };\n",
+  );
+  const result = detectDefaultProject(root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(issueCodes(result), [
+    "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
+  ]);
+});
+
+/**
+ * RCLD03-R2-1: a duplicated relevant key is an override that cannot be proven
+ * statically.
+ */
+test("a duplicate kit key is unsupported", (t) => {
+  const root = writeConfigFixture(
+    t,
+    "export default { kit: {}, kit: { files: { routes: 'custom' } } };\n",
+  );
+  const result = detectDefaultProject(root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(issueCodes(result), [
+    "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
+  ]);
+});
+
+/**
+ * RCLD03-R2-1: a later mutation of a referenced binding changes its effective
+ * value, so the recovered mapping cannot be trusted.
+ */
+test("a later mutation of a referenced config is unsupported", (t) => {
+  const root = writeConfigFixture(
+    t,
+    [
+      "const config = { kit: {} };",
+      "config.kit.files = { routes: process.env.ROUTES };",
+      "export default config;",
+    ].join("\n"),
+  );
+  const result = detectDefaultProject(root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(issueCodes(result), [
+    "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
+  ]);
+});
+
+/**
+ * RCLD03-R2-1: a recovered parse error must not fall back to a proven default.
+ */
+test("a malformed configuration is unsupported", (t) => {
+  const root = writeConfigFixture(t, "export default { kit: {\n");
+  const result = detectDefaultProject(root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(issueCodes(result), [
+    "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
+  ]);
+});

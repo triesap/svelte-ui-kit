@@ -77,18 +77,24 @@ only writing modes.
 
 #### Current owner-authorized RCLD-03 batch verification
 
-Independent review 1 of candidate `95833391745ed23512f2bbccf63b676030c4e222`
-requests RCLD03-R1-1/2/3/4 corrections and continuation through S063. Fresh
-reviewer format/lint/typecheck, unit 218/218, integration 61/61, registry 38/38, CLI 52/52 and
-contracts 127/127 pass, but emitted-module probes reproduce unsound package/config
-discovery, false dependency readiness, missing actual upstream peer checks and
-unsafe rendered shell commands. These are software defects, not external gates.
-Keep 32 accepted and 8 pending; preserve verified authorization and mapping controls.
-Add real caller/installed-module and controlled argv/purity regressions, not
-only helper/string assertions. Repair the early evidence before depending on it,
-then run every remaining original checkpoint and full milestone qualification.
-Record all intermediate failures and remove operator routing from public reports.
-No new acceptance or release-AC20 waiver.
+Independent review 2 of candidate `69f5fc00007f33c6fd756c9fdec690ab0a1d9ff2`
+requests RCLD03-R2-1/2/3/4/5 corrections and continuation through S063. Fresh
+reviewer build/format/lint/typecheck, unit 255/255, integration 138/138,
+registry 38/38, CLI 52/52 and contracts 127/127 pass with zero skips. All 27 original
+probe cases now match their expected outcomes; preserve that verified progress.
+New emitted-module probes expose unsafe config/workspace/peer evidence,
+mutable or incomplete snapshots, literal/comment corruption, invalid generated
+exports, wrong/absent/duplicate CSS imports and unsafe incomplete initialization.
+The governing RCLD records exact findings and decisions. These are eligible
+software work; keep 32 accepted and 25 pending, with S058–S063 unimplemented.
+
+Use actual composed callers, AST imports/exports and planned-consumer check/build;
+helper/string assertions do not prove integration. Qualify installed TS/Svelte
+parser runtime dependencies outside the checkout. Keep observed absence distinct
+from missing/unsafe/unreadable evidence and test complete-tree purity.
+Record all intermediate failures and remove operator routing from all affected
+public reports. Capture underlying command exits before filtering output. No
+new acceptance, release-AC20 waiver or additional dependency approval.
 
 S001–S032 are independently accepted at the anchors in COMMIT_SEQUENCE.md.
 The current S033–S063 dispatch governs: preserve the verified bounded third
@@ -115,7 +121,7 @@ requests both RCLD02-R4 groups in COMMIT_SEQUENCE.md. R3-1 joint compatibility
 is closed; registry within-item/cross-item ancestry, lock same-category
 case/ancestry and integration-directory checks are verified progress. Preserve
 previous closed findings and accepted RCLD-01. Fresh reviewer typecheck,
-unit194/194, registry38/38, integration22/22, CLI52/52 and contracts117/117
+unit194/194, registry 38/38, integration22/22, CLI 52/52 and contracts117/117
 pass without skips. Replayed original probes pass, but nine cross-role or
 required-directory lock negatives still pass the actual parser incorrectly.
 
