@@ -24,6 +24,8 @@ export interface IncomingSource {
 export interface SourceTargetRecord {
   readonly path: string;
   readonly tracked: boolean;
+  /** Lock owner when tracked, otherwise `null`. */
+  readonly owner: string | null;
   readonly disposition: OwnershipDisposition;
   readonly baseHash: string | null;
   readonly localHash: string | null;
@@ -107,6 +109,7 @@ export function planSourceTargets(
     records.push({
       path: logicalPath,
       tracked: lockRecord !== undefined,
+      owner: lockRecord?.owner ?? null,
       disposition,
       baseHash: lockRecord?.baseHash ?? null,
       localHash,

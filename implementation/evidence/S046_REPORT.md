@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S046","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S046","kind":"report","commit":"70d7d49e841cf4395e6576220cc373271ad40c33","disposition":"candidate"}
 -->
 
 Step ID and title: S046 — Plan source retirement with retained customization.
