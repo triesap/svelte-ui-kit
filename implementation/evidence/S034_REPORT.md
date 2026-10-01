@@ -40,15 +40,15 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 
 ## Verification
 
-- `cargo extbuild run -- pnpm run test:unit -- tests/unit/path-overlap.test.ts`
+- `pnpm run test:unit -- tests/unit/path-overlap.test.ts`
   — exit 0, 5/5.
-- `cargo extbuild run -- pnpm run test:unit -- tests/unit/config.test.ts`
+- `pnpm run test:unit -- tests/unit/config.test.ts`
   — exit 0 (existing strict-config coverage preserved).
-- `cargo extbuild run -- pnpm run test:unit` — exit 0, 218/218.
-- `cargo extbuild run -- pnpm run format:check` — exit 0.
-- `cargo extbuild run -- pnpm run lint` — exit 0, zero warnings.
-- `cargo extbuild run -- pnpm run typecheck` — exit 0, five configs.
-- `cargo extbuild run -- pnpm run check:contracts` — exit 0, 0 errors/0 warnings.
+- `pnpm run test:unit` — exit 0, 218/218.
+- `pnpm run format:check` — exit 0.
+- `pnpm run lint` — exit 0, zero warnings.
+- `pnpm run typecheck` — exit 0, five configs.
+- `pnpm run check:contracts` — exit 0, 0 errors/0 warnings.
 - `git diff --check` / `git diff --cached --check` — clean.
 
 ## Limitations

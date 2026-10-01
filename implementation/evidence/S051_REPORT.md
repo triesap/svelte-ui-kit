@@ -33,12 +33,12 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 
 ## Verification
 
-- `cargo extbuild run -- pnpm run test:integration -- tests/integration/css-retirement.test.ts`
+- `pnpm run test:integration -- tests/integration/css-retirement.test.ts`
   — exit 0, 3/3.
-- `cargo extbuild run -- pnpm run test:integration -- tests/integration/source-retirement.test.ts`
+- `pnpm run test:integration -- tests/integration/source-retirement.test.ts`
   — exit 0, 3/3.
-- `cargo extbuild run -- pnpm run typecheck` — exit 0, five configs.
-- `cargo extbuild run -- pnpm run check:contracts` — exit 0, 0 errors/0 warnings.
+- `pnpm run typecheck` — exit 0, five configs.
+- `pnpm run check:contracts` — exit 0, 0 errors/0 warnings.
 - `git diff --check` / `git diff --cached --check` — clean.
 
 ## Limitations

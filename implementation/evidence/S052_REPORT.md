@@ -40,10 +40,10 @@ new dependency.
 
 ## Verification
 
-- `cargo extbuild run -- pnpm run test:unit -- tests/unit/export-regions.test.ts`
+- `pnpm run test:unit -- tests/unit/export-regions.test.ts`
   — exit 0, 7/7.
-- `cargo extbuild run -- pnpm run typecheck` — exit 0, five configs.
-- `cargo extbuild run -- pnpm run check:contracts` — exit 0, 0 errors/0 warnings.
+- `pnpm run typecheck` — exit 0, five configs.
+- `pnpm run check:contracts` — exit 0, 0 errors/0 warnings.
 - `git diff --check` / `git diff --cached --check` — clean.
 
 ## Limitations

@@ -42,15 +42,15 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 
 ## Verification
 
-- `cargo extbuild run -- pnpm run test:unit -- tests/unit/logical-paths.test.ts`
+- `pnpm run test:unit -- tests/unit/logical-paths.test.ts`
   — exit 0, 10/10.
-- `cargo extbuild run -- pnpm run test:unit` — exit 0, 213/213 across the suite
+- `pnpm run test:unit` — exit 0, 213/213 across the suite
   (config and lock suites included, proving the predicate change is
   non-regressive).
-- `cargo extbuild run -- pnpm run format:check` — exit 0.
-- `cargo extbuild run -- pnpm run lint` — exit 0, zero warnings.
-- `cargo extbuild run -- pnpm run typecheck` — exit 0, five configs.
-- `cargo extbuild run -- pnpm run check:contracts` — exit 0, 0 errors/0 warnings.
+- `pnpm run format:check` — exit 0.
+- `pnpm run lint` — exit 0, zero warnings.
+- `pnpm run typecheck` — exit 0, five configs.
+- `pnpm run check:contracts` — exit 0, 0 errors/0 warnings.
 - `git diff --check` / `git diff --cached --check` — clean.
 
 ## Limitations
