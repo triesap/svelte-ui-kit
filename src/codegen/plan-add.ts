@@ -47,6 +47,7 @@ import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
 import { parseManagedCss } from "./css-parse.js";
 import {
   exportDeclarationKey,
+  findRootBarrelImports,
   parseGeneratedDeclarations,
   patchExportRegion,
   type ExportDeclaration,
@@ -301,6 +302,30 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         version: item.manifest.version,
         bytes: file.bytes,
       });
+      // Cycle qualification: a generated source must use direct sibling imports
+      // and never the generated root barrel. The existing AST authority is
+      // composed here rather than a text search.
+      if (
+        logicalPath !== derived.rootExports &&
+        /\.(?:svelte|ts|mts|cts|js|mjs|cjs)$/.test(logicalPath)
+      ) {
+        const text = decodeText(file.bytes);
+        if (text !== null) {
+          const relative = path.posix
+            .relative(path.posix.dirname(logicalPath), derived.rootExports)
+            .replace(/\.ts$/, "");
+          const specifier = relative.startsWith(".")
+            ? relative
+            : `./${relative}`;
+          const offenders = findRootBarrelImports(text, new Set([specifier]));
+          if (offenders.length > 0) {
+            diagnostics.push(
+              `registry source ${logicalPath} imports the root UI barrel ${JSON.stringify(offenders[0])}; generated sources must use direct sibling imports to avoid a cycle`,
+            );
+            hasConflict = true;
+          }
+        }
+      }
     }
     for (const style of item.manifest.styles) {
       const logicalPath = joinLogical(config.stylesDir, style.target);

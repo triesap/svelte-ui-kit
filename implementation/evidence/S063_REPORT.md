@@ -54,9 +54,12 @@ lane exited 0 with zero skips:
   22/22, `test:contracts` 127/127, `check:contracts` 0 errors/0 warnings.
 - Fixture/consumer lanes: `fixture:check` (svelte-check 0 errors/0 warnings),
   `test:fixture` 23/23, `test:browser` 23/23 chromium including the fault and
-  teardown controls. The maintained consumer check/build is the planned-consumer
-  qualification; `installed-package` (in `test:integration`) qualifies the
-  emitted modules from an installed package without author-tree fallback.
+  teardown controls. `tests/integration/planned-consumer.test.ts` builds a
+  consumer from exactly the composed add plan over a real validated registry
+  snapshot, distinct from the maintained hand-authored fixture.
+  `installed-package` (in `test:integration`) qualifies the emitted modules and
+  the promoted TypeScript/Svelte planner/parser paths from an installed package
+  without author-tree fallback.
 - Strict declaration controls: `tests/components/strict-declaration.test.ts`
   17/17, permitting exactly the two qualified Bits 2.19.3 TS2590 diagnostics at
   `button2:23`/`calendar2:25` with Svelte 5.57.1 / TS 6.0.3 / svelte-check 4.7.6
@@ -72,6 +75,13 @@ lane exited 0 with zero skips:
 
 ## Limitations
 
+- Independent review 4 supersedes the review-3 qualification prose above: the
+  review-3 run predates the RCLD03-R4 composed-entry repair. The current
+  candidate revision and its exact lane counts are recorded in
+  `implementation/VERIFICATION.md` and the RCLD-03 review-4 repair commit; a
+  fully qualified S063 candidate still requires the complete cumulative run and
+  independent Codex acceptance. No claim in the review-3 section should be read
+  as acceptance of the newer revision.
 - The conditional Rust guard is N/A for this repository: it has no Cargo
   workspace; the reference guard above is the applicable run.
 - S064 remains gated by independent Codex S063 acceptance; no release, remote

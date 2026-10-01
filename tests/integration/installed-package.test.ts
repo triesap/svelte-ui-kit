@@ -48,7 +48,7 @@ function installedCopy(t: { after: (fn: () => void) => void }): string {
     path.join(installed, "package.json"),
   );
   mkdirSync(path.join(installed, "node_modules"));
-  for (const dependency of ["ajv", "semver"]) {
+  for (const dependency of ["ajv", "semver", "svelte", "typescript"]) {
     linkRuntimeDependency(installed, dependency);
   }
   return installed;
@@ -466,4 +466,97 @@ test("the emitted copy enforces the complete cross-role ownership inventory", (t
       assert.equal(entry.codes.includes(entry.code), true, entry.name);
     }
   }
+});
+
+/**
+ * RCLD03-R4-4: the emitted planner and parser paths must import and run
+ * outside the checkout with the declared runtime TypeScript/Svelte parsers,
+ * never falling back to the authoring tree. The unchanged ajv/semver model
+ * tests above never exercise these modules.
+ */
+const R5_RUNNER_SOURCE = `import { pathToFileURL } from "node:url";
+import path from "node:path";
+const installed = process.env.SUIK_INSTALLED;
+const imp = (relative) =>
+  import(pathToFileURL(path.join(installed, "dist", relative)).href);
+const planAdd = await imp("codegen/plan-add.js");
+const exportsModule = await imp("codegen/exports.js");
+const exportParse = await imp("codegen/export-parse.js");
+const svelteModule = await imp("codegen/svelte.js");
+const plan = await imp("codegen/plan.js");
+const patched = exportsModule.patchExportRegion("index.ts", "", [
+  { name: "Button", target: "./button.svelte", kind: "value" },
+]);
+const region = patched.ok
+  ? exportParse.parseExportRegion("index.ts", patched.value)
+  : { ok: false };
+const compound = exportsModule.shouldGenerateCompoundBarrel([
+  { name: "Root", target: "./root.svelte", kind: "value" },
+  { name: "Trigger", target: "./trigger.svelte", kind: "value" },
+]);
+const layout = svelteModule.patchLayoutImports("<main />", [
+  { specifier: "./kit.css" },
+  { specifier: "./themes.css" },
+  { specifier: "./app.css" },
+]);
+process.stdout.write(
+  JSON.stringify({
+    cwd: process.cwd(),
+    root: installed,
+    planAddType: typeof planAdd.planAdd,
+    exportRegionOk: patched.ok,
+    regionFound: region.ok ? region.value.region !== null : false,
+    compound,
+    layoutOk: layout.ok,
+    layoutOrder:
+      layout.ok && layout.value.includes("kit.css") && layout.value.indexOf("kit.css") < layout.value.indexOf("app.css"),
+    envelopeOperation: plan.toPlanningEnvelope("add", true, [
+      { path: "a", operation: "retire", bytes: new Uint8Array() },
+    ], []).writes[0].operation,
+  }),
+);
+`;
+
+interface R5ChildResult {
+  readonly cwd: string;
+  readonly root: string;
+  readonly planAddType: string;
+  readonly exportRegionOk: boolean;
+  readonly regionFound: boolean;
+  readonly compound: boolean;
+  readonly layoutOk: boolean;
+  readonly layoutOrder: boolean;
+  readonly envelopeOperation: string;
+}
+
+function runR5Child(
+  t: { after: (fn: () => void) => void },
+  installed: string,
+): R5ChildResult {
+  const runner = mkdtempSync(path.join(os.tmpdir(), "suik-r5-runner-"));
+  t.after(() => rmSync(runner, { recursive: true, force: true }));
+  const runnerScript = path.join(runner, "run.mjs");
+  writeFileSync(runnerScript, R5_RUNNER_SOURCE);
+  const result = spawnSync(process.execPath, [runnerScript], {
+    cwd: runner,
+    encoding: "utf8",
+    timeout: 60_000,
+    env: { ...process.env, SUIK_INSTALLED: installed },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout) as R5ChildResult;
+}
+
+test("the emitted planners and TS/Svelte parsers run outside the checkout", (t) => {
+  const installed = installedCopy(t);
+  const output = runR5Child(t, installed);
+  assert.notEqual(output.cwd, PKG_ROOT);
+  assert.notEqual(output.root, PKG_ROOT);
+  assert.equal(output.planAddType, "function");
+  assert.equal(output.exportRegionOk, true);
+  assert.equal(output.regionFound, true);
+  assert.equal(output.compound, true);
+  assert.equal(output.layoutOk, true);
+  assert.equal(output.layoutOrder, true);
+  assert.equal(output.envelopeOperation, "retire");
 });

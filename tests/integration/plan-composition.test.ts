@@ -306,6 +306,60 @@ test("a customized source with a renamed public export blocks the whole batch", 
   );
 });
 
+test("a registry source importing the root barrel is a cycle conflict", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const barrel = 'import { Button } from "../index";\nexport default Button;\n';
+  const part = "<div></div>\n";
+  const reg = registryOf([
+    componentItem("dialog", {
+      exports: [
+        { name: "DialogRoot", target: "dialog/index.ts", kind: "value" },
+      ],
+      files: [
+        {
+          logicalSource: "registry/templates/dialog/index.ts",
+          target: "dialog/index.ts",
+          owner: "dialog",
+          cohort: "dialog",
+          blockId: null,
+          bytes: utf8(barrel),
+          digest: hashBytes(utf8(barrel)) as string,
+        },
+        {
+          logicalSource: "registry/templates/dialog/root.svelte",
+          target: "dialog/root.svelte",
+          owner: "dialog",
+          cohort: "dialog",
+          blockId: null,
+          bytes: utf8(part),
+          digest: hashBytes(utf8(part)) as string,
+        },
+      ],
+    }),
+  ]);
+  const result = planAdd({
+    registry: reg,
+    config: CONFIG,
+    addedRoots: ["dialog"],
+    snapshot: snapshotOf(project, [
+      ...targetPaths(),
+      `${derived.rootExportsDir}/dialog/index.ts`,
+      `${derived.rootExportsDir}/dialog/root.svelte`,
+    ]),
+    lock: null,
+    registryVersion: reg.root.registryVersion,
+    registryHash: reg.root.contentHash,
+  });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.executable, false);
+  assert.ok(
+    result.value.diagnostics.some((entry) => entry.includes("root UI barrel")),
+    JSON.stringify(result.value.diagnostics),
+  );
+});
+
 test("a clean retirement is an explicit operation whose application removes the file", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());
