@@ -20,19 +20,23 @@ function codes(result: ModelResult<unknown>): string[] {
 function buildWorkspace(
   project: TempProject,
   members: readonly string[],
+  workspaces: readonly string[] = ["apps/*"],
 ): void {
   project.writeFile(
     "package.json",
     JSON.stringify({
       name: "workspace-root",
       private: true,
-      workspaces: ["apps/*"],
+      workspaces,
     }),
   );
   for (const member of members) {
     project.writeFile(
       `${member}/package.json`,
-      JSON.stringify({ name: member.replace("/", "-") }),
+      JSON.stringify({
+        name: member.replace("/", "-"),
+        devDependencies: { "@sveltejs/kit": "2.70.3" },
+      }),
     );
   }
 }
@@ -85,7 +89,7 @@ test("a single-member workspace resolves without guessing", (t) => {
   assert.equal(result.value.workspaceRoot, project.root);
 });
 
-test("default discovery selects the nearest enclosing package, never a sibling", (t) => {
+test("default discovery selects the nearest enclosing application, never a sibling", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());
   buildWorkspace(project, ["apps/a", "apps/b"]);
@@ -100,13 +104,105 @@ test("default discovery selects the nearest enclosing package, never a sibling",
     assert.equal(nested.value.selectedBy, "nearest");
   }
 
-  // From the workspace root itself the nearest package is the root, not a
-  // sibling member.
+  // From the workspace root itself the nearest package is the ambiguous
+  // workspace container, not one of its sibling members.
   const atRoot = resolveProjectRoot({ invocationDir: project.root });
-  assert.equal(atRoot.ok, true, JSON.stringify(atRoot));
-  if (atRoot.ok) {
-    assert.equal(atRoot.value.root, project.root);
-  }
+  assert.equal(atRoot.ok, false, JSON.stringify(atRoot));
+  assert.deepEqual(codes(atRoot), ["PROJECT_AMBIGUOUS_WORKSPACE"]);
+});
+
+test("default discovery of a single-member workspace selects that application", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  buildWorkspace(project, ["apps/only"]);
+
+  const result = resolveProjectRoot({ invocationDir: project.root });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.root, path.join(project.root, "apps", "only"));
+  assert.equal(result.value.selectedBy, "nearest");
+});
+
+test("ordinary library members do not count as applications", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ name: "root", workspaces: ["apps/*"] }),
+  );
+  project.writeFile(
+    "apps/lib/package.json",
+    JSON.stringify({ name: "lib", dependencies: { svelte: "5.57.1" } }),
+  );
+
+  const result = resolveProjectRoot({ cwd: ".", invocationDir: project.root });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(codes(result), ["PROJECT_PACKAGE_NOT_FOUND"]);
+});
+
+test("an escaping workspace member pattern is rejected", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ name: "root", workspaces: ["../outside"] }),
+  );
+
+  const result = resolveProjectRoot({ cwd: ".", invocationDir: project.root });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(codes(result), ["PROJECT_WORKSPACE_UNSUPPORTED"]);
+});
+
+test("a negative workspace pattern excludes a proven member", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  buildWorkspace(project, ["apps/keep", "apps/drop"], ["apps/*", "!apps/drop"]);
+
+  const result = resolveProjectRoot({ cwd: ".", invocationDir: project.root });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.root, path.join(project.root, "apps", "keep"));
+});
+
+test("an unsupported deeper glob requires explicit --cwd", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  buildWorkspace(project, ["apps/a"], ["apps/a", "other/**"]);
+  project.writeFile(
+    "other/deep/b/package.json",
+    JSON.stringify({
+      name: "b",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
+    }),
+  );
+
+  const result = resolveProjectRoot({ cwd: ".", invocationDir: project.root });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(codes(result), ["PROJECT_WORKSPACE_UNSUPPORTED"]);
+});
+
+test("a symlinked workspace member is not selected", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ name: "root", workspaces: ["apps/*"] }),
+  );
+  const external = createTempProject({ prefix: "suik-root-external-" });
+  t.after(() => external.cleanup());
+  external.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "linked",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
+    }),
+  );
+  project.writeDir("apps");
+  project.symlink(external.root, "apps/linked");
+
+  const result = resolveProjectRoot({ cwd: ".", invocationDir: project.root });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(codes(result), ["PROJECT_PACKAGE_NOT_FOUND"]);
 });
 
 test("an explicit non-package directory fails clearly", (t) => {

@@ -165,3 +165,44 @@ test("application configuration is never executed during discovery", (t) => {
   if (!result.ok) return;
   assert.equal(result.value.kind, "custom");
 });
+
+test("a symlinked kit.json candidate is unsafe, not a default bootstrap", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile("package.json", JSON.stringify({ name: "linked" }));
+  writeKitConfig(project, "app/ui/_kit/real.json", {
+    schemaVersion: 1,
+    uiDir: "app/ui",
+  });
+  project.symlink("real.json", "app/ui/_kit/kit.json");
+
+  const result = discoverKitConfig(project.root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(codes(result), ["KIT_CONFIG_UNSAFE"]);
+});
+
+test("a directory at kit.json is unsafe, not a default bootstrap", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile("package.json", JSON.stringify({ name: "dir" }));
+  project.writeDir("src/lib/components/ui/_kit/kit.json");
+
+  const result = discoverKitConfig(project.root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(codes(result), ["KIT_CONFIG_UNSAFE"]);
+});
+
+test("a symlinked _kit directory is observed deliberately", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile("package.json", JSON.stringify({ name: "linked-kit" }));
+  const external = createTempProject({ prefix: "suik-kit-external-" });
+  t.after(() => external.cleanup());
+  writeKitConfig(external, "kit.json", { schemaVersion: 1, uiDir: "app/ui" });
+  project.writeDir("app/ui");
+  project.symlink(external.root, "app/ui/_kit");
+
+  const result = discoverKitConfig(project.root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.ok(codes(result).includes("KIT_CONFIG_UNSAFE"));
+});

@@ -77,9 +77,22 @@ only writing modes.
 
 #### Current owner-authorized RCLD-03 batch verification
 
+Independent review 1 of candidate `95833391745ed23512f2bbccf63b676030c4e222`
+requests RCLD03-R1-1/2/3/4 corrections and continuation through S063. Fresh
+reviewer format/lint/typecheck, unit 218/218, integration 61/61, registry 38/38, CLI 52/52 and
+contracts 127/127 pass, but emitted-module probes reproduce unsound package/config
+discovery, false dependency readiness, missing actual upstream peer checks and
+unsafe rendered shell commands. These are software defects, not external gates.
+Keep 32 accepted and 8 pending; preserve verified authorization and mapping controls.
+Add real caller/installed-module and controlled argv/purity regressions, not
+only helper/string assertions. Repair the early evidence before depending on it,
+then run every remaining original checkpoint and full milestone qualification.
+Record all intermediate failures and remove operator routing from public reports.
+No new acceptance or release-AC20 waiver.
+
 S001–S032 are independently accepted at the anchors in COMMIT_SEQUENCE.md.
-The current S033–S063 dispatch governs: test the bounded third authorization
-before replacing the single live record, retain predecessor/acceptance semantics,
+The current S033–S063 dispatch governs: preserve the verified bounded third
+authorization and single live record, retain predecessor/acceptance semantics,
 and run each original checkpoint's direct checks plus format/lint/typecheck and
 contracts before its green commit. At S063 qualify actual composed planners,
 complete-tree zero-write behavior, deterministic B/L/I/cohort/conflict/retirement

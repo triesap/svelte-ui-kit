@@ -17,6 +17,14 @@ const WINDOWS_DRIVE = /^[A-Za-z]:/;
 // eslint-disable-next-line no-control-regex
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
 /**
+ * Characters that are not portable in a single path segment. `?`, `*`, `<`,
+ * `>`, `|` and `"` are reserved by Windows and, more importantly for a shell
+ * tool, are shell metacharacters that would be interpreted rather than treated
+ * literally. `:` is rejected separately and the separators `/` and `\` are
+ * handled at the whole-path level.
+ */
+const NONPORTABLE_CHARACTERS = /[<>"|?*]/;
+/**
  * Windows-reserved device names, with or without an extension. These are not
  * portable across supported platforms because opening them can address a
  * device rather than a file in the working directory.
@@ -25,15 +33,17 @@ const RESERVED_SEGMENT = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i;
 
 /**
  * True when one already-split logical segment is portable. A segment must be
- * non-empty, must not be `.` or `..`, must be free of control characters and
- * the `:` character, must not end in a dot or space (both are silently
- * stripped by Windows), and must not be a reserved device name (ASCII case
- * insensitively, with or without an extension).
+ * non-empty, must not be `.` or `..`, must be free of control characters, must
+ * not contain `:` or the shell/metacharacter set `< > " | ? *`, must not end in
+ * a dot or space (both are silently stripped by Windows), and must not be a
+ * reserved device name (ASCII case insensitively, with or without an
+ * extension).
  */
 export function isPortableLogicalSegment(segment: string): boolean {
   if (segment.length === 0) return false;
   if (segment === "." || segment === "..") return false;
   if (CONTROL_CHARACTERS.test(segment)) return false;
+  if (NONPORTABLE_CHARACTERS.test(segment)) return false;
   if (segment.includes(":")) return false;
   if (/[. ]$/.test(segment)) return false;
   if (RESERVED_SEGMENT.test(segment)) return false;

@@ -89,6 +89,26 @@ test("separator confusion and control characters fail", () => {
   }
 });
 
+test("shell and Windows metacharacters fail per segment", () => {
+  const unsafe = [
+    "src/a?.svelte",
+    "src/a*.svelte",
+    "src/a|b.svelte",
+    "src/a<b.svelte",
+    "src/a>b.svelte",
+    'src/a"b.svelte',
+  ];
+  for (const value of unsafe) {
+    assert.equal(isSafeLogicalRelativePath(value), false, value);
+    assert.notEqual(unsafeLogicalSegment(value), null, value);
+  }
+  // The exact segment is described as a JSON-quoted value, never raw.
+  assert.equal(
+    unsafeLogicalSegment("src/a|b.svelte"),
+    JSON.stringify("a|b.svelte"),
+  );
+});
+
 test("invalid and reserved segments fail portably", () => {
   const reserved = [
     "con",
@@ -157,6 +177,12 @@ test("config parsing rejects reserved and case-aliased target roots", () => {
   });
   assert.equal(colon.ok, false);
   if (!colon.ok) assert.equal(colon.issues[0]?.code, "PATH_UNSAFE");
+
+  for (const value of ["src/a?.svelte", "src/a*.svelte", "src/a|b.ts"]) {
+    const result = parseKitConfig({ schemaVersion: 1, uiDir: value });
+    assert.equal(result.ok, false, value);
+    if (!result.ok) assert.equal(result.issues[0]?.code, "PATH_UNSAFE");
+  }
 });
 
 test("config diagnostics never echo an unsafe raw locator", () => {

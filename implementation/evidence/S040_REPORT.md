@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S040","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S040","kind":"report","commit":"95833391745ed23512f2bbccf63b676030c4e222","disposition":"candidate"}
 -->
 
 Step ID and title: S040 — Render dependency instructions without execution.

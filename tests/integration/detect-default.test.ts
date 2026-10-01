@@ -114,3 +114,137 @@ test("a SvelteKit package without a layout is still a supported target", (t) => 
   // A later initialization checkpoint may create the missing integration.
   assert.equal(result.value.layoutFile, "src/routes/+layout.svelte");
 });
+
+test("a config filename alone is not proof of a SvelteKit application", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ name: "svelte-only", dependencies: { svelte: "5.57.1" } }),
+  );
+  project.writeFile("svelte.config.js", "export default {};\n");
+
+  const result = detectDefaultProject(project.root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(issueCodes(result), ["PROJECT_NOT_SVELTEKIT"]);
+});
+
+test("a literal kit.files mapping is honored", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "custom-routes",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
+    }),
+  );
+  project.writeFile(
+    "svelte.config.ts",
+    'export default { kit: { files: { routes: "app/routes", lib: "app/lib" } } };\n',
+  );
+  project.writeDir("app/routes");
+  project.writeFile("app/routes/+layout.svelte", "<slot />\n");
+
+  const result = detectDefaultProject(project.root);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.routesDir, "app/routes");
+  assert.equal(result.value.libDir, "app/lib");
+  assert.equal(result.value.layoutFile, "app/routes/+layout.svelte");
+  assert.equal(result.value.layoutPresent, true);
+});
+
+test("the existing consumer's const config with adapter calls is static", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "const-config",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
+    }),
+  );
+  project.writeFile(
+    "svelte.config.js",
+    [
+      'import adapter from "@sveltejs/adapter-node";',
+      "const config = {",
+      "  preprocess: vitePreprocess(),",
+      "  kit: {",
+      "    adapter: adapter(),",
+      "  },",
+      "};",
+      "export default config;",
+    ].join("\n"),
+  );
+
+  const result = detectDefaultProject(project.root);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.layoutFile, "src/routes/+layout.svelte");
+});
+
+test("a dynamic kit.files mapping is a typed manual diagnostic", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "dynamic",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
+    }),
+  );
+  project.writeFile(
+    "svelte.config.js",
+    "export default { kit: { files: { routes: process.env.ROUTES } } };\n",
+  );
+
+  const result = detectDefaultProject(project.root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(issueCodes(result), [
+    "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
+  ]);
+  if (result.ok) return;
+  assert.match(result.issues[0]?.message ?? "", /literal/);
+});
+
+test("multiple configuration files are ambiguous", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "many-configs",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
+    }),
+  );
+  project.writeFile("svelte.config.js", "export default {};\n");
+  project.writeFile("svelte.config.ts", "export default {};\n");
+
+  const result = detectDefaultProject(project.root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(issueCodes(result), ["PROJECT_SVELTEKIT_CONFIG_AMBIGUOUS"]);
+});
+
+test("a spread in the exported config is unsupported, not defaulted", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "spread",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
+    }),
+  );
+  project.writeFile(
+    "svelte.config.js",
+    "const base = {};\nexport default { ...base, kit: {} };\n",
+  );
+
+  const result = detectDefaultProject(project.root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(issueCodes(result), [
+    "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
+  ]);
+});

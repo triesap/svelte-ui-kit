@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: S001–S032 independently accepted; RCLD-01 and RCLD-02 complete. S033 is active under the full RCLD-03/S033–S063 dispatch below. S064 requires independent S063 acceptance. Updated 2026-09-30.
+Status: S001–S032 independently accepted; RCLD-01/02 complete. S033–S040 are committed pending review with changes requested; repair them and continue through all S041–S063. S064 requires independent S063 acceptance. Updated 2026-10-01.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,10 +17,10 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S033** (including the bounded RCLD-03 authorization-tooling prerequisite).
+- Active implementation checkpoint: **none** (repairing pending S033–S040 under independent review 1, then resume S041 through S063).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **32 / 203**. Remaining: **171 / 203**.
-- Committed pending review: **7 / 203**. Authored batch range: **S033–S039**.
+- Committed pending review: **8 / 203**. Authored batch range: **S033–S040**.
 - Completed RCLD sequences: **2 / 11**. Remaining: **9 / 11**.
 - Last safe target commit: `0e5b1852d02e15159f2ee4dd885152230457e119`, branch `master` (independently accepted S013–S032 combined evidence anchor).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
@@ -30,7 +30,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - S005 evidence: `implementation/evidence/S005_REPORT.md` and `implementation/evidence/S005_REVIEW.md`. Review 2 accepts the correction: independent unit 5/5, harness 29/29, smoke 41/41 and contracts 84/84 pass; original boundary/filename/failure probes are corrected. No release acceptance is claimed.
 - S006 evidence: `implementation/evidence/S006_REPORT.md` and `implementation/evidence/S006_REVIEW.md`. Review 2 accepts recursive exclusions and maintained-source controls; independent unit 14/14, harness 29/29, smoke 41/41 and contracts 84/84 pass. Original nested probes are corrected; real lint/format preserve all 71 tracked/untracked authoring entries. Accepted and committed at the last safe hash above.
 - S007–S012 reviews: each conventional report/review path records the tested combined candidate, original/repair provenance and independent acceptance. All RCLD-01 review findings are closed; the strict upstream declaration exception remains release AC20 debt.
-- No checkpoint has been skipped or reordered. S001–S032 are complete; S033 is active and S034–S203 remain not_started. Historical dispatches/reviews below retain their original evidence and are superseded by the current RCLD-03 dispatch.
+- No checkpoint has been skipped or reordered. S001–S032 are complete; S033–S040 are committed_pending_review with repairs required; S041–S203 remain not_started. The current RCLD-03 review 1 dispatch governs corrections and continuation to S063.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. By default every checkpoint after S001 depends on the reviewed, verified, committed predecessor. The explicit owner-authorized batch below permits verified implementation commits pending Codex review to unlock successors only within the currently dispatched sequence; the current RCLD-03 activation prerequisite governs the transition from the completed RCLD-02 batch.
 
@@ -67,7 +67,164 @@ bypassing dependencies. There is no current owner, external or hardware blocker.
 Pi writes product/tooling code and tests; Codex owns acceptance and consequential
 decisions. No push, publication, deployment, reference mutation or second tracker.
 
+### Independent review 1 — repair project evidence and finish the planning sequence
+
+Codex reviewed candidate `95833391745ed23512f2bbccf63b676030c4e222`, its
+authorization prerequisite and S033–S040 commits, original criteria, production
+modules/callers, tests and author evidence. Disposition: **changes requested**.
+The third bounded authorization tuple and its historical/predecessor/atomic
+acceptance regressions are verified progress. S034's valid mapping and collision
+controls are preserved. No S033–S040 checkpoint is independently accepted yet;
+retain their original pending hashes and all S001–S032 acceptance.
+
+Fresh reviewer build/typecheck/format/lint passed; unit218/218,
+integration61/61, registry38/38, CLI52/52 and contracts127/127 passed without
+skips. Isolated emitted-module probes nevertheless reproduce the failures below.
+The new project modules are not yet composed into the actual planner, and the
+existing installed-copy tests do not qualify these new modules. The milestone
+consumer/browser/reference/package evidence remains due at S063.
+
+The author stopped after eight product checkpoints with 23 eligible checkpoints
+remaining, citing runtime/context capacity. No product blocker, owner decision
+or review gate prevented S041. Do not treat anticipated difficulty or context
+growth alone as an actual runtime stop. Preserve concise progress and continue
+within the active batch while execution is available; report an actual runtime
+limit precisely if one occurs. No change to the original endpoint is authorized.
+
+#### RCLD03-R1-1 — sound lexical, package and configuration discovery
+
+- S033 still accepts `?`, `*`, `<`, `>`, `|` and double quotes in supposedly
+  portable path segments. Reject the complete invalid-character set consistently
+  through config/lock/target consumers, preserving valid nested/prefix siblings
+  and safe relative diagnostic locators. This does not assert untested Windows
+  runtime qualification.
+- S035 accepts a non-SvelteKit Svelte package merely because a svelte.config file
+  exists, ignores dynamic/custom routes and silently chooses the first of multiple
+  config files. Establish actual SvelteKit package evidence; inspect relevant
+  configuration structurally without executing it. Unsupported dynamic mappings
+  and ambiguous configuration must produce the specified manual diagnostics.
+  Explicit complete kit mappings may supply the required integration facts;
+  do not mistake default-injected fields for explicit owner mapping evidence.
+  The existing exact TypeScript 6.0.3 runtime-promotion approval may be used now
+  for static JS/TS configuration parsing, before S052. No new parser dependency.
+  Support the existing consumer's ordinary static config with unrelated adapter/
+  preprocessor calls without executing those calls; unknown relevant spreads,
+  imports/computed values must never be interpreted as proven defaults.
+- S036 can resolve `../outside` workspace members, turns negative patterns into
+  positive members and ignores unsupported patterns before falsely claiming one
+  target. Infer only contained, non-symlink, proven application members. Respect
+  exclusions and diagnose unsupported/malformed workspace syntax before any
+  selection. Supporting literal paths and a trailing single wildcard is enough
+  for implicit member selection; unsupported deeper globs/YAML constructs must
+  instruct explicit --cwd rather than silently disappear. No new YAML/glob
+  dependency is required. An explicitly selected proven application package is
+  authoritative; otherwise a workspace root requires exactly one proven app or
+  an actionable diagnostic. Ordinary libraries do not count as applications.
+  Default nearest-package mode must also recognize an ambiguous workspace root.
+  Never leak raw absolute input/error paths through diagnostic locators.
+- S037 silently treats an observed symlink/directory at `_kit/kit.json` as no
+  config and returns default bootstrap. Distinguish absent candidates from
+  unsafe/nonregular/malformed/inaccessible ones and fail visibly. Do not traverse
+  unrelated symlink subtrees, and do not claim that skipping them verifies their
+  contents. Observe the default target ancestry and discovered `_kit` entries
+  deliberately, including symlinked `_kit` and file-kind conflicts. Preserve
+  the bounded exclusions and nested-package isolation, but document unsupported
+  mappings precisely. Replace “pass an explicit mapping” with actual supported
+  reconciliation steps; no mapping flag exists. Integrate root canonicalization,
+  observations and ancestry safeguards with S041–S042, without a guessed bootstrap
+  or premature product apply path.
+- All project metadata readers must return typed logical I/O causes. A non-ENOENT
+  lstat error currently escapes as an exception with a host path; parse/read errors
+  are also collapsed into invalid JSON or absence. Distinguish missing, malformed,
+  unsafe and unreadable observations and bound nonregular reads. Preserve complete
+  zero-write snapshots and test injected permission errors and filesystem kinds.
+
+#### RCLD03-R1-2 — truthful declarations, installed resolution and actual peers
+
+- S038 marks an installed undeclared dependency ready, and marks declared `^4`
+  plus installed 5.57.1 ready for required `^5`. Readiness requires explicit
+  declaration evidence, compatible declared/required ranges and an installed
+  version satisfying both. Report missing declaration even when hoisting provides
+  bytes; inspection evidence does not create a consumer dependency declaration.
+  Keep missing install, incompatible declaration, incompatible install and invalid
+  metadata distinguishable. Do not require declared ranges to be subsets of the
+  approved range; require a genuine compatible intersection and actual version
+  membership. Preserve runtime/tooling/peer provenance.
+- Use ordinary strict npm prerelease semantics: 5.58.0-beta.1 must not satisfy
+  `^5` by enabling includePrerelease globally. Retain the already-qualified joint
+  range intersection authority. Malformed installed manifests/versions are typed
+  invalid evidence, not absence or an ordinary incompatible version. Validate
+  package identity and requirements before filesystem lookup.
+- Installed lookup must use the selected package's actual resolution context,
+  including ancestor node_modules/hoisting and normal pnpm links. The current
+  local-only lookup reports a valid hoisted installation missing. Read metadata
+  without executing package code or depending on package.json being publicly
+  exported, and never fall back to the CLI author's checkout. Dependency links
+  remain read-only evidence, never permission for generated writes.
+- S039 only filters already-supplied peer-role plan entries and never reads the
+  selected packages' peerDependencies. A runtime Bits 2.19.3 plan with its actual
+  metadata and no installed date/Svelte peers currently returns success with an
+  empty list. Combine registry requirements and actual selected installed upstream
+  peer metadata into one consistent constraint set; validate required peers even
+  when a wrapper does not import them. Retain provenance and report incompatible
+  or missing/unverifiable upstream metadata. Respect actual optional-peer metadata
+  only when the registry does not independently require that package; do not
+  weaken the required Bits date/Svelte peers. Missing upstream installation must
+  not fabricate a successful peer audit. Exercise actual pinned Bits metadata,
+  joint conflicts, declared/installed matrices and installed emitted modules.
+- Replace tests that currently bless false-ready or malformed-as-absent behavior
+  with original-contract regressions; this repairs a defect, not a relaxed gate.
+
+#### RCLD03-R1-3 — safe, evidence-backed dependency instructions
+
+- S040 emits `pnpm add svelte@>=5`, which a controlled shell probe interprets as
+  redirection and creates `=5`; `svelte@^5||^6` becomes an OR expression and loses
+  part of the argument. Quote every validated package/range operand with a proven
+  POSIX-shell encoding; `<`, `>`, `|`, wildcard and other shell syntax are never
+  bare-safe characters. Reject malformed names/options and control bytes; preserve
+  valid scoped packages, spaces, OR ranges and literal round-trip argv. Do not
+  claim cmd.exe/PowerShell quoting; provide structured operands/manual guidance
+  when the shell cannot be established. The product never executes instructions.
+  Test rendered commands with harmless test-owned manager stubs, checking exact
+  argv and whole-tree purity rather than expected string equality alone.
+- Validate packageManager evidence instead of accepting `pnpm`, `pnpm@garbage`
+  or ignoring an explicit unsupported manager in favor of a stale npm lockfile.
+  Unknown/malformed explicit evidence means manual/typed unsupported guidance.
+  In its absence, use one unambiguous manager in the selected package/workspace
+  context; preserve package selection and never inspect unrelated workspaces.
+  No-manager output must truthfully say manager null/unknown, not fabricated npm.
+  Keep consumer runtime/peer instructions separate from CLI tooling, and retain
+  missing dependency guidance without editing manifests or starting a manager.
+
+#### RCLD03-R1-4 — complete the remaining sequence and retain exact evidence
+
+Repair the applicable S033–S040 findings with meaningful tests and green commits,
+then continue into **all S041–S063** in their original order under the existing
+decisions below. Integrate the repaired readers with immutable observations,
+structural patchers, ownership/cohort decisions and actual composed planners;
+do not stop after the repair group. Run the full S063 qualification before return.
+S064 stays gated on independent S063 acceptance. No new dependency outside the
+existing exact TS/Svelte approvals, expanded command surface or task store.
+
+Preserve the existing three uncommitted S040 bookkeeping changes and carry them
+with the next coherent green commit. Correct stale active-checkpoint/status
+prose as work progresses while keeping pending implementation hashes truthful.
+Reconcile unsupported claims in S033–S040 reports and COMPATIBILITY.md; actual
+peer metadata and integrated paths require actual evidence. Remove operator
+execution-router details newly added to the public reports. Keep repository
+commands and public evidence repository-relative; full operator logs stay private.
+
+The author had repaired intermediate failures in prerequisite formatting,
+S033 path tests (9/10), S034 formatting, S037 discovery (6/7) and S040 lint.
+Retain all of these, not only the final discovery failure summary. Capture raw
+logs and underlying exits at each new verification; a partial/green helper suite
+or an assistant stop message cannot establish full sequence acceptance.
+
 ### Bounded authorization activation prerequisite
+
+Implemented and verified at `717d15ab72c4063b077ca2134bdf87671b127f3f`.
+The single live record now authorizes RCLD-03; preserve it. The instructions
+below describe the completed prerequisite and are retained as history.
 
 The current validator recognizes the historical RCLD-01/S007–S012 and
 RCLD-02/S013–S032 tuples. Pi must first extend and regression-test that existing
@@ -2985,7 +3142,7 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S037 | RCLD-03  | S036       | committed_pending_review | `749296b4562aa9fa2e90b0a4632805bb4955af4d` |
 | S038 | RCLD-03  | S037       | committed_pending_review | `e9b8c168cd19998d5bcaf833eef4e0fdc02b96d8` |
 | S039 | RCLD-03  | S038       | committed_pending_review | `3e16d8f4874a4ca2699aa14d1fd818a3250afe25` |
-| S040 | RCLD-03  | S039       | not_started              | —                                          |
+| S040 | RCLD-03  | S039       | committed_pending_review | `95833391745ed23512f2bbccf63b676030c4e222` |
 | S041 | RCLD-03  | S040       | not_started              | —                                          |
 | S042 | RCLD-03  | S041       | not_started              | —                                          |
 | S043 | RCLD-03  | S042       | not_started              | —                                          |
