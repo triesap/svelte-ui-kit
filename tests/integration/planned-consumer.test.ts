@@ -8,9 +8,11 @@ import {
   symlinkSync,
   writeFileSync,
 } from "node:fs";
+import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { pathToFileURL } from "node:url";
 
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
@@ -206,10 +208,35 @@ function runPnpm(args: readonly string[], cwd: string) {
   });
 }
 
+/**
+ * Serve the actual production handler and capture the SSR body. Proves a
+ * freshly planned application renders its page, not merely that it builds.
+ */
+async function renderProductionPage(
+  consumer: string,
+): Promise<{ status: number; html: string }> {
+  const module = (await import(
+    pathToFileURL(path.join(consumer, "build/handler.js")).href
+  )) as { handler: Parameters<typeof createServer>[0] };
+  const server = createServer(module.handler);
+  await new Promise<void>((resolve) =>
+    server.listen(0, "127.0.0.1", () => resolve()),
+  );
+  try {
+    const address = server.address();
+    const port =
+      typeof address === "object" && address !== null ? address.port : 0;
+    const response = await fetch(`http://127.0.0.1:${port}/`);
+    return { status: response.status, html: await response.text() };
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+}
+
 test(
   "a consumer built from exactly the planned add operations check/build passes",
   { timeout: 180_000 },
-  (t) => {
+  async (t) => {
     const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-reg-"));
     const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-pr-app-"));
     t.after(() => {
@@ -233,7 +260,7 @@ test(
     write(
       consumer,
       "src/routes/+page.svelte",
-      '<script>import { Button } from "$lib/components/ui/index.js";</script>\n<Button />\n',
+      '<h1>PLANNED_SIMPLE_PAGE</h1>\n<script>import { Button } from "$lib/components/ui/index.js";</script>\n<Button />\n',
     );
 
     const registry = realRegistry(registryRoot);
@@ -275,13 +302,19 @@ test(
     assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
     const built = runPnpm(["run", "build"], consumer);
     assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+    const rendered = await renderProductionPage(consumer);
+    assert.equal(rendered.status, 200);
+    assert.ok(
+      rendered.html.includes("PLANNED_SIMPLE_PAGE"),
+      "the freshly planned layout must render the page, not suppress it",
+    );
   },
 );
 
 test(
   "a compound consumer built from exactly the planned add operations builds",
   { timeout: 180_000 },
-  (t) => {
+  async (t) => {
     const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-creg-"));
     const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-pr-capp-"));
     t.after(() => {
@@ -305,7 +338,7 @@ test(
     write(
       consumer,
       "src/routes/+page.svelte",
-      '<script>import { DialogRoot } from "$lib/components/ui/index.js";</script>\n<DialogRoot />\n',
+      '<h1>PLANNED_COMPOUND_PAGE</h1>\n<script>import { DialogRoot } from "$lib/components/ui/index.js";</script>\n<DialogRoot />\n',
     );
 
     const registry = realCompoundRegistry(registryRoot);
@@ -361,6 +394,85 @@ test(
     assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
     const built = runPnpm(["run", "build"], consumer);
     assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+    const rendered = await renderProductionPage(consumer);
+    assert.equal(rendered.status, 200);
+    assert.ok(
+      rendered.html.includes("PLANNED_COMPOUND_PAGE"),
+      "the freshly planned compound layout must render the page",
+    );
+  },
+);
+
+test(
+  "the planned-consumer SSR control fails for suppressed child rendering, not status",
+  { timeout: 180_000 },
+  async (t) => {
+    const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-sreg-"));
+    const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-pr-sapp-"));
+    t.after(() => {
+      rmSync(registryRoot, { recursive: true, force: true });
+      rmSync(consumer, { recursive: true, force: true });
+    });
+    for (const file of [
+      "package.json",
+      "vite.config.ts",
+      "svelte.config.js",
+      "tsconfig.json",
+      "src/app.html",
+    ]) {
+      cpSync(path.join(FIXTURE, file), path.join(consumer, file));
+    }
+    symlinkSync(
+      path.join(FIXTURE, "node_modules"),
+      path.join(consumer, "node_modules"),
+      "dir",
+    );
+    write(
+      consumer,
+      "src/routes/+page.svelte",
+      "<h1>PLANNED_NEGATIVE_PAGE</h1>\n",
+    );
+    const registry = realRegistry(registryRoot);
+    assert.equal(registry.ok, true, JSON.stringify(registry));
+    if (!registry.ok) return;
+    const snapshot = captureSnapshot(consumer, [
+      `${derived.stateDir}/kit.json`,
+      `${derived.stateDir}/kit.lock.json`,
+      derived.rootExports,
+      derived.kitCss,
+      derived.themesCss,
+      derived.appCss,
+      DEFAULT_KIT_CONFIG.layoutFile,
+      `${derived.rootExportsDir}/button.svelte`,
+    ]);
+    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+    if (!snapshot.ok) return;
+    const planned = planAdd({
+      registry: registry.value,
+      config: DEFAULT_KIT_CONFIG,
+      addedRoots: ["button"],
+      snapshot: snapshot.value,
+      lock: null,
+      registryVersion: registry.value.root.registryVersion,
+      registryHash: registry.value.root.contentHash,
+    });
+    assert.equal(planned.ok, true, JSON.stringify(planned));
+    if (!planned.ok) return;
+    applyWrites(consumer, planned.value.writes);
+    // Simulate the historical defect: a materialized layout that imports the
+    // styles but never renders `children`.
+    writeFileSync(
+      path.join(consumer, DEFAULT_KIT_CONFIG.layoutFile),
+      '<script>\nimport "../styles/kit.css";\nimport "../styles/themes.css";\nimport "../styles/app.css";\n</script>\n',
+    );
+    const built = runPnpm(["run", "build"], consumer);
+    assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+    const rendered = await renderProductionPage(consumer);
+    assert.equal(rendered.status, 200);
+    assert.ok(
+      !rendered.html.includes("PLANNED_NEGATIVE_PAGE"),
+      "the negative control must fail for the suppressed page content",
+    );
   },
 );
 

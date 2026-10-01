@@ -17,6 +17,20 @@ export interface ManagedBlockInput {
   readonly body: string;
 }
 
+/**
+ * Versioned stylesheet integration contracts (existing lock field).
+ *
+ * `foundation-tokens-v1` declares explicit ownership of the minimal foundation
+ * tokens body only: its recorded baseline hashes that exact owned body, and the
+ * foundation may be transferred to/from a registry item within one plan.
+ * `stylesheet-v1` is aggregate bookkeeping for the whole stylesheet and, by
+ * itself, grants no ownership of any individual managed block (including
+ * `tokens`). The distinction is carried by the existing `contract` field; no
+ * schema field, tombstone or implicit catalog item is introduced.
+ */
+export const FOUNDATION_TOKENS_CONTRACT = "foundation-tokens-v1";
+export const STYLESHEET_CONTRACT = "stylesheet-v1";
+
 /** Render one managed block with its reserved markers and no added bytes. */
 export function renderManagedBlock(id: string, body: string): string {
   return `/* svelte-ui-kit:start ${id} */${body}/* svelte-ui-kit:end ${id} */`;

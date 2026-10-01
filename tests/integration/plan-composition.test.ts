@@ -461,8 +461,7 @@ test("initialization followed by add retains every integration record", (t) => {
     layoutFile: CONFIG.layoutFile,
     layoutSource: "<main />",
     snapshot: snapshotOf(project),
-    registryVersion: "0.1.0",
-    registryHash: "a".repeat(64),
+    registry: registryOf([]),
     configHash: "b".repeat(64),
   });
   assert.equal(init.ok, true, JSON.stringify(init));
@@ -871,8 +870,7 @@ test("a clean minimal initialization adopts identical registry tokens", (t) => {
     layoutFile: CONFIG.layoutFile,
     layoutSource: "<main />",
     snapshot: snapshotOf(project),
-    registryVersion: "0.1.0",
-    registryHash: "a".repeat(64),
+    registry: registryOf([]),
     configHash: "b".repeat(64),
   });
   assert.equal(init.ok, true, JSON.stringify(init));

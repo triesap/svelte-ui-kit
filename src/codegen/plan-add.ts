@@ -47,18 +47,23 @@ import {
   type KitConfig,
 } from "../project/config.js";
 import {
-  renderDependencyInstructions,
+  renderDependencyInstructionsFromEvidence,
   type DependencyInstruction,
 } from "../project/dependency-instructions.js";
 import {
-  inspectDependencyState,
-  validatePeerDependencies,
+  inspectDependencyStateFromEvidence,
+  validatePeerDependenciesFromEvidence,
+  type DependencyEvidence,
   type DependencyStateEntry,
 } from "../project/dependencies.js";
-import { readJsonObject } from "../project/io.js";
 import { hashBytes } from "./compare.js";
 import { canonicalJson } from "./serialize.js";
-import { composeManagedCss, type ManagedBlockInput } from "./css.js";
+import {
+  composeManagedCss,
+  FOUNDATION_TOKENS_CONTRACT,
+  STYLESHEET_CONTRACT,
+  type ManagedBlockInput,
+} from "./css.js";
 import { classifyCssBlocks } from "./css-compare.js";
 import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
 import { parseManagedCss } from "./css-parse.js";
@@ -86,7 +91,7 @@ import {
   type ProjectSnapshot,
   type TargetObservation,
 } from "./snapshot.js";
-import { patchLayoutImports } from "./svelte.js";
+import { patchLayoutImports, materializePassthroughLayout } from "./svelte.js";
 
 export interface AddPlanInput {
   readonly registry: RegistrySnapshot;
@@ -348,15 +353,27 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   const peers = dependencyPlan.value.entries
     .filter((entry) => entry.roles.includes("peer"))
     .map((entry) => `${entry.name}@${entry.range}`);
-  const instructions = renderDependencyInstructions(snapshot.root, {
-    runtime,
-    peers,
-  });
+  // Derive every dependency/manager decision from the evidence captured with
+  // the target snapshot; the live filesystem is never re-read.
+  const environment = snapshot.environment;
+  const dependencyEvidence: DependencyEvidence = {
+    manifest: environment.manifest,
+    observe: (name) => {
+      const found = environment.installed.get(name);
+      if (found !== undefined) return found;
+      return environment.enumerationComplete ? { kind: "absent" } : null;
+    },
+  };
+  const instructions = renderDependencyInstructionsFromEvidence(
+    environment.manager,
+    environment.managerIssues,
+    { runtime, peers },
+  );
   if (!instructions.ok) return fail(instructions.issues);
   // Compose the declared/installed/peer readiness evidence when the selected
   // package provides a manifest; readiness semantics stay owned by S038/S039.
-  const dependencyStateResult = inspectDependencyState(
-    snapshot.root,
+  const dependencyStateResult = inspectDependencyStateFromEvidence(
+    dependencyEvidence,
     dependencyPlan.value.entries.map((entry) => ({
       name: entry.name,
       range: entry.range,
@@ -375,12 +392,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     // no package.json simply has no consumer dependency evidence yet.
     dependencyIssues.push(...dependencyStateResult.issues);
   }
-  if (hasPackageManifest(snapshot.root)) {
+  if (environment.manifest.kind === "value") {
     // The actual upstream peer audit is part of the same readiness decision: an
     // installed dependency whose required peer is absent or incompatible, or
     // whose metadata is malformed, must not report ready or authorize writes.
-    const peerResult = validatePeerDependencies(
-      snapshot.root,
+    const peerResult = validatePeerDependenciesFromEvidence(
+      dependencyEvidence,
       dependencyPlan.value,
     );
     if (peerResult.ok) {
@@ -577,6 +594,10 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     kitCssPath,
   ]);
   const cssMembers: CohortMember[] = [];
+  let stylesheetFoundation: { owned: boolean; baseline: string | null } = {
+    owned: false,
+    baseline: null,
+  };
   for (const cssPath of [...cssTargets].sort()) {
     const state = observeText(snapshot, cssPath);
     if (state.status === "conflict") {
@@ -620,15 +641,25 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       (entry) => entry.kind === "stylesheet" && entry.path === cssPath,
     );
     const parsedBlocks = parsedExisting.value.blocks;
-    const registryProvidesTokens = (cssBlocksByTarget.get(cssPath) ?? []).some(
-      (block) => block.id === "tokens",
-    );
-    // The foundation `tokens` layer is owned by the stylesheet integration, not
-    // by a registry item. Markers or an identical body alone confer nothing:
-    // the integration record must prove ownership first.
+    const registryProvidesTokens =
+      cssPath === kitCssPath &&
+      (cssBlocksByTarget.get(cssPath) ?? []).some(
+        (block) => block.id === "tokens",
+      );
+    // The foundation `tokens` layer is owned by the stylesheet integration only
+    // when its versioned contract is `foundation-tokens-v1`. `stylesheet-v1`
+    // aggregate bookkeeping and marker presence alone confer no ownership.
+    const priorFoundation =
+      stylesheetIntegration?.contract === FOUNDATION_TOKENS_CONTRACT;
+    let foundationTokensOwned = priorFoundation;
+    let foundationBaseline: string | null = priorFoundation
+      ? (stylesheetIntegration?.baseline ??
+        (hashBytes(utf8(TOKENS_BODY)) as string))
+      : null;
     const integrationOwnsTokens = (blockId: string): boolean =>
       blockId === "tokens" &&
-      stylesheetIntegration !== undefined &&
+      cssPath === kitCssPath &&
+      priorFoundation &&
       !lockByBlock.has(blockId) &&
       !allLockByBlock.has(blockId);
     const existingBodies = new Map(
@@ -639,9 +670,8 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     );
     // An existing managed block the lock does not own is application-owned;
     // markers alone never confer ownership. It is a conflict even when it is
-    // byte-identical to incoming. The foundation `tokens` layer is owned by the
-    // stylesheet integration rather than an item, so proven integration
-    // ownership exempts only that layer.
+    // byte-identical to incoming. The foundation `tokens` layer is exempt only
+    // when the versioned integration contract owns it.
     for (const block of parsedBlocks) {
       if (integrationOwnsTokens(block.id)) continue;
       if (!lockByBlock.has(block.id) && !allLockByBlock.has(block.id)) {
@@ -666,26 +696,76 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       const local = existingBodies.get(blockId) ?? null;
       const incomingBody = desiredById.get(blockId) ?? null;
       const allRecord = allLockByBlock.get(blockId);
+      const record = lockByBlock.get(blockId);
+      const isFoundationTokens = blockId === "tokens" && cssPath === kitCssPath;
+
       if (allRecord !== undefined && retiredOwners.has(allRecord.owner)) {
+        // A retired registry item. A clean registry `tokens` block transfers
+        // back to the minimal foundation once; a customized one remains
+        // detached application-owned text and can never be reacquired.
+        if (isFoundationTokens) {
+          if (local === null) {
+            effective.push({ id: blockId, body: TOKENS_BODY });
+            foundationTokensOwned = true;
+            foundationBaseline = hashBytes(utf8(TOKENS_BODY)) as string;
+          } else if (
+            (hashBytes(utf8(local)) as string) === allRecord.baseHash
+          ) {
+            effective.push({ id: blockId, body: TOKENS_BODY });
+            foundationTokensOwned = true;
+            foundationBaseline = hashBytes(utf8(TOKENS_BODY)) as string;
+          } else {
+            effective.push({ id: blockId, body: local });
+            foundationTokensOwned = false;
+            foundationBaseline = null;
+          }
+          continue;
+        }
         if (local !== null) effective.push({ id: blockId, body: local });
         continue;
       }
-      const record = lockByBlock.get(blockId);
-      const tokensOwned = integrationOwnsTokens(blockId);
-      if (tokensOwned && !registryProvidesTokens) {
-        // The registry does not provide tokens: the integration-owned foundation
-        // layer is preserved byte-for-byte, whether or not it was customized.
-        effective.push({
-          id: blockId,
-          body: local ?? incomingBody ?? TOKENS_BODY,
-        });
+
+      if (isFoundationTokens && !registryProvidesTokens) {
+        if (priorFoundation) {
+          if (local === null) {
+            diagnostics.push(
+              `css conflict at ${cssPath}#tokens: the foundation integration owns the tokens block but it is absent; reconcile the missing owned content explicitly rather than recreating it`,
+            );
+            hasConflict = true;
+            continue;
+          }
+          // Preserve the foundation (clean or customized) and its legitimate
+          // baseline; a local body is never adopted as the base.
+          effective.push({ id: blockId, body: local });
+          foundationTokensOwned = true;
+          continue;
+        }
+        if (record !== undefined) {
+          diagnostics.push(
+            `css conflict at ${cssPath}#tokens: the registry no longer provides tokens while the lock still owns the block`,
+          );
+          hasConflict = true;
+          if (local !== null) effective.push({ id: blockId, body: local });
+          continue;
+        }
+        if (local !== null) {
+          // Unrecorded managed block: already reported as application-owned.
+          effective.push({ id: blockId, body: local });
+          foundationTokensOwned = false;
+          foundationBaseline = null;
+          continue;
+        }
+        // Fresh: create the minimal foundation.
+        effective.push({ id: blockId, body: incomingBody ?? TOKENS_BODY });
+        foundationTokensOwned = true;
+        foundationBaseline = hashBytes(utf8(TOKENS_BODY)) as string;
         continue;
       }
-      // When the registry starts providing `tokens`, a clean, integration-owned
-      // foundation layer is adopted with the canonical foundation body as its
-      // legitimate base, so an identical transition is a no_change/update and a
-      // customized foundation layer still conflicts under the original policy.
-      const adoptFoundation = tokensOwned && registryProvidesTokens;
+
+      // Registry-provided `tokens` (or any non-tokens block) follows ordinary
+      // item lineage. A clean foundation is transferred to the registry item
+      // with the canonical foundation body as its legitimate base.
+      const adoptFoundation = isFoundationTokens && priorFoundation;
       const adoptMeta = cssMeta.get(cssPath)?.get(blockId);
       const classification = classifyCssBlocks([
         {
@@ -722,6 +802,10 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         if (local !== null) effective.push({ id: blockId, body: local });
         continue;
       }
+      if (isFoundationTokens) {
+        foundationTokensOwned = false;
+        foundationBaseline = null;
+      }
       const adoptsIncoming =
         classification.disposition === "create" ||
         classification.disposition === "update";
@@ -751,6 +835,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     }
     effectiveCss.set(cssPath, composed.value);
     cssOutcomes.push({ path: cssPath, blocks: outcomeBlocks });
+    if (cssPath === kitCssPath) {
+      stylesheetFoundation = {
+        owned: foundationTokensOwned,
+        baseline: foundationBaseline,
+      };
+    }
   }
 
   // ---- Minimal initialization prerequisites (themes/app stylesheets) ------
@@ -872,13 +962,23 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         specifier: relativeSpecifier(config.layoutFile, target),
       }),
     );
-    const patched = patchLayoutImports(existing, specifiers);
-    if (!patched.ok) {
-      diagnostics.push(...patched.issues.map((entry) => entry.message));
-      hasConflict = true;
-    } else if (patched.value !== existing) {
-      plannedLayout = patched.value;
-      finalLayout = patched.value;
+    // An absent layout is materialized as a minimal Svelte 5 passthrough so the
+    // added stylesheet imports do not suppress SvelteKit's implicit child
+    // rendering. An existing layout keeps its exact rendering/snippet behavior
+    // and only receives the missing imports.
+    if (layoutState.status === "absent") {
+      const materialized = materializePassthroughLayout(specifiers);
+      plannedLayout = materialized;
+      finalLayout = materialized;
+    } else {
+      const patched = patchLayoutImports(existing, specifiers);
+      if (!patched.ok) {
+        diagnostics.push(...patched.issues.map((entry) => entry.message));
+        hasConflict = true;
+      } else if (patched.value !== existing) {
+        plannedLayout = patched.value;
+        finalLayout = patched.value;
+      }
     }
   }
 
@@ -1049,12 +1149,17 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       {
         kind: "stylesheet" as const,
         path: kitCssPath,
-        baseline: integrationBaseline(
-          priorIntegration("stylesheet", kitCssPath),
-          stylesheetPlan.has(kitCssPath),
-          effectiveCss.get(kitCssPath) ?? "",
-        ),
-        contract: "stylesheet-v1",
+        baseline: stylesheetFoundation.owned
+          ? (stylesheetFoundation.baseline ??
+            (hashBytes(utf8(TOKENS_BODY)) as string))
+          : integrationBaseline(
+              priorIntegration("stylesheet", kitCssPath),
+              stylesheetPlan.has(kitCssPath),
+              effectiveCss.get(kitCssPath) ?? "",
+            ),
+        contract: stylesheetFoundation.owned
+          ? FOUNDATION_TOKENS_CONTRACT
+          : STYLESHEET_CONTRACT,
       },
       {
         kind: "exports" as const,
@@ -1136,10 +1241,6 @@ function decodeText(bytes: Uint8Array): string | null {
   } catch {
     return null;
   }
-}
-
-function hasPackageManifest(root: string): boolean {
-  return readJsonObject(path.join(root, "package.json")).kind !== "absent";
 }
 
 function manifestDigest(registry: RegistrySnapshot, id: string): string {

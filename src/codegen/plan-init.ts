@@ -29,7 +29,7 @@ import {
   type KitConfig,
 } from "../project/config.js";
 import { hashBytes } from "./compare.js";
-import { composeManagedCss } from "./css.js";
+import { composeManagedCss, FOUNDATION_TOKENS_CONTRACT } from "./css.js";
 import { patchExportRegion, exportRegionContent } from "./exports.js";
 import { parseManagedCss } from "./css-parse.js";
 import { parseExportRegion } from "./export-parse.js";
@@ -39,8 +39,9 @@ import {
   type ProjectSnapshot,
   type TargetObservation,
 } from "./snapshot.js";
+import type { RegistrySnapshot } from "../registry/load.js";
 import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
-import { patchLayoutImports } from "./svelte.js";
+import { patchLayoutImports, materializePassthroughLayout } from "./svelte.js";
 
 /** The frozen foundation layer declaration. */
 export const TOKENS_BODY =
@@ -62,8 +63,11 @@ export interface InitPlanInput {
   readonly layoutFile: string;
   readonly layoutSource: string;
   readonly snapshot: ProjectSnapshot;
-  readonly registryVersion: string;
-  readonly registryHash: string;
+  /** Validated registry snapshot; the authoritative registry identity. */
+  readonly registry?: RegistrySnapshot;
+  /** Deprecated scalar identity; ignored in favor of `registry`. */
+  readonly registryVersion?: string;
+  readonly registryHash?: string;
   readonly configHash: string;
 }
 
@@ -105,7 +109,78 @@ function unsafeTargetIssue(
  * preserved untouched.
  */
 export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
-  const { config, snapshot } = input;
+  const { snapshot } = input;
+  if (input.registry === undefined) {
+    return fail([
+      issue(
+        "INIT_REGISTRY_UNVERIFIED",
+        "initialization requires a validated registry snapshot; a supplied scalar registry version/hash is not verifiable evidence",
+        "registryHash",
+      ),
+    ]);
+  }
+  const registryVersion = input.registry.root.registryVersion;
+  const registryHash = input.registry.root.contentHash;
+
+  // Reconcile the observed configuration mapping before planning. A valid
+  // observed `kit.json` is the application's authoritative mapping: a supplied
+  // default must never silently overwrite a custom `stylesDir`/`uiDir`/
+  // `layoutFile`. The effective mapping is then used for every derived target,
+  // so a caller that captured a snapshot for different paths receives an
+  // explicit incomplete-observation error rather than a plan against the wrong
+  // files.
+  let config = input.config;
+  {
+    const suppliedDerived = deriveKitPaths(input.config);
+    const observedConfigPath = `${suppliedDerived.stateDir}/kit.json`;
+    const observedConfig = snapshot.entries.get(observedConfigPath);
+    if (observedConfig !== undefined && observedConfig.kind === "file") {
+      const decodedConfig = decodeObservedText(observedConfig);
+      if (decodedConfig.kind === "invalid") {
+        return fail([
+          issue(
+            "INIT_CONFIG_INVALID",
+            `${observedConfigPath} is not valid UTF-8; reconcile the configuration before initialization`,
+            observedConfigPath,
+          ),
+        ]);
+      }
+      if (decodedConfig.kind === "text") {
+        let parsedObserved: unknown;
+        try {
+          parsedObserved = JSON.parse(decodedConfig.text);
+        } catch {
+          return fail([
+            issue(
+              "INIT_CONFIG_INVALID",
+              `${observedConfigPath} is not valid JSON; reconcile the configuration before initialization`,
+              observedConfigPath,
+            ),
+          ]);
+        }
+        const validatedObserved = parseKitConfig(
+          parsedObserved,
+          observedConfigPath,
+        );
+        if (!validatedObserved.ok) {
+          return fail([
+            issue(
+              "INIT_CONFIG_INVALID",
+              `${observedConfigPath} is invalid; reconcile the configuration before initialization`,
+              observedConfigPath,
+            ),
+          ]);
+        }
+        config = validatedObserved.value;
+      }
+    } else if (
+      observedConfig !== undefined &&
+      observedConfig.kind !== "absent"
+    ) {
+      return unsafeTargetIssue(observedConfigPath, observedConfig);
+    }
+  }
+
   const derived = deriveKitPaths(config);
   if (input.layoutFile !== config.layoutFile) {
     return fail([
@@ -387,23 +462,35 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   ].map((target) => ({
     specifier: relativeSpecifier(input.layoutFile, target),
   }));
-  const patchedLayout = patchLayoutImports(layoutSource, importSpecifiers);
-  if (!patchedLayout.ok) return patchedLayout;
-  const plannedLayout = patchedLayout.value;
+  // An absent layout has no implicit child rendering to preserve, so it is
+  // materialized as a minimal Svelte 5 passthrough layout. An existing layout
+  // receives only the missing imports and keeps its exact rendering/snippet
+  // behavior; rendering is never appended to an intentionally blank/custom
+  // layout by guess.
+  let layoutText: string;
+  if (layoutObservation.kind === "absent") {
+    layoutText = materializePassthroughLayout(importSpecifiers);
+  } else {
+    const patchedLayout = patchLayoutImports(layoutSource, importSpecifiers);
+    if (!patchedLayout.ok) return patchedLayout;
+    layoutText = patchedLayout.value;
+  }
   // An absent layout must still be created even when the supplied source
   // already contains the imports; otherwise a baseline would be claimed for a
   // file that does not exist. Only when the layout is an existing, unchanged
   // file are the bytes left alone.
-  if (layoutObservation.kind === "absent" || plannedLayout !== layoutSource) {
+  const layoutUnchanged =
+    layoutObservation.kind === "file" && layoutText === layoutSource;
+  if (!layoutUnchanged) {
     writes.push({
       path: input.layoutFile,
       operation: layoutObservation.kind === "absent" ? "create" : "update",
-      bytes: utf8(plannedLayout),
+      bytes: utf8(layoutText),
     });
   }
 
   const configHash = hashBytes(utf8(configJson)) as string;
-  if (!SHA256.test(input.registryHash)) {
+  if (!SHA256.test(registryHash)) {
     return fail([
       issue(
         "INIT_REGISTRY_HASH_INVALID",
@@ -417,14 +504,14 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
     {
       kind: "layout",
       path: input.layoutFile,
-      baseline: hashBytes(utf8(plannedLayout)) as string,
+      baseline: hashBytes(utf8(layoutText)) as string,
       contract: "layout-v1",
     },
     {
       kind: "stylesheet",
       path: targets.kitCss,
-      baseline: hashBytes(utf8(plannedKitCss)) as string,
-      contract: "stylesheet-v1",
+      baseline: hashBytes(utf8(TOKENS_BODY)) as string,
+      contract: FOUNDATION_TOKENS_CONTRACT,
     },
     {
       kind: "exports",
@@ -439,8 +526,8 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   const lock: KitLock = {
     schemaVersion: 1,
     toolVersion: INITIAL_TOOL_VERSION,
-    registryVersion: input.registryVersion,
-    registryHash: input.registryHash,
+    registryVersion,
+    registryHash,
     configHash,
     // Preserve the recorded lineage. Initialization establishes the baseline;
     // it must never reset an installed/customized lock to empty.

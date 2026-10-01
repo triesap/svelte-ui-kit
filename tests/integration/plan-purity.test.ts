@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 
@@ -63,8 +63,7 @@ function initPlan(
     layoutFile: DEFAULT_KIT_CONFIG.layoutFile,
     layoutSource: layout,
     snapshot: snapshotOf(project),
-    registryVersion: "0.1.0",
-    registryHash: "a".repeat(64),
+    registry: registryOf([]),
     configHash: "b".repeat(64),
   });
 }
@@ -225,6 +224,13 @@ test("sync planning reaches the intended B/L/I conflict with complete observatio
     cssBlocks: [],
     integrations: [],
   };
+  // The supplied lineage must exist in the observed tree; otherwise an
+  // unrelated missing-lock metadata conflict would fire before the intended
+  // B/L/I cause is reached.
+  project.writeFile(
+    `${derived.stateDir}/kit.lock.json`,
+    `${JSON.stringify(lock, null, 2)}\n`,
+  );
   const before = snapshotTree(project.root);
   const result = planSync({
     registry,
@@ -301,4 +307,83 @@ test("a metadata-only lock transition is distinct from a satisfied no_change", (
   assert.equal(satisfied.ok, true, JSON.stringify(satisfied));
   if (!satisfied.ok) return;
   assert.deepEqual(satisfied.value.writes, []);
+});
+
+test("initialization preserves a complete tree with hidden/empty directories and links", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeDir(".cache/empty");
+  project.symlink("package.json", "linked.json");
+  const styled = project.writeFile("src/app-notes.css", "a {}\n");
+  chmodSync(styled, 0o640);
+  const before = snapshotTree(project.root);
+  const first = initPlan(project, "<main />");
+  assert.equal(first.ok, true, JSON.stringify(first));
+  if (!first.ok) return;
+  assert.deepEqual(
+    snapshotTree(project.root),
+    before,
+    "planning must not write",
+  );
+  const forward = toPlanningEnvelope(
+    "init",
+    true,
+    first.value.writes,
+    first.value.diagnostics,
+  );
+  const second = initPlan(project, "<main />");
+  assert.equal(second.ok, true, JSON.stringify(second));
+  if (!second.ok) return;
+  assert.deepEqual(
+    toPlanningEnvelope(
+      "init",
+      true,
+      second.value.writes,
+      second.value.diagnostics,
+    ),
+    forward,
+    "equivalent inputs produce the same deterministic envelope",
+  );
+});
+
+test("sync planning is executable, side-effect-free and replays as no_change", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeDir(".cache/empty");
+  project.symlink("package.json", "linked.json");
+  const registry = sampleRegistry();
+  const added = planAdd({
+    registry,
+    config: { ...DEFAULT_KIT_CONFIG, requested: ["button"] },
+    addedRoots: ["button"],
+    snapshot: snapshotOf(project),
+    lock: null,
+    registryVersion: registry.root.registryVersion,
+    registryHash: registry.root.contentHash,
+  });
+  assert.equal(added.ok, true, JSON.stringify(added));
+  if (!added.ok || !added.value.executable) return;
+  apply(project, added.value.writes);
+  const before = snapshotTree(project.root);
+  const sync = planSync({
+    registry,
+    config: { ...DEFAULT_KIT_CONFIG, requested: ["button"] },
+    snapshot: snapshotOf(project),
+    lock: added.value.lock,
+    registryVersion: registry.root.registryVersion,
+    registryHash: registry.root.contentHash,
+  });
+  assert.equal(sync.ok, true, JSON.stringify(sync));
+  if (!sync.ok) return;
+  assert.equal(
+    sync.value.executable,
+    true,
+    JSON.stringify(sync.value.diagnostics),
+  );
+  assert.deepEqual(sync.value.writes, []);
+  assert.deepEqual(
+    snapshotTree(project.root),
+    before,
+    "planning must not write",
+  );
 });

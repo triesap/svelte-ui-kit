@@ -32,6 +32,10 @@ import path from "node:path";
 
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { isSafeLogicalRelativePath } from "../project/paths.js";
+import {
+  captureEnvironment,
+  type CapturedEnvironment,
+} from "../project/environment.js";
 
 export type ObservedKind =
   | "absent"
@@ -65,6 +69,13 @@ export interface ProjectSnapshot {
   readonly ancestors: ReadonlyMap<string, AncestorObservation>;
   /** The logical paths captured, in request order. */
   readonly paths: readonly string[];
+  /**
+   * Dependency/manager evidence captured at the same instant as the target
+   * observations. Planners derive readiness from this evidence rather than
+   * re-reading the live filesystem, so one immutable snapshot is never mixed
+   * with later metadata.
+   */
+  readonly environment: CapturedEnvironment;
 }
 
 /** Stable identity of the canonical project root. */
@@ -441,6 +452,7 @@ export function captureSnapshot(
       entries: new FrozenMap(entries),
       ancestors: new FrozenMap(ancestorMap),
       paths: Object.freeze([...logicalPaths]),
+      environment: captureEnvironment(canonical.value.path),
     }),
   );
 }

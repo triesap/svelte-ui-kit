@@ -313,7 +313,29 @@ export function renderDependencyInstructions(
 ): ModelResult<DependencyInstruction> {
   const evidence = detectPackageManager(root);
   if (!evidence.ok) return evidence;
-  const manager = evidence.value.manager;
+  return renderWithManagerEvidence(evidence.value, [], request);
+}
+
+/**
+ * Render installation instructions from captured manager evidence. Planning
+ * uses this variant so a package-manager read is never repeated after the
+ * invocation evidence was captured.
+ */
+export function renderDependencyInstructionsFromEvidence(
+  manager: ManagerEvidence,
+  managerIssues: readonly ModelIssue[],
+  request: DependencyInstructionRequest,
+): ModelResult<DependencyInstruction> {
+  return renderWithManagerEvidence(manager, managerIssues, request);
+}
+
+function renderWithManagerEvidence(
+  managerEvidence: ManagerEvidence,
+  managerIssues: readonly ModelIssue[],
+  request: DependencyInstructionRequest,
+): ModelResult<DependencyInstruction> {
+  if (managerIssues.length > 0) return fail(managerIssues);
+  const manager = managerEvidence.manager;
 
   const runtime = validateAll(request.runtime);
   const peers = validateAll(request.peers);
@@ -330,8 +352,8 @@ export function renderDependencyInstructions(
 
   if (manager === null) {
     const lead =
-      evidence.value.source === "unsupported"
-        ? `${evidence.value.reason}.`
+      managerEvidence.source === "unsupported"
+        ? `${managerEvidence.reason}.`
         : "No supported package manager was proven for this package.";
     return ok({
       manager: null,

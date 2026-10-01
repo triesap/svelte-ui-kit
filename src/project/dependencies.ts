@@ -40,7 +40,7 @@ import {
 } from "../registry/errors.js";
 import { intersectRangesDetailed } from "../registry/dependency-plan.js";
 import type { DependencyPlan } from "../registry/dependency-plan.js";
-import { readJsonObject } from "./io.js";
+import { readJsonObject, type JsonObservation } from "./io.js";
 
 export const DECLARATION_FIELDS = [
   "dependencies",
@@ -168,11 +168,35 @@ function declaredRange(
  * installed version inside that intersection. Invalid required/declared ranges
  * and invalid installed metadata are typed issues.
  */
-export function inspectDependencyState(
-  root: string,
+/**
+ * Captured dependency evidence: one observed manifest plus a resolver that
+ * returns `null` when a name was not observed. A planner must never silently
+ * substitute a live filesystem read for a missing observation.
+ */
+export interface DependencyEvidence {
+  readonly manifest: JsonObservation;
+  readonly observe: (name: string) => InstalledObservation | null;
+}
+
+/**
+ * Inspect declared/installed state for every requirement from captured
+ * evidence. Readiness needs an explicit declaration, a compatible declared/
+ * required intersection and an installed version inside that intersection.
+ * Invalid required/declared ranges and invalid installed metadata are typed
+ * issues; an unobserved installed name is a typed issue rather than absence.
+ */
+export function inspectDependencyStateFromEvidence(
+  evidence: DependencyEvidence,
   requirements: readonly DependencyRequirement[],
 ): ModelResult<readonly DependencyStateEntry[]> {
-  const manifestObservation = readJsonObject(path.join(root, "package.json"));
+  return inspectWithEvidence(evidence.manifest, evidence.observe, requirements);
+}
+
+function inspectWithEvidence(
+  manifestObservation: JsonObservation,
+  observeInstalled: (name: string) => InstalledObservation | null,
+  requirements: readonly DependencyRequirement[],
+): ModelResult<readonly DependencyStateEntry[]> {
   const issues: ModelIssue[] = [];
   if (manifestObservation.kind === "unreadable") {
     return fail([
@@ -256,7 +280,17 @@ export function inspectDependencyState(
       continue;
     }
 
-    const installed = observeInstalled(root, requirement.name);
+    const installed = observeInstalled(requirement.name);
+    if (installed === null) {
+      issues.push(
+        issue(
+          "DEPENDENCY_INSTALL_UNOBSERVED",
+          `installed metadata for ${JSON.stringify(requirement.name)} was not captured; request a fresh snapshot before planning`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
     if (installed.kind === "unreadable") {
       issues.push(
         issue(
@@ -333,6 +367,21 @@ export function inspectDependencyState(
   return ok(entries);
 }
 
+/**
+ * Inspect declared/installed state using the live filesystem. Retained for
+ * callers that have not captured evidence; planning uses the captured variant.
+ */
+export function inspectDependencyState(
+  root: string,
+  requirements: readonly DependencyRequirement[],
+): ModelResult<readonly DependencyStateEntry[]> {
+  return inspectWithEvidence(
+    readJsonObject(path.join(root, "package.json")),
+    (name) => observeInstalled(root, name),
+    requirements,
+  );
+}
+
 /** Unique peer (name, range) requirements from a resolved dependency plan. */
 export function peerRequirementsFromPlan(
   plan: DependencyPlan,
@@ -368,7 +417,7 @@ interface PeerConstraint {
  * requires that name.
  */
 function collectPeerConstraints(
-  root: string,
+  observeInstalled: (name: string) => InstalledObservation | null,
   plan: DependencyPlan,
   issues: ModelIssue[],
 ): readonly PeerConstraint[] {
@@ -423,7 +472,17 @@ function collectPeerConstraints(
   }
 
   for (const entry of plan.entries) {
-    const observation = observeInstalled(root, entry.name);
+    const observation = observeInstalled(entry.name);
+    if (observation === null) {
+      issues.push(
+        issue(
+          "PEER_UPSTREAM_NOT_OBSERVED",
+          `installed metadata for ${entry.name} was not captured; request a fresh snapshot before planning`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
     if (observation.kind === "absent") {
       if (!entry.roles.includes("peer")) {
         issues.push(
@@ -535,15 +594,69 @@ function collectPeerConstraints(
  * not itself import is not silently ignored. A conflict never adds a
  * dependency; it reports a typed diagnostic for the developer to resolve.
  */
+export function validatePeerDependenciesFromEvidence(
+  evidence: DependencyEvidence,
+  plan: DependencyPlan,
+): ModelResult<readonly DependencyStateEntry[]> {
+  return validatePeerWithEvidence(evidence.manifest, evidence.observe, plan);
+}
+
+/**
+ * Validate every resolved peer requirement using the live filesystem. Retained
+ * for callers without captured evidence; planning uses the captured variant.
+ */
 export function validatePeerDependencies(
   root: string,
   plan: DependencyPlan,
 ): ModelResult<readonly DependencyStateEntry[]> {
+  return validatePeerWithEvidence(
+    readJsonObject(path.join(root, "package.json")),
+    (name) => observeInstalled(root, name),
+    plan,
+  );
+}
+
+function validatePeerWithEvidence(
+  manifestObservation: JsonObservation,
+  observeInstalled: (name: string) => InstalledObservation | null,
+  plan: DependencyPlan,
+): ModelResult<readonly DependencyStateEntry[]> {
   const issues: ModelIssue[] = [];
-  const constraints = collectPeerConstraints(root, plan, issues);
+  if (manifestObservation.kind === "unreadable") {
+    return fail([
+      issue(
+        "DEPENDENCY_MANIFEST_UNREADABLE",
+        `package.json could not be read (${manifestObservation.code})`,
+        "package.json",
+      ),
+    ]);
+  }
+  if (manifestObservation.kind === "unsafe") {
+    return fail([
+      issue(
+        "DEPENDENCY_MANIFEST_UNSAFE",
+        "package.json is not a regular file; refusing to read a symlink or nonregular manifest",
+        "package.json",
+      ),
+    ]);
+  }
+  if (manifestObservation.kind === "malformed") {
+    return fail([
+      issue(
+        "DEPENDENCY_MANIFEST_INVALID",
+        "package.json is not valid JSON or is not an object",
+        "package.json",
+      ),
+    ]);
+  }
+  const constraints = collectPeerConstraints(observeInstalled, plan, issues);
   if (issues.length > 0) return fail(issues);
   if (constraints.length === 0) return ok([]);
 
+  const installedEvidence: DependencyEvidence = {
+    manifest: manifestObservation,
+    observe: observeInstalled,
+  };
   const results: DependencyStateEntry[] = [];
   for (const constraint of constraints) {
     const joint = intersectRangesDetailed(constraint.ranges);
@@ -567,7 +680,7 @@ export function validatePeerDependencies(
       );
       continue;
     }
-    const inspected = inspectDependencyState(root, [
+    const inspected = inspectDependencyStateFromEvidence(installedEvidence, [
       { name: constraint.name, range: joint.range },
     ]);
     if (!inspected.ok) {
@@ -601,14 +714,12 @@ export function validatePeerDependencies(
       );
       continue;
     }
-    // Combined audit: a registry runtime requirement on the same package is
-    // part of the joint constraint set. A standalone peer result must not be
-    // reported as overall readiness when the runtime range cannot also hold.
     for (const range of constraint.runtimeRanges) {
       if (constraint.ranges.includes(range)) continue;
-      const runtimeInspection = inspectDependencyState(root, [
-        { name: constraint.name, range },
-      ]);
+      const runtimeInspection = inspectDependencyStateFromEvidence(
+        installedEvidence,
+        [{ name: constraint.name, range }],
+      );
       if (!runtimeInspection.ok) {
         for (const runtimeIssue of runtimeInspection.issues) {
           issues.push(runtimeIssue);

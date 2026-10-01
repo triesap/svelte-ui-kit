@@ -33,9 +33,10 @@ import type { DependencyInstruction } from "../project/dependency-instructions.j
 import type { DependencyStateEntry } from "../project/dependencies.js";
 import { planAdd, type AddPlanInput } from "./plan-add.js";
 import { hashBytes } from "./compare.js";
+import { composeManagedCss, FOUNDATION_TOKENS_CONTRACT } from "./css.js";
 import { retireManagedCss } from "./css-retire.js";
 import { parseKitLock, type KitLock } from "./lock.js";
-import type { PlannedWrite } from "./plan-init.js";
+import { TOKENS_BODY, type PlannedWrite } from "./plan-init.js";
 import {
   planCssRetirement,
   planSourceRetirement,
@@ -148,8 +149,22 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
       if (current === null) continue;
       const retired = retireManagedCss(current, retiredBlocks);
       if (!retired.ok) return fail(retired.issues);
-      if (retired.value.text !== current) {
-        const bytes = utf8(retired.value.text);
+      let finalText = retired.value.text;
+      // Removing the registry-owned `tokens` block transfers ownership back to
+      // the minimal foundation once, so the required layers remain present and
+      // a later sync is a satisfied no_change rather than an empty stylesheet.
+      if (
+        retiredBlocks.some((block) => block.id === "tokens") &&
+        stylesheetPath === deriveKitPaths(input.config).kitCss
+      ) {
+        const recomposed = composeManagedCss(finalText, [
+          { id: "tokens", body: TOKENS_BODY },
+        ]);
+        if (!recomposed.ok) return fail(recomposed.issues);
+        finalText = recomposed.value;
+      }
+      if (finalText !== current) {
+        const bytes = utf8(finalText);
         const operation =
           input.snapshot.entries.get(stylesheetPath)?.kind === "absent"
             ? "create"
@@ -182,6 +197,13 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
       const integrations = finalLock.integrations
         .map((integration) => {
           if (integration.kind !== "stylesheet") return integration;
+          // A `foundation-tokens-v1` baseline hashes the owned foundation body,
+          // not the aggregate stylesheet, so plan-add already recorded the
+          // legitimate base. Only aggregate `stylesheet-v1` bookkeeping is
+          // recalculated against the final applied bytes.
+          if (integration.contract === FOUNDATION_TOKENS_CONTRACT) {
+            return integration;
+          }
           const write = writes.find((entry) => entry.path === integration.path);
           const text =
             write !== undefined

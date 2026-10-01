@@ -11,6 +11,7 @@ import { TOKENS_BODY, planInit } from "../../src/codegen/plan-init.js";
 import { renderManagedBlock } from "../../src/codegen/css.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import { createTempProject } from "../helpers/project.js";
+import { registryOf } from "../helpers/registry.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 /**
@@ -38,8 +39,7 @@ function plan(project: ReturnType<typeof createTempProject>, layout: string) {
     layoutFile: "src/routes/+layout.svelte",
     layoutSource: layout,
     snapshot: snapshot.value,
-    registryVersion: "0.1.0",
-    registryHash: "a".repeat(64),
+    registry: registryOf([]),
     configHash: "b".repeat(64),
   });
 }
@@ -140,8 +140,7 @@ test("a layout path disagreeing with the config is rejected", (t) => {
     layoutFile: "other/+layout.svelte",
     layoutSource: "<main />",
     snapshot: snapshot.value,
-    registryVersion: "0.1.0",
-    registryHash: "a".repeat(64),
+    registry: registryOf([]),
     configHash: "b".repeat(64),
   });
   assert.equal(result.ok, false);

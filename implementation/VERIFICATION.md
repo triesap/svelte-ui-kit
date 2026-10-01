@@ -77,46 +77,55 @@ only writing modes.
 
 #### Current owner-authorized RCLD-03 batch verification
 
-Independent review 5 of candidate `2c10aa37c020d4113c57eb6bccfca6f333bd0b34`
-requests completion of RCLD03-R5-1/2/3/4 and every unfinished S033–S063 criterion.
+Independent review 6 of candidate `8927c4476741de32c280cb18d0e713fa0482a9fa`
+requests RCLD03-R6-1/2/3/4 completion and every unfinished S033–S063 criterion.
 Fresh independent build/typecheck/format/lint pass; unit 265/265, integration
-219/219, registry 38/38, CLI 52/52, harness 37/37 and contracts 127/127 pass,
-all without skips. The actual planned-consumer build now succeeds. Preserve
-verified target rejection, BOM/registry identity, integration retention, export
-ownership/cohort, explicit source retirement, manifest classification and emitted
-parser progress. Twelve independent real-registry probes expose remaining
-metadata/dependency validation, token transition, ownership-scope, retirement
-baseline, operation-kind and root-barrel-cycle failures. Full details and resolved
-decisions are in the single governing review 5; no whole-sequence acceptance.
+238/238, registry 38/38, CLI 52/52, harness 37/37 and contracts 127/127 pass,
+all without skips. All twelve previous real-registry probes now satisfy their
+expected outcomes. Preserve repaired metadata, peer, operation, export/token,
+retirement projection and structural import behavior; real planned consumers
+check/build and installed emitted planning now execute.
 
-Use positive executable init/add/sync plans with complete observations and actual
-schema validation, peer metadata and registry identity. Enforce create/update/
-retire preconditions in the test applier. Compare final lock lineage against final
-applied managed state after retirement, preserve unmanaged bytes/BOMs, then replay
-and update. Test malformed config, observed-absent supplied lock, actual upstream
-peer conflict, unowned tokens, clean minimal-to-registry tokens, unrelated CSS/
-export edits, supported root-barrel import spellings and custom mappings.
+Eight new independent lifecycle/entry/artifact probes find remaining original
+requirements: detached customized tokens can be reclaimed then deleted; missing
+owned tokens are restored; clean token retirement needs a second sync; preserved
+custom foundation baselines are reset; init trusts supplied registry scalars and
+overrides observed mappings; dependency evidence is reread outside the supplied
+snapshot. A real planned fresh application builds and returns HTTP 200 but hides
+its page. A children-rendering-only control restores visible SSR output. These
+are software failures, not external/hardware blockers or independent acceptance.
 
-Both existing planned-consumer tests run build only. Add actual Svelte/TypeScript
-check and build for exact planned simple/compound consumers, including a genuine
-negative type control. Keep maintained fixture evidence separate. The emitted
-installed-copy runner exercises real parsers but only imports planAdd; invoke
-successful planning outside the checkout too. Complete-tree purity/determinism
-must assert successful plans and intended negative causes, including modes,
-hidden/empty directories and links, without writer/manager coordination.
+Qualify the full validated entry and original pure lifecycle requirements using
+actual config/registry/dependency evidence. Enforce explicit foundation versus
+aggregate integration contract semantics, legitimate exact owned baselines,
+tracked missing conflicts, custom detachment and no silent reacquisition. Apply
+exact operations in test-owned consumers; compare final lineage, then replay and
+re-add/retire. Use the complete-tree helper in success and intended-cause conflict
+cases including modes/kinds/links/hidden/empty entries; never begin writer or
+manager work. Preserve all prior controls and custom mapping coverage.
 
-S001–S032 remain independently accepted; S033–S063 remain pending; S064–S203
-are not started. Pi records implementation evidence; Codex accepts before S064.
-After all remaining software corrections and integration work, run every original
-direct check and the full S063 cumulative set: strict frozen install, format,
-lint, typecheck, unit, harness, registry, integration, CLI, components, fixture
-check/SSR/browser, contracts, planned consumers, installed parser/planner,
-strict declaration controls, actual workflow validation and fresh conditional
-reference Rust guard. Serialize fixture writers and retain raw exits/failures/
-reruns, artifact/platform identity and skipped/ignored counts. The author logs
-are bounded evidence for their actual artifacts, not fresh independent whole-MVP
-qualification. Release AC20's exact fixture-only upstream exception remains open.
-No new dependencies, transaction/CLI completion or other-platform acceptance.
+Run actual check/build AND production-handler SSR assertions for freshly planned
+simple/compound consumers, with a missing-child-rendering negative control.
+Exercise absent layout creation and preservation of existing layouts separately.
+Use owned-server cleanup; keep maintained-fixture and planned-artifact evidence
+separate. Pi must update candidate report prose/COMPATIBILITY and progress while
+preserving original pending hashes, structured statuses and accepted reviews.
+This is authorized evidence maintenance, not assignment of Codex acceptance.
+
+After completing every eligible implementation requirement, run the full S063
+set: strict frozen install, format, lint, typecheck, unit, harness, registry,
+integration, CLI, components, fixture check/SSR/browser, contracts, planned
+consumers, emitted parsers/planning, strict declaration controls, actual workflow
+validation and fresh conditional reference Rust guard. Capture underlying exits
+before filtering, retain failed attempts and serialize shared fixture writers.
+The retained author reference log has 578 passes, zero failures and four ignored
+tests; reporting one ignored test from a tail excerpt is incorrect. Record all
+four as listed in governing review 6. Author logs remain bounded artifact evidence.
+Release AC20's fixture-only qualified upstream exception remains open.
+
+S001–S032 remain accepted; S033–S063 remain pending; S064–S203 remain not_started.
+No new dependencies, schema fields, product writer/CLI completion or other
+platform acceptance. Pi records evidence; Codex accepts independently before S064.
 
 #### Historical owner-authorized RCLD-02 batch verification
 
