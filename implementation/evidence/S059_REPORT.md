@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S059","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S059","kind":"report","commit":"a1762984ac319f31319370a3ceecff0652287a72","disposition":"candidate"}
 -->
 
 Step ID and title: S059 — Enforce source-style compatibility cohorts.
