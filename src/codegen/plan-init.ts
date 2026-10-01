@@ -285,23 +285,27 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   // Existing managed regions are only patchable when the lock owns them.
   const exportsText = textOf(targets.rootExports);
   if (!exportsText.ok) return exportsText;
+  let observedExportContent: string | null = null;
   if (exportsText.value !== null) {
     const parsedRegion = parseExportRegion(
       targets.rootExports,
       exportsText.value,
     );
     if (!parsedRegion.ok) return fail(parsedRegion.issues);
-    if (
-      parsedRegion.value.region !== null &&
-      !ownedIntegration("exports", targets.rootExports)
-    ) {
-      return fail([
-        issue(
-          "INIT_OWNERSHIP_CONFLICT",
-          `${targets.rootExports} contains a managed export region that the lock does not own; markers alone do not confer ownership`,
-          targets.rootExports,
-        ),
-      ]);
+    if (parsedRegion.value.region !== null) {
+      if (!ownedIntegration("exports", targets.rootExports)) {
+        return fail([
+          issue(
+            "INIT_OWNERSHIP_CONFLICT",
+            `${targets.rootExports} contains a managed export region that the lock does not own; markers alone do not confer ownership`,
+            targets.rootExports,
+          ),
+        ]);
+      }
+      observedExportContent = exportsText.value.slice(
+        parsedRegion.value.region.contentStart,
+        parsedRegion.value.region.contentEnd,
+      );
     }
   }
 
@@ -391,37 +395,90 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   }
 
   const existingExports = exportsText.value ?? "";
-  const patchedExports = patchExportRegion(
-    targets.rootExports,
-    existingExports,
-    [],
+  const existingExportsIntegration = existingLock?.integrations.find(
+    (integration) =>
+      integration.kind === "exports" &&
+      integration.path === targets.rootExports,
   );
-  if (!patchedExports.ok) return patchedExports;
-  const plannedExports = patchedExports.value;
-  if (
-    plannedExports !== existingExports &&
-    ownedIntegration("exports", targets.rootExports)
-  ) {
-    return fail([
-      issue(
-        "INIT_OWNERSHIP_CONFLICT",
-        `the owned ${targets.rootExports} export region differs from the recorded baseline; initialization will not overwrite customized bytes`,
-        targets.rootExports,
-      ),
-    ]);
-  }
-  if (plannedExports !== existingExports) {
-    writes.push({
-      path: targets.rootExports,
-      operation: exportsText.value === null ? "create" : "update",
-      bytes: utf8(plannedExports),
-    });
+  let plannedExports: string;
+  if (observedExportContent !== null) {
+    // An owned, already-present region is preserved verbatim: initialization
+    // never strips installed declarations. A region that no longer matches its
+    // recorded baseline is customized application text and is refused rather
+    // than reconciled lossily.
+    if (
+      existingExportsIntegration !== undefined &&
+      (hashBytes(utf8(observedExportContent)) as string) !==
+        existingExportsIntegration.baseline
+    ) {
+      return fail([
+        issue(
+          "INIT_OWNERSHIP_CONFLICT",
+          `the owned ${targets.rootExports} export region differs from the recorded baseline; initialization will not overwrite customized bytes`,
+          targets.rootExports,
+        ),
+      ]);
+    }
+    plannedExports = existingExports;
+  } else {
+    const patchedExports = patchExportRegion(
+      targets.rootExports,
+      existingExports,
+      [],
+    );
+    if (!patchedExports.ok) return patchedExports;
+    plannedExports = patchedExports.value;
+    if (
+      plannedExports !== existingExports &&
+      ownedIntegration("exports", targets.rootExports)
+    ) {
+      return fail([
+        issue(
+          "INIT_OWNERSHIP_CONFLICT",
+          `the owned ${targets.rootExports} export region differs from the recorded baseline; initialization will not overwrite customized bytes`,
+          targets.rootExports,
+        ),
+      ]);
+    }
+    if (plannedExports !== existingExports) {
+      writes.push({
+        path: targets.rootExports,
+        operation: exportsText.value === null ? "create" : "update",
+        bytes: utf8(plannedExports),
+      });
+    }
   }
 
   const existingKitCss = kitCssText.value ?? "";
-  const composed = composeManagedCss(existingKitCss, [
-    { id: "tokens", body: TOKENS_BODY },
-  ]);
+  // Preserve every managed block the lock already tracks by its observed body,
+  // so initialization after an installation is a clean no-op rather than a
+  // lossy rewrite. The foundation `tokens` layer is preserved when present (a
+  // detached application-owned block stays byte-for-byte) and is created only
+  // when the target has none.
+  const parsedExistingKit = parseManagedCss(existingKitCss);
+  if (!parsedExistingKit.ok) return parsedExistingKit;
+  const existingKitBodies = new Map(
+    parsedExistingKit.value.blocks.map((block) => [
+      block.id,
+      existingKitCss.slice(block.contentStart, block.contentEnd),
+    ]),
+  );
+  const desiredKitBlocks: { id: string; body: string }[] = [
+    ...(existingLock?.cssBlocks ?? [])
+      .filter((record) => record.path === targets.kitCss)
+      .map((record) => ({
+        id: record.blockId,
+        body: existingKitBodies.get(record.blockId) ?? "",
+      }))
+      .filter((block) => block.body !== ""),
+  ];
+  if (!desiredKitBlocks.some((block) => block.id === "tokens")) {
+    desiredKitBlocks.unshift({
+      id: "tokens",
+      body: existingKitBodies.get("tokens") ?? TOKENS_BODY,
+    });
+  }
+  const composed = composeManagedCss(existingKitCss, desiredKitBlocks);
   if (!composed.ok) return composed;
   const plannedKitCss = composed.value;
   if (
@@ -506,28 +563,60 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
     ]);
   }
 
-  const integrations: LockIntegration[] = [
-    {
-      kind: "layout",
-      path: input.layoutFile,
-      baseline: hashBytes(utf8(layoutText)) as string,
-      contract: "layout-v1",
-    },
-    {
-      kind: "stylesheet",
-      path: targets.kitCss,
-      baseline: hashBytes(utf8(TOKENS_BODY)) as string,
-      contract: FOUNDATION_TOKENS_CONTRACT,
-    },
-    {
-      kind: "exports",
-      path: targets.rootExports,
-      baseline: hashBytes(
-        utf8(exportRegionContent(targets.rootExports, plannedExports) ?? ""),
-      ) as string,
-      contract: "exports-v1",
-    },
-  ];
+  // Preserve the recorded integration lineage. Initialization must never
+  // convert aggregate `stylesheet-v1` bookkeeping into `foundation-tokens-v1`
+  // ownership merely because the retained text happens to equal TOKENS_BODY:
+  // markers, aggregate presence and byte equality cannot reclaim a detached
+  // application-owned block. A fresh initialization establishes the foundation
+  // contract; an existing installation keeps its explicit contract and
+  // legitimate baseline.
+  const priorIntegration = (
+    kind: LockIntegration["kind"],
+    logicalPath: string,
+  ): LockIntegration | undefined =>
+    existingLock?.integrations.find(
+      (entry) => entry.kind === kind && entry.path === logicalPath,
+    );
+  const priorLayout = priorIntegration("layout", input.layoutFile);
+  const priorStylesheet = priorIntegration("stylesheet", targets.kitCss);
+  const priorExports = priorIntegration("exports", targets.rootExports);
+  const exportsChanged = plannedExports !== existingExports;
+  const layoutHash = hashBytes(utf8(layoutText)) as string;
+  const exportsRegionHash = hashBytes(
+    utf8(exportRegionContent(targets.rootExports, plannedExports) ?? ""),
+  ) as string;
+
+  const integrations: LockIntegration[] = (
+    [
+      {
+        kind: "layout",
+        path: input.layoutFile,
+        baseline: layoutUnchanged
+          ? (priorLayout?.baseline ?? layoutHash)
+          : layoutHash,
+        contract: priorLayout?.contract ?? "layout-v1",
+      },
+      {
+        kind: "stylesheet",
+        path: targets.kitCss,
+        baseline:
+          priorStylesheet?.baseline ?? (hashBytes(utf8(TOKENS_BODY)) as string),
+        contract: priorStylesheet?.contract ?? FOUNDATION_TOKENS_CONTRACT,
+      },
+      {
+        kind: "exports",
+        path: targets.rootExports,
+        baseline: exportsChanged
+          ? exportsRegionHash
+          : (priorExports?.baseline ?? exportsRegionHash),
+        contract: priorExports?.contract ?? "exports-v1",
+      },
+    ] satisfies LockIntegration[]
+  ).sort((left, right) => {
+    if (left.path !== right.path) return left.path < right.path ? -1 : 1;
+    if (left.kind === right.kind) return 0;
+    return left.kind < right.kind ? -1 : 1;
+  });
 
   const lock: KitLock = {
     schemaVersion: 1,
