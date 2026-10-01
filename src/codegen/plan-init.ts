@@ -8,17 +8,34 @@
  * initial lock. It never installs an unrequested component and never overwrites
  * existing application styles.
  *
+ * Initialization consumes one complete project observation: every target it
+ * reasons about must have been observed, and a target that is a symlink,
+ * directory, FIFO or otherwise nonregular entry is a typed conflict rather
+ * than an assumed absence. Text is decoded strictly (a byte-order mark is
+ * preserved, an invalid sequence is refused). Managed markers alone never
+ * confer ownership: an existing managed export region or CSS block is only
+ * patchable when the observed lock already owns that integration, otherwise
+ * the plan conflicts. The lock records real per-integration baselines and the
+ * canonical config identity, and is schema-validated before it is returned.
+ *
  * The plan is data: no file is written and no writer is started.
  */
 import path from "node:path";
 
-import { ok, type ModelResult } from "../registry/errors.js";
+import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { deriveKitPaths, type KitConfig } from "../project/config.js";
-import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
+import { hashBytes } from "./compare.js";
 import { composeManagedCss } from "./css.js";
 import { patchExportRegion } from "./exports.js";
-import type { KitLock } from "./lock.js";
-import { observedText, type ProjectSnapshot } from "./snapshot.js";
+import { parseManagedCss } from "./css-parse.js";
+import { parseExportRegion } from "./export-parse.js";
+import { parseKitLock, type KitLock, type LockIntegration } from "./lock.js";
+import {
+  decodeObservedText,
+  type ProjectSnapshot,
+  type TargetObservation,
+} from "./snapshot.js";
+import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
 import { patchLayoutImports } from "./svelte.js";
 
 /** The frozen foundation layer declaration. */
@@ -46,12 +63,6 @@ export interface InitPlanInput {
   readonly configHash: string;
 }
 
-function textAt(snapshot: ProjectSnapshot, logicalPath: string): string | null {
-  const observation = snapshot.entries.get(logicalPath);
-  if (observation === undefined || observation.kind !== "file") return null;
-  return observedText(observation);
-}
-
 function utf8(value: string): Uint8Array {
   return new TextEncoder().encode(value);
 }
@@ -59,6 +70,29 @@ function utf8(value: string): Uint8Array {
 function relativeSpecifier(from: string, to: string): string {
   const relative = path.posix.relative(path.posix.dirname(from), to);
   return relative.startsWith(".") ? relative : `./${relative}`;
+}
+
+const SHA256 = /^[0-9a-f]{64}$/;
+
+function unsafeTargetIssue(
+  logicalPath: string,
+  observation: TargetObservation,
+): ModelResult<never> {
+  const code =
+    observation.kind === "unreadable"
+      ? "INIT_TARGET_UNREADABLE"
+      : "INIT_TARGET_UNSAFE";
+  return fail([
+    issue(
+      code,
+      `${logicalPath} is ${
+        observation.kind === "unreadable"
+          ? `unreadable (${observation.errorCode ?? "EIO"})`
+          : `not a regular file (${observation.kind}); refusing to plan a write over it`
+      }`,
+      logicalPath,
+    ),
+  ]);
 }
 
 /**
@@ -69,47 +103,190 @@ function relativeSpecifier(from: string, to: string): string {
 export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   const { config, snapshot } = input;
   const derived = deriveKitPaths(config);
+  const kitJsonPath = `${derived.stateDir}/kit.json`;
+  const lockPath = `${derived.stateDir}/kit.lock.json`;
+  const targets = {
+    kitJson: kitJsonPath,
+    lock: lockPath,
+    rootExports: derived.rootExports,
+    kitCss: derived.kitCss,
+    themesCss: derived.themesCss,
+    appCss: derived.appCss,
+    layout: input.layoutFile,
+  } as const;
+
+  const observations = new Map<string, TargetObservation>();
+  for (const logicalPath of new Set(Object.values(targets))) {
+    const observation = snapshot.entries.get(logicalPath);
+    if (observation === undefined) {
+      return fail([
+        issue(
+          "INIT_OBSERVATION_INCOMPLETE",
+          `${logicalPath} was not observed; initialization requires a complete project snapshot`,
+          logicalPath,
+        ),
+      ]);
+    }
+    if (observation.kind !== "absent" && observation.kind !== "file") {
+      return unsafeTargetIssue(logicalPath, observation);
+    }
+    observations.set(logicalPath, observation);
+  }
+
+  const textOf = (logicalPath: string): ModelResult<string | null> => {
+    const observation = observations.get(logicalPath) as TargetObservation;
+    if (observation.kind === "absent") return ok(null);
+    const decoded = decodeObservedText(observation);
+    if (decoded.kind === "invalid") {
+      return fail([
+        issue(
+          "INIT_ENCODING_UNSUPPORTED",
+          `${logicalPath} is not valid UTF-8; refusing to replace application bytes lossily`,
+          logicalPath,
+        ),
+      ]);
+    }
+    return ok(decoded.kind === "text" ? decoded.text : null);
+  };
+
+  // Read the existing lock as ownership evidence.
+  let existingLock: KitLock | null = null;
+  const lockObservation = observations.get(lockPath) as TargetObservation;
+  if (lockObservation.kind === "file") {
+    const lockText = textOf(lockPath);
+    if (!lockText.ok) return lockText;
+    if (lockText.value !== null) {
+      let parsedValue: unknown;
+      try {
+        parsedValue = JSON.parse(lockText.value);
+      } catch {
+        return fail([
+          issue(
+            "INIT_LOCK_INVALID",
+            `${lockPath} is not valid JSON; reconcile the lock before initialization`,
+            lockPath,
+          ),
+        ]);
+      }
+      const parsed = parseKitLock(parsedValue, lockPath, {
+        stateDir: derived.stateDir,
+        uiDir: config.uiDir,
+        stylesDir: config.stylesDir,
+      });
+      if (!parsed.ok) return fail(parsed.issues);
+      existingLock = parsed.value;
+    }
+  }
+
+  const ownedIntegration = (
+    kind: LockIntegration["kind"],
+    logicalPath: string,
+  ): boolean =>
+    existingLock !== null &&
+    existingLock.integrations.some(
+      (integration) =>
+        integration.kind === kind && integration.path === logicalPath,
+    );
+
+  // Existing managed regions are only patchable when the lock owns them.
+  const exportsText = textOf(targets.rootExports);
+  if (!exportsText.ok) return exportsText;
+  if (exportsText.value !== null) {
+    const parsedRegion = parseExportRegion(
+      targets.rootExports,
+      exportsText.value,
+    );
+    if (!parsedRegion.ok) return fail(parsedRegion.issues);
+    if (
+      parsedRegion.value.region !== null &&
+      !ownedIntegration("exports", targets.rootExports)
+    ) {
+      return fail([
+        issue(
+          "INIT_OWNERSHIP_CONFLICT",
+          `${targets.rootExports} contains a managed export region that the lock does not own; markers alone do not confer ownership`,
+          targets.rootExports,
+        ),
+      ]);
+    }
+  }
+
+  const kitCssText = textOf(targets.kitCss);
+  if (!kitCssText.ok) return kitCssText;
+  if (kitCssText.value !== null) {
+    const parsedCss = parseManagedCss(kitCssText.value);
+    if (!parsedCss.ok) return fail(parsedCss.issues);
+    if (
+      parsedCss.value.blocks.length > 0 &&
+      !ownedIntegration("stylesheet", targets.kitCss)
+    ) {
+      return fail([
+        issue(
+          "INIT_OWNERSHIP_CONFLICT",
+          `${targets.kitCss} contains managed CSS blocks that the lock does not own; markers alone do not confer ownership`,
+          targets.kitCss,
+        ),
+      ]);
+    }
+  }
+
+  // Layout source and observation must agree when the file exists.
+  const layoutObservation = observations.get(
+    targets.layout,
+  ) as TargetObservation;
+  const layoutSource = input.layoutSource;
+  if (layoutObservation.kind === "file") {
+    const observed = textOf(targets.layout);
+    if (!observed.ok) return observed;
+    if (observed.value !== null && observed.value !== input.layoutSource) {
+      return fail([
+        issue(
+          "INIT_LAYOUT_MISMATCH",
+          `the observed ${targets.layout} differs from the supplied layout source; re-read the layout before planning`,
+          targets.layout,
+        ),
+      ]);
+    }
+  }
+
   const writes: PlannedWrite[] = [];
   const diagnostics: string[] = [];
 
   const configJson = `${JSON.stringify(config, null, 2)}\n`;
-  const existingConfig = textAt(snapshot, `${derived.stateDir}/kit.json`);
-  if (existingConfig !== configJson) {
-    writes.push({
-      path: `${derived.stateDir}/kit.json`,
-      bytes: utf8(configJson),
-    });
+  const configText = textOf(targets.kitJson);
+  if (!configText.ok) return configText;
+  if (configText.value !== configJson) {
+    writes.push({ path: targets.kitJson, bytes: utf8(configJson) });
   }
 
-  const existingExports = textAt(snapshot, derived.rootExports) ?? "";
+  const existingExports = exportsText.value ?? "";
   const patchedExports = patchExportRegion(
-    derived.rootExports,
+    targets.rootExports,
     existingExports,
     [],
   );
   if (!patchedExports.ok) return patchedExports;
-  if (patchedExports.value !== existingExports) {
-    writes.push({
-      path: derived.rootExports,
-      bytes: utf8(patchedExports.value),
-    });
+  const plannedExports = patchedExports.value;
+  if (plannedExports !== existingExports) {
+    writes.push({ path: targets.rootExports, bytes: utf8(plannedExports) });
   }
 
-  const existingKitCss = textAt(snapshot, derived.kitCss) ?? "";
+  const existingKitCss = kitCssText.value ?? "";
   const composed = composeManagedCss(existingKitCss, [
     { id: "tokens", body: TOKENS_BODY },
   ]);
   if (!composed.ok) return composed;
-  if (composed.value !== existingKitCss) {
-    writes.push({ path: derived.kitCss, bytes: utf8(composed.value) });
+  const plannedKitCss = composed.value;
+  if (plannedKitCss !== existingKitCss) {
+    writes.push({ path: targets.kitCss, bytes: utf8(plannedKitCss) });
   }
 
   for (const [logicalPath, label] of [
-    [derived.themesCss, "themes"],
-    [derived.appCss, "app"],
+    [targets.themesCss, "themes"],
+    [targets.appCss, "app"],
   ] as const) {
-    const existing = textAt(snapshot, logicalPath);
-    if (existing === null) {
+    const observation = observations.get(logicalPath) as TargetObservation;
+    if (observation.kind === "absent") {
       diagnostics.push(
         `initialization reports absent empty ${label} stylesheet ${logicalPath}`,
       );
@@ -124,40 +301,64 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   ].map((target) => ({
     specifier: relativeSpecifier(input.layoutFile, target),
   }));
-  const patchedLayout = patchLayoutImports(
-    input.layoutSource,
-    importSpecifiers,
-  );
+  const patchedLayout = patchLayoutImports(layoutSource, importSpecifiers);
   if (!patchedLayout.ok) return patchedLayout;
-  if (patchedLayout.value !== input.layoutSource) {
-    writes.push({ path: input.layoutFile, bytes: utf8(patchedLayout.value) });
+  const plannedLayout = patchedLayout.value;
+  if (plannedLayout !== layoutSource) {
+    writes.push({ path: input.layoutFile, bytes: utf8(plannedLayout) });
   }
+
+  const configHash = hashBytes(utf8(configJson)) as string;
+  if (!SHA256.test(input.registryHash)) {
+    return fail([
+      issue(
+        "INIT_REGISTRY_HASH_INVALID",
+        "the registry identity is not a 64-character lowercase hex digest",
+        "registryHash",
+      ),
+    ]);
+  }
+
+  const integrations: LockIntegration[] = [
+    {
+      kind: "layout",
+      path: input.layoutFile,
+      baseline: hashBytes(utf8(plannedLayout)) as string,
+      contract: "layout-v1",
+    },
+    {
+      kind: "stylesheet",
+      path: targets.kitCss,
+      baseline: hashBytes(utf8(plannedKitCss)) as string,
+      contract: "stylesheet-v1",
+    },
+    {
+      kind: "exports",
+      path: targets.rootExports,
+      baseline: hashBytes(utf8(plannedExports)) as string,
+      contract: "exports-v1",
+    },
+  ];
 
   const lock: KitLock = {
     schemaVersion: 1,
     toolVersion: INITIAL_TOOL_VERSION,
     registryVersion: input.registryVersion,
     registryHash: input.registryHash,
-    configHash: input.configHash,
+    configHash,
     requested: [],
     items: [],
     files: [],
     cssBlocks: [],
-    integrations: [
-      {
-        kind: "layout",
-        path: input.layoutFile,
-        baseline: "0".repeat(64),
-        contract: "layout-v1",
-      },
-      {
-        kind: "exports",
-        path: derived.rootExports,
-        baseline: "0".repeat(64),
-        contract: "exports-v1",
-      },
-    ],
+    integrations,
   };
 
-  return ok({ writes, lock, diagnostics });
+  const validated = parseKitLock(lock, lockPath, {
+    stateDir: derived.stateDir,
+    uiDir: config.uiDir,
+    stylesDir: config.stylesDir,
+  });
+  if (!validated.ok) return fail(validated.issues);
+
+  return ok({ writes, lock: validated.value, diagnostics });
 }
