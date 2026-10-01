@@ -147,6 +147,9 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   );
   if (!projection.ok) return fail(projection.issues);
   const desired = projection.value;
+  // Items that left the closure are handled by configuration-driven retirement,
+  // so they must not appear as conflicts in the forward reconciliation.
+  const retiredOwners = new Set(desired.retired);
 
   const dependencyPlan = planDependencies(registry, desired.order);
   if (!dependencyPlan.ok) return fail(dependencyPlan.issues);
@@ -227,7 +230,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
 
   const sourceRecords = planSourceTargets(
     snapshot,
-    lock?.files ?? [],
+    (lock?.files ?? []).filter((record) => !retiredOwners.has(record.owner)),
     incomingSources,
   );
   const incomingForPlan = incomingSources.map((entry) => ({
@@ -257,7 +260,9 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   }[] = [];
   const cssTargets = new Set([
     ...cssBlocksByTarget.keys(),
-    ...(lock?.cssBlocks.map((block) => block.path) ?? []),
+    ...(lock?.cssBlocks
+      .filter((block) => !retiredOwners.has(block.owner))
+      .map((block) => block.path) ?? []),
   ]);
   const cssMembers: CohortMember[] = [];
   for (const cssPath of [...cssTargets].sort()) {
@@ -292,6 +297,13 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     );
     const lockByBlock = new Map(
       (lock?.cssBlocks ?? [])
+        .filter(
+          (block) => block.path === cssPath && !retiredOwners.has(block.owner),
+        )
+        .map((block) => [block.blockId, block]),
+    );
+    const allLockByBlock = new Map(
+      (lock?.cssBlocks ?? [])
         .filter((block) => block.path === cssPath)
         .map((block) => [block.blockId, block]),
     );
@@ -307,6 +319,13 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     for (const blockId of [...ids].sort()) {
       const local = existingBodies.get(blockId) ?? null;
       const incomingBody = desiredById.get(blockId) ?? null;
+      const allRecord = allLockByBlock.get(blockId);
+      if (allRecord !== undefined && retiredOwners.has(allRecord.owner)) {
+        // A block owned by an item that left the closure is decided by
+        // configuration-driven retirement, not the forward reconciliation.
+        if (local !== null) effective.push({ id: blockId, body: local });
+        continue;
+      }
       const record = lockByBlock.get(blockId);
       const classification = classifyCssBlocks([
         {
@@ -446,15 +465,19 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   // and export members must not partially update when compatibility cannot be
   // established. A changed public API widens the unit to its dependents.
   const cohortMembers: CohortMember[] = [
-    ...sourcePlan.changes.map((change) => ({
-      owner: change.owner,
-      disposition: change.disposition,
-    })),
-    ...sourcePlan.conflicts.map((conflict) => ({
-      owner: conflict.owner ?? conflict.path,
-      disposition: conflict.disposition,
-    })),
-    ...cssMembers,
+    ...sourcePlan.changes
+      .filter((change) => !retiredOwners.has(change.owner))
+      .map((change) => ({
+        owner: change.owner,
+        disposition: change.disposition,
+      })),
+    ...sourcePlan.conflicts
+      .filter((conflict) => !retiredOwners.has(conflict.owner ?? ""))
+      .map((conflict) => ({
+        owner: conflict.owner ?? conflict.path,
+        disposition: conflict.disposition,
+      })),
+    ...cssMembers.filter((member) => !retiredOwners.has(member.owner)),
   ];
   const lockVersion = new Map(
     (lock?.items ?? []).map((item) => [item.id, item.version]),

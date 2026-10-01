@@ -11,7 +11,9 @@
  *
  * Planning is pure and read-only.
  */
-import type { LockFileRecord } from "./lock.js";
+import { hashBytes } from "./compare.js";
+import { parseManagedCss } from "./css-parse.js";
+import type { LockFileRecord, LockCssBlock } from "./lock.js";
 import type { ProjectSnapshot } from "./snapshot.js";
 
 export interface RetirementRecord {
@@ -100,4 +102,118 @@ export function survivingLockFiles(
   retainedOwners: ReadonlySet<string>,
 ): readonly LockFileRecord[] {
   return lockFiles.filter((file) => retainedOwners.has(file.owner));
+}
+
+export interface CssRetirementPlanRecord {
+  readonly path: string;
+  readonly blockId: string;
+  readonly owner: string;
+  readonly action: "remove" | "retain" | "conflict";
+  readonly clean: boolean;
+  readonly reason: string;
+}
+
+function decodeFile(observation: {
+  readonly kind: string;
+  readonly bytes: Uint8Array | null;
+}): string | null {
+  if (observation.kind !== "file" || observation.bytes === null) return null;
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(observation.bytes);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Plan managed-CSS retirement for blocks owned by items that left the closure.
+ * A clean block (local body equals the recorded base) is removed; a customized
+ * block keeps its complete marked span and its ownership is detached; an
+ * unobserved or unsupported target is a conflict, never a silent detach.
+ */
+export function planCssRetirement(
+  snapshot: ProjectSnapshot,
+  lockCssBlocks: readonly LockCssBlock[],
+  retainedOwners: ReadonlySet<string>,
+): readonly CssRetirementPlanRecord[] {
+  const records: CssRetirementPlanRecord[] = [];
+  for (const block of lockCssBlocks) {
+    if (retainedOwners.has(block.owner)) continue;
+    const observation = snapshot.entries.get(block.path);
+    if (observation === undefined) {
+      records.push({
+        path: block.path,
+        blockId: block.blockId,
+        owner: block.owner,
+        action: "conflict",
+        clean: false,
+        reason:
+          "retired stylesheet was not observed; the snapshot is incomplete and retirement cannot be decided",
+      });
+      continue;
+    }
+    const text = decodeFile(observation);
+    if (text === null) {
+      records.push({
+        path: block.path,
+        blockId: block.blockId,
+        owner: block.owner,
+        action: "retain",
+        clean: false,
+        reason:
+          "retired stylesheet is not a regular UTF-8 file; retained untouched and ownership detached",
+      });
+      continue;
+    }
+    const parsed = parseManagedCss(text);
+    if (!parsed.ok) {
+      records.push({
+        path: block.path,
+        blockId: block.blockId,
+        owner: block.owner,
+        action: "conflict",
+        clean: false,
+        reason:
+          "retired stylesheet has malformed markers; retirement cannot be decided",
+      });
+      continue;
+    }
+    const found = parsed.value.blocks.find(
+      (entry) => entry.id === block.blockId,
+    );
+    if (found === undefined) {
+      records.push({
+        path: block.path,
+        blockId: block.blockId,
+        owner: block.owner,
+        action: "retain",
+        clean: false,
+        reason: "retired block is already absent; ownership detached",
+      });
+      continue;
+    }
+    const body = text.slice(found.contentStart, found.contentEnd);
+    const clean = hashBytes(new TextEncoder().encode(body)) === block.baseHash;
+    records.push({
+      path: block.path,
+      blockId: block.blockId,
+      owner: block.owner,
+      action: clean ? "remove" : "retain",
+      clean,
+      reason: clean
+        ? "clean owned block retired"
+        : "customized retired block retained as application-owned text; ownership detached",
+    });
+  }
+  return records.sort((left, right) =>
+    left.path < right.path
+      ? -1
+      : left.path > right.path
+        ? 1
+        : left.blockId < right.blockId
+          ? -1
+          : left.blockId > right.blockId
+            ? 1
+            : 0,
+  );
 }

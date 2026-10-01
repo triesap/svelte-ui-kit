@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S061","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S061","kind":"report","commit":"6844cf24675eb0378d0006edff649e21c71de0db","disposition":"candidate"}
 -->
 
 Step ID and title: S061 — Project truthful final lock lineage.
