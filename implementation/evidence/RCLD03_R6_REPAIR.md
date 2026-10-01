@@ -82,12 +82,19 @@ provenance are unchanged.
   statuses and Codex acceptance ownership. The retained reference log totals
   578 passed / 0 failed / 4 ignored; all four ignored tests are recorded
   explicitly and none is claimed as passed.
+- Independent review 7 subsequently found this R6-4 purity coverage incomplete:
+  the captured environment was only shallow-frozen and executable plans could
+  still bypass selected-project evidence, and the complete-tree success/conflict
+  matrix did not cover every command. The review-7 candidate
+  (`implementation/evidence/RCLD03_R7_REPAIR.md`) completes that work; where the
+  claims here and in `S063_REPORT.md`/`COMPATIBILITY.md` were broader than the
+  review-6 evidence, the review-7 addenda are authoritative.
 
 ## Verification (this candidate)
 
 Run from the svelte-ui-kit worktree with Node `24.21.0` / pnpm `11.22.0`
 through the configured build router unless noted. Raw logs are retained in
-`implementation/evidence/logs/` and the private handoff qualification tree.
+`implementation/evidence/logs/`.
 
 | Lane                         | Result                                                                                                                                                 |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |

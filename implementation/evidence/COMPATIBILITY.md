@@ -1058,3 +1058,52 @@ S033–S063 remain `committed_pending_review`; S064 stays gated by independent
 Codex S063 acceptance. Release AC20's fixture-only Bits 2.19.3 declaration
 exception remains open. Pi implementation evidence only; Codex alone accepts.
 See `implementation/evidence/RCLD03_R6_REPAIR.md` for the commit-level record.
+
+## RCLD-03 independent review 7 planning-boundary repair (2026-10-01)
+
+Addendum for the `pfc through RCLD-03` review-7 series at `ec7a014`/`88f0109`/
+`ea01f7e` on Node `24.21.0` / pnpm `11.22.0`. It supersedes the review-3/4/5/6
+numbers above (which predate the deeply immutable validated invocation boundary,
+cross-command ownership lineage and complete-tree qualification); the original
+criteria and all prior accepted work are unchanged.
+
+- RCLD03-R7-1: `src/project/environment.ts` deep-freezes the captured manifest,
+  installed observations, manager evidence and issue arrays, and captures the
+  static project-selection result once; `src/codegen/invocation.ts` composes one
+  read-only validated boundary that `planInit`/`planAdd`/`planSync` all use, so
+  absent/malformed/non-SvelteKit/ambiguous-manager evidence is a logical failure
+  with no executable writes — implemented and verified.
+- RCLD03-R7-2: `planInit` preserves the recorded stylesheet contract and
+  legitimate baseline, preserves tracked managed blocks and an installed
+  baseline-matching export region, and can no longer convert aggregate
+  `stylesheet-v1` bookkeeping into foundation ownership — implemented and
+  verified.
+- RCLD03-R7-3: `tests/integration/plan-tree-qualification.test.ts` compares
+  complete trees for successful and intended-cause-conflicting init/add/sync
+  plans, proves identical deterministic envelopes for equivalent observations,
+  and asserts the planning modules import neither `node:child_process` nor
+  `node:fs` — implemented and verified.
+
+| Lane                                    | Result at the review-7 candidate                                     |
+| --------------------------------------- | -------------------------------------------------------------------- |
+| Frozen strict install                   | exit 0                                                               |
+| `build` / `format:check` / `lint`       | exit 0 / exit 0 / exit 0                                             |
+| `typecheck`                             | exit 0                                                               |
+| `test:unit`                             | 265 / 265                                                            |
+| `test:harness`                          | 37 / 37                                                              |
+| `test:registry`                         | 38 / 38                                                              |
+| `test:integration`                      | 278 / 278 (was 255; +23 validated-entry/ownership/tree cases)        |
+| `test:cli-bootstrap`                    | 52 / 52                                                              |
+| `test:components`                       | 22 / 22 (strict declaration 17 / 17, two qualified TS2590)           |
+| `test:contracts` / `check:contracts`    | 127 / 127 and 0 errors / 0 warnings (projection unchanged)           |
+| `fixture:check`                         | svelte-check 0 errors / 0 warnings                                   |
+| `test:fixture`                          | 23 / 23                                                              |
+| `test:browser`                          | 23 / 23 chromium (fault + teardown controls)                         |
+| `actionlint 1.7.12` (checksum-verified) | `actionlint .github/workflows/ci.yml` exit 0; shellcheck 0.11.0      |
+| Fresh `leptos_ui_kit` reference guard   | fmt/check/test exit 0; 578 passed / 0 failed / 4 ignored (43 blocks) |
+
+S033–S063 remain `committed_pending_review`; S064 stays gated by independent
+Codex S063 acceptance. The four reference ignored tests are unchanged and none
+is claimed as passed. Release AC20's fixture-only Bits 2.19.3 declaration
+exception remains open. Pi implementation evidence only; Codex alone accepts.
+See `implementation/evidence/RCLD03_R7_REPAIR.md` for the commit-level record.

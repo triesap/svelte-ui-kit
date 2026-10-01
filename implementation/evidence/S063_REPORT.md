@@ -41,7 +41,45 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 - `pnpm run check:contracts` — exit 0, 0 errors / 0 warnings.
 - `git diff --check` / `git diff --cached --check` — clean.
 
-## Cumulative qualification (review-6 candidate)
+## Cumulative qualification (review-7 candidate)
+
+Run at the review-7 candidate revision with Node `24.21.0` / pnpm `11.22.0`
+through the configured build router; every lane exited 0 with zero skips unless
+stated:
+
+- Frozen strict install: `pnpm install --frozen-lockfile
+--strict-peer-dependencies` — exit 0.
+- `build`, `format:check`, `lint`, `typecheck` — exit 0.
+- `test:unit` 265/265, `test:harness` 37/37, `test:registry` 38/38,
+  `test:integration` 278/278, `test:cli-bootstrap` 52/52, `test:components`
+  22/22, `test:contracts` 127/127, `check:contracts` 0 errors/0 warnings.
+- Fixture/consumer lanes: `fixture:check` (svelte-check 0 errors/0 warnings),
+  `test:fixture` 23/23, `test:browser` 23/23 chromium including the fault and
+  teardown controls. `tests/integration/planned-consumer.test.ts` builds a
+  consumer from exactly the composed add plan over a real validated registry
+  snapshot and asserts visible SSR page output from the production handler,
+  with a missing-child-rendering negative control.
+- Strict declaration controls: `tests/components/strict-declaration.test.ts`
+  17/17, permitting exactly the two qualified Bits 2.19.3 TS2590 diagnostics
+  (fixture-only release AC20 debt).
+- Workflow validation: `actionlint 1.7.12` (darwin/arm64) archive SHA-256
+  `aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f` matched the
+  published checksums, ran `actionlint .github/workflows/ci.yml` at exit 0 with
+  `shellcheck 0.11.0` present.
+- Fresh reference guard in the clean `leptos_ui_kit` worktree at
+  `a10fbf06334f4648f5755e05a7147414e4e5fc98`: `cargo fmt --all -- --check` exit
+  0, `cargo check --workspace --all-targets` exit 0, `cargo test --workspace
+--all-targets` exit 0 (578 passed, 0 failed, 4 ignored across 43 result
+  blocks). No reference mutation.
+
+The review-6 table below is historical: independent review 7 found the captured
+environment only shallow-frozen, executable plans still able to bypass
+selected-project evidence, and the complete-tree conflict matrix incomplete.
+`implementation/evidence/RCLD03_R7_REPAIR.md` records the repairs that close
+those criteria; its counts supersede the review-6 numbers here and in
+`implementation/evidence/COMPATIBILITY.md`.
+
+## Cumulative qualification (review-6 candidate — historical)
 
 Run at the current review-6 candidate revision with Node `24.21.0` / pnpm
 `11.22.0` through the configured build router; every lane exited 0 with zero
