@@ -380,6 +380,43 @@ test("a supplied lock that disagrees with the observed bytes conflicts", (t) => 
   );
 });
 
+test("the composed plan carries declared/installed/peer readiness evidence", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "consumer",
+      type: "module",
+      dependencies: { svelte: "5.57.1" },
+    }),
+  );
+  const reg = registryOf([
+    componentItem("button", {
+      exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
+      npm: [{ name: "svelte", range: "^5.57.1", role: "peer" }],
+    }),
+  ]);
+  const result = planAdd({
+    registry: reg,
+    config: CONFIG,
+    addedRoots: ["button"],
+    snapshot: snapshotOf(project),
+    lock: null,
+    registryVersion: reg.root.registryVersion,
+    registryHash: reg.root.contentHash,
+  });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.ok(Array.isArray(result.value.dependencyState));
+  const svelte = result.value.dependencyState?.find(
+    (entry) => entry.name === "svelte",
+  );
+  assert.ok(svelte, JSON.stringify(result.value.dependencyState));
+  assert.equal(svelte.declaredRange, "5.57.1");
+  assert.equal(svelte.status, "missing_install");
+});
+
 test("a lock-owned integration whose target is missing conflicts", (t) => {
   for (const target of [
     derived.kitCss,

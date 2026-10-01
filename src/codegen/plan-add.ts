@@ -40,6 +40,10 @@ import {
   renderDependencyInstructions,
   type DependencyInstruction,
 } from "../project/dependency-instructions.js";
+import {
+  inspectDependencyState,
+  type DependencyStateEntry,
+} from "../project/dependencies.js";
 import { hashBytes } from "./compare.js";
 import { canonicalJson } from "./serialize.js";
 import { composeManagedCss, type ManagedBlockInput } from "./css.js";
@@ -85,6 +89,8 @@ export interface AddPlan {
   readonly projection: RequestProjection;
   readonly dependencies: DependencyPlan;
   readonly dependencyInstructions: DependencyInstruction | null;
+  /** Declared/installed/peer readiness evidence, when a manifest is present. */
+  readonly dependencyState: readonly DependencyStateEntry[] | null;
   readonly sourcePlan: SourcePlan;
   readonly writes: readonly PlannedWrite[];
   readonly lock: KitLock | null;
@@ -288,6 +294,18 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     peers,
   });
   if (!instructions.ok) return fail(instructions.issues);
+  // Compose the declared/installed/peer readiness evidence when the selected
+  // package provides a manifest; readiness semantics stay owned by S038/S039.
+  const dependencyStateResult = inspectDependencyState(
+    snapshot.root,
+    dependencyPlan.value.entries.map((entry) => ({
+      name: entry.name,
+      range: entry.range,
+    })),
+  );
+  const dependencyState = dependencyStateResult.ok
+    ? dependencyStateResult.value
+    : null;
 
   // ---- Incoming registry content ------------------------------------------
   const incomingSources: IncomingSource[] = [];
@@ -979,6 +997,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     projection: desired,
     dependencies: dependencyPlan.value,
     dependencyInstructions: instructions.value,
+    dependencyState,
     sourcePlan,
     writes: hasConflict ? [] : writes,
     lock: projectedLock,

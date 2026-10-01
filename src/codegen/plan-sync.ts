@@ -24,6 +24,7 @@ import { fail, ok, type ModelResult } from "../registry/errors.js";
 import type { DependencyPlan } from "../registry/dependency-plan.js";
 import type { RequestProjection } from "../registry/projection.js";
 import type { DependencyInstruction } from "../project/dependency-instructions.js";
+import type { DependencyStateEntry } from "../project/dependencies.js";
 import { planAdd, type AddPlanInput } from "./plan-add.js";
 import { retireManagedCss } from "./css-retire.js";
 import type { KitLock } from "./lock.js";
@@ -44,6 +45,7 @@ export interface SyncPlan {
   readonly projection: RequestProjection;
   readonly dependencies: DependencyPlan;
   readonly dependencyInstructions: DependencyInstruction | null;
+  readonly dependencyState: readonly DependencyStateEntry[] | null;
   readonly sourcePlan: SourcePlan;
   readonly retirement: readonly RetirementRecord[];
   readonly cssRetirement: readonly CssRetirementPlanRecord[];
@@ -164,6 +166,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
     projection: base.value.projection,
     dependencies: base.value.dependencies,
     dependencyInstructions: base.value.dependencyInstructions,
+    dependencyState: base.value.dependencyState,
     sourcePlan: base.value.sourcePlan,
     retirement,
     cssRetirement,
