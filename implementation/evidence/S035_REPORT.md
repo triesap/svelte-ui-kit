@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S035","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S035","kind":"report","commit":"453434a0a1019795e85034c22f08a32fb70802a9","disposition":"candidate"}
 -->
 
 Step ID and title: S035 — Detect default SvelteKit application packages.

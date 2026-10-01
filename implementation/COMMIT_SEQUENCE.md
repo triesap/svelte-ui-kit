@@ -20,7 +20,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - Active implementation checkpoint: **S033** (including the bounded RCLD-03 authorization-tooling prerequisite).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **32 / 203**. Remaining: **171 / 203**.
-- Committed pending review: **2 / 203**. Authored batch range: **S033–S034**.
+- Committed pending review: **3 / 203**. Authored batch range: **S033–S035**.
 - Completed RCLD sequences: **2 / 11**. Remaining: **9 / 11**.
 - Last safe target commit: `0e5b1852d02e15159f2ee4dd885152230457e119`, branch `master` (independently accepted S013–S032 combined evidence anchor).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
@@ -2980,7 +2980,7 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S032 | RCLD-02  | S031       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
 | S033 | RCLD-03  | S032       | committed_pending_review | `ab3e9c5de3d6c0642427cfda4dee00e11a1163f8` |
 | S034 | RCLD-03  | S033       | committed_pending_review | `98336763f3970c9a77af9a772af816431813ff04` |
-| S035 | RCLD-03  | S034       | not_started              | —                                          |
+| S035 | RCLD-03  | S034       | committed_pending_review | `453434a0a1019795e85034c22f08a32fb70802a9` |
 | S036 | RCLD-03  | S035       | not_started              | —                                          |
 | S037 | RCLD-03  | S036       | not_started              | —                                          |
 | S038 | RCLD-03  | S037       | not_started              | —                                          |
