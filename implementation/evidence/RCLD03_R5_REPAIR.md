@@ -9,8 +9,7 @@ independent acceptance. Codex owns acceptance and the S063/S064 gate.
 Completion of independent review 5 groups RCLD03-R5-1 through RCLD03-R5-4 on
 top of the thirty-one `committed_pending_review` checkpoints S033–S063. The
 thirty-two accepted S001–S032 checkpoints and the RCLD-01/RCLD-02 acceptance
-provenance are unchanged. No submodule pointer, reference repository or parent
-repository state was modified.
+provenance are unchanged.
 
 ## Ordered implementation commits
 
@@ -74,28 +73,34 @@ repository state was modified.
 Run from the svelte-ui-kit worktree with Node 24.21.0 / pnpm 11.22.0 through the
 configured build router unless noted.
 
-| Lane                         | Result                                                                                                                  |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `pnpm install` frozen strict | exit 0, already up to date                                                                                              |
-| `format:check` / `lint`      | exit 0                                                                                                                  |
-| `typecheck`                  | exit 0                                                                                                                  |
-| `test:unit`                  | 265 / 265                                                                                                               |
-| `test:registry`              | 38 / 38                                                                                                                 |
-| `test:integration`           | 238 / 238 (includes new R5 regressions)                                                                                 |
-| `test:harness`               | 37 / 37                                                                                                                 |
-| `test:cli-bootstrap`         | 52 / 52                                                                                                                 |
-| `test:components`            | 22 / 22                                                                                                                 |
-| `test:fixture`               | 23 / 23                                                                                                                 |
-| `fixture:check`              | svelte-check 0 errors / 0 warnings                                                                                      |
-| `test:browser`               | 23 / 23 chromium (fault and teardown controls)                                                                          |
-| `check:contracts`            | 0 errors / 0 warnings                                                                                                   |
-| `test:contracts`             | 127 / 127                                                                                                               |
-| `actionlint 1.7.12`          | archive SHA-256 `aba9ced2...e6953f` verified; exit 0                                                                    |
-| Reference `leptos_ui_kit`    | `cargo fmt` 0, `cargo check --workspace --all-targets` 0, `cargo test --workspace --all-targets` 0; 0 failed, 1 ignored |
+| Lane                         | Result                                                                                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm install` frozen strict | exit 0, already up to date                                                                                                                             |
+| `format:check` / `lint`      | exit 0                                                                                                                                                 |
+| `typecheck`                  | exit 0                                                                                                                                                 |
+| `test:unit`                  | 265 / 265                                                                                                                                              |
+| `test:registry`              | 38 / 38                                                                                                                                                |
+| `test:integration`           | 238 / 238 (includes new R5 regressions)                                                                                                                |
+| `test:harness`               | 37 / 37                                                                                                                                                |
+| `test:cli-bootstrap`         | 52 / 52                                                                                                                                                |
+| `test:components`            | 22 / 22                                                                                                                                                |
+| `test:fixture`               | 23 / 23                                                                                                                                                |
+| `fixture:check`              | svelte-check 0 errors / 0 warnings                                                                                                                     |
+| `test:browser`               | 23 / 23 chromium (fault and teardown controls)                                                                                                         |
+| `check:contracts`            | 0 errors / 0 warnings                                                                                                                                  |
+| `test:contracts`             | 127 / 127                                                                                                                                              |
+| `actionlint 1.7.12`          | archive SHA-256 `aba9ced2...e6953f` verified; exit 0                                                                                                   |
+| Reference `leptos_ui_kit`    | `cargo fmt` 0, `cargo check --workspace --all-targets` 0, `cargo test --workspace --all-targets` 0; 578 passed, 0 failed, 4 ignored (43 result blocks) |
 
-The reference ignored test is
-`packaged_sources_build_with_cargo_vcs_provenance_outside_and_inside_hostile_git`
-(explicitly marked `ignored` as slow package-source acceptance).
+The reference log has four explicitly ignored tests, none of which passed:
+
+- `installed_binaries_run_after_package_source_and_build_state_are_deleted`
+- `homepage_fixture_cli_workflow_smoke`
+- `tests::every_transaction_io_fault_avoids_partial_application_state`
+- `packaged_sources_build_with_cargo_vcs_provenance_outside_and_inside_hostile_git`
+
+This report is standalone repository evidence and carries no operator routing or
+coordination details.
 
 ## Remaining / not claimed
 
