@@ -22,14 +22,24 @@ export interface PlanningOutcome {
   readonly diagnostics: readonly string[];
 }
 
+/**
+ * The content operation a planned write performs. `retire` is an explicit
+ * deletion (bytes are empty) that must never be confused with creating an
+ * empty file.
+ */
+export type ChangeOperation = "create" | "update" | "retire";
+
 /** A planned write as produced by a planner. */
 export interface PlanWrite {
   readonly path: string;
   readonly bytes: Uint8Array;
+  /** Defaults to `create`/`update` when a planner does not state one. */
+  readonly operation?: ChangeOperation;
 }
 
 export interface PlannedWriteEnvelope {
   readonly path: string;
+  readonly operation: ChangeOperation;
   readonly bytesLength: number;
   readonly digest: string;
 }
@@ -61,6 +71,7 @@ export function toPlanningEnvelope(
     )
     .map((write) => ({
       path: write.path,
+      operation: write.operation ?? "update",
       bytesLength: write.bytes.byteLength,
       digest: hashBytes(write.bytes) as string,
     }));

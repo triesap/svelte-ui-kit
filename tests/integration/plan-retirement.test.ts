@@ -255,11 +255,30 @@ test("application exports are not silently erased", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());
   seed(project, "CARD", CARD_BODY);
-  project.writeFile(
-    ROOT_EXPORTS,
-    '// svelte-ui-kit:start exports\nexport { Card } from "./card.svelte";\n// svelte-ui-kit:end exports\nexport const AppThing = 1;\n',
-  );
-  const result = sync(project);
+  const region =
+    '// svelte-ui-kit:start exports\nexport { Card } from "./card.svelte";\n// svelte-ui-kit:end exports\nexport const AppThing = 1;\n';
+  project.writeFile(ROOT_EXPORTS, region);
+  // The managed region is only patchable when the lock owns it. Markers alone
+  // confer no ownership (RCLD03-R4-2).
+  const lock: KitLock = {
+    ...lockFor(),
+    integrations: [
+      {
+        kind: "exports",
+        path: ROOT_EXPORTS,
+        baseline: hashBytes(new TextEncoder().encode(region)) as string,
+        contract: "exports-v1",
+      },
+    ],
+  };
+  const result = planSync({
+    registry: registry(),
+    config: { ...DEFAULT_KIT_CONFIG, requested: ["button"] },
+    snapshot: snapshotOf(project),
+    lock,
+    registryVersion: "0.1.0",
+    registryHash: "a".repeat(64),
+  });
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
   const write = result.value.writes.find(

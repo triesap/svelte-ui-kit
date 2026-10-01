@@ -22,10 +22,11 @@ references.
   for S033–S063 plus the bounded authorization-tooling prerequisite to Pi.
   S001–S032/RCLD-01–RCLD-02 are independently accepted. Follow the current
   "Codex dispatch — complete RCLD-03 project integration and ownership planning"
-  section, especially its current "Independent review 3 — preserve application
-  data and complete composed planning" and resolved decisions. The
+  section, especially its current "Independent review 4 — complete safe planner
+  composition and qualify its artifacts" and resolved decisions. The
   authorization prerequisite is implemented; preserve the single RCLD-03 record.
-  Repair pending S033–S057 under RCLD03-R3-1/2/3/4, then complete S058–S063.
+  Complete pending S033–S063 under RCLD03-R4-1/2/3/4, including every unfinished
+  S058–S063 composition and qualification requirement.
   Continue through the full 31-checkpoint sequence and cumulative qualification;
   S064 stays gated by independent S063 acceptance. Pi updates pending-review
   evidence and never assigns Codex acceptance. Outside this exact batch, return

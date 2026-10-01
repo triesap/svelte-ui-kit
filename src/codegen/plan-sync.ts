@@ -146,7 +146,13 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
     for (const record of retirement) {
       if (record.action !== "delete") continue;
       if (writes.some((write) => write.path === record.path)) continue;
-      writes.push({ path: record.path, bytes: new Uint8Array() });
+      // Retirement is an explicit operation, never a zero-byte write that a
+      // consumer could mistake for creating an empty file.
+      writes.push({
+        path: record.path,
+        operation: "retire",
+        bytes: new Uint8Array(),
+      });
     }
     writes.sort((left, right) =>
       left.path < right.path ? -1 : left.path > right.path ? 1 : 0,

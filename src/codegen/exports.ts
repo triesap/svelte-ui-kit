@@ -55,6 +55,47 @@ export function renderExportLines(
     .concat("\n");
 }
 
+/**
+ * Parse the generated declarations currently present inside a managed export
+ * region. Used to compare the *effective* export surface of an installed owner
+ * with its incoming declarations, rather than trusting item-version inequality.
+ */
+export function parseGeneratedDeclarations(
+  regionContent: string,
+): ExportDeclaration[] {
+  const sourceFile = ts.createSourceFile(
+    "export-region.ts",
+    regionContent,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const declarations: ExportDeclaration[] = [];
+  for (const statement of sourceFile.statements) {
+    if (!ts.isExportDeclaration(statement)) continue;
+    const specifier = statement.moduleSpecifier;
+    if (specifier === undefined || !ts.isStringLiteral(specifier)) continue;
+    if (
+      statement.exportClause !== undefined &&
+      ts.isNamedExports(statement.exportClause)
+    ) {
+      for (const element of statement.exportClause.elements) {
+        declarations.push({
+          name: element.name.text,
+          target: specifier.text,
+          kind: statement.isTypeOnly || element.isTypeOnly ? "type" : "value",
+        });
+      }
+    }
+  }
+  return declarations;
+}
+
+/** Canonical comparability key for one export declaration. */
+export function exportDeclarationKey(declaration: ExportDeclaration): string {
+  return `${declaration.name}|${declaration.kind}|${declaration.target}`;
+}
+
 function hasDirectoryTarget(declaration: ExportDeclaration): boolean {
   const target = declaration.target.replace(/^\.\//, "");
   return target.includes("/");

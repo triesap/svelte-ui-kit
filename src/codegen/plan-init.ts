@@ -42,10 +42,10 @@ import { patchLayoutImports } from "./svelte.js";
 export const TOKENS_BODY =
   "\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n";
 
-export interface PlannedWrite {
-  readonly path: string;
-  readonly bytes: Uint8Array;
-}
+export type { ChangeOperation } from "./plan.js";
+export type { PlanWrite as PlannedWrite } from "./plan.js";
+
+import type { PlanWrite as PlannedWrite } from "./plan.js";
 
 export interface InitPlan {
   readonly writes: readonly PlannedWrite[];
@@ -265,7 +265,11 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   const configText = textOf(targets.kitJson);
   if (!configText.ok) return configText;
   if (configText.value !== configJson) {
-    writes.push({ path: targets.kitJson, bytes: utf8(configJson) });
+    writes.push({
+      path: targets.kitJson,
+      operation: configText.value === null ? "create" : "update",
+      bytes: utf8(configJson),
+    });
   }
 
   const existingExports = exportsText.value ?? "";
@@ -289,7 +293,11 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
     ]);
   }
   if (plannedExports !== existingExports) {
-    writes.push({ path: targets.rootExports, bytes: utf8(plannedExports) });
+    writes.push({
+      path: targets.rootExports,
+      operation: exportsText.value === null ? "create" : "update",
+      bytes: utf8(plannedExports),
+    });
   }
 
   const existingKitCss = kitCssText.value ?? "";
@@ -311,7 +319,11 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
     ]);
   }
   if (plannedKitCss !== existingKitCss) {
-    writes.push({ path: targets.kitCss, bytes: utf8(plannedKitCss) });
+    writes.push({
+      path: targets.kitCss,
+      operation: kitCssText.value === null ? "create" : "update",
+      bytes: utf8(plannedKitCss),
+    });
   }
 
   for (const [logicalPath, label] of [
@@ -323,7 +335,11 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
       diagnostics.push(
         `initialization reports absent empty ${label} stylesheet ${logicalPath}`,
       );
-      writes.push({ path: logicalPath, bytes: new Uint8Array() });
+      writes.push({
+        path: logicalPath,
+        operation: "create",
+        bytes: new Uint8Array(),
+      });
     }
   }
 
@@ -342,7 +358,11 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   // file that does not exist. Only when the layout is an existing, unchanged
   // file are the bytes left alone.
   if (layoutObservation.kind === "absent" || plannedLayout !== layoutSource) {
-    writes.push({ path: input.layoutFile, bytes: utf8(plannedLayout) });
+    writes.push({
+      path: input.layoutFile,
+      operation: layoutObservation.kind === "absent" ? "create" : "update",
+      bytes: utf8(plannedLayout),
+    });
   }
 
   const configHash = hashBytes(utf8(configJson)) as string;
@@ -409,6 +429,7 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   if (lockChanged) {
     writes.push({
       path: lockPath,
+      operation: existingLock === null ? "create" : "update",
       bytes: utf8(`${JSON.stringify(finalLock, null, 2)}\n`),
     });
   }

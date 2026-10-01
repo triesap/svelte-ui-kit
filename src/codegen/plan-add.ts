@@ -4,13 +4,23 @@
  * Combines the initialization prerequisites with an explicit root addition and
  * the resolved registry closure into one read-only proposed batch. It resolves
  * the requested roots, the dependency closure and the dependency instructions
- * as data, then plans the source, managed-CSS and root-export changes against
- * the immutable snapshot and the recorded lock ownership.
+ * as data, then plans the source, managed-CSS, integration and root-export
+ * changes against the immutable snapshot and the recorded lock ownership.
  *
  * Planning is pure: no file is written and no writer or package manager is
  * started. Every conflict is collected (not stopped at the first), and a
  * genuine conflict makes the whole batch non-executable, so a conflicting
  * source/CSS/export change can never update `kit.json` on its own.
+ *
+ * RCLD03-R4-1: the composed entry validates the complete observed state before
+ * any executable result. Every reason-about target must have been observed,
+ * a nonregular/unreadable target is a typed conflict instead of an assumed
+ * empty file, observed config/lock metadata is parsed rather than ignored, the
+ * registry identity is taken from the validated snapshot rather than a
+ * separately supplied scalar, and BOM-preserving decoding is shared with the
+ * initialization planner. A fresh add also emits the minimal initialization
+ * prerequisites (foundation stylesheet, empty themes/app stylesheets) and
+ * records integration ownership so a later sync never loses it.
  */
 import path from "node:path";
 
@@ -25,7 +35,7 @@ import {
   type DependencyPlan,
 } from "../registry/dependency-plan.js";
 import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
-import type { KitConfig } from "../project/config.js";
+import { deriveKitPaths, type KitConfig } from "../project/config.js";
 import {
   renderDependencyInstructions,
   type DependencyInstruction,
@@ -35,14 +45,25 @@ import { composeManagedCss, type ManagedBlockInput } from "./css.js";
 import { classifyCssBlocks } from "./css-compare.js";
 import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
 import { parseManagedCss } from "./css-parse.js";
-import { patchExportRegion, type ExportDeclaration } from "./exports.js";
-import type { KitLock, LockOrigin } from "./lock.js";
+import {
+  exportDeclarationKey,
+  parseGeneratedDeclarations,
+  patchExportRegion,
+  type ExportDeclaration,
+} from "./exports.js";
+import { parseExportRegion } from "./export-parse.js";
+import type { OwnershipDisposition } from "./ownership-policy.js";
+import type { KitLock, LockIntegration, LockOrigin } from "./lock.js";
 import { parseKitLock } from "./lock.js";
 import { buildLockProjection } from "./lock-projection.js";
-import type { PlannedWrite } from "./plan-init.js";
+import { TOKENS_BODY, type PlannedWrite } from "./plan-init.js";
 import { assembleSourcePlan, type SourcePlan } from "./source-plan.js";
 import { planSourceTargets, type IncomingSource } from "./source-targets.js";
-import type { ProjectSnapshot } from "./snapshot.js";
+import {
+  decodeObservedText,
+  type ProjectSnapshot,
+  type TargetObservation,
+} from "./snapshot.js";
 import { patchLayoutImports } from "./svelte.js";
 
 export interface AddPlanInput {
@@ -82,6 +103,60 @@ interface CssMeta {
   readonly body: string;
 }
 
+/**
+ * Validated state of one observed target. `file` carries BOM-preserving text;
+ * `absent` is the *only* creation case; `conflict` records why the target
+ * cannot be reasoned about (unobserved, nonregular, unreadable or invalid
+ * UTF-8).
+ */
+type ObservedTextState =
+  | { readonly status: "absent" }
+  | {
+      readonly status: "file";
+      readonly text: string;
+      readonly hash: string;
+    }
+  | { readonly status: "conflict"; readonly reason: string };
+
+function observeText(
+  snapshot: ProjectSnapshot,
+  logicalPath: string,
+): ObservedTextState {
+  const observation: TargetObservation | undefined =
+    snapshot.entries.get(logicalPath);
+  if (observation === undefined) {
+    return {
+      status: "conflict",
+      reason: `${logicalPath} was not observed; the snapshot is incomplete`,
+    };
+  }
+  if (observation.kind === "absent") return { status: "absent" };
+  if (observation.kind !== "file") {
+    return {
+      status: "conflict",
+      reason: `${logicalPath} is not a regular file (${observation.kind}); refusing to plan over it`,
+    };
+  }
+  const decoded = decodeObservedText(observation);
+  if (decoded.kind === "invalid") {
+    return {
+      status: "conflict",
+      reason: `${logicalPath} is not valid UTF-8`,
+    };
+  }
+  if (decoded.kind !== "text") {
+    return {
+      status: "conflict",
+      reason: `${logicalPath} could not be decoded`,
+    };
+  }
+  return {
+    status: "file",
+    text: decoded.text,
+    hash: observation.hash ?? (hashBytes(observation.bytes) as string),
+  };
+}
+
 function joinLogical(base: string, relative: string): string {
   return `${base.replace(/\/+$/, "")}/${relative.replace(/^\/+/, "")}`;
 }
@@ -95,23 +170,6 @@ function utf8(value: string): Uint8Array {
   return new TextEncoder().encode(value);
 }
 
-function decode(bytes: Uint8Array): string | null {
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  } catch {
-    return null;
-  }
-}
-
-function observedText(
-  snapshot: ProjectSnapshot,
-  logicalPath: string,
-): string | null {
-  const observation = snapshot.entries.get(logicalPath);
-  if (observation === undefined || observation.kind !== "file") return null;
-  return decode(observation.bytes as Uint8Array);
-}
-
 function itemById(
   registry: RegistrySnapshot,
   id: string,
@@ -119,17 +177,8 @@ function itemById(
   return registry.items.find((item) => item.id === id);
 }
 
-function manifestDigest(registry: RegistrySnapshot, id: string): string {
-  const item = itemById(registry, id);
-  if (item === undefined) return "0".repeat(64);
-  const asset = registry.assets.find(
-    (entry) => entry.path === item.manifestPath,
-  );
-  return asset?.digest ?? "0".repeat(64);
-}
-
-function itemVersion(registry: RegistrySnapshot, id: string): string {
-  return itemById(registry, id)?.manifest.version ?? "0.0.0";
+function itemVersion(registry: RegistrySnapshot, id: string): string | null {
+  return itemById(registry, id)?.manifest.version ?? null;
 }
 
 /**
@@ -139,7 +188,69 @@ function itemVersion(registry: RegistrySnapshot, id: string): string {
 export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   const { registry, config, snapshot, lock } = input;
   const diagnostics: string[] = [];
+  const derived = deriveKitPaths(config);
+  let hasConflict = false;
 
+  // The actual validated snapshot identity is authoritative. A separately
+  // supplied scalar is never trusted; a mismatch is recorded as a diagnostic
+  // but cannot change the projected identity.
+  const registryVersion = registry.root.registryVersion;
+  const registryHash = registry.root.contentHash;
+  if (
+    input.registryVersion !== registryVersion ||
+    input.registryHash !== registryHash
+  ) {
+    diagnostics.push(
+      "the composed plan uses the validated registry snapshot identity, not the separately supplied registry version/hash",
+    );
+  }
+
+  // ---- Observed config/lock metadata --------------------------------------
+  const kitJsonPath = joinLogical(config.uiDir, "_kit/kit.json");
+  const lockPath = joinLogical(config.uiDir, "_kit/kit.lock.json");
+  const kitJsonState = observeText(snapshot, kitJsonPath);
+  if (kitJsonState.status === "conflict") {
+    diagnostics.push(`config conflict: ${kitJsonState.reason}`);
+    hasConflict = true;
+  } else if (kitJsonState.status === "file") {
+    try {
+      JSON.parse(kitJsonState.text);
+    } catch {
+      diagnostics.push(
+        `config conflict: ${kitJsonPath} is not valid JSON; reconcile the observed configuration before planning`,
+      );
+      hasConflict = true;
+    }
+  }
+  const lockState = observeText(snapshot, lockPath);
+  if (lockState.status === "conflict") {
+    diagnostics.push(`lock conflict: ${lockState.reason}`);
+    hasConflict = true;
+  } else if (lockState.status === "file") {
+    try {
+      JSON.parse(lockState.text);
+    } catch {
+      diagnostics.push(
+        `lock conflict: ${lockPath} is not valid JSON; reconcile the observed lock before planning`,
+      );
+      hasConflict = true;
+    }
+    if (lock === null) {
+      diagnostics.push(
+        `lock conflict: ${lockPath} was observed but no lock was supplied; a typed null is not proof that the installed lineage is absent`,
+      );
+      hasConflict = true;
+    }
+  } else if (lock !== null) {
+    // A supplied lock against an observed absence is a lower-severity
+    // inconsistency: the observed absence is authoritative, but the caller is
+    // told that the in-memory lineage does not describe the filesystem.
+    diagnostics.push(
+      `a lock was supplied but ${lockPath} was observed absent; the observed absence is authoritative`,
+    );
+  }
+
+  // ---- Request projection and dependencies --------------------------------
   const projection = projectRequests(
     registry,
     [...config.requested, ...input.addedRoots],
@@ -147,8 +258,6 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   );
   if (!projection.ok) return fail(projection.issues);
   const desired = projection.value;
-  // Items that left the closure are handled by configuration-driven retirement,
-  // so they must not appear as conflicts in the forward reconciliation.
   const retiredOwners = new Set(desired.retired);
 
   const dependencyPlan = planDependencies(registry, desired.order);
@@ -166,7 +275,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   });
   if (!instructions.ok) return fail(instructions.issues);
 
-  // Incoming source and style files for the whole closure in install order.
+  // ---- Incoming registry content ------------------------------------------
   const incomingSources: IncomingSource[] = [];
   const sourceMeta = new Map<string, SourceMeta>();
   const cssBlocksByTarget = new Map<string, ManagedBlockInput[]>();
@@ -179,6 +288,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       diagnostics.push(
         `closure item ${JSON.stringify(id)} is not in the registry`,
       );
+      hasConflict = true;
       continue;
     }
     for (const file of item.files) {
@@ -198,11 +308,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         (file) => file.blockId === style.blockId,
       );
       if (registryFile === undefined) continue;
-      const body = decode(registryFile.bytes);
+      const body = decodeText(registryFile.bytes);
       if (body === null) {
         diagnostics.push(
           `managed block ${JSON.stringify(style.blockId)} is not valid UTF-8`,
         );
+        hasConflict = true;
         continue;
       }
       const targetBlocks = cssBlocksByTarget.get(logicalPath) ?? [];
@@ -228,6 +339,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     }
   }
 
+  // ---- Source targets -----------------------------------------------------
   const sourceRecords = planSourceTargets(
     snapshot,
     (lock?.files ?? []).filter((record) => !retiredOwners.has(record.owner)),
@@ -242,12 +354,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   for (const conflict of sourcePlan.conflicts) {
     diagnostics.push(`source conflict at ${conflict.path}: ${conflict.reason}`);
   }
+  if (!sourcePlan.executable) hasConflict = true;
 
-  let hasConflict = !sourcePlan.executable;
-
-  // Managed stylesheet: classify per block, preserve customized blocks and
-  // conflict on genuinely diverged blocks.
+  // ---- Managed stylesheet -------------------------------------------------
+  const kitCssPath = derived.kitCss;
   const stylesheetPlan = new Map<string, string>();
+  const effectiveCss = new Map<string, string>();
   const cssOutcomes: {
     path: string;
     blocks: {
@@ -263,37 +375,35 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     ...(lock?.cssBlocks
       .filter((block) => !retiredOwners.has(block.owner))
       .map((block) => block.path) ?? []),
+    kitCssPath,
   ]);
   const cssMembers: CohortMember[] = [];
   for (const cssPath of [...cssTargets].sort()) {
-    const observation = snapshot.entries.get(cssPath);
-    if (observation === undefined) {
-      diagnostics.push(
-        `managed stylesheet ${cssPath} was not observed; the snapshot is incomplete`,
-      );
+    const state = observeText(snapshot, cssPath);
+    if (state.status === "conflict") {
+      diagnostics.push(`css conflict: ${state.reason}`);
       hasConflict = true;
       continue;
     }
-    const existing =
-      observation.kind === "file"
-        ? decode(observation.bytes as Uint8Array)
-        : "";
-    if (existing === null) {
-      diagnostics.push(`managed stylesheet ${cssPath} is not valid UTF-8`);
-      hasConflict = true;
-      continue;
-    }
+    const existing = state.status === "file" ? state.text : "";
     const parsedExisting = parseManagedCss(existing);
     if (!parsedExisting.ok) {
       diagnostics.push(...parsedExisting.issues.map((entry) => entry.message));
       hasConflict = true;
       continue;
     }
+    const desiredIds = (cssBlocksByTarget.get(cssPath) ?? []).map(
+      (block) => block.id,
+    );
+    const desiredWithFoundation: ManagedBlockInput[] =
+      cssPath === kitCssPath && !desiredIds.includes("tokens")
+        ? [
+            { id: "tokens", body: TOKENS_BODY },
+            ...(cssBlocksByTarget.get(cssPath) ?? []),
+          ]
+        : (cssBlocksByTarget.get(cssPath) ?? []);
     const desiredById = new Map(
-      (cssBlocksByTarget.get(cssPath) ?? []).map((block) => [
-        block.id,
-        block.body,
-      ]),
+      desiredWithFoundation.map((block) => [block.id, block.body]),
     );
     const lockByBlock = new Map(
       (lock?.cssBlocks ?? [])
@@ -307,12 +417,53 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         .filter((block) => block.path === cssPath)
         .map((block) => [block.blockId, block]),
     );
+    const stylesheetIntegration = (lock?.integrations ?? []).find(
+      (entry) => entry.kind === "stylesheet" && entry.path === cssPath,
+    );
+    const parsedBlocks = parsedExisting.value.blocks;
+    const registryProvidesTokens = (cssBlocksByTarget.get(cssPath) ?? []).some(
+      (block) => block.id === "tokens",
+    );
+    const isFoundationTokens = (blockId: string): boolean =>
+      blockId === "tokens" &&
+      !registryProvidesTokens &&
+      !lockByBlock.has(blockId) &&
+      !allLockByBlock.has(blockId);
     const existingBodies = new Map(
-      parsedExisting.value.blocks.map((block) => [
+      parsedBlocks.map((block) => [
         block.id,
         existing.slice(block.contentStart, block.contentEnd),
       ]),
     );
+    // An existing managed block the lock does not own is application-owned;
+    // markers alone never confer ownership. It is a conflict even when it is
+    // byte-identical to incoming. The foundation `tokens` layer is owned by the
+    // stylesheet integration rather than an item, so it is exempt.
+    for (const block of parsedBlocks) {
+      if (isFoundationTokens(block.id)) continue;
+      if (!lockByBlock.has(block.id) && !allLockByBlock.has(block.id)) {
+        diagnostics.push(
+          `css conflict at ${cssPath}#${block.id}: a managed block is present that the lock does not own; markers alone do not confer ownership`,
+        );
+        hasConflict = true;
+      }
+    }
+    // A whole-file customization that the recorded stylesheet baseline no
+    // longer matches and that would still need a change cannot be overwritten.
+    if (
+      stylesheetIntegration !== undefined &&
+      state.status === "file" &&
+      state.hash !== stylesheetIntegration.baseline &&
+      desiredWithFoundation.some((block) => {
+        const local = existingBodies.get(block.id);
+        return local === undefined || local !== block.body;
+      })
+    ) {
+      diagnostics.push(
+        `css conflict at ${cssPath}: the recorded stylesheet baseline does not match the observed bytes and incoming blocks would change it`,
+      );
+      hasConflict = true;
+    }
     const ids = new Set([...existingBodies.keys(), ...desiredById.keys()]);
     const effective: ManagedBlockInput[] = [];
     const outcomeBlocks: (typeof cssOutcomes)[number]["blocks"] = [];
@@ -321,12 +472,19 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       const incomingBody = desiredById.get(blockId) ?? null;
       const allRecord = allLockByBlock.get(blockId);
       if (allRecord !== undefined && retiredOwners.has(allRecord.owner)) {
-        // A block owned by an item that left the closure is decided by
-        // configuration-driven retirement, not the forward reconciliation.
         if (local !== null) effective.push({ id: blockId, body: local });
         continue;
       }
       const record = lockByBlock.get(blockId);
+      if (isFoundationTokens(blockId) && record === undefined) {
+        // The foundation layer is owned by the stylesheet integration. Preserve
+        // an existing body and create the canonical layer only when absent.
+        effective.push({
+          id: blockId,
+          body: local ?? incomingBody ?? TOKENS_BODY,
+        });
+        continue;
+      }
       const classification = classifyCssBlocks([
         {
           id: blockId,
@@ -355,8 +513,6 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         continue;
       }
       if (incomingBody === null) {
-        // A block the registry no longer provides is left untouched here;
-        // retirement is a separate, config-driven operation.
         if (local !== null) effective.push({ id: blockId, body: local });
         continue;
       }
@@ -378,7 +534,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         id: blockId,
         owner,
         cohort: meta?.cohort ?? record?.cohort ?? "",
-        version: meta?.version ?? itemVersion(registry, owner),
+        version: meta?.version ?? itemVersion(registry, owner) ?? "0.0.0",
         baseHash,
       });
     }
@@ -387,27 +543,86 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     if (composed.value !== existing) {
       stylesheetPlan.set(cssPath, composed.value);
     }
+    effectiveCss.set(cssPath, composed.value);
     cssOutcomes.push({ path: cssPath, blocks: outcomeBlocks });
   }
 
-  // Root export region: generated declarations only.
-  const rootExports = joinLogical(config.uiDir, "index.ts");
-  const exportsObservation = snapshot.entries.get(rootExports);
+  // ---- Minimal initialization prerequisites (themes/app stylesheets) ------
+  for (const [logicalPath, label] of [
+    [derived.themesCss, "themes"],
+    [derived.appCss, "app"],
+  ] as const) {
+    const state = observeText(snapshot, logicalPath);
+    if (state.status === "conflict") {
+      diagnostics.push(`stylesheet conflict: ${state.reason}`);
+      hasConflict = true;
+      continue;
+    }
+    if (state.status === "absent") {
+      diagnostics.push(
+        `initialization creates absent empty ${label} stylesheet ${logicalPath}`,
+      );
+      stylesheetPlan.set(logicalPath, "");
+      effectiveCss.set(logicalPath, "");
+    } else {
+      effectiveCss.set(logicalPath, state.text);
+    }
+  }
+
+  // ---- Root export region -------------------------------------------------
+  const rootExports = derived.rootExports;
   let plannedExports: string | null = null;
-  if (exportsObservation === undefined) {
-    diagnostics.push(
-      `root export region ${rootExports} was not observed; the snapshot is incomplete`,
-    );
+  let finalExports = "";
+  let observedExportDeclarations: ExportDeclaration[] = [];
+  const exportsState = observeText(snapshot, rootExports);
+  if (exportsState.status === "conflict") {
+    diagnostics.push(`export conflict: ${exportsState.reason}`);
     hasConflict = true;
   } else {
-    const existing =
-      exportsObservation.kind === "file"
-        ? decode(exportsObservation.bytes as Uint8Array)
-        : "";
-    if (existing === null) {
-      diagnostics.push(`root export region ${rootExports} is not valid UTF-8`);
+    const existing = exportsState.status === "file" ? exportsState.text : "";
+    finalExports = existing;
+    const exportsIntegration = (lock?.integrations ?? []).find(
+      (entry) => entry.kind === "exports" && entry.path === rootExports,
+    );
+    const parsedRegion = parseExportRegion(rootExports, existing);
+    if (!parsedRegion.ok) {
+      diagnostics.push(...parsedRegion.issues.map((entry) => entry.message));
       hasConflict = true;
     } else {
+      if (parsedRegion.value.region !== null) {
+        observedExportDeclarations = parseGeneratedDeclarations(
+          existing.slice(
+            parsedRegion.value.region.contentStart,
+            parsedRegion.value.region.contentEnd,
+          ),
+        );
+      }
+      if (
+        parsedRegion.value.region !== null &&
+        exportsIntegration === undefined
+      ) {
+        diagnostics.push(
+          `export conflict at ${rootExports}: a managed export region is present that the lock does not own; markers alone do not confer ownership`,
+        );
+        hasConflict = true;
+      } else if (
+        exportsIntegration !== undefined &&
+        exportsState.status === "file" &&
+        exportsState.hash !== exportsIntegration.baseline
+      ) {
+        // The owned region was customized; it may only be preserved, never
+        // overwritten with new generated declarations.
+        const rendered = patchExportRegion(rootExports, existing, []);
+        if (!rendered.ok) {
+          diagnostics.push(...rendered.issues.map((entry) => entry.message));
+          hasConflict = true;
+        } else if (
+          rendered.value.slice(0, rendered.value.length) !== existing
+        ) {
+          // No declaration change requested; preserve. A requested change is a
+          // conflict handled by the cohort/ownership rule below.
+        }
+      }
       const patched = patchExportRegion(
         rootExports,
         existing,
@@ -416,43 +631,45 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       if (!patched.ok) {
         diagnostics.push(...patched.issues.map((entry) => entry.message));
         hasConflict = true;
+      } else if (
+        exportsIntegration !== undefined &&
+        exportsState.status === "file" &&
+        exportsState.hash !== exportsIntegration.baseline &&
+        patched.value !== existing
+      ) {
+        diagnostics.push(
+          `export conflict at ${rootExports}: the recorded export baseline does not match the observed customized region and incoming declarations would change it`,
+        );
+        hasConflict = true;
       } else if (patched.value !== existing) {
         plannedExports = patched.value;
+        finalExports = patched.value;
       }
     }
   }
 
-  // Layout imports.
+  // ---- Layout imports -----------------------------------------------------
   let plannedLayout: string | null = null;
-  const layoutObservation = snapshot.entries.get(config.layoutFile);
-  if (layoutObservation === undefined) {
-    diagnostics.push(
-      `layout ${config.layoutFile} was not observed; the snapshot is incomplete`,
-    );
+  let finalLayout = "";
+  const layoutState = observeText(snapshot, config.layoutFile);
+  if (layoutState.status === "conflict") {
+    diagnostics.push(`layout conflict: ${layoutState.reason}`);
     hasConflict = true;
   } else {
-    const existing =
-      layoutObservation.kind === "file"
-        ? decode(layoutObservation.bytes as Uint8Array)
-        : "";
-    if (existing === null) {
-      diagnostics.push(`layout ${config.layoutFile} is not valid UTF-8`);
-      hasConflict = true;
-    } else {
-      const specifiers = [
-        joinLogical(config.stylesDir, "kit.css"),
-        joinLogical(config.stylesDir, "themes.css"),
-        joinLogical(config.stylesDir, "app.css"),
-      ].map((target) => ({
+    const existing = layoutState.status === "file" ? layoutState.text : "";
+    finalLayout = existing;
+    const specifiers = [derived.kitCss, derived.themesCss, derived.appCss].map(
+      (target) => ({
         specifier: relativeSpecifier(config.layoutFile, target),
-      }));
-      const patched = patchLayoutImports(existing, specifiers);
-      if (!patched.ok) {
-        diagnostics.push(...patched.issues.map((entry) => entry.message));
-        hasConflict = true;
-      } else if (patched.value !== existing) {
-        plannedLayout = patched.value;
-      }
+      }),
+    );
+    const patched = patchLayoutImports(existing, specifiers);
+    if (!patched.ok) {
+      diagnostics.push(...patched.issues.map((entry) => entry.message));
+      hasConflict = true;
+    } else if (patched.value !== existing) {
+      plannedLayout = patched.value;
+      finalLayout = patched.value;
     }
   }
 
@@ -461,9 +678,66 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     requested: desired.requested,
   };
 
-  // Conservative compatibility cohorts (S059): a component's source, managed CSS
-  // and export members must not partially update when compatibility cannot be
-  // established. A changed public API widens the unit to its dependents.
+  // ---- Conservative compatibility cohorts (S059) --------------------------
+  // Effective export-surface comparison (RCLD03-R4-2): an owner's export member
+  // participates in its compatibility unit, and an actual declaration change is
+  // proven from the observed region rather than item-version inequality.
+  const exportOwnerByTarget = new Map<string, string>();
+  const incomingByOwner = new Map<string, ExportDeclaration[]>();
+  for (const id of desired.order) {
+    const item = itemById(registry, id);
+    if (item === undefined) continue;
+    for (const file of item.files) {
+      if (file.blockId !== null) continue;
+      const target = file.target.startsWith(".")
+        ? file.target
+        : `./${file.target}`;
+      if (!exportOwnerByTarget.has(target)) exportOwnerByTarget.set(target, id);
+    }
+    incomingByOwner.set(
+      id,
+      item.manifest.exports.map((entry) => ({
+        name: entry.name,
+        target: entry.target.startsWith(".")
+          ? entry.target
+          : `./${entry.target}`,
+        kind: entry.kind,
+      })),
+    );
+  }
+  const observedByOwner = new Map<string, ExportDeclaration[]>();
+  for (const declaration of observedExportDeclarations) {
+    const owner = exportOwnerByTarget.get(declaration.target);
+    if (owner === undefined) continue;
+    const list = observedByOwner.get(owner) ?? [];
+    list.push(declaration);
+    observedByOwner.set(owner, list);
+  }
+  const exportMembers: CohortMember[] = [];
+  const exportApiChanged = new Set<string>();
+  for (const id of desired.order) {
+    if (retiredOwners.has(id)) continue;
+    const incoming = incomingByOwner.get(id) ?? [];
+    const observed = observedByOwner.get(id) ?? [];
+    const incomingKeys = [
+      ...new Set(incoming.map(exportDeclarationKey)),
+    ].sort();
+    const observedKeys = [
+      ...new Set(observed.map(exportDeclarationKey)),
+    ].sort();
+    const equal =
+      incomingKeys.length === observedKeys.length &&
+      incomingKeys.every((key, index) => key === observedKeys[index]);
+    if (equal) {
+      exportMembers.push({ owner: id, disposition: "no_change" });
+      continue;
+    }
+    const disposition: OwnershipDisposition =
+      observed.length === 0 ? "create" : "update";
+    exportMembers.push({ owner: id, disposition });
+    exportApiChanged.add(id);
+  }
+
   const cohortMembers: CohortMember[] = [
     ...sourcePlan.changes
       .filter((change) => !retiredOwners.has(change.owner))
@@ -478,19 +752,9 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         disposition: conflict.disposition,
       })),
     ...cssMembers.filter((member) => !retiredOwners.has(member.owner)),
+    ...exportMembers.filter((member) => !retiredOwners.has(member.owner)),
   ];
-  const lockVersion = new Map(
-    (lock?.items ?? []).map((item) => [item.id, item.version]),
-  );
-  const exportedApiChanged = new Set(
-    desired.items
-      .map((item) => item.id)
-      .filter(
-        (id) =>
-          lockVersion.has(id) &&
-          lockVersion.get(id) !== itemVersion(registry, id),
-      ),
-  );
+  const exportedApiChanged = exportApiChanged;
   const dependents = new Map<string, string[]>();
   for (const item of registry.items) {
     for (const dependency of item.manifest.registryDependencies) {
@@ -513,34 +777,102 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     }
   }
 
+  // ---- Planned writes and truthful lock projection ------------------------
   const writes: PlannedWrite[] = [];
   let projectedLock: KitLock | null = lock;
   if (!hasConflict) {
-    const kitJsonPath = joinLogical(config.uiDir, "_kit/kit.json");
     const configJson = `${JSON.stringify(desiredConfig, null, 2)}\n`;
-    if (observedText(snapshot, kitJsonPath) !== configJson) {
-      writes.push({ path: kitJsonPath, bytes: utf8(configJson) });
+    if (kitJsonState.status !== "file" || kitJsonState.text !== configJson) {
+      writes.push({
+        operation: "create",
+        path: kitJsonPath,
+        bytes: utf8(configJson),
+      });
     }
     for (const change of sourcePlan.changes) {
       if (!change.producesBytes) continue;
       const meta = sourceMeta.get(change.path);
       if (meta === undefined) continue;
-      writes.push({ path: change.path, bytes: meta.bytes });
+      writes.push({
+        operation: "update",
+        path: change.path,
+        bytes: meta.bytes,
+      });
     }
     for (const [cssPath, text] of stylesheetPlan) {
-      writes.push({ path: cssPath, bytes: utf8(text) });
+      const prior = observeText(snapshot, cssPath);
+      writes.push({
+        operation: prior.status === "absent" ? "create" : "update",
+        path: cssPath,
+        bytes: utf8(text),
+      });
     }
     if (plannedExports !== null) {
-      writes.push({ path: rootExports, bytes: utf8(plannedExports) });
+      writes.push({
+        operation: exportsState.status === "absent" ? "create" : "update",
+        path: rootExports,
+        bytes: utf8(plannedExports),
+      });
     }
     if (plannedLayout !== null) {
-      writes.push({ path: config.layoutFile, bytes: utf8(plannedLayout) });
+      writes.push({
+        operation: layoutState.status === "absent" ? "create" : "update",
+        path: config.layoutFile,
+        bytes: utf8(plannedLayout),
+      });
     }
+
+    const integrationBaseline = (
+      prior: LockIntegration | undefined,
+      wrote: boolean,
+      finalText: string,
+    ): LockIntegration["baseline"] =>
+      wrote
+        ? (hashBytes(utf8(finalText)) as string)
+        : (prior?.baseline ?? (hashBytes(utf8(finalText)) as string));
+    const priorIntegration = (kind: LockIntegration["kind"], p: string) =>
+      (lock?.integrations ?? []).find(
+        (entry) => entry.kind === kind && entry.path === p,
+      );
+    const integrations: LockIntegration[] = [
+      {
+        kind: "layout" as const,
+        path: config.layoutFile,
+        baseline: integrationBaseline(
+          priorIntegration("layout", config.layoutFile),
+          plannedLayout !== null,
+          finalLayout,
+        ),
+        contract: "layout-v1",
+      },
+      {
+        kind: "stylesheet" as const,
+        path: kitCssPath,
+        baseline: integrationBaseline(
+          priorIntegration("stylesheet", kitCssPath),
+          stylesheetPlan.has(kitCssPath),
+          effectiveCss.get(kitCssPath) ?? "",
+        ),
+        contract: "stylesheet-v1",
+      },
+      {
+        kind: "exports" as const,
+        path: rootExports,
+        baseline: integrationBaseline(
+          priorIntegration("exports", rootExports),
+          plannedExports !== null,
+          finalExports,
+        ),
+        contract: "exports-v1",
+      },
+    ].sort((left, right) =>
+      left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+    );
 
     const built = buildLockProjection({
       items: desired.items.map((entry) => ({
         id: entry.id,
-        version: itemVersion(registry, entry.id),
+        version: itemVersion(registry, entry.id) ?? "0.0.0",
         digest: manifestDigest(registry, entry.id),
         origin: (entry.provenance === "explicit"
           ? "explicit"
@@ -551,12 +883,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       sourcePlan,
       sourceMeta,
       cssOutcomes,
-      registryVersion: input.registryVersion,
-      registryHash: input.registryHash,
+      integrations,
+      registryVersion,
+      registryHash,
       configHash: hashBytes(utf8(configJson)) as string,
       toolVersion: INITIAL_TOOL_VERSION,
     });
-    const lockPath = joinLogical(config.uiDir, "_kit/kit.lock.json");
     const validated = parseKitLock(built.lock, lockPath, {
       stateDir: joinLogical(config.uiDir, "_kit"),
       uiDir: config.uiDir,
@@ -565,8 +897,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     if (!validated.ok) return fail(validated.issues);
     projectedLock = validated.value;
     const lockJson = `${JSON.stringify(projectedLock, null, 2)}\n`;
-    if (observedText(snapshot, lockPath) !== lockJson) {
-      writes.push({ path: lockPath, bytes: utf8(lockJson) });
+    if (lockState.status !== "file" || lockState.text !== lockJson) {
+      writes.push({
+        operation: lockState.status === "absent" ? "create" : "update",
+        path: lockPath,
+        bytes: utf8(lockJson),
+      });
     }
     writes.sort((left, right) =>
       left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
@@ -587,4 +923,23 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     lock: projectedLock,
     diagnostics: diagnostics.sort(),
   });
+}
+
+function decodeText(bytes: Uint8Array): string | null {
+  try {
+    return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(
+      bytes,
+    );
+  } catch {
+    return null;
+  }
+}
+
+function manifestDigest(registry: RegistrySnapshot, id: string): string {
+  const item = itemById(registry, id);
+  if (item === undefined) return "0".repeat(64);
+  const asset = registry.assets.find(
+    (entry) => entry.path === item.manifestPath,
+  );
+  return asset?.digest ?? "0".repeat(64);
 }

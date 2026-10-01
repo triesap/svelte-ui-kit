@@ -77,23 +77,29 @@ only writing modes.
 
 #### Current owner-authorized RCLD-03 batch verification
 
-Independent review 3 of candidate `b5423b2413c9e91900d3194e88483e3acf3df995`
-requests RCLD03-R3-1/2/3/4 corrections and continuation through S063. Fresh
-reviewer build/format/lint/typecheck, unit 259/259, integration 173/173,
-registry 38/38, CLI 52/52 and contracts 127/127 pass with zero skips. Preserve
-immutable lookup/bytes, strict UTF-8/BOM, ancestry and uncaptured-evidence checks,
-ordinary static proof, import-node patches and simple marker/parser repairs.
-New emitted-module probes expose CSS duplication and changed unmanaged order,
-interpolated-template text deletion, unsafe aliases/workspace/peer proof,
-missing snapshot identity and incomplete/destructive initialization. The exact
-planned effects must include lock publication and replay as no_change without
-resetting initialized/customized state. The governing RCLD records findings and
-decisions. Keep 32 accepted and 25 pending, with S058–S063 unimplemented.
+Independent review 4 of candidate `bf613f4e6e17ccb3a6437ed7ea342acf779d2e10`
+requests RCLD03-R4-1/2/3/4 completion through S063. Fresh independent
+build/format/lint/typecheck, unit 265/265, integration 196/196, registry 38/38,
+CLI 52/52 and contracts 127/127 pass without skips. Preserve the verified prior
+CSS/template repairs, minimal init replay, static/workspace/runtime-peer controls
+and snapshot identities. New real-registry probes expose unsafe composed target
+handling, lost BOM/integration ownership, unowned/custom export overwrite,
+missing export cohort members, spoofed registry identity and ambiguous deletion.
+An actual disposable consumer built from exactly the add plan fails on missing
+kit/themes/app CSS; adding those missing files only in a review control makes
+the same build pass. Keep 32 accepted and 31 pending; S064–S203 not started.
+The author's existing fixture/browser/reference lanes remain evidence for the
+artifacts they actually tested, not generated consumers or installed parsers.
 
 Use actual composed callers, AST imports/exports and planned-consumer check/build;
 helper/string assertions do not prove integration. Qualify installed TS/Svelte
 parser runtime dependencies outside the checkout. Keep observed absence distinct
 from missing/unsafe/unreadable evidence and test complete-tree purity.
+Positive purity/determinism tests must assert executable successful plans with
+all required observations. Apply explicit create/update/retire operations only
+in owned test consumers and verify bytes, absence, lineage and replay. Keep
+hand-authored fixture and planner-produced consumer evidence separate; the
+existing installed model-parser tests do not exercise TS/Svelte planner imports.
 Record all intermediate failures; retain the verified operator-routing cleanup
 in affected public reports. Capture underlying command exits before filtering output. No
 new acceptance, release-AC20 waiver or additional dependency approval.
