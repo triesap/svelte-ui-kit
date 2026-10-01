@@ -397,6 +397,16 @@ function collectPeerConstraints(
     for (const owner of entry.requiredBy) constraint.requiredBy.add(owner);
   }
 
+  // Any registry requirement the consumer needs at runtime or as a peer makes
+  // that package independently required, so an upstream *optional* peer on it
+  // is promoted to mandatory. CLI/tooling-only requirements stay separate.
+  const independentlyRequired = new Set<string>();
+  for (const entry of plan.entries) {
+    if (entry.roles.includes("peer") || entry.roles.includes("runtime")) {
+      independentlyRequired.add(entry.name);
+    }
+  }
+
   for (const entry of plan.entries) {
     const observation = observeInstalled(root, entry.name);
     if (observation.kind === "absent") {
@@ -431,11 +441,32 @@ function collectPeerConstraints(
       );
       continue;
     }
-    const peerDependencies = observation.manifest["peerDependencies"];
-    if (!isRecord(peerDependencies)) continue;
-    const meta = observation.manifest["peerDependenciesMeta"];
-    for (const peerName of Object.keys(peerDependencies).sort()) {
-      const range = peerDependencies[peerName];
+    const peerDependenciesRaw = observation.manifest["peerDependencies"];
+    if (peerDependenciesRaw !== undefined && !isRecord(peerDependenciesRaw)) {
+      issues.push(
+        issue(
+          "PEER_UPSTREAM_INVALID",
+          `${entry.name} declares a malformed peerDependencies map`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+    if (peerDependenciesRaw === undefined) continue;
+    const metaRaw = observation.manifest["peerDependenciesMeta"];
+    if (metaRaw !== undefined && !isRecord(metaRaw)) {
+      issues.push(
+        issue(
+          "PEER_UPSTREAM_INVALID",
+          `${entry.name} declares a malformed peerDependenciesMeta map`,
+          "package.json",
+        ),
+      );
+      continue;
+    }
+    const meta = metaRaw;
+    for (const peerName of Object.keys(peerDependenciesRaw).sort()) {
+      const range = peerDependenciesRaw[peerName];
       if (typeof range !== "string" || validRange(range) === null) {
         issues.push(
           issue(
@@ -446,13 +477,22 @@ function collectPeerConstraints(
         );
         continue;
       }
-      const optional =
-        isRecord(meta) &&
-        isRecord(meta[peerName]) &&
-        (meta[peerName] as Record<string, unknown>)["optional"] === true;
+      const metaEntry = isRecord(meta) ? meta[peerName] : undefined;
+      if (metaEntry !== undefined && !isRecord(metaEntry)) {
+        issues.push(
+          issue(
+            "PEER_UPSTREAM_INVALID",
+            `${entry.name} declares malformed peer metadata for ${peerName}`,
+            "package.json",
+          ),
+        );
+        continue;
+      }
+      const optional = isRecord(metaEntry) && metaEntry["optional"] === true;
       const constraint = ensure(peerName);
-      const independentlyRequired = constraint.required;
-      if (optional && !independentlyRequired) {
+      const isIndependentlyRequired =
+        independentlyRequired.has(peerName) || constraint.required;
+      if (optional && !isIndependentlyRequired) {
         constraint.optional = true;
         continue;
       }

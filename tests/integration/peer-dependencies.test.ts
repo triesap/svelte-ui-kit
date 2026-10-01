@@ -296,3 +296,60 @@ test("an optional upstream peer is skipped when not independently required", (t)
   const result = validatePeerDependencies(project.root, runtimePlan);
   assert.equal(result.ok, true, JSON.stringify(result));
 });
+
+/**
+ * RCLD03-R2-1: a runtime registry requirement makes the package independently
+ * required, so an upstream optional peer that conflicts with it is mandatory.
+ */
+test("a runtime requirement promotes a conflicting optional upstream peer", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ dependencies: { bits: "1.0.0", svelte: "^5" } }),
+  );
+  installWith(project, "bits", "1.0.0", {
+    peerDependencies: { svelte: "^4" },
+    peerDependenciesMeta: { svelte: { optional: true } },
+  });
+  install(project, "svelte", "5.57.1");
+
+  const runtimePlan = plan([
+    {
+      name: "bits",
+      range: "1.0.0",
+      roles: ["runtime"],
+      requiredBy: ["button"],
+    },
+    { name: "svelte", range: "^5", roles: ["runtime"], requiredBy: ["button"] },
+  ]);
+  const result = validatePeerDependencies(project.root, runtimePlan);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.ok(codes(result).includes("PEER_INCOMPATIBLE"));
+});
+
+/**
+ * RCLD03-R2-1: a present but malformed upstream peer map must not manufacture
+ * a successful audit.
+ */
+test("a malformed upstream peer map is invalid evidence", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ dependencies: { bits: "1.0.0" } }),
+  );
+  installWith(project, "bits", "1.0.0", { peerDependencies: "nope" });
+
+  const runtimePlan = plan([
+    {
+      name: "bits",
+      range: "1.0.0",
+      roles: ["runtime"],
+      requiredBy: ["button"],
+    },
+  ]);
+  const result = validatePeerDependencies(project.root, runtimePlan);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.ok(codes(result).includes("PEER_UPSTREAM_INVALID"));
+});

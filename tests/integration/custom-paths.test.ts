@@ -206,3 +206,20 @@ test("a symlinked _kit directory is observed deliberately", (t) => {
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.ok(codes(result).includes("KIT_CONFIG_UNSAFE"));
 });
+
+/**
+ * RCLD03-R2-1: a symlinked default ancestry must not become a silent default
+ * bootstrap.
+ */
+test("a symlinked default ancestry cannot become a default bootstrap", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile("package.json", JSON.stringify({ name: "linked-src" }));
+  const external = createTempProject({ prefix: "suik-src-external-" });
+  t.after(() => external.cleanup());
+  project.symlink(external.root, "src");
+
+  const result = discoverKitConfig(project.root);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(codes(result), ["KIT_CONFIG_UNSAFE"]);
+});

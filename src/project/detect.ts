@@ -155,9 +155,31 @@ export function detectDefaultProject(
     ]);
   }
 
+  let rawManifest: string;
+  try {
+    rawManifest = readFileSync(manifestAbs, "utf8");
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException | null)?.code;
+    if (code === "ENOENT") {
+      return fail([
+        issue(
+          "PROJECT_MANIFEST_MISSING",
+          `${manifestRel} disappeared while it was being read; run the command in a SvelteKit application package`,
+          manifestRel,
+        ),
+      ]);
+    }
+    return fail([
+      issue(
+        "PROJECT_MANIFEST_UNREADABLE",
+        `${manifestRel} could not be read (${code ?? "EIO"})`,
+        manifestRel,
+      ),
+    ]);
+  }
   let manifest: unknown;
   try {
-    manifest = JSON.parse(readFileSync(manifestAbs, "utf8"));
+    manifest = JSON.parse(rawManifest);
   } catch {
     return fail([
       issue(
@@ -432,6 +454,44 @@ function scanKitConfigCandidates(root: string): CandidateScan {
 }
 
 /**
+ * Observe the default generated UI ancestry (`src/lib/components/ui`). An
+ * existing ancestor that is a symlink or a non-directory entry is unsafe: the
+ * generator must not adopt an external tree or bootstrap into a file, so a
+ * default plan cannot be produced from it. Absence is allowed because a later
+ * initialization may create the missing directories.
+ */
+function defaultAncestryIssue(root: string): ModelIssue | null {
+  let current = root;
+  for (const segment of DEFAULT_UI_DIR.split("/")) {
+    current = path.join(current, segment);
+    const entry = observeEntry(current);
+    if (entry.kind === "absent") return null;
+    if (entry.kind === "unreadable") {
+      return issue(
+        "KIT_CONFIG_UNREADABLE",
+        `the default generated ancestry could not be inspected (${entry.code})`,
+        DEFAULT_UI_DIR,
+      );
+    }
+    if (entry.kind === "symlink") {
+      return issue(
+        "KIT_CONFIG_UNSAFE",
+        `the default generated ancestry ${JSON.stringify(DEFAULT_UI_DIR)} traverses a symlinked path; refusing to bootstrap through it`,
+        DEFAULT_UI_DIR,
+      );
+    }
+    if (entry.kind !== "directory") {
+      return issue(
+        "KIT_CONFIG_UNSAFE",
+        `the default generated ancestry ${JSON.stringify(DEFAULT_UI_DIR)} traverses a non-directory entry; refusing to bootstrap through it`,
+        DEFAULT_UI_DIR,
+      );
+    }
+  }
+  return null;
+}
+
+/**
  * Discover the selected custom `_kit/kit.json` within the package (S037). No
  * candidate means a default bootstrap; more than one validated candidate, a
  * malformed candidate, an unsafe/nonregular candidate or a candidate whose
@@ -523,6 +583,9 @@ export function discoverKitConfig(
     ]);
   }
   if (valid.length === 1) return ok(valid[0] as DiscoveredKitConfig);
+
+  const ancestryIssue = defaultAncestryIssue(root);
+  if (ancestryIssue !== null) return fail([ancestryIssue]);
 
   return ok({
     kind: "default",

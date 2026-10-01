@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import path from "node:path";
 import { test } from "node:test";
 
 import {
@@ -257,4 +258,45 @@ test("reporting never executes a manager or changes the tree", (t) => {
   render(project, ["bits-ui@2.19.3"], ["svelte@5.57.1"]);
   render(project, ["bits-ui@2.19.3"], ["svelte@5.57.1"]);
   assert.deepEqual(snapshotTree(project.root), before);
+});
+
+/**
+ * RCLD03-R2-1: manager evidence may come from the proven owning workspace when
+ * the selected member declares none itself.
+ */
+test("the proven owning workspace supplies manager evidence", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "root",
+      packageManager: "pnpm@11.22.0",
+      workspaces: ["apps/*"],
+    }),
+  );
+  project.writeFile("apps/app/package.json", JSON.stringify({ name: "app" }));
+
+  const evidence = detectPackageManager(path.join(project.root, "apps", "app"));
+  assert.equal(evidence.ok, true, JSON.stringify(evidence));
+  if (!evidence.ok) return;
+  assert.equal(evidence.value.manager, "pnpm");
+  assert.equal(evidence.value.source, "packageManager");
+});
+
+/**
+ * RCLD03-R2-1: a malformed selected manifest is typed manual guidance, never a
+ * stale-lockfile fallback.
+ */
+test("a malformed manifest does not fall back to a stale lockfile", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile("package.json", "{ not json");
+  project.writeFile("package-lock.json", "{}\n");
+
+  const evidence = detectPackageManager(project.root);
+  assert.equal(evidence.ok, true, JSON.stringify(evidence));
+  if (!evidence.ok) return;
+  assert.equal(evidence.value.manager, null);
+  assert.equal(evidence.value.source, "unsupported");
 });

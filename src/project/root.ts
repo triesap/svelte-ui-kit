@@ -4,20 +4,24 @@
  * The CLI must operate on exactly one application package and must never guess a
  * workspace sibling. Two selection modes exist:
  *
- * - an explicit `--cwd <path>` selects that package directly; when the path is
- *   a workspace root it is accepted only if the workspace resolves to exactly
- *   one *proven* application package, otherwise an actionable ambiguity or
- *   unsupported-syntax diagnostic is returned;
+ * - an explicit `--cwd <path>` selects that package directly. An explicitly
+ *   selected, *proven* application package is honored even when it also declares
+ *   workspace members; a non-application workspace root is accepted only if the
+ *   workspace resolves to exactly one proven application package, otherwise an
+ *   actionable ambiguity or unsupported-syntax diagnostic is returned;
  * - without `--cwd`, the nearest enclosing package (walking upward from the
  *   invocation directory) is selected. Upward discovery never looks at sibling
  *   packages, but it does recognize an ambiguous workspace root.
  *
  * Membership inference only supports literal paths and a single trailing `/*`
  * wildcard, applies `!` exclusions, requires containment inside the workspace
- * root, rejects symlinked members and requires actual SvelteKit application
- * evidence. Deeper globs, escaping paths and unknown YAML/glob syntax produce a
- * typed diagnostic that instructs the developer to pass `--cwd` rather than
- * silently disappearing.
+ * root and requires actual SvelteKit application evidence. Deeper globs, `?`
+ * and other glob constructs, escaping paths and unknown YAML/glob syntax
+ * produce a typed diagnostic that instructs the developer to pass `--cwd`
+ * rather than silently disappearing. Include and exclude patterns share the
+ * same grammar, and a resolved member must be *physically* contained in the
+ * workspace root, so a symlinked intermediate ancestor cannot select an
+ * external application.
  *
  * Resolution is read-only. It inspects `package.json`/`pnpm-workspace.yaml`
  * metadata only; it never executes config or package scripts. Canonical root
@@ -25,7 +29,7 @@
  * filesystem gate (S041–S042); this module keeps the selected path explicit so
  * that gate can observe it.
  */
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, realpathSync } from "node:fs";
 import path from "node:path";
 
 import {
@@ -69,20 +73,51 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Read the `workspaces` patterns declared by a package manifest. */
-function manifestWorkspacePatterns(value: unknown): string[] | null {
+type ManifestPatterns =
+  | { readonly kind: "none" }
+  | { readonly kind: "patterns"; readonly patterns: WorkspacePatterns }
+  | { readonly kind: "malformed"; readonly reason: string };
+
+/** Read and validate the `workspaces` patterns declared by a package manifest. */
+function manifestWorkspacePatterns(value: unknown): ManifestPatterns {
+  if (value === undefined) return { kind: "none" };
+  let entries: unknown;
   if (Array.isArray(value)) {
-    return value.filter((entry): entry is string => typeof entry === "string");
+    entries = value;
+  } else if (isRecord(value)) {
+    entries = value["packages"];
+    if (entries === undefined) {
+      return {
+        kind: "malformed",
+        reason: "the `workspaces` object has no `packages` list",
+      };
+    }
+  } else {
+    return {
+      kind: "malformed",
+      reason: "`workspaces` must be an array or a `{ packages: [...] }` object",
+    };
   }
-  if (isRecord(value)) {
-    const packages = value["packages"];
-    if (Array.isArray(packages)) {
-      return packages.filter(
-        (entry): entry is string => typeof entry === "string",
-      );
+  if (!Array.isArray(entries)) {
+    return {
+      kind: "malformed",
+      reason: "`workspaces.packages` must be an array",
+    };
+  }
+  for (const entry of entries) {
+    if (typeof entry !== "string") {
+      return {
+        kind: "malformed",
+        reason: "every `workspaces` entry must be a string",
+      };
     }
   }
-  return null;
+  const declared = entries as string[];
+  const include = declared.filter((pattern) => !pattern.startsWith("!"));
+  const exclude = declared
+    .filter((pattern) => pattern.startsWith("!"))
+    .map((pattern) => pattern.slice(1));
+  return { kind: "patterns", patterns: { include, exclude } };
 }
 
 /**
@@ -155,19 +190,41 @@ function pnpmWorkspacePatterns(abs: string): WorkspaceConfig {
 /** Prefer manifest workspaces; otherwise read `pnpm-workspace.yaml`. */
 function readWorkspaceConfig(root: string): WorkspaceConfig {
   const manifestObservation = readJsonObject(path.join(root, "package.json"));
-  if (manifestObservation.kind === "value") {
-    const declared = manifestWorkspacePatterns(
-      manifestObservation.value["workspaces"],
-    );
-    if (declared && declared.length > 0) {
-      const include = declared.filter((pattern) => !pattern.startsWith("!"));
-      const exclude = declared
-        .filter((pattern) => pattern.startsWith("!"))
-        .map((pattern) => pattern.slice(1));
-      return { kind: "patterns", patterns: { include, exclude } };
+  switch (manifestObservation.kind) {
+    case "value": {
+      const declared = manifestWorkspacePatterns(
+        manifestObservation.value["workspaces"],
+      );
+      if (declared.kind === "malformed") {
+        return { kind: "unsupported", reason: declared.reason };
+      }
+      if (
+        declared.kind === "patterns" &&
+        declared.patterns.include.length > 0
+      ) {
+        return { kind: "patterns", patterns: declared.patterns };
+      }
+      return pnpmWorkspacePatterns(path.join(root, "pnpm-workspace.yaml"));
     }
+    case "malformed":
+      return {
+        kind: "unsupported",
+        reason:
+          "package.json is not valid JSON, so workspace membership cannot be proven",
+      };
+    case "unreadable":
+      return {
+        kind: "unsupported",
+        reason: `package.json could not be read (${manifestObservation.code})`,
+      };
+    case "unsafe":
+      return {
+        kind: "unsupported",
+        reason: "package.json is not a regular file",
+      };
+    case "absent":
+      return pnpmWorkspacePatterns(path.join(root, "pnpm-workspace.yaml"));
   }
-  return pnpmWorkspacePatterns(path.join(root, "pnpm-workspace.yaml"));
 }
 
 /** True when `abs` is strictly inside, or equal to, `root`. */
@@ -181,35 +238,73 @@ function isContained(root: string, abs: string): boolean {
   );
 }
 
+/**
+ * The reason a workspace pattern uses an unsupported glob shape, or `null` when
+ * it is a literal path or a single trailing `/*`.
+ */
+function globUnsupportedReason(pattern: string): string | null {
+  if (!/[*?[\]{}()]/.test(pattern)) return null;
+  if (
+    pattern.endsWith("/*") &&
+    !/[*?[\]{}()]/.test(pattern.slice(0, -2)) &&
+    !pattern.slice(0, -2).endsWith("/")
+  ) {
+    return null;
+  }
+  return "uses a glob shape other than a single trailing /*";
+}
+
 type ExpandedMembers =
   | { readonly kind: "members"; readonly members: readonly string[] }
   | { readonly kind: "unsupported"; readonly reason: string };
 
 /**
  * Expand one workspace pattern. Only a literal path or a single trailing `/*`
- * wildcard is supported; anything else (including escapes and deeper globs) is
- * an unsupported pattern, never a silently dropped member.
+ * wildcard is supported; anything else (including `?`, deeper globs and
+ * escapes) is an unsupported pattern, never a silently dropped member. The
+ * directory listing is a typed outcome, and a member that resolves outside the
+ * *physical* workspace root is rejected.
  */
 function expandWorkspacePattern(
   root: string,
   pattern: string,
+  physicalRoot: string,
 ): ExpandedMembers {
-  if (pattern.includes("*")) {
-    if (pattern.endsWith("/*") && !pattern.slice(0, -2).includes("*")) {
-      const base = path.resolve(root, pattern.slice(0, -2));
-      if (!isContained(root, base)) {
-        return { kind: "unsupported", reason: `escapes the workspace root` };
-      }
-      if (observeEntry(base).kind !== "directory")
-        return { kind: "members", members: [] };
-      const members = readdirSync(base)
-        .sort()
-        .map((name) => path.join(base, name));
-      return { kind: "members", members };
+  const globReason = globUnsupportedReason(pattern);
+  if (globReason !== null) {
+    return { kind: "unsupported", reason: globReason };
+  }
+  if (pattern.endsWith("/*")) {
+    const base = path.resolve(root, pattern.slice(0, -2));
+    if (!isContained(root, base)) {
+      return { kind: "unsupported", reason: "escapes the workspace root" };
+    }
+    const baseEntry = observeEntry(base);
+    if (baseEntry.kind === "absent") return { kind: "members", members: [] };
+    if (baseEntry.kind !== "directory") {
+      return {
+        kind: "unsupported",
+        reason: "the wildcard base is not a real directory",
+      };
+    }
+    if (!isPhysicallyContained(physicalRoot, base)) {
+      return {
+        kind: "unsupported",
+        reason: "the wildcard base resolves outside the workspace root",
+      };
+    }
+    let names: string[];
+    try {
+      names = readdirSync(base);
+    } catch (error) {
+      return {
+        kind: "unsupported",
+        reason: `the wildcard base could not be listed (${(error as NodeJS.ErrnoException | null)?.code ?? "EIO"})`,
+      };
     }
     return {
-      kind: "unsupported",
-      reason: "uses a glob shape other than a single trailing /*",
+      kind: "members",
+      members: names.sort().map((name) => path.join(base, name)),
     };
   }
   const resolved = path.resolve(root, pattern);
@@ -219,14 +314,22 @@ function expandWorkspacePattern(
   return { kind: "members", members: [resolved] };
 }
 
+/** True when `abs` physically resolves inside `physicalRoot`. */
+function isPhysicallyContained(physicalRoot: string, abs: string): boolean {
+  let real: string;
+  try {
+    real = realpathSync(abs);
+  } catch {
+    return false;
+  }
+  return isContained(physicalRoot, real);
+}
+
 /** True when a member path matches one literal or trailing-wildcard pattern. */
 function memberMatches(root: string, pattern: string, abs: string): boolean {
-  if (pattern.includes("*")) {
-    if (pattern.endsWith("/*")) {
-      const base = path.resolve(root, pattern.slice(0, -2));
-      return path.dirname(abs) === base;
-    }
-    return false;
+  if (pattern.endsWith("/*")) {
+    const base = path.resolve(root, pattern.slice(0, -2));
+    return path.dirname(abs) === base;
   }
   return path.resolve(root, pattern) === abs;
 }
@@ -256,11 +359,12 @@ interface WorkspaceResolution {
 function workspaceMembers(
   root: string,
   config: WorkspacePatterns,
+  physicalRoot: string,
 ): WorkspaceResolution {
   const issues: ModelIssue[] = [];
   const members: string[] = [];
   for (const pattern of config.include) {
-    const expanded = expandWorkspacePattern(root, pattern);
+    const expanded = expandWorkspacePattern(root, pattern, physicalRoot);
     if (expanded.kind === "unsupported") {
       issues.push(
         issue(
@@ -273,17 +377,83 @@ function workspaceMembers(
     }
     for (const candidate of expanded.members) {
       if (!isApplicationPackage(candidate)) continue;
-      if (
-        config.exclude.some((pattern) =>
-          memberMatches(root, pattern, candidate),
-        )
-      ) {
+      if (!isPhysicallyContained(physicalRoot, candidate)) {
+        issues.push(
+          issue(
+            "PROJECT_WORKSPACE_UNSUPPORTED",
+            `workspace member ${JSON.stringify(path.relative(root, candidate))} resolves outside the workspace root; pass --cwd for the exact application package`,
+            "package.json",
+          ),
+        );
         continue;
       }
+      const excluded = config.exclude.some((pattern) =>
+        memberMatches(root, pattern, candidate),
+      );
+      if (excluded) continue;
       members.push(candidate);
     }
   }
+  for (const pattern of config.exclude) {
+    const globReason = globUnsupportedReason(pattern);
+    if (globReason !== null) {
+      issues.push(
+        issue(
+          "PROJECT_WORKSPACE_UNSUPPORTED",
+          `workspace exclusion ${JSON.stringify(pattern)} ${globReason}; supported exclusions are literal paths and a single trailing /*. Pass --cwd for the exact application package`,
+          "package.json",
+        ),
+      );
+    }
+  }
   return { members: [...new Set(members)].sort(), issues };
+}
+
+/** True when a workspace at `root` declares `target` as one of its members. */
+function workspaceDeclaresMember(
+  root: string,
+  config: WorkspacePatterns,
+  target: string,
+): boolean {
+  const canonical = canonicalRoot(root);
+  if (!canonical.ok) return false;
+  for (const pattern of config.include) {
+    const expanded = expandWorkspacePattern(root, pattern, canonical.value);
+    if (expanded.kind !== "members") continue;
+    for (const member of expanded.members) {
+      if (path.resolve(member) !== target) continue;
+      if (!isPhysicallyContained(canonical.value, member)) continue;
+      if (
+        config.exclude.some((exclude) => memberMatches(root, exclude, member))
+      ) {
+        continue;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Find the nearest ancestor that *proves* it owns `packageRoot` by declaring
+ * it as a workspace member. Only proven membership is returned, so unrelated
+ * ancestors are never treated as a manager evidence source.
+ */
+export function findOwningWorkspaceRoot(packageRoot: string): string | null {
+  const target = path.resolve(packageRoot);
+  let current = path.dirname(target);
+  for (;;) {
+    const config = readWorkspaceConfig(current);
+    if (
+      config.kind === "patterns" &&
+      workspaceDeclaresMember(current, config.patterns, target)
+    ) {
+      return current;
+    }
+    const parent = path.dirname(current);
+    if (parent === current) return null;
+    current = parent;
+  }
 }
 
 /** Resolve the nearest enclosing package by walking strictly upward. */
@@ -304,13 +474,30 @@ function packageName(root: string): string | null {
   return typeof name === "string" ? name : null;
 }
 
+/** Canonicalize the workspace root, or report a typed reason. */
+function canonicalRoot(root: string): ModelResult<string> {
+  try {
+    return ok(realpathSync(root));
+  } catch (error) {
+    return fail([
+      issue(
+        "PROJECT_WORKSPACE_UNSUPPORTED",
+        `the workspace root could not be resolved to its canonical path (${(error as NodeJS.ErrnoException | null)?.code ?? "EIO"})`,
+        "package.json",
+      ),
+    ]);
+  }
+}
+
 /** Resolve a workspace root to exactly one application package. */
 function resolveWorkspaceRoot(
   root: string,
   config: WorkspacePatterns,
   cwdValue: string | null,
 ): ModelResult<ResolvedProjectRoot> {
-  const resolution = workspaceMembers(root, config);
+  const canonical = canonicalRoot(root);
+  if (!canonical.ok) return canonical;
+  const resolution = workspaceMembers(root, config, canonical.value);
   if (resolution.issues.length > 0) return fail(resolution.issues);
   if (resolution.members.length === 0) {
     return fail([
@@ -374,6 +561,17 @@ export function resolveProjectRoot(
         ),
       ]);
     }
+    // An explicitly selected proven application is honored even when it also
+    // declares workspace members; workspace inference only fills the gap for a
+    // directory that is not itself an application package.
+    if (isApplicationPackage(selected)) {
+      return ok({
+        root: selected,
+        selectedBy: "cwd",
+        packageName: packageName(selected),
+        workspaceRoot: null,
+      });
+    }
     const config = readWorkspaceConfig(selected);
     if (config.kind === "unsupported") {
       return fail([
@@ -423,7 +621,13 @@ export function resolveProjectRoot(
     ]);
   }
   if (config.kind === "patterns") {
-    const resolution = workspaceMembers(nearest, config.patterns);
+    const canonical = canonicalRoot(nearest);
+    if (!canonical.ok) return canonical;
+    const resolution = workspaceMembers(
+      nearest,
+      config.patterns,
+      canonical.value,
+    );
     if (resolution.issues.length > 0) return fail(resolution.issues);
     if (resolution.members.length > 1) {
       return fail([

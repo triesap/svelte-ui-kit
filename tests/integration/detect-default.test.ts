@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { syncBuiltinESMExports } from "node:module";
 import { test } from "node:test";
 
 import { detectDefaultProject } from "../../src/project/detect.js";
@@ -321,6 +324,9 @@ test("a later mutation of a referenced config is unsupported", (t) => {
 /**
  * RCLD03-R2-1: a recovered parse error must not fall back to a proven default.
  */
+/**
+ * RCLD03-R2-1: a recovered parse error must not fall back to a proven default.
+ */
 test("a malformed configuration is unsupported", (t) => {
   const root = writeConfigFixture(t, "export default { kit: {\n");
   const result = detectDefaultProject(root);
@@ -328,4 +334,30 @@ test("a malformed configuration is unsupported", (t) => {
   assert.deepEqual(issueCodes(result), [
     "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
   ]);
+});
+
+/**
+ * RCLD03-R2-1: a permission error reading the manifest is a typed unreadable
+ * cause, not a fabricated invalid-JSON or SvelteKit diagnostic.
+ */
+test("a manifest read EACCES is unreadable, not invalid JSON", (t) => {
+  const root = writeConfigFixture(t, "export default {};\n");
+  const original = fs.readFileSync;
+  fs.readFileSync = ((file: fs.PathOrFileDescriptor, ...rest: unknown[]) => {
+    if (String(file) === path.join(root, "package.json")) {
+      const error = new Error("EACCES") as NodeJS.ErrnoException;
+      error.code = "EACCES";
+      throw error;
+    }
+    return (original as (...args: unknown[]) => unknown)(file, ...rest);
+  }) as typeof fs.readFileSync;
+  syncBuiltinESMExports();
+  try {
+    const result = detectDefaultProject(root);
+    assert.equal(result.ok, false, JSON.stringify(result));
+    assert.deepEqual(issueCodes(result), ["PROJECT_MANIFEST_UNREADABLE"]);
+  } finally {
+    fs.readFileSync = original;
+    syncBuiltinESMExports();
+  }
 });

@@ -31,6 +31,7 @@ import {
   type ModelResult,
 } from "../registry/errors.js";
 import { isRegularFile, readJsonObject } from "./io.js";
+import { findOwningWorkspaceRoot } from "./root.js";
 
 export const PACKAGE_MANAGERS = ["pnpm", "npm", "yarn"] as const;
 export type PackageManager = (typeof PACKAGE_MANAGERS)[number];
@@ -104,7 +105,26 @@ function explicitManager(value: unknown): ManagerEvidence {
   return { manager: name, source: "packageManager", reason: null };
 }
 
-/** Detect the selected package manager from explicit or lockfile evidence. */
+/** Lockfile families present as regular files at one root, in stable order. */
+function lockfileManagers(root: string): PackageManager[] {
+  return [
+    ...new Set(
+      LOCKFILE_MANAGERS.filter((entry) =>
+        isRegularFile(path.join(root, entry.file)),
+      ).map((entry) => entry.manager),
+    ),
+  ];
+}
+
+/**
+ * Detect the selected package manager from explicit or lockfile evidence.
+ *
+ * Evidence is taken from the selected package first, then from its *proven*
+ * owning workspace (a workspace that declares the package as a member). A
+ * malformed or unsupported explicit `packageManager` field, and a malformed
+ * selected manifest, are typed manual outcomes: they never fall back to a
+ * stale lockfile or a guessed executable.
+ */
 export function detectPackageManager(
   root: string,
 ): ModelResult<ManagerEvidence> {
@@ -118,31 +138,72 @@ export function detectPackageManager(
       ),
     ]);
   }
+  if (manifest.kind === "malformed") {
+    return ok({
+      manager: null,
+      source: "unsupported",
+      reason:
+        "package.json is not valid JSON, so package manager evidence cannot be trusted",
+    });
+  }
+  if (manifest.kind === "unsafe") {
+    return ok({
+      manager: null,
+      source: "unsupported",
+      reason:
+        "package.json is not a regular file, so package manager evidence cannot be trusted",
+    });
+  }
   if (manifest.kind === "value" && "packageManager" in manifest.value) {
-    const evidence = explicitManager(manifest.value["packageManager"]);
-    return ok(evidence);
+    return ok(explicitManager(manifest.value["packageManager"]));
   }
 
-  const found = LOCKFILE_MANAGERS.filter((entry) =>
-    isRegularFile(path.join(root, entry.file)),
-  ).map((entry) => entry.manager);
-  const unique = [...new Set(found)];
-  if (unique.length === 1) {
+  const selected = lockfileManagers(root);
+  if (selected.length === 1) {
     return ok({
-      manager: unique[0] as PackageManager,
+      manager: selected[0] as PackageManager,
       source: "lockfile",
       reason: null,
     });
   }
-  if (unique.length > 1) {
+  if (selected.length > 1) {
     return fail([
       issue(
         "DEPENDENCY_MANAGER_CONFLICTING",
-        `multiple lockfile families are present (${found.join(", ")}); remove the stale lockfile or declare a single packageManager, then install the required dependencies manually`,
+        `multiple lockfile families are present (${selected.join(", ")}); remove the stale lockfile or declare a single packageManager, then install the required dependencies manually`,
         "package.json",
       ),
     ]);
   }
+
+  const owner = findOwningWorkspaceRoot(root);
+  if (owner !== null) {
+    const ownerManifest = readJsonObject(path.join(owner, "package.json"));
+    if (
+      ownerManifest.kind === "value" &&
+      "packageManager" in ownerManifest.value
+    ) {
+      return ok(explicitManager(ownerManifest.value["packageManager"]));
+    }
+    const ownerLockfiles = lockfileManagers(owner);
+    if (ownerLockfiles.length === 1) {
+      return ok({
+        manager: ownerLockfiles[0] as PackageManager,
+        source: "lockfile",
+        reason: null,
+      });
+    }
+    if (ownerLockfiles.length > 1) {
+      return fail([
+        issue(
+          "DEPENDENCY_MANAGER_CONFLICTING",
+          `multiple lockfile families are present in the owning workspace (${ownerLockfiles.join(", ")}); remove the stale lockfile or declare a single packageManager, then install the required dependencies manually`,
+          "package.json",
+        ),
+      ]);
+    }
+  }
+
   return ok({ manager: null, source: "none", reason: null });
 }
 

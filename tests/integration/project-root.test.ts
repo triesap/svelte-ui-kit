@@ -229,3 +229,91 @@ test("a missing --cwd directory fails clearly", (t) => {
   assert.equal(result.ok, false);
   assert.deepEqual(codes(result), ["PROJECT_CWD_NOT_FOUND"]);
 });
+
+/**
+ * RCLD03-R2-1: an explicitly selected proven application must not be replaced
+ * by one of its workspace children.
+ */
+test("an explicit proven application is not overridden by workspace inference", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "app-root",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
+      workspaces: ["apps/*"],
+    }),
+  );
+  project.writeFile(
+    "apps/a/package.json",
+    JSON.stringify({
+      name: "child",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
+    }),
+  );
+
+  const result = resolveProjectRoot({ cwd: ".", invocationDir: project.root });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.root, project.root);
+  assert.equal(result.value.workspaceRoot, null);
+});
+
+/**
+ * RCLD03-R2-1: an unsupported `?` glob must not disappear into a false unique
+ * selection of the remaining supported members.
+ */
+test("an unsupported question-mark glob is a typed failure", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  buildWorkspace(project, ["apps/a"], ["apps/a", "apps/b?"]);
+
+  const result = resolveProjectRoot({ cwd: ".", invocationDir: project.root });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(codes(result), ["PROJECT_WORKSPACE_UNSUPPORTED"]);
+});
+
+/**
+ * RCLD03-R2-1: an intermediate symlinked ancestor cannot select a physically
+ * external application.
+ */
+test("a symlinked intermediate workspace ancestor cannot escape", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ name: "root", workspaces: ["bridge/apps/*"] }),
+  );
+  const external = createTempProject({ prefix: "suik-root-escape-" });
+  t.after(() => external.cleanup());
+  external.writeFile(
+    "apps/a/package.json",
+    JSON.stringify({
+      name: "external-app",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
+    }),
+  );
+  project.symlink(external.root, "bridge");
+
+  const result = resolveProjectRoot({ cwd: ".", invocationDir: project.root });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(codes(result), ["PROJECT_WORKSPACE_UNSUPPORTED"]);
+});
+
+/**
+ * RCLD03-R2-1: malformed workspace declarations are typed, never silently
+ * filtered into an empty or partial member set.
+ */
+test("malformed workspace declarations are typed", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ name: "root", workspaces: [123, "apps/*"] }),
+  );
+
+  const result = resolveProjectRoot({ cwd: ".", invocationDir: project.root });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.deepEqual(codes(result), ["PROJECT_WORKSPACE_UNSUPPORTED"]);
+});
