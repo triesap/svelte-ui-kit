@@ -186,6 +186,10 @@ function seed(
     renderManagedBlock("tokens", TOKEN_BODY) +
       renderManagedBlock("card", cardCss),
   );
+  project.writeFile(
+    `${derived.stateDir}/kit.lock.json`,
+    `${JSON.stringify(lockFor(), null, 2)}\n`,
+  );
 }
 
 function sync(project: ReturnType<typeof createTempProject>) {
@@ -271,6 +275,10 @@ test("application exports are not silently erased", (t) => {
       },
     ],
   };
+  project.writeFile(
+    `${derived.stateDir}/kit.lock.json`,
+    `${JSON.stringify(lock, null, 2)}\n`,
+  );
   const result = planSync({
     registry: registry(),
     config: { ...DEFAULT_KIT_CONFIG, requested: ["button"] },

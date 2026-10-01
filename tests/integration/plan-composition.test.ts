@@ -176,6 +176,178 @@ test("add rejects malformed observed config and lock metadata", (t) => {
   assert.deepEqual(result.value.writes, []);
 });
 
+test("add rejects a schema-invalid observed config", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    `${derived.stateDir}/kit.json`,
+    JSON.stringify({ schemaVersion: 999, requested: 42 }),
+  );
+  const result = add(project);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.executable, false);
+  assert.deepEqual(result.value.writes, []);
+  assert.ok(
+    result.value.diagnostics.some((entry) => entry.includes("is invalid (")),
+    JSON.stringify(result.value.diagnostics),
+  );
+});
+
+test("add rejects a supplied mapping that disagrees with the observed config", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    `${derived.stateDir}/kit.json`,
+    JSON.stringify({ ...CONFIG, uiDir: "src/custom/ui" }),
+  );
+  const result = add(project);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.executable, false);
+  assert.ok(
+    result.value.diagnostics.some((entry) =>
+      entry.includes("unexplained mapping/state mismatch"),
+    ),
+    JSON.stringify(result.value.diagnostics),
+  );
+});
+
+test("a supplied lock without an observed lock file is a conflict", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const first = add(project);
+  assert.equal(first.ok, true, JSON.stringify(first));
+  if (!first.ok || first.value.lock === null) return;
+  // The lock file is deliberately not applied: the supplied lineage has no
+  // observed counterpart, so it cannot authorize ownership writes.
+  const result = add(project, registry(), { lock: first.value.lock });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.executable, false);
+  assert.ok(
+    result.value.diagnostics.some((entry) =>
+      entry.includes("missing installed lineage cannot authorize ownership"),
+    ),
+    JSON.stringify(result.value.diagnostics),
+  );
+});
+
+test("an installed runtime dependency with an absent required peer is a typed conflict", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "consumer",
+      dependencies: { "bits-ui": "^2.19.3" },
+    }),
+  );
+  project.writeFile(
+    "node_modules/bits-ui/package.json",
+    JSON.stringify({
+      name: "bits-ui",
+      version: "2.19.3",
+      peerDependencies: { svelte: "^5.0.0" },
+    }),
+  );
+  const reg = registryOf([
+    componentItem("button", {
+      exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
+      npm: [{ name: "bits-ui", range: "^2.19.3", role: "runtime" }],
+    }),
+  ]);
+  const result = planAdd({
+    registry: reg,
+    config: CONFIG,
+    addedRoots: ["button"],
+    snapshot: snapshotOf(project),
+    lock: null,
+    registryVersion: reg.root.registryVersion,
+    registryHash: reg.root.contentHash,
+  });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.executable, false);
+  assert.ok(
+    result.value.dependencyIssues.some(
+      (entry) => entry.code === "PEER_MISSING",
+    ),
+    JSON.stringify(result.value.dependencyIssues),
+  );
+});
+
+test("malformed installed metadata and a missing install are distinct typed conflicts", (t) => {
+  const reg = registryOf([
+    componentItem("button", {
+      exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
+      npm: [{ name: "bits-ui", range: "^2.19.3", role: "runtime" }],
+    }),
+  ]);
+  const malformedProject = createTempProject();
+  t.after(() => malformedProject.cleanup());
+  malformedProject.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "consumer",
+      dependencies: { "bits-ui": "^2.19.3" },
+    }),
+  );
+  malformedProject.writeFile("node_modules/bits-ui/package.json", "{ not json");
+  const malformed = planAdd({
+    registry: reg,
+    config: CONFIG,
+    addedRoots: ["button"],
+    snapshot: snapshotOf(malformedProject),
+    lock: null,
+    registryVersion: reg.root.registryVersion,
+    registryHash: reg.root.contentHash,
+  });
+  assert.equal(malformed.ok, true, JSON.stringify(malformed));
+  if (!malformed.ok) return;
+  assert.equal(malformed.value.executable, false);
+  assert.ok(
+    malformed.value.dependencyIssues.some(
+      (entry) => entry.code === "DEPENDENCY_INSTALLED_INVALID",
+    ),
+    JSON.stringify(malformed.value.dependencyIssues),
+  );
+
+  const missingProject = createTempProject();
+  t.after(() => missingProject.cleanup());
+  missingProject.writeFile(
+    "package.json",
+    JSON.stringify({
+      name: "consumer",
+      dependencies: { "bits-ui": "^2.19.3" },
+    }),
+  );
+  const missing = planAdd({
+    registry: reg,
+    config: CONFIG,
+    addedRoots: ["button"],
+    snapshot: snapshotOf(missingProject),
+    lock: null,
+    registryVersion: reg.root.registryVersion,
+    registryHash: reg.root.contentHash,
+  });
+  assert.equal(missing.ok, true, JSON.stringify(missing));
+  if (!missing.ok) return;
+  assert.equal(missing.value.executable, false);
+  assert.ok(
+    missing.value.dependencyIssues.some(
+      (entry) => entry.code === "PEER_UPSTREAM_NOT_INSTALLED",
+    ),
+    JSON.stringify(missing.value.dependencyIssues),
+  );
+  assert.ok(
+    !missing.value.dependencyIssues.some(
+      (entry) => entry.code === "DEPENDENCY_INSTALLED_INVALID",
+    ),
+    "a missing install must not be reported as malformed evidence",
+  );
+});
+
 test("an observed lock without a supplied lock is a typed conflict", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());

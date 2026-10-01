@@ -20,7 +20,12 @@
  * project target (including `kit.json`) is left unchanged. Planning is pure and
  * read-only.
  */
-import { fail, ok, type ModelResult } from "../registry/errors.js";
+import {
+  fail,
+  ok,
+  type ModelIssue,
+  type ModelResult,
+} from "../registry/errors.js";
 import type { DependencyPlan } from "../registry/dependency-plan.js";
 import type { RequestProjection } from "../registry/projection.js";
 import type { DependencyInstruction } from "../project/dependency-instructions.js";
@@ -46,6 +51,7 @@ export interface SyncPlan {
   readonly dependencies: DependencyPlan;
   readonly dependencyInstructions: DependencyInstruction | null;
   readonly dependencyState: readonly DependencyStateEntry[] | null;
+  readonly dependencyIssues: readonly ModelIssue[];
   readonly sourcePlan: SourcePlan;
   readonly retirement: readonly RetirementRecord[];
   readonly cssRetirement: readonly CssRetirementPlanRecord[];
@@ -167,6 +173,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
     dependencies: base.value.dependencies,
     dependencyInstructions: base.value.dependencyInstructions,
     dependencyState: base.value.dependencyState,
+    dependencyIssues: base.value.dependencyIssues,
     sourcePlan: base.value.sourcePlan,
     retirement,
     cssRetirement,

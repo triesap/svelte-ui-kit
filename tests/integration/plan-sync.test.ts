@@ -74,11 +74,22 @@ function lockWithBase(base: string): KitLock {
   };
 }
 
+function seedLock(
+  project: ReturnType<typeof createTempProject>,
+  lock: KitLock,
+): void {
+  project.writeFile(
+    `${derived.stateDir}/kit.lock.json`,
+    `${JSON.stringify(lock, null, 2)}\n`,
+  );
+}
+
 function syncInput(
   project: ReturnType<typeof createTempProject>,
   registry: RegistrySnapshot,
   lock: KitLock,
 ) {
+  seedLock(project, lock);
   return {
     registry,
     config: { ...DEFAULT_KIT_CONFIG, requested: ["button"] },
@@ -135,6 +146,7 @@ test("a real conflict leaves every project target unchanged", (t) => {
       files: [sourceFile("button.svelte", "NEW", "button")],
     }),
   ]);
+  seedLock(project, lockWithBase("BASE"));
   const before = snapshotTree(project.root);
   const result = planSync(syncInput(project, registry, lockWithBase("BASE")));
   assert.equal(result.ok, true, JSON.stringify(result));

@@ -24,7 +24,12 @@
  */
 import path from "node:path";
 
-import { fail, ok, type ModelResult } from "../registry/errors.js";
+import {
+  fail,
+  ok,
+  type ModelIssue,
+  type ModelResult,
+} from "../registry/errors.js";
 import type { RegistrySnapshot } from "../registry/load.js";
 import {
   projectRequests,
@@ -35,15 +40,21 @@ import {
   type DependencyPlan,
 } from "../registry/dependency-plan.js";
 import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
-import { deriveKitPaths, type KitConfig } from "../project/config.js";
+import {
+  deriveKitPaths,
+  parseKitConfig,
+  type KitConfig,
+} from "../project/config.js";
 import {
   renderDependencyInstructions,
   type DependencyInstruction,
 } from "../project/dependency-instructions.js";
 import {
   inspectDependencyState,
+  validatePeerDependencies,
   type DependencyStateEntry,
 } from "../project/dependencies.js";
+import { readJsonObject } from "../project/io.js";
 import { hashBytes } from "./compare.js";
 import { canonicalJson } from "./serialize.js";
 import { composeManagedCss, type ManagedBlockInput } from "./css.js";
@@ -91,6 +102,8 @@ export interface AddPlan {
   readonly dependencyInstructions: DependencyInstruction | null;
   /** Declared/installed/peer readiness evidence, when a manifest is present. */
   readonly dependencyState: readonly DependencyStateEntry[] | null;
+  /** Typed declaration/install/peer causes that block an executable batch. */
+  readonly dependencyIssues: readonly ModelIssue[];
   readonly sourcePlan: SourcePlan;
   readonly writes: readonly PlannedWrite[];
   readonly lock: KitLock | null;
@@ -221,13 +234,40 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     diagnostics.push(`config conflict: ${kitJsonState.reason}`);
     hasConflict = true;
   } else if (kitJsonState.status === "file") {
+    let parsedConfig: unknown;
+    let configMalformed = false;
     try {
-      JSON.parse(kitJsonState.text);
+      parsedConfig = JSON.parse(kitJsonState.text);
     } catch {
+      configMalformed = true;
       diagnostics.push(
         `config conflict: ${kitJsonPath} is not valid JSON; reconcile the observed configuration before planning`,
       );
       hasConflict = true;
+    }
+    if (!configMalformed) {
+      const validatedConfig = parseKitConfig(parsedConfig, kitJsonPath);
+      if (!validatedConfig.ok) {
+        for (const entry of validatedConfig.issues) {
+          diagnostics.push(
+            `config conflict: observed ${kitJsonPath} is invalid (${entry.code}); reconcile the observed configuration before planning`,
+          );
+        }
+        hasConflict = true;
+      } else {
+        const observedConfig = validatedConfig.value;
+        const mappingMismatch =
+          observedConfig.registry !== config.registry ||
+          observedConfig.uiDir !== config.uiDir ||
+          observedConfig.stylesDir !== config.stylesDir ||
+          observedConfig.layoutFile !== config.layoutFile;
+        if (mappingMismatch) {
+          diagnostics.push(
+            `config conflict: the supplied configuration does not match the observed mapping in ${kitJsonPath}; an unexplained mapping/state mismatch must be reconciled before planning`,
+          );
+          hasConflict = true;
+        }
+      }
     }
   }
   const lockState = observeText(snapshot, lockPath);
@@ -246,15 +286,29 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       );
       hasConflict = true;
     }
-    if (lock === null) {
-      diagnostics.push(
-        `lock conflict: ${lockPath} was observed but no lock was supplied; a typed null is not proof that the installed lineage is absent`,
-      );
-      hasConflict = true;
-    } else if (!malformed) {
-      // The supplied in-memory lineage must describe the observed bytes; a
-      // typed interface is not proof that the two agree.
-      if (canonicalJson(parsedObserved) !== canonicalJson(lock)) {
+    if (!malformed) {
+      // The supplied in-memory lineage must describe real, schema-valid
+      // observed bytes; a typed interface is not proof that the two agree.
+      const validatedObservedLock = parseKitLock(parsedObserved, lockPath, {
+        stateDir: joinLogical(config.uiDir, "_kit"),
+        uiDir: config.uiDir,
+        stylesDir: config.stylesDir,
+      });
+      if (!validatedObservedLock.ok) {
+        for (const entry of validatedObservedLock.issues) {
+          diagnostics.push(
+            `lock conflict: observed ${lockPath} is invalid (${entry.code}); reconcile the observed lock before planning`,
+          );
+        }
+        hasConflict = true;
+      } else if (lock === null) {
+        diagnostics.push(
+          `lock conflict: ${lockPath} was observed but no lock was supplied; a typed null is not proof that the installed lineage is absent`,
+        );
+        hasConflict = true;
+      } else if (
+        canonicalJson(validatedObservedLock.value) !== canonicalJson(lock)
+      ) {
         diagnostics.push(
           `lock conflict: the observed ${lockPath} does not match the supplied lock lineage; re-read the installed lineage before planning`,
         );
@@ -262,12 +316,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       }
     }
   } else if (lock !== null) {
-    // A supplied lock against an observed absence is a lower-severity
-    // inconsistency: the observed absence is authoritative, but the caller is
-    // told that the in-memory lineage does not describe the filesystem.
+    // A supplied lock against an observed absence is unsafe: missing installed
+    // lineage cannot authorize ownership writes.
     diagnostics.push(
-      `a lock was supplied but ${lockPath} was observed absent; the observed absence is authoritative`,
+      `lock conflict: a lock was supplied but ${lockPath} was observed absent; missing installed lineage cannot authorize ownership writes`,
     );
+    hasConflict = true;
   }
 
   // ---- Request projection and dependencies --------------------------------
@@ -303,9 +357,39 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       range: entry.range,
     })),
   );
-  const dependencyState = dependencyStateResult.ok
-    ? dependencyStateResult.value
-    : null;
+  const dependencyIssues: ModelIssue[] = [];
+  let dependencyState: readonly DependencyStateEntry[] | null = null;
+  if (dependencyStateResult.ok) {
+    dependencyState = dependencyStateResult.value;
+  } else if (
+    !dependencyStateResult.issues.every(
+      (entry) => entry.code === "DEPENDENCY_MANIFEST_MISSING",
+    )
+  ) {
+    // Invalid declaration/install evidence is a typed conflict; a project with
+    // no package.json simply has no consumer dependency evidence yet.
+    dependencyIssues.push(...dependencyStateResult.issues);
+  }
+  if (hasPackageManifest(snapshot.root)) {
+    // The actual upstream peer audit is part of the same readiness decision: an
+    // installed dependency whose required peer is absent or incompatible, or
+    // whose metadata is malformed, must not report ready or authorize writes.
+    const peerResult = validatePeerDependencies(
+      snapshot.root,
+      dependencyPlan.value,
+    );
+    if (peerResult.ok) {
+      if (dependencyState === null) dependencyState = peerResult.value;
+    } else {
+      dependencyIssues.push(...peerResult.issues);
+    }
+  }
+  if (dependencyIssues.length > 0) {
+    for (const entry of dependencyIssues) {
+      diagnostics.push(`dependency conflict (${entry.code}): ${entry.message}`);
+    }
+    hasConflict = true;
+  }
 
   // ---- Incoming registry content ------------------------------------------
   const incomingSources: IncomingSource[] = [];
@@ -998,6 +1082,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     dependencies: dependencyPlan.value,
     dependencyInstructions: instructions.value,
     dependencyState,
+    dependencyIssues,
     sourcePlan,
     writes: hasConflict ? [] : writes,
     lock: projectedLock,
@@ -1013,6 +1098,10 @@ function decodeText(bytes: Uint8Array): string | null {
   } catch {
     return null;
   }
+}
+
+function hasPackageManifest(root: string): boolean {
+  return readJsonObject(path.join(root, "package.json")).kind !== "absent";
 }
 
 function manifestDigest(registry: RegistrySnapshot, id: string): string {

@@ -77,65 +77,46 @@ only writing modes.
 
 #### Current owner-authorized RCLD-03 batch verification
 
-Independent review 4 of candidate `bf613f4e6e17ccb3a6437ed7ea342acf779d2e10`
-requests RCLD03-R4-1/2/3/4 completion through S063. Fresh independent
-build/format/lint/typecheck, unit 265/265, integration 196/196, registry 38/38,
-CLI 52/52 and contracts 127/127 pass without skips. Preserve the verified prior
-CSS/template repairs, minimal init replay, static/workspace/runtime-peer controls
-and snapshot identities. New real-registry probes expose unsafe composed target
-handling, lost BOM/integration ownership, unowned/custom export overwrite,
-missing export cohort members, spoofed registry identity and ambiguous deletion.
-An actual disposable consumer built from exactly the add plan fails on missing
-kit/themes/app CSS; adding those missing files only in a review control makes
-the same build pass. Keep 32 accepted and 31 pending; S064–S203 not started.
-The author's existing fixture/browser/reference lanes remain evidence for the
-artifacts they actually tested, not generated consumers or installed parsers.
+Independent review 5 of candidate `2c10aa37c020d4113c57eb6bccfca6f333bd0b34`
+requests completion of RCLD03-R5-1/2/3/4 and every unfinished S033–S063 criterion.
+Fresh independent build/typecheck/format/lint pass; unit 265/265, integration
+219/219, registry 38/38, CLI 52/52, harness 37/37 and contracts 127/127 pass,
+all without skips. The actual planned-consumer build now succeeds. Preserve
+verified target rejection, BOM/registry identity, integration retention, export
+ownership/cohort, explicit source retirement, manifest classification and emitted
+parser progress. Twelve independent real-registry probes expose remaining
+metadata/dependency validation, token transition, ownership-scope, retirement
+baseline, operation-kind and root-barrel-cycle failures. Full details and resolved
+decisions are in the single governing review 5; no whole-sequence acceptance.
 
-Repair progress (Pi implementation evidence, not acceptance): commit series
-`4a6952a`–`e60b909` composes one validated planning entry. Add/sync now reject unobserved,
-nonregular, unreadable and invalid-UTF-8 targets with logical causes, parse
-observed config/lock metadata instead of ignoring it, preserve byte-order marks
-by reusing the strict decoder, derive registry identity from the validated
-snapshot, emit minimal kit/themes/app stylesheet prerequisites, retain
-init/add/sync integration records, enforce export/integration ownership, fold
-effective export-surface changes into compatibility cohorts, represent clean
-deletion as an explicit `retire` operation in the plan and envelope, conflict on
-lock-owned integrations whose target is missing, reconcile a supplied lock
-with the observed lock bytes, and carry declared/installed/peer readiness in the
-composed result. New
-integration lanes `plan-composition.test.ts`, `plan-purity.test.ts`,
-`planned-consumer.test.ts` (simple and compound) and the installed planner/parser
-`installed-package.test.ts` R5 runner cover the positive plans and negative
-controls. These are committed pending review; Codex still owns acceptance and
-the cumulative qualification below is not yet rerun on this revision.
+Use positive executable init/add/sync plans with complete observations and actual
+schema validation, peer metadata and registry identity. Enforce create/update/
+retire preconditions in the test applier. Compare final lock lineage against final
+applied managed state after retirement, preserve unmanaged bytes/BOMs, then replay
+and update. Test malformed config, observed-absent supplied lock, actual upstream
+peer conflict, unowned tokens, clean minimal-to-registry tokens, unrelated CSS/
+export edits, supported root-barrel import spellings and custom mappings.
 
-Use actual composed callers, AST imports/exports and planned-consumer check/build;
-helper/string assertions do not prove integration. Qualify installed TS/Svelte
-parser runtime dependencies outside the checkout. Keep observed absence distinct
-from missing/unsafe/unreadable evidence and test complete-tree purity.
-Positive purity/determinism tests must assert executable successful plans with
-all required observations. Apply explicit create/update/retire operations only
-in owned test consumers and verify bytes, absence, lineage and replay. Keep
-hand-authored fixture and planner-produced consumer evidence separate; the
-existing installed model-parser tests do not exercise TS/Svelte planner imports.
-Record all intermediate failures; retain the verified operator-routing cleanup
-in affected public reports. Capture underlying command exits before filtering output. No
-new acceptance, release-AC20 waiver or additional dependency approval.
+Both existing planned-consumer tests run build only. Add actual Svelte/TypeScript
+check and build for exact planned simple/compound consumers, including a genuine
+negative type control. Keep maintained fixture evidence separate. The emitted
+installed-copy runner exercises real parsers but only imports planAdd; invoke
+successful planning outside the checkout too. Complete-tree purity/determinism
+must assert successful plans and intended negative causes, including modes,
+hidden/empty directories and links, without writer/manager coordination.
 
-S001–S032 are independently accepted at the anchors in COMMIT_SEQUENCE.md.
-The current S033–S063 dispatch governs: preserve the verified bounded third
-authorization and single live record, retain predecessor/acceptance semantics,
-and run each original checkpoint's direct checks plus format/lint/typecheck and
-contracts before its green commit. At S063 qualify actual composed planners,
-complete-tree zero-write behavior, deterministic B/L/I/cohort/conflict/retirement
-and lineage results, preserved CSS/exports/layout bytes, custom mappings and
-installed runtime parser independence. Build test-owned planned consumers.
-Run the full existing cumulative lane set, strict declaration controls, actual
-workflow validation and fresh conditional reference guard. Keep exact exits,
-failed attempts, skipped checks and raw logs. The qualified upstream Bits
-exception remains fixture-only release AC20 debt. No transaction/CLI workflow
-completion or other platform/release acceptance is implied. Pi records evidence;
-Codex independently accepts before S064.
+S001–S032 remain independently accepted; S033–S063 remain pending; S064–S203
+are not started. Pi records implementation evidence; Codex accepts before S064.
+After all remaining software corrections and integration work, run every original
+direct check and the full S063 cumulative set: strict frozen install, format,
+lint, typecheck, unit, harness, registry, integration, CLI, components, fixture
+check/SSR/browser, contracts, planned consumers, installed parser/planner,
+strict declaration controls, actual workflow validation and fresh conditional
+reference Rust guard. Serialize fixture writers and retain raw exits/failures/
+reruns, artifact/platform identity and skipped/ignored counts. The author logs
+are bounded evidence for their actual artifacts, not fresh independent whole-MVP
+qualification. Release AC20's exact fixture-only upstream exception remains open.
+No new dependencies, transaction/CLI completion or other-platform acceptance.
 
 #### Historical owner-authorized RCLD-02 batch verification
 

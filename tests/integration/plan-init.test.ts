@@ -214,6 +214,28 @@ test("an owned customized export region is not overwritten", (t) => {
   ]);
 });
 
+test("malformed observed configuration is refused, never overwritten", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile("src/lib/components/ui/_kit/kit.json", "not json");
+  assert.deepEqual(codes(plan(project, "<main />")), ["INIT_CONFIG_INVALID"]);
+  const before = readFileSync(
+    path.join(project.root, "src/lib/components/ui/_kit/kit.json"),
+    "utf8",
+  );
+  assert.equal(before, "not json");
+});
+
+test("a schema-invalid observed configuration is refused", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "src/lib/components/ui/_kit/kit.json",
+    JSON.stringify({ schemaVersion: 999, requested: 42 }),
+  );
+  assert.deepEqual(codes(plan(project, "<main />")), ["INIT_CONFIG_INVALID"]);
+});
+
 function codes(result: ReturnType<typeof plan>): string[] {
   return result.ok ? [] : result.issues.map((entry) => entry.code);
 }

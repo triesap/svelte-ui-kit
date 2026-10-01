@@ -23,7 +23,11 @@
 import path from "node:path";
 
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
-import { deriveKitPaths, type KitConfig } from "../project/config.js";
+import {
+  deriveKitPaths,
+  parseKitConfig,
+  type KitConfig,
+} from "../project/config.js";
 import { hashBytes } from "./compare.js";
 import { composeManagedCss } from "./css.js";
 import { patchExportRegion } from "./exports.js";
@@ -264,6 +268,39 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   const configJson = `${JSON.stringify(config, null, 2)}\n`;
   const configText = textOf(targets.kitJson);
   if (!configText.ok) return configText;
+  // Malformed observed configuration must never be overwritten: reconcile it
+  // explicitly rather than replacing application bytes lossily.
+  if (configText.value !== null) {
+    let parsedConfig: unknown;
+    try {
+      parsedConfig = JSON.parse(configText.value);
+    } catch {
+      return fail([
+        issue(
+          "INIT_CONFIG_INVALID",
+          `${targets.kitJson} is not valid JSON; reconcile the configuration before initialization`,
+          targets.kitJson,
+        ),
+      ]);
+    }
+    const validatedConfig = parseKitConfig(parsedConfig, targets.kitJson);
+    if (!validatedConfig.ok) {
+      const seen = new Set<string>();
+      const issues = [];
+      for (const entry of validatedConfig.issues) {
+        if (seen.has(entry.code)) continue;
+        seen.add(entry.code);
+        issues.push(
+          issue(
+            "INIT_CONFIG_INVALID",
+            `${targets.kitJson} is invalid (${entry.code}); reconcile the configuration before initialization`,
+            targets.kitJson,
+          ),
+        );
+      }
+      return fail(issues);
+    }
+  }
   if (configText.value !== configJson) {
     writes.push({
       path: targets.kitJson,
