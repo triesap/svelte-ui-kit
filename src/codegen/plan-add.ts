@@ -40,6 +40,7 @@ import {
   type DependencyPlan,
 } from "../registry/dependency-plan.js";
 import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
+import { isCompoundComponent } from "../registry/item.js";
 import {
   deriveKitPaths,
   parseKitConfig,
@@ -67,6 +68,7 @@ import {
   findRootBarrelImportsInSource,
   parseGeneratedDeclarations,
   patchExportRegion,
+  renderCompoundBarrel,
   rootBarrelSpecifiers,
   runtimeSpecifier,
   type ExportDeclaration,
@@ -400,6 +402,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   const cssBlocksByTarget = new Map<string, ManagedBlockInput[]>();
   const cssMeta = new Map<string, Map<string, CssMeta>>();
   const exportDeclarations: ExportDeclaration[] = [];
+  const rootDeclarationsByItem = new Map<string, ExportDeclaration[]>();
 
   for (const id of desired.order) {
     const item = itemById(registry, id);
@@ -410,15 +413,72 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       hasConflict = true;
       continue;
     }
+    // Manifest-driven compound barrels: when a compound item declares part
+    // targets, its directory `index.ts` is generated from those declarations
+    // (a pre-authored template is not trusted as generation evidence) and the
+    // root barrel re-exports the public names from the compound barrel.
+    const generatedBarrels = new Map<string, Uint8Array>();
+    const rootDeclarations: ExportDeclaration[] = [];
+    const compoundBarrel = isCompoundComponent(item.manifest)
+      ? item.files.find(
+          (file) => file.blockId === null && file.target.endsWith("/index.ts"),
+        )
+      : undefined;
+    if (compoundBarrel !== undefined) {
+      const barrelSpecifier = runtimeSpecifier(`./${compoundBarrel.target}`);
+      const partExports = item.manifest.exports.filter((entry) => {
+        const target = entry.target.startsWith(".")
+          ? entry.target
+          : `./${entry.target}`;
+        return runtimeSpecifier(target) !== barrelSpecifier;
+      });
+      if (partExports.length > 0) {
+        generatedBarrels.set(
+          compoundBarrel.target,
+          utf8(
+            renderCompoundBarrel(
+              partExports.map((entry) => ({
+                name: entry.name,
+                target: relativeSpecifier(
+                  compoundBarrel.target,
+                  entry.target.replace(/^\.\//, ""),
+                ),
+                kind: entry.kind,
+              })),
+            ),
+          ),
+        );
+        for (const entry of item.manifest.exports) {
+          rootDeclarations.push({
+            name: entry.name,
+            target: barrelSpecifier,
+            kind: entry.kind,
+          });
+        }
+      }
+    }
+    if (rootDeclarations.length === 0) {
+      for (const entry of item.manifest.exports) {
+        rootDeclarations.push({
+          name: entry.name,
+          target: runtimeSpecifier(
+            entry.target.startsWith(".") ? entry.target : `./${entry.target}`,
+          ),
+          kind: entry.kind,
+        });
+      }
+    }
+    rootDeclarationsByItem.set(id, rootDeclarations);
     for (const file of item.files) {
       if (file.blockId !== null) continue;
       const logicalPath = joinLogical(config.uiDir, file.target);
-      incomingSources.push({ path: logicalPath, bytes: file.bytes });
+      const bytes = generatedBarrels.get(file.target) ?? file.bytes;
+      incomingSources.push({ path: logicalPath, bytes });
       sourceMeta.set(logicalPath, {
         owner: id,
         cohort: file.cohort,
         version: item.manifest.version,
-        bytes: file.bytes,
+        bytes,
       });
       // Cycle qualification: a generated source must use direct sibling imports
       // and never the generated root barrel. The existing AST authority is
@@ -427,7 +487,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         logicalPath !== derived.rootExports &&
         /\.(?:svelte|ts|mts|cts|js|mjs|cjs)$/.test(logicalPath)
       ) {
-        const text = decodeText(file.bytes);
+        const text = decodeText(bytes);
         if (text !== null) {
           const specifiers = rootBarrelSpecifiers(
             logicalPath,
@@ -473,14 +533,8 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       });
       cssMeta.set(logicalPath, byBlock);
     }
-    for (const entry of item.manifest.exports) {
-      exportDeclarations.push({
-        name: entry.name,
-        target: runtimeSpecifier(
-          entry.target.startsWith(".") ? entry.target : `./${entry.target}`,
-        ),
-        kind: entry.kind,
-      });
+    for (const declaration of rootDeclarations) {
+      exportDeclarations.push(declaration);
     }
   }
 
@@ -849,16 +903,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       );
       if (!exportOwnerByTarget.has(target)) exportOwnerByTarget.set(target, id);
     }
-    incomingByOwner.set(
-      id,
-      item.manifest.exports.map((entry) => ({
-        name: entry.name,
-        target: runtimeSpecifier(
-          entry.target.startsWith(".") ? entry.target : `./${entry.target}`,
-        ),
-        kind: entry.kind,
-      })),
-    );
+    incomingByOwner.set(id, rootDeclarationsByItem.get(id) ?? []);
   }
   const observedByOwner = new Map<string, ExportDeclaration[]>();
   for (const declaration of observedExportDeclarations) {

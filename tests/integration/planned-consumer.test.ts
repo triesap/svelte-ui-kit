@@ -137,15 +137,13 @@ function realCompoundRegistry(
     compatibility,
     files,
     exports: [
-      { name: "DialogRoot", target: "dialog/index.ts", kind: "value" },
-      { name: "DialogTrigger", target: "dialog/index.ts", kind: "value" },
+      { name: "DialogRoot", target: "dialog/root.svelte", kind: "value" },
+      { name: "DialogTrigger", target: "dialog/trigger.svelte", kind: "value" },
     ],
     styles: [],
   });
   const bodies: Record<string, string> = {
-    "templates/dialog/index.ts":
-      'export { default as DialogRoot } from "./root.svelte";\n' +
-      'export { default as DialogTrigger } from "./trigger.svelte";\n',
+    "templates/dialog/index.ts": "// stale pre-authored barrel\n",
     "templates/dialog/root.svelte": "<div><slot /></div>\n",
     "templates/dialog/trigger.svelte": "<button>open</button>\n",
   };

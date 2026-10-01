@@ -605,6 +605,89 @@ test("a svelte source importing ./index.js is a cycle conflict", (t) => {
   );
 });
 
+test("a compound barrel is generated from manifest part exports", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const stale = "// stale pre-authored barrel\n";
+  const raw = (target: string, body: string) => ({
+    logicalSource: `registry/templates/${target}`,
+    target,
+    owner: "dialog",
+    cohort: "dialog",
+    blockId: null,
+    bytes: utf8(body),
+    digest: hashBytes(utf8(body)) as string,
+  });
+  const reg = registryOf([
+    componentItem("dialog", {
+      files: [
+        raw("dialog/index.ts", stale),
+        raw("dialog/root.svelte", "<div><slot /></div>\n"),
+        raw("dialog/trigger.svelte", "<button>open</button>\n"),
+      ],
+      exports: [
+        { name: "DialogRoot", target: "dialog/root.svelte", kind: "value" },
+        {
+          name: "DialogTrigger",
+          target: "dialog/trigger.svelte",
+          kind: "value",
+        },
+      ],
+    }),
+  ]);
+  const dialogIndex = `${derived.rootExportsDir}/dialog/index.ts`;
+  const dialogRoot = `${derived.rootExportsDir}/dialog/root.svelte`;
+  const dialogTrigger = `${derived.rootExportsDir}/dialog/trigger.svelte`;
+  const result = planAdd({
+    registry: reg,
+    config: CONFIG,
+    addedRoots: ["dialog"],
+    snapshot: snapshotOf(project, [
+      ...targetPaths(),
+      dialogIndex,
+      dialogRoot,
+      dialogTrigger,
+    ]),
+    lock: null,
+    registryVersion: reg.root.registryVersion,
+    registryHash: reg.root.contentHash,
+  });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(
+    result.value.executable,
+    true,
+    JSON.stringify(result.value.diagnostics),
+  );
+  const barrel = result.value.writes.find(
+    (entry) => entry.path === dialogIndex,
+  );
+  assert.ok(barrel);
+  const barrelText = new TextDecoder().decode(barrel.bytes);
+  assert.ok(
+    barrelText.includes(
+      'export { default as DialogRoot } from "./root.svelte";',
+    ),
+    barrelText,
+  );
+  assert.ok(
+    barrelText.includes(
+      'export { default as DialogTrigger } from "./trigger.svelte";',
+    ),
+    barrelText,
+  );
+  assert.ok(!barrelText.includes("stale"), barrelText);
+  const root = result.value.writes.find(
+    (entry) => entry.path === derived.rootExports,
+  );
+  assert.ok(root);
+  const rootText = new TextDecoder().decode(root.bytes);
+  assert.ok(
+    rootText.includes('export { DialogRoot } from "./dialog/index.js";'),
+    rootText,
+  );
+});
+
 test("a supplied lock that disagrees with the observed bytes conflicts", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());
