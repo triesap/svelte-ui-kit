@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S045","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S045","kind":"report","commit":"4f97891a255a4fe64360b199d0b6987ccc895dad","disposition":"candidate"}
 -->
 
 Step ID and title: S045 — Plan missing and untracked source targets.
