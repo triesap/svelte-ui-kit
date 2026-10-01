@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S037","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S037","kind":"report","commit":"749296b4562aa9fa2e90b0a4632805bb4955af4d","disposition":"candidate"}
 -->
 
 Step ID and title: S037 — Freeze supported custom path mappings.
