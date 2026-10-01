@@ -53,3 +53,14 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 - The conditional Rust guard is N/A: this repository has no Cargo workspace.
 - The trusted-local race limit is unchanged: ancestry is observed, then later
   revalidated under coordination by the (not-yet-implemented) transaction.
+
+## RCLD-03 review-4 reconciliation
+
+This report records the original checkpoint candidate named in its structured
+evidence block. The composed planner was subsequently repaired under
+independent review 4 (`implementation/COMMIT_SEQUENCE.md`, RCLD03-R4-1/2/3/4).
+The authoritative reconciliation of actual scope, artifact identity,
+intermediate failures, reruns and raw exits is
+`implementation/evidence/RCLD03_R4_REPAIR.md` with the review-4 addendum in
+`implementation/evidence/COMPATIBILITY.md`; the original acceptance criteria
+are unchanged. This report is Pi implementation evidence, not acceptance.

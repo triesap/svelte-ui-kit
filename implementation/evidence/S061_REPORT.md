@@ -52,3 +52,14 @@ tests/integration/plan-sync.test.ts tests/integration/plan-init.test.ts` — exi
 - The conditional Rust guard is N/A: this repository has no Cargo workspace.
 - Configuration-driven CSS retirement lineage is finalized at S062; the purity
   qualification at S063.
+
+## RCLD-03 review-4 reconciliation
+
+This report records the original checkpoint candidate named in its structured
+evidence block. The composed planner was subsequently repaired under
+independent review 4 (`implementation/COMMIT_SEQUENCE.md`, RCLD03-R4-1/2/3/4).
+The authoritative reconciliation of actual scope, artifact identity,
+intermediate failures, reruns and raw exits is
+`implementation/evidence/RCLD03_R4_REPAIR.md` with the review-4 addendum in
+`implementation/evidence/COMPATIBILITY.md`; the original acceptance criteria
+are unchanged. This report is Pi implementation evidence, not acceptance.

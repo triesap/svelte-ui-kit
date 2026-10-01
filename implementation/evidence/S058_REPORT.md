@@ -49,3 +49,14 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 - Cohort enforcement (S059), full synchronization (S060), truthful lock lineage
   (S061), configuration-driven retirement (S062) and the purity qualification
   (S063) remain.
+
+## RCLD-03 review-4 reconciliation
+
+This report records the original checkpoint candidate named in its structured
+evidence block. The composed planner was subsequently repaired under
+independent review 4 (`implementation/COMMIT_SEQUENCE.md`, RCLD03-R4-1/2/3/4).
+The authoritative reconciliation of actual scope, artifact identity,
+intermediate failures, reruns and raw exits is
+`implementation/evidence/RCLD03_R4_REPAIR.md` with the review-4 addendum in
+`implementation/evidence/COMPATIBILITY.md`; the original acceptance criteria
+are unchanged. This report is Pi implementation evidence, not acceptance.

@@ -63,3 +63,14 @@ Independent review 1 preserved S034's valid mapping and collision controls and
 requested no behavioral change. Its earlier intermediate formatting failure
 remains recorded as a failed attempt; the repaired tree keeps S034 formatting
 green.
+
+## RCLD-03 review-4 reconciliation
+
+This report records the original checkpoint candidate named in its structured
+evidence block. The composed planner was subsequently repaired under
+independent review 4 (`implementation/COMMIT_SEQUENCE.md`, RCLD03-R4-1/2/3/4).
+The authoritative reconciliation of actual scope, artifact identity,
+intermediate failures, reruns and raw exits is
+`implementation/evidence/RCLD03_R4_REPAIR.md` with the review-4 addendum in
+`implementation/evidence/COMPATIBILITY.md`; the original acceptance criteria
+are unchanged. This report is Pi implementation evidence, not acceptance.
