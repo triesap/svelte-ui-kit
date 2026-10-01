@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S052","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S052","kind":"report","commit":"f6e3987382128b918fce65b79211dd3d0c9ffec5","disposition":"candidate"}
 -->
 
 Step ID and title: S052 — Freeze and parse managed TypeScript export regions.

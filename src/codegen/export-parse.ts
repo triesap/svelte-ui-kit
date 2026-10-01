@@ -194,9 +194,16 @@ export function parseExportRegion(
 ): ModelResult<ExportRegionParse> {
   const region = markerRegion(source);
   if (!region.ok) return region;
-  const collected = collectAppExports(fileName, source);
+  // Application exports are collected outside the managed region only, so a
+  // previously generated region is never mistaken for application ownership.
+  const managed = region.value;
+  const appSource =
+    managed === null
+      ? source
+      : source.slice(0, managed.startOffset) + source.slice(managed.endOffset);
+  const collected = collectAppExports(fileName, appSource);
   return ok({
-    region: region.value,
+    region: managed,
     appExports: collected.exports,
     hasWildcardReexport: collected.wildcard,
   });
