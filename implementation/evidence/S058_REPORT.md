@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S058","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S058","kind":"report","commit":"7a87786571cf3cb5513e86639fd977e1d1d419e9","disposition":"candidate"}
 -->
 
 Step ID and title: S058 — Build a pure add-request plan.

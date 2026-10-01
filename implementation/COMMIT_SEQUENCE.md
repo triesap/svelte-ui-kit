@@ -20,7 +20,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - Active implementation checkpoint: **none** (repairing pending S033–S057 under independent review 3, then complete S058 through S063).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **32 / 203**. Remaining: **171 / 203**.
-- Committed pending review: **25 / 203**. Authored batch range: **S033–S057**.
+- Committed pending review: **26 / 203**. Authored batch range: **S033–S058**.
 - Completed RCLD sequences: **2 / 11**. Remaining: **9 / 11**.
 - Last safe target commit: `0e5b1852d02e15159f2ee4dd885152230457e119`, branch `master` (independently accepted S013–S032 combined evidence anchor).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
@@ -30,7 +30,8 @@ Keep all repository content standalone and repository-relative. Record this targ
 - S005 evidence: `implementation/evidence/S005_REPORT.md` and `implementation/evidence/S005_REVIEW.md`. Review 2 accepts the correction: independent unit 5/5, harness 29/29, smoke 41/41 and contracts 84/84 pass; original boundary/filename/failure probes are corrected. No release acceptance is claimed.
 - S006 evidence: `implementation/evidence/S006_REPORT.md` and `implementation/evidence/S006_REVIEW.md`. Review 2 accepts recursive exclusions and maintained-source controls; independent unit 14/14, harness 29/29, smoke 41/41 and contracts 84/84 pass. Original nested probes are corrected; real lint/format preserve all 71 tracked/untracked authoring entries. Accepted and committed at the last safe hash above.
 - S007–S012 reviews: each conventional report/review path records the tested combined candidate, original/repair provenance and independent acceptance. All RCLD-01 review findings are closed; the strict upstream declaration exception remains release AC20 debt.
-- No checkpoint has been skipped or reordered. S001–S032 are complete; S033–S057 are committed_pending_review with repairs required; S058–S203 remain not_started (146 checkpoints). The current RCLD-03 review 3 dispatch governs corrections and continuation to S063.
+- S058 evidence: `implementation/evidence/S058_REPORT.md` records the pure add-request planner candidate at `7a87786571cf3cb5513e86639fd977e1d1d419e9`; independent review pending. Original S058 acceptance criteria apply.
+- No checkpoint has been skipped or reordered. S001–S032 are complete; S033–S058 are committed_pending_review with repairs required; S059–S203 remain not_started (145 checkpoints). The current RCLD-03 review 3 dispatch governs corrections and continuation to S063.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. By default every checkpoint after S001 depends on the reviewed, verified, committed predecessor. The explicit owner-authorized batch below permits verified implementation commits pending Codex review to unlock successors only within the currently dispatched sequence; the current RCLD-03 activation prerequisite governs the transition from the completed RCLD-02 batch.
 
@@ -3484,7 +3485,7 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S055 | RCLD-03  | S054       | committed_pending_review | `eb78d5f73fcdc78eaf6ece51f3cb80184573d645` |
 | S056 | RCLD-03  | S055       | committed_pending_review | `b5c7f65682b380a85bcf63ef7f3999008c881093` |
 | S057 | RCLD-03  | S056       | committed_pending_review | `ba870579ef1c9e862869e4dfe1b6a47f65d4a045` |
-| S058 | RCLD-03  | S057       | not_started              | —                                          |
+| S058 | RCLD-03  | S057       | committed_pending_review | `7a87786571cf3cb5513e86639fd977e1d1d419e9` |
 | S059 | RCLD-03  | S058       | not_started              | —                                          |
 | S060 | RCLD-03  | S059       | not_started              | —                                          |
 | S061 | RCLD-03  | S060       | not_started              | —                                          |

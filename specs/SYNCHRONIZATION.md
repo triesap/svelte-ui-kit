@@ -55,6 +55,25 @@ Source shape, exported parts, CSS selectors, and dependent component APIs can be
 
 A local customization with unchanged upstream is not itself a conflict; however, if another member of its compatibility unit changes and compatibility cannot be established, preserve the whole unit or report a cohort conflict. Document the exact conservative rule and fixtures rather than guessing semantic compatibility from text hashes. Dependencies may require widening a cohort when exported APIs change; not every unrelated component belongs to one permanent giant cohort.
 
+##### Frozen cohort rule (S059, Q09)
+
+The component (item id) is the compatibility unit. Its source files, managed CSS
+blocks and public export declarations are coupled members.
+
+- A unit whose members are all already satisfied (`no_change`) is clean.
+- A unit may adopt incoming content (`create`/`update`) while every other member
+  is also adopting or already satisfied.
+- If a unit mixes an adoption with a locally `customized` member, or with a
+  `conflict`/`untracked_conflict` member, compatibility cannot be established by
+  text hashes: the whole unit is blocked and reported as a cohort conflict. A
+  standalone customization with unchanged upstream is not itself a conflict.
+- A changed public export surface widens the unit to its transitive dependents
+  (via the registry dependency edges) so a dependent unit is subject to the same
+  rule. Unrelated, unchanged units are never merged into one permanent cohort.
+
+`src/codegen/cohorts.ts` implements this table; `tests/unit/cohorts.test.ts`
+holds the frozen examples.
+
 #### Planning and lock truth
 
 Resolve all requested items, read all current managed targets, calculate CSS/barrel/layout changes and dependency status, and detect every relevant conflict before applying any writes. A source conflict must not leave kit.json updated independently. Staging begins only after a safe complete plan exists.

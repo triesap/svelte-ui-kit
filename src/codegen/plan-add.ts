@@ -33,6 +33,7 @@ import {
 import { hashBytes } from "./compare.js";
 import { composeManagedCss, type ManagedBlockInput } from "./css.js";
 import { classifyCssBlocks } from "./css-compare.js";
+import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
 import { parseManagedCss } from "./css-parse.js";
 import { patchExportRegion, type ExportDeclaration } from "./exports.js";
 import type {
@@ -263,6 +264,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     ...cssBlocksByTarget.keys(),
     ...(lock?.cssBlocks.map((block) => block.path) ?? []),
   ]);
+  const cssMembers: CohortMember[] = [];
   for (const cssPath of [...cssTargets].sort()) {
     const observation = snapshot.entries.get(cssPath);
     if (observation === undefined) {
@@ -321,6 +323,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         },
       ])[0];
       if (classification === undefined) continue;
+      if (classification.owner !== null) {
+        cssMembers.push({
+          owner: classification.owner,
+          disposition: classification.disposition,
+        });
+      }
       if (
         classification.disposition === "conflict" ||
         classification.disposition === "untracked_conflict"
@@ -438,6 +446,54 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     ...config,
     requested: desired.requested,
   };
+
+  // Conservative compatibility cohorts (S059): a component's source, managed CSS
+  // and export members must not partially update when compatibility cannot be
+  // established. A changed public API widens the unit to its dependents.
+  const cohortMembers: CohortMember[] = [
+    ...sourcePlan.changes.map((change) => ({
+      owner: change.owner,
+      disposition: change.disposition,
+    })),
+    ...sourcePlan.conflicts.map((conflict) => ({
+      owner: conflict.owner ?? conflict.path,
+      disposition: conflict.disposition,
+    })),
+    ...cssMembers,
+  ];
+  const lockVersion = new Map(
+    (lock?.items ?? []).map((item) => [item.id, item.version]),
+  );
+  const exportedApiChanged = new Set(
+    desired.items
+      .map((item) => item.id)
+      .filter(
+        (id) =>
+          lockVersion.has(id) &&
+          lockVersion.get(id) !== itemVersion(registry, id),
+      ),
+  );
+  const dependents = new Map<string, string[]>();
+  for (const item of registry.items) {
+    for (const dependency of item.manifest.registryDependencies) {
+      const list = dependents.get(dependency) ?? [];
+      list.push(item.id);
+      dependents.set(dependency, list);
+    }
+  }
+  const cohorts = applyCohortPolicy({
+    members: cohortMembers,
+    dependents,
+    exportedApiChanged,
+  });
+  if (cohorts.conflicts.length > 0) {
+    hasConflict = true;
+    for (const conflict of cohorts.conflicts) {
+      diagnostics.push(
+        `cohort conflict for ${conflict.owner}: ${conflict.reason}`,
+      );
+    }
+  }
 
   const writes: PlannedWrite[] = [];
   let projectedLock: KitLock | null = lock;
