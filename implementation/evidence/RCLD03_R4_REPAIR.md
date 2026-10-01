@@ -10,6 +10,9 @@ and does not close S033–S063.
 - `ea5dcf3` — root-barrel cycle qualification, real planned-consumer and
   installed planner/parser lanes, review-4 progress and S063 prose reconciliation.
 - `12bbd81` — manifest-authoritative compound-barrel decision.
+- `5f57eb4` — lock-owned missing integration conflicts, complete-observation
+  purity/conflict controls and metadata-only discrimination.
+- `27aed65` — supplied lock lineage reconciled with the observed lock bytes.
 
 ## What the repair implements (Pi implementation, pending review)
 
@@ -36,10 +39,15 @@ and does not close S033–S063.
   integration records, so init→add retains them. Clean deletion is an explicit
   `retire` operation carried in the plan and the envelope; it is never a
   zero-byte `update`.
+- **Integration ownership.** A lock-owned layout/stylesheet/exports integration
+  whose target has gone missing is a conflict, never a silent recreation.
 - **Cycle qualification (R4-2).** Incoming generated sources are scanned with the
   existing AST authority; a root-barrel import is a conflict.
 - **Compound decision (R4-2).** `shouldGenerateCompoundBarrel` now uses
   `isCompoundComponent` and declared exports, not export counts/targets.
+- **Supplied/observed reconciliation.** A supplied lock that disagrees with the
+  observed `kit.lock.json` bytes is a conflict; observed absence stays
+  authoritative over an in-memory lineage.
 
 ## New verification lanes
 
@@ -52,29 +60,27 @@ and does not close S033–S063.
 - `tests/integration/installed-package.test.ts` (R5) — the emitted planner and
   TypeScript/Svelte parser/planner paths import and run outside the checkout.
 
-## Verified results at `12bbd81` (Node 24.21.0 / pnpm 11.22.0)
+## Verified results at `27aed65` (Node 24.21.0 / pnpm 11.22.0)
 
-| Lane                                                                        | Result                      |
-| --------------------------------------------------------------------------- | --------------------------- |
-| `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | exit 0                      |
-| `format:check`, `lint`, `typecheck`                                         | exit 0                      |
-| `test:unit`                                                                 | 265 pass / 0 fail           |
-| `test:integration`                                                          | 214 pass / 0 fail           |
-| `test:registry`                                                             | 38 pass / 0 fail            |
-| `test:harness`                                                              | 37 pass / 0 fail            |
-| `test:cli-bootstrap`                                                        | 52 pass / 0 fail            |
-| `test:components`                                                           | 22 pass / 0 fail            |
-| `test:contracts` / `check:contracts`                                        | pass / 0 errors, 0 warnings |
+| Lane                                                                        | Result                                 |
+| --------------------------------------------------------------------------- | -------------------------------------- |
+| `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | exit 0                                 |
+| `format:check`, `lint`, `typecheck`                                         | exit 0                                 |
+| `test:unit`                                                                 | 265 pass / 0 fail                      |
+| `test:integration`                                                          | 217 pass / 0 fail                      |
+| `test:registry`                                                             | 38 pass / 0 fail                       |
+| `test:harness`                                                              | 37 pass / 0 fail                       |
+| `test:cli-bootstrap`                                                        | 52 pass / 0 fail                       |
+| `test:components`                                                           | 22 pass / 0 fail                       |
+| `test:contracts` / `check:contracts`                                        | pass / 0 errors, 0 warnings            |
+| `fixture:check`                                                             | svelte-check 0 errors / 0 warnings     |
+| `test:fixture`                                                              | exit 0                                 |
+| `test:browser`                                                              | 23 passed (chromium, fault + teardown) |
+| checksum-verified `actionlint 1.7.12`                                       | exit 0                                 |
+| clean `leptos_ui_kit` reference at `a10fbf0`                                | fmt/check/test 0; 578 / 0 / 4 ignored  |
 
-Run on the product-unchanged predecessor `ea5dcf3`:
-
-- `fixture:check` 0 errors/0 warnings; `test:fixture` exit 0; `test:browser`
-  23 passed (chromium, including fault and teardown controls).
-- checksum-verified `actionlint 1.7.12` on `.github/workflows/ci.yml` exit 0
-  (archive SHA-256 `aba9ce…6953f`, extracted binary `8db117…88388`).
-- clean reference `leptos_ui_kit` at `a10fbf0`: `cargo fmt --check`,
-  `cargo check --workspace --all-targets`, `cargo test --workspace --all-targets`
-  exit 0 (578 passed / 0 failed / 4 ignored). No reference mutation.
+No lane was skipped. The four reference tests are explicitly ignored, not
+zero-skips across every lane.
 
 ## Remaining review-4 work (not claimed complete)
 
