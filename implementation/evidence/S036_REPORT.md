@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S036","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S036","kind":"report","commit":"450a090dd448095838c81aeeb8e48d2393c77d18","disposition":"candidate"}
 -->
 
 Step ID and title: S036 — Resolve explicit working directories in workspaces.

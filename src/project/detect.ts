@@ -12,14 +12,25 @@
  * checkpoints (S036–S037); those layers override the inferred defaults in this
  * module.
  */
-import { lstatSync, readFileSync, type Stats } from "node:fs";
+import { lstatSync, readFileSync, readdirSync, type Stats } from "node:fs";
 import path from "node:path";
 
-import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import {
+  fail,
+  issue,
+  ok,
+  type ModelIssue,
+  type ModelResult,
+} from "../registry/errors.js";
+import {
+  DEFAULT_KIT_CONFIG,
   DEFAULT_LAYOUT_FILE,
   DEFAULT_STYLES_DIR,
   DEFAULT_UI_DIR,
+  deriveKitPaths,
+  parseKitConfig,
+  type KitConfig,
+  type KitDerivedPaths,
 } from "./config.js";
 
 /** Static SvelteKit configuration filenames, in deterministic order. */
@@ -175,5 +186,146 @@ export function detectDefaultProject(
     libDirPresent,
     routesDirPresent,
     layoutPresent,
+  });
+}
+
+/** Directory names never descended into during kit.json discovery. */
+export const DISCOVERY_EXCLUDED_DIRS = [
+  "node_modules",
+  ".git",
+  ".svelte-kit",
+  ".output",
+  "build",
+  "dist",
+  "coverage",
+] as const;
+const EXCLUDED_DIR_SET = new Set<string>(DISCOVERY_EXCLUDED_DIRS);
+
+/** A selected kit configuration and where it was discovered. */
+export interface DiscoveredKitConfig {
+  readonly kind: "default" | "custom";
+  /** Package-relative `_kit/kit.json` path. */
+  readonly configPath: string;
+  readonly config: KitConfig;
+  readonly derived: KitDerivedPaths;
+}
+
+function joinLogical(...segments: readonly string[]): string {
+  return segments
+    .map((segment, index) =>
+      index === 0
+        ? segment.replace(/\/+$/, "")
+        : segment.replace(/^\/+|\/+$/g, ""),
+    )
+    .filter((segment) => segment !== "")
+    .join("/");
+}
+
+/**
+ * Deterministically collect candidate `<uiDir>/_kit/kit.json` paths below the
+ * selected package root. The walk is sorted, skips dependency/VCS/build-output
+ * directories and nested package roots (any descendant directory other than the
+ * root that contains its own `package.json`), and never follows a symlink.
+ */
+function findKitConfigCandidates(root: string): string[] {
+  const results: string[] = [];
+  const walk = (dir: string, relDir: string): void => {
+    const stats = lstatOrNull(dir);
+    if (stats === null || !stats.isDirectory()) return;
+    for (const name of readdirSync(dir).sort()) {
+      const abs = path.join(dir, name);
+      const rel = relDir === "" ? name : `${relDir}/${name}`;
+      const entry = lstatOrNull(abs);
+      if (entry === null || entry.isSymbolicLink() || !entry.isDirectory()) {
+        continue;
+      }
+      if (EXCLUDED_DIR_SET.has(name)) continue;
+      if (isRegularFile(path.join(abs, "package.json"))) continue;
+      if (name === "_kit") {
+        if (isRegularFile(path.join(abs, "kit.json"))) {
+          results.push(`${rel}/kit.json`);
+        }
+        continue;
+      }
+      walk(abs, rel);
+    }
+  };
+  walk(root, "");
+  return results.sort();
+}
+
+/**
+ * Discover the selected custom `_kit/kit.json` within the package (S037). No
+ * candidate means a default bootstrap; more than one validated candidate, a
+ * malformed candidate or a candidate whose declared `uiDir` disagrees with its
+ * location fails visibly. Reading is JSON-only and never executes
+ * `svelte.config.*` or a package script.
+ */
+export function discoverKitConfig(
+  root: string,
+): ModelResult<DiscoveredKitConfig> {
+  const candidates = findKitConfigCandidates(root);
+  const issues: ModelIssue[] = [];
+  const valid: DiscoveredKitConfig[] = [];
+
+  for (const rel of candidates) {
+    const abs = path.join(root, ...rel.split("/"));
+    let raw: unknown;
+    try {
+      raw = JSON.parse(readFileSync(abs, "utf8"));
+    } catch {
+      issues.push(
+        issue(
+          "KIT_CONFIG_INVALID_JSON",
+          `${rel} is not valid JSON; fix the kit configuration before discovery`,
+          rel,
+        ),
+      );
+      continue;
+    }
+    const parsed = parseKitConfig(raw, rel);
+    if (!parsed.ok) {
+      for (const entry of parsed.issues) issues.push(entry);
+      continue;
+    }
+    const derived = deriveKitPaths(parsed.value);
+    const expected = joinLogical(parsed.value.uiDir, "_kit", "kit.json");
+    if (expected !== rel) {
+      issues.push(
+        issue(
+          "KIT_CONFIG_LOCATION_MISMATCH",
+          `${rel} declares uiDir ${JSON.stringify(parsed.value.uiDir)} which derives ${JSON.stringify(expected)}; a custom kit.json must live where its uiDir requires`,
+          rel,
+        ),
+      );
+      continue;
+    }
+    valid.push({
+      kind: "custom",
+      configPath: rel,
+      config: parsed.value,
+      derived,
+    });
+  }
+
+  if (issues.length > 0) return fail(issues);
+  if (valid.length > 1) {
+    return fail([
+      issue(
+        "KIT_CONFIG_AMBIGUOUS",
+        `found ${valid.length} valid kit.json candidates (${valid
+          .map((entry) => entry.configPath)
+          .join(", ")}); keep exactly one or pass an explicit mapping`,
+        valid[0]?.configPath,
+      ),
+    ]);
+  }
+  if (valid.length === 1) return ok(valid[0] as DiscoveredKitConfig);
+
+  return ok({
+    kind: "default",
+    configPath: "src/lib/components/ui/_kit/kit.json",
+    config: DEFAULT_KIT_CONFIG,
+    derived: deriveKitPaths(DEFAULT_KIT_CONFIG),
   });
 }

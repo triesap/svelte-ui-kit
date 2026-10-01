@@ -70,3 +70,21 @@ The stylesheet has separately managed blocks, not whole-file generator ownership
 Ensure the application loads `kit.css`, then `themes.css`, then `app.css`, preserving existing layout code and avoiding duplicate imports. Resolve relative paths from the actual supported layout; the default is `../styles/<name>.css` from `src/routes/+layout.svelte`. Parse Svelte, identify an appropriate instance script, and apply a minimal text edit. Test layouts with no script, existing instance/module scripts, TypeScript, comments, and existing imports. Do not inject into the wrong script or replace route rendering.
 
 Custom UI/styles/root layouts require explicit validated mapping. `--cwd` chooses one package; do not scan and mutate all workspace members. Unsupported or ambiguous integration must produce a diagnostic and an explicit manual step rather than a guessed edit.
+
+#### Custom mapping discovery
+
+Supported custom mappings are the frozen explicit `uiDir`, `stylesDir` and
+`layoutFile` fields of `kit.json`. They are resolved relative to the selected
+application package; no new flag or field is introduced. A custom installation
+is identified by exactly one `_kit/kit.json` below the selected package whose
+location agrees with its declared `uiDir` (`uiDir/_kit/kit.json`). Discovery is
+a read-only, deterministic, sorted walk that excludes dependency, VCS and
+build-output directories and nested package roots, and never follows a symlink.
+No candidate means the default `src/lib/components/ui/_kit/kit.json` bootstrap
+location; more than one validated candidate, a malformed candidate or a
+location/`uiDir` disagreement fails visibly.
+
+`svelte.config.*` and package scripts are never executed for discovery. Only
+statically provable evidence (manifest declarations and file presence) is read.
+An unsupported dynamic or ambiguous SvelteKit configuration produces a typed
+diagnostic with the exact manual integration steps instead of a guessed edit.
