@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S048","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S048","kind":"report","commit":"3d97bbf191d2c00bfff1a13952b6249ab1a1b3d4","disposition":"candidate"}
 -->
 
 Step ID and title: S048 — Parse managed CSS markers without whole-file ownership.
