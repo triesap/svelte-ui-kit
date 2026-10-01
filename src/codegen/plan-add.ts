@@ -41,6 +41,7 @@ import {
   type DependencyInstruction,
 } from "../project/dependency-instructions.js";
 import { hashBytes } from "./compare.js";
+import { canonicalJson } from "./serialize.js";
 import { composeManagedCss, type ManagedBlockInput } from "./css.js";
 import { classifyCssBlocks } from "./css-compare.js";
 import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
@@ -228,9 +229,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     diagnostics.push(`lock conflict: ${lockState.reason}`);
     hasConflict = true;
   } else if (lockState.status === "file") {
+    let parsedObserved: unknown;
+    let malformed = false;
     try {
-      JSON.parse(lockState.text);
+      parsedObserved = JSON.parse(lockState.text);
     } catch {
+      malformed = true;
       diagnostics.push(
         `lock conflict: ${lockPath} is not valid JSON; reconcile the observed lock before planning`,
       );
@@ -241,6 +245,15 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         `lock conflict: ${lockPath} was observed but no lock was supplied; a typed null is not proof that the installed lineage is absent`,
       );
       hasConflict = true;
+    } else if (!malformed) {
+      // The supplied in-memory lineage must describe the observed bytes; a
+      // typed interface is not proof that the two agree.
+      if (canonicalJson(parsedObserved) !== canonicalJson(lock)) {
+        diagnostics.push(
+          `lock conflict: the observed ${lockPath} does not match the supplied lock lineage; re-read the installed lineage before planning`,
+        );
+        hasConflict = true;
+      }
     }
   } else if (lock !== null) {
     // A supplied lock against an observed absence is a lower-severity

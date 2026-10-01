@@ -360,6 +360,26 @@ test("a registry source importing the root barrel is a cycle conflict", (t) => {
   );
 });
 
+test("a supplied lock that disagrees with the observed bytes conflicts", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  const first = add(project);
+  assert.equal(first.ok, true, JSON.stringify(first));
+  if (!first.ok || !first.value.executable || first.value.lock === null) return;
+  applyWrites(project, first.value.writes);
+  const stale = { ...first.value.lock, registryVersion: "9.9.9" };
+  const result = add(project, registry(), { lock: stale });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.equal(result.value.executable, false);
+  assert.ok(
+    result.value.diagnostics.some((entry) =>
+      entry.includes("does not match the supplied lock lineage"),
+    ),
+    JSON.stringify(result.value.diagnostics),
+  );
+});
+
 test("a lock-owned integration whose target is missing conflicts", (t) => {
   for (const target of [
     derived.kitCss,
