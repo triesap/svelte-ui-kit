@@ -59,3 +59,12 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 
 - The conditional Rust guard is N/A: this repository has no Cargo workspace.
 - Dependency inspection and instructions remain S038–S040.
+
+## RCLD-03 review 1 repair addendum (2026-10-01)
+
+Independent review 1 reproduced that a symlink/directory at `_kit/kit.json`
+silently fell back to default bootstrap. Repair commit 69ce8ed observes `_kit`
+entries and `kit.json` kinds deliberately and returns typed
+unsafe/nonregular/unreadable causes, and replaces the imaginary "pass a
+mapping" guidance with supported reconciliation steps. The repaired direct
+suite passes (custom-paths 10/10).

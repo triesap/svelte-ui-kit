@@ -52,3 +52,14 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 - The conditional Rust guard is N/A: this repository has no Cargo workspace.
 - Peer-specific reconciliation (S039) and manager instruction rendering (S040)
   remain open.
+
+## RCLD-03 review 1 repair addendum (2026-10-01)
+
+Independent review 1 reproduced that an installed-but-undeclared dependency was
+marked ready, declared `^4` plus installed 5.57.1 was marked ready for required
+`^5`, a beta satisfied `^5`, a hoisted install was reported missing and a
+malformed manifest was reported absent. Repair commit 9ff4e5d requires explicit
+declaration, a genuine declared/required intersection and an installed version
+inside it under strict npm prerelease semantics; resolves ancestor/hoisted
+installs; and returns typed invalid metadata and typed logical I/O causes. The
+repaired direct suite passes (dependency-state 14/14).

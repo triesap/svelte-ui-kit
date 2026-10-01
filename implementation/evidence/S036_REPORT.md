@@ -55,3 +55,13 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 
 - The conditional Rust guard is N/A: this repository has no Cargo workspace.
 - Explicit custom mappings and `_kit/kit.json` discovery remain S037.
+
+## RCLD-03 review 1 repair addendum (2026-10-01)
+
+Independent review 1 reproduced that `../outside` members resolved, `!` patterns
+became positive members and unsupported globs were ignored before a false single
+target was claimed. Repair commit 69ce8ed infers only contained, non-symlink,
+proven SvelteKit application members, applies `!` exclusions, diagnoses escaping
+paths and deeper globs with an explicit `--cwd` instruction, and recognizes an
+ambiguous workspace root in default discovery. The repaired direct suite passes
+(project-root 12/12).

@@ -55,3 +55,14 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 - Workspace selection/`--cwd` (S036) and explicit custom mappings/discovery
   (S037) remain open; this checkpoint only establishes the default
   interpretation.
+
+## RCLD-03 review 1 repair addendum (2026-10-01)
+
+Independent review 1 reproduced that a non-SvelteKit Svelte package with a
+`svelte.config` file was accepted, dynamic/custom routes were ignored and the
+first of several config files was chosen silently. Repair commit 69ce8ed
+requires declared `@sveltejs/kit` evidence, statically inspects exactly one
+config through the pinned TypeScript AST (no execution), honors literal
+`kit.files.routes`/`kit.files.lib`, and returns typed ambiguity/dynamic
+diagnostics with manual reconciliation steps. The repaired direct suite passes
+(detect-default 12/12).

@@ -56,3 +56,10 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 - The conditional Rust guard is N/A: this repository has no Cargo workspace.
 - Real filesystem ancestry/symlink handling remains S041–S042; this checkpoint
   is lexical and role-based only.
+
+## RCLD-03 review 1 repair addendum (2026-10-01)
+
+Independent review 1 preserved S034's valid mapping and collision controls and
+requested no behavioral change. Its earlier intermediate formatting failure
+remains recorded as a failed attempt; the repaired tree keeps S034 formatting
+green.

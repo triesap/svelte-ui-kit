@@ -52,3 +52,15 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 
 - The conditional Rust guard is N/A: this repository has no Cargo workspace.
 - Manager-specific installation instruction rendering remains S040.
+
+## RCLD-03 review 1 repair addendum (2026-10-01)
+
+Independent review 1 reproduced that only pre-supplied peer-role entries were
+filtered and actual installed upstream `peerDependencies` were never read, so a
+runtime Bits 2.19.3 plan with missing date/Svelte peers returned success.
+Repair commit 9ff4e5d combines registry peer requirements with the actual
+installed upstream peer metadata, validates required peers even when a wrapper
+does not import them, respects optional upstream peers only when the registry
+does not require them, and never fabricates a successful audit from a missing
+upstream installation. The repaired direct suite passes (peer-dependencies
+10/10). See the `COMPATIBILITY.md` S039 repair addendum.

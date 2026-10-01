@@ -58,3 +58,11 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 - The conditional Rust guard is N/A: this repository has no Cargo workspace.
 - This checkpoint is lexical only. Real filesystem ancestry, symlink and
   nonregular-target handling remain S041–S042.
+
+## RCLD-03 review 1 repair addendum (2026-10-01)
+
+Independent review 1 reproduced that portable path segments still accepted `?`,
+`*`, `<`, `>`, `|` and double quotes. Repair commit 69ce8ed rejects the complete
+non-portable/shell metacharacter set in `isPortableLogicalSegment`, so config,
+lock and theme consumers reject them; the original unsafe input is still never
+echoed raw. The repaired S033 direct suite passes (unit logical-paths 11/11).

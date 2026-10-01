@@ -900,3 +900,25 @@ Evidence recorded by the focused fixture (`tests/integration/peer-dependencies.t
   uninstalled peers are `PEER_MISSING`.
 
 These are author-run fixture results, not a fresh independent acceptance.
+
+## S039 repair addendum — actual upstream peer metadata (2026-10-01)
+
+Independent review 1 reproduced that S039 relied only on pre-supplied peer-role
+plan entries. Repair commit 9ff4e5d reads the _actual_ installed upstream
+`peerDependencies` (and `peerDependenciesMeta`) of every selected package.
+Verified against the pinned `bits-ui@2.19.3` metadata
+(`@internationalized/date ^3.8.1`, `svelte ^5.33.0`):
+
+- a runtime Bits plan whose date/Svelte peers are neither declared nor installed
+  is a typed conflict (`PEER_MISSING`), not a successful empty audit;
+- a missing upstream installation is `PEER_UPSTREAM_NOT_INSTALLED`, never a
+  fabricated success;
+- an optional upstream peer is required only when the registry independently
+  requires that package;
+- declared `^4` plus installed 5.57.1 for required `^5` is
+  `declaration_incompatible`, and installed `5.58.0-beta.1` does not satisfy
+  `^5` under ordinary prerelease semantics.
+
+The repaired direct suites are `tests/integration/peer-dependencies.test.ts`
+(10/10) and `tests/integration/dependency-state.test.ts` (14/14). No release
+AC20 waiver is created by this addendum.

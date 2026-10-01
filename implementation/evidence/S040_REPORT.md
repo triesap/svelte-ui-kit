@@ -51,3 +51,14 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 
 - The conditional Rust guard is N/A: this repository has no Cargo workspace.
 - Filesystem snapshots/ancestry remain S041–S042.
+
+## RCLD-03 review 1 repair addendum (2026-10-01)
+
+Independent review 1 reproduced that `pnpm add svelte@>=5` was interpreted by a
+shell as redirection (creating `=5`), `svelte@^5||^6` lost an argument, and
+`pnpm@garbage`/`bun@1.2.0` selected a guessed manager. Repair commit 7331461
+validates every operand and always POSIX single-quotes it so shell operators are
+literal, rejects malformed names/options/control bytes, and validates
+`packageManager` syntax/version and known managers while never falling back to a
+stale lockfile or fabricating `npm` when unknown. The repaired direct suite
+passes (dependency-instructions 12/12).
