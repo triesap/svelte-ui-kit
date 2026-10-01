@@ -473,6 +473,14 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         hasConflict = true;
       }
     }
+    // A tracked integration must never be silently recreated when its target
+    // has gone missing: ownership implies the bytes should exist.
+    if (stylesheetIntegration !== undefined && state.status === "absent") {
+      diagnostics.push(
+        `css conflict at ${cssPath}: the lock owns this stylesheet but the target is absent; reconcile the missing integration explicitly rather than recreating it`,
+      );
+      hasConflict = true;
+    }
     // A whole-file customization that the recorded stylesheet baseline no
     // longer matches and that would still need a change cannot be overwritten.
     if (
@@ -609,6 +617,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     const exportsIntegration = (lock?.integrations ?? []).find(
       (entry) => entry.kind === "exports" && entry.path === rootExports,
     );
+    if (exportsIntegration !== undefined && exportsState.status === "absent") {
+      diagnostics.push(
+        `export conflict at ${rootExports}: the lock owns this export region but the target is absent; reconcile the missing integration explicitly rather than recreating it`,
+      );
+      hasConflict = true;
+    }
     const parsedRegion = parseExportRegion(rootExports, existing);
     if (!parsedRegion.ok) {
       diagnostics.push(...parsedRegion.issues.map((entry) => entry.message));
@@ -683,6 +697,15 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   } else {
     const existing = layoutState.status === "file" ? layoutState.text : "";
     finalLayout = existing;
+    const layoutIntegration = (lock?.integrations ?? []).find(
+      (entry) => entry.kind === "layout" && entry.path === config.layoutFile,
+    );
+    if (layoutIntegration !== undefined && layoutState.status === "absent") {
+      diagnostics.push(
+        `layout conflict at ${config.layoutFile}: the lock owns this layout integration but the target is absent; reconcile the missing integration explicitly rather than recreating it`,
+      );
+      hasConflict = true;
+    }
     const specifiers = [derived.kitCss, derived.themesCss, derived.appCss].map(
       (target) => ({
         specifier: relativeSpecifier(config.layoutFile, target),

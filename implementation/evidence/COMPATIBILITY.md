@@ -967,3 +967,41 @@ S033–S063 remain `committed_pending_review`; S064 stays gated by independent
 Codex S063 acceptance. The qualified Bits 2.19.3 declaration exception remains
 fixture-only release AC20 debt. No remote workflow, publication, deployment or
 platform-matrix acceptance is claimed.
+
+## RCLD-03 independent review 4 composition repair (2026-10-01)
+
+Addendum for the `pfc through RCLD-03` repair series at `4a6952a`/`ea5dcf3`/
+`12bbd81` on Node `24.21.0` / `pnpm 11.22.0`. It supersedes the review-3 numbers
+above (which predate the review-4 composed-entry repair); the original criteria
+and all prior accepted work are unchanged. The review-3 table's `test:harness`
+29/29 and `test:integration` 196/196 are historical; the reference guard's four
+ignored tests are recorded explicitly, not as zero skips across every lane.
+
+- RCLD03-R4-1: observed-target validation, observed config/lock parsing,
+  BOM-preserving shared decode, snapshot-derived registry identity and minimal
+  kit/themes/app initialization effects — implemented and verified.
+- RCLD03-R4-2: unowned export/CSS-block conflict, effective export-surface
+  cohorts, root-barrel cycle qualification and manifest-authoritative compound
+  decision — implemented and verified.
+- RCLD03-R4-3: integrations retained through `buildLockProjection`, explicit
+  `retire` operations in plan and envelope, metadata-only vs no_change
+  distinction and satisfied replay — implemented and verified.
+- RCLD03-R4-4: real validated-registry planned-consumer build, installed
+  planner/TS/Svelte parser lane, complete-observation purity/conflict controls —
+  implemented and verified; full S033–S063 report reconciliation remains.
+
+| Lane                                              | Result at the repair revision                                |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| `test:unit`                                       | 265 / 265                                                    |
+| `test:integration`                                | 215 / 215 (was 196; +19 composed/consumer/parser)            |
+| `test:registry`                                   | 38 / 38                                                      |
+| `test:harness`                                    | 37 / 37                                                      |
+| `test:cli-bootstrap`                              | 52 / 52                                                      |
+| `test:components`                                 | 22 / 22 (two qualified TS2590)                               |
+| `test:contracts` / `check:contracts`              | pass / 0 errors, 0 warnings                                  |
+| `fixture:check` / `test:fixture` / `test:browser` | 0/0; exit 0; 23 passed                                       |
+| `actionlint 1.7.12` (checksum-verified)           | exit 0                                                       |
+| `leptos_ui_kit` reference guard                   | fmt/check/test exit 0; 578 passed / 0 failed / **4 ignored** |
+
+Pi implementation evidence only; Codex alone accepts. See
+`implementation/evidence/RCLD03_R4_REPAIR.md` for the commit-level record.

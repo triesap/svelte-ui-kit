@@ -360,6 +360,32 @@ test("a registry source importing the root barrel is a cycle conflict", (t) => {
   );
 });
 
+test("a lock-owned integration whose target is missing conflicts", (t) => {
+  for (const target of [
+    derived.kitCss,
+    derived.rootExports,
+    CONFIG.layoutFile,
+  ]) {
+    const project = createTempProject();
+    t.after(() => project.cleanup());
+    const first = add(project);
+    assert.equal(first.ok, true, JSON.stringify(first));
+    if (!first.ok || !first.value.executable) continue;
+    applyWrites(project, first.value.writes);
+    rmSync(path.join(project.root, target), { force: true });
+    const result = add(project, registry(), { lock: first.value.lock });
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (!result.ok) continue;
+    assert.equal(result.value.executable, false, target);
+    assert.ok(
+      result.value.diagnostics.some((entry) =>
+        entry.includes("reconcile the missing integration"),
+      ),
+      `${target}: ${JSON.stringify(result.value.diagnostics)}`,
+    );
+  }
+});
+
 test("a clean retirement is an explicit operation whose application removes the file", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());
