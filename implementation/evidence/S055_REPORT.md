@@ -5,7 +5,7 @@ Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
 alone accepts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S055","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S055","kind":"report","commit":"eb78d5f73fcdc78eaf6ece51f3cb80184573d645","disposition":"candidate"}
 -->
 
 Step ID and title: S055 — Identify safe Svelte layout edit spans.
