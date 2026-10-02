@@ -153,6 +153,14 @@ test("a real conflict leaves every project target unchanged", (t) => {
   if (!result.ok) return;
   assert.equal(result.value.executable, false);
   assert.deepEqual(result.value.writes, []);
+  assert.ok(
+    result.value.diagnostics.some(
+      (entry) =>
+        entry.includes("source conflict") &&
+        entry.includes("local and incoming content both changed"),
+    ),
+    JSON.stringify(result.value.diagnostics),
+  );
   assert.deepEqual(snapshotTree(project.root), before);
 });
 

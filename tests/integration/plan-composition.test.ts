@@ -463,6 +463,10 @@ test("an unowned managed export region conflicts instead of being erased", (t) =
   if (!result.ok) return;
   assert.equal(result.value.executable, false);
   assert.deepEqual(result.value.writes, []);
+  assert.ok(
+    result.value.diagnostics.some((entry) => entry.includes("does not own")),
+    JSON.stringify(result.value.diagnostics),
+  );
 });
 
 test("a customized source with a renamed public export blocks the whole batch", (t) => {
