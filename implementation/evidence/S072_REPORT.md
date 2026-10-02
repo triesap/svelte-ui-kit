@@ -5,7 +5,7 @@ Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S072","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S072","kind":"report","commit":"a55f72ded1b2499ca83779e91a2c5c2350ccbf54","disposition":"candidate"}
 -->
 
 Step ID and title: S072 — Clean completed transactions without losing evidence.
