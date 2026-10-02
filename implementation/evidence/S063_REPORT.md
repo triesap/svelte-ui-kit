@@ -175,7 +175,7 @@ Run at the review-3 S063 candidate revision; retained for provenance only.
 
 ## Review-8 cumulative qualification addendum (2026-10-02)
 
-Addendum for the `pfc through RCLD-03` review-8 candidate at `b122039`. It
+Addendum for the `pfc through RCLD-03` review-8 candidate at `5ef055d`. It
 supersedes the review-7 candidate numbers in the sections above, which predate
 the captured effective mapping, owned-content initialization refusal and strict
 behavioral lifecycle qualification. The original checkpoint criteria, pending

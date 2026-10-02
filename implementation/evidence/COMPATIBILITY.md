@@ -1110,7 +1110,7 @@ See `implementation/evidence/RCLD03_R7_REPAIR.md` for the commit-level record.
 
 ## RCLD-03 independent review 8 effective-mapping repair (2026-10-02)
 
-Addendum for the `pfc through RCLD-03` review-8 series at `b122039` on Node
+Addendum for the `pfc through RCLD-03` review-8 series through `5ef055d` on Node
 `24.21.0` / pnpm `11.22.0`. It supersedes the review-3/4/5/6/7 numbers above
 (which predate the captured effective mapping, owned-content initialization
 refusal and strict behavioral lifecycle qualification). The original criteria

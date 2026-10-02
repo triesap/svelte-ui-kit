@@ -87,7 +87,7 @@ verified progress. The actual planned production page/control remains qualified;
 whole-sequence acceptance is withheld.
 
 Four real-registry probes exposed the remaining effective mapping/ownership
-criteria. These are now implemented at candidate `b122039` (see
+criteria. These are now implemented through candidate `5ef055d` (see
 `implementation/evidence/RCLD03_R8_REPAIR.md`): the bounded `_kit/kit.json`
 discovery is captured with the selected-package evidence and composed into one
 effective mapping used by init/add/sync, so a static nondefault routes

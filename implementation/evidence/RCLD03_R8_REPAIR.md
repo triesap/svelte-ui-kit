@@ -18,6 +18,10 @@ review is preserved.
 | Commit    | Area                                                                        |
 | --------- | --------------------------------------------------------------------------- |
 | `b122039` | R8-1/2/3 effective mapped planning, owned-content lifecycle and regressions |
+| `5ef055d` | R8-3 intended-cause assertions for source/export conflicts                  |
+
+The qualified candidate is `5ef055d17acd00cda9228acb287c180b7656a521`; the
+evidence/qualification record in this file is updated separately.
 
 ## RCLD03-R8-1 — captured effective mapping across init/add/sync
 
@@ -76,7 +80,7 @@ through the active layout and exercises the emitted plan envelope.
   evidence that planning starts no writer or package manager, supplementing the
   existing import-scan structure check.
 
-## Verification (this candidate, `b122039`)
+## Verification (qualified candidate `5ef055d`, product code from `b122039`)
 
 Run from this worktree with Node `24.21.0` / pnpm `11.22.0` through the
 configured build router. Complete raw logs are retained (git-ignored) under
