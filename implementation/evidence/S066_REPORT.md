@@ -5,7 +5,7 @@ Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S066","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S066","kind":"report","commit":"ed982c3c872e2309467f06969f70a2d7a4501b36","disposition":"candidate"}
 -->
 
 Step ID and title: S066 — Implement exclusive writer coordination.
