@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: Codex independently accepts S033–S063 at combined evidence anchor `f46d60f`; RCLD-04 is activated. The active authorized batch is all S064–S077 under the live RCLD-04 record. S078 requires independent S077 acceptance. Updated 2026-10-02.
+Status: Codex independently accepts S033–S063 at combined evidence anchor `f46d60f`. RCLD-04 is activated and all fourteen S064–S077 checkpoints are committed pending independent Codex acceptance. S078 requires that acceptance first. Updated 2026-10-02.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,10 +17,10 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S064** (RCLD-04 active; execute S064–S077 under the live authorization record).
+- Active implementation checkpoint: **none** (S064–S077 are committed_pending_review; await independent Codex acceptance before S078).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
-- Committed pending review: **13 / 203**. Authored batch range: **S064–S076**.
+- Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
 - Completed RCLD sequences: **3 / 11**. Remaining: **8 / 11**.
 - Last safe target commit: `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7`, branch `master` (independent S033–S063 combined evidence anchor; original implementation hashes remain provenance).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
@@ -4346,7 +4346,7 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S074 | RCLD-04  | S073       | committed_pending_review | `9cefe60559121fef54956871e9edeb2047ffb40a` |
 | S075 | RCLD-04  | S074       | committed_pending_review | `c82decccf777cd3004721bf161b0ac7be30f2a14` |
 | S076 | RCLD-04  | S075       | committed_pending_review | `f0f2dd1a49288b1c8dc42973d88cc52167afef88` |
-| S077 | RCLD-04  | S076       | not_started              | —                                          |
+| S077 | RCLD-04  | S076       | committed_pending_review | `9f18e2e9721f1e9695ecc17a044c6e3526dd568d` |
 | S078 | RCLD-05  | S077       | not_started              | —                                          |
 | S079 | RCLD-05  | S078       | not_started              | —                                          |
 | S080 | RCLD-05  | S079       | not_started              | —                                          |

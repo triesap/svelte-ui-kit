@@ -5,7 +5,7 @@ Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S077","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S077","kind":"report","commit":"9f18e2e9721f1e9695ecc17a044c6e3526dd568d","disposition":"candidate"}
 -->
 
 Step ID and title: S077 — Compose the guarded apply use case.
