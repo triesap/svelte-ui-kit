@@ -37,6 +37,7 @@ import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
+import { observeEntry } from "../project/io.js";
 import { isSafeLogicalRelativePath, pathsOverlap } from "../project/paths.js";
 import {
   captureReadset,
@@ -598,6 +599,61 @@ function absOf(root: string, logical: string): string {
   return path.join(root, ...logical.split("/"));
 }
 
+/**
+ * Prove the staged replacement can be published with an atomic same-filesystem
+ * rename: the nearest existing ancestor directory of every target must share
+ * the project root's device. A cross-device arrangement is a typed refusal
+ * before any semantic effect, never a happy-path assumption.
+ */
+function verifySameFilesystem(
+  root: string,
+  targets: readonly ValidatedApplyTarget[],
+): ModelIssue[] {
+  const rootEntry = observeEntry(root);
+  if (rootEntry.kind !== "directory") {
+    return [
+      issue(
+        "AUTHORITY_ROOT_UNSAFE",
+        "the project root is not a real directory",
+      ),
+    ];
+  }
+  const rootDevice = rootEntry.stats.dev;
+  const issues: ModelIssue[] = [];
+  for (const target of targets) {
+    let current = path.dirname(absOf(root, target.path));
+    for (;;) {
+      const entry = observeEntry(current);
+      if (entry.kind === "directory") {
+        if (entry.stats.dev !== rootDevice) {
+          issues.push(
+            issue(
+              "STAGE_CROSS_DEVICE",
+              `${target.path} is not on the same filesystem as the project root; refusing non-atomic publication`,
+              target.path,
+            ),
+          );
+        }
+        break;
+      }
+      if (entry.kind !== "absent") {
+        issues.push(
+          issue(
+            "AUTHORITY_ANCESTOR_UNSAFE",
+            `cannot prove a same-filesystem ancestor for ${target.path} (${entry.kind})`,
+            target.path,
+          ),
+        );
+        break;
+      }
+      const parent = path.dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+  }
+  return issues;
+}
+
 /** True when every sealed target's bytes still match their bound digest. */
 function verifySealedTargets(plan: ValidatedApplyPlan): ModelIssue[] {
   const issues: ModelIssue[] = [];
@@ -719,6 +775,12 @@ export function applyPlan(
     );
     if (!revalidated.ok) {
       return { kind: "refused", transactionId, issues: revalidated.issues };
+    }
+
+    // 3b. Prove same-filesystem staging/replacement before any semantic effect.
+    const filesystem = verifySameFilesystem(plan.root, plan.targets);
+    if (filesystem.length > 0) {
+      return { kind: "refused", transactionId, issues: filesystem };
     }
 
     // 4. Satisfied case: no target changes and the lock already holds the
