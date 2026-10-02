@@ -747,252 +747,269 @@ export function applyPlan(
     return { kind: "refused", transactionId: null, issues: acquired.issues };
   }
 
+  let outcome: ApplyOutcome;
   try {
-    // 2. Recovery runs under the lock and validates every recovery input
-    //    against the approved mapping before any mutation.
-    const recovery = recoverTransactions(
-      plan.root,
-      plan.stateDir,
-      {
-        uiDir: plan.uiDir,
-        stylesDir: plan.stylesDir,
-        layoutFile: plan.layoutFile,
-      },
-      hooks,
-    );
-    const refusedRecovery = recovery.filter(
-      (entry) => entry.status === "refused",
-    );
-    if (refusedRecovery.length > 0) {
-      return {
-        kind: "refused",
-        transactionId,
-        issues: refusedRecovery.flatMap((entry) => entry.issues),
-      };
-    }
-
-    // 3. Physical authority and preimage revalidation under coordination.
-    const revalidated = revalidatePreimages(
-      plan.root,
-      [...plan.targets.map((target) => target.preimage), plan.lock.preimage],
-      {
-        root: plan.readset.root,
-        ancestors: plan.readset.ancestors,
-        files: plan.readset.files,
-      },
-    );
-    if (!revalidated.ok) {
-      return { kind: "refused", transactionId, issues: revalidated.issues };
-    }
-
-    // 3b. Prove same-filesystem staging/replacement before any semantic effect.
-    const filesystem = verifySameFilesystem(plan.root, plan.targets);
-    if (filesystem.length > 0) {
-      return { kind: "refused", transactionId, issues: filesystem };
-    }
-
-    // 4. Satisfied case: no target changes and the lock already holds the
-    //    planned bytes. Nothing to do; no transaction is opened.
-    const lockAbs = absOf(plan.root, lockPath(plan.stateDir));
-    const lockUnchanged =
-      plan.targets.length === 0 &&
-      existsSync(lockAbs) &&
-      sha256Hex(readFileSync(lockAbs)) === plan.lock.digest;
-    if (lockUnchanged) {
-      return { kind: "no_change", transactionId: null, issues: [] };
-    }
-
-    const journal: TransactionJournal = {
-      schemaVersion: 1,
+    outcome = applyUnderLock(plan, transactionId, hooks);
+  } catch (error) {
+    outcome = {
+      kind: "refused",
       transactionId,
-      rootIdentity: plan.rootIdentity,
-      planDigest: plan.planDigest,
-      phase: "planned",
-      operations: plan.targets.map((target) => ({
-        path: target.path,
-        operation: target.operation,
-        preimage: {
-          kind: target.preimage.kind,
-          digest: target.preimage.digest,
-          mode: target.preimage.mode,
-        },
-        resultDigest: target.resultDigest,
-        resultMode: target.mode,
-        backupId: null,
-        stagedId: null,
-        applied: false,
-      })),
-      lock: null,
+      issues: [
+        issue(
+          "APPLY_INTERNAL_FAILED",
+          `the guarded batch failed unexpectedly: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      ],
     };
+  }
+  const release = releaseWriterLock(acquired.value);
+  cleanupEmptyTransient(plan);
+  if (release.ok) return outcome;
+  // A failed release never downgrades a truthful outcome, but an applied batch
+  // whose ownership evidence could not be released is not fully clean.
+  return {
+    kind: outcome.kind === "applied" ? "committed_needs_cleanup" : outcome.kind,
+    transactionId,
+    issues: [...outcome.issues, ...release.issues],
+  };
+}
 
-    // 5. Setup: a failure here is typed and cleans only the owned directory.
-    try {
-      mkdirSync(
-        absOf(plan.root, transactionDir(plan.stateDir, transactionId)),
-        {
-          recursive: true,
-          mode: 0o700,
-        },
-      );
-      fireHooks(hooks, "before", "transaction:create", transactionId);
-    } catch (error) {
-      removeTransaction(plan, transactionId);
-      return {
-        kind: "refused",
-        transactionId,
-        issues: [
-          issue(
-            "APPLY_SETUP_FAILED",
-            `could not create the owned transaction directory: ${error instanceof Error ? error.message : String(error)}`,
-          ),
-        ],
-      };
-    }
-
-    const staged = stageOperations(
-      plan.root,
-      plan.stateDir,
+/** The guarded body, run while this attempt holds the exclusive writer lock. */
+function applyUnderLock(
+  plan: ValidatedApplyPlan,
+  transactionId: string,
+  hooks?: TransactionHooks,
+): ApplyOutcome {
+  // 2. Recovery runs under the lock and validates every recovery input
+  //    against the approved mapping before any mutation.
+  const recovery = recoverTransactions(
+    plan.root,
+    plan.stateDir,
+    {
+      uiDir: plan.uiDir,
+      stylesDir: plan.stylesDir,
+      layoutFile: plan.layoutFile,
+    },
+    hooks,
+  );
+  const refusedRecovery = recovery.filter(
+    (entry) => entry.status === "refused",
+  );
+  if (refusedRecovery.length > 0) {
+    return {
+      kind: "refused",
       transactionId,
-      plan.targets.map((target) => ({
-        path: target.path,
-        operation: target.operation,
-        bytes: target.bytes,
-        mode: target.mode,
-      })),
-      hooks,
-    );
-    if (!staged.ok) {
-      removeTransaction(plan, transactionId);
-      return { kind: "refused", transactionId, issues: staged.issues };
-    }
+      issues: refusedRecovery.flatMap((entry) => entry.issues),
+    };
+  }
 
-    const prepared = prepareJournal(journal, staged.value.records);
-    try {
-      persistJournal(
-        plan.root,
-        journalPath(plan.stateDir, transactionId),
-        prepared,
-        hooks,
-      );
-    } catch (error) {
-      removeTransaction(plan, transactionId);
-      return {
-        kind: "refused",
-        transactionId,
-        issues: [
-          issue(
-            "APPLY_PREPARATION_FAILED",
-            `could not persist the prepared journal: ${error instanceof Error ? error.message : String(error)}`,
-          ),
-        ],
-      };
-    }
+  // 3. Physical authority and preimage revalidation under coordination.
+  const revalidated = revalidatePreimages(
+    plan.root,
+    [...plan.targets.map((target) => target.preimage), plan.lock.preimage],
+    {
+      root: plan.readset.root,
+      ancestors: plan.readset.ancestors,
+      files: plan.readset.files,
+    },
+  );
+  if (!revalidated.ok) {
+    return { kind: "refused", transactionId, issues: revalidated.issues };
+  }
 
-    // 6. Re-prove the physical authority and preimages after staging but before
-    //    any live replacement, so an edit made during staging is refused rather
-    //    than overwritten.
-    const rechecked = revalidatePreimages(
-      plan.root,
-      [...plan.targets.map((target) => target.preimage), plan.lock.preimage],
-      {
-        root: plan.readset.root,
-        ancestors: plan.readset.ancestors,
-        files: plan.readset.files,
+  // 3b. Prove same-filesystem staging/replacement before any semantic effect.
+  const filesystem = verifySameFilesystem(plan.root, plan.targets);
+  if (filesystem.length > 0) {
+    return { kind: "refused", transactionId, issues: filesystem };
+  }
+
+  // 4. Satisfied case: no target changes and the lock already holds the
+  //    planned bytes. Nothing to do; no transaction is opened.
+  const lockAbs = absOf(plan.root, lockPath(plan.stateDir));
+  const lockUnchanged =
+    plan.targets.length === 0 &&
+    existsSync(lockAbs) &&
+    sha256Hex(readFileSync(lockAbs)) === plan.lock.digest;
+  if (lockUnchanged) {
+    return { kind: "no_change", transactionId: null, issues: [] };
+  }
+
+  const journal: TransactionJournal = {
+    schemaVersion: 1,
+    transactionId,
+    rootIdentity: plan.rootIdentity,
+    planDigest: plan.planDigest,
+    phase: "planned",
+    operations: plan.targets.map((target) => ({
+      path: target.path,
+      operation: target.operation,
+      preimage: {
+        kind: target.preimage.kind,
+        digest: target.preimage.digest,
+        mode: target.preimage.mode,
       },
-    );
-    if (!rechecked.ok) {
-      removeTransaction(plan, transactionId);
-      return { kind: "refused", transactionId, issues: rechecked.issues };
-    }
+      resultDigest: target.resultDigest,
+      resultMode: target.mode,
+      backupId: null,
+      stagedId: null,
+      applied: false,
+    })),
+    lock: null,
+  };
 
-    const replaced = applyReplacements(
+  // 5. Setup: a failure here is typed and cleans only the owned directory.
+  try {
+    mkdirSync(absOf(plan.root, transactionDir(plan.stateDir, transactionId)), {
+      recursive: true,
+      mode: 0o700,
+    });
+    fireHooks(hooks, "before", "transaction:create", transactionId);
+  } catch (error) {
+    removeTransaction(plan, transactionId);
+    return {
+      kind: "refused",
+      transactionId,
+      issues: [
+        issue(
+          "APPLY_SETUP_FAILED",
+          `could not create the owned transaction directory: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      ],
+    };
+  }
+
+  const staged = stageOperations(
+    plan.root,
+    plan.stateDir,
+    transactionId,
+    plan.targets.map((target) => ({
+      path: target.path,
+      operation: target.operation,
+      bytes: target.bytes,
+      mode: target.mode,
+    })),
+    hooks,
+  );
+  if (!staged.ok) {
+    removeTransaction(plan, transactionId);
+    return { kind: "refused", transactionId, issues: staged.issues };
+  }
+
+  const prepared = prepareJournal(journal, staged.value.records);
+  try {
+    persistJournal(
       plan.root,
-      plan.stateDir,
+      journalPath(plan.stateDir, transactionId),
       prepared,
-      staged.value,
       hooks,
     );
-    if (!replaced.ok) {
-      const recovered = recoverTransactionsUnderLock(
-        plan,
-        transactionId,
-        hooks,
-      );
-      return {
-        kind: "refused",
-        transactionId,
-        issues: [...replaced.issues, ...recovered],
-      };
-    }
+  } catch (error) {
+    removeTransaction(plan, transactionId);
+    return {
+      kind: "refused",
+      transactionId,
+      issues: [
+        issue(
+          "APPLY_PREPARATION_FAILED",
+          `could not persist the prepared journal: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      ],
+    };
+  }
 
-    const published = publishLock(
-      plan.root,
-      plan.stateDir,
-      replaced.journal,
-      plan.lock.bytes,
-      plan.lock.preimage.mode ?? 0o644,
-      hooks,
-    );
-    if (!published.ok) {
-      if (published.journal.phase === "published") {
-        return {
-          kind: "committed_needs_cleanup",
-          transactionId,
-          issues: published.issues,
-        };
-      }
-      const state = classifyApplyPublication(plan, published.journal);
-      if (state === "published") {
-        return {
-          kind: "committed_needs_cleanup",
-          transactionId,
-          issues: published.issues,
-        };
-      }
-      if (state === "ambiguous") {
-        return {
-          kind: "refused",
-          transactionId,
-          issues: [
-            ...published.issues,
-            issue(
-              "RECOVERY_AMBIGUOUS_PUBLICATION",
-              "the canonical lock publication outcome is ambiguous; refusing to roll back or discard evidence",
-              lockPath(plan.stateDir),
-            ),
-          ],
-        };
-      }
-      const recovered = recoverTransactionsUnderLock(
-        plan,
-        transactionId,
-        hooks,
-      );
-      return {
-        kind: "refused",
-        transactionId,
-        issues: [...published.issues, ...recovered],
-      };
-    }
+  // 6. Re-prove the physical authority and preimages after staging but before
+  //    any live replacement, so an edit made during staging is refused rather
+  //    than overwritten.
+  const rechecked = revalidatePreimages(
+    plan.root,
+    [...plan.targets.map((target) => target.preimage), plan.lock.preimage],
+    {
+      root: plan.readset.root,
+      ancestors: plan.readset.ancestors,
+      files: plan.readset.files,
+    },
+  );
+  if (!rechecked.ok) {
+    removeTransaction(plan, transactionId);
+    return { kind: "refused", transactionId, issues: rechecked.issues };
+  }
 
-    const cleanup = cleanupTransaction(
-      plan.root,
-      plan.stateDir,
-      published.journal,
-      hooks,
-    );
-    if (!cleanup.ok) {
+  const replaced = applyReplacements(
+    plan.root,
+    plan.stateDir,
+    prepared,
+    staged.value,
+    hooks,
+  );
+  if (!replaced.ok) {
+    const recovered = recoverTransactionsUnderLock(plan, transactionId, hooks);
+    return {
+      kind: "refused",
+      transactionId,
+      issues: [...replaced.issues, ...recovered],
+    };
+  }
+
+  const published = publishLock(
+    plan.root,
+    plan.stateDir,
+    replaced.journal,
+    plan.lock.bytes,
+    plan.lock.preimage.mode ?? 0o644,
+    hooks,
+  );
+  if (!published.ok) {
+    if (published.journal.phase === "published") {
       return {
         kind: "committed_needs_cleanup",
         transactionId,
-        issues: cleanup.issues,
+        issues: published.issues,
       };
     }
-    return { kind: "applied", transactionId, issues: [] };
-  } finally {
-    releaseWriterLock(acquired.value);
-    cleanupEmptyTransient(plan);
+    const state = classifyApplyPublication(plan, published.journal);
+    if (state === "published") {
+      return {
+        kind: "committed_needs_cleanup",
+        transactionId,
+        issues: published.issues,
+      };
+    }
+    if (state === "ambiguous") {
+      return {
+        kind: "refused",
+        transactionId,
+        issues: [
+          ...published.issues,
+          issue(
+            "RECOVERY_AMBIGUOUS_PUBLICATION",
+            "the canonical lock publication outcome is ambiguous; refusing to roll back or discard evidence",
+            lockPath(plan.stateDir),
+          ),
+        ],
+      };
+    }
+    const recovered = recoverTransactionsUnderLock(plan, transactionId, hooks);
+    return {
+      kind: "refused",
+      transactionId,
+      issues: [...published.issues, ...recovered],
+    };
   }
+
+  const cleanup = cleanupTransaction(
+    plan.root,
+    plan.stateDir,
+    published.journal,
+    hooks,
+  );
+  if (!cleanup.ok) {
+    return {
+      kind: "committed_needs_cleanup",
+      transactionId,
+      issues: cleanup.issues,
+    };
+  }
+  return { kind: "applied", transactionId, issues: [] };
 }
 
 /**

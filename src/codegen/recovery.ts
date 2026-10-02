@@ -15,6 +15,7 @@
  * user edits and unexpected entries are preserved.
  */
 import {
+  chmodSync,
   existsSync,
   readFileSync,
   readdirSync,
@@ -25,6 +26,7 @@ import {
 import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
+import { fail, ok, type ModelResult } from "../registry/errors.js";
 import { observeEntry } from "../project/io.js";
 import { sha256Hex } from "./digest.js";
 import {
@@ -34,6 +36,10 @@ import {
   type TransactionJournal,
 } from "./transaction-journal.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+import {
+  hasRollbackEvidence,
+  verifyOwnedInventory,
+} from "./transaction-inventory.js";
 import {
   classifyPublication,
   observeFileIdentity,
@@ -86,16 +92,52 @@ function issue(code: string, message: string, locator?: string): ModelIssue {
 
 /** List owned transaction directories, sorted, without following symlinks. */
 export function scanTransactions(root: string, stateDir: string): string[] {
+  const checked = scanTransactionsChecked(root, stateDir);
+  return checked.ok ? [...checked.value] : [];
+}
+
+/**
+ * List owned transaction directories with a typed refusal when the transaction
+ * namespace is unreadable or is not a real directory. An unreadable scan is
+ * never silently treated as an empty (already clean) namespace.
+ */
+export function scanTransactionsChecked(
+  root: string,
+  stateDir: string,
+): ModelResult<readonly string[]> {
   const dir = absOf(root, transactionsDir(stateDir));
+  const entry = observeEntry(dir);
+  if (entry.kind === "absent") return ok([]);
+  if (entry.kind === "unreadable") {
+    return fail([
+      issue(
+        "RECOVERY_SCAN_UNREADABLE",
+        `the transaction namespace is unreadable (${entry.code})`,
+      ),
+    ]);
+  }
+  if (entry.kind !== "directory") {
+    return fail([
+      issue(
+        "RECOVERY_SCAN_UNSAFE",
+        `the transaction namespace is not a real directory (${entry.kind})`,
+      ),
+    ]);
+  }
   let entries: string[];
   try {
     entries = readdirSync(dir);
-  } catch {
-    return [];
+  } catch (error) {
+    return fail([
+      issue(
+        "RECOVERY_SCAN_UNREADABLE",
+        `the transaction namespace is unreadable (${codeOf(error)})`,
+      ),
+    ]);
   }
-  return entries
-    .filter((name) => /^[0-9a-f][0-9a-f-]{15,63}$/.test(name))
-    .sort();
+  return ok(
+    entries.filter((name) => /^[0-9a-f][0-9a-f-]{15,63}$/.test(name)).sort(),
+  );
 }
 
 function readJournal(
@@ -131,48 +173,17 @@ function readJournal(
   return parsed.value;
 }
 
-const OWNED_ENTRIES = new Set([
-  "journal.json",
-  "publication.json",
-  "staged",
-  "backups",
-  "progress",
-]);
-
 /**
- * Prove the transaction directory contains only owned entries. An unexpected
- * entry blocks cleanup; it is retained and reported rather than recursively
- * deleted.
+ * Prove the transaction directory contains only owned entries at every depth.
+ * An unexpected entry, symlink or unreadable directory blocks cleanup; it is
+ * retained and reported rather than recursively deleted.
  */
 function inventoryIssues(
   root: string,
   stateDir: string,
   transactionId: string,
 ): ModelIssue[] {
-  const dir = absOf(root, transactionDir(stateDir, transactionId));
-  let entries: string[];
-  try {
-    entries = readdirSync(dir);
-  } catch (error) {
-    return [
-      issue(
-        "RECOVERY_INVENTORY_UNREADABLE",
-        `transaction ${transactionId} inventory is unreadable (${codeOf(error)})`,
-      ),
-    ];
-  }
-  const unexpected = entries.filter(
-    (name) => !OWNED_ENTRIES.has(name) && !/^journal\.json\.tmp-/.test(name),
-  );
-  if (unexpected.length > 0) {
-    return [
-      issue(
-        "RECOVERY_UNEXPECTED_ENTRY",
-        `transaction ${transactionId} contains unexpected entries (${unexpected.sort().join(", ")}); refusing cleanup`,
-      ),
-    ];
-  }
-  return [];
+  return verifyOwnedInventory(root, stateDir, transactionId);
 }
 
 /** Non-following ancestry check for a logical target. */
@@ -197,7 +208,7 @@ function unsafeAncestry(root: string, logicalPath: string): string | null {
 
 type CurrentImage =
   | { readonly kind: "absent" }
-  | { readonly kind: "file"; readonly digest: string }
+  | { readonly kind: "file"; readonly digest: string; readonly mode: number }
   | { readonly kind: "unsafe"; readonly reason: string };
 
 function currentImage(root: string, logicalPath: string): CurrentImage {
@@ -211,7 +222,11 @@ function currentImage(root: string, logicalPath: string): CurrentImage {
     return { kind: "unsafe", reason: `not a regular file (${entry.kind})` };
   }
   try {
-    return { kind: "file", digest: sha256Hex(readFileSync(abs)) };
+    return {
+      kind: "file",
+      digest: sha256Hex(readFileSync(abs)),
+      mode: entry.stats.mode & 0o777,
+    };
   } catch (error) {
     return { kind: "unsafe", reason: `unreadable (${codeOf(error)})` };
   }
@@ -259,12 +274,18 @@ function preflightRollback(
   }
 
   const appliedResult =
-    current.kind === "file" && current.digest === operation.resultDigest;
-  const atPreimage =
+    current.kind === "file" &&
+    current.digest === operation.resultDigest &&
+    current.mode === operation.resultMode;
+  const atPreimageBytes =
     operation.preimage.kind === "file" &&
     operation.preimage.digest !== null &&
     current.kind === "file" &&
     current.digest === operation.preimage.digest;
+  const atPreimage =
+    atPreimageBytes &&
+    (operation.preimage.mode === null ||
+      current.mode === operation.preimage.mode);
 
   if (operation.operation === "create") {
     if (current.kind === "absent") return [];
@@ -272,7 +293,7 @@ function preflightRollback(
       return [
         issue(
           "RECOVERY_USER_EDIT",
-          `refusing to remove created ${operation.path}: its bytes are neither the planned result nor absent`,
+          `refusing to remove created ${operation.path}: its bytes or mode are neither the planned result nor absent`,
           operation.path,
         ),
       ];
@@ -281,6 +302,18 @@ function preflightRollback(
   }
 
   if (atPreimage) return [];
+
+  // Bytes still match the preimage but the mode was edited after the crash:
+  // preserve the edit and refuse rather than overwriting it.
+  if (atPreimageBytes && operation.preimage.mode !== null) {
+    return [
+      issue(
+        "RECOVERY_USER_EDIT",
+        `refusing to restore ${operation.path}: its mode was edited since the interrupted batch`,
+        operation.path,
+      ),
+    ];
+  }
 
   if (current.kind === "file" && !appliedResult) {
     return [
@@ -352,6 +385,18 @@ function preflightRollback(
       ),
     ];
   }
+  if (
+    operation.preimage.mode !== null &&
+    (entry.stats.mode & 0o777) !== operation.preimage.mode
+  ) {
+    return [
+      issue(
+        "RECOVERY_BACKUP_CORRUPT",
+        `refusing to restore ${operation.path}: its owned backup mode was changed`,
+        operation.path,
+      ),
+    ];
+  }
   return [];
 }
 
@@ -384,7 +429,23 @@ function rollbackOperation(
   );
   fireHooks(hooks, "before", "recovery:restore", operation.path);
   renameSync(backup, absOf(root, operation.path));
+  if (operation.preimage.mode !== null) {
+    try {
+      chmodSync(absOf(root, operation.path), operation.preimage.mode);
+    } catch {
+      // The restored bytes are in place; a mode failure is reported by the
+      // caller's inventory/cleanup step rather than silently ignored.
+    }
+  }
 }
+
+const OWNED_ENTRIES = new Set([
+  "journal.json",
+  "publication.json",
+  "staged",
+  "backups",
+  "progress",
+]);
 
 function removeOwnedEntries(
   root: string,
@@ -420,11 +481,36 @@ export function recoverTransaction(
   // of a completed cleanup; finish removing the empty directory rather than
   // refusing forever. Any remaining entry is treated as evidence and refused.
   const dirAbs = absOf(root, transactionDir(stateDir, transactionId));
+  const dirEntry = observeEntry(dirAbs);
+  if (dirEntry.kind === "absent") {
+    return { status: "cleaned", transactionId, issues: [] };
+  }
+  if (dirEntry.kind === "unreadable") {
+    return refuse(transactionId, [
+      issue(
+        "RECOVERY_INVENTORY_UNREADABLE",
+        `transaction ${transactionId} directory is unreadable (${dirEntry.code})`,
+      ),
+    ]);
+  }
+  if (dirEntry.kind !== "directory") {
+    return refuse(transactionId, [
+      issue(
+        "RECOVERY_UNEXPECTED_ENTRY",
+        `transaction ${transactionId} is not a real directory (${dirEntry.kind})`,
+      ),
+    ]);
+  }
   let dirEntries: string[];
   try {
     dirEntries = readdirSync(dirAbs);
-  } catch {
-    dirEntries = [];
+  } catch (error) {
+    return refuse(transactionId, [
+      issue(
+        "RECOVERY_INVENTORY_UNREADABLE",
+        `transaction ${transactionId} directory is unreadable (${codeOf(error)})`,
+      ),
+    ]);
   }
   if (dirEntries.length === 0) {
     try {
@@ -449,6 +535,49 @@ export function recoverTransaction(
     if (!existsSync(journalAbs)) {
       const inventory = inventoryIssues(root, stateDir, transactionId);
       if (inventory.length > 0) return refuse(transactionId, inventory);
+      // Staged/backup/progress state without a journal is possible mutation
+      // evidence: fail closed and retain it rather than guessing it is
+      // pre-preparation and deleting the only old image.
+      if (hasRollbackEvidence(root, stateDir, transactionId)) {
+        return refuse(transactionId, [
+          issue(
+            "RECOVERY_AMBIGUOUS_JOURNAL",
+            `transaction ${transactionId} retains owned state without a readable journal; refusing to discard possible mutation evidence`,
+          ),
+        ]);
+      }
+      // Only a publication intent (or temporary state) may remain: this is the
+      // tail of an interrupted cleanup. Finish it only when the physical witness
+      // proves the publication actually happened.
+      const intentRead = readPublicationIntent(
+        root,
+        publicationIntentPath(stateDir, transactionId),
+      );
+      if (Array.isArray(intentRead)) return refuse(transactionId, intentRead);
+      if (intentRead !== null) {
+        const state = classifyPublication({
+          intent: intentRead,
+          canonical: observeFileIdentity(absOf(root, lockPath(stateDir))),
+          stagedStillPresent:
+            observeFileIdentity(
+              absOf(
+                root,
+                `${stagedDir(stateDir, transactionId)}/kit.lock.json`,
+              ),
+            ) !== null,
+          expectedDigest: intentRead.digest,
+          canonicalDigest: readFileSafe(root, lockPath(stateDir)),
+        });
+        if (state !== "published") {
+          return refuse(transactionId, [
+            issue(
+              "RECOVERY_AMBIGUOUS_PUBLICATION",
+              "the interrupted cleanup cannot prove a completed publication; refusing to discard evidence",
+              lockPath(stateDir),
+            ),
+          ]);
+        }
+      }
       removeOwnedEntries(root, stateDir, transactionId);
       return { status: "cleaned", transactionId, issues: [] };
     }
@@ -590,7 +719,11 @@ export function recoverTransactions(
   roots: RecoveryRoots,
   hooks?: TransactionHooks,
 ): readonly RecoveryResult[] {
-  return scanTransactions(root, stateDir).map((transactionId) =>
+  const scan = scanTransactionsChecked(root, stateDir);
+  if (!scan.ok) {
+    return [{ status: "refused", transactionId: null, issues: scan.issues }];
+  }
+  return scan.value.map((transactionId) =>
     recoverTransaction(root, stateDir, transactionId, roots, hooks),
   );
 }
@@ -610,7 +743,11 @@ export function inspectTransactions(
   stateDir: string,
   roots: RecoveryRoots,
 ): readonly JournalInspection[] {
-  return scanTransactions(root, stateDir).map((transactionId) => {
+  const scan = scanTransactionsChecked(root, stateDir);
+  if (!scan.ok) {
+    return [{ transactionId: "", ok: false, issues: scan.issues }];
+  }
+  return scan.value.map((transactionId) => {
     const read = readJournal(root, stateDir, transactionId);
     if (Array.isArray(read)) {
       return { transactionId, ok: false, issues: read };

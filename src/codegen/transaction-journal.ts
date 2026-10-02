@@ -332,6 +332,7 @@ export function validateJournalTargets(
 ): ModelResult<TransactionJournal> {
   const problems = [];
   const transient = `${roots.stateDir}/.svelte-ui-kit`;
+  const canonicalLock = lockPath(roots.stateDir);
   for (const operation of journal.operations) {
     const target = operation.path;
     const within =
@@ -352,6 +353,15 @@ export function validateJournalTargets(
         issue(
           "JOURNAL_TARGET_UNAPPROVED",
           `journal target ${target} overlaps the reserved transient namespace`,
+          target,
+        ),
+      );
+    }
+    if (target === canonicalLock) {
+      problems.push(
+        issue(
+          "JOURNAL_TARGET_UNAPPROVED",
+          `journal target ${target} is the canonical lock, which is publication rather than an ordinary operation`,
           target,
         ),
       );

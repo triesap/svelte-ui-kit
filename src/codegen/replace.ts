@@ -252,7 +252,21 @@ export function applyReplacements(
 
   const applied: TransactionPhase = "applied";
   current = { ...current, phase: applied };
-  persistJournal(root, journalLogical, current, hooks);
+  try {
+    persistJournal(root, journalLogical, current, hooks);
+  } catch (error) {
+    return {
+      ok: false,
+      journal: current,
+      issues: [
+        {
+          code: "REPLACE_PROGRESS_FAILED",
+          message: `could not persist the applied journal: ${error instanceof Error ? error.message : String(error)}`,
+          locator: "journal.json",
+        },
+      ],
+    };
+  }
   return { ok: true, journal: current, issues: [] };
 }
 

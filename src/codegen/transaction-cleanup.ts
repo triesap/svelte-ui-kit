@@ -17,7 +17,6 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
-  readdirSync,
   rmSync,
   rmdirSync,
   writeFileSync,
@@ -27,6 +26,7 @@ import path from "node:path";
 import type { ModelIssue } from "../registry/errors.js";
 import type { TransactionJournal } from "./transaction-journal.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+import { verifyOwnedInventory } from "./transaction-inventory.js";
 import {
   backupsDir,
   ignoreEntryFor,
@@ -76,31 +76,20 @@ export function cleanupTransaction(
 
   const ownedDir = absOf(root, transactionDir(stateDir, journal.transactionId));
 
-  // Cleanup removes only proven owned inventory. An unexpected entry blocks
-  // cleanup and is retained with actionable evidence rather than recursed.
-  const allowed = new Set([
-    "journal.json",
-    "publication.json",
-    "staged",
-    "backups",
-    "progress",
-  ]);
-  let unexpected: string[];
-  try {
-    unexpected = readdirSync(ownedDir).filter(
-      (name) => !allowed.has(name) && !/^journal\.json\.tmp-/.test(name),
-    );
-  } catch {
-    unexpected = [];
-  }
-  if (unexpected.length > 0) {
+  // Cleanup removes only proven owned inventory, checked recursively. An
+  // unexpected entry at any depth blocks cleanup and is retained rather than
+  // recursed.
+  const inventory = verifyOwnedInventory(root, stateDir, journal.transactionId);
+  if (inventory.length > 0) {
     return {
       ok: false,
       needsCleanup: true,
       issues: [
         {
           code: "COMMITTED_NEEDS_CLEANUP",
-          message: `the transaction committed but its owned directory contains unexpected entries (${unexpected.sort().join(", ")})`,
+          message: `the transaction committed but its owned directory contains unexpected state (${inventory
+            .map((entry) => entry.message)
+            .join("; ")})`,
         },
       ],
     };
@@ -140,6 +129,28 @@ export function cleanupTransaction(
   try {
     for (const [target, boundary] of targets) {
       fireHooks(hooks, "before", boundary, target);
+      // Re-prove the complete owned inventory immediately before each removal,
+      // so an entry introduced at a cleanup boundary is retained and reported
+      // rather than recursively deleted.
+      const recheck = verifyOwnedInventory(
+        root,
+        stateDir,
+        journal.transactionId,
+      );
+      if (recheck.length > 0) {
+        return {
+          ok: false,
+          needsCleanup: true,
+          issues: [
+            {
+              code: "COMMITTED_NEEDS_CLEANUP",
+              message: `the transaction committed but its owned directory contains unexpected state (${recheck
+                .map((entry) => entry.message)
+                .join("; ")})`,
+            },
+          ],
+        };
+      }
       removeIfPresent(target);
       fireHooks(hooks, "after", boundary, target);
     }

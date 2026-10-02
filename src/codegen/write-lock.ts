@@ -15,6 +15,7 @@
 import {
   mkdirSync,
   readFileSync,
+  readdirSync,
   rmSync,
   rmdirSync,
   unlinkSync,
@@ -149,9 +150,22 @@ export function releaseWriterLock(handle: WriterLockHandle): ModelResult<null> {
     ]);
   }
   try {
-    // Remove only the owned owner record, then the now-empty lock directory.
-    // A non-empty directory (unexpected entries) makes the removal fail rather
-    // than silently deleting unrelated state.
+    // Remove the owned owner record and the now-empty lock directory only when
+    // nothing unexpected is present. An unexpected entry retains the owner
+    // evidence for safe follow-up rather than deleting unrelated state.
+    const entries = readdirSync(handle.lockDir);
+    if (entries.some((name) => name !== OWNER_FILE)) {
+      return fail([
+        issue(
+          "WRITER_LOCK_RELEASE_FAILED",
+          `the writer lock contains unexpected entries (${entries
+            .filter((name) => name !== OWNER_FILE)
+            .sort()
+            .join(", ")}); ownership evidence is retained`,
+          writerLockDir(handle.stateDir),
+        ),
+      ]);
+    }
     unlinkSync(ownerFileAbs(handle.lockDir));
     rmdirSync(handle.lockDir);
   } catch (error) {

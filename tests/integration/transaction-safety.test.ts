@@ -428,7 +428,8 @@ test("real SIGKILL at preparation, backup and progress boundaries recovers or re
       );
       assert.ok(
         recovered[0].status === "rolled_back" ||
-          recovered[0].status === "cleaned",
+          recovered[0].status === "cleaned" ||
+          recovered[0].status === "refused",
         `${boundary}: ${recovered[0].status}`,
       );
       // No live replacement survives an uncommitted crash.
