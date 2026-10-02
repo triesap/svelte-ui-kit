@@ -21,7 +21,13 @@
  * | registry failure                 | 12   |
  */
 import { canonicalJson } from "../codegen/serialize.js";
-import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
+import {
+  fail,
+  issue,
+  ok,
+  type ModelIssue,
+  type ModelResult,
+} from "../registry/errors.js";
 import {
   validateWithSchema,
   type SchemaAuthority,
@@ -260,6 +266,41 @@ export function parseEnvelope(
 /** Render exactly one deterministic JSON envelope (canonical, one trailing LF). */
 export function renderEnvelope(envelope: CommandEnvelope): string {
   return canonicalJson(envelope);
+}
+
+/**
+ * Safe manual guidance for a fail-closed recovery diagnostic. Recovery never
+ * invents a force/recover flag: the developer inspects the retained logical
+ * evidence and reconciles using existing commands.
+ */
+export function recoveryGuidance(code: string): string {
+  const guidance: Readonly<Record<string, string>> = {
+    RECOVERY_JOURNAL_UNREADABLE:
+      "Inspect the retained transaction directory under the reserved _kit state namespace and reconcile it manually before retrying; do not delete unknown state.",
+    RECOVERY_IDENTITY_MISMATCH:
+      "The journal does not match its directory. Preserve both and reconcile manually before retrying.",
+    RECOVERY_BACKUP_MISSING:
+      "An owned preimage backup is missing. Restore it from your own copy or reconcile the affected target manually.",
+    RECOVERY_USER_EDIT:
+      "A managed target was edited after the interruption. Keep your edit and reconcile the batch manually; no automatic overwrite is performed.",
+    RECOVERY_AMBIGUOUS_PUBLICATION:
+      "The recorded publication cannot be proven from the canonical lock. Inspect kit.lock.json and the journal and reconcile manually.",
+  };
+  return (
+    guidance[code] ??
+    "Inspect the retained transaction evidence and reconcile manually before retrying."
+  );
+}
+
+/** Convert a recovery issue into a fail-closed error diagnostic. */
+export function recoveryDiagnostic(issue: ModelIssue): EnvelopeDiagnostic {
+  return {
+    code: issue.code,
+    level: "error",
+    message: issue.message,
+    ...(issue.locator === undefined ? {} : { locator: issue.locator }),
+    guidance: recoveryGuidance(issue.code),
+  };
 }
 
 /** Parse a rendered envelope back, failing on trailing content or extra docs. */

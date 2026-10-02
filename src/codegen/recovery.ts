@@ -266,3 +266,25 @@ export function recoverTransactions(
     recoverTransaction(root, stateDir, transactionId, hooks),
   );
 }
+
+export interface JournalInspection {
+  readonly transactionId: string;
+  readonly ok: boolean;
+  readonly issues: readonly ModelIssue[];
+}
+
+/**
+ * Read-only inspection of every transaction journal. Used to block a new
+ * mutation when recovery cannot prove a safe transition; it never mutates.
+ */
+export function inspectTransactions(
+  root: string,
+  stateDir: string,
+): readonly JournalInspection[] {
+  return scanTransactions(root, stateDir).map((transactionId) => {
+    const read = readJournal(root, stateDir, transactionId);
+    return Array.isArray(read)
+      ? { transactionId, ok: false, issues: read }
+      : { transactionId, ok: true, issues: [] };
+  });
+}
