@@ -1,11 +1,12 @@
 # S048 step report — Parse managed CSS markers without whole-file ownership
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S048_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `3d97bbf191d2c00bfff1a13952b6249ab1a1b3d4` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S048","kind":"report","commit":"3d97bbf191d2c00bfff1a13952b6249ab1a1b3d4","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S048","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S048 — Parse managed CSS markers without whole-file ownership.

@@ -1,11 +1,12 @@
 # S044 step report — Implement source base/local/incoming classification
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S044_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `a4080db4d5a43f19933e70ed76a62eaf0d5bc606` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S044","kind":"report","commit":"a4080db4d5a43f19933e70ed76a62eaf0d5bc606","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S044","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S044 — Implement source base/local/incoming classification.

@@ -1,11 +1,12 @@
 # S038 step report — Inspect installed and declared dependency state
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone assigns acceptance.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S038_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `e9b8c168cd19998d5bcaf833eef4e0fdc02b96d8` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S038","kind":"report","commit":"e9b8c168cd19998d5bcaf833eef4e0fdc02b96d8","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S038","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S038 — Inspect installed and declared dependency state.

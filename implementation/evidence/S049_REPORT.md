@@ -1,11 +1,12 @@
 # S049 step report — Apply three-way classification to CSS blocks
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S049_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `00d2424e6e8ad8a092f4c8dd5dcf471e8dbb8ffb` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S049","kind":"report","commit":"00d2424e6e8ad8a092f4c8dd5dcf471e8dbb8ffb","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S049","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S049 — Apply three-way classification to CSS blocks.

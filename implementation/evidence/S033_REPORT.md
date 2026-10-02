@@ -1,11 +1,12 @@
 # S033 step report — Validate lexical logical paths
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone assigns acceptance.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S033_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `ab3e9c5de3d6c0642427cfda4dee00e11a1163f8` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S033","kind":"report","commit":"ab3e9c5de3d6c0642427cfda4dee00e11a1163f8","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S033","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S033 — Validate lexical logical paths.

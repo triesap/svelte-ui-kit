@@ -1,5 +1,9 @@
 # S042 independent review
 
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S042","kind":"review","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"accepted"}
+-->
+
 Reviewer: Codex. Date: 2026-10-02. Scope: Validate filesystem ancestry and symlinks.
 
 Codex independently accepts the original S042 criteria on combined candidate

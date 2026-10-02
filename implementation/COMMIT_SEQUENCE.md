@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: Codex accepts S033–S063 on candidate `6d39fcf`; commit the review evidence and finalize the ledger before S064. The next authorized batch is the activation prerequisite plus all S064–S077/RCLD-04. S078 requires independent S077 acceptance. Updated 2026-10-02.
+Status: Codex independently accepts S033–S063 at combined evidence anchor `f46d60f`; the ledger is finalized. The active authorized batch is the activation prerequisite plus all S064–S077/RCLD-04. S078 requires independent S077 acceptance. Updated 2026-10-02.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,12 +17,12 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **none** (Codex review 9 accepts S033–S063; finalize its committed evidence, activate RCLD-04, then execute S064–S077).
+- Active implementation checkpoint: **none** (S033–S063 accepted and ledger-finalized; activate the RCLD-04 batch, then execute S064–S077).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
-- Completed implementation checkpoints: **32 / 203**. Remaining: **171 / 203**.
-- Committed pending review: **31 / 203**. Authored batch range: **S033–S063**.
-- Completed RCLD sequences: **2 / 11**. Remaining: **9 / 11**.
-- Last safe target commit: `0e5b1852d02e15159f2ee4dd885152230457e119`, branch `master` (independently accepted S013–S032 combined evidence anchor).
+- Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
+- Committed pending review: **0 / 203**. Authored batch range: **none**.
+- Completed RCLD sequences: **3 / 11**. Remaining: **8 / 11**.
+- Last safe target commit: `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7`, branch `master` (independent S033–S063 combined evidence anchor; original implementation hashes remain provenance).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -30,17 +30,17 @@ Keep all repository content standalone and repository-relative. Record this targ
 - S005 evidence: `implementation/evidence/S005_REPORT.md` and `implementation/evidence/S005_REVIEW.md`. Review 2 accepts the correction: independent unit 5/5, harness 29/29, smoke 41/41 and contracts 84/84 pass; original boundary/filename/failure probes are corrected. No release acceptance is claimed.
 - S006 evidence: `implementation/evidence/S006_REPORT.md` and `implementation/evidence/S006_REVIEW.md`. Review 2 accepts recursive exclusions and maintained-source controls; independent unit 14/14, harness 29/29, smoke 41/41 and contracts 84/84 pass. Original nested probes are corrected; real lint/format preserve all 71 tracked/untracked authoring entries. Accepted and committed at the last safe hash above.
 - S007–S012 reviews: each conventional report/review path records the tested combined candidate, original/repair provenance and independent acceptance. All RCLD-01 review findings are closed; the strict upstream declaration exception remains release AC20 debt.
-- S058 evidence: `implementation/evidence/S058_REPORT.md` records the pure add-request planner candidate at `7a87786571cf3cb5513e86639fd977e1d1d419e9`; independent review pending. Original S058 acceptance criteria apply.
-- S059 evidence: `implementation/evidence/S059_REPORT.md` records the frozen cohort rule candidate at `a1762984ac319f31319370a3ceecff0652287a72`; independent review pending.
-- S060 evidence: `implementation/evidence/S060_REPORT.md` records the full synchronization planner candidate at `8b45bc90038b21b9ab6b789b921b1fa6e217c022`; independent review pending.
-- S061 evidence: `implementation/evidence/S061_REPORT.md` records the truthful lock-lineage projection candidate at `6844cf24675eb0378d0006edff649e21c71de0db`; independent review pending.
-- S062 evidence: `implementation/evidence/S062_REPORT.md` records the configuration-driven retirement candidate at `9ffbf9e3fa502eff09345e7707f6767002edb512`; independent review pending.
-- S063 evidence: `implementation/evidence/S063_REPORT.md` records the deterministic purity candidate at `451c13a48a9d0b0866811bd3c94fc0c53bcc8ffc` and the cumulative review-3 qualification (`implementation/evidence/COMPATIBILITY.md`). S064 is gated by independent S063 acceptance.
+- S058 evidence: `implementation/evidence/S058_REPORT.md` records the pure add-request planner candidate at `7a87786571cf3cb5513e86639fd977e1d1d419e9`; independently accepted at the combined evidence anchor above. Original S058 acceptance criteria apply.
+- S059 evidence: `implementation/evidence/S059_REPORT.md` records the frozen cohort rule candidate at `a1762984ac319f31319370a3ceecff0652287a72`; independently accepted at the combined evidence anchor above.
+- S060 evidence: `implementation/evidence/S060_REPORT.md` records the full synchronization planner candidate at `8b45bc90038b21b9ab6b789b921b1fa6e217c022`; independently accepted at the combined evidence anchor above.
+- S061 evidence: `implementation/evidence/S061_REPORT.md` records the truthful lock-lineage projection candidate at `6844cf24675eb0378d0006edff649e21c71de0db`; independently accepted at the combined evidence anchor above.
+- S062 evidence: `implementation/evidence/S062_REPORT.md` records the configuration-driven retirement candidate at `9ffbf9e3fa502eff09345e7707f6767002edb512`; independently accepted at the combined evidence anchor above.
+- S063 evidence: `implementation/evidence/S063_REPORT.md` records the deterministic purity candidate at `451c13a48a9d0b0866811bd3c94fc0c53bcc8ffc` and the cumulative review-3 qualification (`implementation/evidence/COMPATIBILITY.md`). S064 was gated by independent S063 acceptance, which Codex granted at the combined evidence anchor above.
 - RCLD-03 review-5 implementation series: six commits through `8927c4476741de32c280cb18d0e713fa0482a9fa` repair all twelve prior probe cases and add actual consumer check/build and emitted planning. Independent review 6 preserves that progress but finds incomplete initialization evidence, unsafe token retirement/reacquisition, false baseline advancement, unsatisfied replay and suppressed page rendering. Full lifecycle integration, purity coverage and factual report reconciliation remain software work; S064 stays gated.
 - RCLD-03 review-6 implementation series: `6ec7262b15c825aaf7d31c29bc6ef1599b31af94` completes validated invocation evidence, truthful foundation-token ownership and rendered-layout materialization, with the R6-4 purity/report reconciliation recorded in the same series. These commits are Pi implementation evidence; independent review 6 acceptance is still pending and S064 stays gated.
 - RCLD-03 review-7 implementation series: `ec7a014528f13a20da8658871e62b8459bd17af6` (R7-1 deeply immutable validated invocation boundary), `88f01098706c202b3610add081877c274a82fb82` (R7-2 ownership lineage through initialization) and `ea01f7e3f2a773b16dce9e456e4e04f026d1a4eb` (R7-3 complete-tree qualification), with R7-4 evidence/qualification reconciliation recorded in `implementation/evidence/RCLD03_R7_REPAIR.md`. These are Pi implementation evidence; independent S063 acceptance remains with Codex and S064 stays gated.
 - RCLD-03 review-8 implementation series: `b122039` (R8-1 captured effective mapping across init/add/sync, R8-2 tracked missing owned stylesheet refusal and R8-3 exact-lifecycle/behavioral no-writer qualification) and `5ef055d` (R8-3 intended-cause assertions for source/export conflicts) and `2fa0cd3` (R8-2 malformed managed CSS region refusal during initialization), with the evidence and cumulative qualification recorded in `implementation/evidence/RCLD03_R8_REPAIR.md`. These are Pi implementation evidence; independent S063 acceptance remains with Codex and S064 stays gated.
-- Ledger transition pending: S001–S032 complete, S033–S063 committed_pending_review, S064–S203 not_started. Independent review 9 accepts the RCLD-03 implementation; only reachable review-evidence anchoring and atomic ledger finalization remain before RCLD-04 activation. Earlier pending/changes-requested prose is historical.
+- Ledger transition complete: S001–S063 complete at their recorded anchors, S064–S203 not_started. Independent review 9 accepts the RCLD-03 implementation at `f46d60f`; the review-evidence anchoring and atomic ledger finalization are recorded. Earlier pending/changes-requested prose is historical.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. By default every checkpoint after S001 depends on the reviewed, verified, committed predecessor. The explicit owner-authorized batch below permits verified implementation commits pending Codex review to unlock successors only within the currently dispatched sequence; the current RCLD-03 activation prerequisite governs the transition from the completed RCLD-02 batch.
 
@@ -4113,7 +4113,7 @@ The sequence gates below supplement each checkpoint's exact scope and tests. Run
 | ------------------- | ----------- | ----- | ----------- | ------------------- |
 | [RCLD-01](#rcld-01) | S001–S012   | 12    | complete    | None; S001 complete |
 | [RCLD-02](#rcld-02) | S013–S032   | 20    | complete    | S012                |
-| [RCLD-03](#rcld-03) | S033–S063   | 31    | in_progress | S032                |
+| [RCLD-03](#rcld-03) | S033–S063   | 31    | complete    | S032                |
 | [RCLD-04](#rcld-04) | S064–S077   | 14    | not_started | S063                |
 | [RCLD-05](#rcld-05) | S078–S091   | 14    | not_started | S077                |
 | [RCLD-06](#rcld-06) | S092–S115   | 24    | not_started | S091                |
@@ -4151,7 +4151,7 @@ Checkpoints: S013–S032. State: complete.
 
 ### RCLD-03 — Project integration and ownership planning
 
-Checkpoints: S033–S063. State: in_progress.
+Checkpoints: S033–S063. State: complete.
 
 **Scope:** Validate paths and project roots, inspect dependencies, freeze ownership cases, patch CSS/exports/layout structurally, and compose init/add/sync/retirement plans.
 
@@ -4259,211 +4259,211 @@ Checkpoints: S194–S203. State: not_started.
 
 The original IDs, requirement anchors, scope, files, tests, expected results and commit messages are preserved below. Every status starts at not_started. No completion is inferred from a milestone name or plan approval.
 
-| Step | Sequence | Depends on | Status                   | Commit / report                            |
-| ---- | -------- | ---------- | ------------------------ | ------------------------------------------ |
-| S001 | RCLD-01  | None       | complete                 | `bb5010e`                                  |
-| S002 | RCLD-01  | S001       | complete                 | `9ed224f60249ee67732c05737170436e06301c38` |
-| S003 | RCLD-01  | S002       | complete                 | `91cdaaefd756021b343465f7ba7dd3afe2f71b6d` |
-| S004 | RCLD-01  | S003       | complete                 | `fd5d5162c7e5e3fa22fcc8a0365525f4e0e6a100` |
-| S005 | RCLD-01  | S004       | complete                 | `5cf149106fbc7c9fb20eca1f31a0e5b08aff4b11` |
-| S006 | RCLD-01  | S005       | complete                 | `bce30a4b7b5bf0e885d9991719f807cfda98ad63` |
-| S007 | RCLD-01  | S006       | complete                 | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
-| S008 | RCLD-01  | S007       | complete                 | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
-| S009 | RCLD-01  | S008       | complete                 | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
-| S010 | RCLD-01  | S009       | complete                 | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
-| S011 | RCLD-01  | S010       | complete                 | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
-| S012 | RCLD-01  | S011       | complete                 | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
-| S013 | RCLD-02  | S012       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S014 | RCLD-02  | S013       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S015 | RCLD-02  | S014       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S016 | RCLD-02  | S015       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S017 | RCLD-02  | S016       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S018 | RCLD-02  | S017       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S019 | RCLD-02  | S018       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S020 | RCLD-02  | S019       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S021 | RCLD-02  | S020       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S022 | RCLD-02  | S021       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S023 | RCLD-02  | S022       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S024 | RCLD-02  | S023       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S025 | RCLD-02  | S024       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S026 | RCLD-02  | S025       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S027 | RCLD-02  | S026       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S028 | RCLD-02  | S027       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S029 | RCLD-02  | S028       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S030 | RCLD-02  | S029       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S031 | RCLD-02  | S030       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S032 | RCLD-02  | S031       | complete                 | `0e5b1852d02e15159f2ee4dd885152230457e119` |
-| S033 | RCLD-03  | S032       | committed_pending_review | `ab3e9c5de3d6c0642427cfda4dee00e11a1163f8` |
-| S034 | RCLD-03  | S033       | committed_pending_review | `98336763f3970c9a77af9a772af816431813ff04` |
-| S035 | RCLD-03  | S034       | committed_pending_review | `453434a0a1019795e85034c22f08a32fb70802a9` |
-| S036 | RCLD-03  | S035       | committed_pending_review | `450a090dd448095838c81aeeb8e48d2393c77d18` |
-| S037 | RCLD-03  | S036       | committed_pending_review | `749296b4562aa9fa2e90b0a4632805bb4955af4d` |
-| S038 | RCLD-03  | S037       | committed_pending_review | `e9b8c168cd19998d5bcaf833eef4e0fdc02b96d8` |
-| S039 | RCLD-03  | S038       | committed_pending_review | `3e16d8f4874a4ca2699aa14d1fd818a3250afe25` |
-| S040 | RCLD-03  | S039       | committed_pending_review | `95833391745ed23512f2bbccf63b676030c4e222` |
-| S041 | RCLD-03  | S040       | committed_pending_review | `ba7eb15e79c96faf8c7478e7e7ee4c7a53e770be` |
-| S042 | RCLD-03  | S041       | committed_pending_review | `07ecd02dc892db63483c30add165eb265967ce96` |
-| S043 | RCLD-03  | S042       | committed_pending_review | `a2d9d5a26ee2964bfed69d6810e7351dfeb5579c` |
-| S044 | RCLD-03  | S043       | committed_pending_review | `a4080db4d5a43f19933e70ed76a62eaf0d5bc606` |
-| S045 | RCLD-03  | S044       | committed_pending_review | `4f97891a255a4fe64360b199d0b6987ccc895dad` |
-| S046 | RCLD-03  | S045       | committed_pending_review | `70d7d49e841cf4395e6576220cc373271ad40c33` |
-| S047 | RCLD-03  | S046       | committed_pending_review | `aa84b8078ccc8c0ff173bad41fb72c6a654c51b1` |
-| S048 | RCLD-03  | S047       | committed_pending_review | `3d97bbf191d2c00bfff1a13952b6249ab1a1b3d4` |
-| S049 | RCLD-03  | S048       | committed_pending_review | `00d2424e6e8ad8a092f4c8dd5dcf471e8dbb8ffb` |
-| S050 | RCLD-03  | S049       | committed_pending_review | `e43e941d885b44eab8e28a7899a038c6f9a480c4` |
-| S051 | RCLD-03  | S050       | committed_pending_review | `a747fc58d317f5c7ec6bac80bd36e6f8a61f580c` |
-| S052 | RCLD-03  | S051       | committed_pending_review | `f6e3987382128b918fce65b79211dd3d0c9ffec5` |
-| S053 | RCLD-03  | S052       | committed_pending_review | `3c961b73fbddf0da44b77278f526aa0736c5c2cc` |
-| S054 | RCLD-03  | S053       | committed_pending_review | `a0b5f7f5b9306cf38bc1ac3926b545dcb9800071` |
-| S055 | RCLD-03  | S054       | committed_pending_review | `eb78d5f73fcdc78eaf6ece51f3cb80184573d645` |
-| S056 | RCLD-03  | S055       | committed_pending_review | `b5c7f65682b380a85bcf63ef7f3999008c881093` |
-| S057 | RCLD-03  | S056       | committed_pending_review | `ba870579ef1c9e862869e4dfe1b6a47f65d4a045` |
-| S058 | RCLD-03  | S057       | committed_pending_review | `7a87786571cf3cb5513e86639fd977e1d1d419e9` |
-| S059 | RCLD-03  | S058       | committed_pending_review | `a1762984ac319f31319370a3ceecff0652287a72` |
-| S060 | RCLD-03  | S059       | committed_pending_review | `8b45bc90038b21b9ab6b789b921b1fa6e217c022` |
-| S061 | RCLD-03  | S060       | committed_pending_review | `6844cf24675eb0378d0006edff649e21c71de0db` |
-| S062 | RCLD-03  | S061       | committed_pending_review | `9ffbf9e3fa502eff09345e7707f6767002edb512` |
-| S063 | RCLD-03  | S062       | committed_pending_review | `451c13a48a9d0b0866811bd3c94fc0c53bcc8ffc` |
-| S064 | RCLD-04  | S063       | not_started              | —                                          |
-| S065 | RCLD-04  | S064       | not_started              | —                                          |
-| S066 | RCLD-04  | S065       | not_started              | —                                          |
-| S067 | RCLD-04  | S066       | not_started              | —                                          |
-| S068 | RCLD-04  | S067       | not_started              | —                                          |
-| S069 | RCLD-04  | S068       | not_started              | —                                          |
-| S070 | RCLD-04  | S069       | not_started              | —                                          |
-| S071 | RCLD-04  | S070       | not_started              | —                                          |
-| S072 | RCLD-04  | S071       | not_started              | —                                          |
-| S073 | RCLD-04  | S072       | not_started              | —                                          |
-| S074 | RCLD-04  | S073       | not_started              | —                                          |
-| S075 | RCLD-04  | S074       | not_started              | —                                          |
-| S076 | RCLD-04  | S075       | not_started              | —                                          |
-| S077 | RCLD-04  | S076       | not_started              | —                                          |
-| S078 | RCLD-05  | S077       | not_started              | —                                          |
-| S079 | RCLD-05  | S078       | not_started              | —                                          |
-| S080 | RCLD-05  | S079       | not_started              | —                                          |
-| S081 | RCLD-05  | S080       | not_started              | —                                          |
-| S082 | RCLD-05  | S081       | not_started              | —                                          |
-| S083 | RCLD-05  | S082       | not_started              | —                                          |
-| S084 | RCLD-05  | S083       | not_started              | —                                          |
-| S085 | RCLD-05  | S084       | not_started              | —                                          |
-| S086 | RCLD-05  | S085       | not_started              | —                                          |
-| S087 | RCLD-05  | S086       | not_started              | —                                          |
-| S088 | RCLD-05  | S087       | not_started              | —                                          |
-| S089 | RCLD-05  | S088       | not_started              | —                                          |
-| S090 | RCLD-05  | S089       | not_started              | —                                          |
-| S091 | RCLD-05  | S090       | not_started              | —                                          |
-| S092 | RCLD-06  | S091       | not_started              | —                                          |
-| S093 | RCLD-06  | S092       | not_started              | —                                          |
-| S094 | RCLD-06  | S093       | not_started              | —                                          |
-| S095 | RCLD-06  | S094       | not_started              | —                                          |
-| S096 | RCLD-06  | S095       | not_started              | —                                          |
-| S097 | RCLD-06  | S096       | not_started              | —                                          |
-| S098 | RCLD-06  | S097       | not_started              | —                                          |
-| S099 | RCLD-06  | S098       | not_started              | —                                          |
-| S100 | RCLD-06  | S099       | not_started              | —                                          |
-| S101 | RCLD-06  | S100       | not_started              | —                                          |
-| S102 | RCLD-06  | S101       | not_started              | —                                          |
-| S103 | RCLD-06  | S102       | not_started              | —                                          |
-| S104 | RCLD-06  | S103       | not_started              | —                                          |
-| S105 | RCLD-06  | S104       | not_started              | —                                          |
-| S106 | RCLD-06  | S105       | not_started              | —                                          |
-| S107 | RCLD-06  | S106       | not_started              | —                                          |
-| S108 | RCLD-06  | S107       | not_started              | —                                          |
-| S109 | RCLD-06  | S108       | not_started              | —                                          |
-| S110 | RCLD-06  | S109       | not_started              | —                                          |
-| S111 | RCLD-06  | S110       | not_started              | —                                          |
-| S112 | RCLD-06  | S111       | not_started              | —                                          |
-| S113 | RCLD-06  | S112       | not_started              | —                                          |
-| S114 | RCLD-06  | S113       | not_started              | —                                          |
-| S115 | RCLD-06  | S114       | not_started              | —                                          |
-| S116 | RCLD-07  | S115       | not_started              | —                                          |
-| S117 | RCLD-07  | S116       | not_started              | —                                          |
-| S118 | RCLD-07  | S117       | not_started              | —                                          |
-| S119 | RCLD-07  | S118       | not_started              | —                                          |
-| S120 | RCLD-07  | S119       | not_started              | —                                          |
-| S121 | RCLD-07  | S120       | not_started              | —                                          |
-| S122 | RCLD-07  | S121       | not_started              | —                                          |
-| S123 | RCLD-07  | S122       | not_started              | —                                          |
-| S124 | RCLD-07  | S123       | not_started              | —                                          |
-| S125 | RCLD-07  | S124       | not_started              | —                                          |
-| S126 | RCLD-07  | S125       | not_started              | —                                          |
-| S127 | RCLD-07  | S126       | not_started              | —                                          |
-| S128 | RCLD-07  | S127       | not_started              | —                                          |
-| S129 | RCLD-08  | S128       | not_started              | —                                          |
-| S130 | RCLD-08  | S129       | not_started              | —                                          |
-| S131 | RCLD-08  | S130       | not_started              | —                                          |
-| S132 | RCLD-08  | S131       | not_started              | —                                          |
-| S133 | RCLD-08  | S132       | not_started              | —                                          |
-| S134 | RCLD-08  | S133       | not_started              | —                                          |
-| S135 | RCLD-08  | S134       | not_started              | —                                          |
-| S136 | RCLD-08  | S135       | not_started              | —                                          |
-| S137 | RCLD-08  | S136       | not_started              | —                                          |
-| S138 | RCLD-08  | S137       | not_started              | —                                          |
-| S139 | RCLD-08  | S138       | not_started              | —                                          |
-| S140 | RCLD-08  | S139       | not_started              | —                                          |
-| S141 | RCLD-08  | S140       | not_started              | —                                          |
-| S142 | RCLD-08  | S141       | not_started              | —                                          |
-| S143 | RCLD-08  | S142       | not_started              | —                                          |
-| S144 | RCLD-08  | S143       | not_started              | —                                          |
-| S145 | RCLD-08  | S144       | not_started              | —                                          |
-| S146 | RCLD-08  | S145       | not_started              | —                                          |
-| S147 | RCLD-08  | S146       | not_started              | —                                          |
-| S148 | RCLD-08  | S147       | not_started              | —                                          |
-| S149 | RCLD-09  | S148       | not_started              | —                                          |
-| S150 | RCLD-09  | S149       | not_started              | —                                          |
-| S151 | RCLD-09  | S150       | not_started              | —                                          |
-| S152 | RCLD-09  | S151       | not_started              | —                                          |
-| S153 | RCLD-09  | S152       | not_started              | —                                          |
-| S154 | RCLD-09  | S153       | not_started              | —                                          |
-| S155 | RCLD-09  | S154       | not_started              | —                                          |
-| S156 | RCLD-09  | S155       | not_started              | —                                          |
-| S157 | RCLD-09  | S156       | not_started              | —                                          |
-| S158 | RCLD-09  | S157       | not_started              | —                                          |
-| S159 | RCLD-09  | S158       | not_started              | —                                          |
-| S160 | RCLD-09  | S159       | not_started              | —                                          |
-| S161 | RCLD-09  | S160       | not_started              | —                                          |
-| S162 | RCLD-09  | S161       | not_started              | —                                          |
-| S163 | RCLD-09  | S162       | not_started              | —                                          |
-| S164 | RCLD-09  | S163       | not_started              | —                                          |
-| S165 | RCLD-09  | S164       | not_started              | —                                          |
-| S166 | RCLD-09  | S165       | not_started              | —                                          |
-| S167 | RCLD-09  | S166       | not_started              | —                                          |
-| S168 | RCLD-09  | S167       | not_started              | —                                          |
-| S169 | RCLD-09  | S168       | not_started              | —                                          |
-| S170 | RCLD-09  | S169       | not_started              | —                                          |
-| S171 | RCLD-09  | S170       | not_started              | —                                          |
-| S172 | RCLD-09  | S171       | not_started              | —                                          |
-| S173 | RCLD-09  | S172       | not_started              | —                                          |
-| S174 | RCLD-09  | S173       | not_started              | —                                          |
-| S175 | RCLD-09  | S174       | not_started              | —                                          |
-| S176 | RCLD-09  | S175       | not_started              | —                                          |
-| S177 | RCLD-09  | S176       | not_started              | —                                          |
-| S178 | RCLD-09  | S177       | not_started              | —                                          |
-| S179 | RCLD-09  | S178       | not_started              | —                                          |
-| S180 | RCLD-09  | S179       | not_started              | —                                          |
-| S181 | RCLD-09  | S180       | not_started              | —                                          |
-| S182 | RCLD-10  | S181       | not_started              | —                                          |
-| S183 | RCLD-10  | S182       | not_started              | —                                          |
-| S184 | RCLD-10  | S183       | not_started              | —                                          |
-| S185 | RCLD-10  | S184       | not_started              | —                                          |
-| S186 | RCLD-10  | S185       | not_started              | —                                          |
-| S187 | RCLD-10  | S186       | not_started              | —                                          |
-| S188 | RCLD-10  | S187       | not_started              | —                                          |
-| S189 | RCLD-10  | S188       | not_started              | —                                          |
-| S190 | RCLD-10  | S189       | not_started              | —                                          |
-| S191 | RCLD-10  | S190       | not_started              | —                                          |
-| S192 | RCLD-10  | S191       | not_started              | —                                          |
-| S193 | RCLD-10  | S192       | not_started              | —                                          |
-| S194 | RCLD-11  | S193       | not_started              | —                                          |
-| S195 | RCLD-11  | S194       | not_started              | —                                          |
-| S196 | RCLD-11  | S195       | not_started              | —                                          |
-| S197 | RCLD-11  | S196       | not_started              | —                                          |
-| S198 | RCLD-11  | S197       | not_started              | —                                          |
-| S199 | RCLD-11  | S198       | not_started              | —                                          |
-| S200 | RCLD-11  | S199       | not_started              | —                                          |
-| S201 | RCLD-11  | S200       | not_started              | —                                          |
-| S202 | RCLD-11  | S201       | not_started              | —                                          |
-| S203 | RCLD-11  | S202       | not_started              | —                                          |
+| Step | Sequence | Depends on | Status      | Commit / report                            |
+| ---- | -------- | ---------- | ----------- | ------------------------------------------ |
+| S001 | RCLD-01  | None       | complete    | `bb5010e`                                  |
+| S002 | RCLD-01  | S001       | complete    | `9ed224f60249ee67732c05737170436e06301c38` |
+| S003 | RCLD-01  | S002       | complete    | `91cdaaefd756021b343465f7ba7dd3afe2f71b6d` |
+| S004 | RCLD-01  | S003       | complete    | `fd5d5162c7e5e3fa22fcc8a0365525f4e0e6a100` |
+| S005 | RCLD-01  | S004       | complete    | `5cf149106fbc7c9fb20eca1f31a0e5b08aff4b11` |
+| S006 | RCLD-01  | S005       | complete    | `bce30a4b7b5bf0e885d9991719f807cfda98ad63` |
+| S007 | RCLD-01  | S006       | complete    | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
+| S008 | RCLD-01  | S007       | complete    | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
+| S009 | RCLD-01  | S008       | complete    | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
+| S010 | RCLD-01  | S009       | complete    | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
+| S011 | RCLD-01  | S010       | complete    | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
+| S012 | RCLD-01  | S011       | complete    | `0d7ca2a3798f639dd6f913b2c3ed9839776bcd4c` |
+| S013 | RCLD-02  | S012       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S014 | RCLD-02  | S013       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S015 | RCLD-02  | S014       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S016 | RCLD-02  | S015       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S017 | RCLD-02  | S016       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S018 | RCLD-02  | S017       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S019 | RCLD-02  | S018       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S020 | RCLD-02  | S019       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S021 | RCLD-02  | S020       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S022 | RCLD-02  | S021       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S023 | RCLD-02  | S022       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S024 | RCLD-02  | S023       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S025 | RCLD-02  | S024       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S026 | RCLD-02  | S025       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S027 | RCLD-02  | S026       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S028 | RCLD-02  | S027       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S029 | RCLD-02  | S028       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S030 | RCLD-02  | S029       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S031 | RCLD-02  | S030       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S032 | RCLD-02  | S031       | complete    | `0e5b1852d02e15159f2ee4dd885152230457e119` |
+| S033 | RCLD-03  | S032       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S034 | RCLD-03  | S033       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S035 | RCLD-03  | S034       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S036 | RCLD-03  | S035       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S037 | RCLD-03  | S036       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S038 | RCLD-03  | S037       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S039 | RCLD-03  | S038       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S040 | RCLD-03  | S039       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S041 | RCLD-03  | S040       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S042 | RCLD-03  | S041       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S043 | RCLD-03  | S042       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S044 | RCLD-03  | S043       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S045 | RCLD-03  | S044       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S046 | RCLD-03  | S045       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S047 | RCLD-03  | S046       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S048 | RCLD-03  | S047       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S049 | RCLD-03  | S048       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S050 | RCLD-03  | S049       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S051 | RCLD-03  | S050       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S052 | RCLD-03  | S051       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S053 | RCLD-03  | S052       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S054 | RCLD-03  | S053       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S055 | RCLD-03  | S054       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S056 | RCLD-03  | S055       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S057 | RCLD-03  | S056       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S058 | RCLD-03  | S057       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S059 | RCLD-03  | S058       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S060 | RCLD-03  | S059       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S061 | RCLD-03  | S060       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S062 | RCLD-03  | S061       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S063 | RCLD-03  | S062       | complete    | `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` |
+| S064 | RCLD-04  | S063       | not_started | —                                          |
+| S065 | RCLD-04  | S064       | not_started | —                                          |
+| S066 | RCLD-04  | S065       | not_started | —                                          |
+| S067 | RCLD-04  | S066       | not_started | —                                          |
+| S068 | RCLD-04  | S067       | not_started | —                                          |
+| S069 | RCLD-04  | S068       | not_started | —                                          |
+| S070 | RCLD-04  | S069       | not_started | —                                          |
+| S071 | RCLD-04  | S070       | not_started | —                                          |
+| S072 | RCLD-04  | S071       | not_started | —                                          |
+| S073 | RCLD-04  | S072       | not_started | —                                          |
+| S074 | RCLD-04  | S073       | not_started | —                                          |
+| S075 | RCLD-04  | S074       | not_started | —                                          |
+| S076 | RCLD-04  | S075       | not_started | —                                          |
+| S077 | RCLD-04  | S076       | not_started | —                                          |
+| S078 | RCLD-05  | S077       | not_started | —                                          |
+| S079 | RCLD-05  | S078       | not_started | —                                          |
+| S080 | RCLD-05  | S079       | not_started | —                                          |
+| S081 | RCLD-05  | S080       | not_started | —                                          |
+| S082 | RCLD-05  | S081       | not_started | —                                          |
+| S083 | RCLD-05  | S082       | not_started | —                                          |
+| S084 | RCLD-05  | S083       | not_started | —                                          |
+| S085 | RCLD-05  | S084       | not_started | —                                          |
+| S086 | RCLD-05  | S085       | not_started | —                                          |
+| S087 | RCLD-05  | S086       | not_started | —                                          |
+| S088 | RCLD-05  | S087       | not_started | —                                          |
+| S089 | RCLD-05  | S088       | not_started | —                                          |
+| S090 | RCLD-05  | S089       | not_started | —                                          |
+| S091 | RCLD-05  | S090       | not_started | —                                          |
+| S092 | RCLD-06  | S091       | not_started | —                                          |
+| S093 | RCLD-06  | S092       | not_started | —                                          |
+| S094 | RCLD-06  | S093       | not_started | —                                          |
+| S095 | RCLD-06  | S094       | not_started | —                                          |
+| S096 | RCLD-06  | S095       | not_started | —                                          |
+| S097 | RCLD-06  | S096       | not_started | —                                          |
+| S098 | RCLD-06  | S097       | not_started | —                                          |
+| S099 | RCLD-06  | S098       | not_started | —                                          |
+| S100 | RCLD-06  | S099       | not_started | —                                          |
+| S101 | RCLD-06  | S100       | not_started | —                                          |
+| S102 | RCLD-06  | S101       | not_started | —                                          |
+| S103 | RCLD-06  | S102       | not_started | —                                          |
+| S104 | RCLD-06  | S103       | not_started | —                                          |
+| S105 | RCLD-06  | S104       | not_started | —                                          |
+| S106 | RCLD-06  | S105       | not_started | —                                          |
+| S107 | RCLD-06  | S106       | not_started | —                                          |
+| S108 | RCLD-06  | S107       | not_started | —                                          |
+| S109 | RCLD-06  | S108       | not_started | —                                          |
+| S110 | RCLD-06  | S109       | not_started | —                                          |
+| S111 | RCLD-06  | S110       | not_started | —                                          |
+| S112 | RCLD-06  | S111       | not_started | —                                          |
+| S113 | RCLD-06  | S112       | not_started | —                                          |
+| S114 | RCLD-06  | S113       | not_started | —                                          |
+| S115 | RCLD-06  | S114       | not_started | —                                          |
+| S116 | RCLD-07  | S115       | not_started | —                                          |
+| S117 | RCLD-07  | S116       | not_started | —                                          |
+| S118 | RCLD-07  | S117       | not_started | —                                          |
+| S119 | RCLD-07  | S118       | not_started | —                                          |
+| S120 | RCLD-07  | S119       | not_started | —                                          |
+| S121 | RCLD-07  | S120       | not_started | —                                          |
+| S122 | RCLD-07  | S121       | not_started | —                                          |
+| S123 | RCLD-07  | S122       | not_started | —                                          |
+| S124 | RCLD-07  | S123       | not_started | —                                          |
+| S125 | RCLD-07  | S124       | not_started | —                                          |
+| S126 | RCLD-07  | S125       | not_started | —                                          |
+| S127 | RCLD-07  | S126       | not_started | —                                          |
+| S128 | RCLD-07  | S127       | not_started | —                                          |
+| S129 | RCLD-08  | S128       | not_started | —                                          |
+| S130 | RCLD-08  | S129       | not_started | —                                          |
+| S131 | RCLD-08  | S130       | not_started | —                                          |
+| S132 | RCLD-08  | S131       | not_started | —                                          |
+| S133 | RCLD-08  | S132       | not_started | —                                          |
+| S134 | RCLD-08  | S133       | not_started | —                                          |
+| S135 | RCLD-08  | S134       | not_started | —                                          |
+| S136 | RCLD-08  | S135       | not_started | —                                          |
+| S137 | RCLD-08  | S136       | not_started | —                                          |
+| S138 | RCLD-08  | S137       | not_started | —                                          |
+| S139 | RCLD-08  | S138       | not_started | —                                          |
+| S140 | RCLD-08  | S139       | not_started | —                                          |
+| S141 | RCLD-08  | S140       | not_started | —                                          |
+| S142 | RCLD-08  | S141       | not_started | —                                          |
+| S143 | RCLD-08  | S142       | not_started | —                                          |
+| S144 | RCLD-08  | S143       | not_started | —                                          |
+| S145 | RCLD-08  | S144       | not_started | —                                          |
+| S146 | RCLD-08  | S145       | not_started | —                                          |
+| S147 | RCLD-08  | S146       | not_started | —                                          |
+| S148 | RCLD-08  | S147       | not_started | —                                          |
+| S149 | RCLD-09  | S148       | not_started | —                                          |
+| S150 | RCLD-09  | S149       | not_started | —                                          |
+| S151 | RCLD-09  | S150       | not_started | —                                          |
+| S152 | RCLD-09  | S151       | not_started | —                                          |
+| S153 | RCLD-09  | S152       | not_started | —                                          |
+| S154 | RCLD-09  | S153       | not_started | —                                          |
+| S155 | RCLD-09  | S154       | not_started | —                                          |
+| S156 | RCLD-09  | S155       | not_started | —                                          |
+| S157 | RCLD-09  | S156       | not_started | —                                          |
+| S158 | RCLD-09  | S157       | not_started | —                                          |
+| S159 | RCLD-09  | S158       | not_started | —                                          |
+| S160 | RCLD-09  | S159       | not_started | —                                          |
+| S161 | RCLD-09  | S160       | not_started | —                                          |
+| S162 | RCLD-09  | S161       | not_started | —                                          |
+| S163 | RCLD-09  | S162       | not_started | —                                          |
+| S164 | RCLD-09  | S163       | not_started | —                                          |
+| S165 | RCLD-09  | S164       | not_started | —                                          |
+| S166 | RCLD-09  | S165       | not_started | —                                          |
+| S167 | RCLD-09  | S166       | not_started | —                                          |
+| S168 | RCLD-09  | S167       | not_started | —                                          |
+| S169 | RCLD-09  | S168       | not_started | —                                          |
+| S170 | RCLD-09  | S169       | not_started | —                                          |
+| S171 | RCLD-09  | S170       | not_started | —                                          |
+| S172 | RCLD-09  | S171       | not_started | —                                          |
+| S173 | RCLD-09  | S172       | not_started | —                                          |
+| S174 | RCLD-09  | S173       | not_started | —                                          |
+| S175 | RCLD-09  | S174       | not_started | —                                          |
+| S176 | RCLD-09  | S175       | not_started | —                                          |
+| S177 | RCLD-09  | S176       | not_started | —                                          |
+| S178 | RCLD-09  | S177       | not_started | —                                          |
+| S179 | RCLD-09  | S178       | not_started | —                                          |
+| S180 | RCLD-09  | S179       | not_started | —                                          |
+| S181 | RCLD-09  | S180       | not_started | —                                          |
+| S182 | RCLD-10  | S181       | not_started | —                                          |
+| S183 | RCLD-10  | S182       | not_started | —                                          |
+| S184 | RCLD-10  | S183       | not_started | —                                          |
+| S185 | RCLD-10  | S184       | not_started | —                                          |
+| S186 | RCLD-10  | S185       | not_started | —                                          |
+| S187 | RCLD-10  | S186       | not_started | —                                          |
+| S188 | RCLD-10  | S187       | not_started | —                                          |
+| S189 | RCLD-10  | S188       | not_started | —                                          |
+| S190 | RCLD-10  | S189       | not_started | —                                          |
+| S191 | RCLD-10  | S190       | not_started | —                                          |
+| S192 | RCLD-10  | S191       | not_started | —                                          |
+| S193 | RCLD-10  | S192       | not_started | —                                          |
+| S194 | RCLD-11  | S193       | not_started | —                                          |
+| S195 | RCLD-11  | S194       | not_started | —                                          |
+| S196 | RCLD-11  | S195       | not_started | —                                          |
+| S197 | RCLD-11  | S196       | not_started | —                                          |
+| S198 | RCLD-11  | S197       | not_started | —                                          |
+| S199 | RCLD-11  | S198       | not_started | —                                          |
+| S200 | RCLD-11  | S199       | not_started | —                                          |
+| S201 | RCLD-11  | S200       | not_started | —                                          |
+| S202 | RCLD-11  | S201       | not_started | —                                          |
+| S203 | RCLD-11  | S202       | not_started | —                                          |
 
 ## Complete checkpoint definitions
 

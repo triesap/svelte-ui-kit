@@ -1,11 +1,12 @@
 # S043 step report — Freeze the complete ownership disposition matrix
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S043_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `a2d9d5a26ee2964bfed69d6810e7351dfeb5579c` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S043","kind":"report","commit":"a2d9d5a26ee2964bfed69d6810e7351dfeb5579c","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S043","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S043 — Freeze the complete ownership disposition matrix.

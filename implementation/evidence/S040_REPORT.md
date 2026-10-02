@@ -1,11 +1,12 @@
 # S040 step report — Render dependency instructions without execution
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone assigns acceptance.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S040_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `95833391745ed23512f2bbccf63b676030c4e222` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S040","kind":"report","commit":"95833391745ed23512f2bbccf63b676030c4e222","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S040","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S040 — Render dependency instructions without execution.

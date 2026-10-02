@@ -1,5 +1,9 @@
 # S039 independent review
 
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S039","kind":"review","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"accepted"}
+-->
+
 Reviewer: Codex. Date: 2026-10-02. Scope: Validate peer dependencies in the consumer plan.
 
 Codex independently accepts the original S039 criteria on combined candidate

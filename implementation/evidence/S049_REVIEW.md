@@ -1,5 +1,9 @@
 # S049 independent review
 
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S049","kind":"review","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"accepted"}
+-->
+
 Reviewer: Codex. Date: 2026-10-02. Scope: Apply three-way classification to CSS blocks.
 
 Codex independently accepts the original S049 criteria on combined candidate

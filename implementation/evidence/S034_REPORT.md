@@ -1,11 +1,12 @@
 # S034 step report — Reject overlapping and reserved output roots
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone assigns acceptance.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S034_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `98336763f3970c9a77af9a772af816431813ff04` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S034","kind":"report","commit":"98336763f3970c9a77af9a772af816431813ff04","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S034","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S034 — Reject overlapping and reserved output roots.

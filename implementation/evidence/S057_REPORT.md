@@ -1,11 +1,12 @@
 # S057 step report — Build a pure initialization plan
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S057_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `ba870579ef1c9e862869e4dfe1b6a47f65d4a045` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S057","kind":"report","commit":"ba870579ef1c9e862869e4dfe1b6a47f65d4a045","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S057","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S057 — Build a pure initialization plan.

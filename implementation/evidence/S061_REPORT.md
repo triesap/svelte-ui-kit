@@ -1,11 +1,12 @@
 # S061 step report — Project truthful final lock lineage
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S061_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `6844cf24675eb0378d0006edff649e21c71de0db` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S061","kind":"report","commit":"6844cf24675eb0378d0006edff649e21c71de0db","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S061","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S061 — Project truthful final lock lineage.

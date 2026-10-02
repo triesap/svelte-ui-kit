@@ -1,11 +1,12 @@
 # S041 step report — Capture read-only project snapshots
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S041_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `ba7eb15e79c96faf8c7478e7e7ee4c7a53e770be` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S041","kind":"report","commit":"ba7eb15e79c96faf8c7478e7e7ee4c7a53e770be","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S041","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S041 — Capture read-only project snapshots.

@@ -1,5 +1,9 @@
 # S045 independent review
 
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S045","kind":"review","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"accepted"}
+-->
+
 Reviewer: Codex. Date: 2026-10-02. Scope: Plan missing and untracked source targets.
 
 Codex independently accepts the original S045 criteria on combined candidate

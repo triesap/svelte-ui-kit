@@ -1,11 +1,12 @@
 # S054 step report — Generate compound barrels and validate sibling imports
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S054_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `a0b5f7f5b9306cf38bc1ac3926b545dcb9800071` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S054","kind":"report","commit":"a0b5f7f5b9306cf38bc1ac3926b545dcb9800071","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S054","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S054 — Generate compound barrels and validate sibling imports.

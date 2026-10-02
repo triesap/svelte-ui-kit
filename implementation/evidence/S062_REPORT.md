@@ -1,11 +1,12 @@
 # S062 step report — Integrate configuration-driven retirement
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S062_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `9ffbf9e3fa502eff09345e7707f6767002edb512` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S062","kind":"report","commit":"9ffbf9e3fa502eff09345e7707f6767002edb512","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S062","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S062 — Integrate configuration-driven retirement.

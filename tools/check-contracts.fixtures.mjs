@@ -38,7 +38,8 @@ export const SOURCES_JSON_REL = "references/SOURCES.json";
 
 /**
  * The complete allowlist of fixture inputs: the 27 approved contracts, the
- * governing plan, both derived projections and the package manifest. Nothing
+ * governing plan, both derived projections, the package manifest and the
+ * accepted-evidence qualification referenced by the governing prose. Nothing
  * else is copied, so no authoring checkout state or future build artifact can
  * leak into a fixture.
  */
@@ -48,6 +49,7 @@ export const FIXTURE_FILES = [
   PLAN_JSON_REL,
   SOURCES_JSON_REL,
   "package.json",
+  "implementation/evidence/RCLD-03_QUALIFICATION.md",
 ];
 
 const SEQUENCE_BY_STEP = new Map();

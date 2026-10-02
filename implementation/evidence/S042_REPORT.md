@@ -1,11 +1,12 @@
 # S042 step report — Validate filesystem ancestry and symlinks
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S042_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `07ecd02dc892db63483c30add165eb265967ce96` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S042","kind":"report","commit":"07ecd02dc892db63483c30add165eb265967ce96","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S042","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S042 — Validate filesystem ancestry and symlinks.

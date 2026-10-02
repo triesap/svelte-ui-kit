@@ -1,11 +1,12 @@
 # S052 step report — Freeze and parse managed TypeScript export regions
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S052_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `f6e3987382128b918fce65b79211dd3d0c9ffec5` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S052","kind":"report","commit":"f6e3987382128b918fce65b79211dd3d0c9ffec5","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S052","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S052 — Freeze and parse managed TypeScript export regions.

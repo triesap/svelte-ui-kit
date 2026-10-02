@@ -1,11 +1,12 @@
 # S058 step report — Build a pure add-request plan
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S058_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `7a87786571cf3cb5513e86639fd977e1d1d419e9` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S058","kind":"report","commit":"7a87786571cf3cb5513e86639fd977e1d1d419e9","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S058","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S058 — Build a pure add-request plan.

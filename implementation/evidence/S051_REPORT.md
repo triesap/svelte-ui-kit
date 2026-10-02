@@ -1,11 +1,12 @@
 # S051 step report — Retire CSS blocks without deleting custom rules
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S051_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `a747fc58d317f5c7ec6bac80bd36e6f8a61f580c` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S051","kind":"report","commit":"a747fc58d317f5c7ec6bac80bd36e6f8a61f580c","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S051","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S051 — Retire CSS blocks without deleting custom rules.

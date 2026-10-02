@@ -1,11 +1,12 @@
 # S059 step report — Enforce source-style compatibility cohorts
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S059_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `a1762984ac319f31319370a3ceecff0652287a72` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S059","kind":"report","commit":"a1762984ac319f31319370a3ceecff0652287a72","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S059","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S059 — Enforce source-style compatibility cohorts.

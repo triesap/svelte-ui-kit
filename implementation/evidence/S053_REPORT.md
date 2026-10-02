@@ -1,11 +1,12 @@
 # S053 step report — Generate the root UI export region
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S053_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `3c961b73fbddf0da44b77278f526aa0736c5c2cc` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S053","kind":"report","commit":"3c961b73fbddf0da44b77278f526aa0736c5c2cc","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S053","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S053 — Generate the root UI export region.

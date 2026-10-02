@@ -1,11 +1,12 @@
 # S050 step report — Compose stable stylesheet patches
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S050_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `e43e941d885b44eab8e28a7899a038c6f9a480c4` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S050","kind":"report","commit":"e43e941d885b44eab8e28a7899a038c6f9a480c4","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S050","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S050 — Compose stable stylesheet patches.

@@ -1,11 +1,12 @@
 # S045 step report — Plan missing and untracked source targets
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-03 batch. This report is Pi-authored evidence; Codex
-alone accepts.
+Codex independently accepted this checkpoint at combined evidence anchor
+`f46d60fbfb3457f4af66652d7f1bf99f7c725ff7` (see `S045_REVIEW.md` and `RCLD-03_QUALIFICATION.md`).
+Original implementation `4f97891a255a4fe64360b199d0b6987ccc895dad` remains provenance. This report is
+Pi-authored evidence.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S045","kind":"report","commit":"4f97891a255a4fe64360b199d0b6987ccc895dad","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S045","kind":"report","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"implemented"}
 -->
 
 Step ID and title: S045 — Plan missing and untracked source targets.

@@ -1,5 +1,9 @@
 # S036 independent review
 
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S036","kind":"review","commit":"f46d60fbfb3457f4af66652d7f1bf99f7c725ff7","disposition":"accepted"}
+-->
+
 Reviewer: Codex. Date: 2026-10-02. Scope: Resolve explicit working directories in workspaces.
 
 Codex independently accepts the original S036 criteria on combined candidate
