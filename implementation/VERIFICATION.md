@@ -118,6 +118,40 @@ S078 for independent Codex acceptance or a legitimate runtime/user/external stop
 The governing plan remains the only execution authority; Pi records implementation
 and evidence, never new acceptance or relaxed criteria.
 
+#### RCLD-04 review-11 repair progress (locally verified)
+
+Pi implemented the review-11 safety repairs in ordered green checkpoints on top
+of `cf6233e`:
+
+- `e8d5f9e` carries the original immutable snapshot into `composeApplyPlan`,
+  brands the sealed apply authority, derives the root identity and complete plan
+  digest from content, verifies the sealed lock for metadata-only plans and
+  validates the final lock before coordination.
+- `ba40cfe` re-proves staged images and live preimages at the replacement
+  boundaries and enforces same-filesystem arrangements before semantic effects.
+- `a6dea5d` records a durable physical publication witness (canonical preimage
+  and staged image identities) and classifies publication by identity, never by
+  byte equality, refusing contradictions without rollback.
+- `33f6db4` validates the complete owned inventory recursively, fails closed on
+  journal-less mutation evidence, mode edits, canonical-lock recovery
+  operations and unreadable scans, propagates release failure and wraps the
+  final applied-journal persist in a typed refusal.
+
+Causal regressions added: `compose-authority`, `transaction-authority`,
+`replacement-guards`, `publication-witness`, `recovery-ownership`. The
+independent reviewer's 22 compiled probes (17 failing cases plus 5 controls)
+were re-run against the repaired build and each now produces its safe outcome.
+Locally verified with build, typecheck, format:check, lint, unit 276 and
+integration 383. Details and the remaining unqualified work are recorded in
+`implementation/evidence/RCLD04_R2_REPAIR.md`.
+
+This is implementation progress, not acceptance. S064–S077 remain
+`committed_pending_review`; independent Codex acceptance is still required before
+S078. Remaining work is not claimed complete: owned absent-directory creation and
+rollback, standalone recovery identity binding, captured guarded ignore
+integration, complete durability ordering, and the composed custom/update/
+retirement/metadata/conflict and browser/CI qualification lanes.
+
 #### Historical owner-authorized RCLD-03 batch verification
 
 Independent review 8 of candidate `a4c2e4a0bfd68e2463090b9e4886ab4509f7d12e`
