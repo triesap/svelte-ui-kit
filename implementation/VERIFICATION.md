@@ -86,32 +86,49 @@ init probes are repaired, as are earlier token/rendering cases. Preserve this
 verified progress. The actual planned production page/control remains qualified;
 whole-sequence acceptance is withheld.
 
-Four real-registry probes expose remaining effective mapping/ownership criteria:
-static routes are detected but ignored in executable layout writes; an existing
-custom kit is missed and init creates another default installation; valid explicit
-mapping cannot resolve the documented dynamic-config fallback; init reports no
-change with missing tracked CSS while add correctly conflicts.
+Four real-registry probes exposed the remaining effective mapping/ownership
+criteria. These are now implemented at candidate `b122039` (see
+`implementation/evidence/RCLD03_R8_REPAIR.md`): the bounded `_kit/kit.json`
+discovery is captured with the selected-package evidence and composed into one
+effective mapping used by init/add/sync, so a static nondefault routes
+directory, an observed custom installation and an explicit fallback for a
+dynamic routes config all plan their actual targets, while malformed,
+ambiguous, unsafe, location-mismatched or stale/incomplete inputs are refused
+without a live read. `planInit` now refuses tracked missing owned stylesheet
+content with a causal conflict, zero writes and unchanged lineage, keeping an
+empty present body distinct from an absent block. Lifecycle tests use one
+shared strict create/update/retire applier, assert intended diagnostic causes,
+and the planners run under a denied-permission child that behaviorally proves no
+writer or package manager starts.
 
-Complete captured effective selection across all entries, honoring exactly one
-validated custom config, supported detection, explicit fallback and observed
-mapping targets. Qualify actual nondefault planned paths, style loading and page
-rendering in the active application layout. Use strict operation application in
-lifecycle tests: do not skip retire operations or omit applying returned metadata.
-Assert intended diagnostic causes and compare full results/tree state, including
-bytes/modes/kinds/links/hidden/empty entries and no writer/manager work. Source
-import scans supplement rather than replace behavioral evidence.
+A supported nondefault mapping is also qualified end to end in
+`tests/integration/planned-consumer.test.ts`: the exact add plan writes the
+active `src/views/+layout.svelte`, that layout imports the intended styles, and
+the production handler checks, builds and renders the page, with the emitted
+plan envelope asserted.
 
-After all eligible implementation run the full S063 qualification: strict frozen
-install, build/format/lint/typecheck, unit/harness/registry/integration/CLI,
-components, fixture check/SSR/browser, contracts, planned default and custom
-consumers, emitted planning, strict declaration controls, workflow validation and
-fresh conditional reference guard. Retain raw logs in specific ignored
-repository-relative paths with commands, underlying exits, versions, candidate
-and actual artifact identities. Current author native excerpts record green
-exits, but full raw logs could not be recovered at the claimed locations; no
-fresh reviewer component/browser/workflow/reference result is implied. Historical
-logs are not current-candidate evidence. Record all four ignored reference tests
-and preserve release AC20's narrowly qualified fixture-only declaration exception.
+After all eligible implementation the full S063 qualification ran on this
+candidate: strict frozen install, build/format/lint/typecheck,
+unit/harness/registry/integration/CLI, components, fixture check/SSR/browser,
+contracts, planned default and custom consumers, emitted planning, strict
+declaration controls, workflow validation and a fresh conditional reference
+guard. Raw logs are retained in the ignored
+`implementation/evidence/logs/r8-20261002/` paths (underlying exits in
+`exits.log`); all 16 lanes exited 0 and the counts are unit 265, harness 37,
+registry 38, integration 294, CLI 52, components 22 (strict declaration 17/17),
+fixture 23, browser 23, contracts 127. `actionlint 1.7.12` (archive SHA-256
+`aba9ced2…e6953f`) validated `.github/workflows/ci.yml` at exit 0 with
+shellcheck 0.11.0, and the clean `leptos_ui_kit` reference guard at
+`a10fbf06334f4648f5755e05a7147414e4e5fc98` ran fmt/check/test at exit 0 with
+578 passed, 0 failed and four ignored tests. The complete current logs replace
+the prior `/tmp` references, which are historical and are not attributed to
+this candidate. The four reference ignored tests
+(`installed_binaries_run_after_package_source_and_build_state_are_deleted`,
+`homepage_fixture_cli_workflow_smoke`,
+`tests::every_transaction_io_fault_avoids_partial_application_state` and
+`packaged_sources_build_with_cargo_vcs_provenance_outside_and_inside_hostile_git`)
+were not executed and are not claimed as passed. Release AC20's narrowly
+qualified fixture-only Bits 2.19.3 declaration exception remains open.
 
 Keep original pending hashes, structured statuses, accepted reviews and public
 repository boundaries. All remaining RCLD-03 work is one batch with no intermediate

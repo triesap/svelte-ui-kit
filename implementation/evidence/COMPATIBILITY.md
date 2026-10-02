@@ -1107,3 +1107,51 @@ Codex S063 acceptance. The four reference ignored tests are unchanged and none
 is claimed as passed. Release AC20's fixture-only Bits 2.19.3 declaration
 exception remains open. Pi implementation evidence only; Codex alone accepts.
 See `implementation/evidence/RCLD03_R7_REPAIR.md` for the commit-level record.
+
+## RCLD-03 independent review 8 effective-mapping repair (2026-10-02)
+
+Addendum for the `pfc through RCLD-03` review-8 series at `b122039` on Node
+`24.21.0` / pnpm `11.22.0`. It supersedes the review-3/4/5/6/7 numbers above
+(which predate the captured effective mapping, owned-content initialization
+refusal and strict behavioral lifecycle qualification). The original criteria
+and all prior accepted work are unchanged.
+
+- RCLD03-R8-1: the bounded `_kit/kit.json` discovery is captured with the
+  selected-package evidence and composed into one effective mapping used by
+  `planInit`/`planAdd`/`planSync`; a static nondefault routes directory, an
+  observed custom installation, an explicit fallback for a dynamic routes
+  config and the malformed/ambiguous/location-mismatched controls are all
+  qualified, and stale supplied defaults can no longer plan inactive paths.
+- RCLD03-R8-2: `planInit` refuses tracked missing owned stylesheet content with
+  a causal conflict, zero writes and unchanged lineage, keeping an empty present
+  body distinct from an absent block.
+- RCLD03-R8-3: one shared strict operation applier performs real retirement;
+  conflicts assert intended causes; and the planners run under a denied-permission
+  child to prove behaviorally that no writer or package manager starts.
+
+| Lane                                    | Result at the review-8 candidate                                     |
+| --------------------------------------- | -------------------------------------------------------------------- |
+| Frozen strict install                   | exit 0                                                               |
+| `build` / `format:check` / `lint`       | exit 0 / exit 0 / exit 0                                             |
+| `typecheck`                             | exit 0                                                               |
+| `test:unit`                             | 265 / 265                                                            |
+| `test:harness`                          | 37 / 37                                                              |
+| `test:registry`                         | 38 / 38                                                              |
+| `test:integration`                      | 294 / 294 (was 278; +16 effective-mapping/ownership/lifecycle cases) |
+| `test:cli-bootstrap`                    | 52 / 52                                                              |
+| `test:components`                       | 22 / 22 (strict declaration 17 / 17, two qualified TS2590)           |
+| `test:contracts` / `check:contracts`    | 127 / 127 and 0 errors / 0 warnings (projection unchanged)           |
+| `fixture:check`                         | svelte-check 0 errors / 0 warnings                                   |
+| `test:fixture`                          | 23 / 23                                                              |
+| `test:browser`                          | 23 / 23 chromium (fault + teardown controls)                         |
+| `actionlint 1.7.12` (checksum-verified) | `actionlint .github/workflows/ci.yml` exit 0; shellcheck 0.11.0      |
+| Fresh `leptos_ui_kit` reference guard   | fmt/check/test exit 0; 578 passed / 0 failed / 4 ignored (43 blocks) |
+
+Complete raw logs for this candidate are retained only under
+`implementation/evidence/logs/r8-20261002/`. The review-7 report's `/tmp`
+log references are historical and are not attributed to this candidate.
+S033–S063 remain `committed_pending_review`; S064 stays gated by independent
+Codex S063 acceptance. The four reference ignored tests are unchanged and none
+is claimed as passed. Release AC20's fixture-only Bits 2.19.3 declaration
+exception remains open. Pi implementation evidence only; Codex alone accepts.
+See `implementation/evidence/RCLD03_R8_REPAIR.md` for the commit-level record.
