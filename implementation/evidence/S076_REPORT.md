@@ -5,7 +5,7 @@ Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S076","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S076","kind":"report","commit":"f0f2dd1a49288b1c8dc42973d88cc52167afef88","disposition":"candidate"}
 -->
 
 Step ID and title: S076 — Qualify concurrency and process-interruption behavior.
