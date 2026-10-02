@@ -15,6 +15,14 @@ import path from "node:path";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { observeEntry } from "../project/io.js";
 import { sha256Hex } from "./digest.js";
+import {
+  verifyAncestors,
+  verifyReadFiles,
+  verifyRootIdentity,
+  type PhysicalIdentity,
+  type PlanAncestor,
+  type PlanReadFile,
+} from "./authority.js";
 
 export interface TargetPreimage {
   readonly path: string;
@@ -106,20 +114,47 @@ function checkAncestry(root: string, logicalPath: string): string | null {
   return null;
 }
 
+export interface RevalidateOptions {
+  /**
+   * The captured ancestor chain. When supplied, absence is legitimate for a
+   * component the plan recorded as absent (fresh init/custom mapping), and a
+   * replaced physical identity is refused instead of being followed.
+   */
+  readonly ancestors?: readonly PlanAncestor[];
+  /** Captured root identity to prove the root was not replaced. */
+  readonly root?: PhysicalIdentity;
+  /** Captured config/manifest/mapping/lock evidence. */
+  readonly files?: readonly PlanReadFile[];
+}
+
 /**
  * Revalidate every preimage and its ancestor chain. Returns typed
  * `STALE_PLAN` issues for the first differences; an unchanged plan passes.
+ * When the plan carries a physical readset the root identity, ancestor
+ * identities and evidence bytes are proven as well.
  */
 export function revalidatePreimages(
   root: string,
   expected: readonly TargetPreimage[],
+  options: RevalidateOptions = {},
 ): ModelResult<null> {
   const issues = [];
+  if (options.root) issues.push(...verifyRootIdentity(root, options.root));
+  if (options.files && options.files.length > 0) {
+    issues.push(...verifyReadFiles(root, options.files));
+  }
+  const capturedAncestors = options.ancestors;
+  const ancestorsChecked = capturedAncestors !== undefined;
+  if (capturedAncestors) {
+    issues.push(...verifyAncestors(root, capturedAncestors));
+  }
   for (const target of expected) {
-    const ancestry = checkAncestry(root, target.path);
-    if (ancestry !== null) {
-      issues.push(issue("STALE_PLAN", ancestry, target.path));
-      continue;
+    if (!ancestorsChecked) {
+      const ancestry = checkAncestry(root, target.path);
+      if (ancestry !== null) {
+        issues.push(issue("STALE_PLAN", ancestry, target.path));
+        continue;
+      }
     }
     const current = observeTarget(root, target.path);
     if (target.kind === "absent") {

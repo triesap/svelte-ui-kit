@@ -7,6 +7,7 @@ import type { ChildProcessWithoutNullStreams } from "node:child_process";
 
 import { recoverTransaction } from "../../src/codegen/recovery.js";
 import { runWorker, spawnWorker } from "../helpers/fault-process.js";
+import { RECOVERY_ROOTS } from "../helpers/transactions.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 
@@ -109,7 +110,12 @@ test("a SIGKILLed process leaves recoverable state", () => {
       });
       assert.equal(killed.signal, "SIGKILL", `${label}: ${killed.stderr}`);
 
-      const recovered = recoverTransaction(root, STATE_DIR, "1414141414141414");
+      const recovered = recoverTransaction(
+        root,
+        STATE_DIR,
+        "1414141414141414",
+        RECOVERY_ROOTS,
+      );
       assert.equal(recovered.status, "rolled_back", label);
       assert.equal(
         readFileSync(abs(root, "src/styles/kit.css"), "utf8"),
@@ -134,7 +140,12 @@ test("noncooperative edits are not overwritten after a crash", () => {
     assert.equal(readFileSync(css, "utf8"), "new css");
     writeFileSync(css, "noncooperative edit");
 
-    const recovered = recoverTransaction(root, STATE_DIR, "1515151515151515");
+    const recovered = recoverTransaction(
+      root,
+      STATE_DIR,
+      "1515151515151515",
+      RECOVERY_ROOTS,
+    );
     assert.equal(recovered.status, "refused");
     assert.equal(readFileSync(css, "utf8"), "noncooperative edit");
   });

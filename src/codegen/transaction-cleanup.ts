@@ -17,6 +17,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   rmSync,
   rmdirSync,
   writeFileSync,
@@ -73,6 +74,31 @@ export function cleanupTransaction(
   }
 
   const ownedDir = absOf(root, transactionDir(stateDir, journal.transactionId));
+
+  // Cleanup removes only proven owned inventory. An unexpected entry blocks
+  // cleanup and is retained with actionable evidence rather than recursed.
+  const allowed = new Set(["journal.json", "staged", "backups", "progress"]);
+  let unexpected: string[];
+  try {
+    unexpected = readdirSync(ownedDir).filter(
+      (name) => !allowed.has(name) && !/^journal\.json\.tmp-/.test(name),
+    );
+  } catch {
+    unexpected = [];
+  }
+  if (unexpected.length > 0) {
+    return {
+      ok: false,
+      needsCleanup: true,
+      issues: [
+        {
+          code: "COMMITTED_NEEDS_CLEANUP",
+          message: `the transaction committed but its owned directory contains unexpected entries (${unexpected.sort().join(", ")})`,
+        },
+      ],
+    };
+  }
+
   const targets: readonly [
     string,
     (

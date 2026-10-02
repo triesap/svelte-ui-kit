@@ -30,6 +30,7 @@ import {
   journalPath,
   transactionDir,
 } from "../../src/codegen/transaction-types.js";
+import { RECOVERY_ROOTS } from "../helpers/transactions.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 
@@ -71,12 +72,12 @@ test("a corrupt journal does not mutate and is retained", () => {
     writeFileSync(live, "old css");
     writeJournal(root, id, "{not json");
 
-    const recovered = recoverTransaction(root, STATE_DIR, id);
+    const recovered = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
     assert.equal(recovered.status, "refused");
     assert.equal(readFileSync(live, "utf8"), "old css");
     assert.equal(existsSync(abs(root, transactionDir(STATE_DIR, id))), true);
 
-    const inspections = inspectTransactions(root, STATE_DIR);
+    const inspections = inspectTransactions(root, STATE_DIR, RECOVERY_ROOTS);
     assert.equal(inspections.length, 1);
     assert.equal(inspections[0].ok, false);
   });
@@ -90,7 +91,7 @@ test("a forged or unknown journal state is refused", () => {
       id,
       JSON.stringify({ ...baseJournal(id), phase: "invented" }),
     );
-    const recovered = recoverTransaction(root, STATE_DIR, id);
+    const recovered = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
     assert.equal(recovered.status, "refused");
     if (recovered.status === "refused") {
       assert.ok(recovered.issues.length > 0);
@@ -103,7 +104,7 @@ test("a journal identity that disagrees with its directory is refused", () => {
     const id = "dddddddddddddddd";
     const other = "eeeeeeeeeeeeeeee";
     writeJournal(root, id, serializeJournal(baseJournal(other)));
-    const recovered = recoverTransaction(root, STATE_DIR, id);
+    const recovered = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
     assert.equal(recovered.status, "refused");
     if (recovered.status === "refused") {
       assert.equal(recovered.issues[0].code, "RECOVERY_IDENTITY_MISMATCH");
@@ -157,7 +158,7 @@ test("age and PID alone cannot authorize destructive cleanup", () => {
     const old = new Date(Date.now() - 86_400_000);
     utimesSync(journalFile, old, old);
 
-    const recovered = recoverTransaction(root, STATE_DIR, id);
+    const recovered = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
     assert.equal(recovered.status, "refused");
     if (recovered.status === "refused") {
       assert.equal(recovered.issues[0].code, "RECOVERY_USER_EDIT");

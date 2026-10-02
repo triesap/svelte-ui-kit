@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: Codex independently accepts S033–S063 at combined evidence anchor `f46d60f`. RCLD-04 is activated and all fourteen S064–S077 checkpoints are committed pending independent Codex acceptance. S078 requires that acceptance first. Updated 2026-10-02.
+Status: Independent review 10 requests changes to the RCLD-04 candidate `58f325c`. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-02.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **none** (S064–S077 are committed_pending_review; await independent Codex acceptance before S078).
+- Active implementation checkpoint: **RCLD-04 repairs and cumulative qualification** (S064–S077 remain committed_pending_review; review 10 requests changes before independent acceptance/S078).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -40,7 +40,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - RCLD-03 review-6 implementation series: `6ec7262b15c825aaf7d31c29bc6ef1599b31af94` completes validated invocation evidence, truthful foundation-token ownership and rendered-layout materialization, with the R6-4 purity/report reconciliation recorded in the same series. These commits are Pi implementation evidence; independent review 6 acceptance is still pending and S064 stays gated.
 - RCLD-03 review-7 implementation series: `ec7a014528f13a20da8658871e62b8459bd17af6` (R7-1 deeply immutable validated invocation boundary), `88f01098706c202b3610add081877c274a82fb82` (R7-2 ownership lineage through initialization) and `ea01f7e3f2a773b16dce9e456e4e04f026d1a4eb` (R7-3 complete-tree qualification), with R7-4 evidence/qualification reconciliation recorded in `implementation/evidence/RCLD03_R7_REPAIR.md`. These are Pi implementation evidence; independent S063 acceptance remains with Codex and S064 stays gated.
 - RCLD-03 review-8 implementation series: `b122039` (R8-1 captured effective mapping across init/add/sync, R8-2 tracked missing owned stylesheet refusal and R8-3 exact-lifecycle/behavioral no-writer qualification) and `5ef055d` (R8-3 intended-cause assertions for source/export conflicts) and `2fa0cd3` (R8-2 malformed managed CSS region refusal during initialization), with the evidence and cumulative qualification recorded in `implementation/evidence/RCLD03_R8_REPAIR.md`. These are Pi implementation evidence; independent S063 acceptance remains with Codex and S064 stays gated.
-- Ledger transition complete: S001–S063 complete at their recorded anchors, S064–S203 not_started. Independent review 9 accepts the RCLD-03 implementation at `f46d60f`; the review-evidence anchoring and atomic ledger finalization are recorded. Earlier pending/changes-requested prose is historical.
+- Ledger transition complete: S001–S063 complete at their recorded anchors; subsequent RCLD-04 implementation places S064–S077 committed_pending_review and S078–S203 not_started. Independent review 9 accepts the RCLD-03 implementation at `f46d60f`; the review-evidence anchoring and atomic ledger finalization are recorded. Earlier pending/changes-requested prose is historical.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. By default every checkpoint after S001 depends on the reviewed, verified, committed predecessor. The explicit owner-authorized batch below permits verified implementation commits pending Codex review to unlock successors only within the currently dispatched sequence; the current RCLD-03 activation prerequisite governs the transition from the completed RCLD-02 batch.
 
@@ -51,6 +51,155 @@ After each green commit, record the hash and report, update this ledger, and rec
 At S002, adopt the embedded contracts into their scheduled repository-relative files, establish target contract validation and an aligned `implementation/COMMIT_SEQUENCE.json` projection. This document remains the governing execution/status authority; the JSON projection must not drift into a second independently edited plan. Extracted specs govern product intent. Update this document's contract links and supersede embedded snapshots explicitly when extraction is verified; do not maintain conflicting copies silently. S001 baseline evidence and later reports are factual records, not alternate planning backlogs. No additional issue database is required by the current scaffold.
 
 ## Codex dispatch — complete RCLD-04 transactions and recovery
+
+### Independent review 10 — changes requested; finish the complete safety boundary
+
+Codex independently reviewed candidate `58f325c308a65131a13f8db7fcb2406707d1c087`
+on 2026-10-02. The evidence anchor, atomic S033–S063 acceptance transition and
+exact RCLD-04 authorization activation are valid. Preserve S001–S063 acceptance
+and the accepted planner behavior. The fourteen S064–S077 commits are implementation
+progress, **not accepted transactions/recovery**. Counts remain 63 complete,
+14 committed_pending_review, 126 not_started; three sequences complete and eight
+unfinished. Earlier activation instructions below are historical and already done.
+
+Fresh independent build, typecheck, format, lint, unit (276), integration (340),
+contract validation (zero errors/warnings) and contract tests (137) pass. Isolated
+compiled-implementation probes nevertheless reproduce destructive composition
+failures, including real subprocess termination immediately after lock rename.
+The author cumulative logs were audited separately; passing helper tests, synthetic
+plan fixtures and terminal completion claims do not qualify the guarded use case.
+Browser, strict component/fixture, workflow and reference guards were not freshly
+rerun by Codex on this rejected candidate. Release AC20 remains open.
+
+**Execute `pfc through RCLD-04`: all findings below, every unfinished original
+S064–S077 criterion, complete composed use cases and full cumulative qualification.**
+This is one substantial safety-boundary batch with green repair checkpoints,
+not a dispatch for a single failing test. No intermediate independent gate applies.
+Stop before S078 because it requires independently accepted S077. No owner decision,
+external dependency or hardware blocker currently prevents this software work.
+Keep the sole live batch tuple and existing task authority; no new authorization
+or acceptance transition is needed. Pi records implementation/evidence only.
+
+#### RCLD04-R1-1 — complete immutable apply authority and physical read set
+
+Runtime validation currently accepts unknown operations and the canonical lock
+as an ordinary target; validated bytes remain mutable and digest/root strings
+confer no verified authority. Final lock validation happens after replacement
+and does not establish full mapped plan/lock coherence. Root or ancestor replacement
+with identical file bytes is accepted. A real bundled-registry init plan for a
+fresh supported project is refused because legitimate absent ancestors are treated
+as stale, after hidden state has already been created. A symlinked transient root
+receives writes outside the project.
+
+Resolve the complete internal planner-to-apply boundary using the accepted deeply
+immutable invocation/snapshot and effective mapping, with actual root/ancestor
+identities and relevant config/manifest/dependency/lock read set. Validate complete
+operations, roles, bytes/modes/digests, preimage coverage, duplicates, reserved
+namespaces and final lock against the real plan before semantic writes. Reject
+forged partial objects; protect validated authority against later mutation.
+The canonical lock is exclusively final publication. Revalidate physical evidence
+under coordination and at live mutation boundaries. Distinguish approved absence
+from unsafe ancestry: support fresh init and nondefault mappings through recorded,
+owned directory creation, with accurate cleanup. Guard transient ancestry before
+the first coordination/staging write. Include the approved ignore policy in the
+captured guarded change when needed; do not mutate ignore files as an unplanned
+side effect. Do not expand public APIs or weaken accepted planner behavior.
+
+#### RCLD04-R1-2 — coordinate recovery and preserve intervening edits
+
+`applyPlan` recovers before acquiring the writer lock. A competing actual apply
+rolls an active writer back, then reports WRITER_BUSY; the first returns applied
+with old CSS and the new lock. An edit made during staging is overwritten by live
+replacement and then its backup is removed. Acquisition-only lock tests do not
+exercise this composition.
+
+Hold exclusive cooperative ownership across recovery, revalidation, preparation,
+replacement, publication and cleanup, including relevant no-change paths. A live
+owner must never be recovered by a contender. Prove ownership for release and
+recovery; do not infer safe takeover from PID, age, equal bytes or finally handlers.
+Unknown stale ownership fails closed with actionable guidance, without disabling
+valid proven restart recovery. Recheck affected preimages/read evidence before
+live effects so observable user edits are preserved/refused within the approved
+trusted-local threat model. Do not claim hostile filesystem race protection.
+
+#### RCLD04-R1-3 — durable publication, partial failure and filesystem semantics
+
+An exception or SIGKILL after canonical lock rename but before the published
+journal record leaves the durable phase applied. Restart rolls source back while
+leaving the new lock. A transaction-creation fault throws and leaves a journal-less
+orphan. Existing lock mode 0644 becomes 0600. Actual same-filesystem and durability
+assumptions are not established by assigning a staging directory name.
+
+Persist and validate sufficient publication intent/identity and crash evidence to
+close every interruption window, including unchanged-byte publication. After proven
+publication only clean safely; ambiguous publication must retain evidence and refuse
+without destructive rollback. Prepublication rollback requires complete proof.
+Establish the state table, supported filesystem constraints, required durability
+ordering, target/backup/staged verification and preservation of supported modes.
+Refuse unsupported filesystem arrangements before semantic effects. Handle setup,
+prepare, journal, replacement, publication, cleanup and coordination-release failures
+as truthful typed outcomes with retained recoverable evidence or owned cleanup.
+Do not let a failed cleanup/release become a false applied/no-change result.
+
+#### RCLD04-R1-4 — validate all recovery authority before mutation or cleanup
+
+Recovery deletes a notes file named by a schema-valid forged journal outside the
+approved roots, restores corrupted backup bytes without checking the captured
+preimage, follows a target ancestor symlink to delete an outside file, and recursively
+deletes an unexpected entry during published recovery. Root/plan identity strings
+and parsed JSON shapes do not establish recovery authority. The existing target
+validator is not connected to recovery. Scan errors are hidden as an empty scan.
+
+Preflight the whole journal, mapping/root/owner identity, allowed paths and roles,
+phase/progress consistency, exact current/staged/backup images, modes/kinds/ancestry
+and owned inventory before any recovery effect. Reject unsafe, corrupt, incomplete
+or ambiguous records without partial restoration of earlier entries. Bind backups
+to validated preimages. Preserve post-crash edits and every unexpected/unowned file;
+clean only proven owned entries, never blindly recurse through transaction trees.
+Handle missing/unreadable scans and linked journal/transient ancestors explicitly.
+Keep logical diagnostics safe and useful rather than leaking absolute I/O paths.
+Preserve evidence until cleanup itself is safely recoverable.
+
+#### RCLD04-R1-5 — qualify real composed plans, processes and application artifacts
+
+Current S077 synthetic hand-built plans do not prove actual init/add/sync integration
+or installed consumer coherence. The process coverage does not interrupt the actual
+lock-rename gap, and an assertion that a platform string exists is not qualification
+of that platform. Complete this entire original boundary rather than describing
+helper subsets as feature acceptance.
+
+Add repository-owned causal regressions for every finding above, including two
+composed applies, complete-tree positive/refusal controls, replaced physical identities,
+mutable/forged authority, fresh bootstrap, custom mappings, corrupt/unsafe recovery
+inventory, staging edits, modes, setup/cleanup/release errors and same-byte publication.
+Exercise the actual bundled registry, validated init/add/sync planners and guarded
+apply for install, update, retirement, metadata-only, no-change and conflicts; verify
+resulting source/lock coherence and a real generated consumer's check/build and
+emitted/rendered behavior. Use real subprocess kill/restart at preparation, backup,
+replacement/progress, lock rename/publication and cleanup boundaries, with recovery
+and edit-preservation assertions. Keep tests causal and compare entire trees, bytes,
+modes, kinds and links, not merely named-file existence.
+
+At the final candidate run all established cumulative lanes listed below and in
+VERIFICATION.md. Retain raw logs, underlying exit codes, versions, exact source/artifact
+identity, failed attempts and explicitly unrun cases. Reconcile S064–S077 reports,
+state table and qualification claims with actual evidence. Remove operator build-router
+references introduced in S077_REPORT.md; public reports record repository-owned
+commands, while private execution-routing evidence stays outside this repository.
+Keep all fourteen
+checkpoints pending; Codex alone accepts the combined repaired boundary. A commit,
+green subset, progress report or conversation length is not a stopping condition.
+
+#### Pi implementation evidence — RCLD-04 review-10 repairs
+
+Pi applied the RCLD04-R1-1..R1-5 repairs as one safety-boundary batch and added
+repository-owned causal regressions: physical apply authority and sealing,
+coordinated recovery and edit preservation, durable publication/typed partial
+failures, whole-journal recovery preflight and owned cleanup, and real
+planner-to-guarded-apply composition that builds and renders the generated
+consumer. The full record is `evidence/RCLD04_R1_REPAIR.md`. S064–S077 remain
+`committed_pending_review`; the original checkpoint criteria and every accepted
+record are unchanged. Codex alone accepts the repaired boundary before S078.
 
 ### Independent review 9 — RCLD-03 accepted; commit the evidence before activation
 

@@ -1,5 +1,5 @@
 /**
- * Canonical install-lock publication (S071).
+ * Canonical install-lock publication (S071, repaired for RCLD04-R1-3).
  *
  * `kit.lock.json` is the semantic commit point. It is validated as a complete
  * lock and published *after* every source/CSS/config/export/layout target has
@@ -7,11 +7,25 @@
  * over the canonical path; an invalid planned lock never replaces existing
  * state.
  *
+ * A durable *publication intent* is persisted before the rename. If the process
+ * is killed between the intent and the rename, recovery proves from the
+ * canonical bytes whether the commit happened: a matching digest is a completed
+ * publication (cleanup only), a non-matching digest is an uncommitted batch
+ * (safe rollback). This closes the interruption window that previously left the
+ * journal at `applied` and the new lock in place.
+ *
  * A publication whose bytes equal the current lock is still recorded with the
  * unique transaction id and an `unchanged` flag, because byte equality alone is
- * not a commit event.
+ * not a commit event. The existing canonical mode is preserved.
  */
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  chmodSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
@@ -83,16 +97,30 @@ export function validateLockForPublication(
   return { ok: issues.length === 0, issues };
 }
 
+/** Read the current canonical lock mode, or `fallback` when it is absent. */
+function currentLockMode(
+  root: string,
+  stateDir: string,
+  fallback: number,
+): number {
+  try {
+    return statSync(absOf(root, lockPath(stateDir))).mode & 0o777;
+  } catch {
+    return fallback;
+  }
+}
+
 /**
- * Publish the validated lock last. The current lock is read only to classify an
- * unchanged-byte publication; it is never overwritten until the staged lock has
- * been fully written.
+ * Publish the validated lock last. A durable publication intent is persisted
+ * before the rename; the target mode is preserved from the existing canonical
+ * lock, or taken from the planned preimage for a fresh install.
  */
 export function publishLock(
   root: string,
   stateDir: string,
   journal: TransactionJournal,
   lockBytes: Uint8Array,
+  mode = 0o644,
   hooks?: TransactionHooks,
 ): LockPublicationResult {
   const validation = validateLockForPublication(journal, lockBytes, stateDir);
@@ -107,6 +135,40 @@ export function publishLock(
   } catch {
     unchanged = false;
   }
+  const effectiveMode = currentLockMode(root, stateDir, mode);
+
+  // Durable publication intent. Recovery classifies a crash after this point by
+  // comparing the canonical bytes to the recorded digest.
+  const intent: TransactionJournal = {
+    ...journal,
+    phase: "applied",
+    lock: {
+      path: lockPath(stateDir),
+      digest: sha256Hex(lockBytes),
+      published: false,
+      unchanged,
+    },
+  };
+  try {
+    persistJournal(
+      root,
+      journalPath(stateDir, journal.transactionId),
+      intent,
+      hooks,
+    );
+  } catch (error) {
+    return {
+      ok: false,
+      journal: intent,
+      issues: [
+        {
+          code: "LOCK_INTENT_FAILED",
+          message: `could not persist the publication intent: ${codeOf(error)}`,
+          locator: lockPath(stateDir),
+        },
+      ],
+    };
+  }
 
   const stagedLock = absOf(
     root,
@@ -115,17 +177,19 @@ export function publishLock(
   try {
     mkdirSync(path.dirname(stagedLock), { recursive: true, mode: 0o700 });
     fireHooks(hooks, "before", "lock:stage", lockPath(stateDir));
-    writeFileSync(stagedLock, lockBytes, { mode: 0o600 });
+    writeFileSync(stagedLock, lockBytes, { mode: effectiveMode });
+    chmodSync(stagedLock, effectiveMode);
     fireHooks(hooks, "after", "lock:stage", lockPath(stateDir));
 
     fireHooks(hooks, "before", "lock:publish", lockPath(stateDir));
     mkdirSync(path.dirname(destination), { recursive: true });
     renameSync(stagedLock, destination);
+    chmodSync(destination, effectiveMode);
     fireHooks(hooks, "after", "lock:publish", lockPath(stateDir));
   } catch (error) {
     return {
       ok: false,
-      journal,
+      journal: intent,
       issues: [
         {
           code: "LOCK_PUBLICATION_FAILED",

@@ -17,18 +17,15 @@ references.
   self-reviews within the dispatched checkpoint. Codex owns scope,
   contract/API decisions, dependency-selection approval, deviations,
   acceptance, checkpoint commits and dispatch between coding periods.
-- Complete one checkpoint at a time in documented order. The current
-  `pfc through RCLD-04` authorization delegates the evidence/authorization
-  prerequisite and all S064–S077 green implementation commits to Pi. Follow
-  "Codex dispatch — complete RCLD-04 transactions and recovery" in the governing
-  plan. Codex review 9 accepts S033–S063; first commit its supplied review files
-  and finalize the already-approved acceptance at a reachable evidence anchor,
-  then activate the single RCLD-04 authorization record with strict regression
-  coverage. This is mechanical recording of Codex's decision, not Pi acceptance.
-  S001–S032 acceptance remains unchanged. Continue through all fourteen
-  transaction/recovery checkpoints and cumulative qualification. New work remains
-  committed_pending_review; S078 requires independent S077 acceptance. Outside
-  this exact batch, return work unstaged/uncommitted and await its gate.
+- Complete one checkpoint at a time in documented order. Current
+  `pfc through RCLD-04` delegates all green repair commits and full S064–S077
+  integration/qualification to Pi. Follow independent review 10 and
+  RCLD04-R1-1/2/3/4/5 in the governing plan. Review 10 requests changes to the
+  transaction/recovery candidate; preserve all 63 accepted checkpoints and
+  the already-completed RCLD-03 acceptance/authorization bookkeeping. Continue
+  after every green checkpoint through the whole safety boundary. S064–S077
+  stay committed_pending_review; S078 requires independent S077 acceptance.
+  Outside this exact batch, return work unstaged/uncommitted and await its gate.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
 - No commit, push, publication, deployment or reference-repository mutation

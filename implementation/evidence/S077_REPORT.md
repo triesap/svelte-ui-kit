@@ -37,8 +37,7 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 
 ## Cumulative qualification (S077 candidate)
 
-All commands routed through `cargo extbuild run --` after a green
-`cargo extbuild doctor`; frozen strict install; logs retained at
+Repository-owned commands; raw logs retained at
 `implementation/evidence/logs/rcl04-s077-20261002/`.
 
 - `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict`

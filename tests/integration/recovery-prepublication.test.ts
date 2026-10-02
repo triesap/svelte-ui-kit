@@ -33,6 +33,7 @@ import {
   journalPath,
   transactionDir,
 } from "../../src/codegen/transaction-types.js";
+import { RECOVERY_ROOTS } from "../helpers/transactions.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 const ID = "9999999999999999";
@@ -126,7 +127,7 @@ test("restart at each prepublication boundary rolls back to the preimages", () =
       );
       assert.equal(applied.ok, false, label);
 
-      const recovered = recoverTransaction(root, STATE_DIR, ID);
+      const recovered = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
       assert.equal(recovered.status, "rolled_back", label);
       assert.equal(
         readFileSync(abs(root, "src/styles/kit.css"), "utf8"),
@@ -148,7 +149,7 @@ test("user edits after an interruption block destructive restoration", () => {
     assert.equal(applied.ok, true);
 
     writeFileSync(abs(root, "src/styles/kit.css"), "user edit");
-    const recovered = recoverTransaction(root, STATE_DIR, ID);
+    const recovered = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
     assert.equal(recovered.status, "refused");
     if (recovered.status === "refused") {
       assert.equal(recovered.issues[0].code, "RECOVERY_USER_EDIT");
@@ -167,7 +168,7 @@ test("missing backups fail closed", () => {
     assert.equal(applied.ok, true);
     unlinkSync(backupPath(root, STATE_DIR, ID, "backup-0"));
 
-    const recovered = recoverTransaction(root, STATE_DIR, ID);
+    const recovered = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
     assert.equal(recovered.status, "refused");
     if (recovered.status === "refused") {
       assert.equal(recovered.issues[0].code, "RECOVERY_BACKUP_MISSING");

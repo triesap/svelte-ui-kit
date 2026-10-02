@@ -18,6 +18,7 @@ import {
   type ApplyPlanInput,
   type ApplyTarget,
 } from "../../src/codegen/apply.js";
+import { captureReadset } from "../../src/codegen/authority.js";
 import { capturePreimage } from "../../src/codegen/revalidate.js";
 import { faultAtOccurrence } from "../../src/codegen/transaction-hooks.js";
 import {
@@ -130,6 +131,12 @@ function makePlan(root: string, options: PlanOptions = {}): ApplyPlanInput {
         },
       ];
 
+  const readset = captureReadset(
+    root,
+    [...targets.map((target) => target.path), lockPath(stateDir)],
+    [`${uiDir}/_kit/kit.json`],
+  );
+  if (!readset.ok) throw new Error("readset capture failed");
   return {
     root,
     stateDir,
@@ -138,6 +145,7 @@ function makePlan(root: string, options: PlanOptions = {}): ApplyPlanInput {
     layoutFile,
     rootIdentity: "a".repeat(64),
     planDigest: "b".repeat(64),
+    readset: readset.value,
     targets,
     lock: {
       bytes: lockBytes(options.lockConfigHash ?? "d".repeat(64)),

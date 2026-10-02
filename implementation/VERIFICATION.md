@@ -75,24 +75,46 @@ completion unlocks a successor. Unapproved `not_applicable` fails closed.
 Default validation is read-only; `--generate` and `--generate-sources` are the
 only writing modes.
 
-#### Current RCLD-04 batch and RCLD-03 acceptance
+#### Current RCLD-04 review and complete repair qualification
 
-Codex independently accepts S033–S063 on candidate
-`6d39fcf5916f60bd5461f11541418fa10d7b5b1a`; see
-[evidence/RCLD-03_QUALIFICATION.md](evidence/RCLD-03_QUALIFICATION.md) and the
-individual reviews for fresh checks, closure, provenance and limits. Finalize
-committed review evidence and the atomic ledger transition before activating
-RCLD-04. Only that mechanical acceptance transition is delegated to Pi.
+Independent review 10 of `58f325c308a65131a13f8db7fcb2406707d1c087`
+requests RCLD04-R1-1/2/3/4/5 and every unfinished original S064–S077 criterion.
+The RCLD-03 acceptance and exact RCLD-04 activation are already complete;
+preserve 63 accepted/14 pending/126 not_started. Fresh Codex build, typecheck,
+format, lint, unit 276, integration 340, contract validation 0/0 and contract
+137 pass; independent compiled probes still reproduce destructive contention,
+publication-crash, forged/corrupted recovery, unsafe ancestry, mutable authority,
+stale physical identity, bootstrap, user-edit, cleanup and mode failures.
+The original cumulative author logs were audited separately, not freshly rerun
+as whole-feature acceptance. Do not treat a helper test or terminal claim as
+proof of guarded application safety.
 
-The current batch is all S064–S077 plus the bounded activation prerequisite.
-Follow the current governing dispatch and original checkpoint tests. Verify
-state/journal models, coordination, preimage checks, staging, lock-last
-publication, cleanup and recovery with causal fault injection, complete-tree
-comparisons and real-process interruption/contention. Include custom mapping,
-bootstrap, metadata-only and unchanged-lock-byte cases. At S077 rerun the full
-established cumulative lanes and retain raw logs and underlying exits. Do not
-stop after activation or a green checkpoint; stop before independent S077
-acceptance/S078. Preserve release AC20 debt and accurately record unrun platforms.
+Follow the governing review's complete authority/read-set, coordination,
+durable-publication, recovery-preflight and real-composition decisions. Qualify
+actual bundled-registry planner-to-apply init/add/sync use cases, complete trees,
+custom mappings, fresh absent ancestors, metadata-only/no-change/retirement,
+conflicts and a real installed consumer check/build/emitted behavior. Include
+real-process two-writer contention and kill/restart across every preparation,
+replace/progress, publication and cleanup boundary, particularly after canonical
+lock rename before bookkeeping and unchanged-byte lock publication. Prove safe
+refusal preserves user edits, unknown inventory and all outside/unowned paths.
+
+Run affected checks after each coherent green repair checkpoint. At the final
+candidate rerun cumulative frozen strict install, build/typecheck/format/lint,
+unit/integration/registry/CLI/harness/components, strict declaration controls,
+fixture check/build/SSR/browser, contract generation/validation/tests, workflow
+validation and applicable reference fmt/check/test guard. Serialize fixture
+writers; retain full raw logs, actual underlying exits, source/artifact identity,
+versions and failed attempts at ignored repository-relative evidence locations.
+Record actual OS/filesystem coverage; unrun platforms are unverified. Preserve
+release AC20's fixture-only two-diagnostic upstream declaration debt and strict
+17-test control, without new suppression. No generator auto-install is approved.
+
+Continue after green checkpoints through the whole RCLD-04 repair/qualification
+boundary. No intermediate review gate applies. Stop before S078 for independent
+Codex S077 acceptance, or a legitimate runtime limit/user stop/external blocker;
+continue other eligible work if one slice is blocked. Pi records implementation
+and evidence, never new acceptance or requirement relaxation.
 
 #### Historical owner-authorized RCLD-03 batch verification
 

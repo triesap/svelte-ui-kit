@@ -26,6 +26,7 @@ import {
   lockPath,
   transactionDir,
 } from "../../src/codegen/transaction-types.js";
+import { RECOVERY_ROOTS } from "../helpers/transactions.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 const ID = "aaaaaaaaaaaaaaaa";
@@ -122,7 +123,7 @@ function publish(root: string, lockConfigHash: string): TransactionJournal {
 test("a crash immediately after lock publication preserves committed source", () => {
   withRoot((root) => {
     publish(root, "d".repeat(64));
-    const recovered = recoverTransaction(root, STATE_DIR, ID);
+    const recovered = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
     assert.equal(recovered.status, "committed");
     assert.equal(
       readFileSync(abs(root, "src/styles/kit.css"), "utf8"),
@@ -141,7 +142,7 @@ test("a same-byte lock publication is still classified as committed", () => {
   withRoot((root) => {
     const journal = publish(root, "c".repeat(64));
     assert.equal(journal.lock?.unchanged, true);
-    const recovered = recoverTransaction(root, STATE_DIR, ID);
+    const recovered = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
     assert.equal(recovered.status, "committed");
     assert.equal(
       readFileSync(abs(root, "src/styles/kit.css"), "utf8"),
@@ -154,7 +155,7 @@ test("postcommit user modifications survive recovery cleanup", () => {
   withRoot((root) => {
     publish(root, "d".repeat(64));
     writeFileSync(abs(root, "src/styles/kit.css"), "user post-commit edit");
-    const recovered = recoverTransaction(root, STATE_DIR, ID);
+    const recovered = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
     assert.equal(recovered.status, "committed");
     assert.equal(
       readFileSync(abs(root, "src/styles/kit.css"), "utf8"),
