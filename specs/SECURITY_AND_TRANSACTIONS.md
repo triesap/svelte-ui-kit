@@ -35,3 +35,32 @@ Transient coordination and recovery files are not app-owned components and shoul
 Bound parsing and diagnostics sensibly to the packaged local asset model; validate before allocating or writing large user-controlled structures. Prefer a single serialized writer rather than unnecessary parallel mutation. Propagate filesystem and parser errors with context, close handles, clean only owned temporary files, and retain recovery evidence when cleanup cannot safely finish.
 
 Cancellation and process termination cannot always run cleanup; durable recovery must not depend solely on a finally block. A dry run is safe precisely because it does not start a transaction. Prove these properties with fault-injection tests and platform lanes, not prose assertions.
+
+#### Frozen transaction model (S064)
+
+The trusted-local threat model above is frozen: a cooperative developer
+checkout, not a hostile multi-user filesystem. The implementation uses only the
+pinned Node 24/TypeScript baseline and built-in filesystem facilities; no new
+dependency, CLI flag or semantic schema mode is introduced. Node cannot rename
+across filesystems, so staging is required to live on the same filesystem as
+the targets, and atomic per-file replacement is used where the platform
+supports it. No native multi-file atomicity or hostile-filesystem safety is
+claimed.
+
+Phases are ordered `planned -> prepared -> applied -> published -> cleaned`;
+`prepared`/`applied` may additionally `rolled_back` by recovery, and `published`
+may only be cleaned. `planned` has written no live bytes. `published` is the
+semantic commit point and is reached only after the canonical lock is replaced.
+Failure dispositions are `no_change`, `applied`, `committed_needs_cleanup` and
+`refused`; the last is a fail-closed logical diagnostic with manual guidance.
+
+Transient coordination and recovery files live under the reserved state
+directory at `<uiDir>/_kit/.svelte-ui-kit/`: a cooperative `writer.lock`
+directory and per-attempt `transactions/<transactionId>/` directories holding
+`journal.json`, `staged/`, `backups/` and `progress/`. Owned transient
+directories use mode `0700` and the journal/staged files use `0600`. The
+namespace is ignored via a single managed entry `<_kit>/.svelte-ui-kit/` that
+preserves existing ignore rules. A unique transaction id proves ownership and
+publication; byte-equal lock bytes, wall-clock age, PID reuse and process
+`finally` blocks are not sufficient proof of ownership, takeover or successful
+publication.
