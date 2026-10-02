@@ -57,3 +57,36 @@ export function faultAt(
     },
   };
 }
+
+/** Build a hook that throws at the Nth `before` occurrence of a boundary. */
+export function faultAtOccurrence(
+  boundary: TransactionBoundary,
+  occurrence: number,
+  message = `injected fault at ${boundary} #${occurrence}`,
+): TransactionHooks {
+  let seen = 0;
+  return {
+    before: (candidate) => {
+      if (candidate === boundary) {
+        seen += 1;
+        if (seen === occurrence) throw new Error(message);
+      }
+    },
+  };
+}
+
+/** Build a hook that throws immediately `after` the named boundary (once). */
+export function faultAfter(
+  boundary: TransactionBoundary,
+  message = `injected post-fault at ${boundary}`,
+): TransactionHooks {
+  let fired = false;
+  return {
+    after: (candidate) => {
+      if (!fired && candidate === boundary) {
+        fired = true;
+        throw new Error(message);
+      }
+    },
+  };
+}

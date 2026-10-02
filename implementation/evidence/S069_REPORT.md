@@ -5,7 +5,7 @@ Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S069","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S069","kind":"report","commit":"715a9f8aca50392fd32227fa3d421baaad89b407","disposition":"candidate"}
 -->
 
 Step ID and title: S069 — Persist recoverable prepared-state journals.
