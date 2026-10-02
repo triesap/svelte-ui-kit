@@ -27,6 +27,7 @@ import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { isSafeLogicalRelativePath, pathsOverlap } from "../project/paths.js";
 import { canonicalJson } from "./serialize.js";
 import type { ChangeOperation } from "./plan.js";
+import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
   isTransactionId,
   lockPath,
@@ -387,12 +388,14 @@ export function persistJournal(
   root: string,
   logicalJournalPath: string,
   journal: TransactionJournal,
+  hooks?: TransactionHooks,
 ): void {
   const destination = path.join(root, ...logicalJournalPath.split("/"));
   const dir = path.dirname(destination);
   mkdirSync(dir, { recursive: true, mode: 0o700 });
   const temporary = `${destination}.tmp-${journal.transactionId}`;
   const bytes = Buffer.from(serializeJournal(journal), "utf8");
+  fireHooks(hooks, "before", "journal:write", logicalJournalPath);
   const fd = openSync(temporary, "wx", 0o600);
   try {
     writeSync(fd, bytes);
@@ -400,13 +403,16 @@ export function persistJournal(
   } finally {
     closeSync(fd);
   }
+  fireHooks(hooks, "after", "journal:write", logicalJournalPath);
   renameSync(temporary, destination);
+  fireHooks(hooks, "before", "journal:fsync", logicalJournalPath);
   const dirFd = openSync(dir, "r");
   try {
     fsyncSync(dirFd);
   } finally {
     closeSync(dirFd);
   }
+  fireHooks(hooks, "after", "journal:fsync", logicalJournalPath);
 }
 
 /** Replace one journal phase immutably. */
@@ -415,6 +421,81 @@ export function withPhase(
   phase: TransactionPhase,
 ): TransactionJournal {
   return { ...journal, phase };
+}
+
+/**
+ * Record the prepared state (S069): attach the staged identifier produced by
+ * staging, reserve a deterministic backup id for every update/retire preimage,
+ * and move the phase to `prepared`. The returned journal is still pure; the
+ * caller persists it durably before any live replacement begins.
+ */
+export function prepareJournal(
+  journal: TransactionJournal,
+  staged: readonly { readonly path: string; readonly stagedId: string }[],
+): TransactionJournal {
+  const stagedByPath = new Map(
+    staged.map((entry) => [entry.path, entry.stagedId]),
+  );
+  return {
+    ...journal,
+    phase: "prepared",
+    operations: journal.operations.map((operation, index) => ({
+      ...operation,
+      stagedId: stagedByPath.get(operation.path) ?? operation.stagedId,
+      backupId:
+        operation.operation === "create"
+          ? null
+          : (operation.backupId ?? `backup-${index}`),
+    })),
+  };
+}
+
+/**
+ * Verify a prepared journal is complete enough for safe replacement/recovery:
+ * it must be in the `prepared` phase, every create/update must name a staged
+ * image and every update/retire must name a preimage backup. An incomplete
+ * record is refused rather than treated as a recoverable batch.
+ */
+export function verifyPreparedJournal(
+  journal: TransactionJournal,
+): ModelResult<null> {
+  const issues = [];
+  if (journal.phase !== "prepared") {
+    issues.push(
+      issue(
+        "PREPARATION_INCOMPLETE",
+        `journal is in phase "${journal.phase}", not prepared`,
+        "journal.json",
+      ),
+    );
+  }
+  for (const operation of journal.operations) {
+    if (
+      (operation.operation === "create" || operation.operation === "update") &&
+      operation.stagedId === null
+    ) {
+      issues.push(
+        issue(
+          "PREPARATION_INCOMPLETE",
+          `operation ${operation.path} has no staged identifier`,
+          operation.path,
+        ),
+      );
+    }
+    if (
+      (operation.operation === "update" || operation.operation === "retire") &&
+      operation.backupId === null
+    ) {
+      issues.push(
+        issue(
+          "PREPARATION_INCOMPLETE",
+          `operation ${operation.path} has no backup identifier`,
+          operation.path,
+        ),
+      );
+    }
+  }
+  return issues.length > 0 ? fail(issues) : ok(null);
 }
 
 /** Replace one journal operation record by target path. */

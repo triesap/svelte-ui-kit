@@ -5,7 +5,7 @@ Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S068","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S068","kind":"report","commit":"fd9697c0046b2a135b5afdca0485bb8dde43d8ed","disposition":"candidate"}
 -->
 
 Step ID and title: S068 — Stage replacement bytes with owned temporary files.
