@@ -5,7 +5,7 @@ Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S065","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S065","kind":"report","commit":"2ddad4c5bffab5181ecf217f565d4ebaef9234ce","disposition":"candidate"}
 -->
 
 Step ID and title: S065 — Validate transient coordination and journal records.
