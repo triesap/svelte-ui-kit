@@ -5,7 +5,7 @@ Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S064","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S064","kind":"report","commit":"d32bb43f988210e89bf4a96e0c01629ff937e539","disposition":"candidate"}
 -->
 
 Step ID and title: S064 — Freeze transaction states and safety assumptions.

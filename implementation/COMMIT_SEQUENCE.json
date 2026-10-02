@@ -36,7 +36,7 @@
       "first": "S064",
       "last": "S077",
       "count": 14,
-      "state": "not_started",
+      "state": "in_progress",
       "predecessor": "S063"
     },
     {
@@ -929,7 +929,7 @@
       "sequence": "RCLD-04",
       "dependsOn": "S063",
       "requirements": ["R15", "R16", "R32", "R33", "R34"],
-      "status": "not_started",
+      "status": "committed_pending_review",
       "completion": null
     },
     {
