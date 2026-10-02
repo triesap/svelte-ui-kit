@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: Codex independently accepts S033–S063 at combined evidence anchor `f46d60f`; the ledger is finalized. The active authorized batch is the activation prerequisite plus all S064–S077/RCLD-04. S078 requires independent S077 acceptance. Updated 2026-10-02.
+Status: Codex independently accepts S033–S063 at combined evidence anchor `f46d60f`; RCLD-04 is activated. The active authorized batch is all S064–S077 under the live RCLD-04 record. S078 requires independent S077 acceptance. Updated 2026-10-02.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **none** (S033–S063 accepted and ledger-finalized; activate the RCLD-04 batch, then execute S064–S077).
+- Active implementation checkpoint: **S064** (RCLD-04 active; execute S064–S077 under the live authorization record).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **0 / 203**. Authored batch range: **none**.
@@ -109,6 +109,15 @@ S064–S077. No present owner, external or hardware blocker exists.
    green implementation commits recorded as committed_pending_review. Run the
    full qualification after composing the guarded use case, then return for
    Codex acceptance before S078. Keep the original checkpoint criteria intact.
+
+The validator and its regression tests recognize the historical RCLD-01,
+RCLD-02 and RCLD-03 tuples plus this fourth approved RCLD-04 tuple. The single
+live record below replaces the completed RCLD-03 authorization; no second live
+record or generic bypass exists.
+
+<!-- checkpoint-batch
+{"schemaVersion":1,"sequence":"RCLD-04","first":"S064","last":"S077","mode":"pfc","review":"codex-after-sequence"}
+-->
 
 ### Transaction decisions resolved for S064–S077
 
@@ -2392,9 +2401,9 @@ to RCLD-02 before the first S013 implementation commit. The validator still
 recognizes the historical RCLD-01 tuple so historical fixtures and accepted
 RCLD-01 evidence remain valid, but only one record is live in this plan.
 
-<!-- checkpoint-batch
-{"schemaVersion":1,"sequence":"RCLD-03","first":"S033","last":"S063","mode":"pfc","review":"codex-after-sequence"}
--->
+Historical note: the RCLD-02-era live record that previously occupied this
+position was superseded by the RCLD-04 authorization in the governing dispatch
+above; only one live record exists in this plan.
 
 Test accepted S012 required
 before S013, ordered reachable pending hashes/reports, exact range matching,

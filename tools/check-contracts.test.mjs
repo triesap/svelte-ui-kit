@@ -2376,6 +2376,274 @@ test("synthetic atomic acceptance completes every RCLD-03 pending checkpoint", (
 });
 
 // ---------------------------------------------------------------------------
+// Current RCLD-04 batch — S064–S077 pending review
+// ---------------------------------------------------------------------------
+
+const RCLD04_BATCH_IDS = EXPECTED_STEP_IDS.slice(63, 77);
+
+test("every RCLD-04 checkpoint validates as pending review", () => {
+  withFixture(
+    (root) => {
+      const result = runCli(root);
+      assert.equal(result.status, 0, result.output);
+      const projection = JSON.parse(read(root, PLAN_JSON_REL));
+      const pending = projection.steps.filter(
+        (step) => step.status === "committed_pending_review",
+      );
+      assert.equal(pending.length, 14);
+      for (const step of pending) {
+        assert.ok(RCLD04_BATCH_IDS.includes(step.id), step.id);
+        assert.equal(step.completion, null, `${step.id} completion`);
+      }
+      const plan = read(root, PLAN_REL);
+      assert.match(
+        plan,
+        /Completed implementation checkpoints: \*\*63 \/ 203\*\*/,
+      );
+      assert.match(
+        plan,
+        /Committed pending review: \*\*14 \/ 203\*\*\. Authored batch range: \*\*S064–S077\*\*\./,
+      );
+    },
+    { scenario: "rcld04All" },
+  );
+});
+
+test("accepted S063 is required before S064 may be pending review", () => {
+  withFixture(
+    (root) => {
+      setLedgerCell(root, "S063", 4, "in_progress");
+      writeEvidencePair(root, "S063", {
+        commit: null,
+        report: "candidate",
+        review: "changes_requested",
+      });
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 1);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /PREMATURE_ADVANCEMENT/);
+    },
+    { scenario: "rcld04First" },
+  );
+});
+
+test("an unreachable RCLD-04 pending implementation hash is rejected", () => {
+  withFixture(
+    (root) => {
+      git(root, "checkout", "-q", "-b", "side");
+      append(root, "specs/SCOPE_AND_ASSUMPTIONS.md", "side change");
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "side change");
+      const side = git(root, "rev-parse", "HEAD").trim();
+      git(root, "checkout", "-q", "master");
+      setLedgerCell(root, "S064", 5, side);
+      writeEvidence(root, "S064", "report", {
+        commit: side,
+        disposition: "candidate",
+      });
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /not reachable from HEAD/);
+    },
+    { scenario: "rcld04First" },
+  );
+});
+
+test("RCLD-04 pending commits must respect predecessor order", () => {
+  withFixture(
+    (root) => {
+      const base = (() => {
+        git(root, "add", "-A");
+        git(root, "commit", "-q", "-m", "settle pending evidence");
+        return git(root, "rev-parse", "HEAD").trim();
+      })();
+      const writeS065 = () => {
+        writeEvidence(root, "S065", "report", {
+          commit: null,
+          disposition: "candidate",
+        });
+        writeEvidence(root, "S065", "review", {
+          commit: null,
+          disposition: "changes_requested",
+        });
+      };
+      git(root, "checkout", "-q", "-b", "left", base);
+      writeS065();
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "left evidence");
+      const left = git(root, "rev-parse", "HEAD").trim();
+      git(root, "checkout", "-q", "master");
+      git(root, "checkout", "-q", "-b", "right", base);
+      writeS065();
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "right evidence");
+      const right = git(root, "rev-parse", "HEAD").trim();
+      git(root, "checkout", "-q", "master");
+      git(root, "merge", "-q", "--no-ff", "-m", "merge", "left", "right");
+
+      setLedgerCell(root, "S064", 5, left);
+      writeEvidence(root, "S064", "report", {
+        commit: left,
+        disposition: "candidate",
+      });
+      setLedgerCell(root, "S065", 4, "committed_pending_review");
+      setLedgerCell(root, "S065", 5, right);
+      writeEvidence(root, "S065", "report", {
+        commit: right,
+        disposition: "candidate",
+      });
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 1);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /is not a descendant of predecessor/);
+    },
+    { scenario: "rcld04First" },
+  );
+});
+
+test("S078 cannot be recorded as pending review within the RCLD-04 batch", () => {
+  withFixture(
+    (root) => {
+      setLedgerCell(root, "S078", 4, "committed_pending_review");
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /INVALID_STATUS/);
+      assert.match(result.output, /authorized batch/);
+    },
+    { scenario: "rcld04All" },
+  );
+});
+
+test("S078 cannot advance while S077 is only pending review", () => {
+  withFixture(
+    (root) => {
+      setLedgerCell(root, "S078", 4, "in_progress");
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 1);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /PREMATURE_ADVANCEMENT/);
+    },
+    { scenario: "rcld04Last" },
+  );
+});
+
+test("malformed or non-approved RCLD-04 authorizations are rejected", () => {
+  const mutations = [
+    ["widened range", (text) => text.replace('"last":"S077"', '"last":"S078"')],
+    [
+      "narrowed range",
+      (text) => text.replace('"first":"S064"', '"first":"S065"'),
+    ],
+    [
+      "wrong sequence",
+      (text) => text.replace('"sequence":"RCLD-04"', '"sequence":"RCLD-05"'),
+    ],
+    ["wrong mode", (text) => text.replace('"mode":"pfc"', '"mode":"batch"')],
+    [
+      "unknown field",
+      (text) =>
+        text.replace(
+          '"review":"codex-after-sequence"',
+          '"review":"codex-after-sequence","extra":true',
+        ),
+    ],
+    [
+      "malformed JSON",
+      (text) => text.replace(/\{"schemaVersion":1[^}]*\}/, "{not json}"),
+    ],
+  ];
+  for (const [label, mutate] of mutations) {
+    withFixture(
+      (root) => {
+        const text = read(root, PLAN_REL);
+        const mutated = mutate(text);
+        assert.notEqual(mutated, text, `${label} mutation must apply`);
+        write(root, PLAN_REL, mutated);
+        const result = runCli(root);
+        assert.equal(result.status, 1, `${label}: ${result.output}`);
+        assert.match(result.output, /INVALID_BATCH_AUTHORIZATION/, label);
+      },
+      { scenario: "rcld04First" },
+    );
+  }
+});
+
+test("a duplicate RCLD-04 batch authorization is rejected", () => {
+  withFixture(
+    (root) => {
+      const record =
+        '<!-- checkpoint-batch\n{"schemaVersion":1,"sequence":"RCLD-04","first":"S064","last":"S077","mode":"pfc","review":"codex-after-sequence"}\n-->';
+      write(root, PLAN_REL, `${read(root, PLAN_REL)}\n${record}\n`);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /INVALID_BATCH_AUTHORIZATION/);
+    },
+    { scenario: "rcld04First" },
+  );
+});
+
+test("a fenced RCLD-04 batch authorization does not admit pending review", () => {
+  withFixture(
+    (root) => {
+      write(
+        root,
+        PLAN_REL,
+        fenceBlock(read(root, PLAN_REL), /^<!-- checkpoint-batch/, /^-->$/),
+      );
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /INVALID_STATUS/);
+    },
+    { scenario: "rcld04First" },
+  );
+});
+
+test("synthetic atomic acceptance completes every RCLD-04 pending checkpoint", () => {
+  withFixture(
+    (root) => {
+      assert.equal(runCli(root).status, 0, "pending batch must validate");
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "fixture: RCLD-04 evidence commit");
+      const evidence = git(root, "rev-parse", "HEAD").trim();
+      for (const id of RCLD04_BATCH_IDS) {
+        setLedgerCell(root, id, 4, "complete");
+        setLedgerCell(root, id, 5, evidence);
+        writeEvidencePair(root, id, {
+          commit: evidence,
+          report: "implemented",
+          review: "accepted",
+        });
+      }
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 0);
+      const result = runCli(root);
+      assert.equal(result.status, 0, result.output);
+      const plan = read(root, PLAN_REL);
+      assert.match(
+        plan,
+        /Completed implementation checkpoints: \*\*77 \/ 203\*\*/,
+      );
+      assert.match(
+        plan,
+        /Committed pending review: \*\*0 \/ 203\*\*\. Authored batch range: \*\*none\*\*\./,
+      );
+      const projection = JSON.parse(read(root, PLAN_JSON_REL));
+      const rcl04 = projection.sequences.find((seq) => seq.id === "RCLD-04");
+      assert.equal(rcl04.state, "complete");
+      // S078 is now unlocked by the accepted S077.
+      setLedgerCell(root, "S078", 4, "in_progress");
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 0);
+      assert.equal(runCli(root).status, 0);
+    },
+    { scenario: "rcld04All" },
+  );
+});
+
+// ---------------------------------------------------------------------------
 // Governance compatibility and the atomic batch-acceptance transition
 // ---------------------------------------------------------------------------
 

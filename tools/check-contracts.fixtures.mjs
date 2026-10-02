@@ -94,6 +94,15 @@ export const BATCH_RCLD03 = {
   review: "codex-after-sequence",
 };
 
+export const BATCH_RCLD04 = {
+  schemaVersion: 1,
+  sequence: "RCLD-04",
+  first: "S064",
+  last: "S077",
+  mode: "pfc",
+  review: "codex-after-sequence",
+};
+
 /** Fixed, fixture-owned lifecycle scenarios. `s001` is the canonical negative
  * baseline (one complete checkpoint plus the active candidate); `two` and
  * `boundary` are positive states used to prove the suite is independent of how
@@ -182,6 +191,37 @@ export const SCENARIOS = {
     accepted: [],
     pendingReview: ["S063"],
     batch: BATCH_RCLD03,
+  },
+  // Current RCLD-04 batch states: S001–S063 accepted, then one, several or all
+  // of the S064–S077 transaction/recovery implementation commits pending
+  // independent review.
+  rcld04First: {
+    complete: EXPECTED_STEP_IDS.slice(0, 63),
+    candidates: [],
+    accepted: [],
+    pendingReview: ["S064"],
+    batch: BATCH_RCLD04,
+  },
+  rcld04Prefix: {
+    complete: EXPECTED_STEP_IDS.slice(0, 63),
+    candidates: [],
+    accepted: [],
+    pendingReview: EXPECTED_STEP_IDS.slice(63, 67),
+    batch: BATCH_RCLD04,
+  },
+  rcld04All: {
+    complete: EXPECTED_STEP_IDS.slice(0, 63),
+    candidates: [],
+    accepted: [],
+    pendingReview: EXPECTED_STEP_IDS.slice(63, 77),
+    batch: BATCH_RCLD04,
+  },
+  rcld04Last: {
+    complete: EXPECTED_STEP_IDS.slice(0, 76),
+    candidates: [],
+    accepted: [],
+    pendingReview: ["S077"],
+    batch: BATCH_RCLD04,
   },
 };
 
