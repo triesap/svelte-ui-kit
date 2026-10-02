@@ -5,7 +5,7 @@ Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S071","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S071","kind":"report","commit":"6f4d0cbf5e4538eb7d03aac53181ede2b7f5e066","disposition":"candidate"}
 -->
 
 Step ID and title: S071 — Publish the canonical install lock last.
