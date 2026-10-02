@@ -75,7 +75,26 @@ completion unlocks a successor. Unapproved `not_applicable` fails closed.
 Default validation is read-only; `--generate` and `--generate-sources` are the
 only writing modes.
 
-#### Current owner-authorized RCLD-03 batch verification
+#### Current RCLD-04 batch and RCLD-03 acceptance
+
+Codex independently accepts S033–S063 on candidate
+`6d39fcf5916f60bd5461f11541418fa10d7b5b1a`; see
+[evidence/RCLD-03_QUALIFICATION.md](evidence/RCLD-03_QUALIFICATION.md) and the
+individual reviews for fresh checks, closure, provenance and limits. Finalize
+committed review evidence and the atomic ledger transition before activating
+RCLD-04. Only that mechanical acceptance transition is delegated to Pi.
+
+The current batch is all S064–S077 plus the bounded activation prerequisite.
+Follow the current governing dispatch and original checkpoint tests. Verify
+state/journal models, coordination, preimage checks, staging, lock-last
+publication, cleanup and recovery with causal fault injection, complete-tree
+comparisons and real-process interruption/contention. Include custom mapping,
+bootstrap, metadata-only and unchanged-lock-byte cases. At S077 rerun the full
+established cumulative lanes and retain raw logs and underlying exits. Do not
+stop after activation or a green checkpoint; stop before independent S077
+acceptance/S078. Preserve release AC20 debt and accurately record unrun platforms.
+
+#### Historical owner-authorized RCLD-03 batch verification
 
 Independent review 8 of candidate `a4c2e4a0bfd68e2463090b9e4886ab4509f7d12e`
 requests RCLD03-R8-1/2/3 and every unfinished S033–S063 criterion together.

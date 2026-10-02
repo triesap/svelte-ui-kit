@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: S001–S032 independently accepted; RCLD-01/02 complete. S033–S063 are committed pending review with changes requested under independent review 8; complete effective mapping selection, initialization ownership checks and full lifecycle qualification. S064 requires independent S063 acceptance. Updated 2026-10-02.
+Status: Codex accepts S033–S063 on candidate `6d39fcf`; commit the review evidence and finalize the ledger before S064. The next authorized batch is the activation prerequisite plus all S064–S077/RCLD-04. S078 requires independent S077 acceptance. Updated 2026-10-02.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **none** (repair and finish pending S033–S063 under independent review 8; S064 remains gated).
+- Active implementation checkpoint: **none** (Codex review 9 accepts S033–S063; finalize its committed evidence, activate RCLD-04, then execute S064–S077).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **32 / 203**. Remaining: **171 / 203**.
 - Committed pending review: **31 / 203**. Authored batch range: **S033–S063**.
@@ -40,7 +40,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - RCLD-03 review-6 implementation series: `6ec7262b15c825aaf7d31c29bc6ef1599b31af94` completes validated invocation evidence, truthful foundation-token ownership and rendered-layout materialization, with the R6-4 purity/report reconciliation recorded in the same series. These commits are Pi implementation evidence; independent review 6 acceptance is still pending and S064 stays gated.
 - RCLD-03 review-7 implementation series: `ec7a014528f13a20da8658871e62b8459bd17af6` (R7-1 deeply immutable validated invocation boundary), `88f01098706c202b3610add081877c274a82fb82` (R7-2 ownership lineage through initialization) and `ea01f7e3f2a773b16dce9e456e4e04f026d1a4eb` (R7-3 complete-tree qualification), with R7-4 evidence/qualification reconciliation recorded in `implementation/evidence/RCLD03_R7_REPAIR.md`. These are Pi implementation evidence; independent S063 acceptance remains with Codex and S064 stays gated.
 - RCLD-03 review-8 implementation series: `b122039` (R8-1 captured effective mapping across init/add/sync, R8-2 tracked missing owned stylesheet refusal and R8-3 exact-lifecycle/behavioral no-writer qualification) and `5ef055d` (R8-3 intended-cause assertions for source/export conflicts) and `2fa0cd3` (R8-2 malformed managed CSS region refusal during initialization), with the evidence and cumulative qualification recorded in `implementation/evidence/RCLD03_R8_REPAIR.md`. These are Pi implementation evidence; independent S063 acceptance remains with Codex and S064 stays gated.
-- S001–S032 are complete; S033–S063 are committed_pending_review with changes requested; S064–S203 remain not_started (140 checkpoints). Independent review 8 governs completion of the existing RCLD-03 batch; no acceptance or sequence gate is bypassed.
+- Ledger transition pending: S001–S032 complete, S033–S063 committed_pending_review, S064–S203 not_started. Independent review 9 accepts the RCLD-03 implementation; only reachable review-evidence anchoring and atomic ledger finalization remain before RCLD-04 activation. Earlier pending/changes-requested prose is historical.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. By default every checkpoint after S001 depends on the reviewed, verified, committed predecessor. The explicit owner-authorized batch below permits verified implementation commits pending Codex review to unlock successors only within the currently dispatched sequence; the current RCLD-03 activation prerequisite governs the transition from the completed RCLD-02 batch.
 
@@ -50,7 +50,132 @@ After each green commit, record the hash and report, update this ledger, and rec
 
 At S002, adopt the embedded contracts into their scheduled repository-relative files, establish target contract validation and an aligned `implementation/COMMIT_SEQUENCE.json` projection. This document remains the governing execution/status authority; the JSON projection must not drift into a second independently edited plan. Extracted specs govern product intent. Update this document's contract links and supersede embedded snapshots explicitly when extraction is verified; do not maintain conflicting copies silently. S001 baseline evidence and later reports are factual records, not alternate planning backlogs. No additional issue database is required by the current scaffold.
 
+## Codex dispatch — complete RCLD-04 transactions and recovery
+
+### Independent review 9 — RCLD-03 accepted; commit the evidence before activation
+
+Codex independently reviewed clean candidate
+`6d39fcf5916f60bd5461f11541418fa10d7b5b1a` on 2026-10-02 against every original
+S033–S063 criterion and the outstanding review findings. The substantive
+S033–S063 implementation is **accepted**. RCLD03-R8-1/2/3 are closed;
+previously verified repairs and S001–S032 acceptance remain valid. The combined
+review is [RCLD-03_QUALIFICATION.md](evidence/RCLD-03_QUALIFICATION.md), with
+individual S033–S063 review files. This is Codex's decision, not Pi self-acceptance.
+
+The ledger intentionally still says 32 complete, 31 committed_pending_review,
+140 not_started and two completed sequences until the newly authored review
+files exist at a reachable evidence commit. This is a bookkeeping prerequisite,
+not unfinished product work or another independent review request. After the
+bounded activation below, the correct state is 63 complete, zero pending,
+140 not_started, three completed sequences and eight unfinished sequences.
+Original implementation hashes remain provenance in their reports. Original
+R01–R34, AC01–AC22 and all 203 checkpoint definitions are unchanged.
+
+### Batch boundary and activation
+
+Execute **`pfc through RCLD-04`**: the evidence/authorization prerequisite and
+all fourteen S064–S077 checkpoints, their integration, repairs and cumulative
+qualification. Continue after every green commit. Stop before S078: RCLD-05
+must consume an independently accepted guarded apply implementation. S064's
+independent S063 gate is satisfied by the Codex review above only after its
+committed-evidence bookkeeping is finalized. No intermediate review gate splits
+S064–S077. No present owner, external or hardware blocker exists.
+
+1. Verify that the product/test tree remains the reviewed candidate. Commit the
+   supplied Codex governance and review files as an evidence-only green commit.
+   Keep the existing live RCLD-03 record, original pending report hashes and
+   ledger unchanged in that commit; optional structured review records remain
+   absent until the next operation. Record its actual full hash as the combined
+   evidence anchor. Do not invent a self-referential or future hash.
+2. Mechanically finalize the already-issued Codex acceptance: set S033–S063
+   ledger rows to complete at that evidence anchor; set each report's structured
+   record to implemented and each review's structured record to accepted, both
+   at that anchor. Preserve original hashes as provenance. Update counts, last
+   safe commit, sequence state and current prose; regenerate the JSON from this
+   Markdown. Verify all report/review paths exist at the anchor. This narrowly
+   authorizes recording Codex's decision; Pi may not accept any new product work.
+3. Pi may extend the existing authorization validator and its regression tests
+   for exactly one additional approved tuple: schemaVersion 1, sequence RCLD-04,
+   first S064, last S077, mode pfc, review codex-after-sequence. Preserve the
+   historical three tuples and strict evidence semantics. After the acceptance
+   transition and tooling are green, atomically replace the sole live RCLD-03
+   record with this tuple. Never have two live records or add a generic bypass.
+   Test accepted S063 required; pending predecessors only inside S064–S077;
+   S078 forbidden before independent S077 acceptance; malformed, duplicate,
+   fenced and widened records rejected; reachable reports/hashes; historical
+   accepted evidence; atomic fourteen-checkpoint acceptance. The activation may
+   have separate green commits, but it is not the batch endpoint.
+4. Execute S064 through S077 in original order, one checkpoint active at a time,
+   green implementation commits recorded as committed_pending_review. Run the
+   full qualification after composing the guarded use case, then return for
+   Codex acceptance before S078. Keep the original checkpoint criteria intact.
+
+### Transaction decisions resolved for S064–S077
+
+- Keep the trusted local developer-checkout threat model. No claim of hostile
+  multi-user filesystem safety, native multi-file atomicity, or unexecuted OS
+  support. Use the existing Node 24/TypeScript baseline and built-in filesystem
+  facilities; no new dependency or public CLI/config/schema mode is approved.
+- Keep coordination/journal/staging identity internal and outside semantic lock
+  metadata. Freeze the exact owned transient paths, modes and ignore policy in
+  S064 within the existing reserved state namespace. A unique transaction ID is
+  required; time, PID, lock-byte equality or process-finally alone is not proof
+  of ownership, publication, safe takeover or recovery. Unknown/ambiguous state
+  blocks mutation with safe logical diagnostics and documented manual guidance.
+- Prefer rollback before proven final publication; after proven publication,
+  perform only safe cleanup. Freeze and test the state/transition table before
+  implementation. Persist sufficient preparation, backup, per-target progress
+  and publication evidence to distinguish unchanged-byte lock publication;
+  ambiguous evidence must fail closed. Do not invent force/recover commands.
+- Plan first without writes. Under exclusive cooperative coordination revalidate
+  root identity, ancestry, kinds, bytes/modes and relevant selected config/lock/
+  mapping evidence. A stale plan is refused, never silently recomputed during
+  apply. Capture effective mapped targets completely; do not regress discovery,
+  ownership, cohorts, retirement or immutable observations accepted in RCLD-03.
+- Stage exact bytes on the required same filesystem; document and enforce the
+  supported filesystem/durability assumptions. Preserve modes and unmanaged
+  neighbors. Include config, source, CSS, exports/layout, retirement and canonical
+  lock in one guarded batch. Publish the lock last as the semantic commit point;
+  transient progress after publication is bookkeeping. Validate complete plans
+  and final lock before live replacement; typed partial objects confer no rights.
+- Recovery must validate current preimages or exact staged images and refuse
+  destructive restoration over post-interruption edits. Own and clean only
+  proven transaction files/directories; preserve unrelated temporary entries,
+  ignore rules and diagnostic evidence. Report committed-needs-cleanup distinctly
+  from no-change, prepublication failure and ambiguous recovery. Include absent
+  state/bootstrap, metadata-only, satisfied, retirement and custom mapping cases.
+- Prove each stage/replace/publish/cleanup interruption with fault injection and
+  real subprocess termination/restart; prove contention with two cooperative
+  writers and causal controls. Compare complete trees, bytes, modes, kinds and
+  links. Test missing backups, forged/duplicate/unsafe paths, corrupted journal,
+  stale identities, unchanged-byte publication and user edits after crash.
+  Local tests, packaging-capable automation and CI lane implementation are
+  eligible software work; record genuinely unrun platforms accurately.
+
+### Qualification and reporting
+
+Follow VERIFICATION.md, the original S064–S077 checks and the established
+repository scripts. Preserve the accepted RCLD-03 qualification and run affected
+lanes at each green checkpoint; at S077 run cumulative build/typecheck/format/
+lint, unit/integration/registry/CLI/harness/components, strict declaration
+controls, fixture check/build/SSR/browser, contract generation/validation/tests,
+workflow validation and applicable reference guard. Serialize fixture writers.
+Retain full raw logs, underlying exits, versions, candidate/artifact identity,
+failed attempts and unrun cases at ignored repository-relative evidence paths.
+Package installs remain explicit operator/test setup, never generator behavior.
+Release AC20's fixture-only upstream declaration exception remains open debt.
+
+No push, publication, deployment, reference mutation, new tracker or new execution
+plan. Pi authors product/tooling/tests and implementation evidence. Codex owns
+acceptance. A commit, report, long conversation or partial passing test run is
+not a stop. Real runtime limits, user stops, concrete external blockers and the
+S077 independent review boundary are legitimate stops; continue other eligible
+work without bypassing dependencies.
+
 ## Codex dispatch — complete RCLD-03 project integration and ownership planning
+
+Historical dispatch: independent review 9 above supersedes the pending acceptance
+and next-batch statements below. Preserve these findings and repairs as history.
 
 ### Independent RCLD-02 acceptance and next boundary
 
