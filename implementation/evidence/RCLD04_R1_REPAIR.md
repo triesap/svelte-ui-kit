@@ -100,10 +100,34 @@ review-10 repairs and their causal regressions.
 
 ## Verification (this candidate)
 
-Repository-owned commands; raw logs are retained under the ignored local
-evidence log directory for this candidate. `format:check`, `lint`, `typecheck`,
-`build`, unit and integration suites pass; the remaining cumulative lanes and
-their exact counts are recorded in the final candidate log inventory.
+Candidate commit `2795b26c4a47633a212911b57c1356dd5d1b6c1c`. Repository-owned
+commands run in order; raw logs retained under the ignored local evidence log
+directory for this candidate. All exited 0:
+
+- `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict`
+- `pnpm run build`, `typecheck`, `format:check`, `lint`
+- `pnpm run test:unit` 276/276; `test:integration` 366/366 (includes
+  `transaction-authority` 8, `transaction-safety` 16 and `guarded-composition`
+  2, the last applying real `planInit`/`planAdd`/`planSync` output through the
+  production guarded boundary and check/build/server-rendering the generated
+  consumer)
+- `pnpm run test:registry` 38/38; `test:cli-bootstrap` 52/52; `test:harness`
+  37/37; `test:components` 22/22 (17 strict-declaration controls)
+- `pnpm run fixture:check` 0 errors/0 warnings; `test:fixture` 23/23;
+  `test:browser` 23/23
+- `node tools/check-contracts.mjs --generate` then `pnpm run check:contracts`
+  0 errors/0 warnings; `pnpm run test:contracts` 137/137
+- checksum-verified `actionlint 1.7.12` (archive SHA-256
+  `aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f`) on
+  `.github/workflows/ci.yml` exited 0
+- `git diff --check` and `git diff --cached --check` clean
+- read-only reference guard at clean
+  `a10fbf06334f4648f5755e05a7147414e4e5fc98`: `cargo fmt --all -- --check` 0,
+  `cargo check --workspace --all-targets` 0, `cargo test --workspace --all-targets`
+  0 (578 passed, 0 failed, 4 ignored)
+
+Release AC20's fixture-only upstream Bits TS2590 declaration exception remains
+open debt; no new suppression was added.
 
 ## Limitations
 
