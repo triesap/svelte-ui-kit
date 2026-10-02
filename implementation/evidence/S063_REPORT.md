@@ -175,7 +175,7 @@ Run at the review-3 S063 candidate revision; retained for provenance only.
 
 ## Review-8 cumulative qualification addendum (2026-10-02)
 
-Addendum for the `pfc through RCLD-03` review-8 candidate at `5ef055d`. It
+Addendum for the `pfc through RCLD-03` review-8 candidate at `2fa0cd3`. It
 supersedes the review-7 candidate numbers in the sections above, which predate
 the captured effective mapping, owned-content initialization refusal and strict
 behavioral lifecycle qualification. The original checkpoint criteria, pending
@@ -191,7 +191,7 @@ hashes and structured statuses are unchanged.
 | `pnpm install --frozen-lockfile --strict-peer-dependencies` | exit 0                                                 |
 | `build` / `format:check` / `lint` / `typecheck`             | exit 0 / 0 / 0 / 0                                     |
 | `test:unit` / `test:harness` / `test:registry`              | 265 / 265, 37 / 37, 38 / 38                            |
-| `test:integration`                                          | 294 / 294                                              |
+| `test:integration`                                          | 295 / 295                                              |
 | `test:cli-bootstrap` / `test:components`                    | 52 / 52, 22 / 22 (strict declaration 17 / 17)          |
 | `fixture:check` / `test:fixture` / `test:browser`           | 0 errors / 0 warnings, 23 / 23, 23 / 23                |
 | `check:contracts` / `test:contracts`                        | 0 errors / 0 warnings, 127 / 127                       |

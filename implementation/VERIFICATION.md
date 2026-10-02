@@ -87,7 +87,7 @@ verified progress. The actual planned production page/control remains qualified;
 whole-sequence acceptance is withheld.
 
 Four real-registry probes exposed the remaining effective mapping/ownership
-criteria. These are now implemented through candidate `5ef055d` (see
+criteria. These are now implemented through candidate `2fa0cd3` (see
 `implementation/evidence/RCLD03_R8_REPAIR.md`): the bounded `_kit/kit.json`
 discovery is captured with the selected-package evidence and composed into one
 effective mapping used by init/add/sync, so a static nondefault routes
@@ -115,7 +115,7 @@ declaration controls, workflow validation and a fresh conditional reference
 guard. Raw logs are retained in the ignored
 `implementation/evidence/logs/r8-20261002/` paths (underlying exits in
 `exits.log`); all 16 lanes exited 0 and the counts are unit 265, harness 37,
-registry 38, integration 294, CLI 52, components 22 (strict declaration 17/17),
+registry 38, integration 295, CLI 52, components 22 (strict declaration 17/17),
 fixture 23, browser 23, contracts 127. `actionlint 1.7.12` (archive SHA-256
 `aba9ced2…e6953f`) validated `.github/workflows/ci.yml` at exit 0 with
 shellcheck 0.11.0, and the clean `leptos_ui_kit` reference guard at

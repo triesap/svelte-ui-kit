@@ -19,8 +19,9 @@ review is preserved.
 | --------- | --------------------------------------------------------------------------- |
 | `b122039` | R8-1/2/3 effective mapped planning, owned-content lifecycle and regressions |
 | `5ef055d` | R8-3 intended-cause assertions for source/export conflicts                  |
+| `2fa0cd3` | R8-2 malformed managed CSS region refusal during initialization             |
 
-The qualified candidate is `5ef055d17acd00cda9228acb287c180b7656a521`; the
+The qualified candidate is `2fa0cd3d8fab15d876e8d2c067c4815fa8774a19`; the
 evidence/qualification record in this file is updated separately.
 
 ## RCLD03-R8-1 — captured effective mapping across init/add/sync
@@ -80,7 +81,7 @@ through the active layout and exercises the emitted plan envelope.
   evidence that planning starts no writer or package manager, supplementing the
   existing import-scan structure check.
 
-## Verification (qualified candidate `5ef055d`, product code from `b122039`)
+## Verification (qualified candidate `2fa0cd3`, product code from `b122039`)
 
 Run from this worktree with Node `24.21.0` / pnpm `11.22.0` through the
 configured build router. Complete raw logs are retained (git-ignored) under
@@ -98,7 +99,7 @@ with zero skips unless stated.
 | `pnpm run test:unit`                                        | `r8-20261002/unit.log`                       | 265 / 265                                       |
 | `pnpm run test:harness`                                     | `r8-20261002/harness.log`                    | 37 / 37                                         |
 | `pnpm run test:registry`                                    | `r8-20261002/registry.log`                   | 38 / 38                                         |
-| `pnpm run test:integration`                                 | `r8-20261002/integration.log`                | 294 / 294                                       |
+| `pnpm run test:integration`                                 | `r8-20261002/integration.log`                | 295 / 295                                       |
 | `pnpm run test:cli-bootstrap`                               | `r8-20261002/cli-bootstrap.log`              | 52 / 52                                         |
 | `pnpm run test:components`                                  | `r8-20261002/components.log`                 | 22 / 22 (strict declaration 17 / 17, 2 TS2590)  |
 | `pnpm run fixture:check`                                    | `r8-20261002/fixture-check.log`              | svelte-check 0 errors / 0 warnings              |

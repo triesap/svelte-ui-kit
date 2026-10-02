@@ -1110,7 +1110,7 @@ See `implementation/evidence/RCLD03_R7_REPAIR.md` for the commit-level record.
 
 ## RCLD-03 independent review 8 effective-mapping repair (2026-10-02)
 
-Addendum for the `pfc through RCLD-03` review-8 series through `5ef055d` on Node
+Addendum for the `pfc through RCLD-03` review-8 series through `2fa0cd3` on Node
 `24.21.0` / pnpm `11.22.0`. It supersedes the review-3/4/5/6/7 numbers above
 (which predate the captured effective mapping, owned-content initialization
 refusal and strict behavioral lifecycle qualification). The original criteria
@@ -1137,7 +1137,7 @@ and all prior accepted work are unchanged.
 | `test:unit`                             | 265 / 265                                                            |
 | `test:harness`                          | 37 / 37                                                              |
 | `test:registry`                         | 38 / 38                                                              |
-| `test:integration`                      | 294 / 294 (was 278; +16 effective-mapping/ownership/lifecycle cases) |
+| `test:integration`                      | 295 / 295 (was 278; +17 effective-mapping/ownership/lifecycle cases) |
 | `test:cli-bootstrap`                    | 52 / 52                                                              |
 | `test:components`                       | 22 / 22 (strict declaration 17 / 17, two qualified TS2590)           |
 | `test:contracts` / `check:contracts`    | 127 / 127 and 0 errors / 0 warnings (projection unchanged)           |
