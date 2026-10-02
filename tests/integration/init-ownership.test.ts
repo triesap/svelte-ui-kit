@@ -393,3 +393,21 @@ test("an empty recorded block stays present, distinct from a missing one", (t) =
     "an empty present block keeps its recorded lineage",
   );
 });
+
+test("initialization refuses a malformed managed CSS region without writing", (t) => {
+  const project = createSupportedProject();
+  t.after(() => project.cleanup());
+  const malformed = "/* svelte-ui-kit:start tokens */\n:root { --x: 1; }\n";
+  project.writeFile(KIT_CSS, malformed);
+  const initialized = init(project);
+  assert.equal(initialized.ok, false, JSON.stringify(initialized));
+  if (initialized.ok) return;
+  assert.ok(
+    initialized.issues.some((entry) => entry.code.startsWith("CSS_MARKER_")),
+    JSON.stringify(initialized.issues),
+  );
+  assert.equal(
+    readFileSync(path.join(project.root, KIT_CSS), "utf8"),
+    malformed,
+  );
+});
