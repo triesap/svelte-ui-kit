@@ -20,6 +20,7 @@ import {
   type ValidatedApplyPlan,
 } from "../../src/codegen/apply.js";
 import { capturePreimage } from "../../src/codegen/revalidate.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import { lockPath } from "../../src/codegen/transaction-types.js";
 import {
   abs,
@@ -159,6 +160,59 @@ test("changed config evidence refuses a metadata-only plan", () => {
       outcome.issues.map((issue) => issue.code).join(","),
       /AUTHORITY_READ_CHANGED/,
     );
+  });
+});
+
+test("an unvalidated object with matching digest fields is refused", () => {
+  withRoot((root) => {
+    const plan = makeGuardedPlan(root) as unknown as {
+      targets: { bytes: Uint8Array }[];
+      lock: { bytes: Uint8Array; digest: string };
+    };
+    // Forge the shape a caller might assume confers authority: bind the result
+    // digests exactly, but never call validateApplyPlan.
+    for (const target of plan.targets) {
+      (target as { resultDigest?: string }).resultDigest = sha256Hex(
+        target.bytes,
+      );
+    }
+    plan.lock.digest = sha256Hex(plan.lock.bytes);
+    const outcome = applyPlan(plan as never);
+    assert.equal(outcome.kind, "refused");
+    assert.equal(outcome.issues[0].code, "PLAN_UNVALIDATED");
+    assert.equal(
+      readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
+      "old css",
+    );
+  });
+});
+
+test("a mutated sealed lock is refused even with zero ordinary targets", () => {
+  withRoot((root) => {
+    const validated = sealed(makeGuardedPlan(root, { metadataOnly: true }));
+    // In-place mutation of the sealed lock bytes must be caught even though no
+    // target loop would otherwise run.
+    (validated.lock.bytes as Uint8Array)[0] = 0x00;
+    const outcome = applyPlan(validated);
+    assert.equal(outcome.kind, "refused");
+    assert.equal(outcome.issues[0].code, "PLAN_AUTHORITY_STALE");
+  });
+});
+
+test("an invalid final lock is rejected before any semantic replacement", () => {
+  withRoot((root) => {
+    const plan = makeGuardedPlan(root);
+    (plan.lock as { bytes: Uint8Array }).bytes = new TextEncoder().encode(
+      "{invalid",
+    );
+    const result = validateApplyPlan(plan);
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.ok(
+        result.issues.some((issue) => issue.code === "LOCK_INVALID"),
+        JSON.stringify(result.issues),
+      );
+    }
   });
 });
 

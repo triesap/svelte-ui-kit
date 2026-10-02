@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: Independent review 10 requests changes to the RCLD-04 candidate `58f325c`. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-02.
+Status: Independent review 11 requests changes to the RCLD-04 candidate `cf6233e`. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-02.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD-04 repairs and cumulative qualification** (S064–S077 remain committed_pending_review; review 10 requests changes before independent acceptance/S078).
+- Active implementation checkpoint: **RCLD-04 repairs and cumulative qualification** (S064–S077 remain committed_pending_review; review 11 requests changes before independent acceptance/S078).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -51,6 +51,169 @@ After each green commit, record the hash and report, update this ledger, and rec
 At S002, adopt the embedded contracts into their scheduled repository-relative files, establish target contract validation and an aligned `implementation/COMMIT_SEQUENCE.json` projection. This document remains the governing execution/status authority; the JSON projection must not drift into a second independently edited plan. Extracted specs govern product intent. Update this document's contract links and supersede embedded snapshots explicitly when extraction is verified; do not maintain conflicting copies silently. S001 baseline evidence and later reports are factual records, not alternate planning backlogs. No additional issue database is required by the current scaffold.
 
 ## Codex dispatch — complete RCLD-04 transactions and recovery
+
+### Independent review 11 — preserve verified repairs; complete the original guarded boundary
+
+Codex reviewed clean candidate `cf6233e25a3c9134b0f0f59731ef8d93c37b4484`
+on 2026-10-02, including repair `2795b26c4a47633a212911b57c1356dd5d1b6c1c`
+and its qualification report. **Changes requested** for the complete RCLD-04.
+All 63 accepted checkpoints remain accepted; S064–S077 remain pending, with
+126 not_started, three complete sequences and eight unfinished. Original
+R01–R34, AC01–AC22 and every original checkpoint definition are preserved.
+The prior exact batch authorization and acceptance bookkeeping are already done.
+
+Verified progress: a competing apply now refuses without recovering the active
+writer; staging-time edits are preserved; a changed-byte lock-publication gap
+retains committed source; outside-approved targets and byte-corrupt backups are
+refused. Physical identity checks, copied target bytes, fresh-init execution and
+new process/composed-consumer tests are useful implementation progress. Preserve
+these controls and the accepted planner; they do not close the entire R1 groups.
+The public S077 report's operator-routing references are repaired.
+
+Fresh independent build/typecheck/format/lint, unit 276, integration 366, contract
+validation 0/0 and contracts 137 all pass without skips. Compiled independent
+probes nevertheless reproduce the failures below, including a real bundled-registry
+init plan whose post-planning layout edit is lost. The author cumulative logs and
+commands were audited separately at the recorded source candidate. Browser,
+strict component/fixture, workflow and reference lanes were not freshly rerun
+by Codex on this rejected candidate. AC20 remains open release debt.
+
+**Execute `pfc through RCLD-04`: RCLD04-R2-1/2/3/4/5 and ALL remaining original
+S064–S077 criteria, integrated use cases and cumulative qualification.** This
+is a substantial completion batch, not one correction or one green commit.
+No intermediate independent gate exists. S078 requires independent S077 acceptance
+and is ineligible. No owner decision, external dependency or physical hardware
+blocker prevents this software work. Keep one governing plan and the sole live
+RCLD-04 authorization. Pi records implementation/evidence; Codex accepts.
+
+#### RCLD04-R2-1 — retain the original immutable planning authority
+
+`composeApplyPlan` accepts only root/config/write lists and recaptures current
+preimages/root/read evidence after planning. A real init plan therefore overwrites
+a later user layout edit after blessing the edited bytes as its preimage.
+Its optional readFiles defaults empty; original snapshot/environment absence,
+unchanged files, dependency/manager and mapping evidence are not carried through.
+Its digest omits result bytes and hashes lock length, not content. Arbitrary
+root/plan strings and caller-supplied readset subsets are not complete authority.
+`applyPlan` does not authenticate the validated instance; a forged unvalidated
+object with matching digest fields writes successfully. Sealed lock mutation is
+unchecked with zero ordinary targets because verification is inside that loop.
+Malformed nested lock/preimage inputs can throw. Final lock JSON/coherence is
+validated only after semantic replacement, not before mutation.
+
+Resolve the internal invocation-to-planner-to-apply protocol around the ORIGINAL
+accepted immutable snapshot/environment and conflict-free plan, retaining complete
+read evidence including absence and actual root/ancestor identities. Do not
+recapture changed inputs as new authority. Capture/planning remains read-only;
+stale plans refuse, never silently replan. Require an actual authenticated,
+immutable complete validated apply authority, with digests of exact operations,
+result bytes/modes, evidence, mapping and final lock. Verify lock sealing even
+for metadata-only/no-change paths. Strictly validate nested shapes, safe roots,
+roles, namespaces and canonical lock exclusivity. Validate final lock against
+complete projected ownership/config/cohorts before any semantic write. Preserve
+original public API/product scope; do not change the accepted planner semantics.
+
+#### RCLD04-R2-2 — verify physical and staged authority at live boundaries
+
+The post-staging recheck is progress but replacement never verifies the staged
+image again: a changed staged file is installed and reported applied. A user edit
+at the backup boundary is overwritten and discarded. Recorded-absent ancestry is
+accepted whenever any real directory appears, without proving this attempt created
+it. Created ancestors are not recorded for rollback; transient preparation can
+leave application directories on refusal. No product path enforces same-device
+staging; a happy-path test comparing two temp-directory devices is not enforcement.
+The stage/backup/lock publication durability claims exceed implemented flushes.
+The required ignore policy remains a disconnected direct-write helper.
+
+Revalidate affected current preimages, ancestry and exact staged kinds/bytes/modes
+at defined replacement boundaries, preserving observable intervening edits within
+the trusted-local model. Verify root/paths before initial coordination effects and
+again under ownership. Prove and record owned absent-directory creation, then
+clean only proven owned empty ancestors on failure/recovery. Enforce supported
+same-filesystem arrangements before semantic effects; qualify the refusal path.
+Implement and test the specified file/directory durability ordering for preparation,
+backups, replacement/progress and final publication, or report an actual unsupported
+configuration as a typed refusal. No hostile-race or native multi-file atomicity
+claim is authorized. Integrate needed ignore-file changes as captured guarded
+operations preserving existing rules, never an unplanned helper write.
+
+#### RCLD04-R2-3 — prove publication uniquely and refuse contradictions
+
+Current intent recovery equates a matching digest with publication. A failure BEFORE
+canonical rename with unchanged lock bytes is falsely committed. After an actual
+canonical rename followed by a user lock edit, recovery interprets a different
+digest as proof that publication did not happen and rolls source back under the
+edited lock. Missing or unreadable lock evidence is likewise not proof of noncommit.
+
+Durably bind publication intent to the exact canonical preimage and uniquely
+identified staged publication image, keeping identity internal to the transaction.
+A supported same-filesystem physical rename witness can distinguish the old file
+from the published staged file even when bytes match. Prove the committed/precommit
+case using complete witness evidence; otherwise refuse ambiguity without rollback
+or evidence deletion. An edited/deleted/unreadable lock after possible publication
+is a contradiction, not a rollback authorization. Preserve both source and user
+changes. Test both sides of every intent/rename/record boundary with changed and
+unchanged bytes, including canonical byte/mode/kind edits after interruption.
+
+#### RCLD04-R2-4 — recover and clean only fully proven owned state
+
+Recovery does not bind root/plan/owner identity or phase/progress coherence. It
+accepts the canonical lock as an ordinary operation and deletes it. Backup ancestry
+can be a symlink: recovery moves an outside backup into the project. Current/backup
+mode changes are ignored and overwritten. Top-level allowlisted directory names
+are treated as ownership of arbitrary nested files, which are recursively deleted.
+A missing journal with a backup is guessed to be pre-preparation and deletes the
+only old image. Scan failures become an empty scan; unreadable directories are
+reported cleaned. The final applied-journal persist throws, leaving new source
+under the old lock. Writer release failure is ignored after deleting owner evidence,
+so apply reports success while leaving an ambiguous lock.
+
+Validate complete recovery authority, safe root and every transient/journal/backup/
+staged ancestor and entry, phase/progress consistency, exact bytes/modes/kinds,
+unique IDs and complete inventory before ANY recovery effect. A directory name or
+missing record does not prove owned harmless state. Journal-less backups or other
+possible mutation evidence fail closed and remain intact. Preserve unexpected
+entries at every depth; never recursively assume a reserved directory is owned.
+Reject canonical lock operations, contradictory identity/phase/paths and unreadable
+scans with typed logical diagnostics and actionable manual guidance. Recovery is a
+mutation requiring proven exclusive coordination, not an unguarded test shortcut.
+Retain all proven controls from review 10.
+
+Cover every setup/prepare/progress/publish/recovery/cleanup/release exception in the
+composed use case. Propagate release/cleanup failures truthfully, keep enough owner
+and journal evidence for safe follow-up, and never return applied/no_change with an
+unreported failed release. Kill/restart must use the actual supported coordination
+path: safe recovery or explicit fail-closed guidance is allowed; silently removing
+stale locks based on PID/age or bypassing ownership in tests is not. No new force/
+recover CLI is approved. Unknown ownership remains ambiguous until proven.
+
+#### RCLD04-R2-5 — complete qualification and reconcile factual evidence
+
+The two new consumer tests prove default init and add/render plus conditional sync
+replay. They do not complete custom-mapping update/retirement/metadata/conflict
+qualification. Process tests call uncoordinated recovery directly after SIGKILL and
+accept either rollback or refusal without asserting full preservation/diagnostics.
+A single temp-device equality assertion does not prove product filesystem guards.
+RCLD04_R1_REPAIR.md overstates immutable authority, owned creation/cleanup, complete
+inventory, typed failures, unique publication and durability.
+
+Add repository-owned causal tests for every remaining finding and retain the passing
+controls. Qualify the ORIGINAL validated snapshot/plan through actual production
+composition/apply for fresh/default/custom init/add/sync, update, retirement,
+metadata-only, satisfied and conflict cases. Check whole trees, bytes, modes,
+kinds, links, source/lock ownership and unchanged unrelated application content;
+check/build and inspect emitted/rendered real consumers. Exercise complete process
+termination/restart and writer contention, with causal stage/backup/replace/progress/
+intent/rename/publication/cleanup/release controls, edited evidence and unchanged
+locks. Assert the exact safe outcome and evidence, not a broad acceptable enum.
+Implement eligible local/CI automation and report unrun platforms honestly.
+
+At the FINAL candidate rerun established cumulative lanes in VERIFICATION.md, retain
+raw logs/actual exits, versions, exact source/artifact/configuration identity and
+failed attempts. Reconcile every S064–S077 report, state table and repair claim to
+evidence, preserving history and accepted work. Do not call R1/R2 complete because
+only narrow probes pass. Continue after every green checkpoint through the whole
+boundary; return all fourteen pending for Codex acceptance before S078.
 
 ### Independent review 10 — changes requested; finish the complete safety boundary
 

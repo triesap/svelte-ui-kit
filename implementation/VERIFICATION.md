@@ -75,46 +75,48 @@ completion unlocks a successor. Unapproved `not_applicable` fails closed.
 Default validation is read-only; `--generate` and `--generate-sources` are the
 only writing modes.
 
-#### Current RCLD-04 review and complete repair qualification
+#### Current RCLD-04 complete-boundary qualification
 
-Independent review 10 of `58f325c308a65131a13f8db7fcb2406707d1c087`
-requests RCLD04-R1-1/2/3/4/5 and every unfinished original S064–S077 criterion.
-The RCLD-03 acceptance and exact RCLD-04 activation are already complete;
-preserve 63 accepted/14 pending/126 not_started. Fresh Codex build, typecheck,
-format, lint, unit 276, integration 340, contract validation 0/0 and contract
-137 pass; independent compiled probes still reproduce destructive contention,
-publication-crash, forged/corrupted recovery, unsafe ancestry, mutable authority,
-stale physical identity, bootstrap, user-edit, cleanup and mode failures.
-The original cumulative author logs were audited separately, not freshly rerun
-as whole-feature acceptance. Do not treat a helper test or terminal claim as
-proof of guarded application safety.
+Independent review 11 of `cf6233e25a3c9134b0f0f59731ef8d93c37b4484`
+requests RCLD04-R2-1/2/3/4/5 and all unfinished S064–S077 criteria. Preserve
+63 accepted/14 pending/126 not_started and prior accepted planner behavior.
+Fresh Codex build/typecheck/format/lint, unit 276, integration 366, validation
+0/0 and contracts 137 pass. Passing controls confirm active-writer protection,
+staging-edit preservation, changed-byte publication retention and outside-target/
+corrupt-backup refusal. Compiled reviewer probes still expose lost original
+planning authority, metadata-only seal bypass, forged authority, staged corruption,
+replacement-time edit loss, ambiguous publication rollback, nested cleanup/backup
+symlinks, ignored mode edits, missing-journal deletion and untyped/release failures.
+Author full cumulative evidence is audited separately, not fresh acceptance.
 
-Follow the governing review's complete authority/read-set, coordination,
-durable-publication, recovery-preflight and real-composition decisions. Qualify
-actual bundled-registry planner-to-apply init/add/sync use cases, complete trees,
-custom mappings, fresh absent ancestors, metadata-only/no-change/retirement,
-conflicts and a real installed consumer check/build/emitted behavior. Include
-real-process two-writer contention and kill/restart across every preparation,
-replace/progress, publication and cleanup boundary, particularly after canonical
-lock rename before bookkeeping and unchanged-byte lock publication. Prove safe
-refusal preserves user edits, unknown inventory and all outside/unowned paths.
+Follow review 11's complete original-snapshot authority, live/staged physical
+rechecks, unique publication witness, full coordinated recovery/owned inventory
+and composed qualification decisions. Keep all original tests and add causal
+negative/positive controls. Use actual registry/planners and full fresh/default/
+custom init/add/sync lifecycle, metadata-only/no-change/update/retirement/conflict
+cases; compare entire trees and verify real generated consumers' check/build and
+emitted/rendered behavior. Process tests must qualify the actual coordinated restart
+path, not bypass stale writer ownership with direct recovery calls. Assert exact
+safe outcomes/evidence at every stage/backup/replace/progress/publication/cleanup/
+release boundary, including edited/missing lock evidence and unchanged-byte locks.
 
-Run affected checks after each coherent green repair checkpoint. At the final
-candidate rerun cumulative frozen strict install, build/typecheck/format/lint,
-unit/integration/registry/CLI/harness/components, strict declaration controls,
-fixture check/build/SSR/browser, contract generation/validation/tests, workflow
-validation and applicable reference fmt/check/test guard. Serialize fixture
-writers; retain full raw logs, actual underlying exits, source/artifact identity,
-versions and failed attempts at ignored repository-relative evidence locations.
-Record actual OS/filesystem coverage; unrun platforms are unverified. Preserve
-release AC20's fixture-only two-diagnostic upstream declaration debt and strict
-17-test control, without new suppression. No generator auto-install is approved.
+At each green repair run affected causal checks plus established static/contracts.
+At the FINAL composed candidate run frozen strict install, build/typecheck/format/
+lint, unit/integration/registry/CLI/harness/components (strict declaration controls),
+fixture check/build/SSR/browser, projection generation/validation/contract tests,
+checksum-qualified workflow validation and applicable reference fmt/check/test.
+Serialize fixture writers. Retain raw logs, underlying exits, failed attempts,
+versions and source/artifact/platform/configuration identity at ignored repository-
+relative evidence paths. Record actual same-device refusal/durability enforcement;
+a happy-path device assertion or SIGKILL alone proves neither. Accurately record
+unrun platforms and preserve AC20's exact fixture-only upstream two-diagnostic
+exception and strict 17 controls. No new suppression or auto-install is approved.
 
-Continue after green checkpoints through the whole RCLD-04 repair/qualification
-boundary. No intermediate review gate applies. Stop before S078 for independent
-Codex S077 acceptance, or a legitimate runtime limit/user stop/external blocker;
-continue other eligible work if one slice is blocked. Pi records implementation
-and evidence, never new acceptance or requirement relaxation.
+Reconcile S064–S077 and repair qualification reports to actual coverage. Continue
+after each green checkpoint through all eligible work in RCLD-04; stop before
+S078 for independent Codex acceptance or a legitimate runtime/user/external stop.
+The governing plan remains the only execution authority; Pi records implementation
+and evidence, never new acceptance or relaxed criteria.
 
 #### Historical owner-authorized RCLD-03 batch verification
 

@@ -23,6 +23,7 @@ import { planInit } from "../../src/codegen/plan-init.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
+import type { ProjectSnapshot } from "../../src/codegen/snapshot.js";
 import { hashBytes } from "../../src/codegen/compare.js";
 import {
   DEFAULT_KIT_CONFIG,
@@ -175,10 +176,11 @@ function consumerPaths(): string[] {
 
 function applyThroughGuard(
   root: string,
+  snapshot: ProjectSnapshot,
   writes: readonly PlanWrite[],
   config = DEFAULT_KIT_CONFIG,
 ) {
-  const composed = composeApplyPlan({ root, config, writes });
+  const composed = composeApplyPlan({ root, config, writes, snapshot });
   assert.equal(composed.ok, true, JSON.stringify(composed));
   if (!composed.ok) throw new Error("compose failed");
   const validated = validateApplyPlan(composed.value);
@@ -213,7 +215,7 @@ test(
     });
     assert.equal(planned.ok, true, JSON.stringify(planned));
     if (!planned.ok) return;
-    applyThroughGuard(consumer, planned.value.writes);
+    applyThroughGuard(consumer, snapshot.value, planned.value.writes);
 
     const checked = runPnpm(["run", "check"], consumer);
     assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
@@ -263,7 +265,7 @@ test(
       true,
       JSON.stringify(planned.value.diagnostics),
     );
-    applyThroughGuard(consumer, planned.value.writes);
+    applyThroughGuard(consumer, snapshot.value, planned.value.writes);
 
     // A second identical plan is satisfied: the guarded boundary reports
     // no_change without opening a transaction.
@@ -304,6 +306,7 @@ test(
         root: consumer,
         config: DEFAULT_KIT_CONFIG,
         writes: replay.value.writes,
+        snapshot: secondSnapshot.value,
       });
       assert.equal(composed.ok, true, JSON.stringify(composed));
       if (!composed.ok) return;

@@ -48,7 +48,8 @@ import {
   type PlanReadFile,
   type PlanReadset,
 } from "./authority.js";
-import { sha256Hex } from "./digest.js";
+import { canonicalContentHash, sha256Hex } from "./digest.js";
+import { parseKitLock } from "./lock.js";
 import type { ChangeOperation } from "./plan.js";
 import {
   prepareJournal,
@@ -387,25 +388,103 @@ export function validateApplyPlan(
       }),
     );
   }
-  if (plan.lock.preimage.path !== canonicalLock) {
+  // The lock preimage is a strict nested shape, not an unchecked record.
+  const lockPreimage = plan.lock.preimage as unknown;
+  if (!isPlainObject(lockPreimage)) {
     problems.push(
-      issue(
-        "PLAN_PREIMAGE_MISMATCH",
-        "lock preimage path must be the canonical lock",
-        "lock",
-      ),
+      issue("PLAN_PREIMAGE_MISMATCH", "plan.lock.preimage is required", "lock"),
     );
+  } else {
+    if (lockPreimage["path"] !== canonicalLock) {
+      problems.push(
+        issue(
+          "PLAN_PREIMAGE_MISMATCH",
+          "lock preimage path must be the canonical lock",
+          "lock",
+        ),
+      );
+    }
+    const lockKind = lockPreimage["kind"];
+    if (lockKind !== "file" && lockKind !== "absent") {
+      problems.push(
+        issue(
+          "PLAN_PREIMAGE_MISMATCH",
+          "lock preimage kind must be file or absent",
+          "lock",
+        ),
+      );
+    } else if (lockKind === "file") {
+      if (!HEX64.test(String(lockPreimage["digest"]))) {
+        problems.push(
+          issue(
+            "PLAN_PREIMAGE_MISMATCH",
+            "lock preimage digest is invalid",
+            "lock",
+          ),
+        );
+      }
+      const mode = lockPreimage["mode"];
+      if (
+        !Number.isInteger(mode) ||
+        (mode as number) < 0 ||
+        (mode as number) > 0o777
+      ) {
+        problems.push(
+          issue(
+            "PLAN_PREIMAGE_MISMATCH",
+            "lock preimage mode is invalid",
+            "lock",
+          ),
+        );
+      }
+    } else if (
+      lockPreimage["digest"] !== null ||
+      lockPreimage["mode"] !== null
+    ) {
+      problems.push(
+        issue(
+          "PLAN_PREIMAGE_MISMATCH",
+          "an absent lock preimage must not carry a digest or mode",
+          "lock",
+        ),
+      );
+    }
+  }
+
+  // Validate the exact final lock content before any coordination is acquired.
+  // An invalid or incoherent lock must never reach a semantic replacement.
+  if (lockBytesView instanceof Uint8Array && lockBytesView.byteLength > 0) {
+    let parsedLock: unknown;
+    try {
+      parsedLock = JSON.parse(Buffer.from(lockBytesView).toString("utf8"));
+    } catch (error) {
+      problems.push(
+        issue(
+          "LOCK_INVALID",
+          `planned lock is not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
+          canonicalLock,
+        ),
+      );
+    }
+    if (parsedLock !== undefined) {
+      const validatedLock = parseKitLock(parsedLock, canonicalLock, {
+        stateDir: plan.stateDir,
+      });
+      if (!validatedLock.ok) problems.push(...validatedLock.issues);
+    }
   }
   if (problems.length > 0) return fail(problems);
 
+  const derivedRootIdentity = identityDigest(plan.readset.root);
+  const lockView = plan.lock as { bytes: Uint8Array; preimage: TargetPreimage };
   const sealed: ValidatedApplyPlan = {
     root: plan.root,
     stateDir: plan.stateDir,
     uiDir: plan.uiDir,
     stylesDir: plan.stylesDir,
     layoutFile: plan.layoutFile,
-    rootIdentity: plan.rootIdentity,
-    planDigest: plan.planDigest,
+    rootIdentity: derivedRootIdentity,
+    planDigest: "",
     readset: Object.freeze({
       root: Object.freeze({ ...plan.readset.root }),
       ancestors: Object.freeze(
@@ -419,13 +498,85 @@ export function validateApplyPlan(
     }),
     targets: Object.freeze(sealedTargets),
     lock: Object.freeze({
-      bytes: new Uint8Array(plan.lock.bytes),
-      digest: sha256Hex(plan.lock.bytes),
-      preimage: Object.freeze({ ...plan.lock.preimage }),
+      bytes: new Uint8Array(lockView.bytes),
+      digest: sha256Hex(lockView.bytes),
+      preimage: Object.freeze({ ...lockView.preimage }),
     }),
     [validated]: true,
   };
-  return ok(Object.freeze(sealed) as ValidatedApplyPlan);
+  const sealedPlan: ValidatedApplyPlan = Object.freeze({
+    ...sealed,
+    // The plan digest is derived from the complete sealed content; a caller
+    // supplied value is never trusted as authority.
+    planDigest: derivePlanDigest(sealed),
+  }) as ValidatedApplyPlan;
+  return ok(sealedPlan);
+}
+
+/**
+ * Derive the canonical digest of the complete sealed plan: exact result bytes,
+ * modes and operations, the physical read evidence including absence, and the
+ * exact final lock content. A caller supplied digest is never authority.
+ */
+export function derivePlanDigest(input: {
+  readonly root: string;
+  readonly stateDir: string;
+  readonly uiDir: string;
+  readonly stylesDir: string;
+  readonly layoutFile: string;
+  readonly rootIdentity: string;
+  readonly targets: readonly ValidatedApplyTarget[];
+  readonly lock: {
+    readonly bytes: Uint8Array;
+    readonly preimage: TargetPreimage;
+  };
+  readonly readset: PlanReadset;
+}): string {
+  return canonicalContentHash({
+    root: input.root,
+    stateDir: input.stateDir,
+    uiDir: input.uiDir,
+    stylesDir: input.stylesDir,
+    layoutFile: input.layoutFile,
+    rootIdentity: input.rootIdentity,
+    targets: input.targets.map((target) => ({
+      path: target.path,
+      operation: target.operation,
+      resultDigest: target.resultDigest,
+      mode: target.mode,
+      preimage: {
+        kind: target.preimage.kind,
+        digest: target.preimage.digest,
+        mode: target.preimage.mode,
+      },
+    })),
+    lock: {
+      digest: sha256Hex(input.lock.bytes),
+      preimage: {
+        kind: input.lock.preimage.kind,
+        digest: input.lock.preimage.digest,
+        mode: input.lock.preimage.mode,
+      },
+    },
+    readset: {
+      root: {
+        device: input.readset.root.device,
+        inode: input.readset.root.inode,
+      },
+      ancestors: input.readset.ancestors.map((ancestor) => ({
+        path: ancestor.path,
+        kind: ancestor.kind,
+        device: ancestor.device,
+        inode: ancestor.inode,
+      })),
+      files: input.readset.files.map((file) => ({
+        path: file.path,
+        kind: file.kind,
+        digest: file.digest,
+        mode: file.mode,
+      })),
+    },
+  });
 }
 
 /** Convenience: a readset for a caller that already knows its targets. */
@@ -460,15 +611,25 @@ function verifySealedTargets(plan: ValidatedApplyPlan): ModelIssue[] {
         ),
       );
     }
-    if (sha256Hex(plan.lock.bytes) !== plan.lock.digest) {
-      issues.push(
-        issue(
-          "PLAN_AUTHORITY_STALE",
-          "sealed lock bytes changed after validation",
-          lockPath(plan.stateDir),
-        ),
-      );
-    }
+  }
+  // The lock is verified even when there are no ordinary targets, so a
+  // metadata-only apply can never publish mutated sealed bytes.
+  if (sha256Hex(plan.lock.bytes) !== plan.lock.digest) {
+    issues.push(
+      issue(
+        "PLAN_AUTHORITY_STALE",
+        "sealed lock bytes changed after validation",
+        lockPath(plan.stateDir),
+      ),
+    );
+  }
+  if (derivePlanDigest(plan) !== plan.planDigest) {
+    issues.push(
+      issue(
+        "PLAN_AUTHORITY_STALE",
+        "sealed plan content changed after validation",
+      ),
+    );
   }
   return issues;
 }
@@ -483,6 +644,21 @@ export function applyPlan(
   plan: ValidatedApplyPlan,
   hooks?: TransactionHooks,
 ): ApplyOutcome {
+  // Only an instance actually produced by `validateApplyPlan` carries write
+  // authority. A structurally similar object with supplied digest fields is
+  // refused before any observation or coordination.
+  if ((plan as Partial<ValidatedApplyPlan> | null)?.[validated] !== true) {
+    return {
+      kind: "refused",
+      transactionId: null,
+      issues: [
+        issue(
+          "PLAN_UNVALIDATED",
+          "applyPlan requires a plan produced by validateApplyPlan",
+        ),
+      ],
+    };
+  }
   const sealedIssues = verifySealedTargets(plan);
   if (sealedIssues.length > 0) {
     return { kind: "refused", transactionId: null, issues: sealedIssues };
