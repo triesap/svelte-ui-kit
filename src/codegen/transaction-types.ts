@@ -144,6 +144,17 @@ export function journalPath(stateDir: string, transactionId: string): string {
   return `${transactionDir(stateDir, transactionId)}/journal.json`;
 }
 
+/**
+ * The durable publication-intent witness, written before the canonical lock
+ * rename and removed with the owned transaction state.
+ */
+export function publicationIntentPath(
+  stateDir: string,
+  transactionId: string,
+): string {
+  return `${transactionDir(stateDir, transactionId)}/publication.json`;
+}
+
 export function stagedDir(stateDir: string, transactionId: string): string {
   return `${transactionDir(stateDir, transactionId)}/staged`;
 }

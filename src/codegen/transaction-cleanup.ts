@@ -31,6 +31,7 @@ import {
   backupsDir,
   ignoreEntryFor,
   progressDir,
+  publicationIntentPath,
   stagedDir,
   transactionDir,
 } from "./transaction-types.js";
@@ -77,7 +78,13 @@ export function cleanupTransaction(
 
   // Cleanup removes only proven owned inventory. An unexpected entry blocks
   // cleanup and is retained with actionable evidence rather than recursed.
-  const allowed = new Set(["journal.json", "staged", "backups", "progress"]);
+  const allowed = new Set([
+    "journal.json",
+    "publication.json",
+    "staged",
+    "backups",
+    "progress",
+  ]);
   let unexpected: string[];
   try {
     unexpected = readdirSync(ownedDir).filter(
@@ -122,6 +129,10 @@ export function cleanupTransaction(
         root,
         `${transactionDir(stateDir, journal.transactionId)}/journal.json`,
       ),
+      "cleanup:journal",
+    ],
+    [
+      absOf(root, publicationIntentPath(stateDir, journal.transactionId)),
       "cleanup:journal",
     ],
   ];

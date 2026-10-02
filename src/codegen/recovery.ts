@@ -35,8 +35,15 @@ import {
 } from "./transaction-journal.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
+  classifyPublication,
+  observeFileIdentity,
+  readPublicationIntent,
+} from "./publication-intent.js";
+import {
   backupsDir,
   lockPath,
+  publicationIntentPath,
+  stagedDir,
   transactionDir,
   transactionsDir,
 } from "./transaction-types.js";
@@ -126,6 +133,7 @@ function readJournal(
 
 const OWNED_ENTRIES = new Set([
   "journal.json",
+  "publication.json",
   "staged",
   "backups",
   "progress",
@@ -465,22 +473,43 @@ export function recoverTransaction(
     return recoverPublished(root, stateDir, transactionId, journal, hooks);
   }
 
-  // applied with a durable publication intent: the lock rename may or may not
-  // have happened. Classify against the canonical lock before rolling back.
+  // applied with a durable publication intent: the canonical lock rename may or
+  // may not have happened. Classify from the physical rename witness rather
+  // than byte equality, and refuse an ambiguity without rolling back.
   if (journal.phase === "applied" && journal.lock !== null) {
-    const canonical = absOf(root, lockPath(stateDir));
-    let digest: string | null;
-    try {
-      digest = sha256Hex(readFileSync(canonical));
-    } catch {
-      digest = null;
+    const canonicalAbs = absOf(root, lockPath(stateDir));
+    const canonicalDigest = readFileSafe(root, lockPath(stateDir));
+    const intentRead = readPublicationIntent(
+      root,
+      publicationIntentPath(stateDir, transactionId),
+    );
+    if (Array.isArray(intentRead)) {
+      return refuse(transactionId, intentRead);
     }
-    if (digest !== null && digest === journal.lock.digest) {
+    const stagedStillPresent =
+      observeFileIdentity(
+        absOf(root, `${stagedDir(stateDir, transactionId)}/kit.lock.json`),
+      ) !== null;
+    const state = classifyPublication({
+      intent: intentRead,
+      canonical: observeFileIdentity(canonicalAbs),
+      stagedStillPresent,
+      expectedDigest: journal.lock.digest,
+      canonicalDigest,
+    });
+    if (state === "published") {
       return recoverPublished(root, stateDir, transactionId, journal, hooks);
     }
-    if (digest !== null && !journal.lock.published) {
-      // The intended publication definitely did not happen: safe to roll back.
+    if (state === "ambiguous") {
+      return refuse(transactionId, [
+        issue(
+          "RECOVERY_AMBIGUOUS_PUBLICATION",
+          "the canonical lock publication outcome is ambiguous; refusing to roll back or discard evidence",
+          lockPath(stateDir),
+        ),
+      ]);
     }
+    // prepublication: proven not to have published, safe to roll back.
   }
 
   // prepared / applied without committed publication: roll back after a full

@@ -35,8 +35,17 @@ import {
   persistJournal,
   type TransactionJournal,
 } from "./transaction-journal.js";
+import {
+  observeFileIdentity,
+  writePublicationIntent,
+} from "./publication-intent.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
-import { journalPath, lockPath, stagedDir } from "./transaction-types.js";
+import {
+  journalPath,
+  lockPath,
+  publicationIntentPath,
+  stagedDir,
+} from "./transaction-types.js";
 
 export interface LockPublicationResult {
   readonly ok: boolean;
@@ -180,6 +189,35 @@ export function publishLock(
     writeFileSync(stagedLock, lockBytes, { mode: effectiveMode });
     chmodSync(stagedLock, effectiveMode);
     fireHooks(hooks, "after", "lock:stage", lockPath(stateDir));
+
+    // Record the physical rename witness before the canonical rename: the
+    // exact canonical preimage identity and the uniquely identified staged
+    // publication image. Recovery uses this instead of byte equality alone.
+    try {
+      writePublicationIntent(
+        root,
+        publicationIntentPath(stateDir, journal.transactionId),
+        {
+          schemaVersion: 1,
+          transactionId: journal.transactionId,
+          digest: sha256Hex(lockBytes),
+          preimage: observeFileIdentity(destination),
+          staged: observeFileIdentity(stagedLock),
+        },
+      );
+    } catch (error) {
+      return {
+        ok: false,
+        journal: intent,
+        issues: [
+          {
+            code: "LOCK_INTENT_FAILED",
+            message: `could not persist the publication witness: ${codeOf(error)}`,
+            locator: lockPath(stateDir),
+          },
+        ],
+      };
+    }
 
     fireHooks(hooks, "before", "lock:publish", lockPath(stateDir));
     mkdirSync(path.dirname(destination), { recursive: true });

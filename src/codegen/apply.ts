@@ -68,11 +68,19 @@ import {
   createTransactionIdentity,
   journalPath,
   lockPath,
+  publicationIntentPath,
+  stagedDir,
   transactionDir,
   transactionsDir,
   transientRoot,
   type TransactionOutcomeKind,
 } from "./transaction-types.js";
+import {
+  classifyPublication,
+  observeFileIdentity,
+  readPublicationIntent,
+  type PublicationState,
+} from "./publication-intent.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 
 export interface ApplyTarget {
@@ -926,14 +934,33 @@ export function applyPlan(
       hooks,
     );
     if (!published.ok) {
-      if (
-        published.journal.phase === "published" ||
-        publicationCommitted(plan, published.journal)
-      ) {
+      if (published.journal.phase === "published") {
         return {
           kind: "committed_needs_cleanup",
           transactionId,
           issues: published.issues,
+        };
+      }
+      const state = classifyApplyPublication(plan, published.journal);
+      if (state === "published") {
+        return {
+          kind: "committed_needs_cleanup",
+          transactionId,
+          issues: published.issues,
+        };
+      }
+      if (state === "ambiguous") {
+        return {
+          kind: "refused",
+          transactionId,
+          issues: [
+            ...published.issues,
+            issue(
+              "RECOVERY_AMBIGUOUS_PUBLICATION",
+              "the canonical lock publication outcome is ambiguous; refusing to roll back or discard evidence",
+              lockPath(plan.stateDir),
+            ),
+          ],
         };
       }
       const recovered = recoverTransactionsUnderLock(
@@ -969,24 +996,42 @@ export function applyPlan(
 }
 
 /**
- * True when the canonical lock already holds the planned publication bytes for
- * a journal that reached `applied`. This is the durable publication-intent
- * classification used when the published record could not be persisted.
+ * Classify a failed lock publication from the physical rename witness. Only a
+ * matching staged identity proves publication; a matching preimage identity
+ * proves non-publication; anything else is an ambiguity that must not roll
+ * back or discard evidence.
  */
-function publicationCommitted(
+function classifyApplyPublication(
   plan: ValidatedApplyPlan,
   journal: TransactionJournal,
-): boolean {
-  if (journal.phase !== "applied") return false;
-  if (journal.lock === null || journal.lock.published) return false;
-  try {
-    return (
-      sha256Hex(readFileSync(absOf(plan.root, lockPath(plan.stateDir)))) ===
-      journal.lock.digest
-    );
-  } catch {
-    return false;
-  }
+): PublicationState | "none" {
+  if (journal.phase !== "applied" || journal.lock === null) return "none";
+  const intentRead = readPublicationIntent(
+    plan.root,
+    publicationIntentPath(plan.stateDir, journal.transactionId),
+  );
+  if (Array.isArray(intentRead)) return "ambiguous";
+  const canonicalDigest = (() => {
+    try {
+      return sha256Hex(readFileSync(absOf(plan.root, lockPath(plan.stateDir))));
+    } catch {
+      return null;
+    }
+  })();
+  const stagedStillPresent =
+    observeFileIdentity(
+      absOf(
+        plan.root,
+        `${stagedDir(plan.stateDir, journal.transactionId)}/kit.lock.json`,
+      ),
+    ) !== null;
+  return classifyPublication({
+    intent: intentRead,
+    canonical: observeFileIdentity(absOf(plan.root, lockPath(plan.stateDir))),
+    stagedStillPresent,
+    expectedDigest: journal.lock.digest,
+    canonicalDigest,
+  });
 }
 
 function recoverTransactionsUnderLock(
