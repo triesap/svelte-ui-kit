@@ -5,7 +5,7 @@ Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S075","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S075","kind":"report","commit":"c82decccf777cd3004721bf161b0ac7be30f2a14","disposition":"candidate"}
 -->
 
 Step ID and title: S075 — Fail closed on corrupt or ambiguous recovery evidence.
