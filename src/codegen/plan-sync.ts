@@ -26,7 +26,7 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
-import { deriveKitPaths } from "../project/config.js";
+import { deriveKitPaths, type KitConfig } from "../project/config.js";
 import type { DependencyPlan } from "../registry/dependency-plan.js";
 import type { RequestProjection } from "../registry/projection.js";
 import type { DependencyInstruction } from "../project/dependency-instructions.js";
@@ -56,6 +56,8 @@ export interface SyncPlan {
   readonly dependencyState: readonly DependencyStateEntry[] | null;
   readonly dependencyIssues: readonly ModelIssue[];
   readonly sourcePlan: SourcePlan;
+  /** The effective mapping resolved from captured evidence. */
+  readonly effectiveConfig: KitConfig;
   readonly retirement: readonly RetirementRecord[];
   readonly cssRetirement: readonly CssRetirementPlanRecord[];
   readonly writes: readonly PlannedWrite[];
@@ -89,6 +91,10 @@ function observedText(
 export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
   const base = planAdd({ ...input, addedRoots: [] });
   if (!base.ok) return fail(base.issues);
+  // The shared compose step resolves one effective mapping; retirement and the
+  // final lock projection use the same mapping rather than the stale supplied
+  // defaults.
+  const effectiveConfig = base.value.effectiveConfig;
 
   const retainedOwners = new Set(
     base.value.projection.items.map((item) => item.id),
@@ -155,7 +161,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
       // a later sync is a satisfied no_change rather than an empty stylesheet.
       if (
         retiredBlocks.some((block) => block.id === "tokens") &&
-        stylesheetPath === deriveKitPaths(input.config).kitCss
+        stylesheetPath === deriveKitPaths(effectiveConfig).kitCss
       ) {
         const recomposed = composeManagedCss(finalText, [
           { id: "tokens", body: TOKENS_BODY },
@@ -192,7 +198,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
     // serialized integration baselines must describe the final planned bytes,
     // not the pre-retirement stylesheet. Re-validate after the adjustment.
     if (finalLock !== null) {
-      const derived = deriveKitPaths(input.config);
+      const derived = deriveKitPaths(effectiveConfig);
       const lockPath = `${derived.stateDir}/kit.lock.json`;
       const integrations = finalLock.integrations
         .map((integration) => {
@@ -224,8 +230,8 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
         });
       const validated = parseKitLock({ ...finalLock, integrations }, lockPath, {
         stateDir: derived.stateDir,
-        uiDir: input.config.uiDir,
-        stylesDir: input.config.stylesDir,
+        uiDir: effectiveConfig.uiDir,
+        stylesDir: effectiveConfig.stylesDir,
       });
       if (!validated.ok) return fail(validated.issues);
       finalLock = validated.value;
@@ -269,6 +275,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
     dependencyState: base.value.dependencyState,
     dependencyIssues: base.value.dependencyIssues,
     sourcePlan: base.value.sourcePlan,
+    effectiveConfig,
     retirement,
     cssRetirement,
     writes,

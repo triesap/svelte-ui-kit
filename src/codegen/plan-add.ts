@@ -92,7 +92,7 @@ import {
   type TargetObservation,
 } from "./snapshot.js";
 import { patchLayoutImports, materializePassthroughLayout } from "./svelte.js";
-import { validateInvocation } from "./invocation.js";
+import { resolveEffectiveConfig } from "./effective-config.js";
 
 export interface AddPlanInput {
   readonly registry: RegistrySnapshot;
@@ -116,6 +116,8 @@ export interface AddPlan {
   /** Typed declaration/install/peer causes that block an executable batch. */
   readonly dependencyIssues: readonly ModelIssue[];
   readonly sourcePlan: SourcePlan;
+  /** The effective mapping resolved from captured evidence, used by sync. */
+  readonly effectiveConfig: KitConfig;
   readonly writes: readonly PlannedWrite[];
   readonly lock: KitLock | null;
   readonly diagnostics: readonly string[];
@@ -218,15 +220,27 @@ function itemVersion(registry: RegistrySnapshot, id: string): string | null {
  * executable, so a conflict leaves `kit.json` untouched.
  */
 export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
-  const { registry, config, snapshot, lock } = input;
-  // One validated selected-project/manager boundary shared with init and sync:
-  // a missing/malformed/unsupported manifest or an ambiguous manager is a
-  // logical failure with no executable writes, not a fabricated default plan.
-  const invocation = validateInvocation(snapshot);
-  if (!invocation.ok) return fail(invocation.issues);
+  const { registry, snapshot, lock } = input;
+  // One resolved effective mapping shared with init and sync: the captured
+  // selected-project evidence and bounded `_kit/kit.json` discovery determine
+  // the mapping before planning. A missing/malformed/unsupported manifest or
+  // an ambiguous manager is a logical failure with no executable writes, and a
+  // supplied stale default never overrides an observed custom installation.
+  const effective = resolveEffectiveConfig(snapshot, input.config);
+  if (!effective.ok) return fail(effective.issues);
+  const config = effective.value.config;
   const diagnostics: string[] = [];
   const derived = deriveKitPaths(config);
   let hasConflict = false;
+  // A discovery that could not prove exactly one valid installation is a
+  // typed, non-executable conflict: this planner never adopts a second
+  // installation or an ambiguous/malformed one.
+  if (effective.value.issues.length > 0) {
+    hasConflict = true;
+    for (const entry of effective.value.issues) {
+      diagnostics.push(`config conflict (${entry.code}): ${entry.message}`);
+    }
+  }
 
   // The actual validated snapshot identity is authoritative. A separately
   // supplied scalar is never trusted; a mismatch is recorded as a diagnostic
@@ -1233,6 +1247,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     dependencyState,
     dependencyIssues,
     sourcePlan,
+    effectiveConfig: config,
     writes: hasConflict ? [] : writes,
     lock: projectedLock,
     diagnostics: diagnostics.sort(),

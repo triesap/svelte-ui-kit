@@ -21,6 +21,7 @@ import {
   deriveKitPaths,
 } from "../../src/project/config.js";
 import { createSupportedProject } from "../helpers/project.js";
+import { strictApply } from "../helpers/apply.js";
 import {
   componentItem,
   registryOf,
@@ -132,37 +133,6 @@ function applyWrites(
  * requires an absent target, `update` requires an existing one and `retire`
  * removes an existing one. A planner that mislabels an operation fails here.
  */
-function strictApply(
-  project: ReturnType<typeof createSupportedProject>,
-  writes: readonly {
-    path: string;
-    bytes: Uint8Array;
-    operation?: string;
-  }[],
-): void {
-  for (const write of writes) {
-    const abs = path.join(project.root, write.path);
-    const exists = existsSync(abs);
-    assert.ok(write.operation, `write ${write.path} must declare an operation`);
-    if (write.operation === "retire") {
-      assert.equal(exists, true, `retire target must exist: ${write.path}`);
-      rmSync(abs, { force: true });
-      continue;
-    }
-    if (write.operation === "create") {
-      assert.equal(
-        exists,
-        false,
-        `create target must be absent: ${write.path}`,
-      );
-    } else {
-      assert.equal(exists, true, `update target must exist: ${write.path}`);
-    }
-    mkdirSync(path.dirname(abs), { recursive: true });
-    writeFileSync(abs, write.bytes);
-  }
-}
-
 for (const target of [
   derived.rootExports,
   CONFIG.layoutFile,
@@ -1026,7 +996,7 @@ test("planned operations are truthful across create, update and retire", (t) => 
     "create",
   );
   assert.equal(firstOps.get(derived.kitCss), "create");
-  strictApply(project, first.value.writes);
+  strictApply(project.root, first.value.writes);
 
   const second = planAdd({
     registry: reg,
@@ -1044,7 +1014,7 @@ test("planned operations are truthful across create, update and retire", (t) => 
   );
   assert.equal(secondOps.get(spinnerPath), "create");
   assert.equal(secondOps.get(`${derived.stateDir}/kit.json`), "update");
-  strictApply(project, second.value.writes);
+  strictApply(project.root, second.value.writes);
 
   const sync = planSync({
     registry: reg,
@@ -1059,7 +1029,7 @@ test("planned operations are truthful across create, update and retire", (t) => 
   const retire = sync.value.writes.find((w) => w.path === spinnerPath);
   assert.ok(retire);
   assert.equal(retire.operation, "retire");
-  strictApply(project, sync.value.writes);
+  strictApply(project.root, sync.value.writes);
   assert.equal(existsSync(path.join(project.root, spinnerPath)), false);
 
   const replay = planSync({
@@ -1073,5 +1043,5 @@ test("planned operations are truthful across create, update and retire", (t) => 
   assert.equal(replay.ok, true, JSON.stringify(replay));
   if (!replay.ok) return;
   assert.deepEqual(replay.value.writes, []);
-  strictApply(project, replay.value.writes);
+  strictApply(project.root, replay.value.writes);
 });

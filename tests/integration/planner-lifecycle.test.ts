@@ -1,15 +1,10 @@
 import assert from "node:assert/strict";
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 
 import { hashBytes } from "../../src/codegen/compare.js";
+import { strictApply as strictApplyRoot } from "../helpers/apply.js";
 import {
   FOUNDATION_TOKENS_CONTRACT,
   renderManagedBlock,
@@ -114,32 +109,12 @@ function buttonRegistry(
   ]);
 }
 
-/** Test-only applier that enforces each declared operation meaning. */
+/** Shared strict operation applier (create/update/retire meaning enforced). */
 function strictApply(
   project: ReturnType<typeof createSupportedProject>,
   writes: readonly { path: string; bytes: Uint8Array; operation?: string }[],
 ): void {
-  for (const write of writes) {
-    const abs = path.join(project.root, write.path);
-    const exists = existsSync(abs);
-    assert.ok(write.operation, `write ${write.path} must declare an operation`);
-    if (write.operation === "retire") {
-      assert.equal(exists, true, `retire target must exist: ${write.path}`);
-      rmSync(abs, { force: true });
-      continue;
-    }
-    if (write.operation === "create") {
-      assert.equal(
-        exists,
-        false,
-        `create target must be absent: ${write.path}`,
-      );
-    } else {
-      assert.equal(exists, true, `update target must exist: ${write.path}`);
-    }
-    mkdirSync(path.dirname(abs), { recursive: true });
-    writeFileSync(abs, write.bytes);
-  }
+  strictApplyRoot(project.root, writes);
 }
 
 function add(

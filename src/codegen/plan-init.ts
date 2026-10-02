@@ -42,7 +42,7 @@ import {
 import type { RegistrySnapshot } from "../registry/load.js";
 import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
 import { patchLayoutImports, materializePassthroughLayout } from "./svelte.js";
-import { validateInvocation } from "./invocation.js";
+import { resolveEffectiveConfig } from "./effective-config.js";
 
 /** The frozen foundation layer declaration. */
 export const TOKENS_BODY =
@@ -120,72 +120,36 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
       ),
     ]);
   }
-  // One validated selected-project/manager boundary shared with add and sync:
-  // an empty directory, a malformed manifest, a non-SvelteKit package or an
-  // ambiguous manager is a logical failure, never a fabricated default plan.
-  const invocation = validateInvocation(snapshot);
-  if (!invocation.ok) return fail(invocation.issues);
+  // One resolved effective mapping shared with add and sync: the captured
+  // selected-project evidence and bounded `_kit/kit.json` discovery determine
+  // the mapping before any target is planned, so an empty directory, a
+  // malformed manifest, a non-SvelteKit package, an ambiguous manager or a
+  // malformed/ambiguous discovery is a logical failure. A supplied stale
+  // default never overrides an observed custom installation.
+  const effective = resolveEffectiveConfig(snapshot, input.config);
+  if (!effective.ok) return fail(effective.issues);
+  if (effective.value.issues.length > 0) {
+    const seen = new Set<string>();
+    const issues = [];
+    for (const entry of effective.value.issues) {
+      if (seen.has(entry.code)) continue;
+      seen.add(entry.code);
+      issues.push(
+        issue(
+          "INIT_CONFIG_INVALID",
+          `the effective kit configuration could not be proven (${entry.code}); reconcile the configuration before initialization`,
+          entry.locator ?? "kit.json",
+        ),
+      );
+    }
+    return fail(issues);
+  }
+  const config: KitConfig = {
+    ...effective.value.config,
+    requested: [...effective.value.observedRequested],
+  };
   const registryVersion = input.registry.root.registryVersion;
   const registryHash = input.registry.root.contentHash;
-
-  // Reconcile the observed configuration mapping before planning. A valid
-  // observed `kit.json` is the application's authoritative mapping: a supplied
-  // default must never silently overwrite a custom `stylesDir`/`uiDir`/
-  // `layoutFile`. The effective mapping is then used for every derived target,
-  // so a caller that captured a snapshot for different paths receives an
-  // explicit incomplete-observation error rather than a plan against the wrong
-  // files.
-  let config = input.config;
-  {
-    const suppliedDerived = deriveKitPaths(input.config);
-    const observedConfigPath = `${suppliedDerived.stateDir}/kit.json`;
-    const observedConfig = snapshot.entries.get(observedConfigPath);
-    if (observedConfig !== undefined && observedConfig.kind === "file") {
-      const decodedConfig = decodeObservedText(observedConfig);
-      if (decodedConfig.kind === "invalid") {
-        return fail([
-          issue(
-            "INIT_CONFIG_INVALID",
-            `${observedConfigPath} is not valid UTF-8; reconcile the configuration before initialization`,
-            observedConfigPath,
-          ),
-        ]);
-      }
-      if (decodedConfig.kind === "text") {
-        let parsedObserved: unknown;
-        try {
-          parsedObserved = JSON.parse(decodedConfig.text);
-        } catch {
-          return fail([
-            issue(
-              "INIT_CONFIG_INVALID",
-              `${observedConfigPath} is not valid JSON; reconcile the configuration before initialization`,
-              observedConfigPath,
-            ),
-          ]);
-        }
-        const validatedObserved = parseKitConfig(
-          parsedObserved,
-          observedConfigPath,
-        );
-        if (!validatedObserved.ok) {
-          return fail([
-            issue(
-              "INIT_CONFIG_INVALID",
-              `${observedConfigPath} is invalid; reconcile the configuration before initialization`,
-              observedConfigPath,
-            ),
-          ]);
-        }
-        config = validatedObserved.value;
-      }
-    } else if (
-      observedConfig !== undefined &&
-      observedConfig.kind !== "absent"
-    ) {
-      return unsafeTargetIssue(observedConfigPath, observedConfig);
-    }
-  }
 
   const derived = deriveKitPaths(config);
   if (input.layoutFile !== config.layoutFile) {
@@ -385,6 +349,24 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
       }
       return fail(issues);
     }
+    // The observed file must still describe the resolved effective mapping; a
+    // file that changed between discovery and observation is stale evidence
+    // and must not be silently overwritten.
+    const observedConfig = validatedConfig.value;
+    if (
+      observedConfig.registry !== config.registry ||
+      observedConfig.uiDir !== config.uiDir ||
+      observedConfig.stylesDir !== config.stylesDir ||
+      observedConfig.layoutFile !== config.layoutFile
+    ) {
+      return fail([
+        issue(
+          "INIT_CONFIG_INVALID",
+          `${targets.kitJson} no longer matches the resolved effective mapping; re-read the project configuration before initialization`,
+          targets.kitJson,
+        ),
+      ]);
+    }
   }
   if (configText.value !== configJson) {
     writes.push({
@@ -463,14 +445,41 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
       existingKitCss.slice(block.contentStart, block.contentEnd),
     ]),
   );
+  // A recorded block is owned content that must exist. A block that the lock
+  // tracks (registry `cssBlocks` or the `foundation-tokens-v1` integration) but
+  // that is absent from the observed stylesheet is a conflict, never a silent
+  // satisfied installation. A genuinely empty body is still present and stays
+  // distinct from an absent block.
+  const trackedKitBlockIds = new Set<string>();
+  for (const record of existingLock?.cssBlocks ?? []) {
+    if (record.path === targets.kitCss) trackedKitBlockIds.add(record.blockId);
+  }
+  const foundationTokensOwned =
+    existingLock?.integrations.some(
+      (integration) =>
+        integration.kind === "stylesheet" &&
+        integration.path === targets.kitCss &&
+        integration.contract === FOUNDATION_TOKENS_CONTRACT,
+    ) ?? false;
+  if (foundationTokensOwned) trackedKitBlockIds.add("tokens");
+  for (const blockId of [...trackedKitBlockIds].sort()) {
+    if (!existingKitBodies.has(blockId)) {
+      return fail([
+        issue(
+          "INIT_OWNERSHIP_CONFLICT",
+          `${targets.kitCss} records the ${JSON.stringify(blockId)} block as owned but the observed block is absent; tracked missing content must be reconciled explicitly rather than reported as satisfied`,
+          targets.kitCss,
+        ),
+      ]);
+    }
+  }
   const desiredKitBlocks: { id: string; body: string }[] = [
     ...(existingLock?.cssBlocks ?? [])
       .filter((record) => record.path === targets.kitCss)
       .map((record) => ({
         id: record.blockId,
-        body: existingKitBodies.get(record.blockId) ?? "",
-      }))
-      .filter((block) => block.body !== ""),
+        body: existingKitBodies.get(record.blockId) as string,
+      })),
   ];
   if (!desiredKitBlocks.some((block) => block.id === "tokens")) {
     desiredKitBlocks.unshift({

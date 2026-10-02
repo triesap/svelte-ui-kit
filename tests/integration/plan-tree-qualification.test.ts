@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 
 import { hashBytes } from "../../src/codegen/compare.js";
 import { renderManagedBlock } from "../../src/codegen/css.js";
@@ -21,6 +23,7 @@ import {
   type TempProject,
 } from "../helpers/project.js";
 import { componentItem, registryOf, sourceFile } from "../helpers/registry.js";
+import { strictApply } from "../helpers/apply.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 /**
@@ -327,6 +330,12 @@ test("an unowned managed CSS block is an intended-cause conflict for init and ad
   if (addResult.ok) {
     assert.equal(addResult.value.executable, false);
     assert.deepEqual(addResult.value.writes, []);
+    assert.ok(
+      addResult.value.diagnostics.some((entry) =>
+        entry.includes("does not own"),
+      ),
+      JSON.stringify(addResult.value.diagnostics),
+    );
   }
   assertNoWrites(project, before);
 });
@@ -346,6 +355,12 @@ test("an unowned managed export region is an intended-cause conflict for init an
   if (addResult.ok) {
     assert.equal(addResult.value.executable, false);
     assert.deepEqual(addResult.value.writes, []);
+    assert.ok(
+      addResult.value.diagnostics.some((entry) =>
+        entry.includes("does not own"),
+      ),
+      JSON.stringify(addResult.value.diagnostics),
+    );
   }
   assertNoWrites(project, before);
 });
@@ -356,10 +371,7 @@ test("a cohort conflict from a renamed export leaves the tree untouched", (t) =>
   const installed = add(project, buttonRegistry());
   assert.equal(installed.ok, true, JSON.stringify(installed));
   if (!installed.ok || !installed.value.executable) return;
-  for (const write of installed.value.writes) {
-    if (write.operation === "retire") continue;
-    project.writeFile(write.path, new TextDecoder().decode(write.bytes));
-  }
+  strictApply(project.root, installed.value.writes);
   project.writeFile(SOURCE, "<button>CUSTOM</button>\n");
   const renamed = registryOf([
     componentItem("button", {
@@ -373,6 +385,10 @@ test("a cohort conflict from a renamed export leaves the tree untouched", (t) =>
   if (!result.ok) return;
   assert.equal(result.value.executable, false);
   assert.deepEqual(result.value.writes, []);
+  assert.ok(
+    result.value.diagnostics.some((entry) => entry.includes("cohort conflict")),
+    JSON.stringify(result.value.diagnostics),
+  );
   assertNoWrites(project, before);
 });
 
@@ -396,10 +412,7 @@ test("a detached retired token is a conflict, never reacquired or deleted", (t) 
   const installed = add(project, tokens);
   assert.equal(installed.ok, true, JSON.stringify(installed));
   if (!installed.ok || !installed.value.executable) return;
-  for (const write of installed.value.writes) {
-    if (write.operation === "retire") continue;
-    project.writeFile(write.path, new TextDecoder().decode(write.bytes));
-  }
+  strictApply(project.root, installed.value.writes);
   project.writeFile(
     KIT_CSS,
     renderManagedBlock("tokens", "\n.tokens { color: purple; }\n"),
@@ -407,20 +420,60 @@ test("a detached retired token is a conflict, never reacquired or deleted", (t) 
   const retired = sync(project, tokens, installed.value.lock);
   assert.equal(retired.ok, true, JSON.stringify(retired));
   if (!retired.ok || !retired.value.executable) return;
-  for (const write of retired.value.writes) {
-    if (write.operation === "retire") continue;
-    project.writeFile(write.path, new TextDecoder().decode(write.bytes));
-  }
+  strictApply(project.root, retired.value.writes);
   const before = snapshotTree(project.root);
   const readd = add(project, tokens, retired.value.lock);
   assert.equal(readd.ok, true, JSON.stringify(readd));
   if (!readd.ok) return;
   assert.equal(readd.value.executable, false);
   assert.deepEqual(readd.value.writes, []);
+  assert.ok(
+    readd.value.diagnostics.some((entry) => entry.includes("does not own")),
+    JSON.stringify(readd.value.diagnostics),
+  );
   assertNoWrites(project, before);
   assert.ok(
     readFileSync(path.join(project.root, KIT_CSS), "utf8").includes(
       ".tokens { color: purple; }",
     ),
+  );
+});
+
+/**
+ * RCLD03-R8-3: behavioral proof that planning starts no writer or package
+ * manager. The child runs the real planners under Node's permission model with
+ * every filesystem write and child process denied; a clean exit and an
+ * unchanged tree are behavioral evidence, not a source-text scan.
+ */
+test("planning starts no writer or package-manager process under denied permissions", (t) => {
+  const project = createSupportedProject();
+  t.after(() => project.cleanup());
+  const before = snapshotTree(project.root);
+  const control = path.join(
+    process.cwd(),
+    "tests/integration/planner-no-writer-control.mjs",
+  );
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    SUIK_DIST: path.join(process.cwd(), "dist"),
+    SUIK_HELPERS: fileURLToPath(
+      new URL("../helpers/registry.js", import.meta.url),
+    ),
+    SUIK_PLAN_ROOT: project.root,
+  };
+  delete env["NODE_TEST_CONTEXT"];
+  delete env["NODE_OPTIONS"];
+  delete env["NODE_V8_COVERAGE"];
+  const result = spawnSync(
+    process.execPath,
+    ["--permission", "--allow-fs-read=*", control],
+    { cwd: process.cwd(), encoding: "utf8", env },
+  );
+  assert.equal(result.status, 0, result.stderr || String(result.error));
+  assert.equal(result.stderr.trim(), "");
+  assert.deepEqual(
+    snapshotTree(project.root),
+    before,
+    "planning must not change the complete tree",
   );
 });

@@ -160,8 +160,43 @@ test("a statically mapped routes directory is accepted while an unsupported conf
     "svelte.config.js",
     'export default { kit: { files: { routes: "src/views" } } };\n',
   );
-  const accepted = runAll(snapshotOf(supported));
-  assert.equal(accepted.add.ok, true, JSON.stringify(accepted.add));
+  // Capture both the inactive default and the detected layout so the plan is
+  // asserted against the actual effective path, not merely `ok`.
+  const acceptedSnapshot = captureSnapshot(supported.root, [
+    ...paths(),
+    "src/views/+layout.svelte",
+  ]);
+  assert.equal(acceptedSnapshot.ok, true, JSON.stringify(acceptedSnapshot));
+  if (!acceptedSnapshot.ok) return;
+  const registry = buttonRegistry();
+  const accepted = planAdd({
+    registry,
+    config: DEFAULT_KIT_CONFIG,
+    addedRoots: ["button"],
+    snapshot: acceptedSnapshot.value,
+    lock: null,
+    registryVersion: registry.root.registryVersion,
+    registryHash: registry.root.contentHash,
+  });
+  assert.equal(accepted.ok, true, JSON.stringify(accepted));
+  if (!accepted.ok) return;
+  assert.equal(
+    accepted.value.executable,
+    true,
+    JSON.stringify(accepted.value.diagnostics),
+  );
+  assert.ok(
+    accepted.value.writes.some(
+      (write) => write.path === "src/views/+layout.svelte",
+    ),
+    JSON.stringify(accepted.value.writes.map((write) => write.path)),
+  );
+  assert.ok(
+    !accepted.value.writes.some(
+      (write) => write.path === DEFAULT_KIT_CONFIG.layoutFile,
+    ),
+    "the inactive default layout must never be planned",
+  );
 
   const unsupported = createSupportedProject();
   t.after(() => unsupported.cleanup());

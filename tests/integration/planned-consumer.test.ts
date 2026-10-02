@@ -4,6 +4,7 @@ import {
   cpSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -15,6 +16,7 @@ import { test } from "node:test";
 import { pathToFileURL } from "node:url";
 
 import { planAdd } from "../../src/codegen/plan-add.js";
+import { toPlanningEnvelope } from "../../src/codegen/plan.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import { hashBytes } from "../../src/codegen/compare.js";
 import {
@@ -537,6 +539,137 @@ test(
       checked.status,
       0,
       `the check lane must fail on a real type error:\n${checked.stdout}\n${checked.stderr}`,
+    );
+  },
+);
+
+/**
+ * RCLD03-R8-1: a supported nondefault SvelteKit routes mapping is qualified
+ * end to end. The plan must write the *active* layout under the detected
+ * routes directory, that layout must import the intended styles, and the
+ * production handler must still render the page.
+ */
+test(
+  "a nondefault routes mapping plans, checks, builds and renders through the active layout",
+  { timeout: 180_000 },
+  async (t) => {
+    const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-vreg-"));
+    const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-pr-vapp-"));
+    t.after(() => {
+      rmSync(registryRoot, { recursive: true, force: true });
+      rmSync(consumer, { recursive: true, force: true });
+    });
+    for (const file of [
+      "package.json",
+      "vite.config.ts",
+      "tsconfig.json",
+      "src/app.html",
+    ]) {
+      cpSync(path.join(FIXTURE, file), path.join(consumer, file));
+    }
+    symlinkSync(
+      path.join(FIXTURE, "node_modules"),
+      path.join(consumer, "node_modules"),
+      "dir",
+    );
+    writeFileSync(
+      path.join(consumer, "svelte.config.js"),
+      'import adapter from "@sveltejs/adapter-node";\nimport { vitePreprocess } from "@sveltejs/vite-plugin-svelte";\n\n/** @type {import(\'@sveltejs/kit\').Config} */\nconst config = {\n  preprocess: vitePreprocess(),\n  kit: { adapter: adapter(), files: { routes: "src/views" } },\n};\n\nexport default config;\n',
+    );
+    write(
+      consumer,
+      "src/views/+page.svelte",
+      '<h1>PLANNED_VIEWS_PAGE</h1>\n<script>import { Button } from "$lib/components/ui/index.js";</script>\n<Button />\n',
+    );
+
+    const registry = realRegistry(registryRoot);
+    assert.equal(registry.ok, true, JSON.stringify(registry));
+    if (!registry.ok) return;
+
+    const layoutFile = "src/views/+layout.svelte";
+    const config = { ...DEFAULT_KIT_CONFIG, layoutFile };
+    const snapshot = captureSnapshot(consumer, [
+      `${derived.stateDir}/kit.json`,
+      `${derived.stateDir}/kit.lock.json`,
+      derived.rootExports,
+      derived.kitCss,
+      derived.themesCss,
+      derived.appCss,
+      layoutFile,
+      `${derived.rootExportsDir}/button.svelte`,
+      "svelte.config.js",
+    ]);
+    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+    if (!snapshot.ok) return;
+
+    const planned = planAdd({
+      registry: registry.value,
+      config,
+      addedRoots: ["button"],
+      snapshot: snapshot.value,
+      lock: null,
+      registryVersion: registry.value.root.registryVersion,
+      registryHash: registry.value.root.contentHash,
+    });
+    assert.equal(planned.ok, true, JSON.stringify(planned));
+    if (!planned.ok) return;
+    assert.equal(
+      planned.value.executable,
+      true,
+      JSON.stringify(planned.value.diagnostics),
+    );
+    const layoutWrite = planned.value.writes.find(
+      (entry) => entry.path === layoutFile,
+    );
+    assert.ok(
+      layoutWrite,
+      "the active layout must be planned, not the default",
+    );
+    assert.ok(
+      !planned.value.writes.some(
+        (entry) => entry.path === DEFAULT_KIT_CONFIG.layoutFile,
+      ),
+    );
+    const layoutText = new TextDecoder().decode(layoutWrite.bytes);
+    for (const specifier of [
+      "../styles/kit.css",
+      "../styles/themes.css",
+      "../styles/app.css",
+    ]) {
+      assert.ok(
+        layoutText.includes(specifier),
+        `the active layout must import ${specifier}`,
+      );
+    }
+
+    // Emitted planning: the deterministic envelope carries the active layout.
+    const envelope = toPlanningEnvelope(
+      "add",
+      planned.value.executable,
+      planned.value.writes,
+      planned.value.diagnostics,
+    );
+    assert.ok(
+      envelope.writes.some((entry) => entry.path === layoutFile),
+      JSON.stringify(envelope.writes.map((entry) => entry.path)),
+    );
+
+    applyWrites(consumer, planned.value.writes);
+
+    const checked = runPnpm(["run", "check"], consumer);
+    assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
+    const built = runPnpm(["run", "build"], consumer);
+    assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+    assert.ok(
+      readFileSync(path.join(consumer, layoutFile), "utf8").includes(
+        "../styles/kit.css",
+      ),
+    );
+    const rendered = await renderProductionPage(consumer);
+    assert.equal(rendered.status, 200);
+    assert.ok(
+      rendered.html.includes("PLANNED_VIEWS_PAGE"),
+      "the active nondefault layout must render the page",
     );
   },
 );

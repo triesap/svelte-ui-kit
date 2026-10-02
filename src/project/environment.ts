@@ -26,7 +26,12 @@ import {
   type ManagerEvidence,
 } from "./dependency-instructions.js";
 import { observeInstalled, type InstalledObservation } from "./dependencies.js";
-import { detectDefaultProject, type DetectedProject } from "./detect.js";
+import {
+  detectDefaultProject,
+  discoverKitConfig,
+  type DetectedProject,
+  type DiscoveredKitConfig,
+} from "./detect.js";
 import { deepFreeze, FrozenMap } from "./immutable.js";
 import { readJsonObject, type JsonObservation } from "./io.js";
 
@@ -51,6 +56,13 @@ export interface CapturedEnvironment {
    * invocation decision derived from the snapshot.
    */
   readonly project: ModelResult<DetectedProject>;
+  /**
+   * Captured bounded `_kit/kit.json` discovery (S037). Composed with the
+   * selected-project evidence into one effective mapping before planning, so a
+   * custom observed installation is never missed and a later disk edit cannot
+   * change the resolved mapping.
+   */
+  readonly kitConfig: ModelResult<DiscoveredKitConfig>;
 }
 
 /**
@@ -114,6 +126,7 @@ export function captureEnvironment(root: string): CapturedEnvironment {
   );
   const managerResult = detectPackageManager(root);
   const project = deepFreeze(detectDefaultProject(root));
+  const kitConfig = deepFreeze(discoverKitConfig(root));
   return deepFreeze({
     manifest,
     installed,
@@ -127,5 +140,6 @@ export function captureEnvironment(root: string): CapturedEnvironment {
         } satisfies ManagerEvidence),
     managerIssues: managerResult.ok ? [] : managerResult.issues,
     project,
+    kitConfig,
   });
 }

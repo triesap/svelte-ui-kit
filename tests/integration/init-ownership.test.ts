@@ -19,6 +19,7 @@ import {
   deriveKitPaths,
 } from "../../src/project/config.js";
 import { createSupportedProject } from "../helpers/project.js";
+import { strictApply } from "../helpers/apply.js";
 import { componentItem, registryOf } from "../helpers/registry.js";
 
 /**
@@ -75,17 +76,30 @@ function buttonRegistry(options: { tokens?: boolean } = {}) {
   ]);
 }
 
+/** A registry whose button item owns a non-foundation `button` CSS block. */
+function styledButtonRegistry() {
+  return registryOf([
+    componentItem("button", {
+      exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
+      styles: [
+        {
+          source: "registry/styles/button.css",
+          target: "kit.css",
+          blockId: "button",
+          cohort: "core",
+        },
+      ],
+    }),
+  ]);
+}
+
 function apply(
   project: ReturnType<typeof createSupportedProject>,
   writes: readonly { path: string; bytes: Uint8Array; operation?: string }[],
 ): void {
-  for (const write of writes) {
-    // These lifecycle controls may plan an explicit deletion (for example a
-    // retired source); retirement semantics are covered elsewhere, so a retire
-    // is skipped here rather than applied as a zero-byte create.
-    if (write.operation === "retire") continue;
-    project.writeFile(write.path, new TextDecoder().decode(write.bytes));
-  }
+  // The shared strict applier performs the real create/update/retire meaning
+  // (including an actual retirement) before the next observation.
+  strictApply(project.root, writes);
 }
 
 function add(
@@ -289,4 +303,93 @@ test("a satisfied initialization replay writes nothing", (t) => {
   assert.equal(second.ok, true, JSON.stringify(second));
   if (!second.ok) return;
   assert.deepEqual(second.value.writes, []);
+});
+
+/**
+ * RCLD03-R8-2: initialization must not report tracked missing content as a
+ * satisfied installation. A recorded block's lineage implies its bytes exist.
+ */
+test("initialization refuses a missing owned registry block", (t) => {
+  const project = createSupportedProject();
+  t.after(() => project.cleanup());
+  const registry = styledButtonRegistry();
+  const installed = good(add(project, registry, null));
+  apply(project, installed.writes);
+  const cssPath = path.join(project.root, KIT_CSS);
+  const styled = readFileSync(cssPath, "utf8");
+  assert.ok(styled.includes("svelte-ui-kit:start button"));
+  const removed = styled.replace(
+    /\/\* svelte-ui-kit:start button \*\/[\s\S]*?\/\* svelte-ui-kit:end button \*\//,
+    "",
+  );
+  writeFileSync(cssPath, removed);
+
+  const initialized = init(project);
+  assert.equal(initialized.ok, false, JSON.stringify(initialized));
+  if (initialized.ok) return;
+  assert.deepEqual(
+    initialized.issues.map((entry) => entry.code),
+    ["INIT_OWNERSHIP_CONFLICT"],
+  );
+  assert.equal(readFileSync(cssPath, "utf8"), removed, "no bytes changed");
+
+  // Add must reach the same intended cause, not an unrelated one.
+  const readd = add(project, registry, installed.lock);
+  assert.equal(readd.ok, true, JSON.stringify(readd));
+  if (!readd.ok) return;
+  assert.equal(readd.value.executable, false);
+  assert.deepEqual(readd.value.writes, []);
+  assert.ok(
+    readd.value.diagnostics.some((entry) => entry.includes("css conflict")),
+    JSON.stringify(readd.value.diagnostics),
+  );
+});
+
+test("initialization refuses a missing owned foundation block", (t) => {
+  const project = createSupportedProject();
+  t.after(() => project.cleanup());
+  const registry = buttonRegistry();
+  const installed = good(add(project, registry, null));
+  apply(project, installed.writes);
+  const cssPath = path.join(project.root, KIT_CSS);
+  const styled = readFileSync(cssPath, "utf8");
+  assert.ok(styled.includes("svelte-ui-kit:start tokens"));
+  const removed = styled.replace(
+    /\/\* svelte-ui-kit:start tokens \*\/[\s\S]*?\/\* svelte-ui-kit:end tokens \*\//,
+    "",
+  );
+  writeFileSync(cssPath, removed);
+  const initialized = init(project);
+  assert.equal(initialized.ok, false, JSON.stringify(initialized));
+  if (initialized.ok) return;
+  assert.deepEqual(
+    initialized.issues.map((entry) => entry.code),
+    ["INIT_OWNERSHIP_CONFLICT"],
+  );
+  assert.equal(readFileSync(cssPath, "utf8"), removed);
+});
+
+test("an empty recorded block stays present, distinct from a missing one", (t) => {
+  const project = createSupportedProject();
+  t.after(() => project.cleanup());
+  const registry = styledButtonRegistry();
+  const installed = good(add(project, registry, null));
+  apply(project, installed.writes);
+  const cssPath = path.join(project.root, KIT_CSS);
+  const styled = readFileSync(cssPath, "utf8");
+  const emptied = styled.replace(
+    /\/\* svelte-ui-kit:start button \*\/[\s\S]*?\/\* svelte-ui-kit:end button \*\//,
+    "/* svelte-ui-kit:start button *//* svelte-ui-kit:end button */",
+  );
+  writeFileSync(cssPath, emptied);
+  const initialized = init(project);
+  assert.equal(initialized.ok, true, JSON.stringify(initialized));
+  if (!initialized.ok) return;
+  assert.deepEqual(initialized.value.writes, []);
+  assert.ok(
+    initialized.value.lock.cssBlocks.some(
+      (block) => block.blockId === "button",
+    ),
+    "an empty present block keeps its recorded lineage",
+  );
 });

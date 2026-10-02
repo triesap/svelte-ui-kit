@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: S001–S032 independently accepted; RCLD-01/02 complete. S033–S063 are committed pending review with changes requested under independent review 7; finish the shared validated planning boundary, cross-command ownership and complete qualification. S064 requires independent S063 acceptance. Updated 2026-10-01.
+Status: S001–S032 independently accepted; RCLD-01/02 complete. S033–S063 are committed pending review with changes requested under independent review 8; complete effective mapping selection, initialization ownership checks and full lifecycle qualification. S064 requires independent S063 acceptance. Updated 2026-10-02.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **none** (repair and finish pending S033–S063 under independent review 7; S064 remains gated).
+- Active implementation checkpoint: **none** (repair and finish pending S033–S063 under independent review 8; S064 remains gated).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **32 / 203**. Remaining: **171 / 203**.
 - Committed pending review: **31 / 203**. Authored batch range: **S033–S063**.
@@ -39,7 +39,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - RCLD-03 review-5 implementation series: six commits through `8927c4476741de32c280cb18d0e713fa0482a9fa` repair all twelve prior probe cases and add actual consumer check/build and emitted planning. Independent review 6 preserves that progress but finds incomplete initialization evidence, unsafe token retirement/reacquisition, false baseline advancement, unsatisfied replay and suppressed page rendering. Full lifecycle integration, purity coverage and factual report reconciliation remain software work; S064 stays gated.
 - RCLD-03 review-6 implementation series: `6ec7262b15c825aaf7d31c29bc6ef1599b31af94` completes validated invocation evidence, truthful foundation-token ownership and rendered-layout materialization, with the R6-4 purity/report reconciliation recorded in the same series. These commits are Pi implementation evidence; independent review 6 acceptance is still pending and S064 stays gated.
 - RCLD-03 review-7 implementation series: `ec7a014528f13a20da8658871e62b8459bd17af6` (R7-1 deeply immutable validated invocation boundary), `88f01098706c202b3610add081877c274a82fb82` (R7-2 ownership lineage through initialization) and `ea01f7e3f2a773b16dce9e456e4e04f026d1a4eb` (R7-3 complete-tree qualification), with R7-4 evidence/qualification reconciliation recorded in `implementation/evidence/RCLD03_R7_REPAIR.md`. These are Pi implementation evidence; independent S063 acceptance remains with Codex and S064 stays gated.
-- S001–S032 are complete; S033–S063 are committed_pending_review with changes requested; S064–S203 remain not_started (140 checkpoints). Independent review 7 governs completion of the existing RCLD-03 batch; no acceptance or sequence gate is bypassed.
+- S001–S032 are complete; S033–S063 are committed_pending_review with changes requested; S064–S203 remain not_started (140 checkpoints). Independent review 8 governs completion of the existing RCLD-03 batch; no acceptance or sequence gate is bypassed.
 
 Before execution or after a context reset, read the authority, approved dispositions, sequence gates, current ledger entry, complete current checkpoint and its contract links. Inspect current repository instructions/status and refresh baseline evidence. Only one implementation checkpoint may be active. By default every checkpoint after S001 depends on the reviewed, verified, committed predecessor. The explicit owner-authorized batch below permits verified implementation commits pending Codex review to unlock successors only within the currently dispatched sequence; the current RCLD-03 activation prerequisite governs the transition from the completed RCLD-02 batch.
 
@@ -76,7 +76,139 @@ bypassing dependencies. There is no current owner, external or hardware blocker.
 Pi writes product/tooling code and tests; Codex owns acceptance and consequential
 decisions. No push, publication, deployment, reference mutation or second tracker.
 
+### Independent review 8 — complete effective mapping and lifecycle integration
+
+Codex reviewed all four commits through clean candidate
+`a4c2e4a0bfd68e2463090b9e4886ab4509f7d12e` on 2026-10-02. Disposition:
+**changes requested**. Preserve 32 accepted, 31 committed_pending_review and
+140 not_started checkpoints; S064 requires independent S063 acceptance. All
+original R01–R34, AC01–AC22 and S001–S203 definitions remain unchanged.
+
+Verified progress: the previous missing/malformed/unsupported manifest and
+ambiguous-manager cases now fail safely; captured environment mutation is
+rejected and its plan stays stable; init preserves detached token bookkeeping
+and no longer enables the previous overwrite chain. Earlier token transitions,
+replay, baselines, config/registry evidence and rendering remain working. Fresh
+independent build/typecheck/format/lint pass; unit 265/265, integration 278/278,
+registry 38/38, CLI 52/52, harness 37/37 and contracts 127/127 pass, zero skips.
+Actual planned simple/compound check/build/SSR and emitted planning are included
+in integration. The independent exact-plan page/control probe still distinguishes
+visible page rendering from a build/HTTP-200 result without rendered children.
+
+Four additional complete-entry probes expose unfinished original mapping and
+ownership requirements. These are software work, with no owner/external/hardware
+blocker. The full RCLD-03 sequence is not accepted by passing helper tests or a
+new validation call whose selected values are never used.
+
+**Batch decision:** `pfc through RCLD-03` includes every unfinished S033–S063
+criterion and all three groups below as one integration/qualification batch.
+There is no intermediate correction-only stop. Complete effective selection,
+all three planner compositions, actual mapped consumers, ownership lifecycles,
+regression controls and full S063 qualification together. S064's explicit
+independent acceptance gate remains the only current sequence boundary: it
+introduces the writer and cannot use an unaccepted planner. Later checkpoints
+are not eligible until that gate passes.
+
+#### RCLD03-R8-1 — use captured selection to determine the effective mapping
+
+The new validateInvocation checks project.ok but its returned project is unused
+by init/add. A real probe captures routesDir=src/views and
+layoutFile=src/views/+layout.svelte, yet add produces executable writes to
+src/routes/+layout.svelte. The new static-route test checks only result.ok and
+therefore accepts integration at an inactive route. Another probe puts a valid
+custom installation at src/lib/custom-ui/_kit/kit.json; init with supplied
+defaults creates a second default installation instead of discovering it.
+
+A third probe supplies the documented explicit kit.json mapping for a dynamic
+Svelte routes configuration. The entry still returns the very diagnostic that
+tells the user to create that already-present explicit config. Requiring
+unconditional default detection broke the approved manual mapping fallback.
+
+Decision: compose the existing selected-package detection and bounded
+`discoverKitConfig` rules into one captured effective configuration used by
+init/add/sync. Exactly one valid observed custom installation determines the
+mapping; malformed, ambiguous or unsafe discovery fails rather than falling
+back to a second installation. With no explicit kit config, use the supported
+provable default/detected integration mapping. Do not discard captured layout
+selection or let separately supplied stale defaults silently override it.
+If required effective targets were not observed, return a typed request for a
+fresh complete observation before planning; do not fill gaps with live reads.
+
+A valid explicit kit config can resolve the documented unsupported/dynamic
+mapping case without evaluating Svelte config or scripts. This does not waive
+manifest/SvelteKit identity, root safety, configuration validation or manager
+conflicts. Keep existing config fields, discovery exclusions and custom path
+boundaries; do not invent new flags, aliases, schemas or mapping heuristics.
+Resolve mapping before target capture and carry consistent immutable evidence
+through composition. Internal types/helpers may change to express that boundary.
+
+Test the complete entries with actual discovered configs and target observations:
+fresh defaults, static nondefault routes, custom UI/styles/layout, explicit
+fallback, duplicate/malformed/location-mismatched discovery and stale/incomplete
+inputs. Verify actual planned paths, effects and satisfied replay, not merely
+result.ok. Extend the existing exact-plan consumer controls to a supported
+nondefault mapping and verify that the actual active layout loads the styles
+while preserving page rendering. Exercise the emitted planner as well.
+
+#### RCLD03-R8-2 — initialization must not report missing owned CSS as satisfied
+
+After a real styled installation, remove the tracked button CSS block while
+retaining the foundation block. Init returns success with no writes and retains
+the absent block's lineage; add correctly reports a CSS conflict. Init currently
+filters missing recorded bodies out of its desired list, so absent owned content
+silently passes as a satisfied installation.
+
+Decision: initialization must inspect the owned blocks in the stylesheet it
+already observes and refuse tracked missing content with a causal diagnostic,
+zero executable writes and unchanged lineage. Keep genuinely empty bodies
+distinct from missing blocks. Apply the same existing ownership policy across
+init/add/sync; do not restore or detach missing content by guess. Preserve clean
+replay, customized recorded baselines and detached application text. Cover both
+foundation and registry block ownership, relevant malformed/missing regions,
+clean installed state and customization in complete applied lifecycles.
+
+#### RCLD03-R8-3 — qualify exact states, causal conflicts and retained evidence
+
+The new init-ownership test helper explicitly skips retire operations and does
+not enforce create/update semantics. Some new tree tests assert only a false
+executable flag, allowing an unrelated cause to satisfy an intended conflict.
+The static-route positive test asserts acceptance without checking layout paths.
+These cannot establish the full lifecycle or effective mapping claims.
+
+Use the existing strict operation helper (or a shared equivalent) for every
+lifecycle being qualified; actually apply retirement and subsequent metadata
+writes before the next observation. Assert the intended diagnostic and preserve
+positive controls so missing-lock/source conflicts cannot mask CSS/ownership or
+mapping failures. Compare complete plans and tree state, retaining bytes, modes,
+kinds, links, hidden/empty entries and no writer/manager work. Static import
+checks are supporting structure evidence, not a substitute for behavioral
+qualification of the composed path. Preserve already passing original controls.
+
+Finish all remaining composition, tests, reports and full S063 qualification in
+this batch. Native command results show the author's cumulative green exits,
+but the current full raw logs are unavailable at the recorded locations; older
+logs must not be attributed to this candidate. Retain complete raw lane logs at
+specific ignored repository-relative evidence locations, with commands, exits,
+versions, candidate/artifact identity and failure history. Update S063,
+COMPATIBILITY and repair report claims to the actual result. Keep public records
+standalone and original pending hashes/structured status/accepted reviews intact.
+
+Run the established strict frozen install, build/format/lint/typecheck, all
+unit/integration/registry/CLI/harness/component/fixture/browser/contract lanes,
+actual mapped consumers and emitted planning, strict declaration controls,
+workflow validation and conditional reference guard. Serialize fixture writers
+and capture underlying exits before filtering. The four ignored reference tests
+remain explicitly ignored, and the fixture-only Bits declaration exception is
+still release AC20 debt. Pi reports implementation/evidence; Codex accepts.
+
+Continue after green checkpoints until the fully qualified S063 candidate, a
+real runtime limit, user stop or concrete external blocker after other eligible
+work. A commit, progress report, long conversation or partial passing suite is
+not an endpoint. No required review or dependency gate is bypassed.
+
 ### Independent review 7 — finish the complete planning boundary as one batch
+
+Historical review: independent review 8 above governs current execution.
 
 Codex reviewed all three commits through clean candidate
 `f9f829f56d90883612525416c545f126c29e3b5a`. Disposition: **changes requested**.

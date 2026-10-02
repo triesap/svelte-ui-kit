@@ -77,44 +77,46 @@ only writing modes.
 
 #### Current owner-authorized RCLD-03 batch verification
 
-Independent review 7 of candidate `f9f829f56d90883612525416c545f126c29e3b5a`
-requests RCLD03-R7-1/2/3 and every unfinished S033–S063 criterion together.
+Independent review 8 of candidate `a4c2e4a0bfd68e2463090b9e4886ab4509f7d12e`
+requests RCLD03-R8-1/2/3 and every unfinished S033–S063 criterion together.
 Fresh independent build/typecheck/format/lint pass; unit 265/265, integration
-255/255, registry 38/38, CLI 52/52, harness 37/37 and contracts 127/127 pass
-without skips. All eight previous review probes meet their bounded expectations,
-including the exact-plan production page and missing-render negative control.
-Preserve the working token retirement/replay, baseline, mapping, registry and
-rendering behavior. This is verified progress, not S063 acceptance.
+278/278, registry 38/38, CLI 52/52, harness 37/37 and contracts 127/127 pass
+without skips. Prior manifest/manager, environment-immutability and detached-token
+init probes are repaired, as are earlier token/rendering cases. Preserve this
+verified progress. The actual planned production page/control remains qualified;
+whole-sequence acceptance is withheld.
 
-Remaining failures are demonstrated through real validated registries and exact
-applied state: mutable captured environment data changes executable readiness;
-init accepts invalid project/manager evidence; add accepts absent/unsupported
-projects; init can reacquire detached application tokens and enable later
-overwrite. Complete one deeply immutable validated invocation boundary across
-all planners, then qualify full init/add/sync ownership lifecycles and the
-original complete-tree success/conflict matrix. Use supported positive fixtures,
-intended-cause negative controls, exact operations and complete result comparisons.
+Four real-registry probes expose remaining effective mapping/ownership criteria:
+static routes are detected but ignored in executable layout writes; an existing
+custom kit is missed and init creates another default installation; valid explicit
+mapping cannot resolve the documented dynamic-config fallback; init reports no
+change with missing tracked CSS while add correctly conflicts.
 
-Run the full S063 set after all eligible implementation: strict frozen install,
-format/lint/typecheck, unit, harness, registry, integration, CLI, components,
-fixture check/SSR/browser, contracts, planned simple/compound check/build/SSR,
-emitted parsers/planning, strict declaration controls, actual workflow validation
-and fresh conditional reference guard. Serialize shared fixture writers. Capture
-underlying exits, retain failed attempts and distinguish actual artifacts and
-platforms. Current author component/fixture/browser/workflow/reference evidence
-was audited, not freshly rerun by Codex on the rejected candidate. The full
-reference log has 578 passes, zero failures and four ignored tests as named in
-governing review 6; none of the ignored tests passed.
+Complete captured effective selection across all entries, honoring exactly one
+validated custom config, supported detection, explicit fallback and observed
+mapping targets. Qualify actual nondefault planned paths, style loading and page
+rendering in the active application layout. Use strict operation application in
+lifecycle tests: do not skip retire operations or omit applying returned metadata.
+Assert intended diagnostic causes and compare full results/tree state, including
+bytes/modes/kinds/links/hidden/empty entries and no writer/manager work. Source
+import scans supplement rather than replace behavioral evidence.
 
-Reconcile factual report prose and COMPATIBILITY while preserving original
-pending hashes, structured statuses and accepted reviews. Public records must
-not refer to private coordination or runtime routing. Release AC20's fixture-only
-qualified upstream declaration exception remains open.
+After all eligible implementation run the full S063 qualification: strict frozen
+install, build/format/lint/typecheck, unit/harness/registry/integration/CLI,
+components, fixture check/SSR/browser, contracts, planned default and custom
+consumers, emitted planning, strict declaration controls, workflow validation and
+fresh conditional reference guard. Retain raw logs in specific ignored
+repository-relative paths with commands, underlying exits, versions, candidate
+and actual artifact identities. Current author native excerpts record green
+exits, but full raw logs could not be recovered at the claimed locations; no
+fresh reviewer component/browser/workflow/reference result is implied. Historical
+logs are not current-candidate evidence. Record all four ignored reference tests
+and preserve release AC20's narrowly qualified fixture-only declaration exception.
 
-No intermediate stop divides this full remaining planning batch. S001–S032
-remain accepted, S033–S063 pending and S064–S203 not_started. Independent S063
-acceptance is required before guarded transaction work at S064. No new dependency,
-schema field, product writer or other platform acceptance is authorized.
+Keep original pending hashes, structured statuses, accepted reviews and public
+repository boundaries. All remaining RCLD-03 work is one batch with no intermediate
+repair stop. S001–S032 stay accepted, S033–S063 pending and S064–S203 not_started;
+independent S063 acceptance remains required before transaction writer work.
 
 #### Historical owner-authorized RCLD-02 batch verification
 
