@@ -5,7 +5,7 @@ Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
 alone assigns acceptance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S067","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S067","kind":"report","commit":"8fee18d9dec924263bf9754a8746bb131427a024","disposition":"candidate"}
 -->
 
 Step ID and title: S067 — Revalidate planned preimages under coordination.
