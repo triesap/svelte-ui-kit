@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
@@ -514,6 +515,164 @@ test("a custom mapping init applies through the guarded path", () => {
     assert.equal(existsSync(abs(consumer, custom.layoutFile)), true);
     // The default mapping was never materialized.
     assert.equal(existsSync(abs(consumer, derived.stateDir)), false);
+  } finally {
+    rmSync(consumer, { recursive: true, force: true });
+  }
+});
+
+test(
+  "the actual bundled registry drives default init, check and satisfied sync",
+  { timeout: 240_000 },
+  () => {
+    const consumer = seedConsumer("<h1>SHIPPED_PAGE</h1>\n");
+    try {
+      const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
+      assert.equal(registry.ok, true, JSON.stringify(registry));
+      if (!registry.ok) return;
+      const first = captureSnapshot(consumer, consumerPaths());
+      assert.equal(first.ok, true);
+      if (!first.ok) return;
+      const planned = planInit({
+        config: DEFAULT_KIT_CONFIG,
+        layoutFile: DEFAULT_KIT_CONFIG.layoutFile,
+        layoutSource: "",
+        snapshot: first.value,
+        registry: registry.value,
+        configHash: "b".repeat(64),
+      });
+      assert.equal(planned.ok, true, JSON.stringify(planned));
+      if (!planned.ok) return;
+      const outcome = applyGuarded(consumer, first.value, planned.value.writes);
+      assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+      assert.equal(
+        existsSync(abs(consumer, `${derived.stateDir}/kit.lock.json`)),
+        true,
+      );
+      assert.equal(existsSync(abs(consumer, derived.kitCss)), true);
+
+      // The generated application must actually check with the shipped registry.
+      const check = spawnSync("pnpm", ["run", "check"], {
+        cwd: consumer,
+        encoding: "utf8",
+        timeout: 180_000,
+        env: { ...process.env, CI: "1" },
+      });
+      assert.equal(check.status, 0, `${check.stdout}\n${check.stderr}`);
+
+      const before = snapshotTree(consumer);
+      const second = captureSnapshot(consumer, consumerPaths());
+      assert.equal(second.ok, true);
+      if (!second.ok) return;
+      const sync = planSync({
+        registry: registry.value,
+        config: DEFAULT_KIT_CONFIG,
+        snapshot: second.value,
+        lock: currentLock(consumer),
+        registryVersion: registry.value.root.registryVersion,
+        registryHash: registry.value.root.contentHash,
+      });
+      assert.equal(sync.ok, true, JSON.stringify(sync));
+      if (!sync.ok) return;
+      if (sync.value.writes.length === 0) {
+        assert.deepEqual(snapshotTree(consumer), before);
+        return;
+      }
+      const replay = applyGuarded(consumer, second.value, sync.value.writes);
+      assert.ok(
+        replay.kind === "no_change" || replay.kind === "applied",
+        JSON.stringify(replay.issues),
+      );
+      assert.deepEqual(snapshotTree(consumer), before);
+    } finally {
+      rmSync(consumer, { recursive: true, force: true });
+    }
+  },
+);
+
+test("a custom mapping satisfied sync replays through the guarded path", () => {
+  const consumer = seedConsumer("<h1>CUSTOM_SYNC_PAGE</h1>\n");
+  try {
+    write(
+      consumer,
+      "app/ui/_kit/kit.json",
+      JSON.stringify({
+        schemaVersion: 1,
+        uiDir: "app/ui",
+        stylesDir: "app/styles",
+        layoutFile: "src/routes/+layout.svelte",
+      }),
+    );
+    const discovery = discoverKitConfig(consumer);
+    assert.equal(discovery.ok, true, JSON.stringify(discovery));
+    if (!discovery.ok) return;
+    const custom = discovery.value.config;
+    const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
+    assert.equal(registry.ok, true, JSON.stringify(registry));
+    if (!registry.ok) return;
+
+    const paths = [
+      `${custom.uiDir}/_kit/kit.json`,
+      `${custom.uiDir}/_kit/kit.lock.json`,
+      `${custom.uiDir}/index.ts`,
+      `${custom.stylesDir}/kit.css`,
+      `${custom.stylesDir}/themes.css`,
+      `${custom.stylesDir}/app.css`,
+      custom.layoutFile,
+      ".gitignore",
+    ];
+    const first = captureSnapshot(consumer, paths);
+    assert.equal(first.ok, true, JSON.stringify(first));
+    if (!first.ok) return;
+    const planned = planInit({
+      config: custom,
+      layoutFile: custom.layoutFile,
+      layoutSource: "",
+      snapshot: first.value,
+      registry: registry.value,
+      configHash: "b".repeat(64),
+    });
+    assert.equal(planned.ok, true, JSON.stringify(planned));
+    if (!planned.ok) return;
+    const outcome = applyGuarded(
+      consumer,
+      first.value,
+      planned.value.writes,
+      custom,
+    );
+    assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+    const before = snapshotTree(consumer);
+
+    const second = captureSnapshot(consumer, paths);
+    assert.equal(second.ok, true, JSON.stringify(second));
+    if (!second.ok) return;
+    const lock = JSON.parse(
+      readFileSync(abs(consumer, `${custom.uiDir}/_kit/kit.lock.json`), "utf8"),
+    ) as KitLock;
+    const sync = planSync({
+      registry: registry.value,
+      config: custom,
+      snapshot: second.value,
+      lock,
+      registryVersion: registry.value.root.registryVersion,
+      registryHash: registry.value.root.contentHash,
+    });
+    assert.equal(sync.ok, true, JSON.stringify(sync));
+    if (!sync.ok) return;
+    if (sync.value.writes.length === 0) {
+      assert.deepEqual(snapshotTree(consumer), before);
+      return;
+    }
+    const replay = applyGuarded(
+      consumer,
+      second.value,
+      sync.value.writes,
+      custom,
+    );
+    assert.ok(
+      replay.kind === "no_change" || replay.kind === "applied",
+      JSON.stringify(replay.issues),
+    );
+    assert.deepEqual(snapshotTree(consumer), before);
   } finally {
     rmSync(consumer, { recursive: true, force: true });
   }
