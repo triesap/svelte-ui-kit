@@ -33,7 +33,7 @@ import {
   journalPath,
   transactionDir,
 } from "../../src/codegen/transaction-types.js";
-import { RECOVERY_ROOTS } from "../helpers/transactions.js";
+import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 const ID = "9999999999999999";
@@ -65,11 +65,11 @@ const OPERATIONS: StageOperation[] = [
   },
 ];
 
-function journalFor(): TransactionJournal {
+function journalFor(root: string): TransactionJournal {
   return {
     schemaVersion: 1,
     transactionId: ID,
-    rootIdentity: "a".repeat(64),
+    rootIdentity: liveRootIdentity(root),
     planDigest: "b".repeat(64),
     phase: "planned",
     operations: [
@@ -105,7 +105,7 @@ function prepare(root: string) {
   const staged = stageOperations(root, STATE_DIR, ID, OPERATIONS);
   assert.equal(staged.ok, true);
   if (!staged.ok) throw new Error("staging failed");
-  const prepared = prepareJournal(journalFor(), staged.value.records);
+  const prepared = prepareJournal(journalFor(root), staged.value.records);
   persistJournal(root, journalPath(STATE_DIR, ID), prepared);
   return { prepared, staged: staged.value };
 }

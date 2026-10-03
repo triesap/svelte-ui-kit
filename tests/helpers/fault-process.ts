@@ -58,15 +58,20 @@ const { prepareJournal, persistJournal } = await load("transaction-journal.js");
 const { applyReplacements } = await load("replace.js");
 const { faultAt } = await load("transaction-hooks.js");
 const { journalPath } = await load("transaction-types.js");
+const { observeRootIdentity, identityDigest } = await load("authority.js");
 
 const css = path.join(root, ..."src/styles/kit.css".split("/"));
 fs.mkdirSync(path.dirname(css), { recursive: true });
 fs.writeFileSync(css, "old css");
 
+const rootIdentityResult = observeRootIdentity(root);
+if (!rootIdentityResult.ok) { console.log("root-identity-failed"); process.exit(6); }
+const rootIdentity = identityDigest(rootIdentityResult.value);
+
 const journal = {
   schemaVersion: 1,
   transactionId: id,
-  rootIdentity: "a".repeat(64),
+  rootIdentity,
   planDigest: "b".repeat(64),
   phase: "planned",
   operations: [{

@@ -30,6 +30,7 @@ import { fail, ok, type ModelResult } from "../registry/errors.js";
 import { observeEntry } from "../project/io.js";
 import { sha256Hex } from "./digest.js";
 import { flushDirectory } from "./durability.js";
+import { identityDigest, observeRootIdentity } from "./authority.js";
 import {
   parseJournal,
   validateJournalTargets,
@@ -194,6 +195,30 @@ function inventoryIssues(
     transactionId,
     journal === null ? emptyOwnedInventory() : ownedInventoryFor(journal),
   );
+}
+
+/**
+ * Bind the recovered journal to the live project root. A journal copied into a
+ * different checkout, or a replaced root, must never authorize restoration or
+ * cleanup of foreign evidence. This is checked before the first mutation, not
+ * before the read-only preflight, so preflight diagnostics keep precedence.
+ */
+function rootBindingIssues(
+  root: string,
+  journal: TransactionJournal,
+): ModelIssue[] {
+  const observed = observeRootIdentity(root);
+  if (!observed.ok) return [...observed.issues];
+  if (identityDigest(observed.value) !== journal.rootIdentity) {
+    return [
+      issue(
+        "RECOVERY_ROOT_MISMATCH",
+        "the journal root identity does not match the live project root; refusing to recover foreign evidence",
+        "journal.json",
+      ),
+    ];
+  }
+  return [];
 }
 
 /** Non-following ancestry check for a logical target. */
@@ -609,11 +634,15 @@ export function recoverTransaction(
   if (inventory.length > 0) return refuse(transactionId, inventory);
 
   if (journal.phase === "planned") {
+    const binding = rootBindingIssues(root, journal);
+    if (binding.length > 0) return refuse(transactionId, binding);
     removeOwnedEntries(root, stateDir, transactionId);
     return { status: "cleaned", transactionId, issues: [] };
   }
 
   if (journal.phase === "published" || journal.phase === "cleaned") {
+    const binding = rootBindingIssues(root, journal);
+    if (binding.length > 0) return refuse(transactionId, binding);
     return recoverPublished(root, stateDir, transactionId, journal, hooks);
   }
 
@@ -656,6 +685,8 @@ export function recoverTransaction(
       canonicalDigest,
     });
     if (state === "published") {
+      const binding = rootBindingIssues(root, journal);
+      if (binding.length > 0) return refuse(transactionId, binding);
       return recoverPublished(root, stateDir, transactionId, journal, hooks);
     }
     if (state === "ambiguous") {
@@ -677,6 +708,8 @@ export function recoverTransaction(
     issues.push(...preflightRollback(root, stateDir, transactionId, operation));
   }
   if (issues.length > 0) return refuse(transactionId, issues);
+  const binding = rootBindingIssues(root, journal);
+  if (binding.length > 0) return refuse(transactionId, binding);
   for (const operation of [...journal.operations].reverse()) {
     rollbackOperation(root, stateDir, journal, operation, hooks);
   }

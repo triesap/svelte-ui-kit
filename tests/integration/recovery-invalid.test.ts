@@ -112,6 +112,20 @@ test("a journal identity that disagrees with its directory is refused", () => {
   });
 });
 
+test("a journal whose root identity does not match the live root is refused without cleanup", () => {
+  withRoot((root) => {
+    const id = "abababababababab";
+    writeJournal(root, id, serializeJournal(baseJournal(id)));
+    const recovered = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
+    assert.equal(recovered.status, "refused");
+    if (recovered.status === "refused") {
+      assert.equal(recovered.issues[0].code, "RECOVERY_ROOT_MISMATCH");
+    }
+    // The journal evidence is retained rather than cleaned for a foreign root.
+    assert.equal(existsSync(abs(root, transactionDir(STATE_DIR, id))), true);
+  });
+});
+
 test("age and PID alone cannot authorize destructive cleanup", () => {
   withRoot((root) => {
     const id = "ffffffffffffffff";
