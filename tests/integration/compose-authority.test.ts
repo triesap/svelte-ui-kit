@@ -204,3 +204,77 @@ test("composing without the original snapshot is a typed refusal", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+const INSTALLED_MANIFEST = {
+  name: "consumer",
+  type: "module",
+  dependencies: {
+    svelte: "5.57.1",
+    "@sveltejs/kit": "2.70.3",
+    "bits-ui": "2.19.3",
+    "@internationalized/date": "3.12.4",
+  },
+};
+
+function writeInstalledDependencies(root: string): void {
+  write(root, "package.json", JSON.stringify(INSTALLED_MANIFEST));
+  for (const [name, version] of Object.entries(
+    INSTALLED_MANIFEST.dependencies,
+  )) {
+    write(
+      root,
+      `node_modules/${name}/package.json`,
+      JSON.stringify({ name, version }),
+    );
+  }
+}
+
+test("a post-planning installed-package metadata change is refused", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-compose-installed-"));
+  try {
+    writeInstalledDependencies(root);
+    const original =
+      "<script>let original = 1;</script>\n{@render children()}\n";
+    write(root, DEFAULT_KIT_CONFIG.layoutFile, original);
+
+    const { snapshot, writes } = planRealInit(root, original);
+    // The resolved installed manifest is captured as physical integrity
+    // evidence alongside the selected manifest and manager lockfiles.
+    assert.ok(
+      snapshot.environment.evidence.some(
+        (entry) =>
+          entry.path === "node_modules/svelte/package.json" &&
+          entry.kind === "file",
+      ),
+      "the resolved installed manifest must be captured as evidence",
+    );
+
+    // A post-planning installed metadata change (Svelte downgraded) must be a
+    // stale-authority refusal, never silently applied.
+    write(
+      root,
+      "node_modules/svelte/package.json",
+      JSON.stringify({ name: "svelte", version: "4.2.0" }),
+    );
+
+    const composed = composeApplyPlan({
+      root,
+      config: DEFAULT_KIT_CONFIG,
+      writes,
+      snapshot,
+    });
+    assert.equal(composed.ok, true, JSON.stringify(composed));
+    if (!composed.ok) return;
+    const validated = validateApplyPlan(composed.value);
+    assert.equal(validated.ok, true, JSON.stringify(validated));
+    if (!validated.ok) return;
+    const outcome = applyPlan(validated.value);
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      outcome.issues.some((issue) => issue.code === "AUTHORITY_READ_CHANGED"),
+      JSON.stringify(outcome.issues),
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

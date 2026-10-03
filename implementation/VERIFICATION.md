@@ -77,79 +77,59 @@ only writing modes.
 
 #### Current RCLD-04 complete-boundary qualification
 
-Independent review 12 of `9d94bcea2d12e682414244519a7f42cc851c4207`
-requests changes. Follow the current RCLD04-R2-1/2/3/4/5 dispositions in the
-sole governing COMMIT_SEQUENCE, plus ALL remaining original S064–S077 criteria.
+Independent review 13 of `47b0fe83b877795cfe18440ed5f3e773924600c9`
+requests changes. Follow current RCLD04-R2-1/2/3/4/5 dispositions in the sole
+governing COMMIT_SEQUENCE and ALL remaining original S064–S077 criteria.
 Preserve 63 accepted/14 pending/126 not_started and the accepted planner.
-The original 22 compiled reviewer cases now produce safe outcomes. Six additional
-cases still prove transferable validation authority, omitted captured environment,
-deletion of unrecorded numeric backup files/directories, contradictory canonical
-absence rollback and cleanup despite a canonical mode edit. Whole-feature
-acceptance remains pending. Earlier repair claims below are superseded where
-review 12 identifies incomplete behavior.
+There is no intermediate acceptance gate for remaining R2 work; S078 requires
+independent Codex acceptance of the entire completed RCLD-04 boundary.
 
-Fresh independent build/typecheck/format/lint, unit 276, integration 383,
-validation 0/0 and contracts 137 pass with zero skips and retained raw outputs
-and underlying exits. Broader browser/fixture/components/workflow/platform and
-reference lanes were not freshly rerun by Codex on this rejected candidate.
+Original 22 and six review-12 compiled cases now produce safe outcomes. Four
+additional cases reproduce installed-dependency drift omission, published
+canonical identity contradiction cleanup, missing-witness mode-check bypass and
+unowned temporary-journal-name deletion. A real flush-call trace shows incomplete
+cross-directory rename/lock-stage parent flush coverage. Preserve the new
+WeakSet authority, captured manifest/manager/absence, numeric inventory, physical
+witness, flush and live recovery root-binding progress; whole groups stay open.
+Owned-directory rollback, guarded ignore integration, complete installed and
+projected-lock authority, recovery plan/owner/coordination/tail binding and full
+custom/update/retirement/metadata/conflict/process qualification remain software.
 
-The five repair commits `e8d5f9e`, `ba40cfe`, `a6dea5d`, `33f6db4` and
-`9d94bce` provide useful seal, live/staged guard, physical witness, mode/scan/
-journal and typed release improvements. They do not complete immutable authority,
-exact recursive ownership or uniquely proven publication in all supported cases.
-The returned implementation report acknowledges unfinished owned-directory
-rollback, standalone recovery binding, captured ignore integration, durability
-ordering and composed custom/update/retirement/metadata/conflict qualification.
-The original snapshot layout-edit probe must supply the snapshot to exercise
-actual authority; omission only proves COMPOSE_SNAPSHOT_REQUIRED.
+Fresh independent build/typecheck/format/lint, unit 276, integration 394 and
+validation 0/0 pass with zero skips. Contract regression source is unchanged;
+its author final raw result 137/137 was audited, not freshly rerun by Codex.
+Final author raw logs/underlying exits at `47b0fe8` and code revision `d9d7c68`
+cover frozen strict install, static/tests/fixture/Chromium/workflow and unchanged
+reference guards. They are implementation evidence, not independent acceptance.
+The previous review-11 summary-only limitation is historical; this batch retains
+per-lane raw logs and exits. Accurately distinguish each source/artifact/platform.
 
-Review-12 repair progress on top of `9d94bce`: `f575bf0` registers validated
-plans in a module-owned `WeakSet` (a spread with recomputed digests can no
-longer transfer authority), carries the captured manifest/manager/absence
-evidence into the composed read set, records and binds the publication witness
-mode/transaction/digest, removes legacy byte-equality publication, refuses
-contradictory canonical absence, validates canonical kind/mode before cleanup
-and derives the owned inventory from validated journal records;
-`f43b4d1` orders durable flushes across staging, backup, replacement, lock
-staging/publication and recovery, and `d9d7c68` binds recovery journals to the
-live project root. Both green: build, typecheck,
-format:check, lint, unit 276/276, integration 394/394 (zero skips), validation
-0/0 and contracts 137/137, and the reviewer's six additional compiled cases plus
-the original 22 now produce safe outcomes. Remaining and not claimed complete:
-owned absent-directory creation/rollback, captured guarded ignore integration,
-standalone recovery plan/owner binding with its own exclusive coordination
-(the live root identity is now bound before recovery mutation), and composed
-custom/update/retirement/metadata/conflict qualification. S064–S077 remain
-`committed_pending_review`; only Codex accepts.
+At each green checkpoint run affected causal tests plus static/contracts. At the
+FINAL composed candidate run frozen strict install, build/typecheck/format/lint,
+unit/integration/registry/CLI/harness/components including strict declaration
+controls, fixture check/build/SSR/browser, projection generation/validation/
+contract regressions, checksum-qualified actionlint and applicable unchanged
+reference fmt/check/test. Serialize fixture writers. Capture full raw outputs and
+underlying exits BEFORE presentation truncation; retain failed attempts, versions,
+source/artifact/platform/configuration identity at ignored repository-relative
+paths. Do not treat a pipeline status or broad result enum as full qualification.
 
-At each green repair run affected causal checks and established static/contracts.
-At the FINAL composed candidate run frozen strict install, build/typecheck/format/
-lint, unit/integration/registry/CLI/harness/components (strict declaration controls),
-fixture check/build/SSR/browser, projection generation/validation/contract tests,
-checksum-qualified workflow validation and applicable reference fmt/check/test.
-Serialize fixture writers. Retain complete raw logs, actual underlying exits,
-failed attempts, versions and source/artifact/platform/configuration identity at
-ignored repository-relative evidence paths. Capture command status before any
-presentation truncation; a tail pipeline status does not prove the check passed.
-The previous batch retained only a summary, not raw qualification logs; its author
-results are distinct from fresh independent verification and acceptance.
+Use the actual registry and original immutable snapshot through real production
+composition/application for every default/custom init/add/sync, update, retirement,
+metadata-only, satisfied and conflict case. Compare complete trees, bytes, modes,
+kinds, links, ownership and unrelated content; check/build and inspect real emitted
+and rendered consumers. Process tests must use the supported coordinated restart
+path, preserving unknown/stale owner evidence and exact safe diagnostics; no
+uncoordinated recovery shortcut. Qualify actual cross-device refusal, file and
+both-directory flush ordering/failure and unchanged/edited/missing publication
+witnesses. Record eligible automation and genuinely unrun platforms honestly.
 
-Use actual registry/planners and the complete fresh/default/custom lifecycle,
-metadata-only/no-change/update/retirement/conflict cases; compare entire trees and
-verify real generated consumers' check/build and emitted/rendered behavior.
-Process tests must qualify the actual coordinated restart path without bypassing
-stale ownership. Assert exact safe outcomes/evidence at every stage/backup/replace/
-progress/publication/cleanup/release boundary, including edited/missing lock
-and staged evidence and unchanged-byte locks. Qualify actual same-device refusal
-and durability enforcement, not just temp-device equality or SIGKILL.
-Accurately record unrun platforms and preserve AC20's exact fixture-only upstream
-two-diagnostic exception and strict 17 controls. No new suppression is authorized.
-
-Reconcile S064–S077 and repair reports to actual coverage. Continue after each
-green checkpoint through all eligible work in RCLD-04; stop before S078 for
-independent Codex acceptance or a legitimate runtime/user/external stop. The
-existing exact RCLD-04 authorization remains active; do not redo bookkeeping or
-create a second plan/tracker. Pi records implementation/evidence, not acceptance.
+Preserve AC20's exact fixture-only two upstream Bits TS2590 exception and strict
+17 controls; no extra suppression, weakened tests, accessibility bypass or SSR
+change. Reconcile every S064–S077 and repair report to actual final coverage;
+passing old probes does not supersede unfinished original criteria. Continue
+all eligible work after each green checkpoint until the full boundary or a
+legitimate observed stop. Pi records implementation/evidence; Codex accepts.
 
 #### Historical owner-authorized RCLD-03 batch verification
 

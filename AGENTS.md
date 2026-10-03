@@ -19,8 +19,8 @@ references.
   acceptance, checkpoint commits and dispatch between coding periods.
 - Complete one checkpoint at a time in documented order. Current
   `pfc through RCLD-04` delegates all green repair commits and full S064–S077
-  integration/qualification to Pi. Follow independent review 12 and
-  RCLD04-R2-1/2/3/4/5 in the governing plan. Review 12 requests changes to the
+  integration/qualification to Pi. Follow independent review 13 and
+  RCLD04-R2-1/2/3/4/5 in the governing plan. Review 13 requests changes to the
   transaction/recovery candidate; preserve all 63 accepted checkpoints and
   the already-completed RCLD-03 acceptance/authorization bookkeeping. Continue
   after every green checkpoint through the whole safety boundary. S064–S077

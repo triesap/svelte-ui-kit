@@ -27,7 +27,11 @@ import {
   LOCKFILE_MANAGERS,
   type ManagerEvidence,
 } from "./dependency-instructions.js";
-import { observeInstalled, type InstalledObservation } from "./dependencies.js";
+import {
+  observeInstalled,
+  resolveInstalledManifestPath,
+  type InstalledObservation,
+} from "./dependencies.js";
 import {
   detectDefaultProject,
   discoverKitConfig,
@@ -132,10 +136,14 @@ function enumerateInstalledNames(root: string): {
 }
 
 /** Capture exact physical evidence of the manifest and manager lockfiles. */
-function captureEvidence(root: string): EnvironmentEvidence[] {
+function captureEvidence(
+  root: string,
+  extraLogicalPaths: readonly string[] = [],
+): EnvironmentEvidence[] {
   const logicalPaths = [
     "package.json",
     ...LOCKFILE_MANAGERS.map((entry) => entry.file),
+    ...extraLogicalPaths,
   ];
   const evidence: EnvironmentEvidence[] = [];
   for (const logicalPath of logicalPaths) {
@@ -186,6 +194,35 @@ function captureEvidence(root: string): EnvironmentEvidence[] {
 }
 
 /**
+ * Logical paths of the installed manifests resolved under the selected root.
+ * A resolved manifest that lives in an ancestor `node_modules` outside the root
+ * has no root-relative logical path and is excluded here; the captured
+ * `installed` observation still governs planning, and revalidating an
+ * out-of-root layout is not a supported same-root guarantee.
+ */
+function installedManifestPaths(
+  root: string,
+  names: ReadonlySet<string>,
+): string[] {
+  const resolvedRoot = path.resolve(root);
+  const paths: string[] = [];
+  for (const name of names) {
+    const abs = resolveInstalledManifestPath(resolvedRoot, name);
+    if (abs === null) continue;
+    const relative = path.relative(resolvedRoot, abs);
+    if (
+      relative === "" ||
+      relative.startsWith("..") ||
+      path.isAbsolute(relative)
+    ) {
+      continue;
+    }
+    paths.push(relative.split(path.sep).join("/"));
+  }
+  return paths;
+}
+
+/**
  * Capture the complete read-only dependency/manager/project evidence for one
  * selected package root. The result is plain deeply-immutable data; no closure
  * or handle is retained, and no captured value can be mutated through a lookup,
@@ -204,7 +241,7 @@ export function captureEnvironment(root: string): CapturedEnvironment {
   const kitConfig = deepFreeze(discoverKitConfig(root));
   return deepFreeze({
     manifest,
-    evidence: captureEvidence(root),
+    evidence: captureEvidence(root, installedManifestPaths(root, names)),
     installed,
     enumerationComplete: complete,
     manager: managerResult.ok

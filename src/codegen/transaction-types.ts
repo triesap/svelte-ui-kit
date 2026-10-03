@@ -145,6 +145,16 @@ export function journalPath(stateDir: string, transactionId: string): string {
 }
 
 /**
+ * The one exact temporary journal name this transaction may ever create.
+ * Ownership is the recorded transaction id, not a `journal.json.tmp-` prefix:
+ * an unrelated notes file that merely resembles a temporary journal is not
+ * owned and must be preserved.
+ */
+export function journalTempName(transactionId: string): string {
+  return `journal.json.tmp-${transactionId}`;
+}
+
+/**
  * The durable publication-intent witness, written before the canonical lock
  * rename and removed with the owned transaction state.
  */
@@ -153,6 +163,11 @@ export function publicationIntentPath(
   transactionId: string,
 ): string {
   return `${transactionDir(stateDir, transactionId)}/publication.json`;
+}
+
+/** The one exact temporary publication-intent name this transaction may create. */
+export function publicationIntentTempName(transactionId: string): string {
+  return `publication.json.tmp-${transactionId}`;
 }
 
 export function stagedDir(stateDir: string, transactionId: string): string {

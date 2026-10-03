@@ -40,7 +40,7 @@ import {
 } from "../registry/errors.js";
 import { intersectRangesDetailed } from "../registry/dependency-plan.js";
 import type { DependencyPlan } from "../registry/dependency-plan.js";
-import { readJsonObject, type JsonObservation } from "./io.js";
+import { readJsonObject, observeEntry, type JsonObservation } from "./io.js";
 
 export const DECLARATION_FIELDS = [
   "dependencies",
@@ -134,6 +134,42 @@ export function observeInstalled(
 export function installedVersion(root: string, name: string): string | null {
   const observation = observeInstalled(root, name);
   return observation.kind === "value" ? observation.version : null;
+}
+
+/**
+ * Resolve the exact installed `package.json` path for `name` in the selected
+ * package's resolution context, or `null` when no regular installed manifest is
+ * found. This mirrors `observeInstalled`'s nearest-`node_modules`-then-ancestors
+ * walk so captured integrity evidence points at the same physical file the
+ * planner reasoned about. A nonregular or unreadable candidate is reported as
+ * `null` rather than followed.
+ */
+export function resolveInstalledManifestPath(
+  root: string,
+  name: string,
+): string | null {
+  const segments = name.split("/").filter((segment) => segment !== "");
+  if (
+    segments.length === 0 ||
+    segments.some((segment) => segment === ".." || segment === ".")
+  ) {
+    return null;
+  }
+  let current = path.resolve(root);
+  for (;;) {
+    const candidate = path.join(
+      current,
+      "node_modules",
+      ...segments,
+      "package.json",
+    );
+    const entry = observeEntry(candidate);
+    if (entry.kind === "file") return candidate;
+    if (entry.kind !== "absent") return null;
+    const parent = path.dirname(current);
+    if (parent === current) return null;
+    current = parent;
+  }
 }
 
 interface Declaration {

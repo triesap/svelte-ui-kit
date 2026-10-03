@@ -51,8 +51,10 @@ import {
 } from "./publication-intent.js";
 import {
   backupsDir,
+  journalTempName,
   lockPath,
   publicationIntentPath,
+  publicationIntentTempName,
   stagedDir,
   transactionDir,
   transactionsDir,
@@ -473,7 +475,10 @@ function rollbackOperation(
     }
   }
   fireHooks(hooks, "before", "durability:recovery", operation.path);
+  // The restore rename moves the owned backup into the live target directory;
+  // flush the target directory and the backup directory it left.
   flushDirectory(path.dirname(absOf(root, operation.path)));
+  flushDirectory(path.dirname(backup));
   fireHooks(hooks, "after", "durability:recovery", operation.path);
 }
 
@@ -491,19 +496,24 @@ function removeOwnedEntries(
   transactionId: string,
 ): void {
   const dir = absOf(root, transactionDir(stateDir, transactionId));
+  // Remove only the exact owned top-level entries. The two temporary names are
+  // owned by their recorded transaction id, never by a prefix pattern, so an
+  // unrelated notes file that merely resembles a temporary journal survives.
+  const ownedTempNames = new Set<string>([
+    journalTempName(transactionId),
+    publicationIntentTempName(transactionId),
+  ]);
   for (const name of readdirSync(dir)) {
-    if (name === "journal.json" || /^journal\.json\.tmp-/.test(name)) continue;
     const abs = path.join(dir, name);
     if (OWNED_ENTRIES.has(name)) {
       rmSync(abs, { recursive: true, force: true });
+      continue;
+    }
+    if (ownedTempNames.has(name)) {
+      rmSync(abs, { force: true });
     }
   }
   rmSync(path.join(dir, "journal.json"), { force: true });
-  for (const name of readdirSync(dir)) {
-    if (/^journal\.json\.tmp-/.test(name)) {
-      rmSync(path.join(dir, name), { force: true });
-    }
-  }
   rmdirSync(dir);
 }
 
@@ -823,7 +833,19 @@ function verifyPublishedEvidence(
     publicationIntentPath(stateDir, transactionId),
   );
   if (Array.isArray(intentRead)) return [...intentRead];
-  if (intentRead === null) return [];
+  if (intentRead === null) {
+    // A missing witness is not by itself proof of a legitimate cleanup tail.
+    // Without the durable physical witness there is no evidence that the
+    // canonical lock is the exact staged publication image, so fail closed
+    // rather than deleting evidence.
+    return [
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "the publication witness is missing; refusing to treat its absence as proof of a completed publication",
+        lockPath(stateDir),
+      ),
+    ];
+  }
   if (journal.lock === null) {
     return [
       issue(
@@ -850,6 +872,22 @@ function verifyPublishedEvidence(
       issue(
         "RECOVERY_AMBIGUOUS_PUBLICATION",
         "the published canonical lock mode does not match the recorded publication evidence; preserving it rather than cleaning",
+        lockPath(stateDir),
+      ),
+    ];
+  }
+  // The canonical lock must be the *exact physical image* recorded as the
+  // staged publication witness. Equal bytes/mode at a different inode is a
+  // contradiction, not a completed publication.
+  if (
+    intentRead.staged === null ||
+    entry.stats.dev !== intentRead.staged.device ||
+    entry.stats.ino !== intentRead.staged.inode
+  ) {
+    return [
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "the published canonical lock is not the recorded staged publication image; preserving evidence rather than cleaning",
         lockPath(stateDir),
       ),
     ];

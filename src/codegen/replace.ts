@@ -35,6 +35,7 @@ import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
   backupsDir,
   journalPath,
+  stagedDir,
   type TransactionPhase,
 } from "./transaction-types.js";
 import type { StagedBatch, StagedRecord } from "./stage.js";
@@ -143,6 +144,7 @@ export function applyReplacements(
 ): ReplacementResult {
   const backupsLogical = backupsDir(stateDir, journal.transactionId);
   const backupsAbs = absOf(root, backupsLogical);
+  const stagedAbs = absOf(root, stagedDir(stateDir, journal.transactionId));
   const journalLogical = journalPath(stateDir, journal.transactionId);
   let current = journal;
 
@@ -186,7 +188,11 @@ export function applyReplacements(
         mkdirSync(path.dirname(targetAbs), { recursive: true });
         renameSync(targetAbs, path.join(backupsAbs, operation.backupId));
         fireHooks(hooks, "before", "durability:backup", operation.path);
+        // A cross-directory rename affects both parents: the backup directory
+        // gained an entry and the target's directory lost one. Flush both so a
+        // crash cannot resurrect the live file or lose the owned backup.
         flushDirectory(backupsAbs);
+        flushDirectory(path.dirname(targetAbs));
         fireHooks(hooks, "after", "durability:backup", operation.path);
         fireHooks(hooks, "after", "backup:move", operation.path);
       }
@@ -213,7 +219,10 @@ export function applyReplacements(
         mkdirSync(path.dirname(targetAbs), { recursive: true });
         renameSync(absOf(root, record.stagedPath), targetAbs);
         fireHooks(hooks, "before", "durability:replace", operation.path);
+        // The staged image left its directory and entered the target's
+        // directory; flush both parents of the cross-directory rename.
         flushDirectory(path.dirname(targetAbs));
+        flushDirectory(stagedAbs);
         fireHooks(hooks, "after", "durability:replace", operation.path);
         fireHooks(hooks, "after", "replace:apply", operation.path);
       }

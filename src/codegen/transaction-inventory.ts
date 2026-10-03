@@ -19,7 +19,9 @@ import { observeEntry } from "../project/io.js";
 import type { TransactionJournal } from "./transaction-journal.js";
 import {
   backupsDir,
+  journalTempName,
   progressDir,
+  publicationIntentTempName,
   stagedDir,
   transactionDir,
 } from "./transaction-types.js";
@@ -90,7 +92,7 @@ function checkDirectory(
   dirAbs: string,
   allowedFiles: ReadonlySet<string>,
   allowedDirs: ReadonlySet<string>,
-  allowTempJournal: boolean,
+  allowedTempFiles: ReadonlySet<string>,
 ): ModelIssue[] {
   const entry = observeEntry(dirAbs);
   if (entry.kind === "absent") return [];
@@ -124,7 +126,21 @@ function checkDirectory(
   }
   const issues: ModelIssue[] = [];
   for (const name of names) {
-    if (allowTempJournal && /^journal\.json\.tmp-/.test(name)) continue;
+    if (allowedTempFiles.has(name)) {
+      // Only the exact temporary names this transaction records are owned; a
+      // prefix or pattern match is never ownership.
+      const tempKind = observeEntry(path.join(dirAbs, name)).kind;
+      if (tempKind !== "file" && tempKind !== "absent") {
+        issues.push(
+          inventoryIssue(
+            transactionId,
+            `recorded temporary transaction entry ${name} is not a regular file (${tempKind}); refusing owned cleanup`,
+            name,
+          ),
+        );
+      }
+      continue;
+    }
     const child = path.join(dirAbs, name);
     const kind = observeEntry(child).kind;
     if (kind === "symlink") {
@@ -189,12 +205,16 @@ export function verifyOwnedInventory(
   const abs = (logical: string): string =>
     path.join(root, ...logical.split("/"));
   const txDir = abs(transactionDir(stateDir, transactionId));
+  const allowedTempFiles = new Set<string>([
+    journalTempName(transactionId),
+    publicationIntentTempName(transactionId),
+  ]);
   const issues = checkDirectory(
     transactionId,
     txDir,
     inventory.topLevelFiles,
     inventory.topLevelDirs,
-    true,
+    allowedTempFiles,
   );
   if (issues.length > 0) return issues;
   issues.push(
@@ -203,7 +223,7 @@ export function verifyOwnedInventory(
       abs(stagedDir(stateDir, transactionId)),
       inventory.staged,
       new Set<string>(),
-      false,
+      new Set<string>(),
     ),
   );
   issues.push(
@@ -212,7 +232,7 @@ export function verifyOwnedInventory(
       abs(backupsDir(stateDir, transactionId)),
       inventory.backups,
       new Set<string>(),
-      false,
+      new Set<string>(),
     ),
   );
   issues.push(
@@ -221,7 +241,7 @@ export function verifyOwnedInventory(
       abs(progressDir(stateDir, transactionId)),
       inventory.progress,
       new Set<string>(),
-      false,
+      new Set<string>(),
     ),
   );
   return issues;

@@ -191,6 +191,10 @@ export function publishLock(
     chmodSync(stagedLock, effectiveMode);
     fireHooks(hooks, "before", "durability:lock-stage", lockPath(stateDir));
     flushFile(stagedLock);
+    // The staged lock's directory entry must be durable before the publication
+    // intent records its physical identity; otherwise a crash could preserve an
+    // intent that names an image the filesystem never durably created.
+    flushDirectory(path.dirname(stagedLock));
     fireHooks(hooks, "after", "durability:lock-stage", lockPath(stateDir));
     fireHooks(hooks, "after", "lock:stage", lockPath(stateDir));
 
@@ -229,7 +233,10 @@ export function publishLock(
     renameSync(stagedLock, destination);
     chmodSync(destination, effectiveMode);
     fireHooks(hooks, "before", "durability:lock-publish", lockPath(stateDir));
+    // The canonical rename is cross-directory: flush the destination directory
+    // that gained the lock and the staged directory that lost it.
     flushDirectory(path.dirname(destination));
+    flushDirectory(path.dirname(stagedLock));
     fireHooks(hooks, "after", "durability:lock-publish", lockPath(stateDir));
     fireHooks(hooks, "after", "lock:publish", lockPath(stateDir));
   } catch (error) {

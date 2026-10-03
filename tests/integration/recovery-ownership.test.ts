@@ -22,6 +22,7 @@ import {
   backupsDir,
   journalPath,
   lockPath,
+  transactionDir,
   transactionsDir,
   writerLockDir,
 } from "../../src/codegen/transaction-types.js";
@@ -290,5 +291,37 @@ test("an unreadable transaction scan is a typed refusal, not an empty namespace"
     assert.equal(recovered.length, 1);
     assert.equal(recovered[0].status, "refused");
     assert.equal(recovered[0].issues[0].code, "RECOVERY_SCAN_UNSAFE");
+  });
+});
+
+test("an unrecorded temporary-journal-named file blocks cleanup and is retained", () => {
+  withRoot((root) => {
+    const plan = sealed(makeGuardedPlan(root));
+    let extra = "";
+    const outcome = applyPlan(plan, {
+      before: (boundary) => {
+        if (boundary !== "cleanup:staged") return;
+        const ids = readdirSync(abs(root, transactionsDir(GUARDED_STATE)));
+        extra = `${transactionDir(GUARDED_STATE, ids[0] as string)}/journal.json.tmp-user-notes`;
+        write(root, extra, "UNOWNED TEMP-NAMED NOTES");
+      },
+    });
+    assert.equal(
+      outcome.kind,
+      "committed_needs_cleanup",
+      JSON.stringify(outcome.issues),
+    );
+    assert.equal(
+      readFileSync(abs(root, extra), "utf8"),
+      "UNOWNED TEMP-NAMED NOTES",
+    );
+    // Only the exact recorded temporary journal name (journal.json.tmp-<id>) is
+    // owned; a prefix match would delete this unrelated notes file.
+    const recovered = recoverTransactions(root, GUARDED_STATE, ROOTS);
+    assert.equal(recovered[0].status, "refused", JSON.stringify(recovered));
+    assert.equal(
+      readFileSync(abs(root, extra), "utf8"),
+      "UNOWNED TEMP-NAMED NOTES",
+    );
   });
 });

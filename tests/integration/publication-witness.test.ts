@@ -2,10 +2,13 @@ import assert from "node:assert/strict";
 import {
   chmodSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
+  renameSync,
   rmSync,
   statSync,
   unlinkSync,
+  writeFileSync,
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -13,7 +16,11 @@ import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { recoverTransactions } from "../../src/codegen/recovery.js";
-import { lockPath } from "../../src/codegen/transaction-types.js";
+import {
+  lockPath,
+  publicationIntentPath,
+  transactionsDir,
+} from "../../src/codegen/transaction-types.js";
 import { RECOVERY_ROOTS } from "../helpers/transactions.js";
 import {
   abs,
@@ -164,6 +171,85 @@ test("a post-publication lock edit does not roll back committed source", () => {
     assert.equal(
       readFileSync(abs(root, lockPath(GUARDED_STATE)), "utf8"),
       "edited after publication",
+    );
+  });
+});
+
+test("an equal-byte canonical at a different inode is not a proven publication", () => {
+  withRoot((root) => {
+    const plan = sealed(makeGuardedPlan(root));
+    const outcome = applyPlan(plan, {
+      // Interrupt owned cleanup after the canonical rename has durably
+      // completed, then swap the canonical for a fresh inode carrying identical
+      // bytes and mode.
+      before: (boundary) => {
+        if (boundary === "cleanup:staged") {
+          const canonical = abs(root, lockPath(GUARDED_STATE));
+          const bytes = readFileSync(canonical);
+          const replacement = `${canonical}.physical-replacement`;
+          writeFileSync(replacement, bytes, { mode: 0o644 });
+          renameSync(replacement, canonical);
+          throw new Error("replaced the published physical image");
+        }
+      },
+    });
+    assert.equal(
+      outcome.kind,
+      "committed_needs_cleanup",
+      JSON.stringify(outcome.issues),
+    );
+    const recovered = recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS);
+    assert.equal(recovered[0].status, "refused", JSON.stringify(recovered));
+    assert.ok(
+      recovered[0].issues.some(
+        (issue) => issue.code === "RECOVERY_AMBIGUOUS_PUBLICATION",
+      ),
+      JSON.stringify(recovered[0].issues),
+    );
+    assert.equal(
+      readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
+      "new css\n",
+    );
+  });
+});
+
+test("a missing witness with an edited canonical mode refuses cleanup", () => {
+  withRoot((root) => {
+    const plan = sealed(makeGuardedPlan(root));
+    const outcome = applyPlan(plan, {
+      before: (boundary) => {
+        if (boundary === "cleanup:staged") {
+          const ids = readdirSync(abs(root, transactionsDir(GUARDED_STATE)));
+          const witness = abs(
+            root,
+            publicationIntentPath(GUARDED_STATE, ids[0] as string),
+          );
+          chmodSync(abs(root, lockPath(GUARDED_STATE)), 0o700);
+          unlinkSync(witness);
+          throw new Error("witness removed and canonical mode edited");
+        }
+      },
+    });
+    assert.equal(
+      outcome.kind,
+      "committed_needs_cleanup",
+      JSON.stringify(outcome.issues),
+    );
+    const recovered = recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS);
+    assert.equal(recovered[0].status, "refused", JSON.stringify(recovered));
+    assert.ok(
+      recovered[0].issues.some(
+        (issue) => issue.code === "RECOVERY_AMBIGUOUS_PUBLICATION",
+      ),
+      JSON.stringify(recovered[0].issues),
+    );
+    assert.equal(
+      statSync(abs(root, lockPath(GUARDED_STATE))).mode & 0o777,
+      0o700,
+    );
+    assert.equal(
+      readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
+      "new css\n",
     );
   });
 });
