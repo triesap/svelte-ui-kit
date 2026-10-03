@@ -29,6 +29,7 @@ import { canonicalJson } from "./serialize.js";
 import type { ChangeOperation } from "./plan.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
+  APPROVED_IGNORE_FILES,
   isTransactionId,
   lockPath,
   TRANSACTION_PHASES,
@@ -89,6 +90,13 @@ export interface TransactionJournal {
    * older/legacy records, which therefore claim no owned ancestry.
    */
   readonly createdDirs?: readonly JournalCreatedDir[];
+  /**
+   * The narrowly approved application ignore files this batch edits. Recorded
+   * so journal validation, recovery, rollback and restart recognize the same
+   * ignore role instead of rejecting the guarded ignore operation. Absent on
+   * legacy records, which therefore claim no ignore authority.
+   */
+  readonly ignoreFiles?: readonly string[];
 }
 
 const JOURNAL_KEYS = [
@@ -173,7 +181,10 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
     ]);
   }
   const problems: string[] = [];
-  exactlyKeys(parsed, JOURNAL_KEYS, problems, "journal", ["createdDirs"]);
+  exactlyKeys(parsed, JOURNAL_KEYS, problems, "journal", [
+    "createdDirs",
+    "ignoreFiles",
+  ]);
 
   if (parsed["schemaVersion"] !== 1) {
     problems.push("journal schemaVersion must be 1");
@@ -361,6 +372,38 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
     }
   }
 
+  let ignoreFiles: string[] | undefined;
+  const rawIgnoreFiles = parsed["ignoreFiles"];
+  if (rawIgnoreFiles !== undefined) {
+    if (!Array.isArray(rawIgnoreFiles)) {
+      problems.push("journal ignoreFiles must be an array");
+    } else {
+      ignoreFiles = [];
+      const seenIgnored = new Set<string>();
+      const approved = new Set(
+        APPROVED_IGNORE_FILES.map((e) => e.toLowerCase()),
+      );
+      for (const [index, raw] of rawIgnoreFiles.entries()) {
+        const label = `journal ignoreFiles[${index}]`;
+        if (!isSafeLogicalRelativePath(raw)) {
+          problems.push(`${label} path is not a safe logical relative path`);
+          continue;
+        }
+        const folded = raw.toLowerCase();
+        if (!approved.has(folded)) {
+          problems.push(`${label} ${raw} is not an approved ignore file`);
+          continue;
+        }
+        if (seenIgnored.has(folded)) {
+          problems.push(`${label} duplicates ${raw}`);
+          continue;
+        }
+        seenIgnored.add(folded);
+        ignoreFiles.push(raw);
+      }
+    }
+  }
+
   if (problems.length > 0) {
     return fail(
       problems.map((message) =>
@@ -378,6 +421,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
     operations,
     lock,
     ...(createdDirs === undefined ? {} : { createdDirs }),
+    ...(ignoreFiles === undefined ? {} : { ignoreFiles }),
   });
 }
 
@@ -404,12 +448,16 @@ export function validateJournalTargets(
   const problems = [];
   const transient = `${roots.stateDir}/.svelte-ui-kit`;
   const canonicalLock = lockPath(roots.stateDir);
+  const approvedIgnore = new Set(
+    (journal.ignoreFiles ?? []).map((entry) => entry.toLowerCase()),
+  );
   for (const operation of journal.operations) {
     const target = operation.path;
     const within =
       isWithin(target, roots.uiDir) ||
       isWithin(target, roots.stylesDir) ||
-      target === roots.layoutFile;
+      target === roots.layoutFile ||
+      approvedIgnore.has(target.toLowerCase());
     if (!within) {
       problems.push(
         issue(

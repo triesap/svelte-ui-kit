@@ -21,7 +21,7 @@
  * The trusted-local threat model applies: this detects stale plans, replaced
  * identities and accidental symlinks, not hostile concurrent filesystem races.
  */
-import { lstatSync, readFileSync, statSync } from "node:fs";
+import { lstatSync, readFileSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 
 import {
@@ -32,6 +32,7 @@ import {
   type ModelResult,
 } from "../registry/errors.js";
 import { isSafeLogicalRelativePath } from "../project/paths.js";
+import { resolveInstalledManifestPath } from "../project/dependencies.js";
 import { sha256Hex } from "./digest.js";
 import { TRANSIENT_NAMESPACE } from "./transaction-types.js";
 
@@ -67,6 +68,32 @@ export interface PlanReadset {
   readonly root: PhysicalIdentity;
   readonly ancestors: readonly PlanAncestor[];
   readonly files: readonly PlanReadFile[];
+  /**
+   * Read-only installed resolution evidence captured at planning time. A
+   * resolved manifest may live outside the selected root (hoisted/ancestor
+   * installs) or behind a dependency link; these are captured as *read* evidence
+   * so the guarded apply re-proves the same resolution without ever granting
+   * write authority outside the selected root.
+   */
+  readonly installed?: readonly PlanInstalledRead[];
+}
+
+/**
+ * One captured dependency resolution decision input. `path` is the resolved
+ * absolute manifest path (or null when the name was proven absent); `realPath`
+ * and the physical identity distinguish a retargeted dependency link whose
+ * manifest bytes are otherwise equal.
+ */
+export interface PlanInstalledRead {
+  readonly name: string;
+  readonly kind: "absent" | "file" | "unsafe" | "unreadable";
+  readonly path: string | null;
+  readonly realPath: string | null;
+  readonly digest: string | null;
+  readonly mode: number | null;
+  readonly device: number | null;
+  readonly inode: number | null;
+  readonly code: string | null;
 }
 
 function codeOf(error: unknown): string {
@@ -428,6 +455,77 @@ export function validateReadset(readset: unknown): ModelIssue[] {
       }
     }
   }
+  const installed = value.installed;
+  if (installed !== undefined && !Array.isArray(installed)) {
+    problems.push(
+      issue(
+        "PLAN_READSET_INVALID",
+        "plan.readset.installed must be an array when present",
+        "readset.installed",
+      ),
+    );
+  }
+  if (Array.isArray(installed)) {
+    for (const [index, entry] of installed.entries()) {
+      const label = `readset.installed[${index}]`;
+      if (
+        typeof entry !== "object" ||
+        entry === null ||
+        typeof (entry as PlanInstalledRead).name !== "string" ||
+        (entry as PlanInstalledRead).name.length === 0
+      ) {
+        problems.push(
+          issue("PLAN_READSET_INVALID", `${label} name is invalid`, label),
+        );
+        continue;
+      }
+      const record = entry as PlanInstalledRead;
+      if (
+        record.kind !== "file" &&
+        record.kind !== "absent" &&
+        record.kind !== "unsafe" &&
+        record.kind !== "unreadable"
+      ) {
+        problems.push(
+          issue("PLAN_READSET_INVALID", `${label} kind is unknown`, label),
+        );
+        continue;
+      }
+      if (record.kind === "absent") {
+        if (record.path !== null || record.realPath !== null) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} must not carry a path for an absent resolution`,
+              label,
+            ),
+          );
+        }
+        continue;
+      }
+      if (typeof record.path !== "string" || record.path.length === 0) {
+        problems.push(
+          issue("PLAN_READSET_INVALID", `${label} path is invalid`, label),
+        );
+      }
+      if (record.kind === "file") {
+        if (!/^[0-9a-f]{64}$/.test(String(record.digest))) {
+          problems.push(
+            issue("PLAN_READSET_INVALID", `${label} digest is invalid`, label),
+          );
+        }
+        if (
+          !Number.isInteger(record.mode) ||
+          (record.mode as number) < 0 ||
+          (record.mode as number) > 0o777
+        ) {
+          problems.push(
+            issue("PLAN_READSET_INVALID", `${label} mode is invalid`, label),
+          );
+        }
+      }
+    }
+  }
   return problems;
 }
 
@@ -570,6 +668,157 @@ export function verifyReadFiles(
           "AUTHORITY_READ_CHANGED",
           `evidence ${file.path} mode changed since planning`,
           file.path,
+        ),
+      );
+    }
+  }
+  return issues;
+}
+
+/**
+ * Re-prove the captured installed resolution evidence against the live
+ * filesystem. The same nearest-`node_modules`-then-ancestors lookup is re-run
+ * from the selected root, so a nearer incompatible package that appeared after
+ * planning is a resolution change; a retargeted dependency link is a real-path
+ * change even when the manifest bytes are equal; and a changed hoisted manifest
+ * is a digest change. An absent capture that now resolves is an appearance, and
+ * an unsafe/unreadable capture is never treated as absence.
+ */
+export function verifyInstalledReads(
+  root: string,
+  installed: readonly PlanInstalledRead[],
+): ModelIssue[] {
+  const issues: ModelIssue[] = [];
+  for (const entry of installed) {
+    const resolved = resolveInstalledManifestPath(root, entry.name);
+    if (entry.kind === "absent") {
+      if (resolved !== null) {
+        issues.push(
+          issue(
+            "AUTHORITY_INSTALLED_CHANGED",
+            `dependency ${entry.name} was captured absent but now resolves; refusing a stale plan`,
+            entry.name,
+          ),
+        );
+      }
+      continue;
+    }
+    if (resolved === null) {
+      issues.push(
+        issue(
+          "AUTHORITY_INSTALLED_CHANGED",
+          `dependency ${entry.name} no longer resolves to its captured manifest`,
+          entry.name,
+        ),
+      );
+      continue;
+    }
+    if (entry.path === null || resolved !== entry.path) {
+      issues.push(
+        issue(
+          "AUTHORITY_INSTALLED_CHANGED",
+          `dependency ${entry.name} now resolves through a nearer or different install than planned`,
+          entry.name,
+        ),
+      );
+      continue;
+    }
+    let realPath: string | null;
+    try {
+      realPath = realpathSync(resolved);
+    } catch {
+      realPath = null;
+    }
+    if (entry.kind === "unsafe" || entry.kind === "unreadable") {
+      // A captured unsafe/unreadable resolution is never silently accepted as
+      // absence; require a fresh clean observation instead.
+      if (realPath !== null) {
+        issues.push(
+          issue(
+            "AUTHORITY_INSTALLED_CHANGED",
+            `dependency ${entry.name} was captured ${entry.kind} and is now readable; request a fresh snapshot`,
+            entry.name,
+          ),
+        );
+      }
+      continue;
+    }
+    if (realPath !== entry.realPath) {
+      issues.push(
+        issue(
+          "AUTHORITY_INSTALLED_CHANGED",
+          `dependency ${entry.name} link target changed since planning`,
+          entry.name,
+        ),
+      );
+      continue;
+    }
+    let stats;
+    try {
+      stats = realPath === null ? lstatSync(resolved) : statSync(realPath);
+    } catch (error) {
+      issues.push(
+        issue(
+          "AUTHORITY_INSTALLED_UNREADABLE",
+          `dependency ${entry.name} is unreadable (${codeOf(error)})`,
+          entry.name,
+        ),
+      );
+      continue;
+    }
+    if (!stats.isFile()) {
+      issues.push(
+        issue(
+          "AUTHORITY_INSTALLED_CHANGED",
+          `dependency ${entry.name} is no longer a regular file`,
+          entry.name,
+        ),
+      );
+      continue;
+    }
+    if (
+      entry.device !== null &&
+      entry.inode !== null &&
+      (stats.dev !== entry.device || stats.ino !== entry.inode)
+    ) {
+      issues.push(
+        issue(
+          "AUTHORITY_INSTALLED_CHANGED",
+          `dependency ${entry.name} physical identity changed since planning`,
+          entry.name,
+        ),
+      );
+      continue;
+    }
+    let digest: string;
+    try {
+      digest = sha256Hex(readFileSync(resolved));
+    } catch (error) {
+      issues.push(
+        issue(
+          "AUTHORITY_INSTALLED_UNREADABLE",
+          `dependency ${entry.name} is unreadable (${codeOf(error)})`,
+          entry.name,
+        ),
+      );
+      continue;
+    }
+    if (digest !== entry.digest) {
+      issues.push(
+        issue(
+          "AUTHORITY_INSTALLED_CHANGED",
+          `dependency ${entry.name} manifest changed since planning`,
+          entry.name,
+        ),
+      );
+      continue;
+    }
+    if (entry.mode !== null && (stats.mode & 0o777) !== entry.mode) {
+      issues.push(
+        issue(
+          "AUTHORITY_INSTALLED_CHANGED",
+          `dependency ${entry.name} manifest mode changed since planning`,
+          entry.name,
         ),
       );
     }

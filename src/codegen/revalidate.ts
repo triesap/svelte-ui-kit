@@ -17,10 +17,12 @@ import { observeEntry } from "../project/io.js";
 import { sha256Hex } from "./digest.js";
 import {
   verifyAncestors,
+  verifyInstalledReads,
   verifyReadFiles,
   verifyRootIdentity,
   type PhysicalIdentity,
   type PlanAncestor,
+  type PlanInstalledRead,
   type PlanReadFile,
 } from "./authority.js";
 
@@ -125,6 +127,8 @@ export interface RevalidateOptions {
   readonly root?: PhysicalIdentity;
   /** Captured config/manifest/mapping/lock evidence. */
   readonly files?: readonly PlanReadFile[];
+  /** Captured installed resolution evidence (may include ancestor installs). */
+  readonly installed?: readonly PlanInstalledRead[];
 }
 
 /**
@@ -142,6 +146,9 @@ export function revalidatePreimages(
   if (options.root) issues.push(...verifyRootIdentity(root, options.root));
   if (options.files && options.files.length > 0) {
     issues.push(...verifyReadFiles(root, options.files));
+  }
+  if (options.installed && options.installed.length > 0) {
+    issues.push(...verifyInstalledReads(root, options.installed));
   }
   const capturedAncestors = options.ancestors;
   const ancestorsChecked = capturedAncestors !== undefined;

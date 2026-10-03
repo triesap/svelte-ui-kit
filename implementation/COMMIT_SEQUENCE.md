@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: Independent review 13 requests changes to the RCLD-04 candidate `47b0fe8`. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-03.
+Status: Independent review 14 requests changes to the RCLD-04 candidate `551f950`. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-03.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD-04 repairs and cumulative qualification** (S064–S077 remain committed_pending_review; review 13 requests changes before independent acceptance/S078).
+- Active implementation checkpoint: **RCLD-04 repairs and cumulative qualification** (S064–S077 remain committed_pending_review; review 14 requests changes before independent acceptance/S078).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -51,6 +51,119 @@ After each green commit, record the hash and report, update this ledger, and rec
 At S002, adopt the embedded contracts into their scheduled repository-relative files, establish target contract validation and an aligned `implementation/COMMIT_SEQUENCE.json` projection. This document remains the governing execution/status authority; the JSON projection must not drift into a second independently edited plan. Extracted specs govern product intent. Update this document's contract links and supersede embedded snapshots explicitly when extraction is verified; do not maintain conflicting copies silently. S001 baseline evidence and later reports are factual records, not alternate planning backlogs. No additional issue database is required by the current scaffold.
 
 ## Codex dispatch — complete RCLD-04 transactions and recovery
+
+### Independent review 14 — complete authority, recovery and real lifecycle qualification
+
+Codex reviewed clean candidate `551f95036b6e90c18c1136df1a7906a03dec1426`
+on 2026-10-03. Thirteen commits advance `47b0fe8`; product/tools/tests at
+`000c9b0` are identical to the final candidate (later changes are evidence only).
+**Changes requested.** Preserve 63 accepted / 14 committed_pending_review /
+126 not_started and three complete / eight unfinished sequences. All original
+S001–S203 definitions remain byte-identical to the accepted planning baseline;
+R01–R34, AC01–AC22, the projection and live RCLD-04 tuple remain unchanged.
+
+Verified progress: all 32 earlier compiled probe cases produce safe outcomes,
+including the four review-13 cases. Preserve regular installed-manifest integrity,
+canonical inode/mode witness refusal, missing-witness refusal, exact temporary
+name ownership, journal-less root binding, same-filesystem checks and recorded
+absent ancestry. A fresh real flush trace confirms both parents of backup,
+replacement and publication renames and the staged lock parent are flushed.
+These observations accept that progress as evidence, not any whole pending
+checkpoint or repair group. New composed and process tests are useful progress.
+
+Fresh independent build, typecheck, format, lint, unit 278/278, integration
+413/413 and contract validation 0 errors/0 warnings pass, with zero skips.
+Native commands/results and retained author logs support broader local fixture,
+Chromium 23, contracts 137 and unchanged reference 578 passed/0 failed/4 ignored
+qualification. Some lanes reuse overwritten temporary log files; retain separate
+raw logs/exits for every lane on the next final candidate. Broader checks are
+author evidence and were not freshly rerun by Codex. Reference ignored tests are
+separate from AC20's fixture-only two Bits TS2590 declaration exception; AC20
+remains open. Neither exception establishes full MVP completion.
+
+Ten additional compiled cases expose unfinished original requirements:
+
+- Hoisted installed metadata outside the selected root changes after capture,
+  a nearer incompatible package appears, and an installed directory link is
+  retargeted with equal manifest bytes: all three stale plans apply.
+- An unobserved needed `.gitignore` is silently omitted while the install applies.
+  Interrupting a composed init that includes its guarded ignore operation makes
+  recovery reject `.gitignore` as `JOURNAL_TARGET_UNAPPROVED`.
+- A planned journal can name an unrelated empty directory in `createdDirs`;
+  recovery deletes it and reports clean. Safe lexical paths and device/inode
+  equality alone do not establish an approved creation/ownership record.
+- A persisted owner record with this process's PID bypasses acquisition despite
+  no acquired handle. Standalone recovery also reports committed with no issues
+  when its release fails and the owner record remains.
+- Guarded final-lock validation omits UI/styles context: an outside-UI file claim
+  rejected by the existing contextual lock parser is published successfully.
+- A published witness with a contradictory plan digest is accepted and cleaned.
+
+Subsequent delivery attribution clarified on 2026-10-03: the supplied report
+belongs to the candidate already independently reviewed above. Its completion
+claims do not supersede these reproduced findings. No new target commit or
+product/tool/test changes are available for review. Existing review 14 findings,
+the complete authorized repair/integration batch and the S078 gate remain current;
+no additional acceptance, review number or authorization change is recorded.
+
+#### Review 14 decisions and existing R2 dispositions
+
+- **RCLD04-R2-1 remains incomplete.** Supported ancestor-hoisted and linked
+  dependency layouts stay supported. Capture their original read-only physical
+  resolution/lookup/enumeration/absence/link evidence separately from generated
+  write authority; never grant writes outside the selected root. Revalidate all
+  decision inputs without recapture or silently dropping out-of-root evidence.
+  Unsafe/unreadable must stay distinct from absence. Carry captured project
+  selection evidence too. Use full approved mapping in final-lock validation
+  and finish original projected config/ownership/cohort consistency checks.
+- **RCLD04-R2-2 remains incomplete.** Require captured ignore authority whenever
+  a required edit may be needed; incomplete/unsafe capture must be diagnosed,
+  never silently skipped or read live. The same narrowly approved ignore role
+  must participate in journal validation, rollback and restart, preserving
+  unrelated rules. Keep recorded ancestry progress, but validate the complete
+  creation scope/identity/ancestry before any deletion and propagate failures.
+  Newly created directories and cleanup/release removals still lack the complete
+  required parent flush protocol. Test actual flush failures and creation/crash
+  order; hook exceptions alone do not establish syscall failure coverage.
+  Implement repository-owned cross-device negative qualification, including
+  metadata-only paths. A single-volume host does not block deterministic
+  automation; record genuinely unavailable physical/platform lanes separately.
+- **RCLD04-R2-3 remains incomplete.** Preserve repaired physical image and mode
+  proof. Bind witness root/plan/transaction/digest/progress to the complete
+  journal in every published and cleanup-tail path before effects. Contradictory
+  plan identity must refuse and retain evidence. Finish the original full
+  publication/crash matrix rather than accepting only the repaired old probes.
+- **RCLD04-R2-4 remains incomplete.** Reuse only actual acquired in-process
+  coordination authority, with live physical owner proof; PID equality is not
+  acquisition or ownership. Exported recovery must retain truthful release and
+  cleanup issues/outcomes. Validate all created-directory records against the
+  approved operations and safe ancestor chains before any restore/removal;
+  reject arbitrary unrelated directory claims without deleting evidence.
+  Preserve exact temporary ownership and previous user-edit controls. No PID/age
+  takeover, force/recover CLI or test-only lock bypass is approved.
+- **RCLD04-R2-5 remains incomplete.** The new default add/update/retirement tests
+  construct a one-file synthetic registry; the custom case covers only init.
+  This does not qualify all actual shipped-registry default/custom init/add/sync,
+  metadata-only, satisfied, conflict, update and retirement paths or check/build/
+  render those resulting consumers. Complete that matrix with exact whole-tree,
+  bytes/modes/kinds/links/ownership comparisons and real coordinated process
+  interruption/restart. Model documented operator intervention explicitly; do
+  not call recursive test lock deletion a qualified production recovery path.
+  Reconcile the overbroad group-complete claims in `RCLD04_R3_REPAIR.md` and
+  every S064–S077 report without erasing historical provenance. Preserve honest
+  unrun-platform declarations and separate original AC20 release obligations.
+
+**Execute `pfc through RCLD-04`: ALL remaining original S064–S077 requirements,
+existing RCLD04-R2-1/2/3/4/5 corrections, subsequent production integration and
+full final qualification.** The ten cases are regression examples, not the
+batch scope or an intermediate endpoint. Continue after every green checkpoint.
+There is no intermediate acceptance gate; stop before S078 for mandatory
+independent Codex acceptance. No owner, hardware or external blocker prevents
+this eligible software work. Preserve accepted planners, public API/dependency/
+threat-model scope, unrelated work and standalone public boundaries. Pi records
+implementation/evidence; Codex alone grants independent acceptance.
+
+Historical review 13 below is superseded by this current review.
 
 ### Independent review 13 — complete eligible protocol work without an intermediate gate
 

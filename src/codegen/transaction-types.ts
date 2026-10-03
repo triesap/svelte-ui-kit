@@ -116,6 +116,14 @@ export const OWNED_DIR_MODE = 0o700;
 export const JOURNAL_MODE = 0o600;
 export const STAGED_FILE_MODE = 0o600;
 
+/**
+ * The narrowly approved application ignore files the guarded plan may update.
+ * The managed transient-namespace ignore entry is the only ignore edit the
+ * protocol performs, so validation and recovery accept exactly this file and
+ * refuse any other journal-claimed ignore target.
+ */
+export const APPROVED_IGNORE_FILES: readonly string[] = [".gitignore"];
+
 /** The managed ignore entry for the transient namespace (no leading slash). */
 export function ignoreEntryFor(stateDir: string): string {
   return `${stateDir}/${TRANSIENT_NAMESPACE}/`;

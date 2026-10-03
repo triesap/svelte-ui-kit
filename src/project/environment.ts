@@ -18,7 +18,13 @@
  * No writer or package manager is executed.
  */
 import { createHash } from "node:crypto";
-import { lstatSync, readdirSync, readFileSync } from "node:fs";
+import {
+  lstatSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  statSync,
+} from "node:fs";
 import path from "node:path";
 
 import type { ModelIssue, ModelResult } from "../registry/errors.js";
@@ -54,6 +60,48 @@ export interface EnvironmentEvidence {
   readonly mode: number | null;
 }
 
+/**
+ * Physical, read-only evidence of one dependency's resolution-context lookup.
+ * A resolved manifest may legitimately live in an ancestor `node_modules`
+ * outside the selected root; it is captured here as *read* evidence so the
+ * guarded apply can re-prove the same resolution, link target and bytes without
+ * ever granting write authority outside the selected root. A name proven absent
+ * is recorded explicitly so a near-appearing package (a nearer incompatible
+ * install shadowing a hoisted one) is a typed change, not a silent new lookup.
+ */
+export type InstalledResolutionEvidence =
+  | {
+      readonly name: string;
+      readonly kind: "absent";
+      readonly path: null;
+      readonly realPath: null;
+      readonly digest: null;
+      readonly mode: null;
+      readonly device: null;
+      readonly inode: null;
+    }
+  | {
+      readonly name: string;
+      readonly kind: "file";
+      readonly path: string;
+      readonly realPath: string | null;
+      readonly digest: string;
+      readonly mode: number;
+      readonly device: number | null;
+      readonly inode: number | null;
+    }
+  | {
+      readonly name: string;
+      readonly kind: "unsafe" | "unreadable";
+      readonly path: string;
+      readonly realPath: null;
+      readonly digest: null;
+      readonly mode: null;
+      readonly device: null;
+      readonly inode: null;
+      readonly code: string;
+    };
+
 export interface CapturedEnvironment {
   /** Typed observation of the selected package's `package.json`. */
   readonly manifest: JsonObservation;
@@ -71,6 +119,13 @@ export interface CapturedEnvironment {
    * absent rather than unobserved.
    */
   readonly enumerationComplete: boolean;
+  /**
+   * Per-name installed resolution evidence captured at the same instant as the
+   * target bytes. Carried into the guarded apply read set so a near-appearing
+   * package, a retargeted dependency link or a changed hoisted manifest is a
+   * refusal rather than a silently stale plan.
+   */
+  readonly installedResolution: readonly InstalledResolutionEvidence[];
   /** Package-manager evidence resolved from the captured manifest/lockfiles. */
   readonly manager: ManagerEvidence;
   /** Typed manager conflict that blocks planning (for example two lockfiles). */
@@ -222,6 +277,101 @@ function installedManifestPaths(
   return paths;
 }
 
+function codeOf(error: unknown): string {
+  const code = (error as NodeJS.ErrnoException | null)?.code;
+  return typeof code === "string" ? code : "EIO";
+}
+
+/** Capture read-only resolution, link-target and byte evidence for one name. */
+function captureInstalledResolution(
+  root: string,
+  name: string,
+): InstalledResolutionEvidence {
+  const resolved = resolveInstalledManifestPath(root, name);
+  if (resolved === null) {
+    return {
+      name,
+      kind: "absent",
+      path: null,
+      realPath: null,
+      digest: null,
+      mode: null,
+      device: null,
+      inode: null,
+    };
+  }
+  let stats;
+  try {
+    stats = lstatSync(resolved);
+  } catch (error) {
+    return {
+      name,
+      kind: "unreadable",
+      path: resolved,
+      realPath: null,
+      digest: null,
+      mode: null,
+      device: null,
+      inode: null,
+      code: codeOf(error),
+    };
+  }
+  if (stats.isSymbolicLink() || !stats.isFile()) {
+    return {
+      name,
+      kind: "unsafe",
+      path: resolved,
+      realPath: null,
+      digest: null,
+      mode: null,
+      device: null,
+      inode: null,
+      code: "NOT_REGULAR_FILE",
+    };
+  }
+  let bytes: Buffer;
+  try {
+    bytes = readFileSync(resolved);
+  } catch (error) {
+    return {
+      name,
+      kind: "unreadable",
+      path: resolved,
+      realPath: null,
+      digest: null,
+      mode: null,
+      device: null,
+      inode: null,
+      code: codeOf(error),
+    };
+  }
+  let realPath: string | null;
+  try {
+    realPath = realpathSync(resolved);
+  } catch {
+    realPath = null;
+  }
+  let physical: { device: number; inode: number } | null = null;
+  if (realPath !== null) {
+    try {
+      const real = statSync(realPath);
+      physical = { device: real.dev, inode: real.ino };
+    } catch {
+      physical = null;
+    }
+  }
+  return {
+    name,
+    kind: "file",
+    path: resolved,
+    realPath,
+    digest: createHash("sha256").update(bytes).digest("hex"),
+    mode: stats.mode & 0o777,
+    device: physical?.device ?? null,
+    inode: physical?.inode ?? null,
+  };
+}
+
 /**
  * Capture the complete read-only dependency/manager/project evidence for one
  * selected package root. The result is plain deeply-immutable data; no closure
@@ -236,6 +386,9 @@ export function captureEnvironment(root: string): CapturedEnvironment {
       .sort()
       .map((name) => [name, deepFreeze(observeInstalled(root, name))] as const),
   );
+  const installedResolution = [...names]
+    .sort()
+    .map((name) => captureInstalledResolution(root, name));
   const managerResult = detectPackageManager(root);
   const project = deepFreeze(detectDefaultProject(root));
   const kitConfig = deepFreeze(discoverKitConfig(root));
@@ -243,6 +396,7 @@ export function captureEnvironment(root: string): CapturedEnvironment {
     manifest,
     evidence: captureEvidence(root, installedManifestPaths(root, names)),
     installed,
+    installedResolution,
     enumerationComplete: complete,
     manager: managerResult.ok
       ? managerResult.value

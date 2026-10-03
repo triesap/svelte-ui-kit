@@ -77,32 +77,32 @@ only writing modes.
 
 #### Current RCLD-04 complete-boundary qualification
 
-Independent review 13 of `47b0fe83b877795cfe18440ed5f3e773924600c9`
-requests changes. Follow current RCLD04-R2-1/2/3/4/5 dispositions in the sole
-governing COMMIT_SEQUENCE and ALL remaining original S064–S077 criteria.
-Preserve 63 accepted/14 pending/126 not_started and the accepted planner.
-There is no intermediate acceptance gate for remaining R2 work; S078 requires
-independent Codex acceptance of the entire completed RCLD-04 boundary.
+Independent review 14 of `551f95036b6e90c18c1136df1a7906a03dec1426`
+requests changes. Follow current RCLD04-R2-1/2/3/4/5 dispositions and ALL original
+S064–S077 criteria in the sole governing COMMIT_SEQUENCE. Preserve 63 accepted /
+14 pending / 126 not_started, the accepted planner and live RCLD-04 tuple.
+S078 alone requires independent acceptance of the completed boundary.
 
-Original 22 and six review-12 compiled cases now produce safe outcomes. Four
-additional cases reproduce installed-dependency drift omission, published
-canonical identity contradiction cleanup, missing-witness mode-check bypass and
-unowned temporary-journal-name deletion. A real flush-call trace shows incomplete
-cross-directory rename/lock-stage parent flush coverage. Preserve the new
-WeakSet authority, captured manifest/manager/absence, numeric inventory, physical
-witness, flush and live recovery root-binding progress; whole groups stay open.
-Owned-directory rollback, guarded ignore integration, complete installed and
-projected-lock authority, recovery plan/owner/coordination/tail binding and full
-custom/update/retirement/metadata/conflict/process qualification remain software.
+All 32 earlier compiled cases now produce safe outcomes. A real trace confirms
+both rename parents and the staged lock parent are flushed. Preserve those
+repairs. Ten additional cases expose hoisted/nearer/link dependency authority,
+ignore omission and recovery rejection, arbitrary created-directory deletion,
+PID-only coordination, ignored standalone release failure, incomplete final-lock
+mapping validation and contradictory publication plan-identity cleanup.
+Recorded ancestry and new composed/process tests are useful partial progress;
+complete original creation/removal durability, full authority and actual shipped
+registry default/custom lifecycle/consumer/process qualification remain software.
+A single-volume host does not block deterministic cross-device negative tests.
 
-Fresh independent build/typecheck/format/lint, unit 276, integration 394 and
-validation 0/0 pass with zero skips. Contract regression source is unchanged;
-its author final raw result 137/137 was audited, not freshly rerun by Codex.
-Final author raw logs/underlying exits at `47b0fe8` and code revision `d9d7c68`
-cover frozen strict install, static/tests/fixture/Chromium/workflow and unchanged
-reference guards. They are implementation evidence, not independent acceptance.
-The previous review-11 summary-only limitation is historical; this batch retains
-per-lane raw logs and exits. Accurately distinguish each source/artifact/platform.
+Fresh independent build/typecheck/format/lint pass; unit 278, integration 413 and
+contract validation 0 errors/0 warnings pass with zero skips. Broader author
+native results and retained logs support fixture/Chromium/contracts/reference
+qualification; these were not freshly rerun by Codex. Some author lanes overwrite
+temporary captures: retain a distinct raw file and underlying exit for EVERY
+final lane. Record the exact final source/artifact/platform/configuration identity.
+Correct the overbroad group-complete claims in `RCLD04_R3_REPAIR.md` and keep
+historical provenance. Reference's four ignored Rust tests are separate from the
+fixture-only two upstream Bits TS2590/strict-17 exception and AC20 release debt.
 
 At each green checkpoint run affected causal tests plus static/contracts. At the
 FINAL composed candidate run frozen strict install, build/typecheck/format/lint,

@@ -31,7 +31,7 @@ import path from "node:path";
 import type { ModelIssue } from "../registry/errors.js";
 import { sha256Hex } from "./digest.js";
 import { flushDirectory, flushFile } from "./durability.js";
-import { parseKitLock } from "./lock.js";
+import { parseKitLock, type LockValidationContext } from "./lock.js";
 import {
   persistJournal,
   type TransactionJournal,
@@ -71,6 +71,7 @@ export function validateLockForPublication(
   journal: TransactionJournal,
   lockBytes: Uint8Array,
   stateDir: string,
+  context: LockValidationContext = {},
 ): { readonly ok: boolean; readonly issues: readonly ModelIssue[] } {
   const issues: ModelIssue[] = [];
   if (journal.phase !== "applied") {
@@ -99,7 +100,10 @@ export function validateLockForPublication(
     });
     return { ok: false, issues };
   }
-  const validated = parseKitLock(parsed, lockPath(stateDir), { stateDir });
+  const validated = parseKitLock(parsed, lockPath(stateDir), {
+    ...context,
+    stateDir,
+  });
   if (!validated.ok) {
     issues.push(...validated.issues);
     return { ok: false, issues };
@@ -131,9 +135,15 @@ export function publishLock(
   journal: TransactionJournal,
   lockBytes: Uint8Array,
   mode = 0o644,
+  context: LockValidationContext = {},
   hooks?: TransactionHooks,
 ): LockPublicationResult {
-  const validation = validateLockForPublication(journal, lockBytes, stateDir);
+  const validation = validateLockForPublication(
+    journal,
+    lockBytes,
+    stateDir,
+    context,
+  );
   if (!validation.ok) {
     return { ok: false, journal, issues: validation.issues };
   }

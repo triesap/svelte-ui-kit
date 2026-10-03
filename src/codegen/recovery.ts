@@ -65,7 +65,7 @@ import {
 } from "./transaction-types.js";
 import {
   acquireWriterLock,
-  readWriterLock,
+  holdsWriterLock,
   releaseWriterLock,
 } from "./write-lock.js";
 
@@ -206,6 +206,82 @@ function inventoryIssues(
     transactionId,
     journal === null ? emptyOwnedInventory() : ownedInventoryFor(journal),
   );
+}
+
+/** True when `candidate` is `root` or a path below it (ASCII-case folded). */
+function isWithinRoot(candidate: string, root: string): boolean {
+  const foldedCandidate = candidate.toLowerCase();
+  const foldedRoot = root.replace(/\/+$/, "").toLowerCase();
+  return (
+    foldedCandidate === foldedRoot ||
+    foldedCandidate.startsWith(`${foldedRoot}/`)
+  );
+}
+
+/**
+ * Validate every recorded created-directory claim before any restore/removal.
+ * Ownership is never "an empty directory with a matching device/inode": a
+ * created directory must be an approved generated ancestor of at least one
+ * journal operation (or the canonical lock), live within the approved mapping,
+ * and have a safe real-directory ancestor chain. An arbitrary unrelated
+ * directory claim is refused and preserved rather than deleted.
+ */
+function createdDirIssues(
+  root: string,
+  stateDir: string,
+  journal: TransactionJournal,
+  roots: RecoveryRoots,
+): ModelIssue[] {
+  const issues: ModelIssue[] = [];
+  const targets = [
+    ...journal.operations.map((operation) => operation.path),
+    lockPath(stateDir),
+  ];
+  for (const created of journal.createdDirs ?? []) {
+    const logical = created.path;
+    const withinApprovedRoots =
+      isWithinRoot(logical, roots.uiDir) ||
+      isWithinRoot(logical, roots.stylesDir) ||
+      logical === roots.layoutFile ||
+      // A generated ancestor of the approved layout file is legitimate (for
+      // example `src/routes` for `src/routes/+layout.svelte`).
+      isWithinRoot(roots.layoutFile, logical) ||
+      isWithinRoot(logical, stateDir);
+    if (!withinApprovedRoots) {
+      issues.push(
+        issue(
+          "RECOVERY_CREATED_DIR_UNAPPROVED",
+          `journal created directory ${logical} is outside the approved generated roots; refusing to remove unrelated state`,
+          logical,
+        ),
+      );
+      continue;
+    }
+    const isAncestor = targets.some((target) =>
+      target.toLowerCase().startsWith(`${logical.toLowerCase()}/`),
+    );
+    if (!isAncestor) {
+      issues.push(
+        issue(
+          "RECOVERY_CREATED_DIR_UNAPPROVED",
+          `journal created directory ${logical} is not an approved ancestor of any planned operation; refusing to remove unrelated state`,
+          logical,
+        ),
+      );
+      continue;
+    }
+    const ancestry = unsafeAncestry(root, `${logical}/__owned__`);
+    if (ancestry !== null) {
+      issues.push(
+        issue(
+          "RECOVERY_UNSAFE_ANCESTRY",
+          `refusing to remove created directory ${logical}: ${ancestry}`,
+          logical,
+        ),
+      );
+    }
+  }
+  return issues;
 }
 
 /**
@@ -552,18 +628,14 @@ function removeOwnedEntries(
 }
 
 /**
- * True when this process already holds the writer lock for the project, so
+ * True when this process actually holds the writer lock for the project, so
  * recovery is running inside the guarded apply coordination and must not try to
- * acquire a second lock. Ownership is proven by the recorded owner's live
- * process, never by age or a foreign PID.
+ * acquire a second lock. Possession is proven by the in-process acquired-handle
+ * registry, never by a recorded PID: a foreign owner record that merely names
+ * this process must still be refused as busy.
  */
 function coordinatedByThisProcess(root: string, stateDir: string): boolean {
-  const held = readWriterLock(root, stateDir);
-  return (
-    held.kind === "held" &&
-    held.owner !== undefined &&
-    held.owner.pid === process.pid
-  );
+  return holdsWriterLock(root, stateDir);
 }
 
 /** Best-effort removal of empty owned transient directories after a release. */
@@ -603,8 +675,10 @@ export function recoverTransaction(
   if (!acquired.ok) {
     return refuse(transactionId, acquired.issues);
   }
+  let result: RecoveryResult | undefined;
+  let releaseIssues: readonly ModelIssue[] = [];
   try {
-    return recoverTransactionUnderLock(
+    result = recoverTransactionUnderLock(
       root,
       stateDir,
       transactionId,
@@ -612,9 +686,17 @@ export function recoverTransaction(
       hooks,
     );
   } finally {
-    releaseWriterLock(acquired.value);
+    const outcome = releaseWriterLock(acquired.value);
+    if (!outcome.ok) releaseIssues = outcome.issues;
     cleanupReleasedTransient(root, stateDir);
   }
+  if (result === undefined) return refuse(transactionId, releaseIssues);
+  if (releaseIssues.length === 0) return result;
+  return {
+    status: "refused",
+    transactionId,
+    issues: [...result.issues, ...releaseIssues],
+  };
 }
 
 /** Recover one transaction directory against the approved mapping. */
@@ -745,6 +827,8 @@ function recoverTransactionUnderLock(
   }
   const inventory = inventoryIssues(root, stateDir, transactionId, journal);
   if (inventory.length > 0) return refuse(transactionId, inventory);
+  const createdDirs = createdDirIssues(root, stateDir, journal, roots);
+  if (createdDirs.length > 0) return refuse(transactionId, createdDirs);
 
   if (journal.phase === "planned") {
     const binding = rootBindingIssues(root, journal);
@@ -783,6 +867,19 @@ function recoverTransactionUnderLock(
         issue(
           "RECOVERY_AMBIGUOUS_PUBLICATION",
           "the publication witness does not belong to the recovered journal; refusing to roll back or discard evidence",
+          lockPath(stateDir),
+        ),
+      ]);
+    }
+    if (
+      intentRead !== null &&
+      (intentRead.planDigest !== journal.planDigest ||
+        intentRead.rootIdentity !== journal.rootIdentity)
+    ) {
+      return refuse(transactionId, [
+        issue(
+          "RECOVERY_AMBIGUOUS_PUBLICATION",
+          "the publication witness plan or root identity contradicts the recovered journal; refusing to roll back or discard evidence",
           lockPath(stateDir),
         ),
       ]);
@@ -982,6 +1079,22 @@ function verifyPublishedEvidence(
       ),
     ];
   }
+  // Bind the witness to the complete journal identity. A witness whose plan
+  // digest or root identity contradicts the recovered journal is inconsistent
+  // evidence: it must be preserved and refused, never cleaned as if the
+  // publication were proven.
+  if (
+    intentRead.planDigest !== journal.planDigest ||
+    intentRead.rootIdentity !== journal.rootIdentity
+  ) {
+    return [
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "the publication witness plan or root identity contradicts the recovered journal; preserving contradictory evidence rather than cleaning",
+        lockPath(stateDir),
+      ),
+    ];
+  }
   if ((entry.stats.mode & 0o777) !== intentRead.mode) {
     return [
       issue(
@@ -1026,12 +1139,26 @@ export function recoverTransactions(
       { status: "refused", transactionId: null, issues: acquired.issues },
     ];
   }
+  let results: readonly RecoveryResult[] | undefined;
+  let releaseIssues: readonly ModelIssue[] = [];
   try {
-    return recoverScannedTransactions(root, stateDir, roots, hooks);
+    results = recoverScannedTransactions(root, stateDir, roots, hooks);
   } finally {
-    releaseWriterLock(acquired.value);
+    const outcome = releaseWriterLock(acquired.value);
+    if (!outcome.ok) releaseIssues = outcome.issues;
     cleanupReleasedTransient(root, stateDir);
   }
+  if (results === undefined) {
+    return [{ status: "refused", transactionId: null, issues: releaseIssues }];
+  }
+  if (releaseIssues.length === 0) return results;
+  // A recovered transaction whose coordination evidence could not be released
+  // is not a clean outcome: report the retained owner evidence truthfully
+  // rather than discarding the release failure.
+  return [
+    ...results,
+    { status: "refused", transactionId: null, issues: releaseIssues },
+  ];
 }
 
 function recoverScannedTransactions(

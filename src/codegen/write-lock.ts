@@ -52,6 +52,23 @@ export interface WriterLockHandle {
 
 const OWNER_FILE = "owner.json";
 
+/**
+ * The set of lock directories this process actually acquired and has not yet
+ * successfully released. Possession is proven by this in-process registry, not
+ * by a recorded PID: a foreign owner record that merely names this process does
+ * not grant coordination authority and must not bypass acquisition.
+ */
+const HELD_LOCKS = new Set<string>();
+
+function lockKey(root: string, stateDir: string): string {
+  return lockDirAbs(root, stateDir);
+}
+
+/** True when this process currently holds the writer lock for the project. */
+export function holdsWriterLock(root: string, stateDir: string): boolean {
+  return HELD_LOCKS.has(lockKey(root, stateDir));
+}
+
 function lockDirAbs(root: string, stateDir: string): string {
   return path.join(root, ...writerLockDir(stateDir).split("/"));
 }
@@ -170,9 +187,9 @@ export function acquireWriterLock(
       ),
     ]);
   }
+  HELD_LOCKS.add(lockKey(root, stateDir));
   return ok({ root, stateDir, lockDir, transactionId, createdDirectories });
 }
-
 /**
  * Release the lock only when it is still owned by this transaction. A missing
  * or corrupt owner record is an ambiguous stale lock and is never deleted.
@@ -224,6 +241,7 @@ export function releaseWriterLock(handle: WriterLockHandle): ModelResult<null> {
       ),
     ]);
   }
+  HELD_LOCKS.delete(lockKey(handle.root, handle.stateDir));
   return ok(null);
 }
 

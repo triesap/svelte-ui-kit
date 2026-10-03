@@ -27,6 +27,7 @@ import {
 import { deriveKitPaths, type KitConfig } from "../project/config.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";
 import { identityDigest, type PlanReadFile } from "./authority.js";
+import type { PlanInstalledRead } from "./authority.js";
 import { hasIgnoreEntry, ignoreBlockWithEntry } from "./transaction-cleanup.js";
 import type { ApplyPlanInput, ApplyTarget } from "./apply.js";
 import type { PlanWrite } from "./plan.js";
@@ -275,48 +276,73 @@ export function composeApplyPlan(
     ]);
   }
 
-  // Guarded ignore-file integration (S072). When the captured snapshot observed
-  // the application ignore file, plan exactly one managed entry that preserves
-  // every existing rule. It is only required when this batch changes committed
-  // state; a satisfied replay adds nothing, and an unobserved or undecodable
-  // ignore file is left to doctor diagnostics rather than appended blindly.
+  // Guarded ignore-file integration (S072). When the batch changes committed
+  // state it must plan the one managed transient-namespace entry, preserving
+  // every existing rule. The captured ignore authority is required: an
+  // unobserved, unsafe/unreadable or undecodable ignore file is a typed
+  // diagnostic, never a silent skip and never a live fallback read. A satisfied
+  // replay adds nothing.
   const ignorePath = ".gitignore";
   let ignoreTargetAdded = false;
   const lockSatisfied =
     lockObservation.kind === "file" &&
     lockObservation.hash === sha256Hex(lockWrite.bytes);
-  if (
-    (targets.length > 0 || !lockSatisfied) &&
-    snapshot.paths.includes(ignorePath) &&
-    !targetPaths.has(ignorePath)
-  ) {
+  const ignoreRequired = targets.length > 0 || !lockSatisfied;
+  if (ignoreRequired && !targetPaths.has(ignorePath)) {
+    if (!snapshot.paths.includes(ignorePath)) {
+      return fail([
+        issue(
+          "COMPOSE_IGNORE_UNOBSERVED",
+          `the required managed ignore file ${ignorePath} was not observed by the planning snapshot; request a fresh snapshot before planning`,
+          ignorePath,
+        ),
+      ]);
+    }
     const observation = snapshot.entries.get(ignorePath);
-    if (
-      observation !== undefined &&
-      (observation.kind === "absent" || observation.kind === "file")
-    ) {
-      const decoded =
-        observation.kind === "file"
-          ? decodeObservedText(observation)
-          : ({ kind: "none" } as const);
-      if (decoded.kind !== "invalid") {
-        const existing = decoded.kind === "text" ? decoded.text : "";
-        const entry = ignoreEntryFor(stateDir);
-        const preimage = preimageFor(observation);
-        if (preimage !== null && !hasIgnoreEntry(existing, entry)) {
-          targetPaths.add(ignorePath);
-          ignoreTargetAdded = true;
-          targets.push({
-            path: ignorePath,
-            operation: observation.kind === "absent" ? "create" : "update",
-            bytes: new TextEncoder().encode(
-              ignoreBlockWithEntry(existing, entry),
-            ),
-            mode: preimage.kind === "file" ? (preimage.mode ?? 0o644) : 0o644,
-            preimage,
-          });
-        }
-      }
+    if (observation === undefined) {
+      return fail([
+        issue(
+          "COMPOSE_IGNORE_UNOBSERVED",
+          `the required managed ignore file ${ignorePath} was not observed by the planning snapshot; request a fresh snapshot before planning`,
+          ignorePath,
+        ),
+      ]);
+    }
+    if (observation.kind !== "absent" && observation.kind !== "file") {
+      return fail([
+        issue(
+          "COMPOSE_IGNORE_UNSAFE",
+          `the managed ignore file ${ignorePath} was observed as ${observation.kind}; refusing to plan a blind ignore edit`,
+          ignorePath,
+        ),
+      ]);
+    }
+    const decoded =
+      observation.kind === "file"
+        ? decodeObservedText(observation)
+        : ({ kind: "none" } as const);
+    if (decoded.kind === "invalid") {
+      return fail([
+        issue(
+          "COMPOSE_IGNORE_UNSAFE",
+          `the managed ignore file ${ignorePath} is not valid UTF-8; refusing to plan an edit that cannot preserve its existing rules`,
+          ignorePath,
+        ),
+      ]);
+    }
+    const existing = decoded.kind === "text" ? decoded.text : "";
+    const entry = ignoreEntryFor(stateDir);
+    const preimage = preimageFor(observation);
+    if (preimage !== null && !hasIgnoreEntry(existing, entry)) {
+      targetPaths.add(ignorePath);
+      ignoreTargetAdded = true;
+      targets.push({
+        path: ignorePath,
+        operation: observation.kind === "absent" ? "create" : "update",
+        bytes: new TextEncoder().encode(ignoreBlockWithEntry(existing, entry)),
+        mode: preimage.kind === "file" ? (preimage.mode ?? 0o644) : 0o644,
+        preimage,
+      });
     }
   }
 
@@ -363,6 +389,25 @@ export function composeApplyPlan(
   evidenceFiles.sort((left, right) =>
     left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
   );
+
+  // Carry the captured read-only installed resolution decisions. These may name
+  // ancestor/hoisted installs or dependency links outside the selected root;
+  // they are re-proven as reads only and never become write targets.
+  const installedReads: PlanInstalledRead[] =
+    snapshot.environment.installedResolution.map((entry) => ({
+      name: entry.name,
+      kind: entry.kind,
+      path: entry.path,
+      realPath: entry.realPath,
+      digest: entry.digest,
+      mode: entry.mode,
+      device: entry.device,
+      inode: entry.inode,
+      code:
+        entry.kind === "unsafe" || entry.kind === "unreadable"
+          ? entry.code
+          : null,
+    }));
 
   const rootIdentity =
     input.rootIdentity ?? identityDigest(snapshot.rootIdentity);
@@ -419,6 +464,16 @@ export function composeApplyPlan(
         digest: file.digest,
         mode: file.mode,
       })),
+      installed: installedReads.map((entry) => ({
+        name: entry.name,
+        kind: entry.kind,
+        path: entry.path,
+        realPath: entry.realPath,
+        digest: entry.digest,
+        mode: entry.mode,
+        device: entry.device,
+        inode: entry.inode,
+      })),
     },
   });
 
@@ -437,6 +492,7 @@ export function composeApplyPlan(
       },
       ancestors,
       files: evidenceFiles,
+      installed: installedReads,
     },
     targets,
     lock: {

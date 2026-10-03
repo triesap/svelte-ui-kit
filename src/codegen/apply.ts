@@ -498,6 +498,8 @@ export function validateApplyPlan(
     if (parsedLock !== undefined) {
       const validatedLock = parseKitLock(parsedLock, canonicalLock, {
         stateDir: plan.stateDir,
+        uiDir: plan.uiDir,
+        stylesDir: plan.stylesDir,
       });
       if (!validatedLock.ok) problems.push(...validatedLock.issues);
     }
@@ -523,6 +525,11 @@ export function validateApplyPlan(
       ),
       files: Object.freeze(
         plan.readset.files.map((file) => Object.freeze({ ...file })),
+      ),
+      installed: Object.freeze(
+        (plan.readset.installed ?? []).map((entry) =>
+          Object.freeze({ ...entry }),
+        ),
       ),
     }),
     targets: Object.freeze(sealedTargets),
@@ -609,6 +616,16 @@ export function derivePlanDigest(input: {
         kind: file.kind,
         digest: file.digest,
         mode: file.mode,
+      })),
+      installed: (input.readset.installed ?? []).map((entry) => ({
+        name: entry.name,
+        kind: entry.kind,
+        path: entry.path,
+        realPath: entry.realPath,
+        digest: entry.digest,
+        mode: entry.mode,
+        device: entry.device,
+        inode: entry.inode,
       })),
     },
   });
@@ -908,6 +925,7 @@ function applyUnderLock(
       root: plan.readset.root,
       ancestors: plan.readset.ancestors,
       files: plan.readset.files,
+      installed: plan.readset.installed,
     },
   );
   if (!revalidated.ok) {
@@ -956,6 +974,7 @@ function applyUnderLock(
       applied: false,
     })),
     lock: null,
+    ignoreFiles: [...plan.ignoreFiles],
   };
 
   // 5. Setup: a failure here is typed and cleans only the owned directory.
@@ -1053,6 +1072,7 @@ function applyUnderLock(
       root: plan.readset.root,
       ancestors: plan.readset.ancestors,
       files: plan.readset.files,
+      installed: plan.readset.installed,
     },
   );
   if (!rechecked.ok) {
@@ -1082,6 +1102,7 @@ function applyUnderLock(
     replaced.journal,
     plan.lock.bytes,
     plan.lock.preimage.mode ?? 0o644,
+    { stateDir: plan.stateDir, uiDir: plan.uiDir, stylesDir: plan.stylesDir },
     hooks,
   );
   if (!published.ok) {
