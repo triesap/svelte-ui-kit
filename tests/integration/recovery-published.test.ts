@@ -13,6 +13,10 @@ import { test } from "node:test";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
 import {
+  observeFileIdentity,
+  writePublicationIntent,
+} from "../../src/codegen/publication-intent.js";
+import {
   prepareJournal,
   persistJournal,
   type TransactionJournal,
@@ -24,6 +28,7 @@ import { stageOperations } from "../../src/codegen/stage.js";
 import {
   journalPath,
   lockPath,
+  publicationIntentPath,
   transactionDir,
 } from "../../src/codegen/transaction-types.js";
 import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
@@ -160,6 +165,51 @@ test("postcommit user modifications survive recovery cleanup", () => {
     assert.equal(
       readFileSync(abs(root, "src/styles/kit.css"), "utf8"),
       "user post-commit edit",
+    );
+  });
+});
+
+function seedJournalLessWitness(root: string, rootIdentity: string): void {
+  const lock = abs(root, lockPath(STATE_DIR));
+  mkdirSync(path.dirname(lock), { recursive: true });
+  writeFileSync(lock, lockBytes("d".repeat(64)));
+  mkdirSync(abs(root, transactionDir(STATE_DIR, ID)), {
+    recursive: true,
+    mode: 0o700,
+  });
+  writePublicationIntent(root, publicationIntentPath(STATE_DIR, ID), {
+    schemaVersion: 1,
+    transactionId: ID,
+    rootIdentity,
+    planDigest: "b".repeat(64),
+    digest: sha256Hex(readFileSync(lock)),
+    mode: 0o644,
+    preimage: null,
+    staged: observeFileIdentity(lock),
+  });
+}
+
+test("a journal-less publication witness binds to the live project root", () => {
+  withRoot((root) => {
+    seedJournalLessWitness(root, liveRootIdentity(root));
+    const recovered = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
+    assert.equal(recovered.status, "cleaned", JSON.stringify(recovered));
+    assert.equal(existsSync(abs(root, transactionDir(STATE_DIR, ID))), false);
+  });
+});
+
+test("a journal-less witness recorded against a different root is refused", () => {
+  withRoot((root) => {
+    seedJournalLessWitness(root, "a".repeat(64));
+    const recovered = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
+    assert.equal(recovered.status, "refused", JSON.stringify(recovered));
+    assert.ok(
+      recovered.issues.some((issue) => issue.code === "RECOVERY_ROOT_MISMATCH"),
+      JSON.stringify(recovered.issues),
+    );
+    assert.equal(
+      existsSync(abs(root, publicationIntentPath(STATE_DIR, ID))),
+      true,
     );
   });
 });

@@ -48,6 +48,7 @@ import {
   classifyPublication,
   observeFileIdentity,
   readPublicationIntent,
+  type PublicationIntent,
 } from "./publication-intent.js";
 import {
   backupsDir,
@@ -217,6 +218,31 @@ function rootBindingIssues(
         "RECOVERY_ROOT_MISMATCH",
         "the journal root identity does not match the live project root; refusing to recover foreign evidence",
         "journal.json",
+      ),
+    ];
+  }
+  return [];
+}
+
+/**
+ * Bind a journal-less publication witness to the live project root. A witness
+ * surviving in a different checkout, or one recorded against a replaced root,
+ * must never authorize cleanup of foreign evidence.
+ */
+function intentBindingIssues(
+  root: string,
+  stateDir: string,
+  transactionId: string,
+  intent: PublicationIntent,
+): ModelIssue[] {
+  const observed = observeRootIdentity(root);
+  if (!observed.ok) return [...observed.issues];
+  if (identityDigest(observed.value) !== intent.rootIdentity) {
+    return [
+      issue(
+        "RECOVERY_ROOT_MISMATCH",
+        "the publication witness root identity does not match the live project root; refusing to recover foreign evidence",
+        publicationIntentPath(stateDir, transactionId),
       ),
     ];
   }
@@ -605,6 +631,13 @@ export function recoverTransaction(
       );
       if (Array.isArray(intentRead)) return refuse(transactionId, intentRead);
       if (intentRead !== null) {
+        const binding = intentBindingIssues(
+          root,
+          stateDir,
+          transactionId,
+          intentRead,
+        );
+        if (binding.length > 0) return refuse(transactionId, binding);
         const state = classifyPublication({
           intent: intentRead,
           canonical: observeFileIdentity(absOf(root, lockPath(stateDir))),
@@ -682,6 +715,15 @@ export function recoverTransaction(
           lockPath(stateDir),
         ),
       ]);
+    }
+    if (intentRead !== null) {
+      const binding = intentBindingIssues(
+        root,
+        stateDir,
+        transactionId,
+        intentRead,
+      );
+      if (binding.length > 0) return refuse(transactionId, binding);
     }
     const stagedStillPresent =
       observeFileIdentity(

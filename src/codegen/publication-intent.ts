@@ -36,6 +36,9 @@ export interface PublicationIdentity {
 export interface PublicationIntent {
   readonly schemaVersion: 1;
   readonly transactionId: string;
+  /** Digests of the exact validated journal this intent belongs to. */
+  readonly rootIdentity: string;
+  readonly planDigest: string;
   /** Digest of the exact intended canonical lock bytes. */
   readonly digest: string;
   /** Exact mode the publication rename is expected to leave on the canonical lock. */
@@ -171,6 +174,30 @@ export function readPublicationIntent(
     ];
   }
   if (
+    typeof parsed["rootIdentity"] !== "string" ||
+    !/^[0-9a-f]{64}$/.test(parsed["rootIdentity"])
+  ) {
+    return [
+      {
+        code: "PUBLICATION_INTENT_INVALID",
+        message: "the publication intent root identity is invalid",
+        locator: logicalPath,
+      },
+    ];
+  }
+  if (
+    typeof parsed["planDigest"] !== "string" ||
+    !/^[0-9a-f]{64}$/.test(parsed["planDigest"])
+  ) {
+    return [
+      {
+        code: "PUBLICATION_INTENT_INVALID",
+        message: "the publication intent plan digest is invalid",
+        locator: logicalPath,
+      },
+    ];
+  }
+  if (
     typeof parsed["digest"] !== "string" ||
     !/^[0-9a-f]{64}$/.test(parsed["digest"])
   ) {
@@ -209,6 +236,8 @@ export function readPublicationIntent(
   return {
     schemaVersion: 1,
     transactionId: parsed["transactionId"] as string,
+    rootIdentity: parsed["rootIdentity"] as string,
+    planDigest: parsed["planDigest"] as string,
     digest: parsed["digest"] as string,
     mode: parsed["mode"] as number,
     preimage,
