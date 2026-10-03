@@ -677,13 +677,16 @@ function ownedAncestorCandidates(plan: ValidatedApplyPlan): PlanAncestor[] {
 
 /**
  * Prove the staged replacement can be published with an atomic same-filesystem
- * rename: the nearest existing ancestor directory of every target must share
- * the project root's device. A cross-device arrangement is a typed refusal
- * before any semantic effect, never a happy-path assumption.
+ * rename: the nearest existing ancestor directory of every target and of the
+ * owned state directory must share the project root's device. A cross-device
+ * arrangement is a typed refusal before any semantic effect, never a
+ * happy-path assumption. The state directory is checked even for a
+ * metadata-only plan because staging and lock publication live inside it.
  */
 function verifySameFilesystem(
   root: string,
   targets: readonly ValidatedApplyTarget[],
+  stateDir: string,
 ): ModelIssue[] {
   const rootEntry = observeEntry(root);
   if (rootEntry.kind !== "directory") {
@@ -696,8 +699,8 @@ function verifySameFilesystem(
   }
   const rootDevice = rootEntry.stats.dev;
   const issues: ModelIssue[] = [];
-  for (const target of targets) {
-    let current = path.dirname(absOf(root, target.path));
+  const check = (startAbs: string, locator: string): void => {
+    let current = startAbs;
     for (;;) {
       const entry = observeEntry(current);
       if (entry.kind === "directory") {
@@ -705,28 +708,32 @@ function verifySameFilesystem(
           issues.push(
             issue(
               "STAGE_CROSS_DEVICE",
-              `${target.path} is not on the same filesystem as the project root; refusing non-atomic publication`,
-              target.path,
+              `${locator} is not on the same filesystem as the project root; refusing non-atomic publication`,
+              locator,
             ),
           );
         }
-        break;
+        return;
       }
       if (entry.kind !== "absent") {
         issues.push(
           issue(
             "AUTHORITY_ANCESTOR_UNSAFE",
-            `cannot prove a same-filesystem ancestor for ${target.path} (${entry.kind})`,
-            target.path,
+            `cannot prove a same-filesystem ancestor for ${locator} (${entry.kind})`,
+            locator,
           ),
         );
-        break;
+        return;
       }
       const parent = path.dirname(current);
-      if (parent === current) break;
+      if (parent === current) return;
       current = parent;
     }
+  };
+  for (const target of targets) {
+    check(path.dirname(absOf(root, target.path)), target.path);
   }
+  check(absOf(root, stateDir), stateDir);
   return issues;
 }
 
@@ -908,7 +915,11 @@ function applyUnderLock(
   }
 
   // 3b. Prove same-filesystem staging/replacement before any semantic effect.
-  const filesystem = verifySameFilesystem(plan.root, plan.targets);
+  const filesystem = verifySameFilesystem(
+    plan.root,
+    plan.targets,
+    plan.stateDir,
+  );
   if (filesystem.length > 0) {
     return { kind: "refused", transactionId, issues: filesystem };
   }
