@@ -50,6 +50,7 @@ import {
   type PlanReadset,
 } from "./authority.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";
+import { flushDirectory } from "./durability.js";
 import { parseKitLock } from "./lock.js";
 import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../project/config.js";
 import type { ChangeOperation } from "./plan.js";
@@ -1423,10 +1424,15 @@ function removeTransaction(
   plan: ValidatedApplyPlan,
   transactionId: string,
 ): void {
-  rmSync(absOf(plan.root, transactionDir(plan.stateDir, transactionId)), {
-    recursive: true,
-    force: true,
-  });
+  const dir = absOf(plan.root, transactionDir(plan.stateDir, transactionId));
+  rmSync(dir, { recursive: true, force: true });
+  // The removal must be durable in the transaction namespace so a crash cannot
+  // resurrect an owned transaction directory this attempt abandoned.
+  try {
+    flushDirectory(path.dirname(dir));
+  } catch {
+    // The namespace may already be gone; removal is still best effort here.
+  }
 }
 
 /**
@@ -1435,14 +1441,21 @@ function removeTransaction(
  * residue. Only empty directories are removed; unexpected entries survive.
  */
 function cleanupEmptyTransient(plan: ValidatedApplyPlan): void {
-  for (const logical of [
-    transactionsDir(plan.stateDir),
-    transientRoot(plan.stateDir),
-  ]) {
+  for (const [logical, parent] of [
+    [transactionsDir(plan.stateDir), transientRoot(plan.stateDir)],
+    [transientRoot(plan.stateDir), plan.stateDir],
+  ] as const) {
     try {
       rmdirSync(absOf(plan.root, logical));
     } catch {
       // Non-empty or already removed; unrelated state is never touched.
+      continue;
+    }
+    // Durable removal of the now-empty owned transient directory in its parent.
+    try {
+      flushDirectory(absOf(plan.root, parent));
+    } catch {
+      // The directory is already gone; the parent flush is best effort here.
     }
   }
 }
