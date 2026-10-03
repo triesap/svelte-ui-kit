@@ -3,7 +3,7 @@
 Status: implementation repairs for independent review 11 are locally verified;
 S064–S077 remain `committed_pending_review`. Independent Codex acceptance is
 required before S078. This is Pi-authored implementation evidence, not an
-acceptance decision.
+acceptance decision. See "Review 12 repairs" below for the later pass.
 
 Original S064–S077 definitions, R01–R34, AC01–AC22 and the accepted
 RCLD-01..RCLD-03 records are unchanged. The fourteen checkpoint reports keep
@@ -97,14 +97,53 @@ are corrected by this pass:
 
 - Owned absent-directory creation is not yet recorded for bounded rollback; a
   refused batch can leave created application ancestors.
-- Recovery does not yet bind the journal `rootIdentity`/`planDigest` to the live
-  root for the standalone (non-apply) path; the guarded apply path supplies the
-  approved mapping and expected read set.
 - Required ignore-file changes are not yet integrated as captured guarded
   operations; the direct-write helper remains.
-- Per-file directory durability ordering is limited to the journal and intent
-  records; staged-file and lock-publication flush ordering is not fully
-  qualified.
+- Standalone recovery does not yet bind the journal `rootIdentity`/`planDigest`
+  to the live root or require its own exclusive coordination; the guarded apply
+  path supplies the approved mapping and holds the exclusive lock across
+  recovery.
 - Composed real-registry custom-mapping update/retirement/metadata/conflict
   qualification and browser/CI platform lanes remain unrun.
 - AC20's fixture-only upstream declaration exception remains open release debt.
+
+## Review 12 repairs (RCLD04-R2-1/2/3/4)
+
+Review 12 reproduced six defects beyond the original 22 cases and requested
+changes to `9d94bce`. Two green repair commits address them plus durable write
+ordering:
+
+- `f575bf0` (R2-1, R2-3, R2-4): validated plans are registered in a
+  module-owned `WeakSet`, so an object spread with recomputed digests cannot
+  transfer write authority; `composeApplyPlan` carries the captured manifest,
+  recognized manager lockfiles and proven absence into the apply read set; the
+  durable publication intent records the expected canonical mode and binds its
+  transaction/digest to the recovered journal; legacy byte-equality publication
+  is removed; a recorded non-absent canonical preimage that has since
+  disappeared is contradictory rather than prepublication; published recovery
+  validates the canonical kind and mode before cleanup; and the owned transient
+  inventory is derived from validated journal records with required
+  regular-file kinds at every depth.
+- `f43b4d1` (R2-2 durability): shared file/directory flush helpers order staged
+  bytes, backup and replacement directory entries, lock staging and canonical
+  publication, and recovery restore; durability boundaries expose the order for
+  causal verification.
+
+Causal regressions added: `transaction-authority` (copied-instance refusal),
+`compose-authority` (captured manifest drift), `recovery-ownership` (unrecorded
+numeric backup file and directory retention), `publication-witness` (deleted
+canonical contradiction, published mode-edit refusal) and
+`durability-ordering`.
+
+Verification: build, typecheck, format:check, lint, unit 276/276 and integration
+393/393 pass with zero skips; contract validation 0/0 and 137/137 contract tests.
+The private reviewer's six additional compiled cases now produce their safe
+outcomes (forged authority is `PLAN_UNVALIDATED` with notes preserved; manifest
+drift is `AUTHORITY_READ_CHANGED`; unrecorded backup ids yield
+`COMMITTED_NEEDS_CLEANUP` with the entries preserved; deleted canonical yields
+`RECOVERY_AMBIGUOUS_PUBLICATION` without rollback; published mode edit refuses
+cleanup with the mode preserved), and the original 22 cases remain safe.
+
+This is implementation progress, not acceptance. The groups above remain
+**incomplete** where listed under "Remaining work"; passing these cases does not
+accept whole R2 groups or supersede the unfinished original criteria.

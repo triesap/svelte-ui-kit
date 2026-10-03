@@ -103,6 +103,23 @@ ordering and composed custom/update/retirement/metadata/conflict qualification.
 The original snapshot layout-edit probe must supply the snapshot to exercise
 actual authority; omission only proves COMPOSE_SNAPSHOT_REQUIRED.
 
+Review-12 repair progress on top of `9d94bce`: `f575bf0` registers validated
+plans in a module-owned `WeakSet` (a spread with recomputed digests can no
+longer transfer authority), carries the captured manifest/manager/absence
+evidence into the composed read set, records and binds the publication witness
+mode/transaction/digest, removes legacy byte-equality publication, refuses
+contradictory canonical absence, validates canonical kind/mode before cleanup
+and derives the owned inventory from validated journal records;
+`f43b4d1` orders durable flushes across staging, backup, replacement, lock
+staging/publication and recovery. Both green: build, typecheck,
+format:check, lint, unit 276/276, integration 393/393 (zero skips), validation
+0/0 and contracts 137/137, and the reviewer's six additional compiled cases plus
+the original 22 now produce safe outcomes. Remaining and not claimed complete:
+owned absent-directory creation/rollback, captured guarded ignore integration,
+standalone recovery root/owner/phase binding with its own exclusive
+coordination, and composed custom/update/retirement/metadata/conflict
+qualification. S064–S077 remain `committed_pending_review`; only Codex accepts.
+
 At each green repair run affected causal checks and established static/contracts.
 At the FINAL composed candidate run frozen strict install, build/typecheck/format/
 lint, unit/integration/registry/CLI/harness/components (strict declaration controls),
