@@ -30,6 +30,28 @@ Stop further mutation when a command reports pending/ambiguous recovery. Preserv
 
 The implementation must provide fixture-tested instructions for prepared, partially applied, published-but-not-cleaned, and invalid/ambiguous states. It may not claim safe recovery before those fixtures pass. A cleanup failure after publication is not the same as a failed uncommitted installation; command reports must distinguish them.
 
+##### Stale writer coordination after a killed writer
+
+A writer that is killed leaving `_kit/.svelte-ui-kit/writer.lock` in place is
+never reclaimed automatically: the protocol refuses with a busy/coordination
+diagnostic (`WRITER_BUSY`) and retains the owner record and transaction
+evidence, because PID equality, age and lock-directory names are not proof that
+no writer is live. Automatic recovery therefore always refuses first. When a
+real operator has confirmed the recorded owner process is no longer running,
+the bounded manual procedure is:
+
+1. Preserve the existing transaction and journal evidence; do not delete it.
+2. Confirm the recorded `owner.json` PID is not alive in the current process
+   namespace and that no other coordinated writer is active for the project.
+3. Remove only the `_kit/.svelte-ui-kit/writer.lock` coordination directory,
+   leaving every other transient entry untouched.
+4. Re-run the original `init`/`add`/`sync` command so the guarded boundary
+   acquires coordination and performs provable recovery of the retained
+   transaction.
+
+Recursively deleting transaction, journal or staged state is not part of this
+procedure and is not a qualified production recovery path.
+
 #### Agent specification after each commit
 
 Use STEP_REPORT_TEMPLATE.md. State exact commands/working directories/results and unverified lanes, preserve failed evidence, commit only scoped changes, and name the next numbered step. Do not claim a final release when any required acceptance criterion remains blocked. Package construction/testing does not authorize publication or a remote push.

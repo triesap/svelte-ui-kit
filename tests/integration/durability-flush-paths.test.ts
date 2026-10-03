@@ -48,7 +48,9 @@ interface FlushProbe {
   restore(): void;
 }
 
-function recordFlushes(): FlushProbe {
+function recordFlushes(
+  failWhen?: (target: string, boundary: string) => boolean,
+): FlushProbe {
   let boundary = "setup";
   const fdPaths = new Map<number, string>();
   const flushes: Flush[] = [];
@@ -69,7 +71,16 @@ function recordFlushes(): FlushProbe {
   }) as typeof fs.closeSync;
   fs.fsyncSync = ((fd: number) => {
     const target = fdPaths.get(fd);
-    if (target !== undefined) flushes.push({ boundary, target });
+    if (target !== undefined) {
+      if (failWhen?.(target, boundary)) {
+        const error = new Error(
+          "injected fsync failure",
+        ) as NodeJS.ErrnoException;
+        error.code = "EIO";
+        throw error;
+      }
+      flushes.push({ boundary, target });
+    }
     return originalFsync(fd);
   }) as typeof fs.fsyncSync;
   syncBuiltinESMExports();
@@ -221,6 +232,33 @@ test("newly created ancestry and cleanup/release removals are flushed in their p
           entry.target.split(path.sep).join("/").endsWith("/.svelte-ui-kit"),
       ),
       `release parent not flushed: ${JSON.stringify(probe.flushes)}`,
+    );
+  } finally {
+    probe.restore();
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("an actual fsync failure during cleanup is reported as needs-cleanup", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "suik-flush-eio-"));
+  const probe = recordFlushes(
+    (_target, boundary) => boundary === "before:durability:cleanup",
+  );
+  try {
+    const outcome = applyPlan(sealed(absentAncestryPlan(root)), {
+      before: (value) => probe.setBoundary(`before:${value}`),
+      after: (value) => probe.setBoundary(`after:${value}`),
+    });
+    // The lock published but the owned cleanup flush failed with a real EIO:
+    // the outcome must be truthful, not a false success, and evidence remains.
+    assert.equal(
+      outcome.kind,
+      "committed_needs_cleanup",
+      JSON.stringify(outcome.issues),
+    );
+    assert.ok(
+      fs.existsSync(path.join(root, "app/ui/_kit/.svelte-ui-kit/transactions")),
+      "transaction evidence must be retained after a cleanup durability failure",
     );
   } finally {
     probe.restore();

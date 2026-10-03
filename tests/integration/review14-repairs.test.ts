@@ -517,6 +517,56 @@ test("a publication witness with a contradictory plan digest is preserved", () =
   });
 });
 
+test("a stale dead-writer lock refuses automatically before the bounded manual step", () => {
+  withRoot((root) => {
+    const readset = captureReadset(root, [], []);
+    assert.equal(readset.ok, true);
+    if (!readset.ok) return;
+    const tid = "44444444-4444-4444-8444-444444444444";
+    write(
+      root,
+      journalPath(STATE, tid),
+      JSON.stringify({
+        schemaVersion: 1,
+        transactionId: tid,
+        rootIdentity: identityDigest(readset.value.root),
+        planDigest: "b".repeat(64),
+        phase: "planned",
+        operations: [],
+        lock: null,
+      }),
+    );
+    // A lock owned by a process that is not running is still never reclaimed
+    // automatically: PID/age is not proof that no writer is live.
+    write(
+      root,
+      `${writerLockDir(STATE)}/owner.json`,
+      JSON.stringify({
+        schemaVersion: 1,
+        transactionId: "55555555-5555-4555-8555-555555555555",
+        pid: 2147483646,
+      }),
+    );
+    const refused = recoverTransaction(root, STATE, tid, ROOTS);
+    assert.equal(refused.status, "refused");
+    assert.ok(
+      refused.issues.some((entry) => entry.code === "WRITER_BUSY"),
+      JSON.stringify(refused.issues),
+    );
+    assert.equal(existsSync(abs(root, journalPath(STATE, tid))), true);
+
+    // The documented bounded operator step removes only the coordination
+    // directory; the guarded boundary then recovers the retained transaction.
+    rmSync(abs(root, writerLockDir(STATE)), { recursive: true, force: true });
+    const recovered = recoverTransaction(root, STATE, tid, ROOTS);
+    assert.ok(
+      recovered.status === "cleaned" || recovered.status === "rolled_back",
+      JSON.stringify(recovered),
+    );
+    assert.equal(existsSync(abs(root, journalPath(STATE, tid))), false);
+  });
+});
+
 function readFileSyncJournalId(root: string): string {
   const dir = abs(root, transactionsDir(STATE));
   const entries = readdirSync(dir);
