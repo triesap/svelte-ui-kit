@@ -747,6 +747,78 @@ function ownedAncestorCandidates(plan: ValidatedApplyPlan): PlanAncestor[] {
   return [...result.values()];
 }
 
+export type DeviceObservation =
+  | { readonly kind: "directory"; readonly device: number }
+  | { readonly kind: "absent" }
+  | { readonly kind: "other"; readonly detail: string }
+  | { readonly kind: "unreadable"; readonly code: string };
+
+/**
+ * Pure same-filesystem walk from `startAbs` toward the filesystem root. The
+ * nearest existing ancestor directory must carry the project root's device; a
+ * foreign device is a typed refusal, an unsafe ancestor (symlink/non-directory)
+ * or an unreadable ancestor is a typed refusal, and a fully absent chain has no
+ * cross-device evidence. The observation function is injectable so the
+ * deterministic cross-device negative path can be exercised on a single-volume
+ * host without changing the production probe.
+ */
+export function sameFilesystemIssues(
+  rootDevice: number,
+  startAbs: string,
+  locator: string,
+  observe: (abs: string) => DeviceObservation,
+): ModelIssue[] {
+  let current = startAbs;
+  for (;;) {
+    const entry = observe(current);
+    if (entry.kind === "directory") {
+      if (entry.device !== rootDevice) {
+        return [
+          issue(
+            "STAGE_CROSS_DEVICE",
+            `${locator} is not on the same filesystem as the project root; refusing non-atomic publication`,
+            locator,
+          ),
+        ];
+      }
+      return [];
+    }
+    if (entry.kind === "unreadable") {
+      return [
+        issue(
+          "AUTHORITY_ANCESTOR_UNREADABLE",
+          `cannot prove a same-filesystem ancestor for ${locator} (${entry.code})`,
+          locator,
+        ),
+      ];
+    }
+    if (entry.kind === "other") {
+      return [
+        issue(
+          "AUTHORITY_ANCESTOR_UNSAFE",
+          `cannot prove a same-filesystem ancestor for ${locator} (${entry.detail})`,
+          locator,
+        ),
+      ];
+    }
+    const parent = path.dirname(current);
+    if (parent === current) return [];
+    current = parent;
+  }
+}
+
+function observeDevice(abs: string): DeviceObservation {
+  const entry = observeEntry(abs);
+  if (entry.kind === "directory") {
+    return { kind: "directory", device: entry.stats.dev };
+  }
+  if (entry.kind === "absent") return { kind: "absent" };
+  if (entry.kind === "unreadable") {
+    return { kind: "unreadable", code: entry.code };
+  }
+  return { kind: "other", detail: entry.kind };
+}
+
 /**
  * Prove the staged replacement can be published with an atomic same-filesystem
  * rename: the nearest existing ancestor directory of every target and of the
@@ -771,41 +843,24 @@ function verifySameFilesystem(
   }
   const rootDevice = rootEntry.stats.dev;
   const issues: ModelIssue[] = [];
-  const check = (startAbs: string, locator: string): void => {
-    let current = startAbs;
-    for (;;) {
-      const entry = observeEntry(current);
-      if (entry.kind === "directory") {
-        if (entry.stats.dev !== rootDevice) {
-          issues.push(
-            issue(
-              "STAGE_CROSS_DEVICE",
-              `${locator} is not on the same filesystem as the project root; refusing non-atomic publication`,
-              locator,
-            ),
-          );
-        }
-        return;
-      }
-      if (entry.kind !== "absent") {
-        issues.push(
-          issue(
-            "AUTHORITY_ANCESTOR_UNSAFE",
-            `cannot prove a same-filesystem ancestor for ${locator} (${entry.kind})`,
-            locator,
-          ),
-        );
-        return;
-      }
-      const parent = path.dirname(current);
-      if (parent === current) return;
-      current = parent;
-    }
-  };
   for (const target of targets) {
-    check(path.dirname(absOf(root, target.path)), target.path);
+    issues.push(
+      ...sameFilesystemIssues(
+        rootDevice,
+        path.dirname(absOf(root, target.path)),
+        target.path,
+        observeDevice,
+      ),
+    );
   }
-  check(absOf(root, stateDir), stateDir);
+  issues.push(
+    ...sameFilesystemIssues(
+      rootDevice,
+      absOf(root, stateDir),
+      stateDir,
+      observeDevice,
+    ),
+  );
   return issues;
 }
 
