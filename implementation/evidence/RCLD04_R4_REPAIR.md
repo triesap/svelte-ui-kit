@@ -72,10 +72,8 @@ extended `tests/integration/composed-lifecycle.test.ts` (2 cases).
 ## Final candidate qualification
 
 Environment: Node `v24.21.0`, pnpm `11.22.0`, macOS Darwin 25.5 arm64,
-single-volume host. Every lane below was routed through
-`cargo extbuild run --` after a green `cargo extbuild doctor`; raw logs and
-underlying exits are retained under the ignored
-`implementation/evidence/logs/rcl04-review14/` path.
+single-volume host. Every lane below is a portable repository command; raw logs
+and underlying exits are retained under the ignored local evidence-log tree.
 
 | Lane                                                                                 | Result                        | Exit |
 | ------------------------------------------------------------------------------------ | ----------------------------- | ---- |
