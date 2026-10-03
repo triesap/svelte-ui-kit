@@ -27,6 +27,8 @@ import {
 import path from "node:path";
 
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
+import { flushDirectory } from "./durability.js";
+import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import { isTransactionId, writerLockDir } from "./transaction-types.js";
 import type { JournalCreatedDir } from "./transaction-journal.js";
 
@@ -82,6 +84,7 @@ function lockDirAbs(root: string, stateDir: string): string {
 function ensureStateDirectoryChain(
   root: string,
   stateDir: string,
+  hooks?: TransactionHooks,
 ): readonly JournalCreatedDir[] {
   const rootAbs = path.resolve(root);
   const stateAbs = path.join(rootAbs, ...stateDir.split("/"));
@@ -107,6 +110,10 @@ function ensureStateDirectoryChain(
       device: stats.dev,
       inode: stats.ino,
     });
+    // Record the new coordination directory durably in its parent.
+    fireHooks(hooks, "before", "durability:owned-create", current);
+    flushDirectory(path.dirname(current));
+    fireHooks(hooks, "after", "durability:owned-create", current);
   }
   return created;
 }
@@ -124,6 +131,7 @@ export function acquireWriterLock(
   root: string,
   stateDir: string,
   transactionId: string,
+  hooks?: TransactionHooks,
 ): ModelResult<WriterLockHandle> {
   if (!isTransactionId(transactionId)) {
     return fail([
@@ -138,7 +146,7 @@ export function acquireWriterLock(
   const parent = path.dirname(lockDir);
   let createdDirectories: readonly JournalCreatedDir[];
   try {
-    createdDirectories = ensureStateDirectoryChain(root, stateDir);
+    createdDirectories = ensureStateDirectoryChain(root, stateDir, hooks);
     mkdirSync(parent, { recursive: true, mode: 0o700 });
   } catch (error) {
     return fail([
@@ -194,7 +202,10 @@ export function acquireWriterLock(
  * Release the lock only when it is still owned by this transaction. A missing
  * or corrupt owner record is an ambiguous stale lock and is never deleted.
  */
-export function releaseWriterLock(handle: WriterLockHandle): ModelResult<null> {
+export function releaseWriterLock(
+  handle: WriterLockHandle,
+  hooks?: TransactionHooks,
+): ModelResult<null> {
   const read = readOwner(handle.lockDir);
   if (!read.ok) {
     return fail([
@@ -232,7 +243,11 @@ export function releaseWriterLock(handle: WriterLockHandle): ModelResult<null> {
       ]);
     }
     unlinkSync(ownerFileAbs(handle.lockDir));
+    fireHooks(hooks, "before", "durability:release", handle.lockDir);
+    flushDirectory(handle.lockDir);
     rmdirSync(handle.lockDir);
+    flushDirectory(path.dirname(handle.lockDir));
+    fireHooks(hooks, "after", "durability:release", handle.lockDir);
   } catch (error) {
     return fail([
       issue(

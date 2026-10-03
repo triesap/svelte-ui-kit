@@ -24,6 +24,7 @@ import {
 import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
+import { flushDirectory } from "./durability.js";
 import type { TransactionJournal } from "./transaction-journal.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
@@ -161,10 +162,21 @@ export function cleanupTransaction(
         };
       }
       removeIfPresent(target);
+      // The removal must be durable in the containing directory so a crash
+      // cannot resurrect state recovery already proved safe to remove.
+      fireHooks(hooks, "before", "durability:cleanup", target);
+      flushDirectory(path.dirname(target));
+      fireHooks(hooks, "after", "durability:cleanup", target);
       fireHooks(hooks, "after", boundary, target);
     }
-    // Remove the now-empty owned transaction directory itself.
-    if (existsSync(ownedDir)) rmdirSync(ownedDir);
+    // Remove the now-empty owned transaction directory itself, then flush the
+    // parent transaction namespace so the completed cleanup is durable.
+    if (existsSync(ownedDir)) {
+      rmdirSync(ownedDir);
+      fireHooks(hooks, "before", "durability:cleanup", ownedDir);
+      flushDirectory(path.dirname(ownedDir));
+      fireHooks(hooks, "after", "durability:cleanup", ownedDir);
+    }
   } catch (error) {
     return {
       ok: false,

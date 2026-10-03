@@ -6,11 +6,19 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import type { ValidatedApplyPlan } from "../../src/codegen/apply.js";
+import type {
+  ApplyPlanInput,
+  ApplyTarget,
+  ValidatedApplyPlan,
+} from "../../src/codegen/apply.js";
+import { captureReadset } from "../../src/codegen/authority.js";
+import { capturePreimage } from "../../src/codegen/revalidate.js";
+import { lockPath } from "../../src/codegen/transaction-types.js";
 import {
   GUARDED_STATE,
   GUARDED_STYLES,
   makeGuardedPlan,
+  lockJson,
 } from "../helpers/guarded-plan.js";
 
 /**
@@ -131,6 +139,114 @@ test("cross-directory renames flush both affected parents and the staged lock pa
     assert.ok(
       flushed("before:durability:lock-publish", "/staged"),
       `publication source parent not flushed: ${JSON.stringify(probe.flushes)}`,
+    );
+  } finally {
+    probe.restore();
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+/** A plan whose generated mapping and state directory do not exist yet. */
+function absentAncestryPlan(root: string): ApplyPlanInput {
+  const uiDir = "app/ui";
+  const stylesDir = "app/styles";
+  const layoutFile = "app/routes/+layout.svelte";
+  const stateDir = `${uiDir}/_kit`;
+  const targets: ApplyTarget[] = [
+    {
+      path: `${uiDir}/button.svelte`,
+      operation: "create",
+      bytes: new TextEncoder().encode("<button />\n"),
+      mode: 0o644,
+      preimage: capturePreimage(root, `${uiDir}/button.svelte`),
+    },
+  ];
+  const readset = captureReadset(
+    root,
+    [...targets.map((target) => target.path), lockPath(stateDir)],
+    [],
+  );
+  if (!readset.ok) throw new Error("readset capture failed");
+  return {
+    root,
+    stateDir,
+    uiDir,
+    stylesDir,
+    layoutFile,
+    rootIdentity: "a".repeat(64),
+    planDigest: "b".repeat(64),
+    readset: readset.value,
+    targets,
+    lock: {
+      bytes: lockJson("d".repeat(64)),
+      preimage: capturePreimage(root, lockPath(stateDir)),
+    },
+  };
+}
+
+test("newly created ancestry and cleanup/release removals are flushed in their parents", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "suik-flush-owned-"));
+  const probe = recordFlushes();
+  try {
+    const outcome = applyPlan(sealed(absentAncestryPlan(root)), {
+      before: (value) => probe.setBoundary(`before:${value}`),
+      after: (value) => probe.setBoundary(`after:${value}`),
+    });
+    assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+
+    const flushed = (boundary: string, suffix: string): boolean =>
+      probe.flushes.some(
+        (entry) =>
+          entry.boundary === boundary &&
+          entry.target.split(path.sep).join("/").endsWith(suffix),
+      );
+    // Each newly created coordination directory flushes its parent.
+    assert.ok(
+      flushed("before:durability:owned-create", "/app") ||
+        flushed("before:durability:owned-create", "app"),
+      `owned create parent not flushed: ${JSON.stringify(probe.flushes)}`,
+    );
+    // Cleanup removals flush the containing directory, and the final release
+    // flushes the transient namespace.
+    assert.ok(
+      probe.flushes.some(
+        (entry) => entry.boundary === "before:durability:cleanup",
+      ),
+      `cleanup parent not flushed: ${JSON.stringify(probe.flushes)}`,
+    );
+    assert.ok(
+      probe.flushes.some(
+        (entry) =>
+          entry.boundary === "before:durability:release" &&
+          entry.target.split(path.sep).join("/").endsWith("/.svelte-ui-kit"),
+      ),
+      `release parent not flushed: ${JSON.stringify(probe.flushes)}`,
+    );
+  } finally {
+    probe.restore();
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a refused batch flushes the parent of each removed owned ancestor", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "suik-flush-remove-"));
+  const probe = recordFlushes();
+  try {
+    const outcome = applyPlan(sealed(absentAncestryPlan(root)), {
+      before: (value) => {
+        probe.setBoundary(`before:${value}`);
+        if (value === "replace:apply") {
+          throw new Error("review interruption");
+        }
+      },
+      after: (value) => probe.setBoundary(`after:${value}`),
+    });
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      probe.flushes.some(
+        (entry) => entry.boundary === "before:durability:owned-remove",
+      ),
+      `owned removal parent not flushed: ${JSON.stringify(probe.flushes)}`,
     );
   } finally {
     probe.restore();

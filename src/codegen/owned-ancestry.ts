@@ -20,6 +20,8 @@ import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
 import type { PlanAncestor } from "./authority.js";
+import { flushDirectory } from "./durability.js";
+import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import type { JournalCreatedDir } from "./transaction-journal.js";
 
 function codeOf(error: unknown): string {
@@ -53,6 +55,7 @@ export interface OwnedAncestryResult {
 export function createOwnedAncestors(
   root: string,
   ancestors: readonly PlanAncestor[],
+  hooks?: TransactionHooks,
 ): OwnedAncestryResult {
   const candidates = ancestors
     .filter((ancestor) => ancestor.kind === "absent")
@@ -131,6 +134,11 @@ export function createOwnedAncestors(
       device: stats.dev,
       inode: stats.ino,
     });
+    // A newly created directory must be durably recorded in its parent before
+    // the journal names it, so a crash cannot lose the owned ancestry entry.
+    fireHooks(hooks, "before", "durability:owned-create", ancestor.path);
+    flushDirectory(path.dirname(abs));
+    fireHooks(hooks, "after", "durability:owned-create", ancestor.path);
   }
   return { created, issues };
 }
@@ -143,6 +151,7 @@ export function createOwnedAncestors(
 export function removeOwnedAncestors(
   root: string,
   created: readonly JournalCreatedDir[],
+  hooks?: TransactionHooks,
 ): ModelIssue[] {
   const issues: ModelIssue[] = [];
   const ordered = [...created].sort(
@@ -181,6 +190,11 @@ export function removeOwnedAncestors(
     }
     try {
       rmdirSync(abs);
+      // The removal must be durable in the parent directory so a crash cannot
+      // resurrect the owned directory that recovery already proved empty.
+      fireHooks(hooks, "before", "durability:owned-remove", entry.path);
+      flushDirectory(path.dirname(abs));
+      fireHooks(hooks, "after", "durability:owned-remove", entry.path);
     } catch (error) {
       if (codeOf(error) === "ENOENT") continue;
       issues.push(

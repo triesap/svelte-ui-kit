@@ -28,6 +28,10 @@ export type TransactionBoundary =
   | "cleanup:backups"
   | "cleanup:progress"
   | "cleanup:journal"
+  | "durability:cleanup"
+  | "durability:release"
+  | "durability:owned-create"
+  | "durability:owned-remove"
   | "recovery:restore"
   | "durability:recovery"
   | "recovery:cleanup";

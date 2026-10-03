@@ -839,7 +839,12 @@ export function applyPlan(
 
   // 1. Acquire exclusive coordination before recovery. A contender never
   //    recovers a live owner's in-flight batch; it fails busy.
-  const acquired = acquireWriterLock(plan.root, plan.stateDir, transactionId);
+  const acquired = acquireWriterLock(
+    plan.root,
+    plan.stateDir,
+    transactionId,
+    hooks,
+  );
   if (!acquired.ok) {
     return { kind: "refused", transactionId: null, issues: acquired.issues };
   }
@@ -865,14 +870,14 @@ export function applyPlan(
       ],
     };
   }
-  const release = releaseWriterLock(acquired.value);
+  const release = releaseWriterLock(acquired.value, hooks);
   cleanupEmptyTransient(plan);
   // A refused or no-change attempt leaves no committed install, so remove only
   // the empty directories this attempt created. A committed install keeps them.
   const ancestryIssues =
     outcome.kind === "applied" || outcome.kind === "committed_needs_cleanup"
       ? []
-      : removeOwnedAncestors(plan.root, ownedCreated);
+      : removeOwnedAncestors(plan.root, ownedCreated, hooks);
   if (release.ok) {
     return ancestryIssues.length === 0
       ? outcome
@@ -1026,9 +1031,10 @@ function applyUnderLock(
       (ancestor) =>
         ancestor.kind === "absent" && !coordinationPaths.has(ancestor.path),
     ),
+    hooks,
   );
   if (created.issues.length > 0) {
-    removeOwnedAncestors(plan.root, created.created);
+    removeOwnedAncestors(plan.root, created.created, hooks);
     removeTransaction(plan, transactionId);
     return { kind: "refused", transactionId, issues: [...created.issues] };
   }
@@ -1048,7 +1054,7 @@ function applyUnderLock(
       hooks,
     );
   } catch (error) {
-    removeOwnedAncestors(plan.root, ownedCreated);
+    removeOwnedAncestors(plan.root, ownedCreated, hooks);
     removeTransaction(plan, transactionId);
     return {
       kind: "refused",

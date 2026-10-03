@@ -671,7 +671,7 @@ export function recoverTransaction(
       hooks,
     );
   }
-  const acquired = acquireWriterLock(root, stateDir, randomUUID());
+  const acquired = acquireWriterLock(root, stateDir, randomUUID(), hooks);
   if (!acquired.ok) {
     return refuse(transactionId, acquired.issues);
   }
@@ -686,7 +686,7 @@ export function recoverTransaction(
       hooks,
     );
   } finally {
-    const outcome = releaseWriterLock(acquired.value);
+    const outcome = releaseWriterLock(acquired.value, hooks);
     if (!outcome.ok) releaseIssues = outcome.issues;
     cleanupReleasedTransient(root, stateDir);
   }
@@ -833,7 +833,7 @@ function recoverTransactionUnderLock(
   if (journal.phase === "planned") {
     const binding = rootBindingIssues(root, journal);
     if (binding.length > 0) return refuse(transactionId, binding);
-    removeOwnedAncestors(root, journal.createdDirs ?? []);
+    removeOwnedAncestors(root, journal.createdDirs ?? [], hooks);
     removeOwnedEntries(root, stateDir, transactionId);
     return { status: "cleaned", transactionId, issues: [] };
   }
@@ -934,7 +934,11 @@ function recoverTransactionUnderLock(
   }
   // Remove only the recorded owned empty ancestry directories this attempt
   // created; a directory that is no longer empty is preserved and reported.
-  const ancestryIssues = removeOwnedAncestors(root, journal.createdDirs ?? []);
+  const ancestryIssues = removeOwnedAncestors(
+    root,
+    journal.createdDirs ?? [],
+    hooks,
+  );
   fireHooks(hooks, "before", "recovery:cleanup", transactionId);
   const cleanupIssues = inventoryIssues(root, stateDir, transactionId, journal);
   if (cleanupIssues.length > 0) return refuse(transactionId, cleanupIssues);
@@ -1133,7 +1137,7 @@ export function recoverTransactions(
   if (coordinatedByThisProcess(root, stateDir)) {
     return recoverScannedTransactions(root, stateDir, roots, hooks);
   }
-  const acquired = acquireWriterLock(root, stateDir, randomUUID());
+  const acquired = acquireWriterLock(root, stateDir, randomUUID(), hooks);
   if (!acquired.ok) {
     return [
       { status: "refused", transactionId: null, issues: acquired.issues },
@@ -1144,7 +1148,7 @@ export function recoverTransactions(
   try {
     results = recoverScannedTransactions(root, stateDir, roots, hooks);
   } finally {
-    const outcome = releaseWriterLock(acquired.value);
+    const outcome = releaseWriterLock(acquired.value, hooks);
     if (!outcome.ok) releaseIssues = outcome.issues;
     cleanupReleasedTransient(root, stateDir);
   }
