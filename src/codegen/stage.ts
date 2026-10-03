@@ -21,6 +21,7 @@ import path from "node:path";
 
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { sha256Hex } from "./digest.js";
+import { flushDirectory, flushFile } from "./durability.js";
 import type { ChangeOperation } from "./plan.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import { stagedDir } from "./transaction-types.js";
@@ -88,6 +89,10 @@ export function stageOperations(
       chmodSync(stagedPath, operation.mode);
       fireHooks(hooks, "after", "stage:write", operation.path);
 
+      fireHooks(hooks, "before", "durability:stage", operation.path);
+      flushFile(stagedPath);
+      fireHooks(hooks, "after", "durability:stage", operation.path);
+
       fireHooks(hooks, "before", "stage:verify", operation.path);
       const digest = sha256Hex(readFileSync(stagedPath));
       const expected = sha256Hex(operation.bytes);
@@ -104,6 +109,10 @@ export function stageOperations(
         mode: operation.mode,
       });
     }
+    // Flush the staged directory so a crash cannot lose the staged entry.
+    fireHooks(hooks, "before", "durability:stage", stagedLogical);
+    flushDirectory(stagedAbs);
+    fireHooks(hooks, "after", "durability:stage", stagedLogical);
   } catch (error) {
     cleanupStaged(stagedAbs);
     return fail([

@@ -14,16 +14,22 @@ export type TransactionBoundary =
   | "journal:fsync"
   | "stage:write"
   | "stage:verify"
+  | "durability:stage"
   | "backup:move"
+  | "durability:backup"
   | "replace:apply"
+  | "durability:replace"
   | "progress:persist"
   | "lock:stage"
+  | "durability:lock-stage"
   | "lock:publish"
+  | "durability:lock-publish"
   | "cleanup:staged"
   | "cleanup:backups"
   | "cleanup:progress"
   | "cleanup:journal"
   | "recovery:restore"
+  | "durability:recovery"
   | "recovery:cleanup";
 
 export interface TransactionHooks {

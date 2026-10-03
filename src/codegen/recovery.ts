@@ -29,6 +29,7 @@ import type { ModelIssue } from "../registry/errors.js";
 import { fail, ok, type ModelResult } from "../registry/errors.js";
 import { observeEntry } from "../project/io.js";
 import { sha256Hex } from "./digest.js";
+import { flushDirectory } from "./durability.js";
 import {
   parseJournal,
   validateJournalTargets,
@@ -446,6 +447,9 @@ function rollbackOperation(
       // caller's inventory/cleanup step rather than silently ignored.
     }
   }
+  fireHooks(hooks, "before", "durability:recovery", operation.path);
+  flushDirectory(path.dirname(absOf(root, operation.path)));
+  fireHooks(hooks, "after", "durability:recovery", operation.path);
 }
 
 const OWNED_ENTRIES = new Set([

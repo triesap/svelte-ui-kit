@@ -30,6 +30,7 @@ import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
 import { sha256Hex } from "./digest.js";
+import { flushDirectory, flushFile } from "./durability.js";
 import { parseKitLock } from "./lock.js";
 import {
   persistJournal,
@@ -188,6 +189,9 @@ export function publishLock(
     fireHooks(hooks, "before", "lock:stage", lockPath(stateDir));
     writeFileSync(stagedLock, lockBytes, { mode: effectiveMode });
     chmodSync(stagedLock, effectiveMode);
+    fireHooks(hooks, "before", "durability:lock-stage", lockPath(stateDir));
+    flushFile(stagedLock);
+    fireHooks(hooks, "after", "durability:lock-stage", lockPath(stateDir));
     fireHooks(hooks, "after", "lock:stage", lockPath(stateDir));
 
     // Record the physical rename witness before the canonical rename: the
@@ -224,6 +228,9 @@ export function publishLock(
     mkdirSync(path.dirname(destination), { recursive: true });
     renameSync(stagedLock, destination);
     chmodSync(destination, effectiveMode);
+    fireHooks(hooks, "before", "durability:lock-publish", lockPath(stateDir));
+    flushDirectory(path.dirname(destination));
+    fireHooks(hooks, "after", "durability:lock-publish", lockPath(stateDir));
     fireHooks(hooks, "after", "lock:publish", lockPath(stateDir));
   } catch (error) {
     return {

@@ -24,6 +24,7 @@ import path from "node:path";
 import type { ModelIssue } from "../registry/errors.js";
 import { observeEntry } from "../project/io.js";
 import { sha256Hex } from "./digest.js";
+import { flushDirectory } from "./durability.js";
 import { observeTarget } from "./revalidate.js";
 import {
   persistJournal,
@@ -184,6 +185,9 @@ export function applyReplacements(
         }
         mkdirSync(path.dirname(targetAbs), { recursive: true });
         renameSync(targetAbs, path.join(backupsAbs, operation.backupId));
+        fireHooks(hooks, "before", "durability:backup", operation.path);
+        flushDirectory(backupsAbs);
+        fireHooks(hooks, "after", "durability:backup", operation.path);
         fireHooks(hooks, "after", "backup:move", operation.path);
       }
 
@@ -208,6 +212,9 @@ export function applyReplacements(
         }
         mkdirSync(path.dirname(targetAbs), { recursive: true });
         renameSync(absOf(root, record.stagedPath), targetAbs);
+        fireHooks(hooks, "before", "durability:replace", operation.path);
+        flushDirectory(path.dirname(targetAbs));
+        fireHooks(hooks, "after", "durability:replace", operation.path);
         fireHooks(hooks, "after", "replace:apply", operation.path);
       }
 
