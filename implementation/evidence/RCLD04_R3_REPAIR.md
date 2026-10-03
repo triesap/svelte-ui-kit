@@ -19,12 +19,17 @@ eight unfinished sequences.
 
 `captureEnvironment` records the physical integrity of each resolved installed
 `package.json` (nearest `node_modules`, then ancestors) alongside the selected
-manifest and package-manager lockfiles, including explicit absence. The captured
-evidence is carried into the guarded apply read set by `composeApplyPlan`, so a
-post-planning installed metadata change is refused as `AUTHORITY_READ_CHANGED`
-before any semantic write. Planning still reasons from the captured snapshot;
-no live read is mixed into planning, and an out-of-root hoisted layout is
-excluded rather than guessed.
+manifest and package-manager lockfiles, including explicit absence of the
+manifest/lockfiles. The captured evidence is carried into the guarded apply read
+set by `composeApplyPlan`, so a post-planning installed metadata change is
+refused as `AUTHORITY_READ_CHANGED` before any semantic write. Planning still
+reasons from the captured snapshot; no live read is mixed into planning, and an
+out-of-root hoisted layout is excluded rather than guessed. The resolved
+manifest is followed read-only through a linked `node_modules` directory exactly
+as `observeInstalled` does; a candidate that resolves to a nonregular or
+unreadable entry is not carried and is surfaced by the planner's existing typed
+diagnostics. Full per-layout enumeration-completeness and link-target evidence
+for every supported hoisting arrangement is not exhaustively qualified here.
 
 ### RCLD04-R2-2 — owned bootstrap, ignore integration and durability
 
@@ -118,13 +123,13 @@ unchanged and the four review-13 cases now produce their safe outcomes.
 
 ## Disposition reconciliation
 
-| Group                                       | Final disposition                                                                                                                                        |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R2-1 installed authority                    | implemented and verified (projected lock/config/ownership/cohort coherence enforced by the existing validated lock projection plus the guarded read set) |
-| R2-2 bootstrap/ignore/filesystem/durability | implemented and verified except the unavailable cross-device execution lane (typed refusal implemented, single-volume host)                              |
-| R2-3 publication proof                      | implemented and verified                                                                                                                                 |
-| R2-4 recovery authority                     | implemented and verified                                                                                                                                 |
-| R2-5 lifecycle/process                      | implemented and verified for the default and custom composed lifecycle, contention and interruption; Windows platform lane not executed                  |
+| Group                                       | Final disposition                                                                                                                                                                                                                             |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R2-1 installed authority                    | installed manifest integrity carried and verified; projected lock/config/ownership/cohort coherence enforced by the existing validated lock projection plus the guarded read set; exhaustive per-layout enumeration/link evidence not covered |
+| R2-2 bootstrap/ignore/filesystem/durability | implemented and verified except the unavailable cross-device execution lane (typed refusal implemented, single-volume host)                                                                                                                   |
+| R2-3 publication proof                      | implemented and verified                                                                                                                                                                                                                      |
+| R2-4 recovery authority                     | implemented and verified                                                                                                                                                                                                                      |
+| R2-5 lifecycle/process                      | implemented and verified for the default and custom composed lifecycle, contention and interruption; Windows platform lane not executed                                                                                                       |
 
 Historical provenance: the S064–S077 checkpoint reports keep their original
 implementation hashes; this file and the R1/R2 repair records reconcile them to
