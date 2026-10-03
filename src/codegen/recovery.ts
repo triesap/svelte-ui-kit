@@ -715,13 +715,9 @@ function recoverTransactionUnderLock(
         const state = classifyPublication({
           intent: intentRead,
           canonical: observeFileIdentity(absOf(root, lockPath(stateDir))),
-          stagedStillPresent:
-            observeFileIdentity(
-              absOf(
-                root,
-                `${stagedDir(stateDir, transactionId)}/kit.lock.json`,
-              ),
-            ) !== null,
+          stagedIdentity: observeFileIdentity(
+            absOf(root, `${stagedDir(stateDir, transactionId)}/kit.lock.json`),
+          ),
           expectedDigest: intentRead.digest,
           canonicalDigest: readFileSafe(root, lockPath(stateDir)),
         });
@@ -800,14 +796,13 @@ function recoverTransactionUnderLock(
       );
       if (binding.length > 0) return refuse(transactionId, binding);
     }
-    const stagedStillPresent =
-      observeFileIdentity(
-        absOf(root, `${stagedDir(stateDir, transactionId)}/kit.lock.json`),
-      ) !== null;
+    const stagedIdentity = observeFileIdentity(
+      absOf(root, `${stagedDir(stateDir, transactionId)}/kit.lock.json`),
+    );
     const state = classifyPublication({
       intent: intentRead,
       canonical: observeFileIdentity(canonicalAbs),
-      stagedStillPresent,
+      stagedIdentity,
       expectedDigest: journal.lock.digest,
       canonicalDigest,
     });

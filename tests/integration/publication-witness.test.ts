@@ -19,6 +19,7 @@ import { recoverTransactions } from "../../src/codegen/recovery.js";
 import {
   lockPath,
   publicationIntentPath,
+  stagedDir,
   transactionsDir,
 } from "../../src/codegen/transaction-types.js";
 import { RECOVERY_ROOTS } from "../helpers/transactions.js";
@@ -250,6 +251,61 @@ test("a missing witness with an edited canonical mode refuses cleanup", () => {
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
       "new css\n",
+    );
+  });
+});
+
+test("a replaced staged publication image before the rename fails closed", () => {
+  withRoot((root) => {
+    const plan = sealed(makeGuardedPlan(root));
+    const outcome = applyPlan(plan, {
+      before: (boundary) => {
+        if (boundary === "lock:publish") {
+          const ids = readdirSync(abs(root, transactionsDir(GUARDED_STATE)));
+          const stagedLock = abs(
+            root,
+            `${stagedDir(GUARDED_STATE, ids[0] as string)}/kit.lock.json`,
+          );
+          const bytes = readFileSync(stagedLock);
+          unlinkSync(stagedLock);
+          writeFileSync(stagedLock, bytes, { mode: 0o644 });
+          throw new Error("replaced the staged publication image");
+        }
+      },
+    });
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      outcome.issues.some(
+        (issue) => issue.code === "RECOVERY_AMBIGUOUS_PUBLICATION",
+      ),
+      JSON.stringify(outcome.issues),
+    );
+  });
+});
+
+test("a deleted staged publication image before the rename fails closed", () => {
+  withRoot((root) => {
+    const plan = sealed(makeGuardedPlan(root));
+    const outcome = applyPlan(plan, {
+      before: (boundary) => {
+        if (boundary === "lock:publish") {
+          const ids = readdirSync(abs(root, transactionsDir(GUARDED_STATE)));
+          unlinkSync(
+            abs(
+              root,
+              `${stagedDir(GUARDED_STATE, ids[0] as string)}/kit.lock.json`,
+            ),
+          );
+          throw new Error("deleted the staged publication image");
+        }
+      },
+    });
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      outcome.issues.some(
+        (issue) => issue.code === "RECOVERY_AMBIGUOUS_PUBLICATION",
+      ),
+      JSON.stringify(outcome.issues),
     );
   });
 });

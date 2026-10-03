@@ -1161,17 +1161,16 @@ function classifyApplyPublication(
       return null;
     }
   })();
-  const stagedStillPresent =
-    observeFileIdentity(
-      absOf(
-        plan.root,
-        `${stagedDir(plan.stateDir, journal.transactionId)}/kit.lock.json`,
-      ),
-    ) !== null;
+  const stagedIdentity = observeFileIdentity(
+    absOf(
+      plan.root,
+      `${stagedDir(plan.stateDir, journal.transactionId)}/kit.lock.json`,
+    ),
+  );
   return classifyPublication({
     intent: intentRead,
     canonical: observeFileIdentity(absOf(plan.root, lockPath(plan.stateDir))),
-    stagedStillPresent,
+    stagedIdentity,
     expectedDigest: journal.lock.digest,
     canonicalDigest,
   });

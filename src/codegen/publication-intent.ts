@@ -254,7 +254,12 @@ export function readPublicationIntent(
 export function classifyPublication(input: {
   readonly intent: PublicationIntent | null;
   readonly canonical: PublicationIdentity | null;
-  readonly stagedStillPresent: boolean;
+  /**
+   * Physical identity of any surviving staged publication image, or null. It
+   * must still be the exact recorded staged image for a prepublication proof;
+   * a replaced or deleted staged image fails closed rather than being assumed.
+   */
+  readonly stagedIdentity: PublicationIdentity | null;
   readonly expectedDigest: string;
   readonly canonicalDigest: string | null;
 }): PublicationState {
@@ -272,7 +277,7 @@ export function classifyPublication(input: {
       input.canonical === null &&
       input.intent.preimage === null &&
       input.intent.staged !== null &&
-      input.stagedStillPresent
+      sameIdentity(input.stagedIdentity, input.intent.staged)
     ) {
       return "prepublication";
     }
