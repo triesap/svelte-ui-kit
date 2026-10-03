@@ -17,6 +17,7 @@ import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { hashBytes } from "../../src/codegen/compare.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
+import { planSync } from "../../src/codegen/plan-sync.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
 import type { KitLock } from "../../src/codegen/lock.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
@@ -175,13 +176,20 @@ const CARD: CompoundItem = {
 
 function compoundRegistry(
   root: string,
+  options: {
+    readonly cardBody?: string;
+    readonly includeCard?: boolean;
+  } = {},
 ): ReturnType<typeof loadRegistrySnapshot> {
   cpSync(path.join(PKG_ROOT, "schema"), path.join(root, "schema"), {
     recursive: true,
   });
+  const includeCard = options.includeCard ?? true;
+  const card: CompoundItem = { ...CARD, body: options.cardBody ?? CARD.body };
+  const itemsToWrite = includeCard ? [BUTTON, card] : [BUTTON];
   const assets: { path: string; digest: string }[] = [];
   const items: { id: string; manifest: string }[] = [];
-  for (const item of [BUTTON, CARD]) {
+  for (const item of itemsToWrite) {
     const manifest = JSON.stringify({
       schemaVersion: 1,
       id: item.id,
@@ -354,6 +362,134 @@ test("a compound multi-item add generates hybrid files, css blocks and export co
     );
   } finally {
     rmSync(registryRoot, { recursive: true, force: true });
+    rmSync(consumer, { recursive: true, force: true });
+  }
+});
+
+function currentLock(root: string): KitLock {
+  return JSON.parse(
+    readFileSync(abs(root, `${derived.stateDir}/kit.lock.json`), "utf8"),
+  ) as KitLock;
+}
+
+test("a multi-item sync updates one owner and retires it without touching the retained cohort", () => {
+  const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-sync-"));
+  const updatedRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-upd-"));
+  const retiredRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-ret-"));
+  const consumer = seedConsumer("<h1>MULTI_SYNC_PAGE</h1>\n");
+  try {
+    const install = compoundRegistry(registryRoot);
+    assert.equal(install.ok, true, JSON.stringify(install));
+    if (!install.ok) return;
+    const first = captureSnapshot(consumer, compoundPaths());
+    assert.equal(first.ok, true, JSON.stringify(first));
+    if (!first.ok) return;
+    const added = planAdd({
+      registry: install.value,
+      config: DEFAULT_KIT_CONFIG,
+      addedRoots: ["card"],
+      snapshot: first.value,
+      lock: null,
+      registryVersion: install.value.root.registryVersion,
+      registryHash: install.value.root.contentHash,
+    });
+    assert.equal(added.ok, true, JSON.stringify(added));
+    if (!added.ok) return;
+    const installed = applyGuarded(consumer, first.value, added.value.writes);
+    assert.equal(installed.kind, "applied", JSON.stringify(installed.issues));
+    const buttonAfterInstall = readFileSync(
+      abs(consumer, `${derived.rootExportsDir}/button.svelte`),
+      "utf8",
+    );
+
+    // Update the card owner only; the transitive button owner is retained.
+    const updated = compoundRegistry(updatedRoot, {
+      cardBody: '<div class="card">v2</div>\n',
+    });
+    assert.equal(updated.ok, true, JSON.stringify(updated));
+    if (!updated.ok) return;
+    const second = captureSnapshot(consumer, compoundPaths());
+    assert.equal(second.ok, true, JSON.stringify(second));
+    if (!second.ok) return;
+    const sync = planSync({
+      registry: updated.value,
+      config: { ...DEFAULT_KIT_CONFIG, requested: ["card"] },
+      snapshot: second.value,
+      lock: currentLock(consumer),
+      registryVersion: updated.value.root.registryVersion,
+      registryHash: updated.value.root.contentHash,
+    });
+    assert.equal(sync.ok, true, JSON.stringify(sync));
+    if (!sync.ok) return;
+    assert.equal(
+      sync.value.executable,
+      true,
+      JSON.stringify(sync.value.diagnostics),
+    );
+    const applied = applyGuarded(consumer, second.value, sync.value.writes);
+    assert.equal(applied.kind, "applied", JSON.stringify(applied.issues));
+    assert.match(
+      readFileSync(
+        abs(consumer, `${derived.rootExportsDir}/card.svelte`),
+        "utf8",
+      ),
+      /v2/,
+    );
+    assert.equal(
+      readFileSync(
+        abs(consumer, `${derived.rootExportsDir}/button.svelte`),
+        "utf8",
+      ),
+      buttonAfterInstall,
+    );
+
+    // Retire card while explicitly retaining button: the retained owner and its
+    // CSS block survive, and only the retired owner's outputs are removed.
+    const retired = compoundRegistry(retiredRoot, { includeCard: false });
+    assert.equal(retired.ok, true, JSON.stringify(retired));
+    if (!retired.ok) return;
+    const third = captureSnapshot(consumer, compoundPaths());
+    assert.equal(third.ok, true, JSON.stringify(third));
+    if (!third.ok) return;
+    const retirement = planSync({
+      registry: retired.value,
+      config: { ...DEFAULT_KIT_CONFIG, requested: ["button"] },
+      snapshot: third.value,
+      lock: currentLock(consumer),
+      registryVersion: retired.value.root.registryVersion,
+      registryHash: retired.value.root.contentHash,
+    });
+    assert.equal(retirement.ok, true, JSON.stringify(retirement));
+    if (!retirement.ok) return;
+    const removed = applyGuarded(
+      consumer,
+      third.value,
+      retirement.value.writes,
+    );
+    assert.ok(
+      removed.kind === "applied" || removed.kind === "no_change",
+      JSON.stringify(removed),
+    );
+    assert.equal(
+      existsSync(abs(consumer, `${derived.rootExportsDir}/card.svelte`)),
+      false,
+    );
+    assert.equal(
+      existsSync(abs(consumer, `${derived.rootExportsDir}/card.types.ts`)),
+      false,
+    );
+    assert.equal(
+      existsSync(abs(consumer, `${derived.rootExportsDir}/button.svelte`)),
+      true,
+    );
+    const finalCss = readFileSync(abs(consumer, derived.kitCss), "utf8");
+    assert.match(finalCss, /\.button\b/);
+    assert.doesNotMatch(finalCss, /\.card\b/);
+    assert.deepEqual(currentLock(consumer).requested, ["button"]);
+  } finally {
+    rmSync(registryRoot, { recursive: true, force: true });
+    rmSync(updatedRoot, { recursive: true, force: true });
+    rmSync(retiredRoot, { recursive: true, force: true });
     rmSync(consumer, { recursive: true, force: true });
   }
 });
