@@ -18,6 +18,9 @@ playwright-report/
 .env.*
 !.env.example
 
+# Local runtime qualification evidence (raw logs, exits and checksum inventories)
+implementation/evidence/logs/
+
 # OS and editor temporary files
 .DS_Store
 Thumbs.db

@@ -70,6 +70,7 @@ import { cleanupTransaction } from "./transaction-cleanup.js";
 import { stageOperations } from "./stage.js";
 import { acquireWriterLock, releaseWriterLock } from "./write-lock.js";
 import {
+  APPROVED_IGNORE_FILES,
   createTransactionIdentity,
   journalPath,
   lockPath,
@@ -224,6 +225,59 @@ export function validateApplyPlan(
     !(input.lock as { bytes?: unknown }).bytes
   ) {
     problems.push(issue("PLAN_INCOMPLETE", "plan.lock is required", "lock"));
+  }
+  // The approved ignore authority is a strict array of the narrowly managed
+  // ignore files. A malformed value is a typed refusal before any effect, never
+  // an uncaught TypeError; an unapproved or duplicate entry is refused too.
+  if (input.ignoreFiles !== undefined) {
+    if (!Array.isArray(input.ignoreFiles)) {
+      problems.push(
+        issue(
+          "PLAN_IGNORE_INVALID",
+          "plan.ignoreFiles must be an array of logical paths",
+          "ignoreFiles",
+        ),
+      );
+    } else {
+      const seenIgnore = new Set<string>();
+      for (const [index, entry] of input.ignoreFiles.entries()) {
+        if (
+          typeof entry !== "string" ||
+          entry.length === 0 ||
+          !isSafeLogicalRelativePath(entry)
+        ) {
+          problems.push(
+            issue(
+              "PLAN_IGNORE_INVALID",
+              `plan.ignoreFiles[${index}] must be a safe logical path`,
+              "ignoreFiles",
+            ),
+          );
+          continue;
+        }
+        const folded = entry.toLowerCase();
+        if (seenIgnore.has(folded)) {
+          problems.push(
+            issue(
+              "PLAN_IGNORE_DUPLICATE",
+              `plan.ignoreFiles contains duplicate ${entry}`,
+              "ignoreFiles",
+            ),
+          );
+          continue;
+        }
+        seenIgnore.add(folded);
+        if (!APPROVED_IGNORE_FILES.includes(folded)) {
+          problems.push(
+            issue(
+              "PLAN_IGNORE_UNAPPROVED",
+              `ignore file ${entry} is not an approved managed ignore file`,
+              "ignoreFiles",
+            ),
+          );
+        }
+      }
+    }
   }
   if (problems.length > 0) return fail(problems);
 
@@ -500,6 +554,7 @@ export function validateApplyPlan(
         stateDir: plan.stateDir,
         uiDir: plan.uiDir,
         stylesDir: plan.stylesDir,
+        layoutFile: plan.layoutFile,
       });
       if (!validatedLock.ok) problems.push(...validatedLock.issues);
     }
@@ -1108,7 +1163,12 @@ function applyUnderLock(
     replaced.journal,
     plan.lock.bytes,
     plan.lock.preimage.mode ?? 0o644,
-    { stateDir: plan.stateDir, uiDir: plan.uiDir, stylesDir: plan.stylesDir },
+    {
+      stateDir: plan.stateDir,
+      uiDir: plan.uiDir,
+      stylesDir: plan.stylesDir,
+      layoutFile: plan.layoutFile,
+    },
     hooks,
   );
   if (!published.ok) {

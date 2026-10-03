@@ -134,11 +134,24 @@ export function createOwnedAncestors(
       device: stats.dev,
       inode: stats.ino,
     });
-    // A newly created directory must be durably recorded in its parent before
-    // the journal names it, so a crash cannot lose the owned ancestry entry.
-    fireHooks(hooks, "before", "durability:owned-create", ancestor.path);
-    flushDirectory(path.dirname(abs));
-    fireHooks(hooks, "after", "durability:owned-create", ancestor.path);
+    // A freshly created directory must be durably recorded in its parent before
+    // the journal names it, so a crash cannot lose the owned ancestry entry. A
+    // flush failure is reported with the already-created directories retained so
+    // the caller can account for and remove exactly what this attempt made.
+    try {
+      fireHooks(hooks, "before", "durability:owned-create", ancestor.path);
+      flushDirectory(path.dirname(abs));
+      fireHooks(hooks, "after", "durability:owned-create", ancestor.path);
+    } catch (error) {
+      issues.push(
+        issue(
+          "OWNED_ANCESTRY_FLUSH_FAILED",
+          `owned ancestor ${ancestor.path} creation could not be flushed durably (${codeOf(error)})`,
+          ancestor.path,
+        ),
+      );
+      return { created, issues };
+    }
   }
   return { created, issues };
 }
@@ -190,17 +203,30 @@ export function removeOwnedAncestors(
     }
     try {
       rmdirSync(abs);
-      // The removal must be durable in the parent directory so a crash cannot
-      // resurrect the owned directory that recovery already proved empty.
-      fireHooks(hooks, "before", "durability:owned-remove", entry.path);
-      flushDirectory(path.dirname(abs));
-      fireHooks(hooks, "after", "durability:owned-remove", entry.path);
     } catch (error) {
       if (codeOf(error) === "ENOENT") continue;
       issues.push(
         issue(
           "RECOVERY_ANCESTRY_NOT_EMPTY",
           `owned ancestor ${entry.path} is not empty; preserving it (${codeOf(error)})`,
+          entry.path,
+        ),
+      );
+      continue;
+    }
+    // The removal must be durable in the parent directory so a crash cannot
+    // resurrect the owned directory that recovery already proved empty. A
+    // flush failure after a completed removal is a distinct durability fault,
+    // not an unrelated nonempty directory.
+    try {
+      fireHooks(hooks, "before", "durability:owned-remove", entry.path);
+      flushDirectory(path.dirname(abs));
+      fireHooks(hooks, "after", "durability:owned-remove", entry.path);
+    } catch (error) {
+      issues.push(
+        issue(
+          "RECOVERY_ANCESTRY_FLUSH_FAILED",
+          `owned ancestor ${entry.path} removal could not be flushed durably (${codeOf(error)})`,
           entry.path,
         ),
       );

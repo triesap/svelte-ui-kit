@@ -32,7 +32,8 @@ import {
   type ModelResult,
 } from "../registry/errors.js";
 import { isSafeLogicalRelativePath } from "../project/paths.js";
-import { resolveInstalledManifestPath } from "../project/dependencies.js";
+import { observeEntry } from "../project/io.js";
+import { resolveInstalledManifestCandidate } from "../project/dependencies.js";
 import { sha256Hex } from "./digest.js";
 import { TRANSIENT_NAMESPACE } from "./transaction-types.js";
 
@@ -690,7 +691,7 @@ export function verifyInstalledReads(
 ): ModelIssue[] {
   const issues: ModelIssue[] = [];
   for (const entry of installed) {
-    const resolved = resolveInstalledManifestPath(root, entry.name);
+    const resolved = resolveInstalledManifestCandidate(root, entry.name);
     if (entry.kind === "absent") {
       if (resolved !== null) {
         issues.push(
@@ -723,25 +724,35 @@ export function verifyInstalledReads(
       );
       continue;
     }
+    // A captured unsafe/unreadable resolution is never silently accepted as
+    // absence or as authority: it must be re-observed as a clean regular file,
+    // otherwise the plan is stale and a fresh snapshot is required.
+    if (entry.kind === "unsafe" || entry.kind === "unreadable") {
+      issues.push(
+        issue(
+          "AUTHORITY_INSTALLED_CHANGED",
+          `dependency ${entry.name} was captured ${entry.kind} and cannot authorize mutation; request a fresh snapshot`,
+          entry.name,
+        ),
+      );
+      continue;
+    }
+    const current = observeEntry(resolved);
+    if (current.kind !== "file") {
+      issues.push(
+        issue(
+          "AUTHORITY_INSTALLED_CHANGED",
+          `dependency ${entry.name} is no longer a regular file (${current.kind})`,
+          entry.name,
+        ),
+      );
+      continue;
+    }
     let realPath: string | null;
     try {
       realPath = realpathSync(resolved);
     } catch {
       realPath = null;
-    }
-    if (entry.kind === "unsafe" || entry.kind === "unreadable") {
-      // A captured unsafe/unreadable resolution is never silently accepted as
-      // absence; require a fresh clean observation instead.
-      if (realPath !== null) {
-        issues.push(
-          issue(
-            "AUTHORITY_INSTALLED_CHANGED",
-            `dependency ${entry.name} was captured ${entry.kind} and is now readable; request a fresh snapshot`,
-            entry.name,
-          ),
-        );
-      }
-      continue;
     }
     if (realPath !== entry.realPath) {
       issues.push(

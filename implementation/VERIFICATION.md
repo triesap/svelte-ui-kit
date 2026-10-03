@@ -77,32 +77,30 @@ only writing modes.
 
 #### Current RCLD-04 complete-boundary qualification
 
-Independent review 14 of `551f95036b6e90c18c1136df1a7906a03dec1426`
+Independent review 15 of `7690ad7da8d9943999ccb8d366b23f7e87b23c0e`
 requests changes. Follow current RCLD04-R2-1/2/3/4/5 dispositions and ALL original
 S064–S077 criteria in the sole governing COMMIT_SEQUENCE. Preserve 63 accepted /
-14 pending / 126 not_started, the accepted planner and live RCLD-04 tuple.
-S078 alone requires independent acceptance of the completed boundary.
+14 pending / 126 not_started, accepted planners and the live RCLD-04 tuple.
+S078 requires independent acceptance after the complete boundary is ready.
 
-All 32 earlier compiled cases now produce safe outcomes. A real trace confirms
-both rename parents and the staged lock parent are flushed. Preserve those
-repairs. Ten additional cases expose hoisted/nearer/link dependency authority,
-ignore omission and recovery rejection, arbitrary created-directory deletion,
-PID-only coordination, ignored standalone release failure, incomplete final-lock
-mapping validation and contradictory publication plan-identity cleanup.
-Recorded ancestry and new composed/process tests are useful partial progress;
-complete original creation/removal durability, full authority and actual shipped
-registry default/custom lifecycle/consumer/process qualification remain software.
+All 42 prior compiled cases produce safe outcomes. Preserve that verified
+progress. Nine new causal cases expose contradictory live coordination owner,
+release fsync losing owner evidence and leaving stale authority, independently
+rooted custom-style rollback, partial creation fsync accounting, missing installed
+absence enumeration, unsafe metadata becoming absence, omitted layout context,
+malformed input exceptions and untyped partial exported-recovery cleanup failure.
+Complete all original authority, durability, lifecycle and restart qualification.
 A single-volume host does not block deterministic cross-device negative tests.
 
-Fresh independent build/typecheck/format/lint pass; unit 278, integration 413 and
-contract validation 0 errors/0 warnings pass with zero skips. Broader author
-native results and retained logs support fixture/Chromium/contracts/reference
-qualification; these were not freshly rerun by Codex. Some author lanes overwrite
-temporary captures: retain a distinct raw file and underlying exit for EVERY
-final lane. Record the exact final source/artifact/platform/configuration identity.
-Correct the overbroad group-complete claims in `RCLD04_R3_REPAIR.md` and keep
-historical provenance. Reference's four ignored Rust tests are separate from the
-fixture-only two upstream Bits TS2590/strict-17 exception and AC20 release debt.
+Fresh independent build/typecheck/format/lint pass; unit 278, integration 428 and
+contract validation 0 errors/0 warnings pass with zero skips. Twenty-two author
+raw lane logs match retained hashes and native results. Broader fixture/Chromium/
+contracts/reference results are author evidence, not independent acceptance.
+Retain unique raw files and underlying exits for every final lane, including
+failures, exact source/artifact/platform/configuration identity. Ensure logs and
+checksum inventories are ignored; keep public report commands portable.
+Reference's four ignored Rust tests are separate from AC20's fixture-only two
+upstream Bits TS2590/strict-17 exception. Neither establishes MVP completion.
 
 At each green checkpoint run affected causal tests plus static/contracts. At the
 FINAL composed candidate run frozen strict install, build/typecheck/format/lint,
@@ -114,15 +112,21 @@ underlying exits BEFORE presentation truncation; retain failed attempts, version
 source/artifact/platform/configuration identity at ignored repository-relative
 paths. Do not treat a pipeline status or broad result enum as full qualification.
 
-Use the actual registry and original immutable snapshot through real production
-composition/application for every default/custom init/add/sync, update, retirement,
-metadata-only, satisfied and conflict case. Compare complete trees, bytes, modes,
-kinds, links, ownership and unrelated content; check/build and inspect real emitted
-and rendered consumers. Process tests must use the supported coordinated restart
-path, preserving unknown/stale owner evidence and exact safe diagnostics; no
-uncoordinated recovery shortcut. Qualify actual cross-device refusal, file and
-both-directory flush ordering/failure and unchanged/edited/missing publication
-witnesses. Record eligible automation and genuinely unrun platforms honestly.
+Use original immutable snapshots through real production planners, composition,
+validation and guarded application. Qualify actual shipped foundation init/sync;
+for current item lifecycle use representative multi-item registry fixtures under
+already approved contracts, including dependencies, hybrid sources, multiple CSS
+blocks and export/layout cohorts. Cover default/custom add/sync/update/retirement/
+metadata/satisfied/conflict, compare complete trees/bytes/modes/kinds/links/ownership
+and unrelated content, and check/build/render resulting consumers. Current empty
+catalog and later CLI commands are intentional dependency boundaries; do not
+implement S081 or S096/S097 early or defer eligible core qualification to them.
+Process interruption/restart uses current guarded production core with original
+snapshots/replanning, automatic busy refusal and the documented bounded operator
+resolution before coordinated restart. No uncoordinated shortcut or test-only
+lock bypass. Qualify deterministic cross-device refusal, actual creation/removal/
+release/recovery flush failures and publication witness states. Record genuinely
+unrun physical/platform lanes honestly without classifying software as blocked.
 
 Preserve AC20's exact fixture-only two upstream Bits TS2590 exception and strict
 17 controls; no extra suppression, weakened tests, accessibility bypass or SSR

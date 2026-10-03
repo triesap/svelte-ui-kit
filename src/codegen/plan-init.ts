@@ -230,6 +230,7 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
         stateDir: derived.stateDir,
         uiDir: config.uiDir,
         stylesDir: config.stylesDir,
+        layoutFile: config.layoutFile,
       });
       if (!parsed.ok) return fail(parsed.issues);
       existingLock = parsed.value;
@@ -646,6 +647,7 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
     stateDir: derived.stateDir,
     uiDir: config.uiDir,
     stylesDir: config.stylesDir,
+    layoutFile: config.layoutFile,
   });
   if (!validated.ok) return fail(validated.issues);
   const finalLock = validated.value;

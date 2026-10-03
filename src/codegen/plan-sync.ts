@@ -232,6 +232,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
         stateDir: derived.stateDir,
         uiDir: effectiveConfig.uiDir,
         stylesDir: effectiveConfig.stylesDir,
+        layoutFile: effectiveConfig.layoutFile,
       });
       if (!validated.ok) return fail(validated.issues);
       finalLock = validated.value;

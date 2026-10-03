@@ -323,6 +323,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         stateDir: joinLogical(config.uiDir, "_kit"),
         uiDir: config.uiDir,
         stylesDir: config.stylesDir,
+        layoutFile: config.layoutFile,
       });
       if (!validatedObservedLock.ok) {
         for (const entry of validatedObservedLock.issues) {
@@ -1219,6 +1220,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       stateDir: joinLogical(config.uiDir, "_kit"),
       uiDir: config.uiDir,
       stylesDir: config.stylesDir,
+      layoutFile: config.layoutFile,
     });
     if (!validated.ok) return fail(validated.issues);
     projectedLock = validated.value;

@@ -34,7 +34,9 @@ import {
   type ManagerEvidence,
 } from "./dependency-instructions.js";
 import {
+  DECLARATION_FIELDS,
   observeInstalled,
+  resolveInstalledManifestCandidate,
   resolveInstalledManifestPath,
   type InstalledObservation,
 } from "./dependencies.js";
@@ -257,7 +259,7 @@ function captureEvidence(
  */
 function installedManifestPaths(
   root: string,
-  names: ReadonlySet<string>,
+  names: readonly string[],
 ): string[] {
   const resolvedRoot = path.resolve(root);
   const paths: string[] = [];
@@ -282,12 +284,35 @@ function codeOf(error: unknown): string {
   return typeof code === "string" ? code : "EIO";
 }
 
+/**
+ * Declared dependency names from the selected package manifest, in a
+ * deterministic order. These are decision-relevant lookups even when no
+ * installation exists: a name proven absent must stay captured as absent so a
+ * later-appearing incompatible package is a change, not a silent new lookup.
+ */
+function declaredDependencyNames(manifest: JsonObservation): string[] {
+  if (manifest.kind !== "value") return [];
+  const names = new Set<string>();
+  for (const field of DECLARATION_FIELDS) {
+    const record = manifest.value[field];
+    if (
+      typeof record !== "object" ||
+      record === null ||
+      Array.isArray(record)
+    ) {
+      continue;
+    }
+    for (const name of Object.keys(record)) names.add(name);
+  }
+  return [...names];
+}
+
 /** Capture read-only resolution, link-target and byte evidence for one name. */
 function captureInstalledResolution(
   root: string,
   name: string,
 ): InstalledResolutionEvidence {
-  const resolved = resolveInstalledManifestPath(root, name);
+  const resolved = resolveInstalledManifestCandidate(root, name);
   if (resolved === null) {
     return {
       name,
@@ -380,15 +405,22 @@ function captureInstalledResolution(
  */
 export function captureEnvironment(root: string): CapturedEnvironment {
   const manifest = readJsonObject(path.join(root, "package.json"));
-  const { names, complete } = enumerateInstalledNames(root);
+  const enumerated = enumerateInstalledNames(root);
+  // Decision-relevant names are the union of enumerated installed names and the
+  // selected package's declared dependency names. A declared-but-absent name is
+  // captured explicitly as absent rather than being omitted, so a later-appearing
+  // install is a typed change instead of a silent new lookup.
+  const names = [
+    ...new Set([...enumerated.names, ...declaredDependencyNames(manifest)]),
+  ].sort();
   const installed = new FrozenMap<InstalledObservation>(
-    [...names]
-      .sort()
-      .map((name) => [name, deepFreeze(observeInstalled(root, name))] as const),
+    names.map(
+      (name) => [name, deepFreeze(observeInstalled(root, name))] as const,
+    ),
   );
-  const installedResolution = [...names]
-    .sort()
-    .map((name) => captureInstalledResolution(root, name));
+  const installedResolution = names.map((name) =>
+    captureInstalledResolution(root, name),
+  );
   const managerResult = detectPackageManager(root);
   const project = deepFreeze(detectDefaultProject(root));
   const kitConfig = deepFreeze(discoverKitConfig(root));
@@ -397,7 +429,7 @@ export function captureEnvironment(root: string): CapturedEnvironment {
     evidence: captureEvidence(root, installedManifestPaths(root, names)),
     installed,
     installedResolution,
-    enumerationComplete: complete,
+    enumerationComplete: enumerated.complete,
     manager: managerResult.ok
       ? managerResult.value
       : ({

@@ -106,6 +106,12 @@ export interface LockValidationContext {
   readonly stateDir?: string;
   readonly uiDir?: string;
   readonly stylesDir?: string;
+  /**
+   * The approved layout file. When supplied, a layout integration must name
+   * exactly this mapped layout path so a final projected integration can never
+   * be published outside the configured layout mapping.
+   */
+  readonly layoutFile?: string;
 }
 
 function sameIds(left: readonly string[], right: readonly string[]): boolean {
@@ -546,6 +552,20 @@ export function parseKitLock(
         issue(
           "LOCK_RESERVED_STATE",
           `integrations[${index}].path ${JSON.stringify(path)} must not live inside the reserved state directory ${JSON.stringify(context.stateDir)}`,
+          `integrations[${index}].path`,
+        ),
+      );
+    }
+    if (
+      kind === "layout" &&
+      context.layoutFile !== undefined &&
+      (typeof path !== "string" ||
+        asciiFold(path) !== asciiFold(context.layoutFile))
+    ) {
+      issues.push(
+        issue(
+          "LOCK_LAYOUT_CONTEXT",
+          `integrations[${index}].path ${JSON.stringify(path)} must be the approved layout file ${JSON.stringify(context.layoutFile)}`,
           `integrations[${index}].path`,
         ),
       );

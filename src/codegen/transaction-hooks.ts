@@ -34,6 +34,7 @@ export type TransactionBoundary =
   | "durability:owned-remove"
   | "recovery:restore"
   | "durability:recovery"
+  | "recovery:cleanup-dir"
   | "recovery:cleanup";
 
 export interface TransactionHooks {

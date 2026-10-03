@@ -148,6 +148,23 @@ export function resolveInstalledManifestPath(
   root: string,
   name: string,
 ): string | null {
+  const candidate = resolveInstalledManifestCandidate(root, name);
+  if (candidate === null) return null;
+  return observeEntry(candidate).kind === "file" ? candidate : null;
+}
+
+/**
+ * Resolve the nearest existing installed `package.json` candidate for `name`
+ * in the selected package's resolution context, including a nonregular final
+ * entry. This mirrors `observeInstalled`'s nearest-`node_modules`-then-ancestors
+ * walk so a capturer can classify a symlinked, directory or otherwise unreadable
+ * candidate as `unsafe`/`unreadable` rather than collapsing it into absence.
+ * Returns `null` only when no candidate entry exists all the way to the root.
+ */
+export function resolveInstalledManifestCandidate(
+  root: string,
+  name: string,
+): string | null {
   const segments = name.split("/").filter((segment) => segment !== "");
   if (
     segments.length === 0 ||
@@ -163,9 +180,7 @@ export function resolveInstalledManifestPath(
       ...segments,
       "package.json",
     );
-    const entry = observeEntry(candidate);
-    if (entry.kind === "file") return candidate;
-    if (entry.kind !== "absent") return null;
+    if (observeEntry(candidate).kind !== "absent") return candidate;
     const parent = path.dirname(current);
     if (parent === current) return null;
     current = parent;

@@ -67,6 +67,7 @@ import {
   acquireWriterLock,
   holdsWriterLock,
   releaseWriterLock,
+  verifyHeldWriterLock,
 } from "./write-lock.js";
 
 export type RecoveryStatus =
@@ -242,6 +243,12 @@ function createdDirIssues(
     const withinApprovedRoots =
       isWithinRoot(logical, roots.uiDir) ||
       isWithinRoot(logical, roots.stylesDir) ||
+      // An ancestor of an independently rooted UI/styles/layout destination is
+      // legitimate generated ancestry this attempt created (for example
+      // `assets` above a custom `assets/styles` root), so it is approved in
+      // either containment direction before the planner-ancestor check below.
+      isWithinRoot(roots.uiDir, logical) ||
+      isWithinRoot(roots.stylesDir, logical) ||
       logical === roots.layoutFile ||
       // A generated ancestor of the approved layout file is legitimate (for
       // example `src/routes` for `src/routes/+layout.svelte`).
@@ -604,8 +611,22 @@ function removeOwnedEntries(
   root: string,
   stateDir: string,
   transactionId: string,
-): void {
+  hooks?: TransactionHooks,
+): ModelIssue[] {
+  const issues: ModelIssue[] = [];
   const dir = absOf(root, transactionDir(stateDir, transactionId));
+  let names: string[];
+  try {
+    names = readdirSync(dir);
+  } catch (error) {
+    if (codeOf(error) === "ENOENT") return issues;
+    return [
+      issue(
+        "RECOVERY_CLEANUP_FAILED",
+        `transaction ${transactionId} directory could not be listed for cleanup (${codeOf(error)})`,
+      ),
+    ];
+  }
   // Remove only the exact owned top-level entries. The two temporary names are
   // owned by their recorded transaction id, never by a prefix pattern, so an
   // unrelated notes file that merely resembles a temporary journal survives.
@@ -613,29 +634,42 @@ function removeOwnedEntries(
     journalTempName(transactionId),
     publicationIntentTempName(transactionId),
   ]);
-  for (const name of readdirSync(dir)) {
-    const abs = path.join(dir, name);
+  const removeOne = (name: string, options: { recursive: boolean }): void => {
+    try {
+      rmSync(path.join(dir, name), { ...options, force: true });
+    } catch (error) {
+      issues.push(
+        issue(
+          "RECOVERY_CLEANUP_FAILED",
+          `owned transaction entry ${name} could not be removed (${codeOf(error)})`,
+          name,
+        ),
+      );
+    }
+  };
+  for (const name of names) {
     if (OWNED_ENTRIES.has(name)) {
-      rmSync(abs, { recursive: true, force: true });
+      removeOne(name, { recursive: true });
       continue;
     }
     if (ownedTempNames.has(name)) {
-      rmSync(abs, { force: true });
+      removeOne(name, { recursive: false });
     }
   }
-  rmSync(path.join(dir, "journal.json"), { force: true });
-  rmdirSync(dir);
-}
-
-/**
- * True when this process actually holds the writer lock for the project, so
- * recovery is running inside the guarded apply coordination and must not try to
- * acquire a second lock. Possession is proven by the in-process acquired-handle
- * registry, never by a recorded PID: a foreign owner record that merely names
- * this process must still be refused as busy.
- */
-function coordinatedByThisProcess(root: string, stateDir: string): boolean {
-  return holdsWriterLock(root, stateDir);
+  try {
+    fireHooks(hooks, "before", "recovery:cleanup-dir", transactionId);
+    rmdirSync(dir);
+  } catch (error) {
+    if (codeOf(error) !== "ENOENT") {
+      issues.push(
+        issue(
+          "RECOVERY_CLEANUP_FAILED",
+          `transaction ${transactionId} directory could not be removed (${codeOf(error)})`,
+        ),
+      );
+    }
+  }
+  return issues;
 }
 
 /** Best-effort removal of empty owned transient directories after a release. */
@@ -662,7 +696,9 @@ export function recoverTransaction(
   roots: RecoveryRoots,
   hooks?: TransactionHooks,
 ): RecoveryResult {
-  if (coordinatedByThisProcess(root, stateDir)) {
+  if (holdsWriterLock(root, stateDir)) {
+    const contradiction = verifyHeldWriterLock(root, stateDir);
+    if (contradiction.length > 0) return refuse(transactionId, contradiction);
     return recoverTransactionUnderLock(
       root,
       stateDir,
@@ -813,7 +849,8 @@ function recoverTransactionUnderLock(
           ]);
         }
       }
-      removeOwnedEntries(root, stateDir, transactionId);
+      const cleanup = removeOwnedEntries(root, stateDir, transactionId, hooks);
+      if (cleanup.length > 0) return refuse(transactionId, cleanup);
       return { status: "cleaned", transactionId, issues: [] };
     }
     return refuse(transactionId, read);
@@ -834,7 +871,8 @@ function recoverTransactionUnderLock(
     const binding = rootBindingIssues(root, journal);
     if (binding.length > 0) return refuse(transactionId, binding);
     removeOwnedAncestors(root, journal.createdDirs ?? [], hooks);
-    removeOwnedEntries(root, stateDir, transactionId);
+    const cleanup = removeOwnedEntries(root, stateDir, transactionId, hooks);
+    if (cleanup.length > 0) return refuse(transactionId, cleanup);
     return { status: "cleaned", transactionId, issues: [] };
   }
 
@@ -942,7 +980,15 @@ function recoverTransactionUnderLock(
   fireHooks(hooks, "before", "recovery:cleanup", transactionId);
   const cleanupIssues = inventoryIssues(root, stateDir, transactionId, journal);
   if (cleanupIssues.length > 0) return refuse(transactionId, cleanupIssues);
-  removeOwnedEntries(root, stateDir, transactionId);
+  const removalIssues = removeOwnedEntries(
+    root,
+    stateDir,
+    transactionId,
+    hooks,
+  );
+  if (removalIssues.length > 0) {
+    return refuse(transactionId, [...ancestryIssues, ...removalIssues]);
+  }
   fireHooks(hooks, "after", "recovery:cleanup", transactionId);
   return { status: "rolled_back", transactionId, issues: ancestryIssues };
 }
@@ -1008,7 +1054,13 @@ function recoverPublished(
   if (publishedInventory.length > 0) {
     return refuse(transactionId, publishedInventory);
   }
-  removeOwnedEntries(root, stateDir, transactionId);
+  const removalIssues = removeOwnedEntries(
+    root,
+    stateDir,
+    transactionId,
+    hooks,
+  );
+  if (removalIssues.length > 0) return refuse(transactionId, removalIssues);
   fireHooks(hooks, "after", "recovery:cleanup", transactionId);
   return { status: "committed", transactionId, issues: [] };
 }
@@ -1134,7 +1186,13 @@ export function recoverTransactions(
   roots: RecoveryRoots,
   hooks?: TransactionHooks,
 ): readonly RecoveryResult[] {
-  if (coordinatedByThisProcess(root, stateDir)) {
+  if (holdsWriterLock(root, stateDir)) {
+    const contradiction = verifyHeldWriterLock(root, stateDir);
+    if (contradiction.length > 0) {
+      return [
+        { status: "refused", transactionId: null, issues: contradiction },
+      ];
+    }
     return recoverScannedTransactions(root, stateDir, roots, hooks);
   }
   const acquired = acquireWriterLock(root, stateDir, randomUUID(), hooks);
