@@ -36,7 +36,10 @@ import {
   transactionDir,
   transactionsDir,
 } from "../../src/codegen/transaction-types.js";
-import { RECOVERY_ROOTS } from "../helpers/transactions.js";
+import {
+  RECOVERY_ROOTS,
+  clearOrphanedWriterLock,
+} from "../helpers/transactions.js";
 import {
   runGuardedWorker,
   spawnGuardedWorker,
@@ -365,6 +368,14 @@ test("real SIGKILL before replacement rolls the batch back", () => {
       boundary: "replace:apply",
     });
     assert.equal(killed.signal, "SIGKILL", killed.stderr);
+    // The killed writer still owns the coordination lock, so a competing
+    // coordinated recovery refuses busy and retains all evidence.
+    const blocked = recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS);
+    assert.equal(blocked[0].status, "refused", JSON.stringify(blocked));
+    assert.equal(blocked[0].issues[0].code, "WRITER_BUSY");
+    // After the documented operator resolution of the orphaned lock, the
+    // coordinated recovery rolls the uncommitted batch back.
+    clearOrphanedWriterLock(root, GUARDED_STATE);
     const recovered = recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS);
     assert.equal(recovered[0].status, "rolled_back");
     assert.equal(
@@ -381,6 +392,10 @@ test("real SIGKILL after lock publication is classified as committed", () => {
       boundary: "lock:publish",
     });
     assert.equal(killed.signal, "SIGKILL", killed.stderr);
+    const blocked = recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS);
+    assert.equal(blocked[0].status, "refused", JSON.stringify(blocked));
+    assert.equal(blocked[0].issues[0].code, "WRITER_BUSY");
+    clearOrphanedWriterLock(root, GUARDED_STATE);
     const recovered = recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS);
     assert.equal(recovered[0].status, "committed");
     assert.equal(
@@ -397,6 +412,10 @@ test("real SIGKILL during cleanup leaves a committed batch", () => {
       boundary: "cleanup:journal",
     });
     assert.equal(killed.signal, "SIGKILL", killed.stderr);
+    const blocked = recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS);
+    assert.equal(blocked[0].status, "refused", JSON.stringify(blocked));
+    assert.equal(blocked[0].issues[0].code, "WRITER_BUSY");
+    clearOrphanedWriterLock(root, GUARDED_STATE);
     const recovered = recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS);
     assert.ok(
       recovered[0].status === "committed" || recovered[0].status === "cleaned",
@@ -421,6 +440,14 @@ test("real SIGKILL at preparation, backup and progress boundaries recovers or re
         boundary,
       });
       assert.equal(killed.signal, "SIGKILL", `${boundary}: ${killed.stderr}`);
+      const blocked = recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS);
+      assert.equal(
+        blocked[0].status,
+        "refused",
+        `${boundary}: ${JSON.stringify(blocked)}`,
+      );
+      assert.equal(blocked[0].issues[0].code, "WRITER_BUSY");
+      clearOrphanedWriterLock(root, GUARDED_STATE);
       const recovered = recoverTransactions(
         root,
         GUARDED_STATE,

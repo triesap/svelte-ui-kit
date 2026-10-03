@@ -14,6 +14,7 @@
  * recovery), and only proven owned inventory is ever removed. Post-interruption
  * user edits and unexpected entries are preserved.
  */
+import { randomUUID } from "node:crypto";
 import {
   chmodSync,
   existsSync,
@@ -60,7 +61,13 @@ import {
   stagedDir,
   transactionDir,
   transactionsDir,
+  transientRoot,
 } from "./transaction-types.js";
+import {
+  acquireWriterLock,
+  readWriterLock,
+  releaseWriterLock,
+} from "./write-lock.js";
 
 export type RecoveryStatus =
   "no_change" | "rolled_back" | "cleaned" | "committed" | "refused";
@@ -544,8 +551,74 @@ function removeOwnedEntries(
   rmdirSync(dir);
 }
 
-/** Recover one transaction directory against the approved mapping. */
+/**
+ * True when this process already holds the writer lock for the project, so
+ * recovery is running inside the guarded apply coordination and must not try to
+ * acquire a second lock. Ownership is proven by the recorded owner's live
+ * process, never by age or a foreign PID.
+ */
+function coordinatedByThisProcess(root: string, stateDir: string): boolean {
+  const held = readWriterLock(root, stateDir);
+  return (
+    held.kind === "held" &&
+    held.owner !== undefined &&
+    held.owner.pid === process.pid
+  );
+}
+
+/** Best-effort removal of empty owned transient directories after a release. */
+function cleanupReleasedTransient(root: string, stateDir: string): void {
+  for (const logical of [transactionsDir(stateDir), transientRoot(stateDir)]) {
+    try {
+      rmdirSync(absOf(root, logical));
+    } catch {
+      // Non-empty or already removed; unrelated state is never touched.
+    }
+  }
+}
+
+/**
+ * Recover one transaction with proven exclusive coordination. When this
+ * process already holds the writer lock (the guarded apply path) recovery runs
+ * directly; otherwise it acquires the lock, recovers, releases and finishes.
+ * A live foreign owner is refused busy and its evidence retained.
+ */
 export function recoverTransaction(
+  root: string,
+  stateDir: string,
+  transactionId: string,
+  roots: RecoveryRoots,
+  hooks?: TransactionHooks,
+): RecoveryResult {
+  if (coordinatedByThisProcess(root, stateDir)) {
+    return recoverTransactionUnderLock(
+      root,
+      stateDir,
+      transactionId,
+      roots,
+      hooks,
+    );
+  }
+  const acquired = acquireWriterLock(root, stateDir, randomUUID());
+  if (!acquired.ok) {
+    return refuse(transactionId, acquired.issues);
+  }
+  try {
+    return recoverTransactionUnderLock(
+      root,
+      stateDir,
+      transactionId,
+      roots,
+      hooks,
+    );
+  } finally {
+    releaseWriterLock(acquired.value);
+    cleanupReleasedTransient(root, stateDir);
+  }
+}
+
+/** Recover one transaction directory against the approved mapping. */
+function recoverTransactionUnderLock(
   root: string,
   stateDir: string,
   transactionId: string,
@@ -949,12 +1022,35 @@ export function recoverTransactions(
   roots: RecoveryRoots,
   hooks?: TransactionHooks,
 ): readonly RecoveryResult[] {
+  if (coordinatedByThisProcess(root, stateDir)) {
+    return recoverScannedTransactions(root, stateDir, roots, hooks);
+  }
+  const acquired = acquireWriterLock(root, stateDir, randomUUID());
+  if (!acquired.ok) {
+    return [
+      { status: "refused", transactionId: null, issues: acquired.issues },
+    ];
+  }
+  try {
+    return recoverScannedTransactions(root, stateDir, roots, hooks);
+  } finally {
+    releaseWriterLock(acquired.value);
+    cleanupReleasedTransient(root, stateDir);
+  }
+}
+
+function recoverScannedTransactions(
+  root: string,
+  stateDir: string,
+  roots: RecoveryRoots,
+  hooks?: TransactionHooks,
+): readonly RecoveryResult[] {
   const scan = scanTransactionsChecked(root, stateDir);
   if (!scan.ok) {
     return [{ status: "refused", transactionId: null, issues: scan.issues }];
   }
   return scan.value.map((transactionId) =>
-    recoverTransaction(root, stateDir, transactionId, roots, hooks),
+    recoverTransactionUnderLock(root, stateDir, transactionId, roots, hooks),
   );
 }
 
