@@ -17,6 +17,7 @@ import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { hashBytes } from "../../src/codegen/compare.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
+import { planInit } from "../../src/codegen/plan-init.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
 import type { KitLock } from "../../src/codegen/lock.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
@@ -27,6 +28,7 @@ import {
   deriveKitPaths,
   type KitConfig,
 } from "../../src/project/config.js";
+import { discoverKitConfig } from "../../src/project/detect.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { computeRegistryContentHash } from "../../src/registry/model.js";
@@ -442,6 +444,77 @@ test("an unowned managed export region makes the batch non-executable and leaves
     assert.deepEqual(snapshotTree(consumer), before);
   } finally {
     rmSync(registryRoot, { recursive: true, force: true });
+    rmSync(consumer, { recursive: true, force: true });
+  }
+});
+
+test("a custom mapping init applies through the guarded path", () => {
+  const consumer = seedConsumer("<h1>CUSTOM_MAPPING_PAGE</h1>\n");
+  try {
+    write(
+      consumer,
+      "app/ui/_kit/kit.json",
+      JSON.stringify({
+        schemaVersion: 1,
+        uiDir: "app/ui",
+        stylesDir: "app/styles",
+        layoutFile: "src/routes/+layout.svelte",
+      }),
+    );
+    const discovery = discoverKitConfig(consumer);
+    assert.equal(discovery.ok, true, JSON.stringify(discovery));
+    if (!discovery.ok) return;
+    assert.equal(discovery.value.kind, "custom");
+    const custom = discovery.value.config;
+
+    const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
+    assert.equal(registry.ok, true, JSON.stringify(registry));
+    if (!registry.ok) return;
+
+    const paths = [
+      `${custom.uiDir}/_kit/kit.json`,
+      `${custom.uiDir}/_kit/kit.lock.json`,
+      `${custom.uiDir}/index.ts`,
+      `${custom.stylesDir}/kit.css`,
+      `${custom.stylesDir}/themes.css`,
+      `${custom.stylesDir}/app.css`,
+      custom.layoutFile,
+      ".gitignore",
+    ];
+    const snapshot = captureSnapshot(consumer, paths);
+    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+    if (!snapshot.ok) return;
+
+    const planned = planInit({
+      config: custom,
+      layoutFile: custom.layoutFile,
+      layoutSource: "",
+      snapshot: snapshot.value,
+      registry: registry.value,
+      configHash: "b".repeat(64),
+    });
+    assert.equal(planned.ok, true, JSON.stringify(planned));
+    if (!planned.ok) return;
+
+    const outcome = applyGuarded(
+      consumer,
+      snapshot.value,
+      planned.value.writes,
+      custom,
+    );
+    assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+    assert.equal(
+      existsSync(abs(consumer, `${custom.uiDir}/_kit/kit.lock.json`)),
+      true,
+    );
+    assert.equal(
+      existsSync(abs(consumer, `${custom.stylesDir}/kit.css`)),
+      true,
+    );
+    assert.equal(existsSync(abs(consumer, custom.layoutFile)), true);
+    // The default mapping was never materialized.
+    assert.equal(existsSync(abs(consumer, derived.stateDir)), false);
+  } finally {
     rmSync(consumer, { recursive: true, force: true });
   }
 });

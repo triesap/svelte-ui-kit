@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { faultAt } from "../../src/codegen/transaction-hooks.js";
+import { lockPath } from "../../src/codegen/transaction-types.js";
 import {
   abs,
+  GUARDED_STATE,
   GUARDED_STYLES,
   makeGuardedPlan,
 } from "../helpers/guarded-plan.js";
@@ -137,5 +139,51 @@ test("a flush failure at the replacement boundary rolls back safely", () => {
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
       "old css",
     );
+  });
+});
+
+test("a durability fault at every boundary yields a truthful safe outcome", () => {
+  for (const boundary of [
+    "durability:stage",
+    "durability:backup",
+    "durability:replace",
+    "durability:lock-publish",
+  ] as const) {
+    withRoot((root) => {
+      const outcome = applyPlan(
+        sealed(makeGuardedPlan(root)),
+        faultAt(boundary),
+      );
+      const css = readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8");
+      assert.notEqual(outcome.kind, "applied", boundary);
+      if (boundary === "durability:lock-publish") {
+        // The canonical rename already happened: the batch is committed and
+        // must not be reported as an uncommitted refusal.
+        assert.equal(outcome.kind, "committed_needs_cleanup", boundary);
+        assert.equal(css, "new css\n", boundary);
+      } else {
+        assert.equal(outcome.kind, "refused", boundary);
+        assert.equal(css, "old css", boundary);
+      }
+    });
+  }
+});
+
+test("a fault before the publication witness is an ambiguity that never rolls back", () => {
+  withRoot((root) => {
+    const outcome = applyPlan(
+      sealed(makeGuardedPlan(root)),
+      faultAt("durability:lock-stage"),
+    );
+    // No physical rename witness exists yet, so publication is ambiguous: the
+    // batch refuses, the canonical lock is not published, and evidence remains.
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      outcome.issues.some(
+        (issue) => issue.code === "RECOVERY_AMBIGUOUS_PUBLICATION",
+      ),
+      JSON.stringify(outcome.issues),
+    );
+    assert.equal(existsSync(abs(root, lockPath(GUARDED_STATE))), false);
   });
 });
