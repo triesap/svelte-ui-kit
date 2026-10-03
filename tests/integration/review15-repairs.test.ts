@@ -50,6 +50,8 @@ import {
 } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
+import { runWorker } from "../helpers/fault-process.js";
+import { clearOrphanedWriterLock } from "../helpers/transactions.js";
 
 /**
  * RCLD04 review-15 regression coverage. Each case reproduces one independently
@@ -569,6 +571,58 @@ test("an exported recovery cleanup-directory failure is a typed partial outcome"
     assert.ok(
       result.issues.some((entry) => entry.code === "RECOVERY_CLEANUP_FAILED"),
       JSON.stringify(result.issues),
+    );
+  });
+});
+
+test("guarded apply refuses a dead writer and restarts after operator resolution", () => {
+  withRoot((root) => {
+    // A prior writer is killed after staging but before its replacement, so it
+    // leaves a prepared journal and staged bytes behind.
+    const killed = runWorker({
+      mode: "kill",
+      root,
+      stateDir: STATE,
+      transactionId: "1616161616161616",
+      boundary: "replace:apply",
+    });
+    assert.equal(killed.signal, "SIGKILL", killed.stderr);
+    // A dead coordinator left its writer lock behind.
+    mkdirSync(abs(root, writerLockDir(STATE)), { recursive: true });
+    writeFileSync(
+      abs(root, `${writerLockDir(STATE)}/owner.json`),
+      JSON.stringify({
+        schemaVersion: 1,
+        transactionId: "1717171717171717",
+        pid: 2147483646,
+      }),
+    );
+    const first = validateApplyPlan(makePlan(root));
+    assert.equal(first.ok, true, JSON.stringify(first));
+    if (!first.ok) return;
+    const busy = applyPlan(first.value);
+    assert.equal(busy.kind, "refused", JSON.stringify(busy.issues));
+    assert.ok(
+      busy.issues.some((entry) => entry.code === "WRITER_BUSY"),
+      JSON.stringify(busy.issues),
+    );
+    assert.equal(
+      existsSync(abs(root, journalPath(STATE, "1616161616161616"))),
+      true,
+    );
+
+    // The documented bounded operator step removes only the orphaned lock; a
+    // fresh observation/planning pass then restarts through the guarded core,
+    // which recovers the killed writer's transaction before applying.
+    clearOrphanedWriterLock(root, STATE);
+    const restart = validateApplyPlan(makePlan(root));
+    assert.equal(restart.ok, true, JSON.stringify(restart));
+    if (!restart.ok) return;
+    const outcome = applyPlan(restart.value);
+    assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+    assert.equal(
+      existsSync(abs(root, journalPath(STATE, "1616161616161616"))),
+      false,
     );
   });
 });
