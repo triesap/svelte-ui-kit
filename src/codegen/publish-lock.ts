@@ -201,6 +201,7 @@ export function publishLock(
           schemaVersion: 1,
           transactionId: journal.transactionId,
           digest: sha256Hex(lockBytes),
+          mode: effectiveMode,
           preimage: observeFileIdentity(destination),
           staged: observeFileIdentity(stagedLock),
         },

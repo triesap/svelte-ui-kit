@@ -38,6 +38,8 @@ export interface PublicationIntent {
   readonly transactionId: string;
   /** Digest of the exact intended canonical lock bytes. */
   readonly digest: string;
+  /** Exact mode the publication rename is expected to leave on the canonical lock. */
+  readonly mode: number;
   /** Physical identity of the canonical preimage, or null when it was absent. */
   readonly preimage: PublicationIdentity | null;
   /** Physical identity of the exact staged publication image. */
@@ -180,6 +182,19 @@ export function readPublicationIntent(
       },
     ];
   }
+  if (
+    !Number.isInteger(parsed["mode"]) ||
+    (parsed["mode"] as number) < 0 ||
+    (parsed["mode"] as number) > 0o777
+  ) {
+    return [
+      {
+        code: "PUBLICATION_INTENT_INVALID",
+        message: "the publication intent mode is invalid",
+        locator: logicalPath,
+      },
+    ];
+  }
   const preimage = identityRecord(parsed["preimage"]);
   const staged = identityRecord(parsed["staged"]);
   if (preimage === undefined || staged === undefined) {
@@ -195,6 +210,7 @@ export function readPublicationIntent(
     schemaVersion: 1,
     transactionId: parsed["transactionId"] as string,
     digest: parsed["digest"] as string,
+    mode: parsed["mode"] as number,
     preimage,
     staged,
   };
@@ -220,8 +236,12 @@ export function classifyPublication(input: {
     ) {
       return "published";
     }
+    // A recorded non-absent preimage that has since disappeared is not proof of
+    // non-publication: someone removed the canonical lock after the intent. It
+    // is contradictory evidence and must fail closed rather than roll back.
     if (
       input.canonical === null &&
+      input.intent.preimage === null &&
       input.intent.staged !== null &&
       input.stagedStillPresent
     ) {
@@ -235,14 +255,7 @@ export function classifyPublication(input: {
     }
     return "ambiguous";
   }
-  // A legacy record without a physical witness: a digest match is a strong
-  // commit signal, but a mismatch does not prove non-publication, so it is
-  // ambiguous rather than rollback authority.
-  if (
-    input.canonicalDigest !== null &&
-    input.canonicalDigest === input.expectedDigest
-  ) {
-    return "published";
-  }
+  // A legacy record without a physical witness can never prove a unique
+  // publication. Byte equality is not a commit event, so it fails closed.
   return "ambiguous";
 }

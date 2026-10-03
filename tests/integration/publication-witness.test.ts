@@ -1,11 +1,20 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import {
+  chmodSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { recoverTransactions } from "../../src/codegen/recovery.js";
 import { lockPath } from "../../src/codegen/transaction-types.js";
+import { RECOVERY_ROOTS } from "../helpers/transactions.js";
 import {
   abs,
   GUARDED_STATE,
@@ -61,6 +70,73 @@ test("a same-byte interruption before the rename is not a false commit", () => {
     assert.equal(
       readFileSync(abs(root, lockPath(GUARDED_STATE)), "utf8"),
       bytes,
+    );
+  });
+});
+
+test("a canonical lock deleted before the rename is a contradiction that preserves source", () => {
+  withRoot((root) => {
+    // Seed a real canonical preimage so its recorded physical identity proves
+    // the lock existed before the interrupted rename.
+    write(
+      root,
+      lockPath(GUARDED_STATE),
+      new TextDecoder().decode(lockJson("c".repeat(64))),
+    );
+    const plan = sealed(makeGuardedPlan(root));
+    const outcome = applyPlan(plan, {
+      before: (boundary) => {
+        if (boundary === "lock:publish") {
+          unlinkSync(abs(root, lockPath(GUARDED_STATE)));
+          throw new Error("canonical was removed before the rename");
+        }
+      },
+    });
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      outcome.issues.some(
+        (issue) => issue.code === "RECOVERY_AMBIGUOUS_PUBLICATION",
+      ),
+      JSON.stringify(outcome.issues),
+    );
+    assert.equal(
+      readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
+      "new css\n",
+    );
+  });
+});
+
+test("a published canonical mode edit refuses cleanup and preserves evidence", () => {
+  withRoot((root) => {
+    const plan = sealed(makeGuardedPlan(root));
+    const outcome = applyPlan(plan, {
+      after: (boundary) => {
+        if (boundary === "lock:publish") {
+          chmodSync(abs(root, lockPath(GUARDED_STATE)), 0o700);
+          throw new Error("mode edit after publication");
+        }
+      },
+    });
+    assert.equal(
+      outcome.kind,
+      "committed_needs_cleanup",
+      JSON.stringify(outcome.issues),
+    );
+    const recovered = recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS);
+    assert.equal(recovered[0].status, "refused", JSON.stringify(recovered));
+    assert.ok(
+      recovered[0].issues.some(
+        (issue) => issue.code === "RECOVERY_AMBIGUOUS_PUBLICATION",
+      ),
+      JSON.stringify(recovered[0].issues),
+    );
+    assert.equal(
+      statSync(abs(root, lockPath(GUARDED_STATE))).mode & 0o777,
+      0o700,
+    );
+    assert.equal(
+      readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
+      "new css\n",
     );
   });
 });

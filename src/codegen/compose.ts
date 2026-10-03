@@ -286,10 +286,12 @@ export function composeApplyPlan(
     if (ancestor !== null) ancestors.push(ancestor);
   }
   const evidenceFiles: PlanReadFile[] = [];
+  const evidenceSeen = new Set<string>();
   for (const path of snapshot.paths) {
     if (targetPaths.has(path) || path === canonicalLock) continue;
     const observation = snapshot.entries.get(path);
     if (observation?.kind === "file" && observation.hash !== null) {
+      evidenceSeen.add(path);
       evidenceFiles.push({
         path,
         kind: "file",
@@ -297,6 +299,19 @@ export function composeApplyPlan(
         mode: observation.mode ?? 0o644,
       });
     }
+  }
+  // Carry the captured environment/manifest/manager evidence (including proven
+  // absence) so a post-planning dependency or manifest edit cannot be silently
+  // omitted from the apply read set.
+  for (const captured of snapshot.environment.evidence) {
+    if (evidenceSeen.has(captured.path)) continue;
+    evidenceSeen.add(captured.path);
+    evidenceFiles.push({
+      path: captured.path,
+      kind: captured.kind,
+      digest: captured.digest,
+      mode: captured.mode,
+    });
   }
   evidenceFiles.sort((left, right) =>
     left.path < right.path ? -1 : left.path > right.path ? 1 : 0,

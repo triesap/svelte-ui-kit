@@ -122,6 +122,64 @@ test("a post-planning layout edit is refused rather than blessed as a preimage",
   }
 });
 
+test("a post-planning manifest dependency change is refused from captured environment evidence", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-compose-env-"));
+  try {
+    const manifest = {
+      name: "consumer",
+      type: "module",
+      dependencies: {
+        svelte: "5.57.1",
+        "@sveltejs/kit": "2.70.3",
+        "bits-ui": "2.19.3",
+        "@internationalized/date": "3.12.4",
+      },
+    };
+    write(root, "package.json", JSON.stringify(manifest));
+    const original =
+      "<script>let original = 1;</script>\n{@render children()}\n";
+    write(root, DEFAULT_KIT_CONFIG.layoutFile, original);
+
+    const { snapshot, writes } = planRealInit(root, original);
+    // A dependency declaration change after planning must be carried as stale
+    // manifest evidence, not silently omitted from the apply read set.
+    write(
+      root,
+      "package.json",
+      JSON.stringify({
+        ...manifest,
+        dependencies: { ...manifest.dependencies, svelte: "4.2.0" },
+      }),
+    );
+
+    const composed = composeApplyPlan({
+      root,
+      config: DEFAULT_KIT_CONFIG,
+      writes,
+      snapshot,
+    });
+    assert.equal(composed.ok, true, JSON.stringify(composed));
+    if (!composed.ok) return;
+    assert.ok(
+      composed.value.readset.files.some(
+        (file) => file.path === "package.json" && file.kind === "file",
+      ),
+      "the manifest must be carried into the read set",
+    );
+    const validated = validateApplyPlan(composed.value);
+    assert.equal(validated.ok, true, JSON.stringify(validated));
+    if (!validated.ok) return;
+    const outcome = applyPlan(validated.value);
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      outcome.issues.some((issue) => issue.code === "AUTHORITY_READ_CHANGED"),
+      JSON.stringify(outcome.issues),
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("composing without the original snapshot is a typed refusal", () => {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-compose-nosnap-"));
   try {

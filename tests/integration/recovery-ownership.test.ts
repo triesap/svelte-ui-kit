@@ -238,6 +238,51 @@ test("the canonical lock is rejected as an ordinary recovery operation", () => {
   });
 });
 
+test("an unrecorded numeric backup file blocks cleanup and is retained", () => {
+  withRoot((root) => {
+    const plan = sealed(makeGuardedPlan(root));
+    let extra = "";
+    const outcome = applyPlan(plan, {
+      before: (boundary) => {
+        if (boundary !== "cleanup:staged") return;
+        const ids = readdirSync(abs(root, transactionsDir(GUARDED_STATE)));
+        extra = `${backupsDir(GUARDED_STATE, ids[0] as string)}/backup-999`;
+        write(root, extra, "UNOWNED FILE");
+      },
+    });
+    assert.equal(
+      outcome.kind,
+      "committed_needs_cleanup",
+      JSON.stringify(outcome.issues),
+    );
+    assert.equal(readFileSync(abs(root, extra), "utf8"), "UNOWNED FILE");
+  });
+});
+
+test("an unrecorded numeric backup directory blocks cleanup and preserves nested notes", () => {
+  withRoot((root) => {
+    const plan = sealed(makeGuardedPlan(root));
+    let extra = "";
+    const outcome = applyPlan(plan, {
+      before: (boundary) => {
+        if (boundary !== "cleanup:staged") return;
+        const ids = readdirSync(abs(root, transactionsDir(GUARDED_STATE)));
+        extra = `${backupsDir(GUARDED_STATE, ids[0] as string)}/backup-999/notes.txt`;
+        write(root, extra, "UNOWNED NESTED NOTES");
+      },
+    });
+    assert.equal(
+      outcome.kind,
+      "committed_needs_cleanup",
+      JSON.stringify(outcome.issues),
+    );
+    assert.equal(
+      readFileSync(abs(root, extra), "utf8"),
+      "UNOWNED NESTED NOTES",
+    );
+  });
+});
+
 test("an unreadable transaction scan is a typed refusal, not an empty namespace", () => {
   withRoot((root) => {
     write(root, transactionsDir(GUARDED_STATE), "not a directory");

@@ -26,7 +26,10 @@ import path from "node:path";
 import type { ModelIssue } from "../registry/errors.js";
 import type { TransactionJournal } from "./transaction-journal.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
-import { verifyOwnedInventory } from "./transaction-inventory.js";
+import {
+  ownedInventoryFor,
+  verifyOwnedInventory,
+} from "./transaction-inventory.js";
 import {
   backupsDir,
   ignoreEntryFor,
@@ -76,10 +79,15 @@ export function cleanupTransaction(
 
   const ownedDir = absOf(root, transactionDir(stateDir, journal.transactionId));
 
-  // Cleanup removes only proven owned inventory, checked recursively. An
-  // unexpected entry at any depth blocks cleanup and is retained rather than
-  // recursed.
-  const inventory = verifyOwnedInventory(root, stateDir, journal.transactionId);
+  // Cleanup removes only the exact inventory recorded by the validated
+  // journal, checked recursively. An unexpected or wrong-kind entry at any
+  // depth blocks cleanup and is retained rather than recursed.
+  const inventory = verifyOwnedInventory(
+    root,
+    stateDir,
+    journal.transactionId,
+    ownedInventoryFor(journal),
+  );
   if (inventory.length > 0) {
     return {
       ok: false,
@@ -136,6 +144,7 @@ export function cleanupTransaction(
         root,
         stateDir,
         journal.transactionId,
+        ownedInventoryFor(journal),
       );
       if (recheck.length > 0) {
         return {

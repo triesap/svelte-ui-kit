@@ -49,12 +49,17 @@ export interface PlanAncestor {
   readonly inode: number | null;
 }
 
-/** A relevant read-only evidence file captured at planning time. */
+/**
+ * A relevant read-only evidence entry captured at planning time. Evidence is
+ * either an exact regular file or a proven absence, so a manifest, lockfile or
+ * dependency observation that did not exist at planning time is carried as
+ * explicit absence rather than being silently omitted.
+ */
 export interface PlanReadFile {
   readonly path: string;
-  readonly kind: "file";
-  readonly digest: string;
-  readonly mode: number;
+  readonly kind: "file" | "absent";
+  readonly digest: string | null;
+  readonly mode: number | null;
 }
 
 /** The complete physical authority a plan depends on. */
@@ -179,11 +184,14 @@ export function captureAncestors(
   return ok(ancestors);
 }
 
-/** Capture one relevant evidence file, or `null` when it is absent. */
+/**
+ * Capture one relevant evidence entry, recording absence explicitly rather than
+ * collapsing a missing file into an omitted entry.
+ */
 export function captureReadFile(
   root: string,
   logicalPath: string,
-): ModelResult<PlanReadFile | null> {
+): ModelResult<PlanReadFile> {
   if (!isSafeLogicalRelativePath(logicalPath)) {
     return fail([
       issue(
@@ -197,7 +205,14 @@ export function captureReadFile(
   try {
     stats = lstatSync(abs);
   } catch (error) {
-    if (codeOf(error) === "ENOENT") return ok(null);
+    if (codeOf(error) === "ENOENT") {
+      return ok({
+        path: logicalPath,
+        kind: "absent",
+        digest: null,
+        mode: null,
+      });
+    }
     return fail([
       issue(
         "AUTHORITY_READ_UNREADABLE",
@@ -263,7 +278,7 @@ export function captureReadset(
   for (const readFile of readFiles) {
     const captured = captureReadFile(root, readFile);
     if (!captured.ok) return captured;
-    if (captured.value !== null) files.push(captured.value);
+    files.push(captured.value);
   }
   return ok({
     root: identity.value,
@@ -379,6 +394,24 @@ export function validateReadset(readset: unknown): ModelIssue[] {
         continue;
       }
       const record = file as PlanReadFile;
+      if (record.kind !== "file" && record.kind !== "absent") {
+        problems.push(
+          issue("PLAN_READSET_INVALID", `${label} kind is unknown`, label),
+        );
+        continue;
+      }
+      if (record.kind === "absent") {
+        if (record.digest !== null || record.mode !== null) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} must not carry a digest or mode for an absent entry`,
+              label,
+            ),
+          );
+        }
+        continue;
+      }
       if (!/^[0-9a-f]{64}$/.test(String(record.digest))) {
         problems.push(
           issue("PLAN_READSET_INVALID", `${label} digest is invalid`, label),
@@ -386,8 +419,8 @@ export function validateReadset(readset: unknown): ModelIssue[] {
       }
       if (
         !Number.isInteger(record.mode) ||
-        record.mode < 0 ||
-        record.mode > 0o777
+        (record.mode as number) < 0 ||
+        (record.mode as number) > 0o777
       ) {
         problems.push(
           issue("PLAN_READSET_INVALID", `${label} mode is invalid`, label),
@@ -499,7 +532,19 @@ export function verifyReadFiles(
       issues.push(...observed.issues);
       continue;
     }
-    if (observed.value === null) {
+    if (file.kind === "absent") {
+      if (observed.value.kind !== "absent") {
+        issues.push(
+          issue(
+            "AUTHORITY_READ_CHANGED",
+            `evidence ${file.path} appeared since planning`,
+            file.path,
+          ),
+        );
+      }
+      continue;
+    }
+    if (observed.value.kind === "absent") {
       issues.push(
         issue(
           "AUTHORITY_READ_CHANGED",

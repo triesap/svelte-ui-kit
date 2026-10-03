@@ -37,7 +37,9 @@ import {
 } from "./transaction-journal.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
+  emptyOwnedInventory,
   hasRollbackEvidence,
+  ownedInventoryFor,
   verifyOwnedInventory,
 } from "./transaction-inventory.js";
 import {
@@ -174,16 +176,23 @@ function readJournal(
 }
 
 /**
- * Prove the transaction directory contains only owned entries at every depth.
- * An unexpected entry, symlink or unreadable directory blocks cleanup; it is
- * retained and reported rather than recursively deleted.
+ * Prove the transaction directory contains only entries recorded by the
+ * validated journal at every depth. An unexpected entry, symlink, wrong-kind
+ * recorded entry or unreadable directory blocks cleanup; it is retained and
+ * reported rather than recursively deleted.
  */
 function inventoryIssues(
   root: string,
   stateDir: string,
   transactionId: string,
+  journal: TransactionJournal | null,
 ): ModelIssue[] {
-  return verifyOwnedInventory(root, stateDir, transactionId);
+  return verifyOwnedInventory(
+    root,
+    stateDir,
+    transactionId,
+    journal === null ? emptyOwnedInventory() : ownedInventoryFor(journal),
+  );
 }
 
 /** Non-following ancestry check for a logical target. */
@@ -533,11 +542,11 @@ export function recoverTransaction(
       `${transactionDir(stateDir, transactionId)}/journal.json`,
     );
     if (!existsSync(journalAbs)) {
-      const inventory = inventoryIssues(root, stateDir, transactionId);
-      if (inventory.length > 0) return refuse(transactionId, inventory);
       // Staged/backup/progress state without a journal is possible mutation
       // evidence: fail closed and retain it rather than guessing it is
-      // pre-preparation and deleting the only old image.
+      // pre-preparation and deleting the only old image. This runs before the
+      // recorded-inventory check so a journal-less backup is reported as
+      // ambiguous mutation evidence rather than an unrecorded entry.
       if (hasRollbackEvidence(root, stateDir, transactionId)) {
         return refuse(transactionId, [
           issue(
@@ -546,6 +555,8 @@ export function recoverTransaction(
           ),
         ]);
       }
+      const inventory = inventoryIssues(root, stateDir, transactionId, null);
+      if (inventory.length > 0) return refuse(transactionId, inventory);
       // Only a publication intent (or temporary state) may remain: this is the
       // tail of an interrupted cleanup. Finish it only when the physical witness
       // proves the publication actually happened.
@@ -590,7 +601,7 @@ export function recoverTransaction(
   if (!targetValidation.ok) {
     return refuse(transactionId, targetValidation.issues);
   }
-  const inventory = inventoryIssues(root, stateDir, transactionId);
+  const inventory = inventoryIssues(root, stateDir, transactionId, journal);
   if (inventory.length > 0) return refuse(transactionId, inventory);
 
   if (journal.phase === "planned") {
@@ -614,6 +625,20 @@ export function recoverTransaction(
     );
     if (Array.isArray(intentRead)) {
       return refuse(transactionId, intentRead);
+    }
+    if (
+      intentRead !== null &&
+      (journal.lock === null ||
+        intentRead.transactionId !== transactionId ||
+        intentRead.digest !== journal.lock.digest)
+    ) {
+      return refuse(transactionId, [
+        issue(
+          "RECOVERY_AMBIGUOUS_PUBLICATION",
+          "the publication witness does not belong to the recovered journal; refusing to roll back or discard evidence",
+          lockPath(stateDir),
+        ),
+      ]);
     }
     const stagedStillPresent =
       observeFileIdentity(
@@ -652,7 +677,7 @@ export function recoverTransaction(
     rollbackOperation(root, stateDir, journal, operation, hooks);
   }
   fireHooks(hooks, "before", "recovery:cleanup", transactionId);
-  const cleanupIssues = inventoryIssues(root, stateDir, transactionId);
+  const cleanupIssues = inventoryIssues(root, stateDir, transactionId, journal);
   if (cleanupIssues.length > 0) return refuse(transactionId, cleanupIssues);
   removeOwnedEntries(root, stateDir, transactionId);
   fireHooks(hooks, "after", "recovery:cleanup", transactionId);
@@ -698,7 +723,28 @@ function recoverPublished(
       ),
     ]);
   }
+  // Validate the complete published evidence — regular-file kind, recorded mode
+  // and witness identity — before removing any owned state. A canonical mode
+  // edit is contradictory evidence that must be preserved, not cleaned.
+  const publishedIssues = verifyPublishedEvidence(
+    root,
+    stateDir,
+    transactionId,
+    journal,
+  );
+  if (publishedIssues.length > 0) {
+    return refuse(transactionId, publishedIssues);
+  }
   fireHooks(hooks, "before", "recovery:cleanup", transactionId);
+  const publishedInventory = verifyOwnedInventory(
+    root,
+    stateDir,
+    transactionId,
+    ownedInventoryFor(journal),
+  );
+  if (publishedInventory.length > 0) {
+    return refuse(transactionId, publishedInventory);
+  }
   removeOwnedEntries(root, stateDir, transactionId);
   fireHooks(hooks, "after", "recovery:cleanup", transactionId);
   return { status: "committed", transactionId, issues: [] };
@@ -710,6 +756,68 @@ function readFileSafe(root: string, logical: string): string | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Prove the complete physical publication evidence before cleanup: the
+ * canonical lock is a regular file with the exact recorded mode, and any
+ * surviving publication witness belongs to this transaction and digest. A
+ * missing witness is only accepted for the cleanup tail, where the journal and
+ * canonical digest have already been proven.
+ */
+function verifyPublishedEvidence(
+  root: string,
+  stateDir: string,
+  transactionId: string,
+  journal: TransactionJournal,
+): ModelIssue[] {
+  const entry = observeEntry(absOf(root, lockPath(stateDir)));
+  if (entry.kind !== "file") {
+    return [
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        `the published canonical lock is not a regular file (${entry.kind})`,
+        lockPath(stateDir),
+      ),
+    ];
+  }
+  const intentRead = readPublicationIntent(
+    root,
+    publicationIntentPath(stateDir, transactionId),
+  );
+  if (Array.isArray(intentRead)) return [...intentRead];
+  if (intentRead === null) return [];
+  if (journal.lock === null) {
+    return [
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "a publication witness survives without a recovered lock record",
+        lockPath(stateDir),
+      ),
+    ];
+  }
+  if (
+    intentRead.transactionId !== transactionId ||
+    intentRead.digest !== journal.lock.digest
+  ) {
+    return [
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "the publication witness does not belong to the recovered journal",
+        lockPath(stateDir),
+      ),
+    ];
+  }
+  if ((entry.stats.mode & 0o777) !== intentRead.mode) {
+    return [
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "the published canonical lock mode does not match the recorded publication evidence; preserving it rather than cleaning",
+        lockPath(stateDir),
+      ),
+    ];
+  }
+  return [];
 }
 
 /** Recover every transaction directory under the state namespace. */

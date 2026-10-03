@@ -77,80 +77,60 @@ only writing modes.
 
 #### Current RCLD-04 complete-boundary qualification
 
-Independent review 11 of `cf6233e25a3c9134b0f0f59731ef8d93c37b4484`
-requests RCLD04-R2-1/2/3/4/5 and all unfinished S064–S077 criteria. Preserve
-63 accepted/14 pending/126 not_started and prior accepted planner behavior.
-Fresh Codex build/typecheck/format/lint, unit 276, integration 366, validation
-0/0 and contracts 137 pass. Passing controls confirm active-writer protection,
-staging-edit preservation, changed-byte publication retention and outside-target/
-corrupt-backup refusal. Compiled reviewer probes still expose lost original
-planning authority, metadata-only seal bypass, forged authority, staged corruption,
-replacement-time edit loss, ambiguous publication rollback, nested cleanup/backup
-symlinks, ignored mode edits, missing-journal deletion and untyped/release failures.
-Author full cumulative evidence is audited separately, not fresh acceptance.
+Independent review 12 of `9d94bcea2d12e682414244519a7f42cc851c4207`
+requests changes. Follow the current RCLD04-R2-1/2/3/4/5 dispositions in the
+sole governing COMMIT_SEQUENCE, plus ALL remaining original S064–S077 criteria.
+Preserve 63 accepted/14 pending/126 not_started and the accepted planner.
+The original 22 compiled reviewer cases now produce safe outcomes. Six additional
+cases still prove transferable validation authority, omitted captured environment,
+deletion of unrecorded numeric backup files/directories, contradictory canonical
+absence rollback and cleanup despite a canonical mode edit. Whole-feature
+acceptance remains pending. Earlier repair claims below are superseded where
+review 12 identifies incomplete behavior.
 
-Follow review 11's complete original-snapshot authority, live/staged physical
-rechecks, unique publication witness, full coordinated recovery/owned inventory
-and composed qualification decisions. Keep all original tests and add causal
-negative/positive controls. Use actual registry/planners and full fresh/default/
-custom init/add/sync lifecycle, metadata-only/no-change/update/retirement/conflict
-cases; compare entire trees and verify real generated consumers' check/build and
-emitted/rendered behavior. Process tests must qualify the actual coordinated restart
-path, not bypass stale writer ownership with direct recovery calls. Assert exact
-safe outcomes/evidence at every stage/backup/replace/progress/publication/cleanup/
-release boundary, including edited/missing lock evidence and unchanged-byte locks.
+Fresh independent build/typecheck/format/lint, unit 276, integration 383,
+validation 0/0 and contracts 137 pass with zero skips and retained raw outputs
+and underlying exits. Broader browser/fixture/components/workflow/platform and
+reference lanes were not freshly rerun by Codex on this rejected candidate.
 
-At each green repair run affected causal checks plus established static/contracts.
+The five repair commits `e8d5f9e`, `ba40cfe`, `a6dea5d`, `33f6db4` and
+`9d94bce` provide useful seal, live/staged guard, physical witness, mode/scan/
+journal and typed release improvements. They do not complete immutable authority,
+exact recursive ownership or uniquely proven publication in all supported cases.
+The returned implementation report acknowledges unfinished owned-directory
+rollback, standalone recovery binding, captured ignore integration, durability
+ordering and composed custom/update/retirement/metadata/conflict qualification.
+The original snapshot layout-edit probe must supply the snapshot to exercise
+actual authority; omission only proves COMPOSE_SNAPSHOT_REQUIRED.
+
+At each green repair run affected causal checks and established static/contracts.
 At the FINAL composed candidate run frozen strict install, build/typecheck/format/
 lint, unit/integration/registry/CLI/harness/components (strict declaration controls),
 fixture check/build/SSR/browser, projection generation/validation/contract tests,
 checksum-qualified workflow validation and applicable reference fmt/check/test.
-Serialize fixture writers. Retain raw logs, underlying exits, failed attempts,
-versions and source/artifact/platform/configuration identity at ignored repository-
-relative evidence paths. Record actual same-device refusal/durability enforcement;
-a happy-path device assertion or SIGKILL alone proves neither. Accurately record
-unrun platforms and preserve AC20's exact fixture-only upstream two-diagnostic
-exception and strict 17 controls. No new suppression or auto-install is approved.
+Serialize fixture writers. Retain complete raw logs, actual underlying exits,
+failed attempts, versions and source/artifact/platform/configuration identity at
+ignored repository-relative evidence paths. Capture command status before any
+presentation truncation; a tail pipeline status does not prove the check passed.
+The previous batch retained only a summary, not raw qualification logs; its author
+results are distinct from fresh independent verification and acceptance.
 
-Reconcile S064–S077 and repair qualification reports to actual coverage. Continue
-after each green checkpoint through all eligible work in RCLD-04; stop before
-S078 for independent Codex acceptance or a legitimate runtime/user/external stop.
-The governing plan remains the only execution authority; Pi records implementation
-and evidence, never new acceptance or relaxed criteria.
+Use actual registry/planners and the complete fresh/default/custom lifecycle,
+metadata-only/no-change/update/retirement/conflict cases; compare entire trees and
+verify real generated consumers' check/build and emitted/rendered behavior.
+Process tests must qualify the actual coordinated restart path without bypassing
+stale ownership. Assert exact safe outcomes/evidence at every stage/backup/replace/
+progress/publication/cleanup/release boundary, including edited/missing lock
+and staged evidence and unchanged-byte locks. Qualify actual same-device refusal
+and durability enforcement, not just temp-device equality or SIGKILL.
+Accurately record unrun platforms and preserve AC20's exact fixture-only upstream
+two-diagnostic exception and strict 17 controls. No new suppression is authorized.
 
-#### RCLD-04 review-11 repair progress (locally verified)
-
-Pi implemented the review-11 safety repairs in ordered green checkpoints on top
-of `cf6233e`:
-
-- `e8d5f9e` carries the original immutable snapshot into `composeApplyPlan`,
-  brands the sealed apply authority, derives the root identity and complete plan
-  digest from content, verifies the sealed lock for metadata-only plans and
-  validates the final lock before coordination.
-- `ba40cfe` re-proves staged images and live preimages at the replacement
-  boundaries and enforces same-filesystem arrangements before semantic effects.
-- `a6dea5d` records a durable physical publication witness (canonical preimage
-  and staged image identities) and classifies publication by identity, never by
-  byte equality, refusing contradictions without rollback.
-- `33f6db4` validates the complete owned inventory recursively, fails closed on
-  journal-less mutation evidence, mode edits, canonical-lock recovery
-  operations and unreadable scans, propagates release failure and wraps the
-  final applied-journal persist in a typed refusal.
-
-Causal regressions added: `compose-authority`, `transaction-authority`,
-`replacement-guards`, `publication-witness`, `recovery-ownership`. The
-independent reviewer's 22 compiled probes (17 failing cases plus 5 controls)
-were re-run against the repaired build and each now produces its safe outcome.
-Locally verified with build, typecheck, format:check, lint, unit 276 and
-integration 383. Details and the remaining unqualified work are recorded in
-`implementation/evidence/RCLD04_R2_REPAIR.md`.
-
-This is implementation progress, not acceptance. S064–S077 remain
-`committed_pending_review`; independent Codex acceptance is still required before
-S078. Remaining work is not claimed complete: owned absent-directory creation and
-rollback, standalone recovery identity binding, captured guarded ignore
-integration, complete durability ordering, and the composed custom/update/
-retirement/metadata/conflict and browser/CI qualification lanes.
+Reconcile S064–S077 and repair reports to actual coverage. Continue after each
+green checkpoint through all eligible work in RCLD-04; stop before S078 for
+independent Codex acceptance or a legitimate runtime/user/external stop. The
+existing exact RCLD-04 authorization remains active; do not redo bookkeeping or
+create a second plan/tracker. Pi records implementation/evidence, not acceptance.
 
 #### Historical owner-authorized RCLD-03 batch verification
 

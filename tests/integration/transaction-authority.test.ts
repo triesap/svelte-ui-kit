@@ -15,6 +15,7 @@ import { test } from "node:test";
 
 import {
   applyPlan,
+  derivePlanDigest,
   validateApplyPlan,
   type ApplyTarget,
   type ValidatedApplyPlan,
@@ -51,6 +52,37 @@ function sealed(plan: unknown): ValidatedApplyPlan {
 function mutable(plan: unknown): { targets: ApplyTarget[] } {
   return plan as { targets: ApplyTarget[] };
 }
+
+test("a copied validated instance cannot transfer authority with recomputed digests", () => {
+  withRoot((root) => {
+    write(root, "notes.txt", "PRIVATE NOTES");
+    const validated = sealed(makeGuardedPlan(root));
+    // A spread copies enumerable properties (including any brand token), but
+    // the module-owned validation registry is keyed by the exact instance.
+    const bytes = new TextEncoder().encode("FORGED NOTES");
+    const forged = {
+      ...validated,
+      targets: [
+        {
+          path: "notes.txt",
+          operation: "update" as const,
+          bytes,
+          mode: 0o644,
+          preimage: capturePreimage(root, "notes.txt"),
+          resultDigest: sha256Hex(bytes),
+        },
+      ],
+    } as unknown as ValidatedApplyPlan;
+    const recomputed = {
+      ...forged,
+      planDigest: derivePlanDigest(forged as never),
+    } as ValidatedApplyPlan;
+    const outcome = applyPlan(recomputed);
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.equal(outcome.issues[0].code, "PLAN_UNVALIDATED");
+    assert.equal(readFileSync(abs(root, "notes.txt"), "utf8"), "PRIVATE NOTES");
+  });
+});
 
 test("unknown operations are rejected before any coordination", () => {
   withRoot((root) => {

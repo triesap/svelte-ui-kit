@@ -20,7 +20,6 @@ import { faultAt } from "../../src/codegen/transaction-hooks.js";
 import {
   backupsDir,
   journalPath,
-  progressDir,
   stagedDir,
   transactionDir,
   transientRoot,
@@ -49,7 +48,18 @@ function publishedJournal(id = ID): TransactionJournal {
     rootIdentity: "a".repeat(64),
     planDigest: "b".repeat(64),
     phase: "published",
-    operations: [],
+    operations: [
+      {
+        path: "src/styles/kit.css",
+        operation: "update",
+        preimage: { kind: "file", digest: "d".repeat(64), mode: 0o644 },
+        resultDigest: "e".repeat(64),
+        resultMode: 0o644,
+        backupId: "backup-0",
+        stagedId: "stage-0",
+        applied: true,
+      },
+    ],
     lock: {
       path: `${STATE_DIR}/kit.lock.json`,
       digest: "c".repeat(64),
@@ -63,7 +73,6 @@ function populate(root: string, id: string): void {
   for (const logical of [
     `${stagedDir(STATE_DIR, id)}/stage-0`,
     `${backupsDir(STATE_DIR, id)}/backup-0`,
-    `${progressDir(STATE_DIR, id)}/progress-0`,
   ]) {
     const target = abs(root, logical);
     mkdirSync(path.dirname(target), { recursive: true });

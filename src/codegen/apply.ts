@@ -119,8 +119,14 @@ export interface ValidatedApplyTarget {
   readonly resultDigest: string;
 }
 
-const validated = Symbol("ValidatedApplyPlan");
+const VALIDATED_PLANS = new WeakSet<object>();
 
+/**
+ * The instance-level validation registry. Membership is module-owned and
+ * nontransferable: object spread copies enumerable properties, never WeakSet
+ * membership, so a forged copy with recomputed digest fields can never confer
+ * write authority.
+ */
 export interface ValidatedApplyPlan {
   readonly root: string;
   readonly stateDir: string;
@@ -136,7 +142,6 @@ export interface ValidatedApplyPlan {
     readonly digest: string;
     readonly preimage: TargetPreimage;
   };
-  readonly [validated]: true;
 }
 
 const OPERATIONS: readonly ChangeOperation[] = ["create", "update", "retire"];
@@ -511,7 +516,6 @@ export function validateApplyPlan(
       digest: sha256Hex(lockView.bytes),
       preimage: Object.freeze({ ...lockView.preimage }),
     }),
-    [validated]: true,
   };
   const sealedPlan: ValidatedApplyPlan = Object.freeze({
     ...sealed,
@@ -519,6 +523,8 @@ export function validateApplyPlan(
     // supplied value is never trusted as authority.
     planDigest: derivePlanDigest(sealed),
   }) as ValidatedApplyPlan;
+  // Register the exact instance, not a copyable token.
+  VALIDATED_PLANS.add(sealedPlan);
   return ok(sealedPlan);
 }
 
@@ -708,10 +714,15 @@ export function applyPlan(
   plan: ValidatedApplyPlan,
   hooks?: TransactionHooks,
 ): ApplyOutcome {
-  // Only an instance actually produced by `validateApplyPlan` carries write
-  // authority. A structurally similar object with supplied digest fields is
-  // refused before any observation or coordination.
-  if ((plan as Partial<ValidatedApplyPlan> | null)?.[validated] !== true) {
+  // Only the exact instance produced by `validateApplyPlan` carries write
+  // authority. A structurally similar object, including an object spread of a
+  // validated instance with recomputed digest fields, is refused before any
+  // observation or coordination.
+  if (
+    typeof plan !== "object" ||
+    plan === null ||
+    !VALIDATED_PLANS.has(plan as object)
+  ) {
     return {
       kind: "refused",
       transactionId: null,

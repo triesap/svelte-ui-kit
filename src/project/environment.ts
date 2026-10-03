@@ -17,12 +17,14 @@
  *
  * No writer or package manager is executed.
  */
-import { readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { lstatSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import type { ModelIssue, ModelResult } from "../registry/errors.js";
 import {
   detectPackageManager,
+  LOCKFILE_MANAGERS,
   type ManagerEvidence,
 } from "./dependency-instructions.js";
 import { observeInstalled, type InstalledObservation } from "./dependencies.js";
@@ -35,9 +37,28 @@ import {
 import { deepFreeze, FrozenMap } from "./immutable.js";
 import { readJsonObject, type JsonObservation } from "./io.js";
 
+/**
+ * Physical evidence of one environment file captured with the snapshot: an
+ * exact regular file (digest and mode) or a proven absence. Carrying absence
+ * explicitly prevents a later-appearing manifest or lockfile from being
+ * silently ignored at apply time.
+ */
+export interface EnvironmentEvidence {
+  readonly path: string;
+  readonly kind: "file" | "absent";
+  readonly digest: string | null;
+  readonly mode: number | null;
+}
+
 export interface CapturedEnvironment {
   /** Typed observation of the selected package's `package.json`. */
   readonly manifest: JsonObservation;
+  /**
+   * Exact physical evidence of the manifest and every recognized package-manager
+   * lockfile, including absence. Carried into the guarded apply read set so a
+   * captured dependency/manifest change is refused rather than omitted.
+   */
+  readonly evidence: readonly EnvironmentEvidence[];
   /** Resolved installed metadata keyed by package name. */
   readonly installed: ReadonlyMap<string, InstalledObservation>;
   /**
@@ -110,6 +131,60 @@ function enumerateInstalledNames(root: string): {
   return { names, complete };
 }
 
+/** Capture exact physical evidence of the manifest and manager lockfiles. */
+function captureEvidence(root: string): EnvironmentEvidence[] {
+  const logicalPaths = [
+    "package.json",
+    ...LOCKFILE_MANAGERS.map((entry) => entry.file),
+  ];
+  const evidence: EnvironmentEvidence[] = [];
+  for (const logicalPath of logicalPaths) {
+    const abs = path.join(root, ...logicalPath.split("/"));
+    let stats;
+    try {
+      stats = lstatSync(abs);
+    } catch {
+      evidence.push({
+        path: logicalPath,
+        kind: "absent",
+        digest: null,
+        mode: null,
+      });
+      continue;
+    }
+    if (!stats.isFile() || stats.isSymbolicLink()) {
+      // A nonregular manifest/lockfile is represented as absence so a plan never
+      // claims authority over a kind it cannot verify byte-for-byte.
+      evidence.push({
+        path: logicalPath,
+        kind: "absent",
+        digest: null,
+        mode: null,
+      });
+      continue;
+    }
+    let bytes: Buffer;
+    try {
+      bytes = readFileSync(abs);
+    } catch {
+      evidence.push({
+        path: logicalPath,
+        kind: "absent",
+        digest: null,
+        mode: null,
+      });
+      continue;
+    }
+    evidence.push({
+      path: logicalPath,
+      kind: "file",
+      digest: createHash("sha256").update(bytes).digest("hex"),
+      mode: stats.mode & 0o777,
+    });
+  }
+  return evidence;
+}
+
 /**
  * Capture the complete read-only dependency/manager/project evidence for one
  * selected package root. The result is plain deeply-immutable data; no closure
@@ -129,6 +204,7 @@ export function captureEnvironment(root: string): CapturedEnvironment {
   const kitConfig = deepFreeze(discoverKitConfig(root));
   return deepFreeze({
     manifest,
+    evidence: captureEvidence(root),
     installed,
     enumerationComplete: complete,
     manager: managerResult.ok
