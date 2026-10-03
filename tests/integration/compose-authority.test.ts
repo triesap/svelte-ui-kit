@@ -54,6 +54,7 @@ function planRealInit(root: string, layoutSource: string) {
     `${derived.stateDir}/kit.json`,
     `${derived.stateDir}/kit.lock.json`,
     DEFAULT_KIT_CONFIG.layoutFile,
+    ".gitignore",
   ];
   const snapshot = captureSnapshot(root, paths);
   assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
@@ -228,6 +229,44 @@ function writeInstalledDependencies(root: string): void {
     );
   }
 }
+
+test("a guarded init plans and applies the managed ignore entry", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-compose-ignore-"));
+  try {
+    writeInstalledDependencies(root);
+    write(root, ".gitignore", "node_modules/\n# keep me\n");
+    const original =
+      "<script>let original = 1;</script>\n{@render children()}\n";
+    write(root, DEFAULT_KIT_CONFIG.layoutFile, original);
+
+    const { snapshot, writes } = planRealInit(root, original);
+    const composed = composeApplyPlan({
+      root,
+      config: DEFAULT_KIT_CONFIG,
+      writes,
+      snapshot,
+    });
+    assert.equal(composed.ok, true, JSON.stringify(composed));
+    if (!composed.ok) return;
+    assert.ok(
+      composed.value.targets.some((target) => target.path === ".gitignore"),
+      JSON.stringify(composed.value.targets.map((t) => t.path)),
+    );
+    assert.deepEqual(composed.value.ignoreFiles, [".gitignore"]);
+
+    const validated = validateApplyPlan(composed.value);
+    assert.equal(validated.ok, true, JSON.stringify(validated));
+    if (!validated.ok) return;
+    const outcome = applyPlan(validated.value);
+    assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+
+    const ignore = readFileSync(path.join(root, ".gitignore"), "utf8");
+    assert.ok(ignore.startsWith("node_modules/\n# keep me\n"), ignore);
+    assert.ok(ignore.includes(`${derived.stateDir}/.svelte-ui-kit/`), ignore);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test("a post-planning installed-package metadata change is refused", () => {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-compose-installed-"));

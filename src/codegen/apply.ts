@@ -111,6 +111,11 @@ export interface ApplyPlanInput {
     readonly bytes: Uint8Array;
     readonly preimage: TargetPreimage;
   };
+  /**
+   * Additional approved ignore files (for example `.gitignore`) that the
+   * guarded plan may update. Defaults to none when omitted.
+   */
+  readonly ignoreFiles?: readonly string[];
 }
 
 /** A sealed target: bytes are copied and their result digest is bound. */
@@ -147,6 +152,7 @@ export interface ValidatedApplyPlan {
     readonly digest: string;
     readonly preimage: TargetPreimage;
   };
+  readonly ignoreFiles: readonly string[];
 }
 
 const OPERATIONS: readonly ChangeOperation[] = ["create", "update", "retire"];
@@ -224,6 +230,9 @@ export function validateApplyPlan(
   const plan = input as ApplyPlanInput;
   const canonicalLock = lockPath(plan.stateDir);
   const roots = [plan.uiDir, plan.stylesDir, plan.layoutFile];
+  const approvedIgnoreFiles = new Set(
+    (plan.ignoreFiles ?? []).map((entry) => entry.toLowerCase()),
+  );
   const seen = new Set<string>();
   const sealedTargets: ValidatedApplyTarget[] = [];
   const lockBytesView = plan.lock.bytes;
@@ -316,7 +325,8 @@ export function validateApplyPlan(
         (root) =>
           target.path === root.replace(/\/+$/, "") ||
           target.path.startsWith(`${root.replace(/\/+$/, "")}/`),
-      );
+      ) ||
+      approvedIgnoreFiles.has(target.path.toLowerCase());
     if (!within) {
       problems.push(
         issue(
@@ -521,6 +531,7 @@ export function validateApplyPlan(
       digest: sha256Hex(lockView.bytes),
       preimage: Object.freeze({ ...lockView.preimage }),
     }),
+    ignoreFiles: Object.freeze([...(plan.ignoreFiles ?? [])]),
   };
   const sealedPlan: ValidatedApplyPlan = Object.freeze({
     ...sealed,
@@ -551,6 +562,7 @@ export function derivePlanDigest(input: {
     readonly preimage: TargetPreimage;
   };
   readonly readset: PlanReadset;
+  readonly ignoreFiles?: readonly string[];
 }): string {
   return canonicalContentHash({
     root: input.root,
@@ -559,6 +571,9 @@ export function derivePlanDigest(input: {
     stylesDir: input.stylesDir,
     layoutFile: input.layoutFile,
     rootIdentity: input.rootIdentity,
+    ignoreFiles: [...(input.ignoreFiles ?? [])].map((entry) =>
+      entry.toLowerCase(),
+    ),
     targets: input.targets.map((target) => ({
       path: target.path,
       operation: target.operation,

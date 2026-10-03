@@ -27,9 +27,11 @@ import {
 import { deriveKitPaths, type KitConfig } from "../project/config.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";
 import { identityDigest, type PlanReadFile } from "./authority.js";
+import { hasIgnoreEntry, ignoreBlockWithEntry } from "./transaction-cleanup.js";
 import type { ApplyPlanInput, ApplyTarget } from "./apply.js";
 import type { PlanWrite } from "./plan.js";
-import { lockPath } from "./transaction-types.js";
+import { decodeObservedText } from "./snapshot.js";
+import { ignoreEntryFor, lockPath } from "./transaction-types.js";
 import type {
   AncestorObservation,
   ProjectSnapshot,
@@ -273,6 +275,51 @@ export function composeApplyPlan(
     ]);
   }
 
+  // Guarded ignore-file integration (S072). When the captured snapshot observed
+  // the application ignore file, plan exactly one managed entry that preserves
+  // every existing rule. It is only required when this batch changes committed
+  // state; a satisfied replay adds nothing, and an unobserved or undecodable
+  // ignore file is left to doctor diagnostics rather than appended blindly.
+  const ignorePath = ".gitignore";
+  let ignoreTargetAdded = false;
+  const lockSatisfied =
+    lockObservation.kind === "file" &&
+    lockObservation.hash === sha256Hex(lockWrite.bytes);
+  if (
+    (targets.length > 0 || !lockSatisfied) &&
+    snapshot.paths.includes(ignorePath) &&
+    !targetPaths.has(ignorePath)
+  ) {
+    const observation = snapshot.entries.get(ignorePath);
+    if (
+      observation !== undefined &&
+      (observation.kind === "absent" || observation.kind === "file")
+    ) {
+      const decoded =
+        observation.kind === "file"
+          ? decodeObservedText(observation)
+          : ({ kind: "none" } as const);
+      if (decoded.kind !== "invalid") {
+        const existing = decoded.kind === "text" ? decoded.text : "";
+        const entry = ignoreEntryFor(stateDir);
+        const preimage = preimageFor(observation);
+        if (preimage !== null && !hasIgnoreEntry(existing, entry)) {
+          targetPaths.add(ignorePath);
+          ignoreTargetAdded = true;
+          targets.push({
+            path: ignorePath,
+            operation: observation.kind === "absent" ? "create" : "update",
+            bytes: new TextEncoder().encode(
+              ignoreBlockWithEntry(existing, entry),
+            ),
+            mode: preimage.kind === "file" ? (preimage.mode ?? 0o644) : 0o644,
+            preimage,
+          });
+        }
+      }
+    }
+  }
+
   // The ancestor chain and read-only evidence come from the captured snapshot,
   // including explicit absence, never from a later live recapture.
   const ancestors: {
@@ -396,6 +443,7 @@ export function composeApplyPlan(
       bytes: lockWrite.bytes,
       preimage: lockPreimage,
     },
+    ignoreFiles: ignoreTargetAdded ? [ignorePath] : [],
   });
 }
 

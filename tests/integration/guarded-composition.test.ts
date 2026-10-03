@@ -171,6 +171,7 @@ function consumerPaths(): string[] {
     derived.appCss,
     DEFAULT_KIT_CONFIG.layoutFile,
     `${derived.rootExportsDir}/button.svelte`,
+    ".gitignore",
   ];
 }
 

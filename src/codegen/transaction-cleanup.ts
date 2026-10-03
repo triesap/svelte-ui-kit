@@ -188,6 +188,21 @@ export interface IgnoreResult {
 const MANAGED_HEADER = "# svelte-ui-kit transient transaction state";
 
 /**
+ * Append the managed ignore block to existing ignore content, preserving every
+ * existing rule byte-for-byte. Exported so the planner can compute the exact
+ * bytes of a guarded ignore-file change without writing.
+ */
+export function ignoreBlockWithEntry(existing: string, entry: string): string {
+  const prefix = existing.length === 0 || existing.endsWith("\n") ? "" : "\n";
+  return `${existing}${prefix}${MANAGED_HEADER}\n${entry}\n`;
+}
+
+/** True when the managed entry is already present as a whole line. */
+export function hasIgnoreEntry(existing: string, entry: string): boolean {
+  return existing.split("\n").some((line) => line.trim() === entry);
+}
+
+/**
  * Ensure the transient namespace is ignored, appended as one managed block.
  * Existing rules are preserved; a second call is a no-op. The namespace is only
  * added when no rule already mentions the transient directory.
@@ -215,8 +230,7 @@ export function ensureIgnoreEntry(
   if (existing.split("\n").some((line) => line.trim() === entry)) {
     return { changed: false, issues: [] };
   }
-  const prefix = existing.length === 0 || existing.endsWith("\n") ? "" : "\n";
-  const block = `${existing}${prefix}${MANAGED_HEADER}\n${entry}\n`;
+  const block = ignoreBlockWithEntry(existing, entry);
   try {
     mkdirSync(path.dirname(gitignore), { recursive: true });
     writeFileSync(gitignore, block);
