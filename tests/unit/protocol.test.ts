@@ -10,6 +10,8 @@ import {
   parseEnvelope,
   PROTOCOL_VERSION,
   readRenderedEnvelope,
+  recoveryDiagnostic,
+  recoveryGuidance,
   renderEnvelope,
   STATUS_EXITS,
   type ResultStatus,
@@ -203,4 +205,30 @@ test("unknown commands and statuses fail the schema", () => {
     }).ok,
     false,
   );
+});
+
+test("recovery diagnostics carry code-specific manual guidance", () => {
+  const codes = [
+    "RECOVERY_SCAN_UNSAFE",
+    "RECOVERY_UNEXPECTED_ENTRY",
+    "RECOVERY_ROOT_MISMATCH",
+    "RECOVERY_ANCESTRY_NOT_EMPTY",
+    "RECOVERY_AMBIGUOUS_JOURNAL",
+    "WRITER_BUSY",
+    "WRITER_LOCK_UNOWNED",
+  ];
+  const fallback =
+    "Inspect the retained transaction evidence and reconcile manually before retrying.";
+  for (const code of codes) {
+    const guidance = recoveryGuidance(code);
+    assert.notEqual(guidance, fallback, code);
+    assert.ok(!/force|--recover|roll forward/i.test(guidance), code);
+    const diagnostic = recoveryDiagnostic({
+      code,
+      message: `${code} occurred`,
+      locator: "src/styles/kit.css",
+    });
+    assert.equal(diagnostic.code, code);
+    assert.equal(diagnostic.guidance, guidance);
+  }
 });

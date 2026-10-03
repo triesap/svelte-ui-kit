@@ -281,10 +281,38 @@ export function recoveryGuidance(code: string): string {
       "The journal does not match its directory. Preserve both and reconcile manually before retrying.",
     RECOVERY_BACKUP_MISSING:
       "An owned preimage backup is missing. Restore it from your own copy or reconcile the affected target manually.",
+    RECOVERY_BACKUP_CORRUPT:
+      "An owned preimage backup no longer matches its recorded preimage. Preserve the affected target and reconcile manually.",
     RECOVERY_USER_EDIT:
       "A managed target was edited after the interruption. Keep your edit and reconcile the batch manually; no automatic overwrite is performed.",
     RECOVERY_AMBIGUOUS_PUBLICATION:
       "The recorded publication cannot be proven from the canonical lock. Inspect kit.lock.json and the journal and reconcile manually.",
+    RECOVERY_AMBIGUOUS_JOURNAL:
+      "Owned transient state remains without a readable journal. Inspect the transaction directory and reconcile manually; do not delete possible mutation evidence.",
+    RECOVERY_SCAN_UNSAFE:
+      "The reserved _kit transient namespace is not a real directory. Move the unexpected entry aside manually before retrying.",
+    RECOVERY_SCAN_UNREADABLE:
+      "The reserved _kit transient namespace is unreadable. Restore read access manually before retrying.",
+    RECOVERY_UNEXPECTED_ENTRY:
+      "The transaction directory contains an unrecorded entry. Inspect and move it aside manually; owned cleanup never recurses into unknown state.",
+    RECOVERY_INVENTORY_UNREADABLE:
+      "The transaction inventory is unreadable. Restore read access to the retained transaction directory before retrying.",
+    RECOVERY_ROOT_MISMATCH:
+      "The retained evidence was recorded against a different project root. Recover it in its originating checkout or reconcile manually.",
+    RECOVERY_UNSAFE_ANCESTRY:
+      "A managed target traverses a symlinked or non-directory ancestor. Resolve the unsafe path manually before retrying.",
+    RECOVERY_UNSAFE_TARGET:
+      "A managed target is no longer a regular file. Reconcile the affected target manually; no automatic overwrite is performed.",
+    RECOVERY_ANCESTRY_CHANGED:
+      "A directory created by the interrupted batch was replaced. Preserve the current directory and reconcile manually.",
+    RECOVERY_ANCESTRY_NOT_EMPTY:
+      "A directory created by the interrupted batch now holds unrelated content. Preserve it and reconcile the batch manually.",
+    WRITER_BUSY:
+      "Another cooperative writer owns the mutation lock. Wait for it to finish, or if it is an orphaned lock left by a killed process, confirm no writer is active and remove the reserved writer.lock directory manually.",
+    WRITER_LOCK_UNOWNED:
+      "The writer lock is missing or its owner record is ambiguous. Inspect the reserved writer.lock directory and reconcile manually; ownership is never taken over by process age or PID alone.",
+    WRITER_LOCK_RELEASE_FAILED:
+      "The owned writer lock could not be released. Inspect the reserved writer.lock directory and reconcile manually.",
   };
   return (
     guidance[code] ??
