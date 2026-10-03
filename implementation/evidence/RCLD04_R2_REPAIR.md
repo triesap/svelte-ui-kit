@@ -99,10 +99,10 @@ are corrected by this pass:
   refused batch can leave created application ancestors.
 - Required ignore-file changes are not yet integrated as captured guarded
   operations; the direct-write helper remains.
-- Standalone recovery does not yet bind the journal `rootIdentity`/`planDigest`
-  to the live root or require its own exclusive coordination; the guarded apply
-  path supplies the approved mapping and holds the exclusive lock across
-  recovery.
+- Standalone recovery binds the journal `rootIdentity` to the live root, but
+  does not yet bind plan/owner identity or acquire its own exclusive
+  coordination; the guarded apply path supplies the approved mapping and holds
+  the exclusive lock across recovery.
 - Composed real-registry custom-mapping update/retirement/metadata/conflict
   qualification and browser/CI platform lanes remain unrun.
 - AC20's fixture-only upstream declaration exception remains open release debt.
@@ -128,6 +128,11 @@ ordering:
   bytes, backup and replacement directory entries, lock staging and canonical
   publication, and recovery restore; durability boundaries expose the order for
   causal verification.
+- `d9d7c68` (R2-4): recovery refuses a journal whose recorded root identity
+  does not match the live project root, checked before the first mutation but
+  after read-only preflight so existing corruption/user-edit diagnostics keep
+  precedence. Standalone plan/owner identity binding and its own exclusive
+  coordination remain open.
 
 Causal regressions added: `transaction-authority` (copied-instance refusal),
 `compose-authority` (captured manifest drift), `recovery-ownership` (unrecorded
