@@ -127,6 +127,31 @@ export function readPublicationIntent(
   logicalPath: string,
 ): PublicationIntent | null | ModelIssue[] {
   const abs = path.join(root, ...logicalPath.split("/"));
+  let entry;
+  try {
+    entry = lstatSync(abs);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException | null)?.code === "ENOENT") return null;
+    return [
+      {
+        code: "PUBLICATION_INTENT_UNREADABLE",
+        message: `the publication intent is unreadable (${(error as NodeJS.ErrnoException | null)?.code ?? "EIO"})`,
+        locator: logicalPath,
+      },
+    ];
+  }
+  if (entry.isSymbolicLink() || !entry.isFile()) {
+    // A witness must be the physical regular file this transaction wrote. A
+    // symlinked or nonregular witness could redirect the identity proof, so it
+    // is contradictory evidence rather than a readable intent.
+    return [
+      {
+        code: "PUBLICATION_INTENT_UNSAFE",
+        message: `the publication intent is not a real regular file (${entry.isSymbolicLink() ? "symlink" : "other"})`,
+        locator: logicalPath,
+      },
+    ];
+  }
   let text: string;
   try {
     text = readFileSync(abs, "utf8");

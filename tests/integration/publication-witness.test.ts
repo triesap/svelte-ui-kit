@@ -7,6 +7,7 @@ import {
   renameSync,
   rmSync,
   statSync,
+  symlinkSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -304,6 +305,38 @@ test("a deleted staged publication image before the rename fails closed", () => 
     assert.ok(
       outcome.issues.some(
         (issue) => issue.code === "RECOVERY_AMBIGUOUS_PUBLICATION",
+      ),
+      JSON.stringify(outcome.issues),
+    );
+  });
+});
+
+test("a symlinked publication witness is refused as unsafe evidence", () => {
+  withRoot((root) => {
+    const plan = sealed(makeGuardedPlan(root));
+    const outcome = applyPlan(plan, {
+      before: (boundary) => {
+        if (boundary === "lock:publish") {
+          const ids = readdirSync(abs(root, transactionsDir(GUARDED_STATE)));
+          const intent = abs(
+            root,
+            publicationIntentPath(GUARDED_STATE, ids[0] as string),
+          );
+          const bytes = readFileSync(intent);
+          unlinkSync(intent);
+          const decoy = abs(root, `${GUARDED_STATE}/decoy-witness.json`);
+          writeFileSync(decoy, bytes);
+          symlinkSync(decoy, intent);
+          throw new Error("symlinked the publication witness");
+        }
+      },
+    });
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      outcome.issues.some(
+        (issue) =>
+          issue.code === "RECOVERY_AMBIGUOUS_PUBLICATION" ||
+          issue.code === "PUBLICATION_INTENT_UNSAFE",
       ),
       JSON.stringify(outcome.issues),
     );
