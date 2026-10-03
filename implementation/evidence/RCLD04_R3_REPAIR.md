@@ -8,12 +8,22 @@ review-12/review-13 partial claims contradicted below;
 `RCLD04_R2_REPAIR.md` and `RCLD04_R1_REPAIR.md` remain the historical records of
 the earlier passes.
 
+Superseding note (review 14, 2026-10-03): independent review 14 reproduced ten
+additional compiled failures, so the group-level "complete"/"implemented and
+verified" claims below are overbroad and are retained only as review-13
+history. The corrected coverage and the review-14 repairs are recorded in
+`RCLD04_R4_REPAIR.md`. Whole R2 groups remained open at review 13; no group is
+independently accepted.
+
 Original S064–S077 definitions, R01–R34, AC01–AC22, the accepted RCLD-01..RCLD-03
 records and the accepted pure planner behavior are unchanged. Counts remain 63
 accepted / 14 committed_pending_review / 126 not_started and three complete /
 eight unfinished sequences.
 
-## Repaired and completed review-13 findings
+## Repaired review-13 findings (partial; group-complete claims superseded)
+
+The section headings below record the review-13 partial progress. They are not
+group-complete claims; see `RCLD04_R4_REPAIR.md` for the review-14 corrections.
 
 ### RCLD04-R2-1 — installed resolution authority carried into apply
 
@@ -50,7 +60,7 @@ for every supported hoisting arrangement is not exhaustively qualified here.
   replacement, lock publication, recovery restore); the staged publication
   lock's parent is flushed during lock staging before the durable intent.
 
-### RCLD04-R2-3 — complete publication witness
+### RCLD04-R2-3 — publication witness (review-13 partial)
 
 - The published canonical lock must be the exact physical image recorded as the
   staged publication witness (device/inode) with the recorded bytes, mode,
@@ -60,7 +70,7 @@ for every supported hoisting arrangement is not exhaustively qualified here.
   a replaced or deleted staged image fails closed without rollback or evidence
   deletion.
 
-### RCLD04-R2-4 — complete recovery authority
+### RCLD04-R2-4 — recovery authority (review-13 partial)
 
 - Temporary-name prefixes are no longer ownership; only the exact recorded
   temporary journal/publication names are removed. An unrelated notes file that
@@ -121,9 +131,12 @@ Raw per-lane logs are retained under the ignored
 probe suites were re-run: the 28 previously-safe cases are semantically
 unchanged and the four review-13 cases now produce their safe outcomes.
 
-## Disposition reconciliation
+## Disposition reconciliation (review-13 historical; superseded)
 
-| Group                                       | Final disposition                                                                                                                                                                                                                             |
+The table below was the review-13 disposition. Review 14 found it overbroad;
+the current disposition is in `RCLD04_R4_REPAIR.md`.
+
+| Group                                       | Review-13 claim (superseded)                                                                                                                                                                                                                  |
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | R2-1 installed authority                    | installed manifest integrity carried and verified; projected lock/config/ownership/cohort coherence enforced by the existing validated lock projection plus the guarded read set; exhaustive per-layout enumeration/link evidence not covered |
 | R2-2 bootstrap/ignore/filesystem/durability | implemented and verified except the unavailable cross-device execution lane (typed refusal implemented, single-volume host)                                                                                                                   |
