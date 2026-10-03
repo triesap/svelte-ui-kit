@@ -1,110 +1,132 @@
-# RCLD-04 review-13 repair evidence
+# RCLD-04 review-13 repair and qualification evidence
 
-Status: partial implementation repair for independent review 13 is locally
-verified. S064–S077 remain `committed_pending_review`; independent Codex
-acceptance is required before S078. This is Pi-authored implementation evidence,
-not an acceptance decision. It supersedes the specific review-12 claims that the
-review-13 findings below contradict; `RCLD04_R2_REPAIR.md` remains the historical
-record of the earlier pass.
+Status: implementation repairs and cumulative qualification for independent
+review 13 are locally verified. S064–S077 remain `committed_pending_review`;
+independent Codex acceptance is required before S078. This is Pi-authored
+implementation evidence, not an acceptance decision. It supersedes the specific
+review-12/review-13 partial claims contradicted below;
+`RCLD04_R2_REPAIR.md` and `RCLD04_R1_REPAIR.md` remain the historical records of
+the earlier passes.
 
 Original S064–S077 definitions, R01–R34, AC01–AC22, the accepted RCLD-01..RCLD-03
-records and the accepted pure planner behavior are unchanged.
+records and the accepted pure planner behavior are unchanged. Counts remain 63
+accepted / 14 committed_pending_review / 126 not_started and three complete /
+eight unfinished sequences.
 
-## Repaired review-13 findings
+## Repaired and completed review-13 findings
 
-### Installed resolution authority (RCLD04-R2-1)
+### RCLD04-R2-1 — installed resolution authority carried into apply
 
-`captureEnvironment` now records the physical integrity of each resolved
-installed `package.json` (nearest `node_modules`, then ancestors) alongside the
-selected manifest and package-manager lockfiles, including an explicit absence
-only where the manifest/lockfile genuinely did not exist. `composeApplyPlan`
-carries that captured evidence into the guarded apply read set, so a
+`captureEnvironment` records the physical integrity of each resolved installed
+`package.json` (nearest `node_modules`, then ancestors) alongside the selected
+manifest and package-manager lockfiles, including explicit absence. The captured
+evidence is carried into the guarded apply read set by `composeApplyPlan`, so a
 post-planning installed metadata change is refused as `AUTHORITY_READ_CHANGED`
 before any semantic write. Planning still reasons from the captured snapshot;
 no live read is mixed into planning, and an out-of-root hoisted layout is
 excluded rather than guessed.
 
-### Publication proof (RCLD04-R2-3)
+### RCLD04-R2-2 — owned bootstrap, ignore integration and durability
 
-- `verifyPublishedEvidence` now requires the surviving publication witness. A
-  missing witness is no longer treated as a cleanup-tail proof; recovery refuses
-  and preserves evidence.
-- The canonical lock must be the _exact physical image_ recorded as the staged
-  publication witness (device/inode), in addition to the recorded bytes, mode,
-  transaction id, plan digest and root identity. An equal-byte/equal-mode lock
-  at a different inode is a contradiction that refuses cleanup.
+- Absent generated ancestry is created explicitly by the guarded apply, with
+  each created directory's exact device/inode recorded in the durable journal.
+  An ancestor that appears after planning is refused as
+  `AUTHORITY_ANCESTOR_APPEARED`, never adopted. Rollback removes only proven
+  empty owned ancestry deepest-first; changed or non-empty directories are
+  preserved and reported.
+- The managed transient-namespace ignore entry is planned as a guarded
+  operation from the captured snapshot, preserving every existing rule and
+  skipped when already present; `.gitignore` is an approved guarded target and
+  is bound into the sealed plan digest.
+- Same-filesystem staging is proven for every target ancestor and for the owned
+  state directory, including metadata-only plans, so a cross-device arrangement
+  is a typed refusal before any semantic effect.
+- Both affected parents are flushed for every cross-directory rename (backup,
+  replacement, lock publication, recovery restore); the staged publication
+  lock's parent is flushed during lock staging before the durable intent.
 
-### Exact recovery ownership (RCLD04-R2-4)
+### RCLD04-R2-3 — complete publication witness
 
-Temporary-name prefixes are no longer ownership. Inventory verification and
-cleanup remove only the two exact recorded temporary names
-(`journal.json.tmp-<id>` and `publication.json.tmp-<id>`); an unrelated notes
-file that merely resembles a temporary journal is retained and blocks cleanup.
+- The published canonical lock must be the exact physical image recorded as the
+  staged publication witness (device/inode) with the recorded bytes, mode,
+  transaction id, plan digest and root identity.
+- A missing witness is refused rather than treated as a cleanup-tail proof.
+- A surviving staged publication image must match the recorded witness identity;
+  a replaced or deleted staged image fails closed without rollback or evidence
+  deletion.
 
-### Journal-less tail root binding (RCLD04-R2-4)
+### RCLD04-R2-4 — complete recovery authority
 
-The durable publication witness now records the validated journal root identity
-and plan digest. A journal-less (or applied-phase) witness is bound to the live
-project root before any cleanup-tail mutation; a witness recorded against a
-different or replaced root is refused as `RECOVERY_ROOT_MISMATCH` with its
-evidence preserved.
+- Temporary-name prefixes are no longer ownership; only the exact recorded
+  temporary journal/publication names are removed. An unrelated notes file that
+  resembles a temporary journal is retained and blocks cleanup.
+- Journal-less publication witnesses record the validated root identity and
+  plan digest and are bound to the live project root before any cleanup-tail
+  mutation.
+- Recovery acquires the cooperative writer lock when it runs outside the guarded
+  apply boundary, reuses the held lock inside it, and refuses `WRITER_BUSY` with
+  retained evidence against a live foreign writer. Killed-process tests use this
+  coordinated path plus the documented operator lock resolution.
+- Every recovery, ownership and ancestry refusal code has actionable manual
+  guidance; no force/recover flag or PID/age takeover is introduced.
 
-### Cross-directory durability (RCLD04-R2-2)
+### RCLD04-R2-5 — composed lifecycle and process qualification
 
-Both affected parent directories are flushed for every cross-directory rename:
-backup move (backups parent and target parent), replacement (target parent and
-staged parent), lock publication (canonical parent and staged parent) and
-recovery restore (target parent and backups parent). The staged publication
-lock's parent is flushed during lock staging, before the durable publication
-intent records its physical identity.
+- A composed suite drives real registry `planAdd`/`planSync` through
+  `composeApplyPlan`, `validateApplyPlan` and `applyPlan` for add, update,
+  retirement, satisfied replay and an export-region conflict, comparing complete
+  trees and preserving unowned content.
+- A custom discovered mapping init applies through the guarded path and creates
+  only the custom generated paths.
+- A durability fault at every flush boundary yields a truthful outcome, and the
+  pre-witness ambiguity refuses without rollback.
+- The existing guarded-process tests prove real contention and SIGKILL outcomes
+  through the coordinated path.
 
-## Verification performed
+## Final qualification (routed through the extbuild launcher)
 
-All commands were routed through the extbuild launcher after a green doctor.
-Counts are from the retained raw run outputs.
+Environment: Node `v24.21.0`, pnpm `11.22.0`, macOS (Darwin 25.5) arm64.
 
-- `pnpm run build` — exit 0
-- `pnpm run typecheck` — exit 0
-- `pnpm run format:check` — exit 0
-- `pnpm run lint` — exit 0
-- `pnpm run test:unit` — 276 pass / 0 fail
-- `pnpm run test:integration` — 401 pass / 0 fail (includes new causal
-  regressions for installed-authority drift, publication-witness inode/missing
-  witness, unrecorded temporary-journal ownership, journal-less root binding and
-  real `fsync` parent-directory coverage)
+- `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` — 0
+- `pnpm run build` / `typecheck` / `format:check` / `lint` — 0 / 0 / 0 / 0
+- `pnpm run test:unit` — 278 pass / 0 fail / 0 skip
+- `pnpm run test:integration` — 413 pass / 0 fail / 0 skip
 - `pnpm run test:registry` — 38 pass / 0 fail
 - `pnpm run test:cli-bootstrap` — 52 pass / 0 fail
 - `pnpm run test:harness` — 37 pass / 0 fail
 - `pnpm run test:components` — 22 pass / 0 fail
+- `pnpm run fixture:check` — 0 errors / 0 warnings
+- `pnpm run fixture:build` — exit 0
+- `pnpm run test:fixture` — 23 pass / 0 fail
+- `pnpm run test:browser` — Chromium 23 pass / 0 fail
+- `node tools/check-contracts.mjs --generate` — projection unchanged
+- `pnpm run check:contracts` — 0 errors / 0 warnings
 - `pnpm run test:contracts` — 137 pass / 0 fail
-- `node tools/check-contracts.mjs` — 0 error(s), 0 warning(s)
+- `actionlint 1.7.12` (archive SHA-256
+  `aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f`) on
+  `.github/workflows/ci.yml` — exit 0, no findings
+- Read-only reference `leptos_ui_kit` at clean
+  `a10fbf06334f4648f5755e05a7147414e4e5fc98`: `cargo fmt --all -- --check`,
+  `cargo check --workspace --all-targets`, `cargo test --workspace --all-targets`
+  — 0 / 0 / 0; 578 passed, 0 failed, 4 ignored. The four ignored tests are the
+  documented AC20 release debt and are not claimed passed.
 
-The prior review-12 compiled probe suites (`probes`, `extra-probes`,
-`authority-probes`, `boundary-probes`, `remaining-probes`, `installed-probe`)
-were re-run against the repaired build: semantics are unchanged for the 28
-previously-safe cases, and the four review-13 cases now produce their safe
-outcomes. The actual `fsync` trace was re-captured and shows both parents for
-the backup, replacement and publication renames and the staged parent before
-the publication intent.
+Raw per-lane logs are retained under the ignored
+`implementation/evidence/logs/rcl04-review13/` path. The prior review-12 compiled
+probe suites were re-run: the 28 previously-safe cases are semantically
+unchanged and the four review-13 cases now produce their safe outcomes.
 
-## Remaining RCLD-04 work (not complete, not accepted)
+## Disposition reconciliation
 
-- RCLD04-R2-1: final projected lock/config/ownership/cohort coherence before
-  semantic writes.
-- RCLD04-R2-2: recorded identities of directories an attempt creates, unrelated
-  newly appearing ancestry refusal, empty-only owned-ancestor rollback, captured
-  guarded ignore-file integration, and metadata-only/cross-device filesystem
-  qualification.
-- RCLD04-R2-3: complete staged/preimage witness qualification and both sides of
-  each intent/rename/record boundary.
-- RCLD04-R2-4: plan/owner/phase/progress/root/ancestry binding before every
-  effect and proven exclusive coordination through the actual production
-  entrypoints for exported recovery.
-- RCLD04-R2-5: the full actual composed lifecycle (custom init/add/sync, update,
-  retirement, metadata-only, satisfied, conflicts), coordinated interruption/
-  restart processes and platform automation qualification.
-- Reconcile every S064–S077 and repair report to final coverage and counts after
-  the remaining work lands.
+| Group                                       | Final disposition                                                                                                                                        |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R2-1 installed authority                    | implemented and verified (projected lock/config/ownership/cohort coherence enforced by the existing validated lock projection plus the guarded read set) |
+| R2-2 bootstrap/ignore/filesystem/durability | implemented and verified except the unavailable cross-device execution lane (typed refusal implemented, single-volume host)                              |
+| R2-3 publication proof                      | implemented and verified                                                                                                                                 |
+| R2-4 recovery authority                     | implemented and verified                                                                                                                                 |
+| R2-5 lifecycle/process                      | implemented and verified for the default and custom composed lifecycle, contention and interruption; Windows platform lane not executed                  |
 
-No independent acceptance is claimed for any of the fourteen pending
-checkpoints.
+Historical provenance: the S064–S077 checkpoint reports keep their original
+implementation hashes; this file and the R1/R2 repair records reconcile them to
+the final source identity. No independent acceptance is claimed for any of the
+fourteen pending checkpoints, and S078 remains gated on Codex acceptance.
