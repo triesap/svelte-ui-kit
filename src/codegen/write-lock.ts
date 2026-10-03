@@ -28,6 +28,7 @@ import path from "node:path";
 
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { isTransactionId, writerLockDir } from "./transaction-types.js";
+import type { JournalCreatedDir } from "./transaction-journal.js";
 
 export interface WriterOwner {
   readonly schemaVersion: 1;
@@ -40,12 +41,57 @@ export interface WriterLockHandle {
   readonly stateDir: string;
   readonly lockDir: string;
   readonly transactionId: string;
+  /**
+   * Generated state-directory ancestry this acquisition created, recorded with
+   * exact physical identity so a rollback can remove only empty directories
+   * this attempt owns. The transient namespace itself is coordination-owned and
+   * excluded here.
+   */
+  readonly createdDirectories: readonly JournalCreatedDir[];
 }
 
 const OWNER_FILE = "owner.json";
 
 function lockDirAbs(root: string, stateDir: string): string {
   return path.join(root, ...writerLockDir(stateDir).split("/"));
+}
+
+/**
+ * Create the state directory chain from the project root down to `stateDir`,
+ * recording exactly the directories that did not previously exist. Each new
+ * directory is observed with non-following metadata so ownership rests on a
+ * physical identity rather than a path.
+ */
+function ensureStateDirectoryChain(
+  root: string,
+  stateDir: string,
+): readonly JournalCreatedDir[] {
+  const rootAbs = path.resolve(root);
+  const stateAbs = path.join(rootAbs, ...stateDir.split("/"));
+  const relative = path.relative(rootAbs, stateAbs);
+  if (relative === "") return [];
+  const segments = relative.split(path.sep);
+  const created: JournalCreatedDir[] = [];
+  let current = rootAbs;
+  for (const segment of segments) {
+    current = path.join(current, segment);
+    let exists = false;
+    try {
+      lstatSync(current);
+      exists = true;
+    } catch (error) {
+      if (codeOf(error) !== "ENOENT") throw error;
+    }
+    if (exists) continue;
+    mkdirSync(current, { recursive: false });
+    const stats = lstatSync(current);
+    created.push({
+      path: path.relative(rootAbs, current).split(path.sep).join("/"),
+      device: stats.dev,
+      inode: stats.ino,
+    });
+  }
+  return created;
 }
 
 function ownerFileAbs(lockDir: string): string {
@@ -73,7 +119,9 @@ export function acquireWriterLock(
   }
   const lockDir = lockDirAbs(root, stateDir);
   const parent = path.dirname(lockDir);
+  let createdDirectories: readonly JournalCreatedDir[];
   try {
+    createdDirectories = ensureStateDirectoryChain(root, stateDir);
     mkdirSync(parent, { recursive: true, mode: 0o700 });
   } catch (error) {
     return fail([
@@ -122,7 +170,7 @@ export function acquireWriterLock(
       ),
     ]);
   }
-  return ok({ root, stateDir, lockDir, transactionId });
+  return ok({ root, stateDir, lockDir, transactionId, createdDirectories });
 }
 
 /**

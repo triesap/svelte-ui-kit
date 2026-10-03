@@ -239,3 +239,41 @@ test("persistJournal writes a durable, re-readable record", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("owned created-directory records round-trip and reject malformed entries", () => {
+  const journal = {
+    ...validJournal(),
+    createdDirs: [{ path: "src/styles", device: 42, inode: 7 }],
+  };
+  const text = serializeJournal(journal);
+  const parsed = parseJournal(text);
+  assert.equal(parsed.ok, true, JSON.stringify(parsed));
+  if (parsed.ok) assert.deepEqual(parsed.value, journal);
+
+  const unsafe = parseJournal(
+    JSON.stringify({
+      ...journal,
+      createdDirs: [{ path: "../escape", device: 1, inode: 2 }],
+    }),
+  );
+  assert.equal(unsafe.ok, false);
+
+  const unknownKey = parseJournal(
+    JSON.stringify({
+      ...journal,
+      createdDirs: [{ path: "src", device: 1, inode: 2, extra: true }],
+    }),
+  );
+  assert.equal(unknownKey.ok, false);
+
+  const duplicate = parseJournal(
+    JSON.stringify({
+      ...journal,
+      createdDirs: [
+        { path: "src/styles", device: 1, inode: 2 },
+        { path: "SRC/STYLES", device: 3, inode: 4 },
+      ],
+    }),
+  );
+  assert.equal(duplicate.ok, false);
+});

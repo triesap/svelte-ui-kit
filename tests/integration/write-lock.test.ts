@@ -86,6 +86,7 @@ test("an ambiguous stale lock is not silently removed", () => {
       stateDir: STATE_DIR,
       lockDir,
       transactionId: ID_ONE,
+      createdDirectories: [],
     });
     assert.equal(refused.ok, false);
     if (!refused.ok)

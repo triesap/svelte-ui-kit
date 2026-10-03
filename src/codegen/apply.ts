@@ -55,8 +55,13 @@ import type { ChangeOperation } from "./plan.js";
 import {
   prepareJournal,
   persistJournal,
+  type JournalCreatedDir,
   type TransactionJournal,
 } from "./transaction-journal.js";
+import {
+  createOwnedAncestors,
+  removeOwnedAncestors,
+} from "./owned-ancestry.js";
 import { recoverTransactions } from "./recovery.js";
 import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
 import { applyReplacements } from "./replace.js";
@@ -614,6 +619,48 @@ function absOf(root: string, logical: string): string {
 }
 
 /**
+ * The complete generated-ancestry plan for every target and the canonical
+ * lock. A recorded-absent ancestor implies every deeper component was also
+ * absent at planning, so the inferred deeper components are included; a chain
+ * with no recorded-absent component has nothing to create. This lets the owned
+ * bootstrap cover the whole absent chain even though `captureAncestors` stops
+ * at the first missing component.
+ */
+function ownedAncestorCandidates(plan: ValidatedApplyPlan): PlanAncestor[] {
+  const recordedKinds = new Map(
+    plan.readset.ancestors.map((ancestor) => [ancestor.path, ancestor.kind]),
+  );
+  const result = new Map<string, PlanAncestor>();
+  const paths = [
+    ...plan.targets.map((target) => target.path),
+    lockPath(plan.stateDir),
+  ];
+  for (const targetPath of paths) {
+    const segments = targetPath.split("/");
+    let inferredAbsent = false;
+    for (let index = 1; index < segments.length; index += 1) {
+      const logical = segments.slice(0, index).join("/");
+      const recorded = recordedKinds.get(logical);
+      if (recorded === "directory") {
+        inferredAbsent = false;
+        continue;
+      }
+      if (recorded === "absent") inferredAbsent = true;
+      if (!inferredAbsent) continue;
+      if (!result.has(logical)) {
+        result.set(logical, {
+          path: logical,
+          kind: "absent",
+          device: null,
+          inode: null,
+        });
+      }
+    }
+  }
+  return [...result.values()];
+}
+
+/**
  * Prove the staged replacement can be published with an atomic same-filesystem
  * rename: the nearest existing ancestor directory of every target must share
  * the project root's device. A cross-device arrangement is a typed refusal
@@ -758,9 +805,15 @@ export function applyPlan(
     return { kind: "refused", transactionId: null, issues: acquired.issues };
   }
 
+  // Owned generated ancestry includes the state-directory chain this
+  // acquisition created plus any absent target ancestry created below.
+  const ownedCreated: JournalCreatedDir[] = [
+    ...acquired.value.createdDirectories,
+  ];
+
   let outcome: ApplyOutcome;
   try {
-    outcome = applyUnderLock(plan, transactionId, hooks);
+    outcome = applyUnderLock(plan, transactionId, ownedCreated, hooks);
   } catch (error) {
     outcome = {
       kind: "refused",
@@ -775,13 +828,23 @@ export function applyPlan(
   }
   const release = releaseWriterLock(acquired.value);
   cleanupEmptyTransient(plan);
-  if (release.ok) return outcome;
+  // A refused or no-change attempt leaves no committed install, so remove only
+  // the empty directories this attempt created. A committed install keeps them.
+  const ancestryIssues =
+    outcome.kind === "applied" || outcome.kind === "committed_needs_cleanup"
+      ? []
+      : removeOwnedAncestors(plan.root, ownedCreated);
+  if (release.ok) {
+    return ancestryIssues.length === 0
+      ? outcome
+      : { ...outcome, issues: [...outcome.issues, ...ancestryIssues] };
+  }
   // A failed release never downgrades a truthful outcome, but an applied batch
   // whose ownership evidence could not be released is not fully clean.
   return {
     kind: outcome.kind === "applied" ? "committed_needs_cleanup" : outcome.kind,
     transactionId,
-    issues: [...outcome.issues, ...release.issues],
+    issues: [...outcome.issues, ...release.issues, ...ancestryIssues],
   };
 }
 
@@ -789,6 +852,7 @@ export function applyPlan(
 function applyUnderLock(
   plan: ValidatedApplyPlan,
   transactionId: string,
+  ownedCreated: JournalCreatedDir[],
   hooks?: TransactionHooks,
 ): ApplyOutcome {
   // 2. Recovery runs under the lock and validates every recovery input
@@ -907,14 +971,39 @@ function applyUnderLock(
   }
 
   const prepared = prepareJournal(journal, staged.value.records);
+  // Create the remaining absent generated ancestry this attempt owns, and
+  // record every owned directory's exact identity so rollback removes only
+  // empty directories this attempt made.
+  const coordinationPaths = new Set(ownedCreated.map((entry) => entry.path));
+  const created = createOwnedAncestors(
+    plan.root,
+    ownedAncestorCandidates(plan).filter(
+      (ancestor) =>
+        ancestor.kind === "absent" && !coordinationPaths.has(ancestor.path),
+    ),
+  );
+  if (created.issues.length > 0) {
+    removeOwnedAncestors(plan.root, created.created);
+    removeTransaction(plan, transactionId);
+    return { kind: "refused", transactionId, issues: [...created.issues] };
+  }
+  ownedCreated.push(...created.created);
+  const preparedWithAncestry: TransactionJournal = {
+    ...prepared,
+    // Only the extra generated ancestry this attempt created is recorded for
+    // recovery; the coordination state-directory chain is transient and is
+    // removed by the guarded release/cleanup path.
+    createdDirs: created.created,
+  };
   try {
     persistJournal(
       plan.root,
       journalPath(plan.stateDir, transactionId),
-      prepared,
+      preparedWithAncestry,
       hooks,
     );
   } catch (error) {
+    removeOwnedAncestors(plan.root, ownedCreated);
     removeTransaction(plan, transactionId);
     return {
       kind: "refused",
@@ -948,7 +1037,7 @@ function applyUnderLock(
   const replaced = applyReplacements(
     plan.root,
     plan.stateDir,
-    prepared,
+    preparedWithAncestry,
     staged.value,
     hooks,
   );

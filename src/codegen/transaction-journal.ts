@@ -64,6 +64,18 @@ export interface JournalLockRecord {
   readonly unchanged: boolean;
 }
 
+/**
+ * Physical identity of one generated ancestor directory this attempt created.
+ * Recording the exact device/inode proves ownership: rollback removes only a
+ * directory that is still the exact empty directory this attempt made, never an
+ * unrelated directory that merely appeared at the same logical path.
+ */
+export interface JournalCreatedDir {
+  readonly path: string;
+  readonly device: number;
+  readonly inode: number;
+}
+
 export interface TransactionJournal {
   readonly schemaVersion: 1;
   readonly transactionId: string;
@@ -72,6 +84,11 @@ export interface TransactionJournal {
   readonly phase: TransactionPhase;
   readonly operations: readonly JournalOperationRecord[];
   readonly lock: JournalLockRecord | null;
+  /**
+   * Owned generated-ancestry directories created by this attempt. Absent on
+   * older/legacy records, which therefore claim no owned ancestry.
+   */
+  readonly createdDirs?: readonly JournalCreatedDir[];
 }
 
 const JOURNAL_KEYS = [
@@ -95,20 +112,34 @@ const OPERATION_KEYS = [
 ] as const;
 const PREIMAGE_KEYS = ["kind", "digest", "mode"] as const;
 const LOCK_KEYS = ["path", "digest", "published", "unchanged"] as const;
+const CREATED_DIR_KEYS = ["path", "device", "inode"] as const;
 
+/**
+ * Require every key in `required` and tolerate the listed `optional` keys, while
+ * rejecting any unknown key. Optional keys preserve strict parsing for legacy
+ * records that omit them.
+ */
 function exactlyKeys(
   value: Record<string, unknown>,
-  keys: readonly string[],
+  required: readonly string[],
   problems: string[],
   label: string,
+  optional: readonly string[] = [],
 ): void {
   const actual = Object.keys(value).sort();
-  const expected = [...keys].sort();
-  if (
-    actual.length !== expected.length ||
-    !actual.every((key, index) => key === expected[index])
-  ) {
-    problems.push(`${label} keys must be exactly ${keys.join(", ")}`);
+  const allowed = new Set<string>([...required, ...optional]);
+  const expectedLabel = `${label} keys must be exactly ${required.join(", ")}${
+    optional.length > 0 ? ` (optional: ${optional.join(", ")})` : ""
+  }`;
+  for (const key of actual) {
+    if (!allowed.has(key)) {
+      problems.push(`${expectedLabel}; unexpected key ${key}`);
+    }
+  }
+  for (const key of required) {
+    if (!(key in value)) {
+      problems.push(`${expectedLabel}; missing key ${key}`);
+    }
   }
 }
 
@@ -142,7 +173,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
     ]);
   }
   const problems: string[] = [];
-  exactlyKeys(parsed, JOURNAL_KEYS, problems, "journal");
+  exactlyKeys(parsed, JOURNAL_KEYS, problems, "journal", ["createdDirs"]);
 
   if (parsed["schemaVersion"] !== 1) {
     problems.push("journal schemaVersion must be 1");
@@ -291,6 +322,45 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
     }
   }
 
+  let createdDirs: JournalCreatedDir[] | undefined;
+  const rawCreatedDirs = parsed["createdDirs"];
+  if (rawCreatedDirs !== undefined) {
+    if (!Array.isArray(rawCreatedDirs)) {
+      problems.push("journal createdDirs must be an array");
+    } else {
+      createdDirs = [];
+      const seenDirs = new Set<string>();
+      for (const [index, raw] of rawCreatedDirs.entries()) {
+        const label = `journal createdDirs[${index}]`;
+        if (!isPlainObject(raw)) {
+          problems.push(`${label} must be an object`);
+          continue;
+        }
+        exactlyKeys(raw, CREATED_DIR_KEYS, problems, label);
+        if (!isSafeLogicalRelativePath(raw["path"])) {
+          problems.push(`${label} path is not a safe logical relative path`);
+        } else {
+          const folded = raw["path"].toLowerCase();
+          if (seenDirs.has(folded)) {
+            problems.push(`${label} duplicates ${raw["path"]}`);
+          }
+          seenDirs.add(folded);
+        }
+        if (
+          !Number.isInteger(raw["device"]) ||
+          !Number.isInteger(raw["inode"])
+        ) {
+          problems.push(`${label} must carry integer device/inode`);
+        }
+        createdDirs.push({
+          path: String(raw["path"]),
+          device: Number(raw["device"]),
+          inode: Number(raw["inode"]),
+        });
+      }
+    }
+  }
+
   if (problems.length > 0) {
     return fail(
       problems.map((message) =>
@@ -307,6 +377,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
     phase: parsed["phase"] as TransactionPhase,
     operations,
     lock,
+    ...(createdDirs === undefined ? {} : { createdDirs }),
   });
 }
 

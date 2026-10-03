@@ -31,6 +31,7 @@ import { observeEntry } from "../project/io.js";
 import { sha256Hex } from "./digest.js";
 import { flushDirectory } from "./durability.js";
 import { identityDigest, observeRootIdentity } from "./authority.js";
+import { removeOwnedAncestors } from "./owned-ancestry.js";
 import {
   parseJournal,
   validateJournalTargets,
@@ -679,6 +680,7 @@ export function recoverTransaction(
   if (journal.phase === "planned") {
     const binding = rootBindingIssues(root, journal);
     if (binding.length > 0) return refuse(transactionId, binding);
+    removeOwnedAncestors(root, journal.createdDirs ?? []);
     removeOwnedEntries(root, stateDir, transactionId);
     return { status: "cleaned", transactionId, issues: [] };
   }
@@ -765,12 +767,15 @@ export function recoverTransaction(
   for (const operation of [...journal.operations].reverse()) {
     rollbackOperation(root, stateDir, journal, operation, hooks);
   }
+  // Remove only the recorded owned empty ancestry directories this attempt
+  // created; a directory that is no longer empty is preserved and reported.
+  const ancestryIssues = removeOwnedAncestors(root, journal.createdDirs ?? []);
   fireHooks(hooks, "before", "recovery:cleanup", transactionId);
   const cleanupIssues = inventoryIssues(root, stateDir, transactionId, journal);
   if (cleanupIssues.length > 0) return refuse(transactionId, cleanupIssues);
   removeOwnedEntries(root, stateDir, transactionId);
   fireHooks(hooks, "after", "recovery:cleanup", transactionId);
-  return { status: "rolled_back", transactionId, issues: [] };
+  return { status: "rolled_back", transactionId, issues: ancestryIssues };
 }
 
 /**
