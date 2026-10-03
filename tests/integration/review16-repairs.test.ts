@@ -8,6 +8,7 @@ import {
   readdirSync,
   rmSync,
   writeFileSync,
+  type Stats,
 } from "node:fs";
 import fsDefault from "node:fs";
 import { syncBuiltinESMExports } from "node:module";
@@ -512,6 +513,90 @@ test("failed-release restoration never overwrites a new unrelated owner", () => 
     assert.equal(readFileSync(owner, "utf8"), foreign);
   });
 });
+
+test("guarded apply refuses a cross-device state directory with no semantic writes", () => {
+  withRoot((root) => {
+    const plan = makePlan(root);
+    const readset = {
+      ...plan.readset,
+      ancestors: plan.readset.ancestors.filter(
+        (ancestor) => ancestor.path !== STATE,
+      ),
+    };
+    const validated = validateApplyPlan({ ...plan, readset });
+    assert.equal(validated.ok, true, JSON.stringify(validated));
+    if (!validated.ok) return;
+    const cssBefore = readFileSync(abs(root, `${STYLES}/kit.css`), "utf8");
+    const lockBefore = readFileSync(abs(root, lockPath(STATE)), "utf8");
+    const outcome = withForeignStateDevice(root, () =>
+      applyPlan(validated.value),
+    );
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      outcome.issues.some((entry) => entry.code === "STAGE_CROSS_DEVICE"),
+      JSON.stringify(outcome.issues),
+    );
+    assert.equal(
+      readFileSync(abs(root, `${STYLES}/kit.css`), "utf8"),
+      cssBefore,
+    );
+    assert.equal(readFileSync(abs(root, lockPath(STATE)), "utf8"), lockBefore);
+    assert.equal(existsSync(abs(root, transactionsDir(STATE))), false);
+  });
+});
+
+test("metadata-only guarded apply refuses a cross-device state directory", () => {
+  withRoot((root) => {
+    const plan = metadataOnlyPlan(root);
+    const readset = {
+      ...plan.readset,
+      ancestors: plan.readset.ancestors.filter(
+        (ancestor) => ancestor.path !== STATE,
+      ),
+    };
+    const validated = validateApplyPlan({ ...plan, readset });
+    assert.equal(validated.ok, true, JSON.stringify(validated));
+    if (!validated.ok) return;
+    const lockBefore = readFileSync(abs(root, lockPath(STATE)), "utf8");
+    const outcome = withForeignStateDevice(root, () =>
+      applyPlan(validated.value),
+    );
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      outcome.issues.some((entry) => entry.code === "STAGE_CROSS_DEVICE"),
+      JSON.stringify(outcome.issues),
+    );
+    assert.equal(readFileSync(abs(root, lockPath(STATE)), "utf8"), lockBefore);
+    assert.equal(existsSync(abs(root, transactionsDir(STATE))), false);
+  });
+});
+
+/**
+ * Run `body` while the state directory observes a foreign device. This is a
+ * deterministic, single-volume injection of the same observation the guarded
+ * cross-device walk performs; it does not bypass coordination.
+ */
+function withForeignStateDevice<T>(root: string, body: () => T): T {
+  const mutableFs = fsDefault as unknown as {
+    lstatSync: typeof fsDefault.lstatSync;
+  };
+  const original = mutableFs.lstatSync;
+  const stateAbs = abs(root, STATE);
+  mutableFs.lstatSync = ((...args: Parameters<typeof lstatSync>) => {
+    const stats = original(...args) as Stats;
+    if (String(args[0]) === stateAbs) {
+      Object.defineProperty(stats, "dev", { value: stats.dev + 1 });
+    }
+    return stats;
+  }) as typeof fsDefault.lstatSync;
+  syncBuiltinESMExports();
+  try {
+    return body();
+  } finally {
+    mutableFs.lstatSync = original;
+    syncBuiltinESMExports();
+  }
+}
 
 test("a malformed nested target preimage is a typed refusal, never a throw", () => {
   withRoot((root) => {
