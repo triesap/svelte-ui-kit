@@ -77,30 +77,37 @@ only writing modes.
 
 #### Current RCLD-04 complete-boundary qualification
 
-Independent review 15 of `7690ad7da8d9943999ccb8d366b23f7e87b23c0e`
-requests changes. Follow current RCLD04-R2-1/2/3/4/5 dispositions and ALL original
-S064–S077 criteria in the sole governing COMMIT_SEQUENCE. Preserve 63 accepted /
-14 pending / 126 not_started, accepted planners and the live RCLD-04 tuple.
-S078 requires independent acceptance after the complete boundary is ready.
+Independent review 16 of clean candidate `dd5a489` requests changes. Follow
+current RCLD04-R2-1/2/3/4/5 and ALL original S064–S077 criteria in the sole
+COMMIT_SEQUENCE. Preserve 63 accepted / 14 pending / 126 not_started and the
+live RCLD-04 tuple; independent acceptance of the full boundary gates S078.
 
-All 42 prior compiled cases produce safe outcomes. Preserve that verified
-progress. Nine new causal cases expose contradictory live coordination owner,
-release fsync losing owner evidence and leaving stale authority, independently
-rooted custom-style rollback, partial creation fsync accounting, missing installed
-absence enumeration, unsafe metadata becoming absence, omitted layout context,
-malformed input exceptions and untyped partial exported-recovery cleanup failure.
-Complete all original authority, durability, lifecycle and restart qualification.
-A single-volume host does not block deterministic cross-device negative tests.
+The 51 previous compiled cases retain their scoped safe outcomes. Preserve
+those repairs, ignored runtime evidence and standalone public reports. Ten new
+causal cases expose physical acquired-owner substitution, discarded planned
+ancestry identity/flush failures, absent recovery-cleanup parent durability,
+initial coordination creation residue, unmapped stylesheet/export integrations,
+raw exported restore exceptions, unrelated owner overwrite on failed release,
+and malformed nested target-preimage serialization exceptions. Complete every
+original structured authority/protocol path, not only these named examples.
 
-Fresh independent build/typecheck/format/lint pass; unit 278, integration 428 and
-contract validation 0 errors/0 warnings pass with zero skips. Twenty-two author
-raw lane logs match retained hashes and native results. Broader fixture/Chromium/
-contracts/reference results are author evidence, not independent acceptance.
-Retain unique raw files and underlying exits for every final lane, including
-failures, exact source/artifact/platform/configuration identity. Ensure logs and
-checksum inventories are ignored; keep public report commands portable.
-Reference's four ignored Rust tests are separate from AC20's fixture-only two
-upstream Bits TS2590/strict-17 exception. Neither establishes MVP completion.
+Fresh independent build/typecheck/format/lint pass; unit 283, integration 440,
+contracts 0 errors/0 warnings and zero skips. Thirty-three retained author raw
+log/probe/exit files match hashes; broader fixture/Chromium/contracts/reference
+lanes are author evidence, not newly independent feature acceptance. Retain
+unique complete raw outputs and underlying exits for each final lane/attempt,
+exact final source/artifact/platform/configuration identity and honest skips.
+
+Multi-item tests currently cover default add/update/retirement with selected
+output assertions. Complete the factual default/custom lifecycle/cohort matrix,
+complete-tree/physical/ownership comparisons and check/build/render of those
+resulting consumers. Shipped foundation, representative multi-item fixtures and
+current guarded production-core process restart remain the approved approach;
+future S081 CLI and S096/S097 catalog stay at original gates. Complete actual
+syscall failure/flush ordering and guarded cross-device refusal qualification,
+including metadata-only plans. Single-volume hardware does not block deterministic
+software automation. Reconcile R5 complete/no-gap claims with actual evidence;
+AC20 and four ignored reference tests remain separately open/explicit.
 
 At each green checkpoint run affected causal tests plus static/contracts. At the
 FINAL composed candidate run frozen strict install, build/typecheck/format/lint,

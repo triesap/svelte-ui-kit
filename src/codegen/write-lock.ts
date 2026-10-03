@@ -34,6 +34,8 @@ import {
   type ModelResult,
 } from "../registry/errors.js";
 import { flushDirectory } from "./durability.js";
+import { removeOwnedAncestors } from "./owned-ancestry.js";
+import type { PhysicalIdentity } from "./authority.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import { isTransactionId, writerLockDir } from "./transaction-types.js";
 import type { JournalCreatedDir } from "./transaction-journal.js";
@@ -61,12 +63,24 @@ export interface WriterLockHandle {
 const OWNER_FILE = "owner.json";
 
 /**
+ * One in-process coordination claim. Possession is proven by the recorded
+ * transaction id *and* the exact physical identity of the owner record this
+ * process wrote. Equal bytes at a new inode are a different physical record
+ * and therefore do not prove the original acquired authority.
+ */
+interface HeldClaim {
+  readonly transactionId: string;
+  readonly device: number;
+  readonly inode: number;
+}
+
+/**
  * The set of lock directories this process actually acquired and has not yet
  * successfully released. Possession is proven by this in-process registry, not
  * by a recorded PID: a foreign owner record that merely names this process does
  * not grant coordination authority and must not bypass acquisition.
  */
-const HELD_LOCKS = new Map<string, string>();
+const HELD_LOCKS = new Map<string, HeldClaim>();
 
 function lockKey(root: string, stateDir: string): string {
   return lockDirAbs(root, stateDir);
@@ -82,7 +96,7 @@ export function heldWriterTransactionId(
   root: string,
   stateDir: string,
 ): string | null {
-  return HELD_LOCKS.get(lockKey(root, stateDir)) ?? null;
+  return HELD_LOCKS.get(lockKey(root, stateDir))?.transactionId ?? null;
 }
 
 /**
@@ -97,7 +111,8 @@ export function verifyHeldWriterLock(
   root: string,
   stateDir: string,
 ): ModelIssue[] {
-  const held = HELD_LOCKS.get(lockKey(root, stateDir));
+  const key = lockKey(root, stateDir);
+  const held = HELD_LOCKS.get(key);
   if (held === undefined) {
     return [
       issue(
@@ -107,7 +122,8 @@ export function verifyHeldWriterLock(
       ),
     ];
   }
-  const read = readOwner(lockDirAbs(root, stateDir));
+  const lockDir = lockDirAbs(root, stateDir);
+  const read = readOwner(lockDir);
   if (!read.ok) {
     return [
       issue(
@@ -117,16 +133,58 @@ export function verifyHeldWriterLock(
       ),
     ];
   }
-  if (read.value.transactionId !== held) {
+  if (read.value.transactionId !== held.transactionId) {
     return [
       issue(
         "WRITER_LOCK_CONTRADICTED",
-        `the live writer lock owner ${read.value.transactionId} contradicts the transaction ${held} this process acquired; refusing to bypass a live owner`,
+        `the live writer lock owner ${read.value.transactionId} contradicts the transaction ${held.transactionId} this process acquired; refusing to bypass a live owner`,
+        writerLockDir(stateDir),
+      ),
+    ];
+  }
+  // The transaction id alone is not physical proof: a record replaced with
+  // identical bytes at a new inode (or a different device) is not the exact
+  // owner record this process wrote, so it cannot authorize recovery effects.
+  const identity = observeOwnerIdentity(lockDir);
+  if (!identity.ok) {
+    return [
+      issue(
+        "WRITER_LOCK_CONTRADICTED",
+        `the held writer lock owner record could not be observed (${identity.reason}); refusing to treat it as coordination authority`,
+        writerLockDir(stateDir),
+      ),
+    ];
+  }
+  if (
+    identity.value.device !== held.device ||
+    identity.value.inode !== held.inode
+  ) {
+    return [
+      issue(
+        "WRITER_LOCK_CONTRADICTED",
+        "the live writer lock owner record is a different physical file than the one this process acquired; refusing substituted owner evidence",
         writerLockDir(stateDir),
       ),
     ];
   }
   return [];
+}
+
+/** Non-following physical identity of the owner record, or a typed failure. */
+function observeOwnerIdentity(
+  lockDir: string,
+):
+  | { readonly ok: true; readonly value: PhysicalIdentity }
+  | { readonly ok: false; readonly reason: string } {
+  try {
+    const stats = lstatSync(ownerFileAbs(lockDir));
+    if (stats.isSymbolicLink() || !stats.isFile()) {
+      return { ok: false, reason: "owner record is not a regular file" };
+    }
+    return { ok: true, value: { device: stats.dev, inode: stats.ino } };
+  } catch (error) {
+    return { ok: false, reason: `unreadable (${codeOf(error)})` };
+  }
 }
 
 function lockDirAbs(root: string, stateDir: string): string {
@@ -143,41 +201,71 @@ function ensureStateDirectoryChain(
   root: string,
   stateDir: string,
   hooks?: TransactionHooks,
-): readonly JournalCreatedDir[] {
+): {
+  readonly created: readonly JournalCreatedDir[];
+  readonly issue: ModelIssue | null;
+} {
   const rootAbs = path.resolve(root);
   const stateAbs = path.join(rootAbs, ...stateDir.split("/"));
   const relative = path.relative(rootAbs, stateAbs);
-  if (relative === "") return [];
+  if (relative === "") return { created: [], issue: null };
   const segments = relative.split(path.sep);
   const created: JournalCreatedDir[] = [];
   let current = rootAbs;
   for (const segment of segments) {
     current = path.join(current, segment);
+    const logical = path.relative(rootAbs, current).split(path.sep).join("/");
     let exists = false;
     try {
       lstatSync(current);
       exists = true;
     } catch (error) {
-      if (codeOf(error) !== "ENOENT") throw error;
+      if (codeOf(error) !== "ENOENT") {
+        return {
+          created,
+          issue: issue(
+            "WRITER_LOCK_UNAVAILABLE",
+            `could not inspect the coordination ancestry ${logical}: ${codeOf(error)}`,
+          ),
+        };
+      }
     }
     if (exists) continue;
-    mkdirSync(current, { recursive: false });
-    const stats = lstatSync(current);
-    created.push({
-      path: path.relative(rootAbs, current).split(path.sep).join("/"),
-      device: stats.dev,
-      inode: stats.ino,
-    });
-    // Record the new coordination directory durably in its parent.
-    fireHooks(hooks, "before", "durability:owned-create", current);
-    flushDirectory(path.dirname(current));
-    fireHooks(hooks, "after", "durability:owned-create", current);
+    try {
+      mkdirSync(current, { recursive: false });
+      const stats = lstatSync(current);
+      created.push({ path: logical, device: stats.dev, inode: stats.ino });
+      // Record the new coordination directory durably in its parent. A flush
+      // failure retains the already-created identity list so the caller can
+      // account for and remove exactly the owned empty ancestry it made.
+      fireHooks(hooks, "before", "durability:owned-create", current);
+      flushDirectory(path.dirname(current));
+      fireHooks(hooks, "after", "durability:owned-create", current);
+    } catch (error) {
+      return {
+        created,
+        issue: issue(
+          "WRITER_LOCK_UNAVAILABLE",
+          `could not prepare the coordination ancestry ${logical}: ${codeOf(error)}`,
+        ),
+      };
+    }
   }
-  return created;
+  return { created, issue: null };
 }
 
 function ownerFileAbs(lockDir: string): string {
   return path.join(lockDir, OWNER_FILE);
+}
+
+/** True when the owner record path currently exists (following no links). */
+function ownerRecordPresent(ownerAbs: string): boolean {
+  try {
+    lstatSync(ownerAbs);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -202,11 +290,18 @@ export function acquireWriterLock(
   }
   const lockDir = lockDirAbs(root, stateDir);
   const parent = path.dirname(lockDir);
-  let createdDirectories: readonly JournalCreatedDir[];
+  const prepared = ensureStateDirectoryChain(root, stateDir, hooks);
+  const createdDirectories = prepared.created;
+  if (prepared.issue !== null) {
+    // Account for and roll back exactly the owned empty coordination ancestry
+    // this attempt made before the transient namespace is even created.
+    removeOwnedAncestors(root, createdDirectories, hooks);
+    return fail([prepared.issue]);
+  }
   try {
-    createdDirectories = ensureStateDirectoryChain(root, stateDir, hooks);
     mkdirSync(parent, { recursive: true, mode: 0o700 });
   } catch (error) {
+    removeOwnedAncestors(root, createdDirectories, hooks);
     return fail([
       issue(
         "WRITER_LOCK_UNAVAILABLE",
@@ -244,8 +339,10 @@ export function acquireWriterLock(
       mode: 0o600,
     });
   } catch (error) {
-    // Remove only the lock directory this call just created.
+    // Remove only the lock directory this call just created, and account for
+    // any owned empty coordination ancestry it created.
     safeRemove(lockDir);
+    removeOwnedAncestors(root, createdDirectories, hooks);
     return fail([
       issue(
         "WRITER_LOCK_UNAVAILABLE",
@@ -253,7 +350,22 @@ export function acquireWriterLock(
       ),
     ]);
   }
-  HELD_LOCKS.set(lockKey(root, stateDir), transactionId);
+  const identity = observeOwnerIdentity(lockDir);
+  if (!identity.ok) {
+    safeRemove(lockDir);
+    removeOwnedAncestors(root, createdDirectories, hooks);
+    return fail([
+      issue(
+        "WRITER_LOCK_UNAVAILABLE",
+        `could not observe writer ownership: ${identity.reason}`,
+      ),
+    ]);
+  }
+  HELD_LOCKS.set(lockKey(root, stateDir), {
+    transactionId,
+    device: identity.value.device,
+    inode: identity.value.inode,
+  });
   return ok({ root, stateDir, lockDir, transactionId, createdDirectories });
 }
 /**
@@ -320,12 +432,13 @@ export function releaseWriterLock(
     // restore the exact owner record so the lock remains identifiable and
     // refuses new writers rather than becoming an ownerless stale lock.
     HELD_LOCKS.delete(key);
-    restoreOwnerRecord(handle.lockDir, owner);
+    const retained = restoreOwnerRecord(handle.lockDir, owner, handle.stateDir);
     return fail([
       issue(
         "WRITER_LOCK_RELEASE_FAILED",
         `could not release the owned writer lock: ${codeOf(error)}`,
       ),
+      ...(retained === null ? [] : [retained]),
     ]);
   }
   HELD_LOCKS.delete(key);
@@ -334,18 +447,52 @@ export function releaseWriterLock(
 
 /**
  * Restore the exact validated owner record when a release removed it but did
- * not durably finish. Best effort: the lock directory may already be gone (a
- * completed rmdir), in which case there is no stale lock to leave behind.
+ * not durably finish. A record that has appeared since (a different owner, or
+ * corrupt/unreadable bytes) is unrelated ownership evidence: it is retained
+ * verbatim rather than truncated with the old owner's bytes, and the conflict
+ * is reported. Best effort: the lock directory may already be gone (a completed
+ * rmdir), in which case there is no stale lock to leave behind.
  */
-function restoreOwnerRecord(lockDir: string, owner: WriterOwner): void {
+function restoreOwnerRecord(
+  lockDir: string,
+  owner: WriterOwner,
+  stateDir: string,
+): ModelIssue | null {
+  let stats;
   try {
-    if (!lstatSync(lockDir).isDirectory()) return;
-    writeFileSync(ownerFileAbs(lockDir), `${JSON.stringify(owner)}\n`, {
-      mode: 0o600,
-    });
+    stats = lstatSync(lockDir);
+  } catch {
+    return null;
+  }
+  if (stats.isSymbolicLink() || !stats.isDirectory()) return null;
+  const ownerAbs = ownerFileAbs(lockDir);
+  if (ownerRecordPresent(ownerAbs)) {
+    const current = readOwner(lockDir);
+    if (!current.ok) {
+      return issue(
+        "WRITER_LOCK_RELEASE_FAILED",
+        `an unreadable owner record appeared during release (${current.reason}); retaining it rather than overwriting unrelated ownership evidence`,
+        writerLockDir(stateDir),
+      );
+    }
+    if (
+      current.value.transactionId !== owner.transactionId ||
+      current.value.pid !== owner.pid
+    ) {
+      return issue(
+        "WRITER_LOCK_RELEASE_FAILED",
+        `a different owner record ${current.value.transactionId} appeared during release; retaining it rather than overwriting unrelated ownership evidence`,
+        writerLockDir(stateDir),
+      );
+    }
+    return null;
+  }
+  try {
+    writeFileSync(ownerAbs, `${JSON.stringify(owner)}\n`, { mode: 0o600 });
   } catch {
     // The lock directory is gone or unreadable; nothing more can be retained.
   }
+  return null;
 }
 
 /** Read the current owner record, distinguishing absent/ambiguous/held. */

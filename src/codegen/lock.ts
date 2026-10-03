@@ -39,6 +39,7 @@ import {
   isSemVer,
   validateSemVer,
 } from "../registry/versions.js";
+import { KIT_CSS_NAME, ROOT_EXPORTS_NAME } from "../project/config.js";
 
 /** Schema document that owns the lock shape. */
 export const KIT_LOCK_SCHEMA = "kit-lock.schema.json";
@@ -112,6 +113,32 @@ export interface LockValidationContext {
    * be published outside the configured layout mapping.
    */
   readonly layoutFile?: string;
+  /**
+   * The approved aggregate stylesheet. When omitted it is derived from
+   * `stylesDir`; a stylesheet integration must then name exactly this path.
+   */
+  readonly stylesheetPath?: string;
+  /**
+   * The approved root exports barrel. When omitted it is derived from `uiDir`;
+   * an exports integration must then name exactly this path.
+   */
+  readonly exportsPath?: string;
+}
+
+/** The fixed aggregate stylesheet path for one styles root. */
+function derivedStylesheetPath(
+  stylesDir: string | undefined,
+): string | undefined {
+  return stylesDir === undefined
+    ? undefined
+    : `${stylesDir.replace(/\/+$/, "")}/${KIT_CSS_NAME}`;
+}
+
+/** The fixed root exports barrel path for one UI root. */
+function derivedExportsPath(uiDir: string | undefined): string | undefined {
+  return uiDir === undefined
+    ? undefined
+    : `${uiDir.replace(/\/+$/, "")}/${ROOT_EXPORTS_NAME}`;
 }
 
 function sameIds(left: readonly string[], right: readonly string[]): boolean {
@@ -566,6 +593,37 @@ export function parseKitLock(
         issue(
           "LOCK_LAYOUT_CONTEXT",
           `integrations[${index}].path ${JSON.stringify(path)} must be the approved layout file ${JSON.stringify(context.layoutFile)}`,
+          `integrations[${index}].path`,
+        ),
+      );
+    }
+    const stylesheetPath =
+      context.stylesheetPath ?? derivedStylesheetPath(context.stylesDir);
+    if (
+      kind === "stylesheet" &&
+      stylesheetPath !== undefined &&
+      (typeof path !== "string" ||
+        asciiFold(path) !== asciiFold(stylesheetPath))
+    ) {
+      issues.push(
+        issue(
+          "LOCK_STYLESHEET_CONTEXT",
+          `integrations[${index}].path ${JSON.stringify(path)} must be the approved aggregate stylesheet ${JSON.stringify(stylesheetPath)}`,
+          `integrations[${index}].path`,
+        ),
+      );
+    }
+    const exportsPath =
+      context.exportsPath ?? derivedExportsPath(context.uiDir);
+    if (
+      kind === "exports" &&
+      exportsPath !== undefined &&
+      (typeof path !== "string" || asciiFold(path) !== asciiFold(exportsPath))
+    ) {
+      issues.push(
+        issue(
+          "LOCK_EXPORTS_CONTEXT",
+          `integrations[${index}].path ${JSON.stringify(path)} must be the approved root exports barrel ${JSON.stringify(exportsPath)}`,
           `integrations[${index}].path`,
         ),
       );

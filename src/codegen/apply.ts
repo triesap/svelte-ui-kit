@@ -51,6 +51,7 @@ import {
 } from "./authority.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";
 import { parseKitLock } from "./lock.js";
+import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../project/config.js";
 import type { ChangeOperation } from "./plan.js";
 import {
   prepareJournal,
@@ -411,6 +412,32 @@ export function validateApplyPlan(
       );
       continue;
     }
+    // Strict nested shape: exactly {path, kind, digest, mode}, no unknown or
+    // missing keys, and a kind-consistent digest/mode. A malformed nested
+    // preimage is a typed refusal before digest/sealing/coordination, never an
+    // `undefined` value that later throws during canonical serialization.
+    for (const key of Object.keys(target.preimage)) {
+      if (!["path", "kind", "digest", "mode"].includes(key)) {
+        problems.push(
+          issue(
+            "PLAN_PREIMAGE_MISMATCH",
+            `target ${target.path} preimage has unexpected key ${key}`,
+            target.path,
+          ),
+        );
+      }
+    }
+    for (const key of ["path", "kind", "digest", "mode"]) {
+      if (!(key in target.preimage)) {
+        problems.push(
+          issue(
+            "PLAN_PREIMAGE_MISMATCH",
+            `target ${target.path} preimage is missing ${key}`,
+            target.path,
+          ),
+        );
+      }
+    }
     if (target.preimage.path !== target.path) {
       problems.push(
         issue(
@@ -460,6 +487,32 @@ export function validateApplyPlan(
         ),
       );
     }
+    if (target.preimage.kind === "file") {
+      if (
+        target.preimage.mode === null ||
+        !Number.isInteger(target.preimage.mode) ||
+        target.preimage.mode < 0 ||
+        target.preimage.mode > 0o777
+      ) {
+        problems.push(
+          issue(
+            "PLAN_PREIMAGE_MISMATCH",
+            `target ${target.path} preimage mode is invalid`,
+            target.path,
+          ),
+        );
+      }
+    } else if (target.preimage.kind === "absent") {
+      if (target.preimage.digest !== null || target.preimage.mode !== null) {
+        problems.push(
+          issue(
+            "PLAN_PREIMAGE_MISMATCH",
+            `target ${target.path} absent preimage must not carry a digest or mode`,
+            target.path,
+          ),
+        );
+      }
+    }
     sealedTargets.push(
       Object.freeze({
         path: target.path,
@@ -478,6 +531,28 @@ export function validateApplyPlan(
       issue("PLAN_PREIMAGE_MISMATCH", "plan.lock.preimage is required", "lock"),
     );
   } else {
+    for (const key of Object.keys(lockPreimage)) {
+      if (!["path", "kind", "digest", "mode"].includes(key)) {
+        problems.push(
+          issue(
+            "PLAN_PREIMAGE_MISMATCH",
+            `plan.lock.preimage has unexpected key ${key}`,
+            "lock",
+          ),
+        );
+      }
+    }
+    for (const key of ["path", "kind", "digest", "mode"]) {
+      if (!(key in lockPreimage)) {
+        problems.push(
+          issue(
+            "PLAN_PREIMAGE_MISMATCH",
+            `plan.lock.preimage is missing ${key}`,
+            "lock",
+          ),
+        );
+      }
+    }
     if (lockPreimage["path"] !== canonicalLock) {
       problems.push(
         issue(
@@ -550,11 +625,19 @@ export function validateApplyPlan(
       );
     }
     if (parsedLock !== undefined) {
+      const derivedPaths = deriveKitPaths({
+        ...DEFAULT_KIT_CONFIG,
+        uiDir: plan.uiDir,
+        stylesDir: plan.stylesDir,
+        layoutFile: plan.layoutFile,
+      });
       const validatedLock = parseKitLock(parsedLock, canonicalLock, {
         stateDir: plan.stateDir,
         uiDir: plan.uiDir,
         stylesDir: plan.stylesDir,
         layoutFile: plan.layoutFile,
+        stylesheetPath: derivedPaths.kitCss,
+        exportsPath: derivedPaths.rootExports,
       });
       if (!validatedLock.ok) problems.push(...validatedLock.issues);
     }

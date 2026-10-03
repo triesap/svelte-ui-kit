@@ -324,6 +324,17 @@ export function validateReadset(readset: unknown): ModelIssue[] {
     ];
   }
   const value = readset as Partial<PlanReadset>;
+  for (const key of Object.keys(value)) {
+    if (!["root", "ancestors", "files", "installed"].includes(key)) {
+      problems.push(
+        issue(
+          "PLAN_READSET_INVALID",
+          `plan.readset has unexpected key ${key}`,
+          "readset",
+        ),
+      );
+    }
+  }
   if (
     typeof value.root !== "object" ||
     value.root === null ||
@@ -337,6 +348,18 @@ export function validateReadset(readset: unknown): ModelIssue[] {
         "readset.root",
       ),
     );
+  } else {
+    for (const key of Object.keys(value.root)) {
+      if (!["device", "inode"].includes(key)) {
+        problems.push(
+          issue(
+            "PLAN_READSET_INVALID",
+            `plan.readset.root has unexpected key ${key}`,
+            "readset.root",
+          ),
+        );
+      }
+    }
   }
   if (!Array.isArray(value.ancestors)) {
     problems.push(
@@ -347,6 +370,7 @@ export function validateReadset(readset: unknown): ModelIssue[] {
       ),
     );
   } else {
+    const seenAncestors = new Set<string>();
     for (const [index, ancestor] of value.ancestors.entries()) {
       const label = `readset.ancestors[${index}]`;
       if (
@@ -364,6 +388,28 @@ export function validateReadset(readset: unknown): ModelIssue[] {
         continue;
       }
       const record = ancestor as PlanAncestor;
+      for (const key of Object.keys(record)) {
+        if (!["path", "kind", "device", "inode"].includes(key)) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} has unexpected key ${key}`,
+              label,
+            ),
+          );
+        }
+      }
+      const folded = record.path.toLowerCase();
+      if (seenAncestors.has(folded)) {
+        problems.push(
+          issue(
+            "PLAN_READSET_INVALID",
+            `${label} duplicates ancestor ${record.path}`,
+            label,
+          ),
+        );
+      }
+      seenAncestors.add(folded);
       if (record.kind !== "directory" && record.kind !== "absent") {
         problems.push(
           issue("PLAN_READSET_INVALID", `${label} kind is unknown`, label),
@@ -405,6 +451,7 @@ export function validateReadset(readset: unknown): ModelIssue[] {
       ),
     );
   } else {
+    const seenFiles = new Set<string>();
     for (const [index, file] of value.files.entries()) {
       const label = `readset.files[${index}]`;
       if (
@@ -422,6 +469,28 @@ export function validateReadset(readset: unknown): ModelIssue[] {
         continue;
       }
       const record = file as PlanReadFile;
+      for (const key of Object.keys(record)) {
+        if (!["path", "kind", "digest", "mode"].includes(key)) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} has unexpected key ${key}`,
+              label,
+            ),
+          );
+        }
+      }
+      const folded = record.path.toLowerCase();
+      if (seenFiles.has(folded)) {
+        problems.push(
+          issue(
+            "PLAN_READSET_INVALID",
+            `${label} duplicates evidence ${record.path}`,
+            label,
+          ),
+        );
+      }
+      seenFiles.add(folded);
       if (record.kind !== "file" && record.kind !== "absent") {
         problems.push(
           issue("PLAN_READSET_INVALID", `${label} kind is unknown`, label),
@@ -467,6 +536,7 @@ export function validateReadset(readset: unknown): ModelIssue[] {
     );
   }
   if (Array.isArray(installed)) {
+    const seenInstalled = new Set<string>();
     for (const [index, entry] of installed.entries()) {
       const label = `readset.installed[${index}]`;
       if (
@@ -481,6 +551,39 @@ export function validateReadset(readset: unknown): ModelIssue[] {
         continue;
       }
       const record = entry as PlanInstalledRead;
+      for (const key of Object.keys(record)) {
+        if (
+          ![
+            "name",
+            "kind",
+            "path",
+            "realPath",
+            "digest",
+            "mode",
+            "device",
+            "inode",
+            "code",
+          ].includes(key)
+        ) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} has unexpected key ${key}`,
+              label,
+            ),
+          );
+        }
+      }
+      if (seenInstalled.has(record.name)) {
+        problems.push(
+          issue(
+            "PLAN_READSET_INVALID",
+            `${label} duplicates dependency ${record.name}`,
+            label,
+          ),
+        );
+      }
+      seenInstalled.add(record.name);
       if (
         record.kind !== "file" &&
         record.kind !== "absent" &&
@@ -524,6 +627,14 @@ export function validateReadset(readset: unknown): ModelIssue[] {
             issue("PLAN_READSET_INVALID", `${label} mode is invalid`, label),
           );
         }
+      } else if (typeof record.code !== "string" || record.code.length === 0) {
+        problems.push(
+          issue(
+            "PLAN_READSET_INVALID",
+            `${label} must record the ${record.kind} diagnostic code`,
+            label,
+          ),
+        );
       }
     }
   }

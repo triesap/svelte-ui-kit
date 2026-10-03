@@ -18,6 +18,7 @@ import { randomUUID } from "node:crypto";
 import {
   chmodSync,
   existsSync,
+  lstatSync,
   readFileSync,
   readdirSync,
   renameSync,
@@ -283,6 +284,39 @@ function createdDirIssues(
         issue(
           "RECOVERY_UNSAFE_ANCESTRY",
           `refusing to remove created directory ${logical}: ${ancestry}`,
+          logical,
+        ),
+      );
+      continue;
+    }
+    // Preflight the physical identity before ANY restore/removal. Only the
+    // exact empty directory this attempt recorded may be removed; a path that
+    // now holds a different inode/device (or is absent/unreadable) is a
+    // contradiction that must be preserved, not deleted or reported clean.
+    let stats;
+    try {
+      stats = lstatSync(absOf(root, logical));
+    } catch (error) {
+      if (codeOf(error) === "ENOENT") continue;
+      issues.push(
+        issue(
+          "RECOVERY_CREATED_DIR_IDENTITY",
+          `refusing to remove created directory ${logical}: it could not be observed (${codeOf(error)})`,
+          logical,
+        ),
+      );
+      continue;
+    }
+    if (
+      stats.isSymbolicLink() ||
+      !stats.isDirectory() ||
+      stats.dev !== created.device ||
+      stats.ino !== created.inode
+    ) {
+      issues.push(
+        issue(
+          "RECOVERY_CREATED_DIR_IDENTITY",
+          `refusing to remove created directory ${logical}: its physical identity contradicts the recorded creation evidence`,
           logical,
         ),
       );
@@ -561,28 +595,51 @@ function rollbackOperation(
   journal: TransactionJournal,
   operation: JournalOperationRecord,
   hooks?: TransactionHooks,
-): void {
+): ModelIssue[] {
   const current = currentImage(root, operation.path);
   if (operation.operation === "create") {
     if (current.kind === "file" && current.digest === operation.resultDigest) {
-      rmSync(absOf(root, operation.path), { force: true });
+      try {
+        rmSync(absOf(root, operation.path), { force: true });
+      } catch (error) {
+        return [
+          issue(
+            "RECOVERY_RESTORE_FAILED",
+            `could not roll back created ${operation.path} (${codeOf(error)})`,
+            operation.path,
+          ),
+        ];
+      }
     }
-    return;
+    return [];
   }
   const atPreimage =
     operation.preimage.digest !== null &&
     current.kind === "file" &&
     current.digest === operation.preimage.digest;
-  if (atPreimage) return;
-  if (operation.backupId === null) return;
+  if (atPreimage) return [];
+  if (operation.backupId === null) return [];
   const backup = backupPathAbs(
     root,
     stateDir,
     journal.transactionId,
     operation.backupId,
   );
-  fireHooks(hooks, "before", "recovery:restore", operation.path);
-  renameSync(backup, absOf(root, operation.path));
+  try {
+    fireHooks(hooks, "before", "recovery:restore", operation.path);
+    renameSync(backup, absOf(root, operation.path));
+  } catch (error) {
+    // An actual rename failure is a typed truthful partial outcome, never a
+    // raw exception escaping exported recovery. The journal remains for a
+    // later coordinated retry.
+    return [
+      issue(
+        "RECOVERY_RESTORE_FAILED",
+        `could not restore ${operation.path} (${codeOf(error)})`,
+        operation.path,
+      ),
+    ];
+  }
   if (operation.preimage.mode !== null) {
     try {
       chmodSync(absOf(root, operation.path), operation.preimage.mode);
@@ -591,12 +648,23 @@ function rollbackOperation(
       // caller's inventory/cleanup step rather than silently ignored.
     }
   }
-  fireHooks(hooks, "before", "durability:recovery", operation.path);
-  // The restore rename moves the owned backup into the live target directory;
-  // flush the target directory and the backup directory it left.
-  flushDirectory(path.dirname(absOf(root, operation.path)));
-  flushDirectory(path.dirname(backup));
-  fireHooks(hooks, "after", "durability:recovery", operation.path);
+  try {
+    fireHooks(hooks, "before", "durability:recovery", operation.path);
+    // The restore rename moves the owned backup into the live target directory;
+    // flush the target directory and the backup directory it left.
+    flushDirectory(path.dirname(absOf(root, operation.path)));
+    flushDirectory(path.dirname(backup));
+    fireHooks(hooks, "after", "durability:recovery", operation.path);
+  } catch (error) {
+    return [
+      issue(
+        "RECOVERY_RESTORE_FAILED",
+        `restore of ${operation.path} could not be flushed durably (${codeOf(error)})`,
+        operation.path,
+      ),
+    ];
+  }
+  return [];
 }
 
 const OWNED_ENTRIES = new Set([
@@ -656,6 +724,20 @@ function removeOwnedEntries(
       removeOne(name, { recursive: false });
     }
   }
+  // The child removals must be durable in the transaction directory before it
+  // is itself removed; a flush failure is reported rather than swallowed.
+  try {
+    flushDirectory(dir);
+  } catch (error) {
+    if (codeOf(error) !== "ENOENT") {
+      issues.push(
+        issue(
+          "RECOVERY_CLEANUP_FAILED",
+          `owned transaction ${transactionId} directory removals could not be flushed durably (${codeOf(error)})`,
+        ),
+      );
+    }
+  }
   try {
     fireHooks(hooks, "before", "recovery:cleanup-dir", transactionId);
     rmdirSync(dir);
@@ -669,16 +751,38 @@ function removeOwnedEntries(
       );
     }
   }
+  // Flush the transaction namespace so a crash cannot resurrect the removed
+  // transaction directory after recovery already proved it safe to remove.
+  try {
+    flushDirectory(path.dirname(dir));
+  } catch (error) {
+    issues.push(
+      issue(
+        "RECOVERY_CLEANUP_FAILED",
+        `the transaction namespace removal of ${transactionId} could not be flushed durably (${codeOf(error)})`,
+      ),
+    );
+  }
   return issues;
 }
 
 /** Best-effort removal of empty owned transient directories after a release. */
 function cleanupReleasedTransient(root: string, stateDir: string): void {
-  for (const logical of [transactionsDir(stateDir), transientRoot(stateDir)]) {
+  for (const [logical, parent] of [
+    [transactionsDir(stateDir), transientRoot(stateDir)],
+    [transientRoot(stateDir), stateDir],
+  ] as const) {
     try {
       rmdirSync(absOf(root, logical));
     } catch {
       // Non-empty or already removed; unrelated state is never touched.
+      continue;
+    }
+    // Durable removal of the now-empty owned transient directory in its parent.
+    try {
+      flushDirectory(absOf(root, parent));
+    } catch {
+      // The directory is already gone; the parent flush is best effort here.
     }
   }
 }
@@ -781,8 +885,16 @@ function recoverTransactionUnderLock(
   if (dirEntries.length === 0) {
     try {
       rmdirSync(dirAbs);
-    } catch {
-      // Already gone; nothing to finish.
+      flushDirectory(path.dirname(dirAbs));
+    } catch (error) {
+      if (codeOf(error) !== "ENOENT") {
+        return refuse(transactionId, [
+          issue(
+            "RECOVERY_CLEANUP_FAILED",
+            `empty transaction ${transactionId} directory could not be durably removed (${codeOf(error)})`,
+          ),
+        ]);
+      }
     }
     return { status: "cleaned", transactionId, issues: [] };
   }
@@ -870,7 +982,18 @@ function recoverTransactionUnderLock(
   if (journal.phase === "planned") {
     const binding = rootBindingIssues(root, journal);
     if (binding.length > 0) return refuse(transactionId, binding);
-    removeOwnedAncestors(root, journal.createdDirs ?? [], hooks);
+    // A planned transaction wrote no live bytes; its owned empty ancestry is
+    // removed only when every identity/removal/flush issue is proven. A
+    // contradiction or durability fault is refused with the journal preserved
+    // rather than discarding proof while reporting clean.
+    const ancestryIssues = removeOwnedAncestors(
+      root,
+      journal.createdDirs ?? [],
+      hooks,
+    );
+    if (ancestryIssues.length > 0) {
+      return refuse(transactionId, ancestryIssues);
+    }
     const cleanup = removeOwnedEntries(root, stateDir, transactionId, hooks);
     if (cleanup.length > 0) return refuse(transactionId, cleanup);
     return { status: "cleaned", transactionId, issues: [] };
@@ -967,8 +1090,17 @@ function recoverTransactionUnderLock(
   if (issues.length > 0) return refuse(transactionId, issues);
   const binding = rootBindingIssues(root, journal);
   if (binding.length > 0) return refuse(transactionId, binding);
+  const restoreIssues: ModelIssue[] = [];
   for (const operation of [...journal.operations].reverse()) {
-    rollbackOperation(root, stateDir, journal, operation, hooks);
+    restoreIssues.push(
+      ...rollbackOperation(root, stateDir, journal, operation, hooks),
+    );
+  }
+  if (restoreIssues.length > 0) {
+    // A restore/durability failure is a truthful partial outcome: the journal
+    // and any un-restored owned evidence are retained for a later coordinated
+    // retry rather than being deleted as if the rollback completed.
+    return refuse(transactionId, restoreIssues);
   }
   // Remove only the recorded owned empty ancestry directories this attempt
   // created; a directory that is no longer empty is preserved and reported.
