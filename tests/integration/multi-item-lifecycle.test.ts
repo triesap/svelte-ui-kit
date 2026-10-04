@@ -13,41 +13,66 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import {
+  applyPlan,
+  validateApplyPlan,
+  type ApplyOutcome,
+  type ValidatedApplyPlan,
+} from "../../src/codegen/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { hashBytes } from "../../src/codegen/compare.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
 import type { KitLock } from "../../src/codegen/lock.js";
-import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import type { ProjectSnapshot } from "../../src/codegen/snapshot.js";
+import {
+  captureSnapshot,
+  type ProjectSnapshot,
+} from "../../src/codegen/snapshot.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
+  type KitConfig,
+  type KitDerivedPaths,
 } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { computeRegistryContentHash } from "../../src/registry/model.js";
-import { snapshotByPath, snapshotTree } from "../helpers/tree-snapshot.js";
+import {
+  assertTreeAfterMutations,
+  snapshotTree,
+  type TreeMutation,
+} from "../helpers/tree-snapshot.js";
 
 /**
  * RCLD04-R2-5: a representative multi-item registry fixture driven through the
- * production planner and guarded apply. The fixture conforms to the already
+ * production planner and guarded apply, parameterized over a default and an
+ * independently rooted custom mapping. The fixture conforms to the already
  * approved manifest/template/component contracts: a component with an explicit
  * registry dependency, a hybrid Svelte + TypeScript file set, multiple CSS
  * blocks in distinct cohorts sharing one aggregate stylesheet, and value/type
  * export cohorts. It supplements, and does not replace, the shipped-foundation
  * lifecycle qualification.
+ *
+ * Each add/update/retirement step derives its expected tree from the captured
+ * pre-state and the composed production plan, then compares the complete
+ * resulting tree including bytes, modes, kinds, symlink targets and unrelated
+ * application content. The only structural changes permitted are the parent
+ * directories the plan itself requires.
  */
 
 const PKG_ROOT = process.cwd();
 const FIXTURE = path.join(PKG_ROOT, "tests/fixtures/consumer");
-const derived = deriveKitPaths(DEFAULT_KIT_CONFIG);
 const COMPATIBILITY = {
   svelte: "^5.57.1",
   bits: "^2.19.3",
   date: "^3.8.1",
+};
+
+const CUSTOM_CONFIG: KitConfig = {
+  ...DEFAULT_KIT_CONFIG,
+  uiDir: "app/ui",
+  stylesDir: "assets/styles",
 };
 
 function utf8(value: string): Uint8Array {
@@ -245,7 +270,8 @@ function compoundRegistry(
   return loadRegistrySnapshot(createAssetProvider(root));
 }
 
-function compoundPaths(): string[] {
+function compoundPaths(config: KitConfig): string[] {
+  const derived = deriveKitPaths(config);
   return [
     `${derived.stateDir}/kit.json`,
     `${derived.stateDir}/kit.lock.json`,
@@ -256,52 +282,193 @@ function compoundPaths(): string[] {
     derived.kitCss,
     derived.themesCss,
     derived.appCss,
-    DEFAULT_KIT_CONFIG.layoutFile,
+    config.layoutFile,
     ".gitignore",
   ];
 }
 
+interface GuardedApply {
+  readonly plan: ValidatedApplyPlan;
+  readonly outcome: ApplyOutcome;
+}
+
 function applyGuarded(
   root: string,
+  config: KitConfig,
   snapshot: ProjectSnapshot,
   writes: readonly PlanWrite[],
-): ReturnType<typeof applyPlan> {
-  const composed = composeApplyPlan({
-    root,
-    config: DEFAULT_KIT_CONFIG,
-    writes,
-    snapshot,
-  });
+): GuardedApply {
+  const composed = composeApplyPlan({ root, config, writes, snapshot });
   assert.equal(composed.ok, true, JSON.stringify(composed));
   if (!composed.ok) throw new Error("compose failed");
   const validated = validateApplyPlan(composed.value);
   assert.equal(validated.ok, true, JSON.stringify(validated));
   if (!validated.ok) throw new Error("validation failed");
-  return applyPlan(validated.value);
+  return { plan: validated.value, outcome: applyPlan(validated.value) };
 }
 
-test("a compound multi-item add generates hybrid files, css blocks and export cohorts", () => {
+/**
+ * Every write the guarded plan will perform: each composed target plus the
+ * canonical lock publication. This is the exact mutation set the expected tree
+ * is built from; the resulting tree is never consulted to derive it.
+ */
+function planMutations(
+  plan: ValidatedApplyPlan,
+  derived: KitDerivedPaths,
+): TreeMutation[] {
+  const mutations: TreeMutation[] = plan.targets.map((target) => ({
+    path: target.path,
+    operation: target.operation,
+    bytes: target.bytes,
+    mode: target.mode,
+  }));
+  mutations.push({
+    path: `${derived.stateDir}/kit.lock.json`,
+    operation: plan.lock.preimage.kind === "file" ? "update" : "create",
+    bytes: plan.lock.bytes,
+    mode: plan.lock.preimage.mode ?? 0o644,
+  });
+  return mutations;
+}
+
+function assertApplied(
+  label: string,
+  consumer: string,
+  config: KitConfig,
+  before: ReturnType<typeof snapshotTree>,
+  guarded: GuardedApply,
+): void {
+  assert.equal(
+    guarded.outcome.kind,
+    "applied",
+    `${label}: ${JSON.stringify(guarded.outcome.issues)}`,
+  );
+  assertTreeAfterMutations(
+    consumer,
+    before,
+    planMutations(guarded.plan, deriveKitPaths(config)),
+  );
+}
+
+interface OwnershipSpec {
+  readonly requested: readonly string[];
+  readonly items: readonly string[];
+  readonly files: readonly {
+    readonly target: string;
+    readonly owner: string;
+    readonly cohort: string;
+  }[];
+  readonly blocks: readonly {
+    readonly blockId: string;
+    readonly owner: string;
+    readonly cohort: string;
+  }[];
+}
+
+/** Whole-lock ownership and cohort comparison against an explicit expectation. */
+function assertLockOwnership(
+  lock: KitLock,
+  config: KitConfig,
+  spec: OwnershipSpec,
+): void {
+  const derived = deriveKitPaths(config);
+  assert.deepEqual([...lock.requested].sort(), [...spec.requested].sort());
+  assert.deepEqual(
+    lock.items.map((item) => `${item.id}:${item.origin}`).sort(),
+    [...spec.items].sort(),
+  );
+  assert.deepEqual(
+    lock.files
+      .map((file) => `${file.path}:${file.owner}:${file.cohort}`)
+      .sort(),
+    spec.files
+      .map(
+        (file) =>
+          `${derived.rootExportsDir}/${file.target}:${file.owner}:${file.cohort}`,
+      )
+      .sort(),
+    JSON.stringify(lock.files),
+  );
+  assert.deepEqual(
+    lock.cssBlocks
+      .map(
+        (block) =>
+          `${block.path}:${block.blockId}:${block.owner}:${block.cohort}`,
+      )
+      .sort(),
+    spec.blocks
+      .map(
+        (block) =>
+          `${derived.kitCss}:${block.blockId}:${block.owner}:${block.cohort}`,
+      )
+      .sort(),
+    JSON.stringify(lock.cssBlocks),
+  );
+  const integration = (
+    kind: "layout" | "stylesheet" | "exports",
+  ): string | undefined =>
+    lock.integrations.find((entry) => entry.kind === kind)?.path;
+  assert.equal(integration("layout"), config.layoutFile);
+  assert.equal(integration("stylesheet"), derived.kitCss);
+  assert.equal(integration("exports"), derived.rootExports);
+}
+
+function currentLock(root: string, derived: KitDerivedPaths): KitLock {
+  return JSON.parse(
+    readFileSync(abs(root, `${derived.stateDir}/kit.lock.json`), "utf8"),
+  ) as KitLock;
+}
+
+const ADDED_OWNERSHIP: OwnershipSpec = {
+  requested: ["card"],
+  items: ["button:transitive", "card:explicit"],
+  files: [
+    { target: "button.svelte", owner: "button", cohort: "core" },
+    { target: "card.svelte", owner: "card", cohort: "core" },
+    { target: "card.types.ts", owner: "card", cohort: "types" },
+  ],
+  blocks: [
+    { blockId: "button", owner: "button", cohort: "core" },
+    { blockId: "card", owner: "card", cohort: "core" },
+    { blockId: "card-extra", owner: "card", cohort: "extra" },
+  ],
+};
+
+const RETAINED_OWNERSHIP: OwnershipSpec = {
+  requested: ["button"],
+  items: ["button:explicit"],
+  files: [{ target: "button.svelte", owner: "button", cohort: "core" }],
+  blocks: [{ blockId: "button", owner: "button", cohort: "core" }],
+};
+
+/**
+ * Run the same add → update → retirement lifecycle for one mapping. Each step
+ * compares the complete resulting tree against the pre-state plus the composed
+ * production plan.
+ */
+function runMultiItemLifecycle(config: KitConfig): void {
+  const derived = deriveKitPaths(config);
   const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-reg-"));
+  const updatedRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-upd-"));
+  const retiredRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-ret-"));
   const consumer = seedConsumer("<h1>MULTI_ITEM_PAGE</h1>\n");
   try {
-    const registry = compoundRegistry(registryRoot);
-    assert.equal(registry.ok, true, JSON.stringify(registry));
-    if (!registry.ok) return;
-
-    const first = captureSnapshot(consumer, compoundPaths());
+    // ---- add -------------------------------------------------------------
+    const install = compoundRegistry(registryRoot);
+    assert.equal(install.ok, true, JSON.stringify(install));
+    if (!install.ok) return;
+    const first = captureSnapshot(consumer, compoundPaths(config));
     assert.equal(first.ok, true, JSON.stringify(first));
     if (!first.ok) return;
-    const unrelatedBefore = snapshotByPath(snapshotTree(consumer));
-
     const added = planAdd({
-      registry: registry.value,
-      config: DEFAULT_KIT_CONFIG,
+      registry: install.value,
+      config,
       // Only card is requested; button is pulled as a registry dependency.
       addedRoots: ["card"],
       snapshot: first.value,
       lock: null,
-      registryVersion: registry.value.root.registryVersion,
-      registryHash: registry.value.root.contentHash,
+      registryVersion: install.value.root.registryVersion,
+      registryHash: install.value.root.contentHash,
     });
     assert.equal(added.ok, true, JSON.stringify(added));
     if (!added.ok) return;
@@ -311,8 +478,14 @@ test("a compound multi-item add generates hybrid files, css blocks and export co
       JSON.stringify(added.value.diagnostics),
     );
 
-    const applied = applyGuarded(consumer, first.value, added.value.writes);
-    assert.equal(applied.kind, "applied", JSON.stringify(applied.issues));
+    const beforeAdd = snapshotTree(consumer);
+    const installed = applyGuarded(
+      consumer,
+      config,
+      first.value,
+      added.value.writes,
+    );
+    assertApplied("add", consumer, config, beforeAdd, installed);
 
     // Hybrid file set: both items' Svelte files and the card TypeScript file.
     for (const rel of [
@@ -332,90 +505,26 @@ test("a compound multi-item add generates hybrid files, css blocks and export co
     assert.match(exports, /Button/);
     assert.match(exports, /Card/);
     assert.match(exports, /CardProps/);
-
-    const lock = JSON.parse(
-      readFileSync(abs(consumer, `${derived.stateDir}/kit.lock.json`), "utf8"),
-    ) as KitLock;
-    assert.deepEqual(lock.requested, ["card"]);
-    assert.deepEqual(
-      lock.items.map((item) => `${item.id}:${item.origin}`).sort(),
-      ["button:transitive", "card:explicit"],
-    );
-    assert.deepEqual(lock.cssBlocks.map((block) => block.blockId).sort(), [
-      "button",
-      "card",
-      "card-extra",
-    ]);
-    assert.ok(
-      lock.files.some(
-        (file) =>
-          file.path.endsWith("card.types.ts") && file.cohort === "types",
-      ),
-      JSON.stringify(lock.files),
+    assertLockOwnership(
+      currentLock(consumer, derived),
+      config,
+      ADDED_OWNERSHIP,
     );
 
-    // Unrelated content is preserved byte-for-byte.
-    const unrelatedAfter = snapshotByPath(snapshotTree(consumer));
-    assert.deepEqual(
-      unrelatedAfter.get("src/routes/+page.svelte"),
-      unrelatedBefore.get("src/routes/+page.svelte"),
-    );
-  } finally {
-    rmSync(registryRoot, { recursive: true, force: true });
-    rmSync(consumer, { recursive: true, force: true });
-  }
-});
-
-function currentLock(root: string): KitLock {
-  return JSON.parse(
-    readFileSync(abs(root, `${derived.stateDir}/kit.lock.json`), "utf8"),
-  ) as KitLock;
-}
-
-test("a multi-item sync updates one owner and retires it without touching the retained cohort", () => {
-  const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-sync-"));
-  const updatedRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-upd-"));
-  const retiredRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-ret-"));
-  const consumer = seedConsumer("<h1>MULTI_SYNC_PAGE</h1>\n");
-  try {
-    const install = compoundRegistry(registryRoot);
-    assert.equal(install.ok, true, JSON.stringify(install));
-    if (!install.ok) return;
-    const first = captureSnapshot(consumer, compoundPaths());
-    assert.equal(first.ok, true, JSON.stringify(first));
-    if (!first.ok) return;
-    const added = planAdd({
-      registry: install.value,
-      config: DEFAULT_KIT_CONFIG,
-      addedRoots: ["card"],
-      snapshot: first.value,
-      lock: null,
-      registryVersion: install.value.root.registryVersion,
-      registryHash: install.value.root.contentHash,
-    });
-    assert.equal(added.ok, true, JSON.stringify(added));
-    if (!added.ok) return;
-    const installed = applyGuarded(consumer, first.value, added.value.writes);
-    assert.equal(installed.kind, "applied", JSON.stringify(installed.issues));
-    const buttonAfterInstall = readFileSync(
-      abs(consumer, `${derived.rootExportsDir}/button.svelte`),
-      "utf8",
-    );
-
-    // Update the card owner only; the transitive button owner is retained.
+    // ---- update ----------------------------------------------------------
     const updated = compoundRegistry(updatedRoot, {
       cardBody: '<div class="card">v2</div>\n',
     });
     assert.equal(updated.ok, true, JSON.stringify(updated));
     if (!updated.ok) return;
-    const second = captureSnapshot(consumer, compoundPaths());
+    const second = captureSnapshot(consumer, compoundPaths(config));
     assert.equal(second.ok, true, JSON.stringify(second));
     if (!second.ok) return;
     const sync = planSync({
       registry: updated.value,
-      config: { ...DEFAULT_KIT_CONFIG, requested: ["card"] },
+      config: { ...config, requested: ["card"] },
       snapshot: second.value,
-      lock: currentLock(consumer),
+      lock: currentLock(consumer, derived),
       registryVersion: updated.value.root.registryVersion,
       registryHash: updated.value.root.contentHash,
     });
@@ -426,8 +535,18 @@ test("a multi-item sync updates one owner and retires it without touching the re
       true,
       JSON.stringify(sync.value.diagnostics),
     );
-    const applied = applyGuarded(consumer, second.value, sync.value.writes);
-    assert.equal(applied.kind, "applied", JSON.stringify(applied.issues));
+    const buttonAfterInstall = readFileSync(
+      abs(consumer, `${derived.rootExportsDir}/button.svelte`),
+      "utf8",
+    );
+    const beforeUpdate = snapshotTree(consumer);
+    const updatedApply = applyGuarded(
+      consumer,
+      config,
+      second.value,
+      sync.value.writes,
+    );
+    assertApplied("update", consumer, config, beforeUpdate, updatedApply);
     assert.match(
       readFileSync(
         abs(consumer, `${derived.rootExportsDir}/card.svelte`),
@@ -442,34 +561,42 @@ test("a multi-item sync updates one owner and retires it without touching the re
       ),
       buttonAfterInstall,
     );
+    assertLockOwnership(
+      currentLock(consumer, derived),
+      config,
+      ADDED_OWNERSHIP,
+    );
 
-    // Retire card while explicitly retaining button: the retained owner and its
-    // CSS block survive, and only the retired owner's outputs are removed.
+    // ---- retirement ------------------------------------------------------
     const retired = compoundRegistry(retiredRoot, { includeCard: false });
     assert.equal(retired.ok, true, JSON.stringify(retired));
     if (!retired.ok) return;
-    const third = captureSnapshot(consumer, compoundPaths());
+    const third = captureSnapshot(consumer, compoundPaths(config));
     assert.equal(third.ok, true, JSON.stringify(third));
     if (!third.ok) return;
     const retirement = planSync({
       registry: retired.value,
-      config: { ...DEFAULT_KIT_CONFIG, requested: ["button"] },
+      config: { ...config, requested: ["button"] },
       snapshot: third.value,
-      lock: currentLock(consumer),
+      lock: currentLock(consumer, derived),
       registryVersion: retired.value.root.registryVersion,
       registryHash: retired.value.root.contentHash,
     });
     assert.equal(retirement.ok, true, JSON.stringify(retirement));
     if (!retirement.ok) return;
+    assert.equal(
+      retirement.value.executable,
+      true,
+      JSON.stringify(retirement.value.diagnostics),
+    );
+    const beforeRetirement = snapshotTree(consumer);
     const removed = applyGuarded(
       consumer,
+      config,
       third.value,
       retirement.value.writes,
     );
-    assert.ok(
-      removed.kind === "applied" || removed.kind === "no_change",
-      JSON.stringify(removed),
-    );
+    assertApplied("retirement", consumer, config, beforeRetirement, removed);
     assert.equal(
       existsSync(abs(consumer, `${derived.rootExportsDir}/card.svelte`)),
       false,
@@ -485,11 +612,28 @@ test("a multi-item sync updates one owner and retires it without touching the re
     const finalCss = readFileSync(abs(consumer, derived.kitCss), "utf8");
     assert.match(finalCss, /\.button\b/);
     assert.doesNotMatch(finalCss, /\.card\b/);
-    assert.deepEqual(currentLock(consumer).requested, ["button"]);
+    assertLockOwnership(
+      currentLock(consumer, derived),
+      config,
+      RETAINED_OWNERSHIP,
+    );
+    // The retained dependency's unrelated page content survives untouched.
+    assert.match(
+      readFileSync(abs(consumer, "src/routes/+page.svelte"), "utf8"),
+      /MULTI_ITEM_PAGE/,
+    );
   } finally {
     rmSync(registryRoot, { recursive: true, force: true });
     rmSync(updatedRoot, { recursive: true, force: true });
     rmSync(retiredRoot, { recursive: true, force: true });
     rmSync(consumer, { recursive: true, force: true });
   }
+}
+
+test("default mapping: multi-item add, update and retirement match the complete planned tree", () => {
+  runMultiItemLifecycle(DEFAULT_KIT_CONFIG);
+});
+
+test("independent custom mapping: multi-item add, update and retirement match the complete planned tree", () => {
+  runMultiItemLifecycle(CUSTOM_CONFIG);
 });

@@ -17,6 +17,7 @@ import {
   applyPlan,
   validateApplyPlan,
   type ApplyOutcome,
+  type ValidatedApplyPlan,
 } from "../../src/codegen/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit, type InitPlan } from "../../src/codegen/plan-init.js";
@@ -33,7 +34,12 @@ import {
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { computeRegistryContentHash } from "../../src/registry/model.js";
-import { snapshotByPath, snapshotTree } from "../helpers/tree-snapshot.js";
+import {
+  assertTreeAfterMutations,
+  snapshotByPath,
+  snapshotTree,
+  type TreeMutation,
+} from "../helpers/tree-snapshot.js";
 
 /**
  * RCLD04-R2-5: factual lifecycle matrix for the guarded production core.
@@ -121,19 +127,44 @@ function planFor(root: string, config: KitConfig, configHash = "b".repeat(64)) {
   return { snapshot: snapshot.value, planned: planned.value };
 }
 
+function planMutations(
+  plan: ValidatedApplyPlan,
+  config: KitConfig,
+): TreeMutation[] {
+  const derived = deriveKitPaths(config);
+  const mutations: TreeMutation[] = plan.targets.map((target) => ({
+    path: target.path,
+    operation: target.operation,
+    bytes: target.bytes,
+    mode: target.mode,
+  }));
+  mutations.push({
+    path: `${derived.stateDir}/kit.lock.json`,
+    operation: plan.lock.preimage.kind === "file" ? "update" : "create",
+    bytes: plan.lock.bytes,
+    mode: plan.lock.preimage.mode ?? 0o644,
+  });
+  return mutations;
+}
+
+interface GuardedApply {
+  readonly plan: ValidatedApplyPlan;
+  readonly outcome: ApplyOutcome;
+}
+
 function applyGuarded(
   root: string,
   config: KitConfig,
   snapshot: ProjectSnapshot,
   writes: readonly PlanWrite[],
-): ApplyOutcome {
+): GuardedApply {
   const composed = composeApplyPlan({ root, config, writes, snapshot });
   assert.equal(composed.ok, true, JSON.stringify(composed));
   if (!composed.ok) throw new Error("compose failed");
   const validated = validateApplyPlan(composed.value);
   assert.equal(validated.ok, true, JSON.stringify(validated));
   if (!validated.ok) throw new Error("validate failed");
-  return applyPlan(validated.value);
+  return { plan: validated.value, outcome: applyPlan(validated.value) };
 }
 
 function assertGeneratedDefaults(
@@ -174,15 +205,28 @@ function assertGeneratedDefaults(
 test("default init writes the exact planned tree, modes and ownership", () => {
   withRoot((root) => {
     const { snapshot, planned } = planFor(root, DEFAULT_KIT_CONFIG);
-    const unrelatedBefore = snapshotByPath(snapshotTree(root));
-    const applied = applyGuarded(
+    const before = snapshotTree(root);
+    const guarded = applyGuarded(
       root,
       DEFAULT_KIT_CONFIG,
       snapshot,
       planned.writes,
     );
-    assert.equal(applied.kind, "applied", JSON.stringify(applied.issues));
+    assert.equal(
+      guarded.outcome.kind,
+      "applied",
+      JSON.stringify(guarded.outcome.issues),
+    );
     assertGeneratedDefaults(root, DEFAULT_KIT_CONFIG, planned.lock);
+
+    // The complete resulting tree is exactly the captured pre-state plus the
+    // composed production plan: every planner write, the managed ignore entry
+    // and the final lock, with only justified structural parent directories.
+    assertTreeAfterMutations(
+      root,
+      before,
+      planMutations(guarded.plan, DEFAULT_KIT_CONFIG),
+    );
 
     // The complete planned write set is exactly the generated differences.
     const after = snapshotByPath(snapshotTree(root));
@@ -196,11 +240,6 @@ test("default init writes the exact planned tree, modes and ownership", () => {
         write.path,
       );
     }
-    // Unrelated application state is byte-identical.
-    assert.deepEqual(
-      after.get("package.json"),
-      unrelatedBefore.get("package.json"),
-    );
   });
 });
 
@@ -212,7 +251,7 @@ test("a satisfied re-init through the guarded core is a no-change apply", () => 
       DEFAULT_KIT_CONFIG,
       first.snapshot,
       first.planned.writes,
-    );
+    ).outcome;
     assert.equal(applied.kind, "applied", JSON.stringify(applied.issues));
 
     // A second observation against the same configuration is satisfied: it
@@ -232,9 +271,15 @@ test("custom mapping init generates under the configured roots", () => {
   };
   withRoot((root) => {
     const { snapshot, planned } = planFor(root, config);
-    const applied = applyGuarded(root, config, snapshot, planned.writes);
-    assert.equal(applied.kind, "applied", JSON.stringify(applied.issues));
+    const before = snapshotTree(root);
+    const guarded = applyGuarded(root, config, snapshot, planned.writes);
+    assert.equal(
+      guarded.outcome.kind,
+      "applied",
+      JSON.stringify(guarded.outcome.issues),
+    );
     assertGeneratedDefaults(root, config, planned.lock);
+    assertTreeAfterMutations(root, before, planMutations(guarded.plan, config));
     const derived = deriveKitPaths(config);
     assert.equal(existsSync(abs(root, "app/ui/index.ts")), true);
     assert.equal(existsSync(abs(root, "assets/styles/kit.css")), true);
@@ -257,7 +302,7 @@ test("a metadata-only re-init publishes only the changed lock", () => {
       DEFAULT_KIT_CONFIG,
       first.snapshot,
       first.planned.writes,
-    );
+    ).outcome;
     assert.equal(applied.kind, "applied", JSON.stringify(applied.issues));
 
     // An empty registry with a bumped version changes only lock metadata: the
@@ -315,7 +360,7 @@ test("a metadata-only re-init publishes only the changed lock", () => {
         DEFAULT_KIT_CONFIG,
         snapshot.value,
         planned.value.writes,
-      );
+      ).outcome;
       assert.equal(reapply.kind, "applied", JSON.stringify(reapply.issues));
     } finally {
       rmSync(altRoot, { recursive: true, force: true });
@@ -331,7 +376,7 @@ test("a conflicting managed target is refused with no semantic writes", () => {
       DEFAULT_KIT_CONFIG,
       first.snapshot,
       first.planned.writes,
-    );
+    ).outcome;
     assert.equal(applied.kind, "applied", JSON.stringify(applied.issues));
 
     // Replace the managed exports barrel with an unrelated directory: the

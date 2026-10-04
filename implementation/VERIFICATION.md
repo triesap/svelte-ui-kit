@@ -75,6 +75,16 @@ completion unlocks a successor. Unapproved `not_applicable` fails closed.
 Default validation is read-only; `--generate` and `--generate-sources` are the
 only writing modes.
 
+#### Current bounded Q1 verification
+
+The owner-directed `pfc RCLD04-Q1` dispatch in COMMIT_SEQUENCE supersedes earlier
+single-session full-batch verification. Run the affected multi-item and
+review16-matrix integration tests, build, typecheck, formatting, lint and
+contract/projection validation. Retain raw outputs/exits and a concise Q1 report.
+Consumer check/build/render, browser, reference and final cumulative lanes remain
+required in subsequent approved sub-batches; they are not Q1 stopping prerequisites.
+Passing Q1 grants no whole-group, RCLD-04 or MVP acceptance.
+
 #### Current RCLD-04 complete-boundary qualification
 
 Independent review 16 of clean candidate `dd5a489` requests changes. Follow

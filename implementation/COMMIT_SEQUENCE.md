@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD-04 repairs and cumulative qualification** (S064–S077 remain committed_pending_review; review 16 requests changes before independent acceptance/S078).
+- Active implementation checkpoint: **RCLD04-Q1 whole-tree lifecycle assertions** (S064–S077 remain committed_pending_review; review 16 requests changes before independent acceptance/S078).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -51,6 +51,56 @@ After each green commit, record the hash and report, update this ledger, and rec
 At S002, adopt the embedded contracts into their scheduled repository-relative files, establish target contract validation and an aligned `implementation/COMMIT_SEQUENCE.json` projection. This document remains the governing execution/status authority; the JSON projection must not drift into a second independently edited plan. Extracted specs govern product intent. Update this document's contract links and supersede embedded snapshots explicitly when extraction is verified; do not maintain conflicting copies silently. S001 baseline evidence and later reports are factual records, not alternate planning backlogs. No additional issue database is required by the current scaffold.
 
 ## Codex dispatch — complete RCLD-04 transactions and recovery
+
+### Owner-directed bounded dispatch — RCLD04-Q1
+
+On 2026-10-04 the owner requested smaller Pi batches because the prior full
+RCLD-04 prompt exceeded practical session capacity. This dispatch supersedes
+previous instructions to finish every remaining repair and qualification lane in
+one session. Original requirements, S001–S203 definitions, accepted checkpoints,
+RCLD-04 pending status and the independent S078 gate are unchanged.
+
+Current authored candidate is `fc4d9c0`; its review-16 repair and matrix claims
+remain pending independent Codex review. No acceptance is granted by this scope
+revision. Do not repeat completed repairs merely because historical findings
+below describe their earlier candidate.
+
+The following are execution sub-batches within original S064–S077, not new
+product checkpoints or an alternate plan:
+
+1. **RCLD04-Q1 — whole-tree lifecycle assertions.** Current dispatch only.
+   Parameterize existing multi-item lifecycle tests for default and independently
+   rooted custom mappings; prove add, update and retirement through original
+   snapshots and production planner/compose/validate/apply. Compare complete
+   planned outputs and all unrelated entries: bytes, modes, kinds, symlink
+   targets and ownership. Permit only specifically justified new parent
+   directories; do not exclude all directory or transient changes. Strengthen
+   existing default/custom initialization assertions in review16-matrix as needed.
+   Use existing contract-conforming registry fixtures. Do not add consumer build/
+   render, browser, reference or full qualification work to this batch. Finish the
+   focused tests and static/contracts checks, record concise evidence, then return
+   for Codex review. Continue after green commits until Q1 is complete.
+2. **RCLD04-Q2 — resulting-consumer qualification.** Later dispatch: focused
+   default/custom multi-item consumer check/build/render and missing lifecycle
+   matrix cells, retaining original contracts and later catalog/CLI gates.
+3. **RCLD04-Q3 — remaining protocol qualification/corrections.** Later dispatch,
+   scoped from independent review of the authored repair candidate; existing
+   authority/publication/recovery/durability obligations remain open until proven.
+4. **RCLD04-Q4 — final cumulative qualification.** Later dispatch after the
+   preceding work: complete final lanes and evidence reconciliation, followed by
+   independent Codex acceptance of S064–S077 before S078.
+
+Command for this dispatch: **`pfc RCLD04-Q1`**. Target-only coherent green commits
+are authorized within Q1. Unstarted Q2–Q4 are explicit remaining work, not skipped
+acceptance criteria or hardware blockers. Do not enter them in this session.
+Do not claim an entire R2 group, RCLD-04 or MVP complete because Q1 passes.
+Full cumulative commands below apply to Q4; Q1 runs only affected focused tests,
+build, typecheck, format, lint and contract/projection validation. A discovered
+production defect requiring a separate repair boundary is reported with evidence
+for Codex sequencing rather than expanding this test-focused batch indefinitely.
+
+Historical full-batch instructions below are superseded in batch size and
+stopping boundary by this owner-directed partition. All original criteria stand.
 
 ### Independent review 16 — complete protocol-wide repairs and the original qualification matrix
 

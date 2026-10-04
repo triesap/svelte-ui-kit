@@ -17,15 +17,14 @@ references.
   self-reviews within the dispatched checkpoint. Codex owns scope,
   contract/API decisions, dependency-selection approval, deviations,
   acceptance, checkpoint commits and dispatch between coding periods.
-- Complete one checkpoint at a time in documented order. Current
-  `pfc through RCLD-04` delegates all green repair commits and full S064–S077
-  integration/qualification to Pi. Follow independent review 16 and
-  RCLD04-R2-1/2/3/4/5 in the governing plan. Review 16 requests changes to the
-  transaction/recovery candidate; preserve all 63 accepted checkpoints and
-  the already-completed RCLD-03 acceptance/authorization bookkeeping. Continue
-  after every green checkpoint through the whole safety boundary. S064–S077
-  stay committed_pending_review; S078 requires independent S077 acceptance.
-  Outside this exact batch, return work unstaged/uncommitted and await its gate.
+- Complete one checkpoint at a time in documented order. Current owner-directed
+  dispatch is `pfc RCLD04-Q1`, the bounded whole-tree lifecycle assertion batch
+  in implementation/COMMIT_SEQUENCE.md. Complete Q1 and its focused verification,
+  then return for Codex review; do not enter Q2–Q4 in this session. Earlier
+  full-RCLD-04 single-session instructions are superseded in batch size only.
+  Preserve all original criteria and 63 accepted checkpoints. S064–S077 remain
+  committed_pending_review; S078 requires independent S077 acceptance.
+  Target-only coherent green Q1 commits are authorized. No parent/remote changes.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
 - No commit, push, publication, deployment or reference-repository mutation
