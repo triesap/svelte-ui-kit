@@ -44,7 +44,10 @@ import {
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { computeRegistryContentHash } from "../../src/registry/model.js";
-import { runGuardedWorker } from "../helpers/guarded-process.js";
+import {
+  runGuardedProductionWorker,
+  runGuardedWorker,
+} from "../helpers/guarded-process.js";
 import {
   GUARDED_LAYOUT,
   GUARDED_STATE,
@@ -54,6 +57,7 @@ import {
 import {
   assertTreeAfterMutations,
   snapshotTree,
+  type TreeEntry,
   type TreeMutation,
 } from "../helpers/tree-snapshot.js";
 
@@ -75,25 +79,29 @@ const PKG_ROOT = process.cwd();
 const abs = (root: string, logical: string): string =>
   path.join(root, ...logical.split("/"));
 
+function seedConsumer(root: string): void {
+  write(
+    root,
+    "package.json",
+    JSON.stringify({
+      name: "consumer",
+      type: "module",
+      dependencies: {
+        svelte: "5.57.1",
+        "@sveltejs/kit": "2.70.3",
+        "bits-ui": "2.19.3",
+        "@internationalized/date": "3.12.4",
+      },
+    }),
+  );
+  // Unrelated application state that no plan may touch.
+  write(root, "unrelated/keep.txt", "keep me\n");
+}
+
 function withRoot(body: (root: string) => void): void {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-restart-"));
   try {
-    write(
-      root,
-      "package.json",
-      JSON.stringify({
-        name: "consumer",
-        type: "module",
-        dependencies: {
-          svelte: "5.57.1",
-          "@sveltejs/kit": "2.70.3",
-          "bits-ui": "2.19.3",
-          "@internationalized/date": "3.12.4",
-        },
-      }),
-    );
-    // Unrelated application state that no plan may touch.
-    write(root, "unrelated/keep.txt", "keep me\n");
+    seedConsumer(root);
     body(root);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -455,3 +463,113 @@ test("a process killed while holding coordination fails closed with owner eviden
     );
   });
 });
+
+/**
+ * The original immutable captured plan, applied in a killed subprocess and then
+ * finished by a fresh recovery process, must produce exactly the same whole
+ * generated tree as a clean reference commit. This qualifies real process
+ * interruption against production planning rather than a hand-built plan.
+ */
+for (const [label, config] of CONFIGS) {
+  test(`${label}: a captured production commit killed after release recovers to the exact committed tree`, () => {
+    const reference = mkdtempSync(path.join(os.tmpdir(), "suik-restart-ref-"));
+    let expected: TreeEntry[];
+    try {
+      seedConsumer(reference);
+      const { snapshot, planned } = planFor(reference, config);
+      const applied = applyCaptured(
+        reference,
+        config,
+        snapshot,
+        planned.writes,
+      );
+      assert.equal(
+        applied.outcome.kind,
+        "applied",
+        JSON.stringify(applied.outcome.issues),
+      );
+      expected = snapshotTree(reference);
+    } finally {
+      rmSync(reference, { recursive: true, force: true });
+    }
+
+    withRoot((root) => {
+      const killed = runGuardedProductionWorker({
+        root,
+        pkgRoot: PKG_ROOT,
+        uiDir: config.uiDir,
+        stylesDir: config.stylesDir,
+        layoutFile: config.layoutFile,
+        boundary: "durability:release",
+        mode: "kill",
+      });
+      assert.equal(killed.signal, "SIGKILL", killed.stderr);
+      const derived = deriveKitPaths(config);
+      assert.equal(
+        existsSync(abs(root, `${derived.stateDir}/kit.lock.json`)),
+        true,
+        "the production commit published its lock before the kill",
+      );
+      const results = recoverTransactions(
+        root,
+        derived.stateDir,
+        rootsFor(config),
+      );
+      assertNoRefusal(results);
+      // The fresh recovery finishes the interrupted cleanup tail, leaving the
+      // exact committed tree including unrelated application state.
+      assert.deepEqual(
+        snapshotTree(root),
+        expected,
+        "fresh recovery must finish the committed production tree exactly",
+      );
+    });
+  });
+}
+
+for (const [label, config] of CONFIGS) {
+  test(`${label}: a captured production process killed while holding coordination fails closed`, () => {
+    withRoot((root) => {
+      const killed = runGuardedProductionWorker({
+        root,
+        pkgRoot: PKG_ROOT,
+        uiDir: config.uiDir,
+        stylesDir: config.stylesDir,
+        layoutFile: config.layoutFile,
+        boundary: "lock:publish",
+        mode: "kill",
+      });
+      assert.equal(killed.signal, "SIGKILL", killed.stderr);
+      const derived = deriveKitPaths(config);
+      const before = snapshotTree(root);
+      const results = recoverTransactions(
+        root,
+        derived.stateDir,
+        rootsFor(config),
+      );
+      assert.ok(
+        results.some(
+          (entry) =>
+            entry.status === "refused" &&
+            entry.issues.some((issue) => issue.code === "WRITER_BUSY"),
+        ),
+        JSON.stringify(results),
+      );
+      // The dead owner's lock and unresolved transaction evidence are retained;
+      // no PID/age takeover and no tree mutation occurs.
+      assert.equal(
+        existsSync(abs(root, writerLockDir(derived.stateDir))),
+        true,
+      );
+      assert.equal(
+        existsSync(abs(root, transactionsDir(derived.stateDir))),
+        true,
+      );
+      assert.deepEqual(
+        snapshotTree(root),
+        before,
+        "a fail-closed recovery must not mutate the tree",
+      );
+    });
+  });
+}

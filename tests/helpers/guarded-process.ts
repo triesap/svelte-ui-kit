@@ -34,6 +34,24 @@ export interface GuardedWorkerOptions {
   readonly holdMs?: number;
 }
 
+/**
+ * Options for the captured production worker: it runs the real
+ * `captureSnapshot` -> `planInit` -> `composeApplyPlan` -> `validateApplyPlan` ->
+ * `applyPlan` boundary rather than a hand-built plan, so a restart after the
+ * kill is qualified against the original immutable plan and the exact generated
+ * tree.
+ */
+export interface ProductionWorkerOptions {
+  readonly root: string;
+  readonly pkgRoot: string;
+  readonly uiDir: string;
+  readonly stylesDir: string;
+  readonly layoutFile: string;
+  readonly boundary: string;
+  readonly mode?: "kill" | "hold";
+  readonly holdMs?: number;
+}
+
 const WORKER = String.raw`
 const base = process.env.SUIK_CODEGEN;
 const root = process.env.SUIK_ROOT;
@@ -107,6 +125,74 @@ function workerEnv(options: GuardedWorkerOptions): NodeJS.ProcessEnv {
   };
 }
 
+/**
+ * The captured production worker. It replays the real read-only planner and
+ * guarded apply boundary for the requested mapping, then kills or holds at the
+ * named boundary. The mapping is rebuilt from the package defaults with only
+ * the ui/styles/layout overrides, so the composed plan is the original
+ * immutable captured plan rather than a synthetic one.
+ */
+const PRODUCTION_WORKER = String.raw`
+const base = process.env.SUIK_CODEGEN;
+const root = process.env.SUIK_ROOT;
+const pkg = process.env.SUIK_PKG;
+const uiDir = process.env.SUIK_UI;
+const stylesDir = process.env.SUIK_STYLES;
+const layoutFile = process.env.SUIK_LAYOUT;
+const boundary = process.env.SUIK_BOUNDARY;
+const mode = process.env.SUIK_MODE || "kill";
+const holdMs = Number(process.env.SUIK_HOLD_MS || "0");
+const load = (name) => import(base + name);
+const { applyPlan, validateApplyPlan } = await load("apply.js");
+const { composeApplyPlan } = await load("compose.js");
+const { planInit } = await load("plan-init.js");
+const { captureSnapshot } = await load("snapshot.js");
+const { DEFAULT_KIT_CONFIG, deriveKitPaths } = await load("../project/config.js");
+const { createAssetProvider } = await load("../registry/assets.js");
+const { loadRegistrySnapshot } = await load("../registry/load.js");
+const fs = await import("node:fs");
+const path = await import("node:path");
+const config = { ...DEFAULT_KIT_CONFIG, uiDir, stylesDir, layoutFile };
+const derived = deriveKitPaths(config);
+const initPaths = [
+  derived.stateDir + "/kit.json",
+  derived.stateDir + "/kit.lock.json",
+  derived.rootExports,
+  derived.kitCss,
+  derived.themesCss,
+  derived.appCss,
+  layoutFile,
+  ".gitignore",
+];
+const registry = loadRegistrySnapshot(createAssetProvider(pkg));
+if (!registry.ok) throw new Error(JSON.stringify(registry));
+const snapshot = captureSnapshot(root, initPaths);
+if (!snapshot.ok) throw new Error(JSON.stringify(snapshot));
+const layoutAbs = path.join(root, ...layoutFile.split("/"));
+const layoutSource = fs.existsSync(layoutAbs) ? fs.readFileSync(layoutAbs, "utf8") : "";
+const planned = planInit({
+  config, layoutFile, layoutSource, snapshot: snapshot.value,
+  registry: registry.value, configHash: "b".repeat(64),
+});
+if (!planned.ok) throw new Error(JSON.stringify(planned));
+const composed = composeApplyPlan({ root, config, writes: planned.value.writes, snapshot: snapshot.value });
+if (!composed.ok) throw new Error(JSON.stringify(composed));
+const validated = validateApplyPlan(composed.value);
+if (!validated.ok) throw new Error(JSON.stringify(validated));
+applyPlan(validated.value, {
+  after: (b) => {
+    if (b !== boundary) return;
+    if (mode === "hold") {
+      console.log("held:" + b);
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, holdMs);
+    } else {
+      process.kill(process.pid, "SIGKILL");
+    }
+  },
+});
+console.log("done");
+`;
+
 export function runGuardedWorker(
   options: GuardedWorkerOptions,
 ): SpawnSyncReturns<string> {
@@ -114,6 +200,30 @@ export function runGuardedWorker(
     encoding: "utf8",
     env: workerEnv(options),
   });
+}
+
+export function runGuardedProductionWorker(
+  options: ProductionWorkerOptions,
+): SpawnSyncReturns<string> {
+  return spawnSync(
+    process.execPath,
+    ["--input-type=module", "-e", PRODUCTION_WORKER],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        SUIK_CODEGEN: codegenBaseUrl(),
+        SUIK_ROOT: options.root,
+        SUIK_PKG: options.pkgRoot,
+        SUIK_UI: options.uiDir,
+        SUIK_STYLES: options.stylesDir,
+        SUIK_LAYOUT: options.layoutFile,
+        SUIK_BOUNDARY: options.boundary,
+        SUIK_MODE: options.mode ?? "kill",
+        SUIK_HOLD_MS: String(options.holdMs ?? 0),
+      },
+    },
+  );
 }
 
 export function spawnGuardedWorker(

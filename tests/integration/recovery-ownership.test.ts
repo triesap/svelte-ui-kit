@@ -288,9 +288,17 @@ test("an unreadable transaction scan is a typed refusal, not an empty namespace"
   withRoot((root) => {
     write(root, transactionsDir(GUARDED_STATE), "not a directory");
     const recovered = recoverTransactions(root, GUARDED_STATE, ROOTS);
-    assert.equal(recovered.length, 1);
-    assert.equal(recovered[0].status, "refused");
-    assert.equal(recovered[0].issues[0].code, "RECOVERY_SCAN_UNSAFE");
+    // The namespace scan is refused as unsafe; the post-release cleanup tail
+    // additionally reports the non-directory kind fault rather than reporting a
+    // false clean namespace. No row may claim a clean outcome.
+    const scanRefusal = recovered.find((entry) =>
+      entry.issues.some((issue) => issue.code === "RECOVERY_SCAN_UNSAFE"),
+    );
+    assert.ok(scanRefusal, JSON.stringify(recovered));
+    assert.ok(
+      recovered.every((entry) => entry.status === "refused"),
+      JSON.stringify(recovered),
+    );
   });
 });
 
