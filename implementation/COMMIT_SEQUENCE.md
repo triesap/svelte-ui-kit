@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: Q1 assertion coverage accepted at `6db6d35`; bounded Q2 consumer qualification is current. Original RCLD-04 acceptance remains pending. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-03.
+Status: Q1 assertion coverage accepted at `6db6d35`; bounded Q2 resulting-consumer qualification is implemented at `afa7df9` pending independent review. Original RCLD-04 acceptance remains pending. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-05.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD04-Q2 resulting-consumer qualification** (S064–S077 remain committed_pending_review; review 16 requests changes before independent acceptance/S078).
+- Active implementation checkpoint: **RCLD04-Q2 resulting-consumer qualification** (implementation evidence recorded at `afa7df9`; S064–S077 remain committed_pending_review; review 16 requests changes before independent acceptance/S078).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -101,6 +101,14 @@ Q2 scope and endpoint:
    affected integration/smoke plus static/contracts, self-review and commit
    coherent green target changes, then return for Codex review. Aim for two or
    three coherent commits, not a commit-count acceptance rule.
+
+Pi implementation evidence is recorded in
+`implementation/evidence/RCLD04_Q2_REPORT.md`: the six default/custom
+add/update/retirement consumer check/build/render results, the default/custom
+satisfied/metadata/conflict disposition matrix, and the preserved Q1
+whole-tree/ownership assertions, at implementation commits `23bb639` and
+`afa7df9`. This records target progress only; it grants no independent
+acceptance and does not enter Q3, Q4 or S078.
 
 Do not add the broad publication/durability matrix, full browser/reference/
 cumulative install/test lanes or later CLI/catalog work to Q2. Production defects
