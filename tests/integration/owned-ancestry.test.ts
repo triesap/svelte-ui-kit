@@ -13,10 +13,12 @@ import { test } from "node:test";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import type { ApplyPlanInput, ApplyTarget } from "../../src/codegen/apply.js";
 import { captureReadset } from "../../src/codegen/authority.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import { capturePreimage } from "../../src/codegen/revalidate.js";
 import { faultAt } from "../../src/codegen/transaction-hooks.js";
 import { lockPath } from "../../src/codegen/transaction-types.js";
 import { abs, lockJson } from "../helpers/guarded-plan.js";
+import { validKitConfigBytes } from "../helpers/kit-config.js";
 
 /**
  * RCLD04-R2-2: owned creation and empty-only rollback of absent generated
@@ -35,6 +37,17 @@ function enc(value: string): Uint8Array {
 
 function emptyTreePlan(root: string): ApplyPlanInput {
   const targets: ApplyTarget[] = [
+    {
+      path: `${STATE_DIR}/kit.json`,
+      operation: "create",
+      bytes: validKitConfigBytes({
+        uiDir: UI_DIR,
+        stylesDir: STYLES_DIR,
+        layoutFile: LAYOUT_FILE,
+      }),
+      mode: 0o644,
+      preimage: capturePreimage(root, `${STATE_DIR}/kit.json`),
+    },
     {
       path: `${UI_DIR}/button.svelte`,
       operation: "create",
@@ -75,7 +88,15 @@ function emptyTreePlan(root: string): ApplyPlanInput {
     readset: readset.value,
     targets,
     lock: {
-      bytes: lockJson("d".repeat(64)),
+      bytes: lockJson(
+        sha256Hex(
+          validKitConfigBytes({
+            uiDir: UI_DIR,
+            stylesDir: STYLES_DIR,
+            layoutFile: LAYOUT_FILE,
+          }),
+        ),
+      ),
       preimage: capturePreimage(root, lockPath(STATE_DIR)),
     },
   };

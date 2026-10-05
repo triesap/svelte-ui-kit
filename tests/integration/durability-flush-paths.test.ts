@@ -31,6 +31,8 @@ import {
   lockJson,
   write,
 } from "../helpers/guarded-plan.js";
+import { validKitConfigBytes } from "../helpers/kit-config.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
 
 /**
@@ -175,7 +177,15 @@ function absentAncestryPlan(root: string): ApplyPlanInput {
   const stylesDir = "app/styles";
   const layoutFile = "app/routes/+layout.svelte";
   const stateDir = `${uiDir}/_kit`;
+  const configBytes = validKitConfigBytes({ uiDir, stylesDir, layoutFile });
   const targets: ApplyTarget[] = [
+    {
+      path: `${stateDir}/kit.json`,
+      operation: "create",
+      bytes: configBytes,
+      mode: 0o644,
+      preimage: capturePreimage(root, `${stateDir}/kit.json`),
+    },
     {
       path: `${uiDir}/button.svelte`,
       operation: "create",
@@ -201,7 +211,7 @@ function absentAncestryPlan(root: string): ApplyPlanInput {
     readset: readset.value,
     targets,
     lock: {
-      bytes: lockJson("d".repeat(64)),
+      bytes: lockJson(sha256Hex(configBytes)),
       preimage: capturePreimage(root, lockPath(stateDir)),
     },
   };

@@ -66,6 +66,7 @@ const load = (name) => import(base + name);
 const { applyPlan, validateApplyPlan } = await load("apply.js");
 const { capturePreimage } = await load("revalidate.js");
 const { captureReadset } = await load("authority.js");
+const { sha256Hex } = await load("digest.js");
 const { lockPath } = await load("transaction-types.js");
 const fs = await import("node:fs");
 const path = await import("node:path");
@@ -73,10 +74,17 @@ const abs = (p) => path.join(root, ...p.split("/"));
 const css = abs(stylesDir + "/kit.css");
 fs.mkdirSync(path.dirname(css), { recursive: true });
 fs.writeFileSync(css, "old css");
+const configPath = uiDir + "/_kit/kit.json";
+const configBytes = new TextEncoder().encode(JSON.stringify({
+  schemaVersion: 1, toolVersion: "0.1.0", registry: "builtin",
+  uiDir, stylesDir, layoutFile, requested: [],
+}, null, 2) + "\n");
+fs.mkdirSync(path.dirname(abs(configPath)), { recursive: true });
+fs.writeFileSync(abs(configPath), configBytes);
 const lockp = lockPath(stateDir);
 const lockBytes = new TextEncoder().encode(JSON.stringify({
   schemaVersion: 1, toolVersion: "0.1.0", registryVersion: "0.1.0",
-  registryHash: "a".repeat(64), configHash: "d".repeat(64),
+  registryHash: "a".repeat(64), configHash: sha256Hex(configBytes),
   requested: [], items: [], files: [], cssBlocks: [], integrations: [],
 }, null, 2) + "\n");
 const target = {
@@ -86,7 +94,7 @@ const target = {
   mode: 0o644,
   preimage: capturePreimage(root, stylesDir + "/kit.css"),
 };
-const readset = captureReadset(root, [target.path, lockp], []);
+const readset = captureReadset(root, [target.path, lockp], [configPath]);
 if (!readset.ok) throw new Error(JSON.stringify(readset));
 const plan = {
   root, stateDir, uiDir, stylesDir, layoutFile,

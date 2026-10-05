@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -24,6 +25,7 @@ import type { KitConfig } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { planMutations } from "../helpers/lifecycle-assertions.js";
+import { validKitConfigBytes } from "../helpers/kit-config.js";
 import {
   assertTreeAfterMutations,
   snapshotTree,
@@ -57,8 +59,10 @@ interface MutablePlan {
   lock: ApplyPlanInput["lock"];
 }
 
-function write(root: string, rel: string, data: string): void {
-  writeFileSync(path.join(root, ...rel.split("/")), data);
+function write(root: string, rel: string, data: string | Uint8Array): void {
+  const target = path.join(root, ...rel.split("/"));
+  mkdirSync(path.dirname(target), { recursive: true });
+  writeFileSync(target, data);
 }
 
 function seed(root: string): void {
@@ -376,4 +380,229 @@ test("a lock that owns a file absent from the projected tree is refused", () => 
       "PROJECTED_OWNERSHIP_MISSING",
     );
   });
+});
+
+/** A canonical lock document for direct projection probes. */
+function lockDoc(overrides: Record<string, unknown> = {}): Uint8Array {
+  return new TextEncoder().encode(
+    `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        toolVersion: "0.1.0",
+        registryVersion: "0.1.0",
+        registryHash: "a".repeat(64),
+        configHash: "c".repeat(64),
+        requested: [],
+        items: [],
+        files: [],
+        cssBlocks: [],
+        integrations: [],
+        ...overrides,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+}
+
+/**
+ * Compose and validate a real batch built from a captured snapshot, asserting
+ * a typed refusal with an unchanged whole tree. Never a thrown serializer or
+ * projection error.
+ */
+function assertComposedRefused(
+  root: string,
+  config: KitConfig,
+  writes: { path: string; operation: "create" | "update"; bytes: Uint8Array }[],
+  paths: string[],
+  expectedCode: string,
+): void {
+  const snapshot = captureSnapshot(root, paths);
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) return;
+  const composed = composeApplyPlan({
+    root,
+    config,
+    writes,
+    snapshot: snapshot.value,
+  });
+  assert.equal(composed.ok, true, JSON.stringify(composed));
+  if (!composed.ok) return;
+  const before = snapshotTree(root);
+  const result = validateApplyPlan(composed.value);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  if (!result.ok) {
+    assert.ok(
+      result.issues.some((entry) => entry.code === expectedCode),
+      `expected ${expectedCode} in ${JSON.stringify(result.issues)}`,
+    );
+  }
+  assert.deepEqual(
+    snapshotTree(root),
+    before,
+    "a refused projection must leave the whole tree unchanged",
+  );
+}
+
+test("a null or malformed target is a typed refusal, never a thrown projection error", () => {
+  withCapturedInit(DEFAULT, (root, plan) => {
+    // A bare null entry previously reached the projected-batch map and threw a
+    // TypeError after the target loop had already recorded a typed issue.
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        value.targets = [null as never];
+      },
+      "PLAN_TARGET_INVALID",
+    );
+    // A target whose bytes are missing is likewise typed before projection.
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        const first = value.targets[0];
+        if (first === undefined) return;
+        value.targets = [{ ...first, bytes: undefined } as never];
+      },
+      "PLAN_TARGET_INVALID",
+    );
+  });
+});
+
+test("a batch that drops the projected config write is refused as incomplete authority", () => {
+  withCapturedInit(DEFAULT, (root, plan) => {
+    const derived = deriveKitPaths(DEFAULT);
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        value.targets = value.targets.filter(
+          (target) => target.path !== `${derived.stateDir}/kit.json`,
+        );
+      },
+      "PROJECTED_CONFIG_MISSING",
+    );
+  });
+});
+
+test("a metadata-only batch cannot publish an arbitrary configHash over a captured config", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-projected-cfg-"));
+  try {
+    seed(root);
+    const derived = deriveKitPaths(DEFAULT);
+    const configPath = `${derived.stateDir}/kit.json`;
+    const lockPath = `${derived.stateDir}/kit.lock.json`;
+    const configBytes = validKitConfigBytes();
+    write(root, configPath, configBytes);
+    const paths = [configPath, lockPath, ".gitignore"];
+    const wrong = lockDoc({ configHash: sha256Hex("not the config") });
+    assertComposedRefused(
+      root,
+      DEFAULT,
+      [
+        {
+          path: lockPath,
+          operation: "create",
+          bytes: wrong,
+        },
+      ],
+      paths,
+      "PROJECTED_CONFIG_HASH_MISMATCH",
+    );
+    // Positive control: the exact captured configuration identity validates.
+    const snapshot = captureSnapshot(root, paths);
+    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+    if (!snapshot.ok) return;
+    const good = composeApplyPlan({
+      root,
+      config: DEFAULT,
+      writes: [
+        {
+          path: lockPath,
+          operation: "create",
+          bytes: lockDoc({ configHash: sha256Hex(configBytes) }),
+        },
+      ],
+      snapshot: snapshot.value,
+    });
+    assert.equal(good.ok, true, JSON.stringify(good));
+    if (!good.ok) return;
+    const result = validateApplyPlan(good.value);
+    assert.equal(result.ok, true, JSON.stringify(result));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a lock whose requested roots disagree with the projected config is refused", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-projected-req-"));
+  try {
+    seed(root);
+    const derived = deriveKitPaths(DEFAULT);
+    const configPath = `${derived.stateDir}/kit.json`;
+    const lockPath = `${derived.stateDir}/kit.lock.json`;
+    const configBytes = validKitConfigBytes({ requested: ["button"] });
+    // The config write requests `button`; the lock silently drops it.
+    assertComposedRefused(
+      root,
+      DEFAULT,
+      [
+        { path: configPath, operation: "create", bytes: configBytes },
+        {
+          path: lockPath,
+          operation: "create",
+          bytes: lockDoc({ configHash: sha256Hex(configBytes), requested: [] }),
+        },
+      ],
+      [configPath, lockPath, ".gitignore"],
+      "PROJECTED_REQUESTED_MISMATCH",
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a managed foundation stylesheet without its tokens block is refused", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-projected-css-"));
+  try {
+    seed(root);
+    const derived = deriveKitPaths(DEFAULT);
+    const configPath = `${derived.stateDir}/kit.json`;
+    const lockPath = `${derived.stateDir}/kit.lock.json`;
+    const configBytes = validKitConfigBytes();
+    // Projected stylesheet has no managed foundation tokens block while the
+    // lock claims the contract; existence alone is not contract proof.
+    assertComposedRefused(
+      root,
+      DEFAULT,
+      [
+        { path: configPath, operation: "create", bytes: configBytes },
+        {
+          path: derived.kitCss,
+          operation: "create",
+          bytes: new TextEncoder().encode("body { color: red; }\n"),
+        },
+        {
+          path: lockPath,
+          operation: "create",
+          bytes: lockDoc({
+            configHash: sha256Hex(configBytes),
+            integrations: [
+              {
+                kind: "stylesheet",
+                path: derived.kitCss,
+                baseline: sha256Hex("tokens"),
+                contract: "foundation-tokens-v1",
+              },
+            ],
+          }),
+        },
+      ],
+      [configPath, lockPath, derived.kitCss, ".gitignore"],
+      "PROJECTED_FOUNDATION_MISSING",
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

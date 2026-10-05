@@ -25,10 +25,10 @@ references.
   mandatory independent Codex S077 review before S078. Preserve 63 accepted
   checkpoints and original criteria/statuses. Target-only coherent green commits
   are authorized within this scope; no parent/remote or reference-source changes.
-- The current return review at `a0016eb` in the expanded dispatch requests
-  structured-validation and projected-batch coherence repairs plus genuine
-  separate-process recovery qualification. Preserve verified cleanup repairs;
-  finish all remaining original RCLD-04 criteria and cumulative evidence together.
+- The current return review at `0ce552a` requires complete original projected
+  content authority, requested-root/ownership/integration coherence, safe malformed
+  target refusals and bounded recovery children. Preserve verified repairs and
+  finish all remaining original RCLD-04 criteria plus cumulative evidence together.
   Test-name inventories and author completion claims do not grant acceptance.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.

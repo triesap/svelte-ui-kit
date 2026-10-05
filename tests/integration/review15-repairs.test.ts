@@ -196,12 +196,15 @@ function validatedPlan(root: string) {
 
 /** A metadata-only plan whose lock alone carries integrations. */
 function metadataOnlyPlan(root: string): ApplyPlanInput {
+  const configBytes = validKitConfigBytes(ROOTS);
+  const configPath = `${STATE}/kit.json`;
+  write(root, configPath, configBytes);
   write(
     root,
     lockPath(STATE),
-    Buffer.from(lockBytes("c".repeat(64))).toString(),
+    Buffer.from(lockBytes(sha256Hex(configBytes))).toString(),
   );
-  const readset = captureReadset(root, [lockPath(STATE)], []);
+  const readset = captureReadset(root, [lockPath(STATE)], [configPath]);
   assert.equal(readset.ok, true);
   if (!readset.ok) throw new Error("readset capture failed");
   return {
@@ -215,7 +218,7 @@ function metadataOnlyPlan(root: string): ApplyPlanInput {
     readset: readset.value,
     targets: [],
     lock: {
-      bytes: lockBytes("d".repeat(64)),
+      bytes: lockBytes(sha256Hex(configBytes)),
       preimage: capturePreimage(root, lockPath(STATE)),
     },
   };

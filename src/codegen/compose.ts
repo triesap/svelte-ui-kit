@@ -370,6 +370,7 @@ export function composeApplyPlan(
         kind: "file",
         digest: observation.hash,
         mode: observation.mode ?? 0o644,
+        bytes: observation.bytes,
       });
     }
   }
@@ -384,6 +385,7 @@ export function composeApplyPlan(
       kind: captured.kind,
       digest: captured.digest,
       mode: captured.mode,
+      bytes: null,
     });
   }
   evidenceFiles.sort((left, right) =>

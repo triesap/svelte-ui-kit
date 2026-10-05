@@ -48,7 +48,7 @@ function withRoot(body: (root: string) => void): void {
 const abs = (root: string, logical: string): string =>
   path.join(root, ...logical.split("/"));
 
-function write(root: string, logical: string, text: string): void {
+function write(root: string, logical: string, text: string | Uint8Array): void {
   const target = abs(root, logical);
   mkdirSync(path.dirname(target), { recursive: true });
   writeFileSync(target, text);
@@ -89,14 +89,15 @@ function makePlan(root: string, options: PlanOptions = {}): ApplyPlanInput {
   const layoutFile = options.layoutFile ?? LAYOUT;
   const stateDir = `${uiDir}/_kit`;
 
-  // Live preimages.
+  const configBytes = validKitConfigBytes({ uiDir, stylesDir, layoutFile });
+
+  // Live preimages. The captured configuration must be the exact effective
+  // bytes so a metadata-only batch can prove its identity against the lock.
   write(root, `${uiDir}/old.svelte`, "old component");
   write(root, `${uiDir}/keep.svelte`, "keep me");
   write(root, `${stylesDir}/kit.css`, "old css");
   write(root, layoutFile, "<script>old layout</script>");
-  write(root, `${uiDir}/_kit/kit.json`, "old config");
-
-  const configBytes = validKitConfigBytes({ uiDir, stylesDir, layoutFile });
+  write(root, `${uiDir}/_kit/kit.json`, configBytes);
 
   const targets: ApplyTarget[] = options.metadataOnly
     ? []
@@ -255,10 +256,7 @@ test("partial, unsafe and out-of-root plans are rejected", () => {
 
 test("a satisfied plan is a no-change with no transaction", () => {
   withRoot((root) => {
-    const plan = makePlan(root, {
-      metadataOnly: true,
-      lockConfigHash: "d".repeat(64),
-    });
+    const plan = makePlan(root, { metadataOnly: true });
     // Write the already-satisfied lock.
     write(root, lockPath(STATE), Buffer.from(plan.lock.bytes).toString("utf8"));
     const satisfied: ApplyPlanInput = {
@@ -316,7 +314,7 @@ test("a recoverable failure rolls back and preserves a consistent state", () => 
     // The batch is rolled back to the exact preimages: no partial writes remain.
     assert.equal(
       readFileSync(abs(root, `${UI}/_kit/kit.json`), "utf8"),
-      "old config",
+      validKitConfigText(),
     );
     assert.equal(existsSync(abs(root, `${UI}/button.svelte`)), false);
     assert.equal(

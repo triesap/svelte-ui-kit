@@ -62,6 +62,15 @@ export interface PlanReadFile {
   readonly kind: "file" | "absent";
   readonly digest: string | null;
   readonly mode: number | null;
+  /**
+   * Exact captured bytes for a regular file (`null` for a proven absence).
+   * Carried so the guarded boundary can validate effective projected content
+   * (configuration identity, managed stylesheet contracts) from the original
+   * immutable capture rather than a later live read. A caller that only has a
+   * digest may omit this; content-dependent checks then refuse as incomplete
+   * authority instead of guessing.
+   */
+  readonly bytes?: Uint8Array | null;
 }
 
 /** The complete physical authority a plan depends on. */
@@ -239,6 +248,7 @@ export function captureReadFile(
         kind: "absent",
         digest: null,
         mode: null,
+        bytes: null,
       });
     }
     return fail([
@@ -275,6 +285,7 @@ export function captureReadFile(
     kind: "file",
     digest: sha256Hex(bytes),
     mode: stats.mode & 0o777,
+    bytes: new Uint8Array(bytes),
   });
 }
 
@@ -470,7 +481,7 @@ export function validateReadset(readset: unknown): ModelIssue[] {
       }
       const record = file as PlanReadFile;
       for (const key of Object.keys(record)) {
-        if (!["path", "kind", "digest", "mode"].includes(key)) {
+        if (!["path", "kind", "digest", "mode", "bytes"].includes(key)) {
           problems.push(
             issue(
               "PLAN_READSET_INVALID",
@@ -479,6 +490,20 @@ export function validateReadset(readset: unknown): ModelIssue[] {
             ),
           );
         }
+      }
+      const contentBytes = record.bytes;
+      if (
+        contentBytes !== undefined &&
+        contentBytes !== null &&
+        !(contentBytes instanceof Uint8Array)
+      ) {
+        problems.push(
+          issue(
+            "PLAN_READSET_INVALID",
+            `${label} bytes must be a byte array when present`,
+            label,
+          ),
+        );
       }
       const folded = record.path.toLowerCase();
       if (seenFiles.has(folded)) {
@@ -507,12 +532,34 @@ export function validateReadset(readset: unknown): ModelIssue[] {
             ),
           );
         }
+        if (contentBytes !== undefined && contentBytes !== null) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} must not carry bytes for an absent entry`,
+              label,
+            ),
+          );
+        }
         continue;
       }
       if (!/^[0-9a-f]{64}$/.test(String(record.digest))) {
         problems.push(
           issue("PLAN_READSET_INVALID", `${label} digest is invalid`, label),
         );
+      }
+      // A carried content capture must be internally consistent with the
+      // recorded digest; a fabricated or stale byte sequence is not evidence.
+      if (contentBytes instanceof Uint8Array) {
+        if (sha256Hex(contentBytes) !== record.digest) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} carried bytes do not match the recorded digest`,
+              label,
+            ),
+          );
+        }
       }
       if (
         !Number.isInteger(record.mode) ||

@@ -670,19 +670,36 @@ export function validateApplyPlan(
     }
   }
 
+  // Structural target/preimage problems stop before projection, hashing or
+  // sealing: no invalid record may reach later semantic processing. This is a
+  // typed refusal, never an uncaught serializer/projection error.
+  if (problems.length > 0) return fail(problems);
+
   // Validate the exact final lock content before any coordination is acquired.
   // An invalid or incoherent lock must never reach a semantic replacement.
   if (lockBytesView instanceof Uint8Array && lockBytesView.byteLength > 0) {
     // Derive the complete projected batch from the captured planning authority:
     // the effective projected configuration, target results and unchanged
-    // evidence. A config write that changes the mapping, or a lock that names an
-    // absent integration/owned record, is a typed refusal before coordination.
+    // evidence, plus the exact projected content carried from the original
+    // capture. A config write that changes the mapping, a lock that names an
+    // absent integration/owned record, or a managed stylesheet that omits its
+    // contracted content is a typed refusal before coordination.
+    const content: { path: string; bytes: Uint8Array }[] = [];
+    for (const target of sealedTargets) {
+      if (target.operation === "retire") continue;
+      content.push({ path: target.path, bytes: target.bytes });
+    }
+    for (const file of plan.readset.files) {
+      if (file.kind === "file" && file.bytes instanceof Uint8Array) {
+        content.push({ path: file.path, bytes: file.bytes });
+      }
+    }
     const projectedBatch = {
       stateDir: plan.stateDir,
       uiDir: plan.uiDir,
       stylesDir: plan.stylesDir,
       layoutFile: plan.layoutFile,
-      targets: plan.targets.map((target) => ({
+      targets: sealedTargets.map((target) => ({
         path: target.path,
         operation: target.operation,
         bytes: target.bytes,
@@ -691,41 +708,44 @@ export function validateApplyPlan(
         path: file.path,
         kind: file.kind,
       })),
+      content,
     };
     const projected = resolveProjectedConfig(projectedBatch);
     if (projected.issues.length > 0) problems.push(...projected.issues);
-    let parsedLock: unknown;
-    try {
-      parsedLock = JSON.parse(Buffer.from(lockBytesView).toString("utf8"));
-    } catch (error) {
-      problems.push(
-        issue(
-          "LOCK_INVALID",
-          `planned lock is not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
-          canonicalLock,
-        ),
-      );
-    }
-    if (parsedLock !== undefined) {
-      const derivedPaths = deriveKitPaths(projected.config);
-      const validatedLock = parseKitLock(parsedLock, canonicalLock, {
-        stateDir: derivedPaths.stateDir,
-        uiDir: projected.config.uiDir,
-        stylesDir: projected.config.stylesDir,
-        layoutFile: projected.config.layoutFile,
-        stylesheetPath: derivedPaths.kitCss,
-        exportsPath: derivedPaths.rootExports,
-      });
-      if (!validatedLock.ok) {
-        problems.push(...validatedLock.issues);
-      } else {
+    if (projected.config !== null) {
+      let parsedLock: unknown;
+      try {
+        parsedLock = JSON.parse(Buffer.from(lockBytesView).toString("utf8"));
+      } catch (error) {
         problems.push(
-          ...validateProjectedLock(
-            projectedBatch,
-            validatedLock.value,
-            projected,
+          issue(
+            "LOCK_INVALID",
+            `planned lock is not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
+            canonicalLock,
           ),
         );
+      }
+      if (parsedLock !== undefined) {
+        const derivedPaths = deriveKitPaths(projected.config);
+        const validatedLock = parseKitLock(parsedLock, canonicalLock, {
+          stateDir: derivedPaths.stateDir,
+          uiDir: projected.config.uiDir,
+          stylesDir: projected.config.stylesDir,
+          layoutFile: projected.config.layoutFile,
+          stylesheetPath: derivedPaths.kitCss,
+          exportsPath: derivedPaths.rootExports,
+        });
+        if (!validatedLock.ok) {
+          problems.push(...validatedLock.issues);
+        } else {
+          problems.push(
+            ...validateProjectedLock(
+              projectedBatch,
+              validatedLock.value,
+              projected,
+            ),
+          );
+        }
       }
     }
   }

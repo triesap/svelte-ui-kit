@@ -1,14 +1,13 @@
 # Verification commands and known-good commits
 
-The current RCLD-04 return review at `a0016eb` requires causal validation cases
-for incomplete/inconsistent installed records and unknown plan/target/lock fields,
-plus complete projected config/lock/target coherence before effects. Verify typed
-failure and unchanged whole trees. Preserve legitimate customized baseline lineage,
-shared CSS and mapped integration roles. Restart qualification must launch bounded
-fresh recovery children and retain their exact exits/output, rather than calling
-recovery in the parent while describing it as a separate process. Complete the
-remaining original per-criterion matrix and cumulative lanes in the same dispatch;
-the original S077/S078 independent gate remains unchanged.
+The current RCLD-04 return review at `0ce552a` requires typed malformed-target
+failures before projection and complete ORIGINAL captured/projected content:
+config existence/mapping/hash for written and unchanged states, explicit requests,
+ownership/cohorts and approved managed integration/CSS contracts. Verify full trees,
+positive customizations and intended refusal causes. Fresh recovery children must
+have enforceable termination bounds with a deliberate stalled-child control.
+Complete remaining original matrices and integrated cumulative qualification in
+this dispatch; independent S077/S078 acceptance remains mandatory.
 
 <!-- Adopted at S002 from the governing RCLD sequence. This file governs product intent; implementation/COMMIT_SEQUENCE.md remains the execution/status authority. -->
 

@@ -43,6 +43,7 @@ import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
 } from "../../src/project/config.js";
+import { validKitConfigBytes } from "../helpers/kit-config.js";
 
 /**
  * RCLD-04 review-16 regression coverage. Each case reproduces one independently
@@ -132,12 +133,15 @@ function journalRecord(
 function makePlan(root: string): ApplyPlanInput {
   const css = `${STYLES}/kit.css`;
   write(root, css, "old css");
+  const configBytes = validKitConfigBytes(ROOTS);
+  const configPath = `${STATE}/kit.json`;
+  write(root, configPath, configBytes);
   write(
     root,
     lockPath(STATE),
-    Buffer.from(lockBytes("c".repeat(64))).toString(),
+    Buffer.from(lockBytes(sha256Hex(configBytes))).toString(),
   );
-  const readset = captureReadset(root, [css, lockPath(STATE)], []);
+  const readset = captureReadset(root, [css, lockPath(STATE)], [configPath]);
   assert.equal(readset.ok, true);
   if (!readset.ok) throw new Error("readset capture failed");
   return {
@@ -159,7 +163,7 @@ function makePlan(root: string): ApplyPlanInput {
       },
     ],
     lock: {
-      bytes: lockBytes("d".repeat(64)),
+      bytes: lockBytes(sha256Hex(configBytes)),
       preimage: capturePreimage(root, lockPath(STATE)),
     },
   };
@@ -167,12 +171,15 @@ function makePlan(root: string): ApplyPlanInput {
 
 /** A metadata-only plan whose lock alone carries integrations. */
 function metadataOnlyPlan(root: string): ApplyPlanInput {
+  const configBytes = validKitConfigBytes(ROOTS);
+  const configPath = `${STATE}/kit.json`;
+  write(root, configPath, configBytes);
   write(
     root,
     lockPath(STATE),
-    Buffer.from(lockBytes("c".repeat(64))).toString(),
+    Buffer.from(lockBytes(sha256Hex(configBytes))).toString(),
   );
-  const readset = captureReadset(root, [lockPath(STATE)], []);
+  const readset = captureReadset(root, [lockPath(STATE)], [configPath]);
   assert.equal(readset.ok, true);
   if (!readset.ok) throw new Error("readset capture failed");
   return {
@@ -186,7 +193,7 @@ function metadataOnlyPlan(root: string): ApplyPlanInput {
     readset: readset.value,
     targets: [],
     lock: {
-      bytes: lockBytes("d".repeat(64)),
+      bytes: lockBytes(sha256Hex(configBytes)),
       preimage: capturePreimage(root, lockPath(STATE)),
     },
   };

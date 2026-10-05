@@ -24,7 +24,11 @@ export function abs(root: string, logical: string): string {
   return path.join(root, ...logical.split("/"));
 }
 
-export function write(root: string, logical: string, text: string): void {
+export function write(
+  root: string,
+  logical: string,
+  text: string | Uint8Array,
+): void {
   const target = abs(root, logical);
   mkdirSync(path.dirname(target), { recursive: true });
   writeFileSync(target, text);
@@ -68,13 +72,15 @@ export function makeGuardedPlan(
   const layoutFile = options.layoutFile ?? GUARDED_LAYOUT;
   const stateDir = `${uiDir}/_kit`;
 
+  const configBytes = validKitConfigBytes({ uiDir, stylesDir, layoutFile });
+
   write(root, `${uiDir}/old.svelte`, "old component");
   write(root, `${uiDir}/keep.svelte`, "keep me");
   write(root, `${stylesDir}/kit.css`, "old css");
   write(root, layoutFile, "<script>old layout</script>");
-  write(root, `${uiDir}/_kit/kit.json`, "old config");
-
-  const configBytes = validKitConfigBytes({ uiDir, stylesDir, layoutFile });
+  // The captured configuration bytes must be the exact effective configuration
+  // so a metadata-only batch can prove its identity against the lock.
+  write(root, `${uiDir}/_kit/kit.json`, configBytes);
 
   const targets: ApplyTarget[] = options.metadataOnly
     ? []

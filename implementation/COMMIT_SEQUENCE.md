@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: independent return review at `a0016eb` verified namespace-removal repairs and cumulative execution evidence; structured validation, projected config/lock/target coherence and separate-process recovery are now implemented and qualified in `36fc866` and `70b57a4`, documented in `implementation/evidence/RCLD04_RETURN_REVIEW.md`. S064–S077 remain `committed_pending_review` pending independent Codex S077 verification before S078; the current dispatch remains `pfc through RCLD-04`. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-05.
+Status: independent return review at `0ce552a` verifies the previous seven refusal repairs and genuine recovery children, but complete projected-content coherence and safe malformed-target handling remain incomplete. Current dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-05.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD-04 remaining authority and integration qualification** (return review below requests changes to the candidate described by `implementation/evidence/RCLD04_Q4_REPORT.md`; S064–S077 remain committed_pending_review and S078 stays gated).
+- Active implementation checkpoint: **RCLD-04 complete projected content and protocol qualification** (current return review at `0ce552a` requests changes; S064–S077 remain committed_pending_review and S078 stays gated).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -53,6 +53,60 @@ At S002, adopt the embedded contracts into their scheduled repository-relative f
 ## Codex dispatch — complete RCLD-04 transactions and recovery
 
 ### Current expanded dispatch — through RCLD-04
+
+#### Independent return review — 0ce552a
+
+Codex reviewed clean candidate `0ce552ae26336648eac035ebd5235c22096ed440`
+and commits `36fc866`, `70b57a4`, `0ce552a`. The seven preceding malformed/
+incoherent cases now refuse with typed issues; preserve those repairs, valid
+controls, actual separately launched recovery children, scoped Q1/Q2/installed
+progress and all earlier namespace/flush/markup fixes. Fresh integration passes
+504 tests. Cumulative author logs establish execution, not whole-feature
+acceptance. No original checkpoint, R2 group or RCLD-04 is newly accepted.
+
+Remaining independently reproduced requirements:
+
+1. Malformed target `null` is recognized in the target loop but then dereferenced
+   by the new projected-batch map, throwing `TypeError`. Structural failures must
+   stop before projection/hashing/sealing; inventory invalid/null/missing target
+   and nested shapes with typed failures and unchanged trees. Retain useful
+   diagnostics without letting invalid records reach later semantic processing.
+2. Projected config is still fabricated from declared roots when no config write
+   is present. Removing init's config write publishes a lock with no config file.
+   A metadata-only batch over a captured existing config publishes an arbitrary
+   wrong `configHash`. Carry sufficient ORIGINAL captured config content/identity
+   through production composition and validate the effective projected config
+   whether created, updated or unchanged. Missing/retired/malformed/incomplete
+   config authority must refuse before effects; no fallback guesses/live recapture.
+3. A valid config write with `requested=[button]`, matching exact `configHash`,
+   publishes a lock with `requested=[]`. Validate explicit requests/effective
+   ownership and cohort/integration state against the complete projected batch,
+   preserving explicit/transitive distinctions and legitimate customization.
+4. A projected stylesheet containing no managed foundation contract is installed
+   while the lock claims `foundation-tokens-v1`. Path presence alone is not
+   content/ownership/contract proof. Validate existing approved integration and
+   managed CSS-block contracts, identities and required relationships from exact
+   projected/captured content. Preserve unmanaged regions and customized effective
+   bytes with truthful baseline lineage; do not demand blanket upstream hash
+   equality or add new component APIs/contract modes.
+5. Fresh recovery is now a real child, but `runRecoveryWorker` has no enforceable
+   timeout/kill bound. Add a bounded owned child lifecycle and a controlled stalled
+   child regression proving termination, attributable failure and no unrelated
+   resource changes. Do not describe unbounded synchronous spawn as bounded.
+
+Execute the FULL remaining original RCLD-04 boundary together: complete projected
+content authority across init/add/sync, default/custom and normal/metadata-only/
+satisfied/conflict/update/retirement/cohort dispositions; remaining original
+causal filesystem/publication/recovery/real-process matrices; then integrated
+cumulative qualification and factual report/ledger/projection reconciliation.
+These probes are regression examples, not a correction-only endpoint. Reuse sound
+existing coverage and preserve original planner semantics. Per-criterion evidence
+must link each original acceptance condition to a causal executed case and exact
+outcome, rather than relabel a file-name inventory exhaustive qualification.
+No owner, external or hardware blocker prevents eligible software. Continue after
+all green slices; no intermediate Q3/Q4 management stop or commit cap. Stop before
+S078 for mandatory independent Codex S077 acceptance, or a genuine runtime/user/
+external stop after other eligible work. All original definitions and gates remain.
 
 #### Independent return review — a0016eb
 
