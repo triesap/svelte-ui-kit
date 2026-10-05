@@ -30,6 +30,9 @@ not_started.
    resulting tree is compared exactly against a clean reference commit. A second
    captured production kill while coordination is held fails closed with
    `WRITER_BUSY`, retained owner/transaction evidence and no tree mutation.
+   Return-review follow-up (`70b57a4`, `implementation/evidence/RCLD04_RETURN_REVIEW.md`)
+   now launches that recovery in a genuinely separate child process with an
+   attributable PID/exit/signal/output envelope through both exported callers.
 3. **Truthful outcome reconciliation.** The unreadable-namespace regression now
    asserts that all recovery rows are refusals (the additional truthful
    `ENOTDIR` cleanup refusal is not reported as clean), retaining the original

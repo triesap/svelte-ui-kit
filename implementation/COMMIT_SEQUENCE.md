@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: independent return review at `a0016eb` verifies namespace-removal repairs and cumulative execution evidence, but structured validation, projected config/lock/target coherence and separate-process recovery qualification remain incomplete. Current dispatch remains `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together, before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-05.
+Status: independent return review at `a0016eb` verified namespace-removal repairs and cumulative execution evidence; structured validation, projected config/lock/target coherence and separate-process recovery are now implemented and qualified in `36fc866` and `70b57a4`, documented in `implementation/evidence/RCLD04_RETURN_REVIEW.md`. S064–S077 remain `committed_pending_review` pending independent Codex S077 verification before S078; the current dispatch remains `pfc through RCLD-04`. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-05.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -22,7 +22,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
 - Completed RCLD sequences: **3 / 11**. Remaining: **8 / 11**.
-- Last safe target commit: `a73f5af46f3af8ef9ca6d8ee6591cbd7961533a8`, branch `master` (captured production restart and whole-tree recovery; the Q3 namespace-removal fix is `a6ed512`; prior accepted anchors remain provenance).
+- Last safe target commit: `70b57a4105a4209adf4873bcfa58067bc91c8b7e`, branch `master` (return-review structured-validation/coherence repair `36fc866`, separate-process recovery qualification `70b57a4`; prior accepted anchors and `a73f5af`/`a6ed512` remain provenance).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
