@@ -18,13 +18,13 @@ references.
   contract/API decisions, dependency-selection approval, deviations,
   acceptance, checkpoint commits and dispatch between coding periods.
 - Complete one checkpoint at a time in documented order. Current owner-directed
-  dispatch is `pfc RCLD04-Q1`, the bounded whole-tree lifecycle assertion batch
-  in implementation/COMMIT_SEQUENCE.md. Complete Q1 and its focused verification,
-  then return for Codex review; do not enter Q2–Q4 in this session. Earlier
-  full-RCLD-04 single-session instructions are superseded in batch size only.
-  Preserve all original criteria and 63 accepted checkpoints. S064–S077 remain
-  committed_pending_review; S078 requires independent S077 acceptance.
-  Target-only coherent green Q1 commits are authorized. No parent/remote changes.
+  dispatch is `pfc RCLD04-Q2`, resulting-consumer qualification in the governing
+  COMMIT_SEQUENCE. Q1 assertion coverage is independently accepted; original
+  S064–S077 remain committed_pending_review. Complete Q2 and focused checks,
+  then return for Codex review before Q3/Q4. Earlier Q1-only and single-session
+  full-RCLD instructions are superseded in dispatch scope, not criteria.
+  Preserve 63 accepted checkpoints and the independent S077/S078 gate.
+  Target-only coherent green Q2 commits are authorized; no parent/remote changes.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
 - No commit, push, publication, deployment or reference-repository mutation

@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: Independent review 16 requests changes to the RCLD-04 candidate `dd5a489`. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-03.
+Status: Q1 assertion coverage accepted at `6db6d35`; bounded Q2 consumer qualification is current. Original RCLD-04 acceptance remains pending. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-03.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD04-Q1 whole-tree lifecycle assertions** (S064–S077 remain committed_pending_review; review 16 requests changes before independent acceptance/S078).
+- Active implementation checkpoint: **RCLD04-Q2 resulting-consumer qualification** (S064–S077 remain committed_pending_review; review 16 requests changes before independent acceptance/S078).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -51,6 +51,68 @@ After each green commit, record the hash and report, update this ledger, and rec
 At S002, adopt the embedded contracts into their scheduled repository-relative files, establish target contract validation and an aligned `implementation/COMMIT_SEQUENCE.json` projection. This document remains the governing execution/status authority; the JSON projection must not drift into a second independently edited plan. Extracted specs govern product intent. Update this document's contract links and supersede embedded snapshots explicitly when extraction is verified; do not maintain conflicting copies silently. S001 baseline evidence and later reports are factual records, not alternate planning backlogs. No additional issue database is required by the current scaffold.
 
 ## Codex dispatch — complete RCLD-04 transactions and recovery
+
+### Current bounded dispatch — RCLD04-Q2
+
+Independent Codex review on 2026-10-04 accepts **Q1 test coverage** at
+`6db6d35c26f4b99c9a7f119b5dbb7fca18081560` (`ceb5d62` implementation plus
+its report). This is scoped acceptance of the bounded assertion batch, not
+acceptance of any original S064–S077 checkpoint, R2 group or whole RCLD-04.
+Preserve 63 accepted / 14 committed_pending_review / 126 not_started, all
+original definitions/criteria, live tuple and the independent S078 gate.
+
+Verified: fresh build/typecheck/format/lint/contracts pass; two focused
+integration files execute seven passing tests with zero failures/skips. A private
+independent helper probe passes its positive control and rejects nine unexpected
+file/mode/directory/link/addition/residue/removal/postimage mutations. Default
+and independently rooted custom add/update/retirement compare complete planned
+trees and explicit ownership/cohort expectations; default/custom init has the
+same complete-tree check. No source/tool product change was part of Q1.
+The authored full protocol candidate still awaits independent Q3 review.
+
+**Execute `pfc RCLD04-Q2` only.** Q1 is complete; this dispatch supersedes the
+historical Q1-only instructions below. Preserve the owner-directed bounded
+session policy and single governing plan. Q3 and Q4 remain separate required
+batches; do not enter them or S078 in this session.
+
+Q2 scope and endpoint:
+
+1. Use existing shipped foundation and representative multi-item fixtures to
+   qualify the resulting **default and independent custom** applications after
+   add, update and retirement through captured snapshots and production
+   planners/composition/validation/application. At each of these six successful
+   stages run actual Svelte check, production build and built-handler SSR.
+   The test page must import/consume the generated value/type exports and render
+   generated components, with stage-specific markers proving the update and
+   retained component after retirement. A fixture-only or foundation-only page
+   does not establish multi-item consumption. Preserve Q1 tree/cohort assertions.
+2. Complete default/custom multi-item satisfied, metadata-only and conflicting
+   dispositions using the existing core; compare exact whole trees/ownership.
+   No-change/conflict checks may reuse an already qualified consumer artifact
+   only with explicit proof that its relevant source/config/dependency inputs
+   are identical. Metadata-only changes must be confined to exact planned state.
+3. Reuse maintained owned-copy/child-server helpers and existing dependencies;
+   do not mutate the maintained consumer fixture or shared dependency tree.
+   Test harness pages/config adapters are explicit owned fixture setup, not
+   generator writes. Derive imports from mapped roots without new product API,
+   aliases, unsafe path allowances, type suppression or SSR disablement.
+4. Retain unique per-stage check/build/render results, source/artifact identity,
+   full raw outputs/exits and a concise factual Q2 coverage report. Run focused
+   affected integration/smoke plus static/contracts, self-review and commit
+   coherent green target changes, then return for Codex review. Aim for two or
+   three coherent commits, not a commit-count acceptance rule.
+
+Do not add the broad publication/durability matrix, full browser/reference/
+cumulative install/test lanes or later CLI/catalog work to Q2. Production defects
+that prevent the bounded qualification get a minimal reproduction and evidence
+for Codex sequencing; do not expand into a protocol rewrite. Original Q3 review/
+corrections and Q4 cumulative acceptance obligations remain required software
+work. No owner decision blocks this chosen batch. Clear owner natural-language
+instructions remain authoritative; workflow syntax is not the only way to grant
+instructions, and this concrete updated dispatch needs no repeated confirmation.
+
+Historical partition and Q1 receipt below remain provenance; current Q2 scope
+and stopping boundary take precedence.
 
 ### Owner-directed bounded dispatch — RCLD04-Q1
 

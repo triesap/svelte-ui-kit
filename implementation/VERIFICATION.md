@@ -75,15 +75,17 @@ completion unlocks a successor. Unapproved `not_applicable` fails closed.
 Default validation is read-only; `--generate` and `--generate-sources` are the
 only writing modes.
 
-#### Current bounded Q1 verification
+#### Current bounded Q2 verification
 
-The owner-directed `pfc RCLD04-Q1` dispatch in COMMIT_SEQUENCE supersedes earlier
-single-session full-batch verification. Run the affected multi-item and
-review16-matrix integration tests, build, typecheck, formatting, lint and
-contract/projection validation. Retain raw outputs/exits and a concise Q1 report.
-Consumer check/build/render, browser, reference and final cumulative lanes remain
-required in subsequent approved sub-batches; they are not Q1 stopping prerequisites.
-Passing Q1 grants no whole-group, RCLD-04 or MVP acceptance.
+Follow COMMIT_SEQUENCE's current `pfc RCLD04-Q2` dispatch. Q1 tests and scoped
+coverage are accepted; original checkpoint/feature acceptance remains pending.
+Run resulting default/custom multi-item Svelte check, production build and
+built-handler SSR after add/update/retirement, plus exact satisfied/metadata/
+conflict comparisons. Reuse existing owned consumer/server helpers; serialize
+fixture writers and retain per-stage raw outputs/exits/artifact identity.
+Run only affected integration/smoke lanes plus build/typecheck/format/lint and
+contract/projection validation. Browser/reference/full cumulative lanes stay
+in Q4; protocol review/corrections stay Q3. Complete Q2 then return for review.
 
 #### Current RCLD-04 complete-boundary qualification
 

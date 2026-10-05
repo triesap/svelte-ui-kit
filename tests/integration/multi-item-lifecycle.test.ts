@@ -1,58 +1,41 @@
 import assert from "node:assert/strict";
-import {
-  cpSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import {
-  applyPlan,
-  validateApplyPlan,
-  type ApplyOutcome,
-  type ValidatedApplyPlan,
-} from "../../src/codegen/apply.js";
-import { composeApplyPlan } from "../../src/codegen/compose.js";
-import { hashBytes } from "../../src/codegen/compare.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
-import type { PlanWrite } from "../../src/codegen/plan.js";
-import type { KitLock } from "../../src/codegen/lock.js";
-import {
-  captureSnapshot,
-  type ProjectSnapshot,
-} from "../../src/codegen/snapshot.js";
+import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
   type KitConfig,
-  type KitDerivedPaths,
 } from "../../src/project/config.js";
-import { createAssetProvider } from "../../src/registry/assets.js";
-import { loadRegistrySnapshot } from "../../src/registry/load.js";
-import { computeRegistryContentHash } from "../../src/registry/model.js";
 import {
-  assertTreeAfterMutations,
-  snapshotTree,
-  type TreeMutation,
-} from "../helpers/tree-snapshot.js";
+  ADDED_OWNERSHIP,
+  RETAINED_OWNERSHIP,
+  applyGuarded,
+  assertApplied,
+  assertLockOwnership,
+  currentLock,
+} from "../helpers/lifecycle-assertions.js";
+import {
+  CUSTOM_MULTI_ITEM_CONFIG,
+  compoundPaths,
+  compoundRegistry,
+  seedMultiItemConsumer,
+} from "../helpers/multi-item-fixture.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 /**
  * RCLD04-R2-5: a representative multi-item registry fixture driven through the
  * production planner and guarded apply, parameterized over a default and an
- * independently rooted custom mapping. The fixture conforms to the already
- * approved manifest/template/component contracts: a component with an explicit
- * registry dependency, a hybrid Svelte + TypeScript file set, multiple CSS
- * blocks in distinct cohorts sharing one aggregate stylesheet, and value/type
- * export cohorts. It supplements, and does not replace, the shipped-foundation
- * lifecycle qualification.
+ * independently rooted custom mapping. The fixture (and its approved
+ * manifest/template/component contracts) lives in
+ * `tests/helpers/multi-item-fixture.ts`; the whole-tree and ownership
+ * assertions live in `tests/helpers/lifecycle-assertions.ts`. It supplements,
+ * and does not replace, the shipped-foundation lifecycle qualification.
  *
  * Each add/update/retirement step derives its expected tree from the captured
  * pre-state and the composed production plan, then compares the complete
@@ -61,385 +44,9 @@ import {
  * directories the plan itself requires.
  */
 
-const PKG_ROOT = process.cwd();
-const FIXTURE = path.join(PKG_ROOT, "tests/fixtures/consumer");
-const COMPATIBILITY = {
-  svelte: "^5.57.1",
-  bits: "^2.19.3",
-  date: "^3.8.1",
-};
-
-const CUSTOM_CONFIG: KitConfig = {
-  ...DEFAULT_KIT_CONFIG,
-  uiDir: "app/ui",
-  stylesDir: "assets/styles",
-};
-
-function utf8(value: string): Uint8Array {
-  return new TextEncoder().encode(value);
-}
-
 function abs(root: string, rel: string): string {
   return path.join(root, ...rel.split("/"));
 }
-
-function write(root: string, rel: string, data: string | Uint8Array): void {
-  const target = abs(root, rel);
-  mkdirSync(path.dirname(target), { recursive: true });
-  writeFileSync(target, data);
-}
-
-function seedConsumer(page: string): string {
-  const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-multi-app-"));
-  for (const file of [
-    "package.json",
-    "vite.config.ts",
-    "svelte.config.js",
-    "tsconfig.json",
-    "src/app.html",
-  ]) {
-    cpSync(path.join(FIXTURE, file), path.join(consumer, file));
-  }
-  symlinkSync(
-    path.join(FIXTURE, "node_modules"),
-    path.join(consumer, "node_modules"),
-    "dir",
-  );
-  write(consumer, "src/routes/+page.svelte", page);
-  return consumer;
-}
-
-interface ManifestFile {
-  readonly source: string;
-  readonly target: string;
-  readonly kind: "svelte" | "typescript";
-  readonly cohort: string;
-}
-
-interface ManifestStyle {
-  readonly source: string;
-  readonly target: string;
-  readonly blockId: string;
-  readonly cohort: string;
-}
-
-interface ManifestExport {
-  readonly name: string;
-  readonly target: string;
-  readonly kind: "value" | "type";
-}
-
-interface CompoundItem {
-  readonly id: string;
-  readonly body: string;
-  readonly files: readonly ManifestFile[];
-  readonly styles: readonly ManifestStyle[];
-  readonly exports: readonly ManifestExport[];
-  readonly dependencies: readonly string[];
-}
-
-const BUTTON: CompoundItem = {
-  id: "button",
-  body: "<button>button</button>\n",
-  files: [
-    {
-      source: "templates/button.svelte",
-      target: "button.svelte",
-      kind: "svelte",
-      cohort: "core",
-    },
-  ],
-  styles: [
-    {
-      source: "styles/button.css",
-      target: "kit.css",
-      blockId: "button",
-      cohort: "core",
-    },
-  ],
-  exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
-  dependencies: [],
-};
-
-const CARD: CompoundItem = {
-  id: "card",
-  body: '<div class="card"><slot /></div>\n',
-  files: [
-    {
-      source: "templates/card.svelte",
-      target: "card.svelte",
-      kind: "svelte",
-      cohort: "core",
-    },
-    {
-      source: "templates/card.types.ts",
-      target: "card.types.ts",
-      kind: "typescript",
-      cohort: "types",
-    },
-  ],
-  styles: [
-    {
-      source: "styles/card.css",
-      target: "kit.css",
-      blockId: "card",
-      cohort: "core",
-    },
-    {
-      source: "styles/card-extra.css",
-      target: "kit.css",
-      blockId: "card-extra",
-      cohort: "extra",
-    },
-  ],
-  exports: [
-    { name: "Card", target: "card.svelte", kind: "value" },
-    { name: "CardProps", target: "card.types.ts", kind: "type" },
-  ],
-  dependencies: ["button"],
-};
-
-function compoundRegistry(
-  root: string,
-  options: {
-    readonly cardBody?: string;
-    readonly includeCard?: boolean;
-  } = {},
-): ReturnType<typeof loadRegistrySnapshot> {
-  cpSync(path.join(PKG_ROOT, "schema"), path.join(root, "schema"), {
-    recursive: true,
-  });
-  const includeCard = options.includeCard ?? true;
-  const card: CompoundItem = { ...CARD, body: options.cardBody ?? CARD.body };
-  const itemsToWrite = includeCard ? [BUTTON, card] : [BUTTON];
-  const assets: { path: string; digest: string }[] = [];
-  const items: { id: string; manifest: string }[] = [];
-  for (const item of itemsToWrite) {
-    const manifest = JSON.stringify({
-      schemaVersion: 1,
-      id: item.id,
-      kind: "component",
-      version: "0.1.0",
-      description: `${item.id} compound fixture item.`,
-      compatibility: COMPATIBILITY,
-      files: item.files,
-      exports: item.exports,
-      styles: item.styles,
-      registryDependencies: item.dependencies,
-    });
-    write(root, `registry/ui/${item.id}.json`, manifest);
-    assets.push({
-      path: `registry/ui/${item.id}.json`,
-      digest: hashBytes(utf8(manifest)) as string,
-    });
-    items.push({ id: item.id, manifest: `ui/${item.id}.json` });
-    for (const file of item.files) {
-      const body =
-        file.kind === "svelte"
-          ? item.body
-          : `export interface ${item.id}Props {}\n`;
-      write(root, `registry/${file.source}`, body);
-      assets.push({
-        path: `registry/${file.source}`,
-        digest: hashBytes(utf8(body)) as string,
-      });
-    }
-    for (const style of item.styles) {
-      const body = `.${style.blockId} {}\n`;
-      write(root, `registry/${style.source}`, body);
-      assets.push({
-        path: `registry/${style.source}`,
-        digest: hashBytes(utf8(body)) as string,
-      });
-    }
-  }
-  const basis = {
-    schemaVersion: 1,
-    registryVersion: "0.1.0",
-    compatibility: COMPATIBILITY,
-    items,
-  };
-  write(
-    root,
-    "registry/registry.json",
-    JSON.stringify({
-      ...basis,
-      contentHash: computeRegistryContentHash(basis, assets),
-    }),
-  );
-  return loadRegistrySnapshot(createAssetProvider(root));
-}
-
-function compoundPaths(config: KitConfig): string[] {
-  const derived = deriveKitPaths(config);
-  return [
-    `${derived.stateDir}/kit.json`,
-    `${derived.stateDir}/kit.lock.json`,
-    derived.rootExports,
-    `${derived.rootExportsDir}/button.svelte`,
-    `${derived.rootExportsDir}/card.svelte`,
-    `${derived.rootExportsDir}/card.types.ts`,
-    derived.kitCss,
-    derived.themesCss,
-    derived.appCss,
-    config.layoutFile,
-    ".gitignore",
-  ];
-}
-
-interface GuardedApply {
-  readonly plan: ValidatedApplyPlan;
-  readonly outcome: ApplyOutcome;
-}
-
-function applyGuarded(
-  root: string,
-  config: KitConfig,
-  snapshot: ProjectSnapshot,
-  writes: readonly PlanWrite[],
-): GuardedApply {
-  const composed = composeApplyPlan({ root, config, writes, snapshot });
-  assert.equal(composed.ok, true, JSON.stringify(composed));
-  if (!composed.ok) throw new Error("compose failed");
-  const validated = validateApplyPlan(composed.value);
-  assert.equal(validated.ok, true, JSON.stringify(validated));
-  if (!validated.ok) throw new Error("validation failed");
-  return { plan: validated.value, outcome: applyPlan(validated.value) };
-}
-
-/**
- * Every write the guarded plan will perform: each composed target plus the
- * canonical lock publication. This is the exact mutation set the expected tree
- * is built from; the resulting tree is never consulted to derive it.
- */
-function planMutations(
-  plan: ValidatedApplyPlan,
-  derived: KitDerivedPaths,
-): TreeMutation[] {
-  const mutations: TreeMutation[] = plan.targets.map((target) => ({
-    path: target.path,
-    operation: target.operation,
-    bytes: target.bytes,
-    mode: target.mode,
-  }));
-  mutations.push({
-    path: `${derived.stateDir}/kit.lock.json`,
-    operation: plan.lock.preimage.kind === "file" ? "update" : "create",
-    bytes: plan.lock.bytes,
-    mode: plan.lock.preimage.mode ?? 0o644,
-  });
-  return mutations;
-}
-
-function assertApplied(
-  label: string,
-  consumer: string,
-  config: KitConfig,
-  before: ReturnType<typeof snapshotTree>,
-  guarded: GuardedApply,
-): void {
-  assert.equal(
-    guarded.outcome.kind,
-    "applied",
-    `${label}: ${JSON.stringify(guarded.outcome.issues)}`,
-  );
-  assertTreeAfterMutations(
-    consumer,
-    before,
-    planMutations(guarded.plan, deriveKitPaths(config)),
-  );
-}
-
-interface OwnershipSpec {
-  readonly requested: readonly string[];
-  readonly items: readonly string[];
-  readonly files: readonly {
-    readonly target: string;
-    readonly owner: string;
-    readonly cohort: string;
-  }[];
-  readonly blocks: readonly {
-    readonly blockId: string;
-    readonly owner: string;
-    readonly cohort: string;
-  }[];
-}
-
-/** Whole-lock ownership and cohort comparison against an explicit expectation. */
-function assertLockOwnership(
-  lock: KitLock,
-  config: KitConfig,
-  spec: OwnershipSpec,
-): void {
-  const derived = deriveKitPaths(config);
-  assert.deepEqual([...lock.requested].sort(), [...spec.requested].sort());
-  assert.deepEqual(
-    lock.items.map((item) => `${item.id}:${item.origin}`).sort(),
-    [...spec.items].sort(),
-  );
-  assert.deepEqual(
-    lock.files
-      .map((file) => `${file.path}:${file.owner}:${file.cohort}`)
-      .sort(),
-    spec.files
-      .map(
-        (file) =>
-          `${derived.rootExportsDir}/${file.target}:${file.owner}:${file.cohort}`,
-      )
-      .sort(),
-    JSON.stringify(lock.files),
-  );
-  assert.deepEqual(
-    lock.cssBlocks
-      .map(
-        (block) =>
-          `${block.path}:${block.blockId}:${block.owner}:${block.cohort}`,
-      )
-      .sort(),
-    spec.blocks
-      .map(
-        (block) =>
-          `${derived.kitCss}:${block.blockId}:${block.owner}:${block.cohort}`,
-      )
-      .sort(),
-    JSON.stringify(lock.cssBlocks),
-  );
-  const integration = (
-    kind: "layout" | "stylesheet" | "exports",
-  ): string | undefined =>
-    lock.integrations.find((entry) => entry.kind === kind)?.path;
-  assert.equal(integration("layout"), config.layoutFile);
-  assert.equal(integration("stylesheet"), derived.kitCss);
-  assert.equal(integration("exports"), derived.rootExports);
-}
-
-function currentLock(root: string, derived: KitDerivedPaths): KitLock {
-  return JSON.parse(
-    readFileSync(abs(root, `${derived.stateDir}/kit.lock.json`), "utf8"),
-  ) as KitLock;
-}
-
-const ADDED_OWNERSHIP: OwnershipSpec = {
-  requested: ["card"],
-  items: ["button:transitive", "card:explicit"],
-  files: [
-    { target: "button.svelte", owner: "button", cohort: "core" },
-    { target: "card.svelte", owner: "card", cohort: "core" },
-    { target: "card.types.ts", owner: "card", cohort: "types" },
-  ],
-  blocks: [
-    { blockId: "button", owner: "button", cohort: "core" },
-    { blockId: "card", owner: "card", cohort: "core" },
-    { blockId: "card-extra", owner: "card", cohort: "extra" },
-  ],
-};
-
-const RETAINED_OWNERSHIP: OwnershipSpec = {
-  requested: ["button"],
-  items: ["button:explicit"],
-  files: [{ target: "button.svelte", owner: "button", cohort: "core" }],
-  blocks: [{ blockId: "button", owner: "button", cohort: "core" }],
-};
 
 /**
  * Run the same add → update → retirement lifecycle for one mapping. Each step
@@ -451,7 +58,7 @@ function runMultiItemLifecycle(config: KitConfig): void {
   const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-reg-"));
   const updatedRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-upd-"));
   const retiredRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-ret-"));
-  const consumer = seedConsumer("<h1>MULTI_ITEM_PAGE</h1>\n");
+  const consumer = seedMultiItemConsumer("<h1>MULTI_ITEM_PAGE</h1>\n");
   try {
     // ---- add -------------------------------------------------------------
     const install = compoundRegistry(registryRoot);
@@ -635,5 +242,5 @@ test("default mapping: multi-item add, update and retirement match the complete 
 });
 
 test("independent custom mapping: multi-item add, update and retirement match the complete planned tree", () => {
-  runMultiItemLifecycle(CUSTOM_CONFIG);
+  runMultiItemLifecycle(CUSTOM_MULTI_ITEM_CONFIG);
 });
