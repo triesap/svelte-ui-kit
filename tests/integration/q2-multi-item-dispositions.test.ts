@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  writeFileSync,
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -228,4 +229,123 @@ test("default mapping: multi-item satisfied, metadata-only and conflict disposit
 
 test("custom mapping: multi-item satisfied, metadata-only and conflict dispositions", () => {
   runDispositions(CUSTOM_MULTI_ITEM_CONFIG);
+});
+
+/**
+ * A genuine base/local/incoming cohort conflict. The application edits the
+ * tracked card CSS block locally while the incoming registry changes both the
+ * card source (a clean update) and the same CSS block. The block therefore has
+ * three distinct base/local/incoming bodies (a conflict), the card unit mixes
+ * that conflict with an adopting update, and the whole batch is non-executable
+ * with zero planned writes and an exactly preserved whole tree and lock.
+ */
+function runCohortConflict(config: KitConfig): void {
+  const derived = deriveKitPaths(config);
+  const installRoot = mkdtempSync(
+    path.join(os.tmpdir(), "suik-q2-coh-install-"),
+  );
+  const updateRoot = mkdtempSync(path.join(os.tmpdir(), "suik-q2-coh-update-"));
+  const consumer = seedMultiItemConsumer("<h1>COHORT_CONFLICT_PAGE</h1>\n");
+  try {
+    const installed = compoundRegistry(installRoot);
+    assert.equal(installed.ok, true, JSON.stringify(installed));
+    if (!installed.ok) return;
+    const first = captureSnapshot(consumer, compoundPaths(config));
+    assert.equal(first.ok, true, JSON.stringify(first));
+    if (!first.ok) return;
+    const add = planAdd({
+      registry: installed.value,
+      config,
+      addedRoots: ["card"],
+      snapshot: first.value,
+      lock: null,
+      registryVersion: installed.value.root.registryVersion,
+      registryHash: installed.value.root.contentHash,
+    });
+    assert.equal(add.ok, true, JSON.stringify(add));
+    if (!add.ok) return;
+    assert.equal(
+      add.value.executable,
+      true,
+      JSON.stringify(add.value.diagnostics),
+    );
+    const beforeInstall = snapshotTree(consumer);
+    assertApplied(
+      "cohort-install",
+      consumer,
+      config,
+      beforeInstall,
+      applyGuarded(consumer, config, first.value, add.value.writes),
+    );
+    assertLockOwnership(
+      currentLock(consumer, derived),
+      config,
+      ADDED_OWNERSHIP,
+    );
+
+    // Local application edit of the tracked card CSS block only.
+    const cssPath = abs(consumer, derived.kitCss);
+    const localBefore = readFileSync(cssPath, "utf8");
+    const localEdited = localBefore.replace(
+      ".card {}\n",
+      ".card { color: blue; }\n",
+    );
+    assert.notEqual(
+      localEdited,
+      localBefore,
+      "the local card block edit must apply",
+    );
+    writeFileSync(cssPath, localEdited);
+
+    // Incoming registry changes the card source and the same card CSS block, so
+    // the recorded base, the local edit and the incoming body are all distinct.
+    const updated = compoundRegistry(updateRoot, {
+      version: "0.2.0",
+      cardBody: '<div class="card v2"><slot /></div>\n',
+      cssBodyOverrides: { card: ".card { color: red; }\n" },
+    });
+    assert.equal(updated.ok, true, JSON.stringify(updated));
+    if (!updated.ok) return;
+    const before = snapshotTree(consumer);
+    const lockBefore = JSON.stringify(currentLock(consumer, derived));
+    const snapshot = captureSnapshot(consumer, compoundPaths(config));
+    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+    if (!snapshot.ok) return;
+    const conflict = planSync({
+      registry: updated.value,
+      config: { ...config, requested: ["card"] },
+      snapshot: snapshot.value,
+      lock: currentLock(consumer, derived),
+      registryVersion: updated.value.root.registryVersion,
+      registryHash: updated.value.root.contentHash,
+    });
+    assert.equal(conflict.ok, true, JSON.stringify(conflict));
+    if (!conflict.ok) return;
+    assert.equal(
+      conflict.value.executable,
+      false,
+      JSON.stringify(conflict.value.diagnostics),
+    );
+    assert.deepEqual(conflict.value.writes, []);
+    const diagnostics = JSON.stringify(conflict.value.diagnostics);
+    assert.match(diagnostics, /local and incoming managed text both changed/);
+    assert.match(diagnostics, /cohort conflict/);
+    // Non-executable with zero planned writes: the apply API is never entered,
+    // and the whole tree and canonical lock stay exactly as planned against.
+    assert.deepEqual(snapshotTree(consumer), before);
+    assert.equal(JSON.stringify(currentLock(consumer, derived)), lockBefore);
+    assert.equal(readFileSync(cssPath, "utf8"), localEdited);
+  } finally {
+    rmSync(installRoot, { recursive: true, force: true });
+    rmSync(updateRoot, { recursive: true, force: true });
+    rmSync(consumer, { recursive: true, force: true });
+  }
+}
+
+test("default mapping: base/local/incoming cohort conflict is non-executable with zero writes", () => {
+  runCohortConflict(DEFAULT_KIT_CONFIG);
+});
+
+test("custom mapping: base/local/incoming cohort conflict is non-executable with zero writes", () => {
+  runCohortConflict(CUSTOM_MULTI_ITEM_CONFIG);
 });

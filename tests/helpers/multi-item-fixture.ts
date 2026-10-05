@@ -179,6 +179,12 @@ export interface CompoundRegistryOptions {
   readonly cardBody?: string;
   readonly includeCard?: boolean;
   readonly version?: string;
+  /**
+   * Override the registry CSS body for one managed block id. Used to build a
+   * genuine base/local/incoming three-way conflict where the incoming block
+   * bytes differ from both the recorded base and a local edit.
+   */
+  readonly cssBodyOverrides?: Readonly<Record<string, string>>;
 }
 
 /** Materialize the representative compound registry and load its snapshot. */
@@ -226,7 +232,8 @@ export function compoundRegistry(
       });
     }
     for (const style of item.styles) {
-      const body = `.${style.blockId} {}\n`;
+      const body =
+        options.cssBodyOverrides?.[style.blockId] ?? `.${style.blockId} {}\n`;
       write(root, `registry/${style.source}`, body);
       assets.push({
         path: `registry/${style.source}`,

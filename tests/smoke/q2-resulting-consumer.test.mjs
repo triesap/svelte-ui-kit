@@ -12,11 +12,11 @@
  *
  * The test page imports the generated value and type exports derived from the
  * mapped root and renders the generated components; the SSR response must carry
- * the stage-specific component markers (the added component, its updated body
- * and the retained component after retirement). Every check/build/render
- * subprocess is spawned with the inherited extbuild router environment so the
- * nested command context reaches the child; per-stage raw outputs, exits,
- * source/artifact digests and the response are retained under the ignored
+ * the generated components' own `data-kit-marker` markup and stage-specific
+ * content (the added component, its updated body and the retained component
+ * after retirement). Every check/build/render subprocess runs with the
+ * inherited parent environment; per-stage raw outputs, exits/signals/errors,
+ * input/served artifact digests and the response are retained under the ignored
  * `implementation/evidence/logs/` tree.
  *
  * Each mapping's consumer copy, every child process and every server are owned
@@ -29,6 +29,7 @@ import { createHash } from "node:crypto";
 import {
   cpSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -48,8 +49,8 @@ import {
   startOwnedServer,
 } from "./owned-server.mjs";
 import {
+  assertGeneratedComponentMarkup,
   assertServerRendered,
-  assertVisibleMarkers,
 } from "./ssr-assertions.mjs";
 
 const PACKAGE_ROOT = process.cwd();
@@ -166,6 +167,33 @@ function write(root, rel, data) {
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function fileDigestOrNull(file) {
+  return existsSync(file) ? sha256(readFileSync(file)) : null;
+}
+
+/** Deterministic digest over the sorted entries and file bytes of a tree. */
+function treeDigest(root) {
+  if (!existsSync(root)) return null;
+  const parts = [];
+  const walk = (abs, rel) => {
+    const stats = lstatSync(abs);
+    if (stats.isDirectory()) {
+      parts.push(`d ${rel}`);
+      for (const name of readdirSync(abs).sort()) {
+        walk(path.join(abs, name), rel === "" ? name : `${rel}/${name}`);
+      }
+      return;
+    }
+    if (stats.isSymbolicLink()) {
+      parts.push(`l ${rel}`);
+      return;
+    }
+    parts.push(`f ${rel} ${sha256(readFileSync(abs))}`);
+  };
+  walk(root, "");
+  return sha256(utf8(parts.join("\n")));
 }
 
 function retain(label, stage, kind, content) {
@@ -347,8 +375,9 @@ function runFixtureScript(root, script, timeout) {
     /\.[cm]?js$/.test(execPath);
   const command = viaNode ? process.execPath : "pnpm";
   const args = viaNode ? [execPath, "run", script] : ["run", script];
-  // Inherit the extbuild router environment so the nested command context
-  // reaches the child; only the test-runner-specific variables are removed.
+  // Inherit the maintained fixture lane's environment, dropping only the
+  // test-runner-specific variables so the nested pnpm/Node invocation behaves
+  // exactly as the maintained lane invoked by `pnpm run test:fixture` does.
   const env = { ...process.env };
   delete env["NODE_OPTIONS"];
   delete env["NODE_V8_COVERAGE"];
@@ -356,13 +385,23 @@ function runFixtureScript(root, script, timeout) {
   env["npm_config_verify_deps_before_run"] = "false";
   env["PATH"] =
     `${path.dirname(process.execPath)}${path.delimiter}${env["PATH"] ?? ""}`;
-  return spawnSync(command, args, {
+  const result = spawnSync(command, args, {
     cwd: root,
     env,
     encoding: "utf8",
     timeout,
     maxBuffer: MAX_BUFFER,
   });
+  return {
+    command,
+    args,
+    cwd: root,
+    status: result.status,
+    signal: result.signal,
+    stdout: result.stdout,
+    stderr: result.stderr,
+    error: result.error,
+  };
 }
 
 function assertCompleted(result, label) {
@@ -431,150 +470,239 @@ function applyGuarded(consumer, config, snapshot, writes) {
 
 const STAGE_MARKERS = {
   add: {
-    present: ["BUTTON_RETAINED", "CARD_ADDED_V1"],
+    components: [
+      { tag: "button", marker: "BUTTON_RETAINED", text: "Retained button" },
+      { tag: "div", marker: "CARD_ADDED_V1", text: "Card v1" },
+    ],
     absent: ["CARD_UPDATED_V2"],
   },
   update: {
-    present: ["BUTTON_RETAINED", "CARD_UPDATED_V2"],
+    components: [
+      { tag: "button", marker: "BUTTON_RETAINED", text: "Retained button" },
+      { tag: "div", marker: "CARD_UPDATED_V2", text: "Card v2" },
+    ],
     absent: ["CARD_ADDED_V1"],
   },
   retirement: {
-    present: ["BUTTON_RETAINED"],
+    components: [
+      { tag: "button", marker: "BUTTON_RETAINED", text: "Retained button" },
+    ],
     absent: ["CARD_ADDED_V1", "CARD_UPDATED_V2"],
   },
 };
 
 async function runStage({ label, consumer, config, registry, stage }) {
   const derived = deriveKitPaths(config);
-  const snapshot = captureSnapshot(consumer, observedPaths(config));
-  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-  if (!snapshot.ok) return;
-  const lock = currentLock(consumer, derived);
-
-  let writes;
-  if (stage === "add") {
-    const planned = planAdd({
-      registry,
-      config,
-      addedRoots: ["card"],
-      snapshot: snapshot.value,
-      lock: null,
-      registryVersion: registry.root.registryVersion,
-      registryHash: registry.root.contentHash,
-    });
-    assert.equal(planned.ok, true, JSON.stringify(planned));
-    if (!planned.ok) return;
-    assert.equal(
-      planned.value.executable,
-      true,
-      JSON.stringify(planned.value.diagnostics),
-    );
-    writes = planned.value.writes;
-  } else {
-    const requested = stage === "update" ? ["card"] : ["button"];
-    const planned = planSync({
-      registry,
-      config: { ...config, requested },
-      snapshot: snapshot.value,
-      lock,
-      registryVersion: registry.root.registryVersion,
-      registryHash: registry.root.contentHash,
-    });
-    assert.equal(planned.ok, true, JSON.stringify(planned));
-    if (!planned.ok) return;
-    assert.equal(
-      planned.value.executable,
-      true,
-      JSON.stringify(planned.value.diagnostics),
-    );
-    writes = planned.value.writes;
-  }
-
-  const outcome = applyGuarded(consumer, config, snapshot.value, writes);
-  assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
-
-  // The generated barrel is the mapped, derived import source and must export
-  // the stage's value and type cohorts.
-  const barrel = readFileSync(abs(consumer, derived.rootExports), "utf8");
-  assert.match(barrel, /Button\b/);
-  assert.match(barrel, /ButtonProps\b/);
-  if (stage === "retirement") {
-    assert.doesNotMatch(barrel, /\bCard\b/);
-  } else {
-    assert.match(barrel, /\bCard\b/);
-    assert.match(barrel, /CardProps\b/);
-  }
-  const cardPath = abs(consumer, `${derived.rootExportsDir}/card.svelte`);
-  if (stage === "retirement") {
-    assert.equal(existsSync(cardPath), false);
-  } else {
-    assert.equal(
-      readFileSync(cardPath, "utf8"),
-      stage === "add" ? CARD_V1 : CARD_V2,
-    );
-  }
-
-  // Write the harness page and run the real consumer lanes.
-  const pagePath = path.join(consumer, "src", "routes", "+page.svelte");
-  writeFileSync(pagePath, pageSource(consumer, config, stage));
-
-  const check = runFixtureScript(consumer, "check", CHECK_TIMEOUT_MS);
-  retain(label, stage, "check", `${check.stdout ?? ""}\n${check.stderr ?? ""}`);
-  assertCompleted(check, `${label}/${stage} svelte-check`);
-  assert.equal(
-    check.status,
-    0,
-    `${label}/${stage} svelte-check failed:\n${check.stdout}\n${check.stderr}`,
-  );
-
-  const build = runFixtureScript(consumer, "build", BUILD_TIMEOUT_MS);
-  retain(label, stage, "build", `${build.stdout ?? ""}\n${build.stderr ?? ""}`);
-  assertCompleted(build, `${label}/${stage} vite build`);
-  assert.equal(
-    build.status,
-    0,
-    `${label}/${stage} vite build failed:\n${build.stdout}\n${build.stderr}`,
-  );
-
-  const handler = path.join(consumer, "build", "handler.js");
-  assert.equal(existsSync(handler), true, `${label}/${stage} missing handler`);
-  let server;
-  try {
-    server = startOwnedServer({
-      command: process.execPath,
-      args: [DEFAULT_LAUNCHER, handler],
-      cwd: consumer,
-    });
-    const port = await server.ready;
-    const response = await fetchRoute(`http://127.0.0.1:${port}/`);
-    retain(label, stage, "render", {
-      status: response.status,
-      contentType: response.contentType,
-      body: response.body,
-    });
-    assertServerRendered(response, "world");
-    assertVisibleMarkers(response, STAGE_MARKERS[stage], `${label}/${stage}`);
-  } finally {
-    if (server) await server.stop();
-  }
-
-  // Source/artifact identity for this stage.
-  const identity = {
+  const stageLog = {
     label,
     stage,
-    pageSha256: sha256(readFileSync(pagePath)),
-    barrelSha256: sha256(readFileSync(abs(consumer, derived.rootExports))),
-    buttonSha256: sha256(
-      readFileSync(abs(consumer, `${derived.rootExportsDir}/button.svelte`)),
-    ),
-    cardSha256: existsSync(cardPath) ? sha256(readFileSync(cardPath)) : null,
-    checkStatus: check.status,
-    buildStatus: build.status,
-    markerPresent: STAGE_MARKERS[stage].present,
-    markerAbsent: STAGE_MARKERS[stage].absent,
+    commands: [],
+    server: null,
+    failure: null,
   };
-  retain(label, stage, "artifact-identity", identity);
-  return identity;
+  const recordCommand = (result) => ({
+    command: result.command,
+    args: result.args,
+    cwd: result.cwd,
+    status: result.status,
+    signal: result.signal,
+    error: result.error ? String(result.error.message ?? result.error) : null,
+  });
+  try {
+    const snapshot = captureSnapshot(consumer, observedPaths(config));
+    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+    if (!snapshot.ok) return;
+    const lock = currentLock(consumer, derived);
+
+    let writes;
+    if (stage === "add") {
+      const planned = planAdd({
+        registry,
+        config,
+        addedRoots: ["card"],
+        snapshot: snapshot.value,
+        lock: null,
+        registryVersion: registry.root.registryVersion,
+        registryHash: registry.root.contentHash,
+      });
+      assert.equal(planned.ok, true, JSON.stringify(planned));
+      if (!planned.ok) return;
+      assert.equal(
+        planned.value.executable,
+        true,
+        JSON.stringify(planned.value.diagnostics),
+      );
+      writes = planned.value.writes;
+    } else {
+      const requested = stage === "update" ? ["card"] : ["button"];
+      const planned = planSync({
+        registry,
+        config: { ...config, requested },
+        snapshot: snapshot.value,
+        lock,
+        registryVersion: registry.root.registryVersion,
+        registryHash: registry.root.contentHash,
+      });
+      assert.equal(planned.ok, true, JSON.stringify(planned));
+      if (!planned.ok) return;
+      assert.equal(
+        planned.value.executable,
+        true,
+        JSON.stringify(planned.value.diagnostics),
+      );
+      writes = planned.value.writes;
+    }
+
+    const outcome = applyGuarded(consumer, config, snapshot.value, writes);
+    assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+
+    // The generated barrel is the mapped, derived import source and must export
+    // the stage's value and type cohorts.
+    const barrel = readFileSync(abs(consumer, derived.rootExports), "utf8");
+    assert.match(barrel, /Button\b/);
+    assert.match(barrel, /ButtonProps\b/);
+    if (stage === "retirement") {
+      assert.doesNotMatch(barrel, /\bCard\b/);
+    } else {
+      assert.match(barrel, /\bCard\b/);
+      assert.match(barrel, /CardProps\b/);
+    }
+    const cardPath = abs(consumer, `${derived.rootExportsDir}/card.svelte`);
+    if (stage === "retirement") {
+      assert.equal(existsSync(cardPath), false);
+    } else {
+      assert.equal(
+        readFileSync(cardPath, "utf8"),
+        stage === "add" ? CARD_V1 : CARD_V2,
+      );
+    }
+
+    // Write the harness page and run the real consumer lanes.
+    const pagePath = path.join(consumer, "src", "routes", "+page.svelte");
+    writeFileSync(pagePath, pageSource(consumer, config, stage));
+
+    const inputIdentity = {
+      registryVersion: registry.root.registryVersion,
+      registryContentHash: registry.root.contentHash,
+      config: { ...config },
+      packageJsonSha256: fileDigestOrNull(abs(consumer, "package.json")),
+      pnpmLockSha256: fileDigestOrNull(abs(consumer, "pnpm-lock.yaml")),
+      installed: snapshot.value.environment.installedResolution.map(
+        (entry) => ({
+          name: entry.name,
+          kind: entry.kind,
+          digest: entry.digest,
+        }),
+      ),
+    };
+
+    const check = runFixtureScript(consumer, "check", CHECK_TIMEOUT_MS);
+    const checkCommand = recordCommand(check);
+    stageLog.commands.push(checkCommand);
+    retain(label, stage, "check", {
+      ...checkCommand,
+      stdout: check.stdout ?? "",
+      stderr: check.stderr ?? "",
+    });
+    assertCompleted(check, `${label}/${stage} svelte-check`);
+    assert.equal(
+      check.status,
+      0,
+      `${label}/${stage} svelte-check failed:\n${check.stdout}\n${check.stderr}`,
+    );
+
+    const build = runFixtureScript(consumer, "build", BUILD_TIMEOUT_MS);
+    const buildCommand = recordCommand(build);
+    stageLog.commands.push(buildCommand);
+    retain(label, stage, "build", {
+      ...buildCommand,
+      stdout: build.stdout ?? "",
+      stderr: build.stderr ?? "",
+    });
+    assertCompleted(build, `${label}/${stage} vite build`);
+    assert.equal(
+      build.status,
+      0,
+      `${label}/${stage} vite build failed:\n${build.stdout}\n${build.stderr}`,
+    );
+
+    const handler = path.join(consumer, "build", "handler.js");
+    assert.equal(
+      existsSync(handler),
+      true,
+      `${label}/${stage} missing handler`,
+    );
+    let server;
+    try {
+      server = startOwnedServer({
+        command: process.execPath,
+        args: [DEFAULT_LAUNCHER, handler],
+        cwd: consumer,
+      });
+      stageLog.server = {
+        command: process.execPath,
+        args: [DEFAULT_LAUNCHER, handler],
+        cwd: consumer,
+        handlerSha256: fileDigestOrNull(handler),
+        buildOutputDigest: treeDigest(path.join(consumer, "build")),
+      };
+      const port = await server.ready;
+      const response = await fetchRoute(`http://127.0.0.1:${port}/`);
+      stageLog.server.port = port;
+      stageLog.server.responseSha256 = sha256(utf8(response.body));
+      stageLog.server.responseStatus = response.status;
+      stageLog.server.contentType = response.contentType;
+      stageLog.server.stdout = server.stdout();
+      stageLog.server.stderr = server.stderr();
+      retain(label, stage, "render", {
+        status: response.status,
+        contentType: response.contentType,
+        body: response.body,
+      });
+      assertServerRendered(response, "world");
+      assertGeneratedComponentMarkup(
+        response,
+        STAGE_MARKERS[stage],
+        `${label}/${stage}`,
+      );
+    } finally {
+      if (server) await server.stop();
+    }
+
+    // Retain the input identity, source/build identity and the actually served
+    // handler/server-output identity for this stage. The identity log is written
+    // from the `finally` block so a failed stage still records its commands,
+    // exits, signals and failure cause.
+    const identity = {
+      label,
+      stage,
+      input: inputIdentity,
+      source: {
+        pageSha256: fileDigestOrNull(pagePath),
+        barrelSha256: fileDigestOrNull(abs(consumer, derived.rootExports)),
+        buttonSha256: fileDigestOrNull(
+          abs(consumer, `${derived.rootExportsDir}/button.svelte`),
+        ),
+        cardSha256: fileDigestOrNull(cardPath),
+      },
+      served: {
+        handlerSha256: fileDigestOrNull(handler),
+        buildOutputDigest: treeDigest(path.join(consumer, "build")),
+        responseSha256: stageLog.server?.responseSha256 ?? null,
+        responseStatus: stageLog.server?.responseStatus ?? null,
+      },
+      commands: stageLog.commands,
+      server: stageLog.server,
+      markers: STAGE_MARKERS[stage],
+    };
+    stageLog.identity = identity;
+    return identity;
+  } catch (error) {
+    stageLog.failure = String(error instanceof Error ? error.message : error);
+    throw error;
+  } finally {
+    retain(label, stage, "artifact-identity", stageLog);
+  }
 }
 
 async function runMapping(label, config) {
@@ -650,4 +778,99 @@ test("custom mapping: resulting consumer checks, builds and renders after add, u
     uiDir: "app/ui",
     stylesDir: "assets/styles",
   });
+});
+
+/**
+ * Causal controls for the generated-component assertion itself. These prove
+ * the assertion cannot be satisfied by page wrappers alone, by markup present
+ * only in a serialized script or an HTML comment, by a missing component or by
+ * stale generated markup, while the real generated component markup passes.
+ * Synthetic responses isolate the assertion's decision so the control is
+ * deterministic and does not depend on a build.
+ */
+test("generated-component assertion has positive and causal negative controls", () => {
+  const html = (body) => ({ status: 200, contentType: "text/html", body });
+  const stage = STAGE_MARKERS.add;
+  const realComponent =
+    '<div><button data-kit-marker="BUTTON_RETAINED">Retained button</button>' +
+    '<div data-kit-marker="CARD_ADDED_V1">Card v1</div></div>';
+
+  // Positive control: the actual generated component markup passes.
+  assert.doesNotThrow(() =>
+    assertGeneratedComponentMarkup(html(realComponent), stage, "control"),
+  );
+
+  // Wrapper-only: page-level markers without the generated components.
+  assert.throws(
+    () =>
+      assertGeneratedComponentMarkup(
+        html(
+          '<div data-button-marker="BUTTON_RETAINED"></div><div data-card-marker="CARD_ADDED_V1"></div>',
+        ),
+        stage,
+        "wrapper-only",
+      ),
+    /generated <button>/,
+  );
+
+  // Script-only and comment-only markers are stripped and cannot pass.
+  assert.throws(
+    () =>
+      assertGeneratedComponentMarkup(
+        html(
+          `<script>const x = '<button data-kit-marker="BUTTON_RETAINED">Retained button</button><div data-kit-marker="CARD_ADDED_V1">Card v1</div>';</script>`,
+        ),
+        stage,
+        "script-only",
+      ),
+    /generated <button>/,
+  );
+  assert.throws(
+    () =>
+      assertGeneratedComponentMarkup(
+        html(
+          '<!-- <button data-kit-marker="BUTTON_RETAINED">Retained button</button><div data-kit-marker="CARD_ADDED_V1">Card v1</div> -->',
+        ),
+        stage,
+        "comment-only",
+      ),
+    /generated <button>/,
+  );
+
+  // Missing component: only the retained button renders.
+  assert.throws(
+    () =>
+      assertGeneratedComponentMarkup(
+        html(
+          '<button data-kit-marker="BUTTON_RETAINED">Retained button</button>',
+        ),
+        stage,
+        "missing-card",
+      ),
+    /generated <div>/,
+  );
+
+  // Stale markup: the previous card stage renders instead of the expected one.
+  assert.throws(
+    () =>
+      assertGeneratedComponentMarkup(
+        html(
+          '<button data-kit-marker="BUTTON_RETAINED">Retained button</button><div data-kit-marker="CARD_UPDATED_V2">Card v2</div>',
+        ),
+        stage,
+        "stale-card",
+      ),
+    /generated <div>/,
+  );
+
+  // A stale marker is also rejected as an unexpected generated marker.
+  assert.throws(
+    () =>
+      assertGeneratedComponentMarkup(
+        html(realComponent),
+        { components: stage.components, absent: ["CARD_ADDED_V1"] },
+        "stale-absent",
+      ),
+    /unexpected generated component marker/,
+  );
 });

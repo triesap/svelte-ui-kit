@@ -1,7 +1,7 @@
 # RCLD04-Q2 resulting-consumer qualification report
 
-Implementation evidence for the owner-directed bounded dispatch `pfc RCLD04-Q2`
-in `implementation/COMMIT_SEQUENCE.md`. This report records Pi implementation
+Implementation evidence for the resulting-consumer qualification dispatched in
+`implementation/COMMIT_SEQUENCE.md`. This report records Pi implementation
 coverage; it grants no independent acceptance, whole-group, RCLD-04 or MVP
 completion, and it does not unlock S078 (which requires independent S077
 acceptance).
@@ -9,14 +9,19 @@ acceptance).
 ## Boundary
 
 - Start revision: `6db6d35c26f4b99c9a7f119b5dbb7fca18081560` (Q1 accepted).
-- Implementation commits: `23bb639` (dispositions + shared fixture extraction +
-  the folded-in owner-directed Q2 governance edits) and `afa7df9` (resulting
-  default/custom consumer check/build/render).
+- Q2 implementation commits: `23bb639` (dispositions + shared fixture extraction
+  - the folded-in owner-directed Q2 governance edits) and `afa7df9` (resulting
+    default/custom consumer check/build/render).
+- Q3 qualification corrections recorded here: strengthened generated-component
+  markup assertions with positive and causal negative controls, input/source/
+  served build identity capture with per-stage command exits/signals/errors,
+  maintained `test:fixture` wiring with serialized fixture writers, and genuine
+  base/local/incoming cohort conflict cases.
 - Committed pending review: S064–S077 remain `committed_pending_review`; S078 is
   still gated on independent S077 acceptance.
 - Q3 (protocol qualifications/corrections) and Q4 (cumulative qualification)
   were not entered.
-- No parent/coordinator change, reference-repository run, dependency change,
+- No external workspace change, reference-repository run, dependency change,
   push, publication or deployment occurred.
 - Raw per-stage outputs, exits, response bodies and artifact digests are
   retained under the ignored `implementation/evidence/logs/rcl04-q2-*` tree; no
@@ -45,14 +50,28 @@ components with per-stage `data-*` markers.
 | custom  | update     | 0            | 0          | 200 | BUTTON_RETAINED, CARD_UPDATED_V2 | CARD_ADDED_V1                  |
 | custom  | retirement | 0            | 0          | 200 | BUTTON_RETAINED                  | CARD_ADDED_V1, CARD_UPDATED_V2 |
 
-The SSR markup carries both the page-level `data-*-marker` and the generated
-component's own `data-kit-marker`, so the response proves the generated
-component rendered rather than a fixture-only page.
+The SSR assertion now matches the generated components' own `data-kit-marker`
+markup and stage-specific content (for example
+`<button data-kit-marker="BUTTON_RETAINED">Retained button</button>` and
+`<div data-kit-marker="CARD_ADDED_V1">Card v1</div>`), after stripping scripts
+and HTML comments. Page-level `data-*-marker` wrappers alone cannot satisfy it;
+wrapper-only, script/comment-only, missing and stale generated markup all fail in
+the causal control test, while the real component markup passes.
 
-### Source/artifact identity
+### Input, source and served identity
 
 Full digests are retained per stage in
 `implementation/evidence/logs/rcl04-q2-*/<mapping>-<stage>-artifact-identity.log`.
+Each stage log now records the registry version/content hash, the effective
+config, the owned `package.json`/`pnpm-lock.yaml` digests and the captured
+installed resolution decisions (input identity); the generated source digests
+(source identity); and the actually served build identity (the built
+`build/handler.js` digest, the complete build-output tree digest, the response
+body digest/status/content type and the server stdio). The check and build
+command, arguments, working directory, exit status, signal and spawn/timeout
+error are recorded in the same log even when a command fails, so a failed stage
+is still fully attributed. Raw outputs and raw responses stay under the ignored
+`implementation/evidence/logs/` tree.
 The retained identity proves the update changes only the card owner and the
 retirement removes it while the retained `button` cohort is byte-identical:
 
@@ -93,6 +112,14 @@ non-regular directory and asserts the conflict diagnostic plus no semantic
 write. The satisfied case never enters the guarded application: the whole tree
 and canonical lock are compared byte-for-byte before and after planning.
 
+A genuinely conflicting managed target whose local and incoming bytes both
+changed is refused with zero planned writes: editing the tracked card CSS block
+locally while the incoming registry changes both the card source (a clean update)
+and the same CSS block gives the block three distinct base/local/incoming bodies
+plus an adopting sibling member, so the card unit is a cohort conflict. The whole
+tree and canonical lock are byte-identical before and after planning for both
+mappings, and the guarded application API is never entered.
+
 ## Preserved Q1 assertions
 
 `tests/integration/multi-item-lifecycle.test.ts` keeps every accepted Q1
@@ -104,27 +131,28 @@ default/custom lifecycle files still execute seven passing tests.
 
 ## Verification (repository commands, Node 24.21.0 / pnpm 11.22.0 pins)
 
-| Command                                                                                                                                                                                           | Result                                      |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `pnpm run build`                                                                                                                                                                                  | exit 0                                      |
-| `node tools/run-unit-tests.mjs --suite integration tests/integration/multi-item-lifecycle.test.ts tests/integration/review16-matrix.test.ts tests/integration/q2-multi-item-dispositions.test.ts` | 3 files, 9 tests, 9 pass, 0 fail, 0 skipped |
-| `node --test tests/smoke/lifecycle-consumer.test.mjs tests/smoke/q2-resulting-consumer.test.mjs`                                                                                                  | 3 tests, 3 pass, 0 fail                     |
-| `pnpm run typecheck`                                                                                                                                                                              | exit 0                                      |
-| `pnpm run format:check`                                                                                                                                                                           | exit 0                                      |
-| `pnpm run lint`                                                                                                                                                                                   | exit 0                                      |
-| `node tools/check-contracts.mjs --generate`                                                                                                                                                       | exit 0, projection unchanged                |
-| `pnpm run check:contracts`                                                                                                                                                                        | 0 error(s), 0 warning(s)                    |
-| `git diff --check` / `git diff --cached --check`                                                                                                                                                  | exit 0                                      |
+| Command                                                                                                                                                                                                                                       | Result                                                    |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `pnpm run build`                                                                                                                                                                                                                              | exit 0                                                    |
+| `node tools/run-unit-tests.mjs --suite integration tests/integration/multi-item-lifecycle.test.ts tests/integration/review16-matrix.test.ts tests/integration/q2-multi-item-dispositions.test.ts tests/integration/compose-authority.test.ts` | 4 files, 30 tests, 30 pass, 0 fail, 0 skipped             |
+| `node --test tests/smoke/q2-resulting-consumer.test.mjs`                                                                                                                                                                                      | 3 tests, 3 pass, 0 fail (incl. generated-markup controls) |
+| `pnpm run test:fixture` (after wiring, serialized)                                                                                                                                                                                            | 27 tests, 27 pass, 0 fail                                 |
+| `pnpm run typecheck`                                                                                                                                                                                                                          | exit 0                                                    |
+| `pnpm run format:check`                                                                                                                                                                                                                       | exit 0                                                    |
+| `pnpm run lint`                                                                                                                                                                                                                               | exit 0                                                    |
+| `node tools/check-contracts.mjs --generate`                                                                                                                                                                                                   | exit 0, projection unchanged                              |
+| `pnpm run check:contracts`                                                                                                                                                                                                                    | 0 error(s), 0 warning(s)                                  |
+| `git diff --check` / `git diff --cached --check`                                                                                                                                                                                              | exit 0                                                    |
 
-Every mutating command ran through `cargo extbuild run --` after
-`cargo extbuild doctor` reported a green configuration. The consumer child
-processes inherit the extbuild router environment; only
-`NODE_OPTIONS`/`NODE_V8_COVERAGE`/`NODE_TEST_CONTEXT` are dropped for the child.
+The maintained `test:fixture` lane invokes the four smoke suites with
+`--test-concurrency=1`, so no two fixture writers (owned consumer copies or
+builds) run at the same time.
 
 ## Remaining work
 
-- RCLD04-Q3: remaining protocol qualification/corrections scoped from
-  independent review of the authored repair candidate.
+- RCLD04-Q3: this bounded dispatch's Q2 qualification corrections and the
+  installed-resolution authority qualification are implemented and verified
+  above. Remaining Q3 protocol/qualification work is a later dispatch.
 - RCLD04-Q4: full cumulative lanes and evidence reconciliation, followed by
   independent Codex acceptance of S064–S077 before S078.
 - S078 is not entered; S064–S077 remain committed pending review.

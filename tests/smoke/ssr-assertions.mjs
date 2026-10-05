@@ -13,6 +13,24 @@ export function stripScripts(html) {
   return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
 }
 
+/** The HTML with HTML comment content removed. */
+export function stripComments(html) {
+  return html.replace(/<!--[\s\S]*?-->/g, "");
+}
+
+/**
+ * The visible server markup with both scripts and comments removed. A marker
+ * that appears only inside a serialized hydration script or an HTML comment is
+ * therefore never counted as rendered content.
+ */
+export function visibleMarkup(html) {
+  return stripComments(stripScripts(html));
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /**
  * Assert successful HTTP transport independent of page content. Throws for a
  * non-200 status or a non-HTML content type.
@@ -31,7 +49,7 @@ export function assertHtmlTransport(response, label) {
  * null when the expected heading and request-local value are both present.
  */
 export function missingSsrMarkupError(response, expectedValue) {
-  const visible = stripScripts(response.body);
+  const visible = visibleMarkup(response.body);
   if (!/Consumer fixture qualification/.test(visible)) {
     return new Error(
       "missing visible SSR markup: the server-rendered route heading is absent",
@@ -69,7 +87,7 @@ export function assertVisibleMarkers(
   label = "SSR",
 ) {
   assertHtmlTransport(response, label);
-  const visible = stripScripts(response.body);
+  const visible = visibleMarkup(response.body);
   for (const marker of present) {
     assert.ok(
       visible.includes(marker),
@@ -80,6 +98,50 @@ export function assertVisibleMarkers(
     assert.ok(
       !visible.includes(marker),
       `${label}: unexpected visible marker ${JSON.stringify(marker)}`,
+    );
+  }
+  return visible;
+}
+
+/**
+ * Assert the actual generated component markup, not merely page wrapper text.
+ *
+ * Each expectation names one generated component by the element tag it
+ * renders, the component's own `data-kit-marker` attribute value and the exact
+ * stage-specific text it must contain. The assertion matches a real element
+ * whose marker attribute and content both appear in the visible markup, so:
+ *
+ * - a page that only renders its own `data-*-marker` wrappers (no generated
+ *   component) cannot pass;
+ * - a marker placed only in a serialized script or an HTML comment cannot pass,
+ *   because scripts and comments are stripped first;
+ * - a missing generated component cannot pass; and
+ * - stale generated markup (the marker/text of another stage) cannot pass.
+ *
+ * Transport success is asserted independently so a 500 or wrong content type
+ * cannot satisfy a component assertion. Returns the visible markup.
+ */
+export function assertGeneratedComponentMarkup(
+  response,
+  { components = [], absent = [] } = {},
+  label = "SSR",
+) {
+  assertHtmlTransport(response, label);
+  const visible = visibleMarkup(response.body);
+  for (const component of components) {
+    const { tag, marker, text } = component;
+    const pattern = new RegExp(
+      `<${escapeRegExp(tag)}\\b[^>]*\\bdata-kit-marker="${escapeRegExp(marker)}"[^>]*>[\\s\\S]*?${escapeRegExp(text)}[\\s\\S]*?<\\/${escapeRegExp(tag)}>`,
+    );
+    assert.ok(
+      pattern.test(visible),
+      `${label}: generated <${tag}> with data-kit-marker=${JSON.stringify(marker)} and content ${JSON.stringify(text)} is absent from visible server-rendered markup`,
+    );
+  }
+  for (const marker of absent) {
+    assert.ok(
+      !visible.includes(`data-kit-marker="${marker}"`),
+      `${label}: unexpected generated component marker ${JSON.stringify(marker)}`,
     );
   }
   return visible;

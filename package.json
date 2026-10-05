@@ -50,7 +50,7 @@
     "test:harness": "node --test tools/run-unit-tests.test.mjs",
     "fixture:check": "pnpm --dir tests/fixtures/consumer run check",
     "fixture:build": "pnpm --dir tests/fixtures/consumer run build",
-    "test:fixture": "pnpm run fixture:build && node --test tests/smoke/consumer-fixture.test.mjs tests/smoke/owned-server.test.mjs tests/smoke/lifecycle-consumer.test.mjs",
+    "test:fixture": "pnpm run fixture:build && node --test --test-concurrency=1 tests/smoke/consumer-fixture.test.mjs tests/smoke/owned-server.test.mjs tests/smoke/lifecycle-consumer.test.mjs tests/smoke/q2-resulting-consumer.test.mjs",
     "test:browser": "pnpm run fixture:build && playwright test --config playwright.config.ts",
     "check:contracts": "node tools/check-contracts.mjs",
     "test:contracts": "node --test tools/check-contracts.test.mjs"
