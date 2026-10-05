@@ -75,17 +75,26 @@ completion unlocks a successor. Unapproved `not_applicable` fails closed.
 Default validation is read-only; `--generate` and `--generate-sources` are the
 only writing modes.
 
-#### Current bounded Q2 verification
+#### Current bounded Q3 verification
 
-Follow COMMIT_SEQUENCE's current `pfc RCLD04-Q2` dispatch. Q1 tests and scoped
-coverage are accepted; original checkpoint/feature acceptance remains pending.
-Run resulting default/custom multi-item Svelte check, production build and
-built-handler SSR after add/update/retirement, plus exact satisfied/metadata/
-conflict comparisons. Reuse existing owned consumer/server helpers; serialize
-fixture writers and retain per-stage raw outputs/exits/artifact identity.
-Run only affected integration/smoke lanes plus build/typecheck/format/lint and
-contract/projection validation. Browser/reference/full cumulative lanes stay
-in Q4; protocol review/corrections stay Q3. Complete Q2 then return for review.
+Follow COMMIT_SEQUENCE's current `pfc RCLD04-Q3` dispatch. Preserve Q1 scoped
+acceptance; Q2 consumer qualification corrections and installed-resolution
+admission evidence remain pending independent review. Verify actual generated
+component markup with positive/causal negative controls, six default/custom
+consumer check/build/SSR stages, served build and source/config/dependency
+identities, exact satisfied/metadata/conflict comparisons including real local/
+incoming cohort conflict, and maintained consumer-lane inclusion. Serialize
+fixture writers. Qualify captured installed authority across direct/hoisted/
+linked layouts and the specific unchanged/drift/unsafe/unreadable cases in the
+current dispatch through production guarded callers with exact tree comparisons.
+
+Run build/typecheck/format/lint/contracts, focused affected integration and
+assertion controls, and maintained `test:fixture` after its wiring correction.
+Retain raw outputs/exits and factual coverage, including failed attempts.
+Regenerate derived projections only through their tooling; original projection
+and checkpoint definitions must remain unchanged. Browser/reference/full
+cumulative lanes stay Q4; other protocol groups remain later Q3 work. Complete
+both dispatched groups, then stop for Codex review before expanding the scope.
 
 #### Current RCLD-04 complete-boundary qualification
 

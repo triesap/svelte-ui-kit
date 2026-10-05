@@ -253,9 +253,10 @@ function captureEvidence(
 /**
  * Logical paths of the installed manifests resolved under the selected root.
  * A resolved manifest that lives in an ancestor `node_modules` outside the root
- * has no root-relative logical path and is excluded here; the captured
- * `installed` observation still governs planning, and revalidating an
- * out-of-root layout is not a supported same-root guarantee.
+ * has no root-relative logical path and is not duplicated here; it is carried
+ * by the per-name `installedResolution` evidence instead. The guarded apply
+ * re-proves that resolution context, link target and bytes as read-only
+ * evidence without granting any write authority outside the selected root.
  */
 function installedManifestPaths(
   root: string,

@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: Q1 assertion coverage accepted at `6db6d35`; bounded Q2 resulting-consumer qualification is implemented at `afa7df9` pending independent review. Original RCLD-04 acceptance remains pending. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-05.
+Status: Q1 assertion coverage accepted at `6db6d35`; independent Q2 review at `bbdb63e` requests qualification corrections. Current bounded dispatch is Q3: those corrections plus captured installed-resolution admission qualification. Original RCLD-04 acceptance remains pending. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-05.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -52,75 +52,93 @@ At S002, adopt the embedded contracts into their scheduled repository-relative f
 
 ## Codex dispatch — complete RCLD-04 transactions and recovery
 
-### Current bounded dispatch — RCLD04-Q2
+### Current bounded dispatch — RCLD04-Q3
 
-Independent Codex review on 2026-10-04 accepts **Q1 test coverage** at
-`6db6d35c26f4b99c9a7f119b5dbb7fca18081560` (`ceb5d62` implementation plus
-its report). This is scoped acceptance of the bounded assertion batch, not
-acceptance of any original S064–S077 checkpoint, R2 group or whole RCLD-04.
-Preserve 63 accepted / 14 committed_pending_review / 126 not_started, all
-original definitions/criteria, live tuple and the independent S078 gate.
+Independent Codex review on 2026-10-05 requests Q2 qualification corrections
+at clean candidate `bbdb63eecf611bf545a9fdf389b57d7e7b376f76`
+(implementation `23bb639` / `afa7df9`, followed by its report). Preserve scoped
+Q1 acceptance at `6db6d35`, all original S001–S203 definitions and R01–R34 /
+AC01–AC22 criteria, 63 accepted / 14 committed_pending_review / 126 not_started,
+the live RCLD-04 tuple and the independent S077/S078 gate. This review does not
+accept any original S064–S077 checkpoint or whole R2 group.
 
-Verified: fresh build/typecheck/format/lint/contracts pass; two focused
-integration files execute seven passing tests with zero failures/skips. A private
-independent helper probe passes its positive control and rejects nine unexpected
-file/mode/directory/link/addition/residue/removal/postimage mutations. Default
-and independently rooted custom add/update/retirement compare complete planned
-trees and explicit ownership/cohort expectations; default/custom init has the
-same complete-tree check. No source/tool product change was part of Q1.
-The authored full protocol candidate still awaits independent Q3 review.
+Fresh reviewer build/typecheck/format/lint/contracts pass. The three focused
+integration files pass nine tests; the two smoke files pass three tests,
+including real default/custom add/update/retirement check/build/built-handler
+SSR at all six stages. The authored core has no Q2 source/tool changes.
+Default/custom satisfied zero-write planning, exact metadata-only lock changes
+and unsafe nonregular-target refusal are verified progress. Ten prior review-16
+independent causal probes now produce safe typed outcomes on the fresh build;
+preserve these repairs. They do not establish the full protocol boundary.
 
-**Execute `pfc RCLD04-Q2` only.** Q1 is complete; this dispatch supersedes the
-historical Q1-only instructions below. Preserve the owner-directed bounded
-session policy and single governing plan. Q3 and Q4 remain separate required
-batches; do not enter them or S078 in this session.
+Q2 remains incomplete for these concrete reasons:
 
-Q2 scope and endpoint:
+1. Marker assertions search arbitrary non-script strings. A response containing
+   only page wrapper markers, with no generated components, passes. Require
+   actual generated component markup and stage-specific content, with controls
+   proving wrapper-only, script/comment-only, missing and stale component markup
+   cannot pass. Preserve real owned built-handler SSR at all six stages.
+2. The identity records hash page/barrel/component source, not the built handler
+   and server output. Retain source/config/dependency inputs and the actually
+   served build identity, with per-stage command/exit/signal/error evidence even
+   when a subprocess fails. Do not claim source digests alone are artifact proof.
+3. The new resulting-consumer suite is absent from `test:fixture`, which CI runs.
+   Wire it into the maintained consumer lane and serialize fixture writers.
+4. The conflict cell only tests a directory in place of a managed file. Add
+   genuine base/local/incoming cohort conflict controls for both mappings,
+   proving zero planned writes and whole-tree/lock preservation. Satisfied
+   zero-write plans need not enter an application API that requires a lock write.
+5. Restore portable standalone wording in changed Q2 report/test comments;
+   machine-specific build routing belongs outside public repository content.
+   Reconcile claims without erasing the historical six-stage passing evidence.
 
-1. Use existing shipped foundation and representative multi-item fixtures to
-   qualify the resulting **default and independent custom** applications after
-   add, update and retirement through captured snapshots and production
-   planners/composition/validation/application. At each of these six successful
-   stages run actual Svelte check, production build and built-handler SSR.
-   The test page must import/consume the generated value/type exports and render
-   generated components, with stage-specific markers proving the update and
-   retained component after retirement. A fixture-only or foundation-only page
-   does not establish multi-item consumption. Preserve Q1 tree/cohort assertions.
-2. Complete default/custom multi-item satisfied, metadata-only and conflicting
-   dispositions using the existing core; compare exact whole trees/ownership.
-   No-change/conflict checks may reuse an already qualified consumer artifact
-   only with explicit proof that its relevant source/config/dependency inputs
-   are identical. Metadata-only changes must be confined to exact planned state.
-3. Reuse maintained owned-copy/child-server helpers and existing dependencies;
-   do not mutate the maintained consumer fixture or shared dependency tree.
-   Test harness pages/config adapters are explicit owned fixture setup, not
-   generator writes. Derive imports from mapped roots without new product API,
-   aliases, unsafe path allowances, type suppression or SSR disablement.
-4. Retain unique per-stage check/build/render results, source/artifact identity,
-   full raw outputs/exits and a concise factual Q2 coverage report. Run focused
-   affected integration/smoke plus static/contracts, self-review and commit
-   coherent green target changes, then return for Codex review. Aim for two or
-   three coherent commits, not a commit-count acceptance rule.
+**Execute `pfc RCLD04-Q3` only.** This bounded dispatch combines those Q2
+qualification repairs with the next eligible RCLD04-R2-1 installed-resolution
+qualification. It is the first focused protocol boundary within existing Q3,
+not a new product checkpoint, alternate plan or permission to finish all
+protocol/cumulative work in one session. Aim for two or three coherent commits.
 
-Pi implementation evidence is recorded in
-`implementation/evidence/RCLD04_Q2_REPORT.md`: the six default/custom
-add/update/retirement consumer check/build/render results, the default/custom
-satisfied/metadata/conflict disposition matrix, and the preserved Q1
-whole-tree/ownership assertions, at implementation commits `23bb639` and
-`afa7df9`. This records target progress only; it grants no independent
-acceptance and does not enter Q3, Q4 or S078.
+Ordered scope and exact endpoint:
 
-Do not add the broad publication/durability matrix, full browser/reference/
-cumulative install/test lanes or later CLI/catalog work to Q2. Production defects
-that prevent the bounded qualification get a minimal reproduction and evidence
-for Codex sequencing; do not expand into a protocol rewrite. Original Q3 review/
-corrections and Q4 cumulative acceptance obligations remain required software
-work. No owner decision blocks this chosen batch. Clear owner natural-language
-instructions remain authoritative; workflow syntax is not the only way to grant
-instructions, and this concrete updated dispatch needs no repeated confirmation.
+1. Complete all five Q2 corrections above using existing fixtures/core/server
+   helpers and pinned dependencies. Preserve Q1 exact planned whole-tree and
+   ownership/cohort assertions and shipped foundation qualification.
+2. Qualify captured installed-resolution authority through real production
+   snapshot/planner/compose/validate/apply, not helper-only tests: unchanged
+   direct, hoisted and package-directory-linked layouts apply successfully;
+   post-planning nearer shadowing, hoisted manifest byte/mode/physical replacement,
+   same-byte package-link retargeting, and captured absence followed by appearance
+   refuse safely. Distinguish unsafe final manifest entries and unreadable or
+   incomplete enumeration from absence. Use deterministic syscall faults where
+   host permissions cannot make an unreadability case reliable. Assert typed
+   outcomes, exact whole-tree preservation after refusal and no mutation outside
+   the selected consumer root; external dependencies remain read-only. Cover
+   default and independently rooted custom mappings where write-root mapping
+   affects the guarded path. Use existing core APIs, no recapture, force bypass,
+   new dependency or expanded write permissions. Repair actual defects exposed
+   within this installed-authority boundary with causal repository tests.
+3. Run focused affected integration, maintained `test:fixture`, assertion
+   controls and static/contracts. Retain raw logs, exact exits, identities and a
+   factual coverage matrix. Update progress/evidence, self-review and commit
+   coherent green target changes. Stop when both scoped groups are implemented
+   and verified, for independent Codex review of this admission boundary.
 
-Historical partition and Q1 receipt below remain provenance; current Q2 scope
-and stopping boundary take precedence.
+Remaining publication/recovery/durability and other structured authority
+qualification still belong to subsequent Q3 dispatches; Q4 retains full
+cumulative install/test/browser/CI/reference evidence and reconciliation.
+Neither Q3 as a whole nor S064–S077 can be marked accepted by this dispatch.
+Do not enter Q4, S078, later CLI S081 or catalog S096/S097. A broader protocol
+finding gets a concrete reproduction and preserved evidence for Codex sequencing,
+not silent deferral or a scope-expanding rewrite. No owner/external/hardware
+blocker exists for this selected software work.
+
+Continue through both groups after each green commit; a report, passing subset,
+conversation size or one commit is not the endpoint. Respect user stops,
+required independent review gates and actual runtime/external limits; report
+unfinished work and the precise stopping cause without claiming completion.
+Clear owner natural-language instructions remain authoritative. Historical
+Q2/Q1/full-batch instructions are provenance, superseded in dispatch and batch
+size, never in original acceptance criteria.
 
 ### Owner-directed bounded dispatch — RCLD04-Q1
 

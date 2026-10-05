@@ -17,14 +17,14 @@ references.
   self-reviews within the dispatched checkpoint. Codex owns scope,
   contract/API decisions, dependency-selection approval, deviations,
   acceptance, checkpoint commits and dispatch between coding periods.
-- Complete one checkpoint at a time in documented order. Current owner-directed
-  dispatch is `pfc RCLD04-Q2`, resulting-consumer qualification in the governing
-  COMMIT_SEQUENCE. Q1 assertion coverage is independently accepted; original
-  S064–S077 remain committed_pending_review. Complete Q2 and focused checks,
-  then return for Codex review before Q3/Q4. Earlier Q1-only and single-session
-  full-RCLD instructions are superseded in dispatch scope, not criteria.
-  Preserve 63 accepted checkpoints and the independent S077/S078 gate.
-  Target-only coherent green Q2 commits are authorized; no parent/remote changes.
+- Complete one checkpoint at a time in documented order. Current bounded
+  dispatch is `pfc RCLD04-Q3`: Q2 qualification corrections followed by captured
+  installed-resolution authority qualification, as scoped in COMMIT_SEQUENCE.
+  Preserve scoped Q1 acceptance and all original S064–S077 pending criteria.
+  Finish both groups and focused checks, then return for Codex admission review;
+  remaining Q3 protocol work and Q4 are later dispatches. Preserve 63 accepted
+  checkpoints and the independent S077/S078 gate. Target-only coherent green
+  commits are authorized in this bounded scope; no parent or remote changes.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
 - No commit, push, publication, deployment or reference-repository mutation
