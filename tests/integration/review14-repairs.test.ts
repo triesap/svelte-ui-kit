@@ -49,7 +49,9 @@ import {
   type CapturedEnvironment,
 } from "../../src/project/environment.js";
 import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
+import { validKitConfigBytes } from "../helpers/kit-config.js";
 
 /**
  * RCLD04 review-14 regression coverage. Each case proves a distinct safety
@@ -144,11 +146,12 @@ function makePlan(root: string): ApplyPlanInput {
     `${STATE}/kit.lock.json`,
     Buffer.from(lockBytes("c".repeat(64))).toString("utf8"),
   );
+  const configBytes = validKitConfigBytes(ROOTS);
   const targets: ApplyTarget[] = [
     {
       path: `${STATE}/kit.json`,
       operation: "update",
-      bytes: new TextEncoder().encode("new config\n"),
+      bytes: configBytes,
       mode: 0o644,
       preimage: capturePreimage(root, `${STATE}/kit.json`),
     },
@@ -170,7 +173,7 @@ function makePlan(root: string): ApplyPlanInput {
     readset: readset.value,
     targets,
     lock: {
-      bytes: lockBytes("d".repeat(64)),
+      bytes: lockBytes(sha256Hex(configBytes)),
       preimage: capturePreimage(root, lockPath(STATE)),
     },
   };
@@ -305,12 +308,12 @@ test("a composed guarded ignore operation recovers without an unapproved-target 
       {
         path: `${STATE}/kit.json`,
         operation: "update",
-        bytes: new TextEncoder().encode("new config\n"),
+        bytes: validKitConfigBytes(ROOTS),
       },
       {
         path: lockPath(STATE),
         operation: "create",
-        bytes: lockBytes("d".repeat(64)),
+        bytes: lockBytes(sha256Hex(validKitConfigBytes(ROOTS))),
       },
     ];
     const composed = composeApplyPlan({

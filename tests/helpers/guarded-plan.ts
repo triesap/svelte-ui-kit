@@ -3,8 +3,10 @@ import path from "node:path";
 
 import { captureReadset } from "../../src/codegen/authority.js";
 import type { ApplyPlanInput, ApplyTarget } from "../../src/codegen/apply.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import { capturePreimage } from "../../src/codegen/revalidate.js";
 import { lockPath } from "../../src/codegen/transaction-types.js";
+import { validKitConfigBytes } from "./kit-config.js";
 
 /**
  * Shared guarded-plan builder for RCLD-04 authority/coordination regressions.
@@ -72,13 +74,15 @@ export function makeGuardedPlan(
   write(root, layoutFile, "<script>old layout</script>");
   write(root, `${uiDir}/_kit/kit.json`, "old config");
 
+  const configBytes = validKitConfigBytes({ uiDir, stylesDir, layoutFile });
+
   const targets: ApplyTarget[] = options.metadataOnly
     ? []
     : [
         {
           path: `${uiDir}/_kit/kit.json`,
           operation: "update",
-          bytes: new TextEncoder().encode("new config\n"),
+          bytes: configBytes,
           mode: 0o644,
           preimage: capturePreimage(root, `${uiDir}/_kit/kit.json`),
         },
@@ -123,7 +127,7 @@ export function makeGuardedPlan(
     readset: readset.value,
     targets,
     lock: {
-      bytes: lockJson(options.lockConfigHash ?? "d".repeat(64)),
+      bytes: lockJson(options.lockConfigHash ?? sha256Hex(configBytes)),
       preimage: capturePreimage(root, lockPath(stateDir)),
     },
   };

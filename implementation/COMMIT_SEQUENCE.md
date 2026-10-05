@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: independent cleanup review at `aab99c4` verifies prior flush/markup repairs and preserves Q1/Q2/installed-authority progress, but remaining removal-error handling and full protocol qualification are incomplete. The owner requests more work per command: current dispatch is `pfc through RCLD-04`, combining all remaining Q3 work and Q4 cumulative qualification. Preserve 63 accepted / 14 committed_pending_review / 126 not_started and original S077/S078 acceptance gate. Updated 2026-10-05.
+Status: independent return review at `a0016eb` verifies namespace-removal repairs and cumulative execution evidence, but structured validation, projected config/lock/target coherence and separate-process recovery qualification remain incomplete. Current dispatch remains `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together, before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-05.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD-04 complete candidate** (all remaining original S064–S077/R2 implementation, Q3 corrections and Q4 cumulative qualification recorded in `implementation/evidence/RCLD04_Q4_REPORT.md`; S064–S077 remain committed_pending_review pending the mandatory independent Codex S077 review before S078).
+- Active implementation checkpoint: **RCLD-04 remaining authority and integration qualification** (return review below requests changes to the candidate described by `implementation/evidence/RCLD04_Q4_REPORT.md`; S064–S077 remain committed_pending_review and S078 stays gated).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -53,6 +53,57 @@ At S002, adopt the embedded contracts into their scheduled repository-relative f
 ## Codex dispatch — complete RCLD-04 transactions and recovery
 
 ### Current expanded dispatch — through RCLD-04
+
+#### Independent return review — a0016eb
+
+Codex reviewed clean candidate `a0016ebd0a58c9895b0516e48c7f2ee7ebbd5aaf`
+and commits `a6ed512`, `a73f5af`, `a0016eb`. Namespace-removal EIO now has
+truthful typed outcomes through apply and both recovery callers. Preserve this
+repair, prior flush/markup/Q1/Q2/installed-resolution progress, and real captured
+default/custom writer interruption with complete-tree comparisons. The retained
+cumulative lane logs substantiate execution, not whole-feature acceptance.
+No original checkpoint, R2 group or RCLD-04 acceptance is granted.
+
+Independent production-init probes expose still-open R2-1 requirements:
+
+- An installed absent record missing `digest` throws `ModelError` from digest
+  serialization instead of returning validation issues. An absent record with
+  non-null digest/mode/device/inode is accepted. Top-level plan, target and lock
+  unknown fields are silently accepted. Inventory every approved nested shape
+  and validate required/unknown fields and kind-consistent null/identity values
+  before digest/sealing. Malformed evidence must return typed failures without
+  starting coordination or changing the tree; positive controls must remain valid.
+- A captured init plan whose config write changes `uiDir` to a different mapping
+  validates and reports `applied` while publishing the old mapped lock. Removing
+  its planned layout write likewise publishes a layout integration for an absent
+  file. Parsing the lock alone does not validate the complete projected batch.
+  Before effects, derive the effective projected config/targets/unchanged captured
+  evidence and validate mapping, requested roots, ownership/cohorts and integration
+  existence/roles against the final lock. Require sufficient original evidence,
+  never live recapture. Preserve legitimate local customization and baseline
+  lineage: do not require every effective user-edited byte to equal an upstream
+  base hash. Preserve valid shared CSS and mapped app/layout integration roles.
+
+The captured restart tests call `recoverTransactions` directly in the parent
+test; they do not launch the separately spawned fresh recovery process required
+by the prior dispatch. The Q4 report and helper comments overstate that evidence.
+Launch bounded recovery children with attributable exit/output and exact whole-tree
+assertions for both exported callers where applicable. Include default/custom,
+recoverable post-release tails and fail-closed held ownership; never remove owner
+locks or bypass coordination to fake recovery. Complete the original causal
+stage/backup/replacement/progress/intent/rename/record/cleanup/release crash and
+fault matrix, reusing sound existing coverage and adding genuinely missing cells.
+
+Continue the SAME substantial `pfc through RCLD-04` boundary: repairs plus full
+remaining R2-1..5/S064–S077 caller and per-criterion qualification, then integrated
+cumulative checks and factual report/ledger/projection reconciliation. A table of
+test filenames or safe historical probes is not complete acceptance evidence;
+link each original criterion to an executed case and assert its intended outcome.
+Correct the complete-candidate and fresh-process claims without erasing historical
+evidence. No new APIs, dependency changes, forced takeover or product requirements.
+No owner/external/hardware blocker prevents this software batch. Stop only at the
+original independent S077 acceptance gate before S078 or a legitimate runtime/user/
+external stop; continue other eligible work. Earlier narrower limits stay superseded.
 
 The owner requested more eligible work per command on 2026-10-05. Execute
 **`pfc through RCLD-04`**: complete all remaining original S064–S077 /

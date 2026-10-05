@@ -537,34 +537,32 @@ export function validateReadset(readset: unknown): ModelIssue[] {
   }
   if (Array.isArray(installed)) {
     const seenInstalled = new Set<string>();
+    const installedKeys: readonly string[] = [
+      "name",
+      "kind",
+      "path",
+      "realPath",
+      "digest",
+      "mode",
+      "device",
+      "inode",
+      "code",
+    ];
     for (const [index, entry] of installed.entries()) {
       const label = `readset.installed[${index}]`;
-      if (
-        typeof entry !== "object" ||
-        entry === null ||
-        typeof (entry as PlanInstalledRead).name !== "string" ||
-        (entry as PlanInstalledRead).name.length === 0
-      ) {
+      if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
         problems.push(
-          issue("PLAN_READSET_INVALID", `${label} name is invalid`, label),
+          issue("PLAN_READSET_INVALID", `${label} must be an object`, label),
         );
         continue;
       }
-      const record = entry as PlanInstalledRead;
+      const record = entry as Record<string, unknown>;
+      // Strict nested shape: every approved key must be present and no unknown
+      // key may appear. A missing evidence key can no longer reach canonical
+      // serialization as `undefined` and throw a serializer `ModelError`; it is
+      // a typed refusal before hashing/sealing/coordination.
       for (const key of Object.keys(record)) {
-        if (
-          ![
-            "name",
-            "kind",
-            "path",
-            "realPath",
-            "digest",
-            "mode",
-            "device",
-            "inode",
-            "code",
-          ].includes(key)
-        ) {
+        if (!installedKeys.includes(key)) {
           problems.push(
             issue(
               "PLAN_READSET_INVALID",
@@ -574,67 +572,156 @@ export function validateReadset(readset: unknown): ModelIssue[] {
           );
         }
       }
-      if (seenInstalled.has(record.name)) {
+      for (const key of installedKeys) {
+        if (!(key in record)) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} is missing required key ${key}`,
+              label,
+            ),
+          );
+        }
+      }
+      if (typeof record["name"] !== "string" || record["name"].length === 0) {
+        problems.push(
+          issue("PLAN_READSET_INVALID", `${label} name is invalid`, label),
+        );
+        continue;
+      }
+      const name = record["name"];
+      if (seenInstalled.has(name)) {
         problems.push(
           issue(
             "PLAN_READSET_INVALID",
-            `${label} duplicates dependency ${record.name}`,
+            `${label} duplicates dependency ${name}`,
             label,
           ),
         );
       }
-      seenInstalled.add(record.name);
+      seenInstalled.add(name);
+      const kind = record["kind"];
       if (
-        record.kind !== "file" &&
-        record.kind !== "absent" &&
-        record.kind !== "unsafe" &&
-        record.kind !== "unreadable"
+        kind !== "file" &&
+        kind !== "absent" &&
+        kind !== "unsafe" &&
+        kind !== "unreadable"
       ) {
         problems.push(
           issue("PLAN_READSET_INVALID", `${label} kind is unknown`, label),
         );
         continue;
       }
-      if (record.kind === "absent") {
-        if (record.path !== null || record.realPath !== null) {
+      if (kind === "absent") {
+        // An absent resolution may carry only null evidence. A stray digest,
+        // mode, identity or diagnostic code is kind-inconsistent, not authority.
+        if (
+          record["path"] !== null ||
+          record["realPath"] !== null ||
+          record["digest"] !== null ||
+          record["mode"] !== null ||
+          record["device"] !== null ||
+          record["inode"] !== null ||
+          record["code"] !== null
+        ) {
           problems.push(
             issue(
               "PLAN_READSET_INVALID",
-              `${label} must not carry a path for an absent resolution`,
+              `${label} absent resolution must carry only null evidence`,
               label,
             ),
           );
         }
         continue;
       }
-      if (typeof record.path !== "string" || record.path.length === 0) {
+      if (typeof record["path"] !== "string" || record["path"].length === 0) {
         problems.push(
           issue("PLAN_READSET_INVALID", `${label} path is invalid`, label),
         );
       }
-      if (record.kind === "file") {
-        if (!/^[0-9a-f]{64}$/.test(String(record.digest))) {
+      if (kind === "file") {
+        const realPath = record["realPath"];
+        if (
+          realPath !== null &&
+          (typeof realPath !== "string" || realPath.length === 0)
+        ) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} realPath is invalid`,
+              label,
+            ),
+          );
+        }
+        if (!/^[0-9a-f]{64}$/.test(String(record["digest"]))) {
           problems.push(
             issue("PLAN_READSET_INVALID", `${label} digest is invalid`, label),
           );
         }
+        const mode = record["mode"];
         if (
-          !Number.isInteger(record.mode) ||
-          (record.mode as number) < 0 ||
-          (record.mode as number) > 0o777
+          !Number.isInteger(mode) ||
+          (mode as number) < 0 ||
+          (mode as number) > 0o777
         ) {
           problems.push(
             issue("PLAN_READSET_INVALID", `${label} mode is invalid`, label),
           );
         }
-      } else if (typeof record.code !== "string" || record.code.length === 0) {
-        problems.push(
-          issue(
-            "PLAN_READSET_INVALID",
-            `${label} must record the ${record.kind} diagnostic code`,
-            label,
-          ),
-        );
+        const device = record["device"];
+        if (
+          device !== null &&
+          (!Number.isInteger(device) || (device as number) < 0)
+        ) {
+          problems.push(
+            issue("PLAN_READSET_INVALID", `${label} device is invalid`, label),
+          );
+        }
+        const inode = record["inode"];
+        if (
+          inode !== null &&
+          (!Number.isInteger(inode) || (inode as number) < 0)
+        ) {
+          problems.push(
+            issue("PLAN_READSET_INVALID", `${label} inode is invalid`, label),
+          );
+        }
+        if (record["code"] !== null) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} resolved file must not carry a diagnostic code`,
+              label,
+            ),
+          );
+        }
+      } else {
+        // unsafe/unreadable evidence is a diagnostic, never a resolved file.
+        if (
+          record["realPath"] !== null ||
+          record["digest"] !== null ||
+          record["mode"] !== null ||
+          record["device"] !== null ||
+          record["inode"] !== null
+        ) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} ${kind} resolution must not carry a resolved file identity`,
+              label,
+            ),
+          );
+        }
+        const code = record["code"];
+        if (typeof code !== "string" || code.length === 0) {
+          problems.push(
+            issue(
+              "PLAN_READSET_INVALID",
+              `${label} must record the ${kind} diagnostic code`,
+              label,
+            ),
+          );
+        }
       }
     }
   }

@@ -1,0 +1,379 @@
+import assert from "node:assert/strict";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { test } from "node:test";
+
+import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import type { ApplyPlanInput } from "../../src/codegen/apply.js";
+import { composeApplyPlan } from "../../src/codegen/compose.js";
+import { planInit } from "../../src/codegen/plan-init.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
+import { captureSnapshot } from "../../src/codegen/snapshot.js";
+import {
+  deriveKitPaths,
+  DEFAULT_KIT_CONFIG,
+} from "../../src/project/config.js";
+import type { KitConfig } from "../../src/project/config.js";
+import { createAssetProvider } from "../../src/registry/assets.js";
+import { loadRegistrySnapshot } from "../../src/registry/load.js";
+import { planMutations } from "../helpers/lifecycle-assertions.js";
+import {
+  assertTreeAfterMutations,
+  snapshotTree,
+} from "../helpers/tree-snapshot.js";
+
+/**
+ * RCLD04-R2-1/R2-2: strict structured validation and complete projected-batch
+ * coherence at the guarded boundary.
+ *
+ * These cases reproduce the independent return-review probes on a real captured
+ * production initialization plan: unknown plan/target/lock fields, a malformed
+ * installed-resolution record that previously threw from canonical hashing, a
+ * projected config write that disagrees with the published lock mapping, and a
+ * lock integration whose projected file no longer exists. Every refusal is
+ * typed, happens before coordination or writes, and leaves the selected tree
+ * byte-identical.
+ */
+
+const PKG_ROOT = process.cwd();
+const DEFAULT = DEFAULT_KIT_CONFIG;
+const CUSTOM: KitConfig = {
+  ...DEFAULT_KIT_CONFIG,
+  uiDir: "app/ui",
+  stylesDir: "assets/styles",
+};
+
+/** A deliberately mutable view of a captured plan for negative probes. */
+interface MutablePlan {
+  readset: ApplyPlanInput["readset"];
+  targets: ApplyPlanInput["targets"];
+  lock: ApplyPlanInput["lock"];
+}
+
+function write(root: string, rel: string, data: string): void {
+  writeFileSync(path.join(root, ...rel.split("/")), data);
+}
+
+function seed(root: string): void {
+  write(
+    root,
+    "package.json",
+    JSON.stringify({
+      name: "consumer",
+      type: "module",
+      dependencies: {
+        svelte: "5.57.1",
+        "@sveltejs/kit": "2.70.3",
+        "bits-ui": "2.19.3",
+        "@internationalized/date": "3.12.4",
+      },
+    }),
+  );
+}
+
+function initPaths(config: KitConfig): string[] {
+  const derived = deriveKitPaths(config);
+  return [
+    `${derived.stateDir}/kit.json`,
+    `${derived.stateDir}/kit.lock.json`,
+    derived.rootExports,
+    derived.kitCss,
+    derived.themesCss,
+    derived.appCss,
+    config.layoutFile,
+    ".gitignore",
+  ];
+}
+
+/** A real captured `planInit` -> `composeApplyPlan` batch for one mapping. */
+function capturedInit(root: string, config: KitConfig): ApplyPlanInput {
+  const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
+  assert.equal(registry.ok, true, JSON.stringify(registry));
+  if (!registry.ok) throw new Error("registry invalid");
+  const snapshot = captureSnapshot(root, initPaths(config));
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) throw new Error("snapshot failed");
+  const planned = planInit({
+    config,
+    layoutFile: config.layoutFile,
+    layoutSource: "",
+    snapshot: snapshot.value,
+    registry: registry.value,
+    configHash: "b".repeat(64),
+  });
+  assert.equal(planned.ok, true, JSON.stringify(planned));
+  if (!planned.ok) throw new Error("plan failed");
+  const composed = composeApplyPlan({
+    root,
+    config,
+    writes: planned.value.writes,
+    snapshot: snapshot.value,
+  });
+  assert.equal(composed.ok, true, JSON.stringify(composed));
+  if (!composed.ok) throw new Error("compose failed");
+  return composed.value;
+}
+
+function withCapturedInit(
+  config: KitConfig,
+  body: (root: string, plan: ApplyPlanInput) => void,
+): void {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-projected-"));
+  try {
+    seed(root);
+    body(root, capturedInit(root, config));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+/** Validate a mutated captured plan and prove a typed refusal with no effect. */
+function assertRefusedWithoutEffect(
+  root: string,
+  plan: ApplyPlanInput,
+  mutate: (plan: MutablePlan) => void,
+  expectedCode: string,
+): void {
+  const mutated = structuredClone(plan) as unknown as MutablePlan;
+  mutate(mutated);
+  const before = snapshotTree(root);
+  const result = validateApplyPlan(mutated as unknown as ApplyPlanInput);
+  assert.equal(result.ok, false, JSON.stringify(result));
+  if (!result.ok) {
+    assert.ok(
+      result.issues.some((entry) => entry.code === expectedCode),
+      `expected ${expectedCode} in ${JSON.stringify(result.issues)}`,
+    );
+  }
+  assert.deepEqual(
+    snapshotTree(root),
+    before,
+    "a refused projection must not create files, coordination or residue",
+  );
+  const derived = deriveKitPaths(DEFAULT);
+  assert.equal(
+    existsSync(path.join(root, derived.stateDir, ".svelte-ui-kit")),
+    false,
+  );
+}
+
+test("unknown plan, target and lock fields are typed refusals before hashing", () => {
+  withCapturedInit(DEFAULT, (root, plan) => {
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        (value as unknown as Record<string, unknown>).unapproved = true;
+      },
+      "PLAN_UNKNOWN_FIELD",
+    );
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        (value.targets[0] as unknown as Record<string, unknown>).unapproved =
+          true;
+      },
+      "PLAN_TARGET_INVALID",
+    );
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        (value.lock as unknown as Record<string, unknown>).unapproved = true;
+      },
+      "PLAN_LOCK_INVALID",
+    );
+  });
+});
+
+test("malformed installed-resolution evidence is typed, never a thrown serializer error", () => {
+  withCapturedInit(DEFAULT, (root, plan) => {
+    const base = {
+      name: "not-installed",
+      kind: "absent" as const,
+      path: null,
+      realPath: null,
+      digest: null,
+      mode: null,
+      device: null,
+      inode: null,
+      code: null,
+    };
+    // A missing required key previously reached canonical hashing as
+    // `undefined` and threw a `ModelError` from digest serialization.
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        const missingKey = { ...base } as Record<string, unknown>;
+        delete missingKey.digest;
+        value.readset = {
+          ...value.readset,
+          installed: [missingKey] as never,
+        };
+      },
+      "PLAN_READSET_INVALID",
+    );
+    // An absent resolution carrying a non-null digest/mode/device/inode is
+    // kind-inconsistent and must not validate as authority.
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        value.readset = {
+          ...value.readset,
+          installed: [
+            {
+              ...base,
+              digest: "a".repeat(64),
+              mode: 0o644,
+              device: 1,
+              inode: 2,
+            },
+          ],
+        };
+      },
+      "PLAN_READSET_INVALID",
+    );
+  });
+});
+
+test("positive controls: default and custom captured init plans validate and apply exactly", () => {
+  for (const config of [DEFAULT, CUSTOM]) {
+    const root = mkdtempSync(path.join(os.tmpdir(), "suik-projected-ok-"));
+    try {
+      seed(root);
+      const plan = capturedInit(root, config);
+      const before = snapshotTree(root);
+      const validated = validateApplyPlan(plan);
+      assert.equal(validated.ok, true, JSON.stringify(validated));
+      if (!validated.ok) continue;
+      const outcome = applyPlan(validated.value);
+      assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+      assertTreeAfterMutations(
+        root,
+        before,
+        planMutations(validated.value, deriveKitPaths(config)),
+      );
+      const derived = deriveKitPaths(config);
+      const configBytes = readFileSync(
+        path.join(root, ...`${derived.stateDir}/kit.json`.split("/")),
+      );
+      const lock = JSON.parse(
+        Buffer.from(validated.value.lock.bytes).toString("utf8"),
+      ) as { configHash: string };
+      assert.equal(lock.configHash, sha256Hex(configBytes));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
+test("a projected config write that disagrees with the plan mapping is refused", () => {
+  withCapturedInit(DEFAULT, (root, plan) => {
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        const derived = deriveKitPaths(DEFAULT);
+        const index = value.targets.findIndex(
+          (entry) => entry.path === `${derived.stateDir}/kit.json`,
+        );
+        assert.ok(index >= 0, "the captured init must plan the config write");
+        const target = value.targets[index];
+        if (target === undefined) return;
+        const config = JSON.parse(Buffer.from(target.bytes).toString("utf8"));
+        config.uiDir = "other/ui";
+        const bytes = new TextEncoder().encode(`${JSON.stringify(config)}\n`);
+        value.targets = value.targets.map((entry, position) =>
+          position === index ? { ...entry, bytes } : entry,
+        );
+      },
+      "PROJECTED_CONFIG_MISMATCH",
+    );
+  });
+});
+
+test("a projected lock that names an absent integration or owned file is refused", () => {
+  withCapturedInit(DEFAULT, (root, plan) => {
+    // Remove the planned layout write while the lock still records a layout
+    // integration for it: the published lock would describe a file that does
+    // not exist.
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        value.targets = value.targets.filter(
+          (target) => target.path !== DEFAULT.layoutFile,
+        );
+      },
+      "PROJECTED_INTEGRATION_MISSING",
+    );
+  });
+});
+
+test("a final lock whose configHash is not the projected config identity is refused", () => {
+  withCapturedInit(DEFAULT, (root, plan) => {
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        const lock = JSON.parse(
+          Buffer.from(value.lock.bytes).toString("utf8"),
+        ) as Record<string, unknown>;
+        lock.configHash = "c".repeat(64);
+        value.lock = {
+          ...value.lock,
+          bytes: new TextEncoder().encode(`${JSON.stringify(lock, null, 2)}\n`),
+        };
+      },
+      "PROJECTED_CONFIG_HASH_MISMATCH",
+    );
+  });
+});
+
+test("a lock that owns a file absent from the projected tree is refused", () => {
+  withCapturedInit(DEFAULT, (root, plan) => {
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        const derived = deriveKitPaths(DEFAULT);
+        const lock = JSON.parse(
+          Buffer.from(value.lock.bytes).toString("utf8"),
+        ) as {
+          requested: string[];
+          items: unknown[];
+          files: unknown[];
+        };
+        lock.items.push({
+          id: "button",
+          version: "0.1.0",
+          digest: sha256Hex("button"),
+          origin: "explicit",
+        });
+        lock.requested.push("button");
+        lock.files.push({
+          path: `${derived.rootExportsDir}/ghost.svelte`,
+          owner: "button",
+          baseHash: sha256Hex("ghost"),
+          itemVersion: "0.1.0",
+          cohort: "core",
+        });
+        value.lock = {
+          ...value.lock,
+          bytes: new TextEncoder().encode(`${JSON.stringify(lock, null, 2)}\n`),
+        };
+      },
+      "PROJECTED_OWNERSHIP_MISSING",
+    );
+  });
+});

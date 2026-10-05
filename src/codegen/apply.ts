@@ -52,7 +52,11 @@ import {
 import { canonicalContentHash, sha256Hex } from "./digest.js";
 import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
 import { parseKitLock } from "./lock.js";
-import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../project/config.js";
+import {
+  resolveProjectedConfig,
+  validateProjectedLock,
+} from "./projected-batch.js";
+import { deriveKitPaths } from "../project/config.js";
 import type { ChangeOperation } from "./plan.js";
 import {
   prepareJournal,
@@ -162,8 +166,53 @@ const OPERATIONS: readonly ChangeOperation[] = ["create", "update", "retire"];
 const HEX64 = /^[0-9a-f]{64}$/;
 const TRANSIENT_BASENAME = ".svelte-ui-kit";
 
+/**
+ * The complete approved key set of each input shape. An unknown key is a typed
+ * refusal, never a silently ignored field: a caller cannot smuggle authority
+ * or extra behaviour past validation. Nested preimages/readset evidence carry
+ * their own strict key inventories.
+ */
+const PLAN_KEYS: readonly string[] = [
+  "root",
+  "stateDir",
+  "uiDir",
+  "stylesDir",
+  "layoutFile",
+  "rootIdentity",
+  "planDigest",
+  "readset",
+  "targets",
+  "lock",
+  "ignoreFiles",
+];
+const TARGET_KEYS: readonly string[] = [
+  "path",
+  "operation",
+  "bytes",
+  "mode",
+  "preimage",
+];
+const LOCK_KEYS: readonly string[] = ["bytes", "preimage"];
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** Record every key of a plain object that is not in the approved inventory. */
+function unknownKeys(
+  value: Record<string, unknown>,
+  allowed: readonly string[],
+  code: string,
+  locator: string,
+  problems: ModelIssue[],
+): void {
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) {
+      problems.push(
+        issue(code, `${locator} has unexpected key ${key}`, locator),
+      );
+    }
+  }
 }
 
 /**
@@ -181,6 +230,7 @@ export function validateApplyPlan(
   if (!isPlainObject(input)) {
     return fail([issue("PLAN_INCOMPLETE", "plan must be an object", "plan")]);
   }
+  unknownKeys(input, PLAN_KEYS, "PLAN_UNKNOWN_FIELD", "plan", problems);
   const requiredStrings: readonly (keyof ApplyPlanInput)[] = [
     "root",
     "stateDir",
@@ -311,6 +361,13 @@ export function validateApplyPlan(
       );
       continue;
     }
+    unknownKeys(
+      target,
+      TARGET_KEYS,
+      "PLAN_TARGET_INVALID",
+      typeof target.path === "string" ? target.path : "targets",
+      problems,
+    );
     if (!isSafeLogicalRelativePath(target.path)) {
       problems.push(
         issue(
@@ -525,6 +582,9 @@ export function validateApplyPlan(
       }),
     );
   }
+  // The lock wrapper is a strict nested shape. An unknown key is a typed
+  // refusal before digest/sealing/coordination, never a silently ignored field.
+  unknownKeys(plan.lock, LOCK_KEYS, "PLAN_LOCK_INVALID", "lock", problems);
   // The lock preimage is a strict nested shape, not an unchecked record.
   const lockPreimage = plan.lock.preimage as unknown;
   if (!isPlainObject(lockPreimage)) {
@@ -613,6 +673,27 @@ export function validateApplyPlan(
   // Validate the exact final lock content before any coordination is acquired.
   // An invalid or incoherent lock must never reach a semantic replacement.
   if (lockBytesView instanceof Uint8Array && lockBytesView.byteLength > 0) {
+    // Derive the complete projected batch from the captured planning authority:
+    // the effective projected configuration, target results and unchanged
+    // evidence. A config write that changes the mapping, or a lock that names an
+    // absent integration/owned record, is a typed refusal before coordination.
+    const projectedBatch = {
+      stateDir: plan.stateDir,
+      uiDir: plan.uiDir,
+      stylesDir: plan.stylesDir,
+      layoutFile: plan.layoutFile,
+      targets: plan.targets.map((target) => ({
+        path: target.path,
+        operation: target.operation,
+        bytes: target.bytes,
+      })),
+      evidence: plan.readset.files.map((file) => ({
+        path: file.path,
+        kind: file.kind,
+      })),
+    };
+    const projected = resolveProjectedConfig(projectedBatch);
+    if (projected.issues.length > 0) problems.push(...projected.issues);
     let parsedLock: unknown;
     try {
       parsedLock = JSON.parse(Buffer.from(lockBytesView).toString("utf8"));
@@ -626,21 +707,26 @@ export function validateApplyPlan(
       );
     }
     if (parsedLock !== undefined) {
-      const derivedPaths = deriveKitPaths({
-        ...DEFAULT_KIT_CONFIG,
-        uiDir: plan.uiDir,
-        stylesDir: plan.stylesDir,
-        layoutFile: plan.layoutFile,
-      });
+      const derivedPaths = deriveKitPaths(projected.config);
       const validatedLock = parseKitLock(parsedLock, canonicalLock, {
-        stateDir: plan.stateDir,
-        uiDir: plan.uiDir,
-        stylesDir: plan.stylesDir,
-        layoutFile: plan.layoutFile,
+        stateDir: derivedPaths.stateDir,
+        uiDir: projected.config.uiDir,
+        stylesDir: projected.config.stylesDir,
+        layoutFile: projected.config.layoutFile,
         stylesheetPath: derivedPaths.kitCss,
         exportsPath: derivedPaths.rootExports,
       });
-      if (!validatedLock.ok) problems.push(...validatedLock.issues);
+      if (!validatedLock.ok) {
+        problems.push(...validatedLock.issues);
+      } else {
+        problems.push(
+          ...validateProjectedLock(
+            projectedBatch,
+            validatedLock.value,
+            projected,
+          ),
+        );
+      }
     }
   }
   if (problems.length > 0) return fail(problems);

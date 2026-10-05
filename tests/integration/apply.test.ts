@@ -19,12 +19,17 @@ import {
   type ApplyTarget,
 } from "../../src/codegen/apply.js";
 import { captureReadset } from "../../src/codegen/authority.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import { capturePreimage } from "../../src/codegen/revalidate.js";
 import { faultAtOccurrence } from "../../src/codegen/transaction-hooks.js";
 import {
   lockPath,
   transactionsDir,
 } from "../../src/codegen/transaction-types.js";
+import {
+  validKitConfigBytes,
+  validKitConfigText,
+} from "../helpers/kit-config.js";
 
 const UI = "src/lib/components/ui";
 const STYLES = "src/styles";
@@ -91,13 +96,15 @@ function makePlan(root: string, options: PlanOptions = {}): ApplyPlanInput {
   write(root, layoutFile, "<script>old layout</script>");
   write(root, `${uiDir}/_kit/kit.json`, "old config");
 
+  const configBytes = validKitConfigBytes({ uiDir, stylesDir, layoutFile });
+
   const targets: ApplyTarget[] = options.metadataOnly
     ? []
     : [
         {
           path: `${uiDir}/_kit/kit.json`,
           operation: "update",
-          bytes: new TextEncoder().encode("new config\n"),
+          bytes: configBytes,
           mode: 0o644,
           preimage: capturePreimage(root, `${uiDir}/_kit/kit.json`),
         },
@@ -148,7 +155,7 @@ function makePlan(root: string, options: PlanOptions = {}): ApplyPlanInput {
     readset: readset.value,
     targets,
     lock: {
-      bytes: lockBytes(options.lockConfigHash ?? "d".repeat(64)),
+      bytes: lockBytes(options.lockConfigHash ?? sha256Hex(configBytes)),
       preimage: capturePreimage(root, lockPath(stateDir)),
     },
   };
@@ -168,7 +175,7 @@ test("a successful batch changes exactly the planned files and publishes last", 
     assert.equal(outcome.kind, "applied");
     assert.equal(
       readFileSync(abs(root, `${UI}/_kit/kit.json`), "utf8"),
-      "new config\n",
+      validKitConfigText(),
     );
     assert.equal(
       readFileSync(abs(root, `${UI}/button.svelte`), "utf8"),
@@ -189,7 +196,7 @@ test("a successful batch changes exactly the planned files and publishes last", 
     );
     assert.equal(
       JSON.parse(readFileSync(abs(root, lockPath(STATE)), "utf8")).configHash,
-      "d".repeat(64),
+      sha256Hex(readFileSync(abs(root, `${UI}/_kit/kit.json`))),
     );
     assert.equal(
       existsSync(abs(root, transactionsDir(STATE))) &&
@@ -275,7 +282,7 @@ test("a metadata-only plan publishes the lock without touching sources", () => {
     );
     assert.equal(
       JSON.parse(readFileSync(abs(root, lockPath(STATE)), "utf8")).configHash,
-      "d".repeat(64),
+      JSON.parse(Buffer.from(plan.lock.bytes).toString("utf8")).configHash,
     );
   });
 });

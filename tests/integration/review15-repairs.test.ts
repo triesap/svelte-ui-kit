@@ -50,7 +50,9 @@ import {
 } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import { runWorker } from "../helpers/fault-process.js";
+import { validKitConfigBytes } from "../helpers/kit-config.js";
 import { clearOrphanedWriterLock } from "../helpers/transactions.js";
 
 /**
@@ -151,11 +153,12 @@ function makePlan(root: string): ApplyPlanInput {
     lockPath(STATE),
     Buffer.from(lockBytes("c".repeat(64))).toString(),
   );
+  const configBytes = validKitConfigBytes(ROOTS);
   const targets: ApplyTarget[] = [
     {
       path: `${STATE}/kit.json`,
       operation: "update",
-      bytes: enc("new config\n"),
+      bytes: configBytes,
       mode: 0o644,
       preimage: capturePreimage(root, `${STATE}/kit.json`),
     },
@@ -178,7 +181,7 @@ function makePlan(root: string): ApplyPlanInput {
     readset: readset.value,
     targets,
     lock: {
-      bytes: lockBytes("d".repeat(64)),
+      bytes: lockBytes(sha256Hex(configBytes)),
       preimage: capturePreimage(root, lockPath(STATE)),
     },
   };

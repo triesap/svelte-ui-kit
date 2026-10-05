@@ -515,7 +515,10 @@ test("the supported filesystem constraint is verified and complete trees compare
     const lock = JSON.parse(
       readFileSync(abs(root, lockPath(GUARDED_STATE)), "utf8"),
     );
-    assert.equal(lock.configHash, "d".repeat(64));
+    assert.equal(
+      lock.configHash,
+      sha256Hex(readFileSync(abs(root, `${GUARDED_STATE}/kit.json`))),
+    );
   });
 });
 
