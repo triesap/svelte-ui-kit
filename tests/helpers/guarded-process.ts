@@ -226,6 +226,102 @@ export function runGuardedProductionWorker(
   );
 }
 
+/**
+ * A separately launched recovery process (RCLD04-R2-4/R2-5).
+ *
+ * The exported recovery callers must be qualified in a *fresh process*, not by
+ * calling them in the parent test while describing that as a separate process.
+ * This worker runs the real `recoverTransaction` (single) or
+ * `recoverTransactions` (scanned) against the captured state and prints an
+ * attributable PID/result envelope, so the parent can assert the child's exact
+ * exit, signal, PID and typed results against the whole tree.
+ */
+export interface RecoveryWorkerOptions {
+  readonly root: string;
+  readonly stateDir: string;
+  readonly uiDir: string;
+  readonly stylesDir: string;
+  readonly layoutFile: string;
+  readonly mode: "scanned" | "single";
+  /** Required for `single`; the transaction to recover in the fresh process. */
+  readonly transactionId?: string;
+}
+
+const RECOVERY_WORKER = String.raw`
+const base = process.env.SUIK_CODEGEN;
+const root = process.env.SUIK_ROOT;
+const stateDir = process.env.SUIK_STATE_DIR;
+const uiDir = process.env.SUIK_UI;
+const stylesDir = process.env.SUIK_STYLES;
+const layoutFile = process.env.SUIK_LAYOUT;
+const mode = process.env.SUIK_RECOVERY_MODE;
+const transactionId = process.env.SUIK_TRANSACTION_ID || "";
+const load = (name) => import(base + name);
+const { recoverTransaction, recoverTransactions } = await load("recovery.js");
+const roots = { uiDir, stylesDir, layoutFile };
+let results;
+if (mode === "single") {
+  results = [recoverTransaction(root, stateDir, transactionId, roots)];
+} else {
+  results = [...recoverTransactions(root, stateDir, roots)];
+}
+console.log("SUIK_RECOVERY_PID " + process.pid);
+console.log("SUIK_RECOVERY_RESULT " + JSON.stringify(results));
+`;
+
+function recoveryEnv(options: RecoveryWorkerOptions): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    SUIK_CODEGEN: codegenBaseUrl(),
+    SUIK_ROOT: options.root,
+    SUIK_STATE_DIR: options.stateDir,
+    SUIK_UI: options.uiDir,
+    SUIK_STYLES: options.stylesDir,
+    SUIK_LAYOUT: options.layoutFile,
+    SUIK_RECOVERY_MODE: options.mode,
+    SUIK_TRANSACTION_ID: options.transactionId ?? "",
+  };
+}
+
+export function runRecoveryWorker(
+  options: RecoveryWorkerOptions,
+): SpawnSyncReturns<string> {
+  return spawnSync(
+    process.execPath,
+    ["--input-type=module", "-e", RECOVERY_WORKER],
+    { encoding: "utf8", env: recoveryEnv(options) },
+  );
+}
+
+/**
+ * Parse the child's attributable recovery envelope. A missing or malformed
+ * envelope is itself a failure: the parent must never infer success from a
+ * zero exit alone.
+ */
+export interface RecoveryChildOutput {
+  readonly pid: number;
+  readonly results: readonly {
+    readonly status: string;
+    readonly transactionId: string | null;
+    readonly issues: readonly {
+      readonly code: string;
+      readonly message: string;
+    }[];
+  }[];
+}
+
+export function parseRecoveryWorkerOutput(stdout: string): RecoveryChildOutput {
+  const pidMatch = /^SUIK_RECOVERY_PID (\d+)$/m.exec(stdout);
+  const resultMatch = /^SUIK_RECOVERY_RESULT (.+)$/m.exec(stdout);
+  if (pidMatch === null || resultMatch === null) {
+    throw new Error(`missing recovery envelope: ${stdout}`);
+  }
+  return {
+    pid: Number(pidMatch[1]),
+    results: JSON.parse(resultMatch[1] as string),
+  };
+}
+
 export function spawnGuardedWorker(
   options: GuardedWorkerOptions,
 ): ChildProcessWithoutNullStreams {

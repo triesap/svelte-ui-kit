@@ -4,6 +4,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -21,7 +22,6 @@ import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit } from "../../src/codegen/plan-init.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
 import {
-  recoverTransactions,
   type RecoveryResult,
   type RecoveryRoots,
 } from "../../src/codegen/recovery.js";
@@ -47,7 +47,10 @@ import { computeRegistryContentHash } from "../../src/registry/model.js";
 import {
   runGuardedProductionWorker,
   runGuardedWorker,
+  runRecoveryWorker,
+  parseRecoveryWorkerOutput,
 } from "../helpers/guarded-process.js";
+import { runWorker } from "../helpers/fault-process.js";
 import {
   GUARDED_LAYOUT,
   GUARDED_STATE,
@@ -204,6 +207,36 @@ function assertNoRefusal(results: readonly RecoveryResult[]): void {
   assert.deepEqual(refused, [], JSON.stringify(results));
 }
 
+/**
+ * Run a real exported recovery caller in a separately launched child process
+ * and return its typed results. A zero exit is never enough: the child must
+ * emit an attributable PID/result envelope and the PID must differ from the
+ * parent so the qualification cannot be satisfied in-process.
+ */
+function recoverInFreshProcess(options: {
+  readonly root: string;
+  readonly stateDir: string;
+  readonly uiDir: string;
+  readonly stylesDir: string;
+  readonly layoutFile: string;
+  readonly mode: "scanned" | "single";
+  readonly transactionId?: string;
+}): readonly RecoveryResult[] {
+  const child = runRecoveryWorker(options);
+  assert.equal(child.signal, null, child.stderr);
+  assert.equal(child.status, 0, child.stderr);
+  assert.ok(
+    typeof child.pid === "number" && child.pid > 0,
+    "the recovery child must have an attributable PID",
+  );
+  const envelope = parseRecoveryWorkerOutput(child.stdout);
+  assert.ok(
+    envelope.pid > 0 && envelope.pid !== process.pid,
+    `recovery must run in a fresh process, saw pid ${envelope.pid}`,
+  );
+  return envelope.results as readonly RecoveryResult[];
+}
+
 const CONFIGS: readonly [string, KitConfig][] = [
   ["default", DEFAULT_KIT_CONFIG],
   [
@@ -241,11 +274,12 @@ for (const [label, config] of CONFIGS) {
       );
       const committed = snapshotTree(root);
 
-      const results = recoverTransactions(
+      const results = recoverInFreshProcess({
         root,
-        derived.stateDir,
-        rootsFor(config),
-      );
+        stateDir: derived.stateDir,
+        ...rootsFor(config),
+        mode: "scanned",
+      });
       assertNoRefusal(results);
       assert.deepEqual(
         snapshotTree(root),
@@ -284,11 +318,12 @@ for (const [label, config] of CONFIGS) {
         false,
         "a prepublication refusal must not publish the lock",
       );
-      const results = recoverTransactions(
+      const results = recoverInFreshProcess({
         root,
-        derived.stateDir,
-        rootsFor(config),
-      );
+        stateDir: derived.stateDir,
+        ...rootsFor(config),
+        mode: "scanned",
+      });
       assertNoRefusal(results);
       assert.deepEqual(snapshotTree(root), before);
     });
@@ -373,11 +408,12 @@ test("default: a metadata-only commit publishes only the lock and survives recov
         planMutations(reapply.plan, DEFAULT_KIT_CONFIG),
       );
       const committed = snapshotTree(root);
-      const results = recoverTransactions(
+      const results = recoverInFreshProcess({
         root,
-        derived.stateDir,
-        rootsFor(DEFAULT_KIT_CONFIG),
-      );
+        stateDir: derived.stateDir,
+        ...rootsFor(DEFAULT_KIT_CONFIG),
+        mode: "scanned",
+      });
       assertNoRefusal(results);
       assert.deepEqual(snapshotTree(root), committed);
     } finally {
@@ -406,10 +442,13 @@ test("a kill after the writer release is finished by a fresh recovery", () => {
     assert.equal(existsSync(abs(root, lockPath(GUARDED_STATE))), true);
     assert.equal(existsSync(abs(root, writerLockDir(GUARDED_STATE))), false);
 
-    const results = recoverTransactions(root, GUARDED_STATE, {
+    const results = recoverInFreshProcess({
+      root,
+      stateDir: GUARDED_STATE,
       uiDir: GUARDED_UI,
       stylesDir: GUARDED_STYLES,
       layoutFile: GUARDED_LAYOUT,
+      mode: "scanned",
     });
     assertNoRefusal(results);
     assert.equal(
@@ -438,10 +477,13 @@ test("a process killed while holding coordination fails closed with owner eviden
     });
     assert.equal(killed.signal, "SIGKILL", killed.stderr);
 
-    const results = recoverTransactions(root, GUARDED_STATE, {
+    const results = recoverInFreshProcess({
+      root,
+      stateDir: GUARDED_STATE,
       uiDir: GUARDED_UI,
       stylesDir: GUARDED_STYLES,
       layoutFile: GUARDED_LAYOUT,
+      mode: "scanned",
     });
     assert.ok(
       results.some((entry) => entry.status === "refused"),
@@ -510,11 +552,12 @@ for (const [label, config] of CONFIGS) {
         true,
         "the production commit published its lock before the kill",
       );
-      const results = recoverTransactions(
+      const results = recoverInFreshProcess({
         root,
-        derived.stateDir,
-        rootsFor(config),
-      );
+        stateDir: derived.stateDir,
+        ...rootsFor(config),
+        mode: "scanned",
+      });
       assertNoRefusal(results);
       // The fresh recovery finishes the interrupted cleanup tail, leaving the
       // exact committed tree including unrelated application state.
@@ -542,11 +585,12 @@ for (const [label, config] of CONFIGS) {
       assert.equal(killed.signal, "SIGKILL", killed.stderr);
       const derived = deriveKitPaths(config);
       const before = snapshotTree(root);
-      const results = recoverTransactions(
+      const results = recoverInFreshProcess({
         root,
-        derived.stateDir,
-        rootsFor(config),
-      );
+        stateDir: derived.stateDir,
+        ...rootsFor(config),
+        mode: "scanned",
+      });
       assert.ok(
         results.some(
           (entry) =>
@@ -573,3 +617,87 @@ for (const [label, config] of CONFIGS) {
     });
   });
 }
+
+for (const [label, config] of CONFIGS) {
+  test(`${label}: a captured production holder killed in the publication window fails closed through a fresh single-recovery child`, () => {
+    withRoot((root) => {
+      const killed = runGuardedProductionWorker({
+        root,
+        pkgRoot: PKG_ROOT,
+        uiDir: config.uiDir,
+        stylesDir: config.stylesDir,
+        layoutFile: config.layoutFile,
+        boundary: "lock:publish",
+        mode: "kill",
+      });
+      assert.equal(killed.signal, "SIGKILL", killed.stderr);
+      const derived = deriveKitPaths(config);
+      const ids = readdirSync(abs(root, transactionsDir(derived.stateDir)));
+      assert.equal(ids.length, 1, JSON.stringify(ids));
+      const before = snapshotTree(root);
+      const results = recoverInFreshProcess({
+        root,
+        stateDir: derived.stateDir,
+        ...rootsFor(config),
+        mode: "single",
+        transactionId: ids[0] as string,
+      });
+      // A killed holder still owns the writer lock; a fresh single-recovery
+      // process must fail closed rather than take over or mutate the tree.
+      assert.ok(
+        results.some(
+          (entry) =>
+            entry.status === "refused" &&
+            entry.issues.some((issue) => issue.code === "WRITER_BUSY"),
+        ),
+        JSON.stringify(results),
+      );
+      assert.equal(
+        existsSync(abs(root, writerLockDir(derived.stateDir))),
+        true,
+      );
+      assert.equal(
+        existsSync(abs(root, transactionsDir(derived.stateDir))),
+        true,
+      );
+      assert.deepEqual(
+        snapshotTree(root),
+        before,
+        "a fail-closed single recovery must not mutate the tree",
+      );
+    });
+  });
+}
+
+test("a synthetic interrupted transaction is rolled back by a fresh single-recovery child", () => {
+  withRoot((root) => {
+    const killed = runWorker({
+      mode: "kill",
+      root,
+      stateDir: GUARDED_STATE,
+      transactionId: "1616161616161616",
+      boundary: "replace:apply",
+    });
+    assert.equal(killed.signal, "SIGKILL", killed.stderr);
+    const results = recoverInFreshProcess({
+      root,
+      stateDir: GUARDED_STATE,
+      uiDir: GUARDED_UI,
+      stylesDir: GUARDED_STYLES,
+      layoutFile: GUARDED_LAYOUT,
+      mode: "single",
+      transactionId: "1616161616161616",
+    });
+    assert.equal(results.length, 1);
+    assert.equal(results[0]?.status, "rolled_back", JSON.stringify(results));
+    assert.equal(
+      readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
+      "old css",
+    );
+    assert.equal(
+      existsSync(abs(root, transactionsDir(GUARDED_STATE))),
+      false,
+      "a fully recovered transaction leaves no owned residue",
+    );
+  });
+});
