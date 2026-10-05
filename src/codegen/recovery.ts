@@ -861,6 +861,7 @@ export function recoverTransaction(
   if (!acquired.ok) {
     return refuse(transactionId, acquired.issues);
   }
+  const ownedCreated = acquired.value.createdDirectories;
   let result: RecoveryResult | undefined;
   let releaseIssues: readonly ModelIssue[] = [];
   let transientIssues: readonly ModelIssue[];
@@ -877,7 +878,15 @@ export function recoverTransaction(
     if (!outcome.ok) releaseIssues = outcome.issues;
     transientIssues = cleanupReleasedTransient(root, stateDir);
   }
-  const coordinationIssues = [...releaseIssues, ...transientIssues];
+  // Remove only the empty state-directory ancestry this recovery created after
+  // the transient namespace is gone, so a standalone recovery leaves no owned
+  // residue. A directory that is no longer empty is preserved and reported.
+  const ancestryIssues = removeOwnedAncestors(root, ownedCreated, hooks);
+  const coordinationIssues = [
+    ...releaseIssues,
+    ...transientIssues,
+    ...ancestryIssues,
+  ];
   if (result === undefined) return refuse(transactionId, coordinationIssues);
   if (coordinationIssues.length === 0) return result;
   // The transaction state was recovered, but its namespace removal was not
@@ -1384,6 +1393,7 @@ export function recoverTransactions(
       { status: "refused", transactionId: null, issues: acquired.issues },
     ];
   }
+  const ownedCreated = acquired.value.createdDirectories;
   let results: readonly RecoveryResult[] | undefined;
   let releaseIssues: readonly ModelIssue[] = [];
   let transientIssues: readonly ModelIssue[];
@@ -1394,7 +1404,12 @@ export function recoverTransactions(
     if (!outcome.ok) releaseIssues = outcome.issues;
     transientIssues = cleanupReleasedTransient(root, stateDir);
   }
-  const coordinationIssues = [...releaseIssues, ...transientIssues];
+  const ancestryIssues = removeOwnedAncestors(root, ownedCreated, hooks);
+  const coordinationIssues = [
+    ...releaseIssues,
+    ...transientIssues,
+    ...ancestryIssues,
+  ];
   if (results === undefined) {
     return [
       { status: "refused", transactionId: null, issues: coordinationIssues },
