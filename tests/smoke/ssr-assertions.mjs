@@ -108,8 +108,10 @@ export function assertVisibleMarkers(
  *
  * Each expectation names one generated component by the element tag it
  * renders, the component's own `data-kit-marker` attribute value and the exact
- * stage-specific text it must contain. The assertion matches a real element
- * whose marker attribute and content both appear in the visible markup, so:
+ * stage-specific text it must contain. The assertion isolates the marked
+ * element's own content (up to that element's closing tag) and requires the
+ * expected text to appear *inside* it, so text in an unrelated later element
+ * cannot satisfy the assertion even when an earlier marked element is empty:
  *
  * - a page that only renders its own `data-*-marker` wrappers (no generated
  *   component) cannot pass;
@@ -130,11 +132,16 @@ export function assertGeneratedComponentMarkup(
   const visible = visibleMarkup(response.body);
   for (const component of components) {
     const { tag, marker, text } = component;
+    // The content group is bounded by the first closing tag for this element,
+    // so a match can never span out of an empty marked element into unrelated
+    // later markup. The captured inner content must itself contain the exact
+    // expected text.
     const pattern = new RegExp(
-      `<${escapeRegExp(tag)}\\b[^>]*\\bdata-kit-marker="${escapeRegExp(marker)}"[^>]*>[\\s\\S]*?${escapeRegExp(text)}[\\s\\S]*?<\\/${escapeRegExp(tag)}>`,
+      `<${escapeRegExp(tag)}\\b[^>]*\\bdata-kit-marker="${escapeRegExp(marker)}"[^>]*>([\\s\\S]*?)<\\/${escapeRegExp(tag)}>`,
     );
+    const match = pattern.exec(visible);
     assert.ok(
-      pattern.test(visible),
+      match !== null && match[1].includes(text),
       `${label}: generated <${tag}> with data-kit-marker=${JSON.stringify(marker)} and content ${JSON.stringify(text)} is absent from visible server-rendered markup`,
     );
   }

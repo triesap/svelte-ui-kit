@@ -75,26 +75,27 @@ completion unlocks a successor. Unapproved `not_applicable` fails closed.
 Default validation is read-only; `--generate` and `--generate-sources` are the
 only writing modes.
 
-#### Current bounded Q3 verification
+#### Current bounded Q3 cleanup verification
 
-Follow COMMIT_SEQUENCE's current `pfc RCLD04-Q3` dispatch. Preserve Q1 scoped
-acceptance; Q2 consumer qualification corrections and installed-resolution
-admission evidence remain pending independent review. Verify actual generated
-component markup with positive/causal negative controls, six default/custom
-consumer check/build/SSR stages, served build and source/config/dependency
-identities, exact satisfied/metadata/conflict comparisons including real local/
-incoming cohort conflict, and maintained consumer-lane inclusion. Serialize
-fixture writers. Qualify captured installed authority across direct/hoisted/
-linked layouts and the specific unchanged/drift/unsafe/unreadable cases in the
-current dispatch through production guarded callers with exact tree comparisons.
+Follow COMMIT_SEQUENCE's current `pfc RCLD04-Q3-CLEANUP` dispatch. Preserve
+scoped Q1 and verified Q2/installed-authority progress; original checkpoint/
+feature acceptance stays pending. Reproduce the actual post-release parent
+flush failures through guarded apply and both recovery entry points; verify
+truthful typed outcomes and cleanup ordering/evidence retention. Extend through
+real captured planner/compose/validate/apply normal, prepublication refusal and
+metadata-only paths, default/custom where mapped ancestry matters. Include a
+fresh-process recovery after process termination during cleanup, exact whole
+source/lock trees and unrelated-state preservation. A hook-only helper test does
+not establish production restart. Complete the outside-element-text SSR negative
+control and unreadable installed-case full-tree comparison in this same batch.
 
-Run build/typecheck/format/lint/contracts, focused affected integration and
-assertion controls, and maintained `test:fixture` after its wiring correction.
-Retain raw outputs/exits and factual coverage, including failed attempts.
-Regenerate derived projections only through their tooling; original projection
-and checkpoint definitions must remain unchanged. Browser/reference/full
-cumulative lanes stay Q4; other protocol groups remain later Q3 work. Complete
-both dispatched groups, then stop for Codex review before expanding the scope.
+Run build/typecheck/format/lint/contracts, focused affected integration (cleanup,
+durability, recovery, publication witness and changed authority/lifecycle files),
+and maintained serialized `test:fixture`. Retain exact outputs/exits, failures,
+source/build/platform identity and a factual matrix. Derive projections only via
+their tooling; original projection/203 definitions stay unchanged. Broader Q3
+criteria and Q4 cumulative/browser/CI/reference lanes remain required later.
+Finish the current entire scoped boundary, then stop for independent review.
 
 #### Current RCLD-04 complete-boundary qualification
 

@@ -873,4 +873,20 @@ test("generated-component assertion has positive and causal negative controls", 
       ),
     /unexpected generated component marker/,
   );
+
+  // The expected text must appear *inside* its own marked element. An empty
+  // marked element followed by the expected text in an unrelated element must
+  // not satisfy the assertion.
+  assert.throws(
+    () =>
+      assertGeneratedComponentMarkup(
+        html(
+          '<button data-kit-marker="BUTTON_RETAINED"></button><button>Retained button</button>' +
+            '<div data-kit-marker="CARD_ADDED_V1"></div><div>Card v1</div>',
+        ),
+        stage,
+        "text-outside-element",
+      ),
+    /generated <button>/,
+  );
 });

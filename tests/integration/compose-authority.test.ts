@@ -714,6 +714,7 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
       );
       assert.equal(captured?.kind, "unreadable");
       assert.equal(snapshot.environment.enumerationComplete, false);
+      const rootBefore = snapshotTree(root);
       const { composed, outcome } = applyAuthority(
         root,
         config,
@@ -731,6 +732,11 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
           (entry) => entry.code === "AUTHORITY_INSTALLED_CHANGED",
         ),
         JSON.stringify(outcome.issues),
+      );
+      assert.deepEqual(
+        snapshotTree(root),
+        rootBefore,
+        "an unreadable/incomplete enumeration refusal must preserve the selected root exactly",
       );
     } finally {
       rmSync(base, { recursive: true, force: true });

@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: Q1 assertion coverage accepted at `6db6d35`; independent Q2 review at `bbdb63e` requests qualification corrections. Current bounded dispatch is Q3: those corrections plus captured installed-resolution admission qualification. Original RCLD-04 acceptance remains pending. Preserve all 63 accepted checkpoints; S064–S077 remain committed_pending_review. Complete the entire transaction/recovery safety boundary and qualification before independent acceptance and S078. Updated 2026-10-05.
+Status: Q1 assertion coverage remains accepted at `6db6d35`. Independent admission review at `f3ae818` verifies Q2 and installed-resolution progress but requests remaining markup-proof and cleanup-durability corrections. Current bounded dispatch is `pfc RCLD04-Q3-CLEANUP`. Preserve 63 accepted checkpoints and S064–S077 committed_pending_review; original RCLD-04/MVP acceptance and S078 remain gated. Updated 2026-10-05.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -52,93 +52,101 @@ At S002, adopt the embedded contracts into their scheduled repository-relative f
 
 ## Codex dispatch — complete RCLD-04 transactions and recovery
 
-### Current bounded dispatch — RCLD04-Q3
+### Current bounded dispatch — RCLD04-Q3-CLEANUP
 
-Independent Codex review on 2026-10-05 requests Q2 qualification corrections
-at clean candidate `bbdb63eecf611bf545a9fdf389b57d7e7b376f76`
-(implementation `23bb639` / `afa7df9`, followed by its report). Preserve scoped
-Q1 acceptance at `6db6d35`, all original S001–S203 definitions and R01–R34 /
-AC01–AC22 criteria, 63 accepted / 14 committed_pending_review / 126 not_started,
-the live RCLD-04 tuple and the independent S077/S078 gate. This review does not
-accept any original S064–S077 checkpoint or whole R2 group.
+Independent Codex admission review at clean candidate
+`f3ae818` (`d41d752` installed-authority coverage and `f3ae818` Q2 corrections)
+verifies scoped progress. Preserve Q1 acceptance at `6db6d35`, original
+S001–S203 definitions, R01–R34 / AC01–AC22, the unchanged projection/live tuple,
+63 accepted / 14 committed_pending_review / 126 not_started and the independent
+S077/S078 gate. No full R2 group, original checkpoint or RCLD-04 is accepted.
 
-Fresh reviewer build/typecheck/format/lint/contracts pass. The three focused
-integration files pass nine tests; the two smoke files pass three tests,
-including real default/custom add/update/retirement check/build/built-handler
-SSR at all six stages. The authored core has no Q2 source/tool changes.
-Default/custom satisfied zero-write planning, exact metadata-only lock changes
-and unsafe nonregular-target refusal are verified progress. Ten prior review-16
-independent causal probes now produce safe typed outcomes on the fresh build;
-preserve these repairs. They do not establish the full protocol boundary.
+Fresh build/typecheck/format/lint/contracts pass; focused integration passes
+30 tests; maintained serialized `test:fixture` passes all 27 tests, including
+all six default/custom consumer check/build/built-handler SSR stages and the
+causal markup controls. Preserve the fixed CI inclusion, actual served handler/
+build/input provenance, genuine default/custom local/incoming cohort conflicts,
+portable changed Q2 content and installed direct/hoisted/linked success and
+stale-resolution refusal coverage. The installed-authority tests exercise real
+snapshot/planner/compose/validate/apply and exact root/external tree checks.
+The ENOTDIR enumeration case lacks its required complete-tree preservation
+assertion; finish that assertion within this batch, not a separate handoff.
 
-Q2 remains incomplete for these concrete reasons:
+Independent causal probes find these remaining failures despite green suites:
 
-1. Marker assertions search arbitrary non-script strings. A response containing
-   only page wrapper markers, with no generated components, passes. Require
-   actual generated component markup and stage-specific content, with controls
-   proving wrapper-only, script/comment-only, missing and stale component markup
-   cannot pass. Preserve real owned built-handler SSR at all six stages.
-2. The identity records hash page/barrel/component source, not the built handler
-   and server output. Retain source/config/dependency inputs and the actually
-   served build identity, with per-stage command/exit/signal/error evidence even
-   when a subprocess fails. Do not claim source digests alone are artifact proof.
-3. The new resulting-consumer suite is absent from `test:fixture`, which CI runs.
-   Wire it into the maintained consumer lane and serialize fixture writers.
-4. The conflict cell only tests a directory in place of a managed file. Add
-   genuine base/local/incoming cohort conflict controls for both mappings,
-   proving zero planned writes and whole-tree/lock preservation. Satisfied
-   zero-write plans need not enter an application API that requires a lock write.
-5. Restore portable standalone wording in changed Q2 report/test comments;
-   machine-specific build routing belongs outside public repository content.
-   Reconcile claims without erasing the historical six-stage passing evidence.
+1. `applyPlan` swallows the final parent-directory `fsync` failure after empty
+   transient removal and reports `applied` with no issues. Committed source is
+   preserved, but clean durable success is false. Its post-release cleanup is
+   part of the original protocol, not an optional best-effort waiver.
+2. Both standalone `recoverTransaction` and `recoverTransactions` swallow that
+   same final removal flush failure and report clean success. Propagate typed
+   truthful outcomes through both entry points and the guarded caller.
+3. Recovery transaction cleanup records an actual transaction-directory flush
+   failure but continues removing the transaction directory: journal and
+   transaction evidence are gone when `refused` is returned. Stop destructive
+   progress after a failed durability checkpoint and preserve sufficient owned
+   restart proof; audit the adjacent normal cleanup ordering as the same boundary.
+4. The generated-markup regular expression spans a closing element boundary.
+   Empty generated elements plus expected text in later unrelated elements still
+   pass. Bind the known flat fixture text to its actual generated element and
+   add a causal outside-text negative control. Keep existing wrapper/script/
+   comment/missing/stale negatives, positive controls and six real SSR stages.
 
-**Execute `pfc RCLD04-Q3` only.** This bounded dispatch combines those Q2
-qualification repairs with the next eligible RCLD04-R2-1 installed-resolution
-qualification. It is the first focused protocol boundary within existing Q3,
-not a new product checkpoint, alternate plan or permission to finish all
-protocol/cumulative work in one session. Aim for two or three coherent commits.
+**Execute `pfc RCLD04-Q3-CLEANUP` only.** This is a bounded cleanup and restart
+qualification segment within existing Q3, not a new product checkpoint or
+alternate plan. It combines required corrections with subsequent eligible
+production restart qualification. Aim for two or three coherent commits.
 
-Ordered scope and exact endpoint:
+Codex decisions and ordered work:
 
-1. Complete all five Q2 corrections above using existing fixtures/core/server
-   helpers and pinned dependencies. Preserve Q1 exact planned whole-tree and
-   ownership/cohort assertions and shipped foundation qualification.
-2. Qualify captured installed-resolution authority through real production
-   snapshot/planner/compose/validate/apply, not helper-only tests: unchanged
-   direct, hoisted and package-directory-linked layouts apply successfully;
-   post-planning nearer shadowing, hoisted manifest byte/mode/physical replacement,
-   same-byte package-link retargeting, and captured absence followed by appearance
-   refuse safely. Distinguish unsafe final manifest entries and unreadable or
-   incomplete enumeration from absence. Use deterministic syscall faults where
-   host permissions cannot make an unreadability case reliable. Assert typed
-   outcomes, exact whole-tree preservation after refusal and no mutation outside
-   the selected consumer root; external dependencies remain read-only. Cover
-   default and independently rooted custom mappings where write-root mapping
-   affects the guarded path. Use existing core APIs, no recapture, force bypass,
-   new dependency or expanded write permissions. Repair actual defects exposed
-   within this installed-authority boundary with causal repository tests.
-3. Run focused affected integration, maintained `test:fixture`, assertion
-   controls and static/contracts. Retain raw logs, exact exits, identities and a
-   factual coverage matrix. Update progress/evidence, self-review and commit
-   coherent green target changes. Stop when both scoped groups are implemented
-   and verified, for independent Codex review of this admission boundary.
+1. Preserve existing terminal semantics: a published batch remains committed
+   and must never roll back on cleanup failure. Applied-but-incomplete cleanup
+   becomes `committed_needs_cleanup` with actionable typed issues. Uncommitted
+   recovery failures report refusal; scanned recovery must expose its cleanup
+   failure rather than returning only clean results. Legitimate absence and
+   non-empty unrelated state remain distinct from unexpected I/O failure.
+2. Repair the shared post-release cleanup and transaction-removal durability
+   paths across apply/single/scanned recovery. Propagate actual syscall failures,
+   stop subsequent destructive removals after failed prerequisites and keep
+   journal/witness/ownership proof until dependent removals are safely durable.
+   If removal already occurred before an error, report it truthfully and retain
+   safe retry evidence; never restore over newly appearing unrelated state.
+   No force takeover, age/PID ownership, out-of-root writes, new public API,
+   new dependency or weakening of the frozen transaction model is authorized.
+3. Complete scoped markup and unreadable installed-tree assertions, then qualify
+   actual cleanup/restart paths through production captured planners/compose/
+   validate/apply and both standalone recovery entry points. Exercise a normal
+   commit, a prepublication refusal/rollback and a metadata-only commit, using
+   default and independent custom mappings where mapped ancestry matters.
+   Prove actual `fsync`/remove failures and ordered calls, exact committed or
+   restored source/lock trees, retained proof, unrelated-entry preservation and
+   truthful outcome aggregation. Include deterministic process termination at
+   an interrupted cleanup boundary followed by recovery in a fresh process;
+   in-process hook exceptions alone do not prove restart without finally cleanup.
+   Select a post-release interruption for recoverable cleanup-tail testing.
+   A process terminated while still holding coordination must fail closed with
+   retained owner evidence; PID death never authorizes takeover or test bypass.
+   Reuse maintained fixtures/helpers and dependencies. Repair further defects
+   within this shared cleanup/restart boundary with causal repository tests.
+4. Retain raw checks/exits and a factual per-case coverage report. Run focused
+   affected protocol/authority integration, maintained serialized `test:fixture`
+   and static/contracts; self-review and commit coherent green target changes.
+   Update implementation evidence/progress; independent acceptance stays Codex.
 
-Remaining publication/recovery/durability and other structured authority
-qualification still belong to subsequent Q3 dispatches; Q4 retains full
-cumulative install/test/browser/CI/reference evidence and reconciliation.
-Neither Q3 as a whole nor S064–S077 can be marked accepted by this dispatch.
-Do not enter Q4, S078, later CLI S081 or catalog S096/S097. A broader protocol
-finding gets a concrete reproduction and preserved evidence for Codex sequencing,
-not silent deferral or a scope-expanding rewrite. No owner/external/hardware
-blocker exists for this selected software work.
+Exact endpoint: all four findings corrected and the scoped cleanup/restart
+matrix implemented and verified, then return for independent Codex review.
+Continue after every green commit until that endpoint; a report or passing
+subset is not a stopping point. Respect user stops, required review gates,
+actual runtime limits and genuine external blockers. Preserve concrete evidence
+for broader findings and continue other eligible scoped work.
 
-Continue through both groups after each green commit; a report, passing subset,
-conversation size or one commit is not the endpoint. Respect user stops,
-required independent review gates and actual runtime/external limits; report
-unfinished work and the precise stopping cause without claiming completion.
-Clear owner natural-language instructions remain authoritative. Historical
-Q2/Q1/full-batch instructions are provenance, superseded in dispatch and batch
-size, never in original acceptance criteria.
+Other structured-authority and broader publication/recovery/durability criteria
+remain required subsequent Q3 work; full cumulative qualification/reconciliation
+remains Q4. Do not enter Q4, S078, later CLI S081 or catalog S096/S097. No owner,
+external or hardware blocker exists for the selected software work. Clear owner
+natural-language instructions remain authoritative; the independent S077 gate
+still cannot be replaced by Pi self-acceptance. Historical full-batch/Q1/Q2/Q3
+admission instructions are superseded in current dispatch, never original criteria.
 
 ### Owner-directed bounded dispatch — RCLD04-Q1
 
