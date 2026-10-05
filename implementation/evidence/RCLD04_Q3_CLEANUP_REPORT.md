@@ -117,8 +117,10 @@ Private probe paths and outputs are retained only in ignored local evidence.
 - A real second physical device (cross-device) and Windows remain unexecuted
   platform lanes; no new device-dependent claim is made here.
 - Q4 (full cumulative install/unit/integration/browser/CI/reference
-  reconciliation) and the later Q3 structured-authority/publication/durability
-  criteria remain subsequent dispatches and were not entered.
+  reconciliation) was completed in the expanded `pfc through RCLD-04` batch and
+  is recorded in `implementation/evidence/RCLD04_Q4_REPORT.md`; the remaining
+  structured-authority/publication/durability criteria were likewise qualified
+  there. This Q3 report is retained as provenance for its scoped corrections.
 - AC20's two pinned upstream Bits TS2590 fixture exceptions and the four ignored
   reference Rust tests remain explicit debt, unchanged and not waived.
 - The read-only reference repository stayed unmodified at

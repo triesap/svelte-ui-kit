@@ -17,12 +17,12 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD04-Q2 resulting-consumer qualification** (implementation evidence recorded at `afa7df9`; S064–S077 remain committed_pending_review; review 16 requests changes before independent acceptance/S078).
+- Active implementation checkpoint: **RCLD-04 complete candidate** (all remaining original S064–S077/R2 implementation, Q3 corrections and Q4 cumulative qualification recorded in `implementation/evidence/RCLD04_Q4_REPORT.md`; S064–S077 remain committed_pending_review pending the mandatory independent Codex S077 review before S078).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
 - Completed RCLD sequences: **3 / 11**. Remaining: **8 / 11**.
-- Last safe target commit: `f46d60fbfb3457f4af66652d7f1bf99f7c725ff7`, branch `master` (independent S033–S063 combined evidence anchor; original implementation hashes remain provenance).
+- Last safe target commit: `a73f5af46f3af8ef9ca6d8ee6591cbd7961533a8`, branch `master` (captured production restart and whole-tree recovery; the Q3 namespace-removal fix is `a6ed512`; prior accepted anchors remain provenance).
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
