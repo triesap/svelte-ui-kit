@@ -253,7 +253,22 @@ export interface RecoveryWorkerOptions {
   readonly mode: "scanned" | "single";
   /** Required for `single`; the transaction to recover in the fresh process. */
   readonly transactionId?: string;
+  /**
+   * Enforceable wall-clock bound for the owned child. On expiry the OS SIGKILLs
+   * the child (which cannot be trapped), so a stalled or hung recovery can never
+   * pin the parent indefinitely. Defaults to the approved recovery bound.
+   */
+  readonly timeoutMs?: number;
+  /**
+   * Test-only controlled stall: the child blocks synchronously for this long
+   * *after* printing its envelope, so the parent can prove the bound terminates
+   * a genuinely stalled recovery process without weakening the typed result.
+   */
+  readonly stallMs?: number;
 }
+
+/** Approved enforceable bound for one owned recovery child. */
+export const DEFAULT_RECOVERY_TIMEOUT_MS = 30_000;
 
 const RECOVERY_WORKER = String.raw`
 const base = process.env.SUIK_CODEGEN;
@@ -264,6 +279,7 @@ const stylesDir = process.env.SUIK_STYLES;
 const layoutFile = process.env.SUIK_LAYOUT;
 const mode = process.env.SUIK_RECOVERY_MODE;
 const transactionId = process.env.SUIK_TRANSACTION_ID || "";
+const stallMs = Number(process.env.SUIK_RECOVERY_STALL_MS || "0");
 const load = (name) => import(base + name);
 const { recoverTransaction, recoverTransactions } = await load("recovery.js");
 const roots = { uiDir, stylesDir, layoutFile };
@@ -275,6 +291,11 @@ if (mode === "single") {
 }
 console.log("SUIK_RECOVERY_PID " + process.pid);
 console.log("SUIK_RECOVERY_RESULT " + JSON.stringify(results));
+if (stallMs > 0) {
+  // A deliberately unresponsive child: only the parent's enforceable bound may
+  // terminate it. SIGKILL cannot be trapped, so this proves the bound.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, stallMs);
+}
 `;
 
 function recoveryEnv(options: RecoveryWorkerOptions): NodeJS.ProcessEnv {
@@ -288,6 +309,7 @@ function recoveryEnv(options: RecoveryWorkerOptions): NodeJS.ProcessEnv {
     SUIK_LAYOUT: options.layoutFile,
     SUIK_RECOVERY_MODE: options.mode,
     SUIK_TRANSACTION_ID: options.transactionId ?? "",
+    SUIK_RECOVERY_STALL_MS: String(options.stallMs ?? 0),
   };
 }
 
@@ -297,7 +319,15 @@ export function runRecoveryWorker(
   return spawnSync(
     process.execPath,
     ["--input-type=module", "-e", RECOVERY_WORKER],
-    { encoding: "utf8", env: recoveryEnv(options) },
+    {
+      encoding: "utf8",
+      env: recoveryEnv(options),
+      // A bounded owned-child lifecycle: the OS terminates a stalled child at
+      // the deadline with an untrappable SIGKILL, so the parent always regains
+      // control with an attributable timeout/signal rather than blocking.
+      timeout: options.timeoutMs ?? DEFAULT_RECOVERY_TIMEOUT_MS,
+      killSignal: "SIGKILL",
+    },
   );
 }
 

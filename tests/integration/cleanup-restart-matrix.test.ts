@@ -701,3 +701,47 @@ test("a synthetic interrupted transaction is rolled back by a fresh single-recov
     );
   });
 });
+
+test("a stalled recovery child is terminated at the enforceable bound with no unrelated changes", () => {
+  withRoot((root) => {
+    const before = snapshotTree(root);
+    const started = Date.now();
+    const child = runRecoveryWorker({
+      root,
+      stateDir: GUARDED_STATE,
+      uiDir: GUARDED_UI,
+      stylesDir: GUARDED_STYLES,
+      layoutFile: GUARDED_LAYOUT,
+      mode: "scanned",
+      timeoutMs: 1_500,
+      stallMs: 60_000,
+    });
+    const elapsed = Date.now() - started;
+    // The bound fired and the OS terminated the stalled child with an
+    // untrappable signal: the parent regained control instead of blocking.
+    assert.equal(
+      child.signal,
+      "SIGKILL",
+      `stdout=${child.stdout} stderr=${child.stderr}`,
+    );
+    assert.ok(child.error, "the timed-out child must report a typed error");
+    assert.equal((child.error as NodeJS.ErrnoException).code, "ETIMEDOUT");
+    assert.ok(
+      elapsed < 20_000,
+      `the enforceable bound must terminate promptly, took ${elapsed}ms`,
+    );
+    // Exact attribution is retained even though the bound terminated the
+    // process: the child emitted its PID/result envelope before stalling.
+    const envelope = parseRecoveryWorkerOutput(child.stdout);
+    assert.ok(
+      envelope.pid > 0 && envelope.pid !== process.pid,
+      `the stalled child must have a fresh attributable PID, saw ${envelope.pid}`,
+    );
+    // No unrelated application/resource state changed by the bounded lifecycle.
+    assert.deepEqual(
+      snapshotTree(root),
+      before,
+      "terminating a stalled recovery child must not touch the tree",
+    );
+  });
+});
