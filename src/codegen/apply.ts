@@ -50,7 +50,7 @@ import {
   type PlanReadset,
 } from "./authority.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";
-import { flushDirectory } from "./durability.js";
+import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
 import { parseKitLock } from "./lock.js";
 import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../project/config.js";
 import type { ChangeOperation } from "./plan.js";
@@ -1466,9 +1466,20 @@ function cleanupEmptyTransient(plan: ValidatedApplyPlan): ModelIssue[] {
   ] as const) {
     try {
       rmdirSync(absOf(plan.root, logical));
-    } catch {
-      // Non-empty or already removed; unrelated state is never touched.
-      continue;
+    } catch (error) {
+      const code = errorCode(error);
+      // A real I/O, permission or kind fault while removing an empty owned
+      // directory is not a clean absence or a non-empty guard: report it and
+      // stop destructive progress rather than reporting a false clean success.
+      if (isEmptyRemovalAbsence(code)) continue;
+      issues.push(
+        issue(
+          "COMMITTED_NEEDS_CLEANUP",
+          `owned transient directory ${logical} could not be removed (${code})`,
+          logical,
+        ),
+      );
+      return issues;
     }
     // Durable removal of the now-empty owned transient directory in its parent.
     try {

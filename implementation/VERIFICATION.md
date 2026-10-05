@@ -75,27 +75,26 @@ completion unlocks a successor. Unapproved `not_applicable` fails closed.
 Default validation is read-only; `--generate` and `--generate-sources` are the
 only writing modes.
 
-#### Current bounded Q3 cleanup verification
+#### Current expanded RCLD-04 verification
 
-Follow COMMIT_SEQUENCE's current `pfc RCLD04-Q3-CLEANUP` dispatch. Preserve
-scoped Q1 and verified Q2/installed-authority progress; original checkpoint/
-feature acceptance stays pending. Reproduce the actual post-release parent
-flush failures through guarded apply and both recovery entry points; verify
-truthful typed outcomes and cleanup ordering/evidence retention. Extend through
-real captured planner/compose/validate/apply normal, prepublication refusal and
-metadata-only paths, default/custom where mapped ancestry matters. Include a
-fresh-process recovery after process termination during cleanup, exact whole
-source/lock trees and unrelated-state preservation. A hook-only helper test does
-not establish production restart. Complete the outside-element-text SSR negative
-control and unreadable installed-case full-tree comparison in this same batch.
+Follow COMMIT_SEQUENCE's current `pfc through RCLD-04` dispatch. Correct typed
+namespace-removal errors and remaining captured production restart proof, then
+complete all original R2/S064–S077 authority/publication/durability/recovery and
+lifecycle evidence. Preserve verified earlier repairs. Use actual syscall faults
+and exact whole-tree/lock/ownership assertions, separate-process interruption/
+recovery and held-writer refusal. Never infer whole acceptance from helper tests.
 
-Run build/typecheck/format/lint/contracts, focused affected integration (cleanup,
-durability, recovery, publication witness and changed authority/lifecycle files),
-and maintained serialized `test:fixture`. Retain exact outputs/exits, failures,
-source/build/platform identity and a factual matrix. Derive projections only via
-their tooling; original projection/203 definitions stay unchanged. Broader Q3
-criteria and Q4 cumulative/browser/CI/reference lanes remain required later.
-Finish the current entire scoped boundary, then stop for independent review.
+Continue into full cumulative qualification in this same command after the
+integrated protocol candidate is green: frozen strict install, all maintained
+static/test/component/registry/CLI/harness/contracts/consumer/browser lanes,
+projection/source checks, CI workflow validation and conditional read-only Rust
+reference guards. Serialize consumer writers; retain raw outputs/exits/failures
+and tested source/build/platform identity. Record unavailable platform/external
+lanes and AC20/reference exceptions explicitly, without silently waiving them or
+stopping other eligible work. Original203 definitions/projection/statuses stay
+unchanged. Stop only at the complete RCLD-04 candidate for independent S077
+review before S078, or a genuine user/runtime/external stop; no intermediate Q3/
+Q4 handoff or two-or-three-commit cap applies.
 
 #### Current RCLD-04 complete-boundary qualification
 

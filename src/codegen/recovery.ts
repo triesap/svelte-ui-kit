@@ -31,7 +31,7 @@ import type { ModelIssue } from "../registry/errors.js";
 import { fail, ok, type ModelResult } from "../registry/errors.js";
 import { observeEntry } from "../project/io.js";
 import { sha256Hex } from "./digest.js";
-import { flushDirectory } from "./durability.js";
+import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
 import { identityDigest, observeRootIdentity } from "./authority.js";
 import { removeOwnedAncestors } from "./owned-ancestry.js";
 import {
@@ -812,9 +812,21 @@ function cleanupReleasedTransient(
   ] as const) {
     try {
       rmdirSync(absOf(root, logical));
-    } catch {
-      // Non-empty or already removed; unrelated state is never touched.
-      continue;
+    } catch (error) {
+      const code = codeOf(error);
+      // A real I/O, permission or kind fault while removing an empty owned
+      // directory is not a clean absence or a non-empty guard: report it as a
+      // typed issue and stop destructive progress. Swallowing it would report
+      // a false clean recovery while leaving owned residue behind.
+      if (isEmptyRemovalAbsence(code)) continue;
+      issues.push(
+        issue(
+          "RECOVERY_CLEANUP_FAILED",
+          `owned transient directory ${logical} could not be removed (${code})`,
+          logical,
+        ),
+      );
+      return issues;
     }
     // Durable removal of the now-empty owned transient directory in its parent.
     try {

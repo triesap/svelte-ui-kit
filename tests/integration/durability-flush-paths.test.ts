@@ -13,7 +13,12 @@ import type {
 } from "../../src/codegen/apply.js";
 import { captureReadset } from "../../src/codegen/authority.js";
 import { capturePreimage } from "../../src/codegen/revalidate.js";
-import { lockPath } from "../../src/codegen/transaction-types.js";
+import { persistJournal } from "../../src/codegen/transaction-journal.js";
+import {
+  journalPath,
+  lockPath,
+  transientRoot,
+} from "../../src/codegen/transaction-types.js";
 import {
   recoverTransaction,
   recoverTransactions,
@@ -24,8 +29,9 @@ import {
   abs,
   makeGuardedPlan,
   lockJson,
+  write,
 } from "../helpers/guarded-plan.js";
-import { RECOVERY_ROOTS } from "../helpers/transactions.js";
+import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
 
 /**
  * RCLD04-R2-2: causal durability coverage for cross-directory renames.
@@ -434,3 +440,159 @@ for (const [label, recover] of [
     }
   });
 }
+
+/**
+ * Fail the first real `rmdir` of an owned empty namespace directory with EIO,
+ * then stop failing. Unlike a hook exception this drives a genuine syscall
+ * fault on the post-release cleanup path, whose removal errors were previously
+ * swallowed as though the directory were simply absent or non-empty.
+ */
+function failRmdirWhile(predicate: (target: string) => boolean): {
+  fired(): boolean;
+  restore(): void;
+} {
+  let fired = false;
+  const original = fs.rmdirSync.bind(fs);
+  fs.rmdirSync = ((p: fs.PathLike, ...rest: never[]) => {
+    const target = String(p);
+    if (!fired && predicate(target)) {
+      fired = true;
+      throw Object.assign(new Error("injected owned namespace rmdir EIO"), {
+        code: "EIO",
+      });
+    }
+    return (original as (p: fs.PathLike, ...rest: never[]) => void)(p, ...rest);
+  }) as typeof fs.rmdirSync;
+  syncBuiltinESMExports();
+  return {
+    fired: () => fired,
+    restore: () => {
+      fs.rmdirSync = original;
+      syncBuiltinESMExports();
+    },
+  };
+}
+
+/** The owned transaction namespace removed by the post-release cleanup tail. */
+function transactionsNamespace(root: string): string {
+  return abs(root, `${GUARDED_STATE}/.svelte-ui-kit/transactions`);
+}
+
+/** A journal-only planned transaction is the minimal owned residue. */
+function persistPlannedOnly(root: string, transactionId: string): void {
+  write(root, `${GUARDED_STATE}/kit.json`, "old config");
+  persistJournal(root, journalPath(GUARDED_STATE, transactionId), {
+    schemaVersion: 1,
+    transactionId,
+    rootIdentity: liveRootIdentity(root),
+    planDigest: "b".repeat(64),
+    phase: "planned",
+    operations: [],
+    lock: null,
+  });
+}
+
+test("applyPlan reports committed_needs_cleanup when the owned namespace removal fails", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "suik-rmdir-apply-"));
+  const probe = failRmdirWhile(
+    (target) => target === transactionsNamespace(root),
+  );
+  try {
+    const outcome = applyPlan(sealed(makeGuardedPlan(root)));
+    assert.equal(probe.fired(), true, "the namespace removal must be reached");
+    // The lock published; a real removal I/O fault must never be reported as a
+    // clean success or roll the committed batch back.
+    assert.equal(
+      outcome.kind,
+      "committed_needs_cleanup",
+      JSON.stringify(outcome.issues),
+    );
+    assert.ok(
+      outcome.issues.some((entry) => entry.code === "COMMITTED_NEEDS_CLEANUP"),
+      JSON.stringify(outcome.issues),
+    );
+    assert.equal(
+      fs.readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
+      "new css\n",
+    );
+    assert.ok(
+      fs.existsSync(transactionsNamespace(root)),
+      "the owned namespace residue must be retained as restart evidence",
+    );
+  } finally {
+    probe.restore();
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+for (const [label, recover] of [
+  [
+    "recoverTransaction",
+    (root: string) =>
+      [
+        recoverTransaction(
+          root,
+          GUARDED_STATE,
+          "44444444-4444-4444-8444-444444444444",
+          RECOVERY_ROOTS,
+        ),
+      ] as const,
+  ],
+  [
+    "recoverTransactions",
+    (root: string) => recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS),
+  ],
+] as const) {
+  test(`${label} refuses truthfully when the owned namespace removal fails`, () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "suik-rmdir-recover-"));
+    persistPlannedOnly(root, "44444444-4444-4444-8444-444444444444");
+    const probe = failRmdirWhile(
+      (target) => target === transactionsNamespace(root),
+    );
+    try {
+      const results = recover(root);
+      assert.equal(
+        probe.fired(),
+        true,
+        `${label}: the namespace removal must be reached`,
+      );
+      const refused = results.filter((entry) => entry.status === "refused");
+      assert.ok(
+        refused.length > 0,
+        `${label}: a real removal fault must not be reported as clean: ${JSON.stringify(results)}`,
+      );
+      assert.ok(
+        refused.some((entry) =>
+          entry.issues.some(
+            (issue) => issue.code === "RECOVERY_CLEANUP_FAILED",
+          ),
+        ),
+        JSON.stringify(results),
+      );
+      assert.ok(
+        fs.existsSync(transactionsNamespace(root)),
+        `${label}: the owned namespace residue must be retained`,
+      );
+    } finally {
+      probe.restore();
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+}
+
+test("an unrelated entry in the transient namespace is preserved and not an error", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "suik-rmdir-control-"));
+  try {
+    makeGuardedPlan(root);
+    // A non-empty owned transient namespace is a legitimate ENOTEMPTY outcome,
+    // not a cleanup failure: unrelated state survives and the batch is clean.
+    const notes = abs(root, `${transientRoot(GUARDED_STATE)}/notes.txt`);
+    fs.mkdirSync(path.dirname(notes), { recursive: true });
+    fs.writeFileSync(notes, "operator notes");
+    const outcome = applyPlan(sealed(makeGuardedPlan(root)));
+    assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+    assert.equal(fs.readFileSync(notes, "utf8"), "operator notes");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

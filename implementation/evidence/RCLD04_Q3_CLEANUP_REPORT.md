@@ -67,7 +67,7 @@ S077/S078 gate is untouched.
 | 3b. Audit of adjacent normal transaction cleanup ordering (same boundary).                                                       | Audited: `cleanupTransaction` already stops at the first failed removal flush and does not remove the directory afterwards.             | `transaction-cleanup`, `publication-witness`, `recovery-ownership` remain green.                                                            |
 | 4. `assertGeneratedComponentMarkup` spanned closing element boundaries; empty generated elements plus later text still passed.   | Content is captured within the marked element's own closing tag; the expected flat fixture text must be inside that element.            | `q2-resulting-consumer` positive + causal negatives incl. outside-element-text; private markup probe.                                       |
 | 5. The ENOTDIR installed-authority case lacked the required exact full-tree preservation assertion.                              | The refusal now snapshots and compares the complete selected root before/after.                                                         | `compose-authority` "an unreadable/incomplete enumeration is distinct from absence and refused".                                            |
-| New: standalone recovery left its created empty state-directory ancestry behind.                                                 | Recovery removes only the empty coordination ancestry it created and reports removal faults.                                            | `cleanup-restart-matrix` prepublication cases assert the exact captured tree after a fresh recovery.                                        |
+| New: standalone recovery left its created empty state-directory ancestry behind.                                                 | Recovery removes only the empty coordination ancestry it created and reports removal faults.                                            | `cleanup-restart-matrix` prepublication cases assert the exact captured tree after a fresh recovery.                                        |     | New: `cleanupEmptyTransient`/`cleanupReleasedTransient` swallowed a real `rmdir` EIO on `_kit/.svelte-ui-kit/transactions` and reported clean. | Legitimate `ENOENT`/`ENOTEMPTY`/`EEXIST` absence or non-empty state is distinguished from unexpected I/O/permission/kind faults, which return typed `COMMITTED_NEEDS_CLEANUP` (apply) or `RECOVERY_CLEANUP_FAILED` (both recovery callers) and stop destructive progress. | `durability-flush-paths` "applyPlan reports committed_needs_cleanup when the owned namespace removal fails", both recovery namespace-removal cases, and the unrelated-entry control. |
 
 ## Factual cleanup/restart matrix
 
@@ -91,13 +91,12 @@ Every row is an executed production path with repository-owned assertions.
 ## Final candidate qualification
 
 Environment: Node `v24.21.0`, pnpm `11.22.0`, macOS arm64, single-volume host.
-Every lane is a portable repository command routed through the repository
-extbuild router; raw logs, exits and identity are retained as ignored local
-runtime evidence under `implementation/evidence/logs/q3cleanup-<timestamp>/`.
+Every lane is a portable repository command; raw logs, exits and identity are
+retained as ignored local runtime evidence under
+`implementation/evidence/logs/q3cleanup-<timestamp>/`.
 
 | Lane                                                | Result                                            | Exit |
 | --------------------------------------------------- | ------------------------------------------------- | ---- |
-| `cargo extbuild doctor`                             | green                                             | 0    |
 | `pnpm run build`                                    | built                                             | 0    |
 | `pnpm run typecheck`                                | 0 errors across five configs                      | 0    |
 | `pnpm run format:check`                             | clean                                             | 0    |

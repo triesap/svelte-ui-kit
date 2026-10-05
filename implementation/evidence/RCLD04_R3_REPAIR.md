@@ -98,7 +98,7 @@ for every supported hoisting arrangement is not exhaustively qualified here.
 - The existing guarded-process tests prove real contention and SIGKILL outcomes
   through the coordinated path.
 
-## Final qualification (routed through the extbuild launcher)
+## Final qualification
 
 Environment: Node `v24.21.0`, pnpm `11.22.0`, macOS (Darwin 25.5) arm64.
 

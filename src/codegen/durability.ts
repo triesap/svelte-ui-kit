@@ -29,3 +29,23 @@ export function flushDirectory(abs: string): void {
     closeSync(fd);
   }
 }
+
+/**
+ * Errno codes that legitimately mean an owned empty-namespace directory is
+ * already absent or is not empty. These are ordinary, safe outcomes: the
+ * directory is either gone or holds unrelated state that must never be
+ * removed. Any other code (EIO, EACCES, EPERM, ENOTDIR, ELOOP, ...) is a real
+ * I/O, permission or kind fault and must be reported instead of silently
+ * treated as a clean removal.
+ */
+const ABSENT_OR_NON_EMPTY_CODES: ReadonlySet<string> = new Set([
+  "ENOENT",
+  "ENOTEMPTY",
+  // Windows reports a non-empty directory removal as EEXIST in some cases.
+  "EEXIST",
+]);
+
+/** True when a failed empty-directory removal is legitimate absence/non-empty state. */
+export function isEmptyRemovalAbsence(code: string): boolean {
+  return ABSENT_OR_NON_EMPTY_CODES.has(code);
+}

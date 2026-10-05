@@ -114,9 +114,8 @@ assertions; prose does not fill a cell.
 ## Final candidate qualification
 
 Environment: Node `v24.21.0`, pnpm `11.22.0`, macOS arm64, single-volume host.
-Every lane is a portable repository command routed through the repository
-extbuild router; raw logs and underlying exits are retained as ignored local
-runtime evidence.
+Every lane is a portable repository command; raw logs and underlying exits are
+retained as ignored local runtime evidence.
 
 | Lane                                                                                 | Result                                                         | Exit |
 | ------------------------------------------------------------------------------------ | -------------------------------------------------------------- | ---- |

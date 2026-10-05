@@ -17,15 +17,14 @@ references.
   self-reviews within the dispatched checkpoint. Codex owns scope,
   contract/API decisions, dependency-selection approval, deviations,
   acceptance, checkpoint commits and dispatch between coding periods.
-- Complete one checkpoint at a time in documented order. Current bounded
-  dispatch is `pfc RCLD04-Q3-CLEANUP`: remaining markup/authority assertion
-  corrections, shared cleanup durability repair and production restart
-  qualification, as scoped in COMMIT_SEQUENCE. Preserve Q1 scoped acceptance
-  and all original S064–S077 pending criteria. Finish the complete dispatched
-  boundary and focused checks, then return for Codex review; broader remaining
-  Q3 protocol and Q4 are later dispatches. Preserve 63 accepted checkpoints and
-  the independent S077/S078 gate. Target-only coherent green commits are
-  authorized here; no parent or remote changes.
+- Complete one checkpoint at a time in documented order. Current owner-expanded
+  dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 work,
+  Q3 protocol corrections/qualification and Q4 cumulative checks together.
+  Earlier Q3-only/two-or-three-commit/Q4-later management limits are superseded.
+  Continue after green slices through the complete candidate, then return for
+  mandatory independent Codex S077 review before S078. Preserve 63 accepted
+  checkpoints and original criteria/statuses. Target-only coherent green commits
+  are authorized within this scope; no parent/remote or reference-source changes.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
 - No commit, push, publication, deployment or reference-repository mutation
