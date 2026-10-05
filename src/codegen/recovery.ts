@@ -675,19 +675,25 @@ const OWNED_ENTRIES = new Set([
   "progress",
 ]);
 
+/**
+ * The authoritative owned proof entries. Their removals are made durable only
+ * after the ephemeral owned removals are already durable, so a failed
+ * prerequisite never destroys the journal/witness a coordinated retry needs.
+ */
+const OWNED_PROOF_ENTRIES = new Set(["journal.json", "publication.json"]);
+
 function removeOwnedEntries(
   root: string,
   stateDir: string,
   transactionId: string,
   hooks?: TransactionHooks,
 ): ModelIssue[] {
-  const issues: ModelIssue[] = [];
   const dir = absOf(root, transactionDir(stateDir, transactionId));
   let names: string[];
   try {
     names = readdirSync(dir);
   } catch (error) {
-    if (codeOf(error) === "ENOENT") return issues;
+    if (codeOf(error) === "ENOENT") return [];
     return [
       issue(
         "RECOVERY_CLEANUP_FAILED",
@@ -702,53 +708,74 @@ function removeOwnedEntries(
     journalTempName(transactionId),
     publicationIntentTempName(transactionId),
   ]);
-  const removeOne = (name: string, options: { recursive: boolean }): void => {
+  const ephemeralOwned = names.filter(
+    (name) => OWNED_ENTRIES.has(name) && !OWNED_PROOF_ENTRIES.has(name),
+  );
+  const tempEntries = names.filter((name) => ownedTempNames.has(name));
+  const proofEntries = names.filter((name) => OWNED_PROOF_ENTRIES.has(name));
+
+  const removeGroup = (
+    group: readonly string[],
+    recursive: boolean,
+  ): ModelIssue[] => {
+    for (const name of group) {
+      try {
+        rmSync(path.join(dir, name), { recursive, force: true });
+      } catch (error) {
+        if (codeOf(error) === "ENOENT") continue;
+        return [
+          issue(
+            "RECOVERY_CLEANUP_FAILED",
+            `owned transaction entry ${name} could not be removed (${codeOf(error)})`,
+            name,
+          ),
+        ];
+      }
+    }
+    return [];
+  };
+  const flushDir = (label: string): ModelIssue[] => {
     try {
-      rmSync(path.join(dir, name), { ...options, force: true });
+      flushDirectory(dir);
+      return [];
     } catch (error) {
-      issues.push(
+      if (codeOf(error) === "ENOENT") return [];
+      return [
         issue(
           "RECOVERY_CLEANUP_FAILED",
-          `owned transaction entry ${name} could not be removed (${codeOf(error)})`,
-          name,
+          `owned transaction ${transactionId} ${label} could not be flushed durably (${codeOf(error)})`,
         ),
-      );
+      ];
     }
   };
-  for (const name of names) {
-    if (OWNED_ENTRIES.has(name)) {
-      removeOne(name, { recursive: true });
-      continue;
-    }
-    if (ownedTempNames.has(name)) {
-      removeOne(name, { recursive: false });
-    }
-  }
-  // The child removals must be durable in the transaction directory before it
-  // is itself removed; a flush failure is reported rather than swallowed.
-  try {
-    flushDirectory(dir);
-  } catch (error) {
-    if (codeOf(error) !== "ENOENT") {
-      issues.push(
-        issue(
-          "RECOVERY_CLEANUP_FAILED",
-          `owned transaction ${transactionId} directory removals could not be flushed durably (${codeOf(error)})`,
-        ),
-      );
-    }
-  }
+
+  // Remove the ephemeral owned entries first and make those removals durable
+  // before touching the authoritative journal/witness. A failed prerequisite
+  // stops destructive progress with the proof retained for a coordinated
+  // retry, rather than deleting the evidence while reporting a refusal.
+  const ephemeralIssues = removeGroup(ephemeralOwned, true);
+  if (ephemeralIssues.length > 0) return ephemeralIssues;
+  const tempIssues = removeGroup(tempEntries, false);
+  if (tempIssues.length > 0) return tempIssues;
+  const ephemeralFlush = flushDir("directory removals");
+  if (ephemeralFlush.length > 0) return ephemeralFlush;
+
+  const proofIssues = removeGroup(proofEntries, false);
+  if (proofIssues.length > 0) return proofIssues;
+  const proofFlush = flushDir("journal/witness removals");
+  if (proofFlush.length > 0) return proofFlush;
+
   try {
     fireHooks(hooks, "before", "recovery:cleanup-dir", transactionId);
     rmdirSync(dir);
   } catch (error) {
     if (codeOf(error) !== "ENOENT") {
-      issues.push(
+      return [
         issue(
           "RECOVERY_CLEANUP_FAILED",
           `transaction ${transactionId} directory could not be removed (${codeOf(error)})`,
         ),
-      );
+      ];
     }
   }
   // Flush the transaction namespace so a crash cannot resurrect the removed
@@ -756,18 +783,29 @@ function removeOwnedEntries(
   try {
     flushDirectory(path.dirname(dir));
   } catch (error) {
-    issues.push(
-      issue(
-        "RECOVERY_CLEANUP_FAILED",
-        `the transaction namespace removal of ${transactionId} could not be flushed durably (${codeOf(error)})`,
-      ),
-    );
+    if (codeOf(error) !== "ENOENT") {
+      return [
+        issue(
+          "RECOVERY_CLEANUP_FAILED",
+          `the transaction namespace removal of ${transactionId} could not be flushed durably (${codeOf(error)})`,
+        ),
+      ];
+    }
   }
-  return issues;
+  return [];
 }
 
-/** Best-effort removal of empty owned transient directories after a release. */
-function cleanupReleasedTransient(root: string, stateDir: string): void {
+/**
+ * Removal of empty owned transient directories after a release. A failed
+ * parent flush stops further destructive progress and is returned as a typed
+ * issue rather than silently swallowed, so recovery never reports a false
+ * clean success when its namespace removal was not durable.
+ */
+function cleanupReleasedTransient(
+  root: string,
+  stateDir: string,
+): ModelIssue[] {
+  const issues: ModelIssue[] = [];
   for (const [logical, parent] of [
     [transactionsDir(stateDir), transientRoot(stateDir)],
     [transientRoot(stateDir), stateDir],
@@ -781,10 +819,18 @@ function cleanupReleasedTransient(root: string, stateDir: string): void {
     // Durable removal of the now-empty owned transient directory in its parent.
     try {
       flushDirectory(absOf(root, parent));
-    } catch {
-      // The directory is already gone; the parent flush is best effort here.
+    } catch (error) {
+      issues.push(
+        issue(
+          "RECOVERY_CLEANUP_FAILED",
+          `owned transient directory ${logical} was removed but its parent could not be flushed durably (${codeOf(error)})`,
+          logical,
+        ),
+      );
+      return issues;
     }
   }
+  return issues;
 }
 
 /**
@@ -817,6 +863,7 @@ export function recoverTransaction(
   }
   let result: RecoveryResult | undefined;
   let releaseIssues: readonly ModelIssue[] = [];
+  let transientIssues: readonly ModelIssue[];
   try {
     result = recoverTransactionUnderLock(
       root,
@@ -828,14 +875,18 @@ export function recoverTransaction(
   } finally {
     const outcome = releaseWriterLock(acquired.value, hooks);
     if (!outcome.ok) releaseIssues = outcome.issues;
-    cleanupReleasedTransient(root, stateDir);
+    transientIssues = cleanupReleasedTransient(root, stateDir);
   }
-  if (result === undefined) return refuse(transactionId, releaseIssues);
-  if (releaseIssues.length === 0) return result;
+  const coordinationIssues = [...releaseIssues, ...transientIssues];
+  if (result === undefined) return refuse(transactionId, coordinationIssues);
+  if (coordinationIssues.length === 0) return result;
+  // The transaction state was recovered, but its namespace removal was not
+  // durable (or coordination was not released): never report a false clean
+  // success. The recovered outcome stays truthful through the issue list.
   return {
     status: "refused",
     transactionId,
-    issues: [...result.issues, ...releaseIssues],
+    issues: [...result.issues, ...coordinationIssues],
   };
 }
 
@@ -1335,23 +1386,26 @@ export function recoverTransactions(
   }
   let results: readonly RecoveryResult[] | undefined;
   let releaseIssues: readonly ModelIssue[] = [];
+  let transientIssues: readonly ModelIssue[];
   try {
     results = recoverScannedTransactions(root, stateDir, roots, hooks);
   } finally {
     const outcome = releaseWriterLock(acquired.value, hooks);
     if (!outcome.ok) releaseIssues = outcome.issues;
-    cleanupReleasedTransient(root, stateDir);
+    transientIssues = cleanupReleasedTransient(root, stateDir);
   }
+  const coordinationIssues = [...releaseIssues, ...transientIssues];
   if (results === undefined) {
-    return [{ status: "refused", transactionId: null, issues: releaseIssues }];
+    return [
+      { status: "refused", transactionId: null, issues: coordinationIssues },
+    ];
   }
-  if (releaseIssues.length === 0) return results;
-  // A recovered transaction whose coordination evidence could not be released
-  // is not a clean outcome: report the retained owner evidence truthfully
-  // rather than discarding the release failure.
+  if (coordinationIssues.length === 0) return results;
+  // A recovered transaction whose coordination or namespace removal was not
+  // durable must be exposed in the aggregate, not hidden behind clean rows.
   return [
     ...results,
-    { status: "refused", transactionId: null, issues: releaseIssues },
+    { status: "refused", transactionId: null, issues: coordinationIssues },
   ];
 }
 

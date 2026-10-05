@@ -8,6 +8,8 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
+import fsDefault from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -173,6 +175,65 @@ test("missing backups fail closed", () => {
     if (recovered.status === "refused") {
       assert.equal(recovered.issues[0].code, "RECOVERY_BACKUP_MISSING");
     }
+    assert.equal(existsSync(abs(root, transactionDir(STATE_DIR, ID))), true);
+  });
+});
+
+test("a transaction-directory flush failure retains the journal and directory", () => {
+  withRoot((root) => {
+    prepare(root);
+    let fired = false;
+    const fdPaths = new Map<number, string>();
+    const originalOpen = fsDefault.openSync.bind(fsDefault);
+    const originalClose = fsDefault.closeSync.bind(fsDefault);
+    const originalFsync = fsDefault.fsyncSync.bind(fsDefault);
+    const txnDir = abs(root, transactionDir(STATE_DIR, ID));
+    fsDefault.openSync = ((p: fsDefault.PathLike, ...rest: never[]) => {
+      const fd = (
+        originalOpen as (p: fsDefault.PathLike, ...rest: never[]) => number
+      )(p, ...rest);
+      fdPaths.set(fd, String(p));
+      return fd;
+    }) as typeof fsDefault.openSync;
+    fsDefault.closeSync = ((fd: number) => {
+      fdPaths.delete(fd);
+      return originalClose(fd);
+    }) as typeof fsDefault.closeSync;
+    fsDefault.fsyncSync = ((fd: number) => {
+      if (!fired && fdPaths.get(fd) === txnDir) {
+        fired = true;
+        throw Object.assign(
+          new Error("injected transaction-directory fsync EIO"),
+          { code: "EIO" },
+        );
+      }
+      return originalFsync(fd);
+    }) as typeof fsDefault.fsyncSync;
+    syncBuiltinESMExports();
+    let recovered: ReturnType<typeof recoverTransaction> | undefined;
+    try {
+      recovered = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
+    } finally {
+      fsDefault.openSync = originalOpen;
+      fsDefault.closeSync = originalClose;
+      fsDefault.fsyncSync = originalFsync;
+      syncBuiltinESMExports();
+    }
+    assert.equal(
+      fired,
+      true,
+      "the transaction-directory flush must be reached",
+    );
+    assert.equal(recovered?.status, "refused", JSON.stringify(recovered));
+    assert.ok(
+      recovered?.issues.some(
+        (entry) => entry.code === "RECOVERY_CLEANUP_FAILED",
+      ),
+      JSON.stringify(recovered?.issues),
+    );
+    // Destructive progress stopped at the failed prerequisite: the journal and
+    // its transaction directory remain as safe restart evidence.
+    assert.equal(existsSync(abs(root, journalPath(STATE_DIR, ID))), true);
     assert.equal(existsSync(abs(root, transactionDir(STATE_DIR, ID))), true);
   });
 });

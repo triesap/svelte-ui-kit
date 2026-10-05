@@ -789,6 +789,12 @@ function absOf(root: string, logical: string): string {
   return path.join(root, ...logical.split("/"));
 }
 
+/** The errno code of a filesystem failure, or a conservative I/O default. */
+function errorCode(error: unknown): string {
+  const code = (error as NodeJS.ErrnoException | null)?.code;
+  return typeof code === "string" ? code : "EIO";
+}
+
 /**
  * The complete generated-ancestry plan for every target and the canonical
  * lock. A recorded-absent ancestor implies every deeper component was also
@@ -1065,24 +1071,32 @@ export function applyPlan(
     };
   }
   const release = releaseWriterLock(acquired.value, hooks);
-  cleanupEmptyTransient(plan);
+  const transientIssues = cleanupEmptyTransient(plan);
   // A refused or no-change attempt leaves no committed install, so remove only
   // the empty directories this attempt created. A committed install keeps them.
   const ancestryIssues =
     outcome.kind === "applied" || outcome.kind === "committed_needs_cleanup"
       ? []
       : removeOwnedAncestors(plan.root, ownedCreated, hooks);
+  const cleanupIssues = [...transientIssues, ...ancestryIssues];
   if (release.ok) {
-    return ancestryIssues.length === 0
-      ? outcome
-      : { ...outcome, issues: [...outcome.issues, ...ancestryIssues] };
+    if (cleanupIssues.length === 0) return outcome;
+    // A published batch never rolls back for a cleanup failure, but it is not
+    // fully clean either: report the truthful applied-but-needs-cleanup
+    // outcome with the actual durability issue retained.
+    return {
+      ...outcome,
+      kind:
+        outcome.kind === "applied" ? "committed_needs_cleanup" : outcome.kind,
+      issues: [...outcome.issues, ...cleanupIssues],
+    };
   }
   // A failed release never downgrades a truthful outcome, but an applied batch
   // whose ownership evidence could not be released is not fully clean.
   return {
+    ...outcome,
     kind: outcome.kind === "applied" ? "committed_needs_cleanup" : outcome.kind,
-    transactionId,
-    issues: [...outcome.issues, ...release.issues, ...ancestryIssues],
+    issues: [...outcome.issues, ...release.issues, ...cleanupIssues],
   };
 }
 
@@ -1439,8 +1453,13 @@ function removeTransaction(
  * Best-effort removal of empty owned transient directories after release, so a
  * fresh initialization that only created transient state does not leave hidden
  * residue. Only empty directories are removed; unexpected entries survive.
+ *
+ * The removal of each empty directory is flushed in its parent. If that flush
+ * fails, the removal may not be durable, so destructive progress stops and a
+ * typed issue is returned; the surviving namespace is retained as evidence.
  */
-function cleanupEmptyTransient(plan: ValidatedApplyPlan): void {
+function cleanupEmptyTransient(plan: ValidatedApplyPlan): ModelIssue[] {
+  const issues: ModelIssue[] = [];
   for (const [logical, parent] of [
     [transactionsDir(plan.stateDir), transientRoot(plan.stateDir)],
     [transientRoot(plan.stateDir), plan.stateDir],
@@ -1454,10 +1473,18 @@ function cleanupEmptyTransient(plan: ValidatedApplyPlan): void {
     // Durable removal of the now-empty owned transient directory in its parent.
     try {
       flushDirectory(absOf(plan.root, parent));
-    } catch {
-      // The directory is already gone; the parent flush is best effort here.
+    } catch (error) {
+      issues.push(
+        issue(
+          "COMMITTED_NEEDS_CLEANUP",
+          `owned transient directory ${logical} was removed but its parent could not be flushed durably (${errorCode(error)})`,
+          logical,
+        ),
+      );
+      return issues;
     }
   }
+  return issues;
 }
 
 // Kept for import stability with the sealed-authority readers.

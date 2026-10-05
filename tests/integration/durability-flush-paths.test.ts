@@ -15,11 +15,17 @@ import { captureReadset } from "../../src/codegen/authority.js";
 import { capturePreimage } from "../../src/codegen/revalidate.js";
 import { lockPath } from "../../src/codegen/transaction-types.js";
 import {
+  recoverTransaction,
+  recoverTransactions,
+} from "../../src/codegen/recovery.js";
+import {
   GUARDED_STATE,
   GUARDED_STYLES,
+  abs,
   makeGuardedPlan,
   lockJson,
 } from "../helpers/guarded-plan.js";
+import { RECOVERY_ROOTS } from "../helpers/transactions.js";
 
 /**
  * RCLD04-R2-2: causal durability coverage for cross-directory renames.
@@ -291,3 +297,140 @@ test("a refused batch flushes the parent of each removed owned ancestor", () => 
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+/**
+ * Fail the first real `fsync` whose opened target satisfies `predicate`, then
+ * stop failing. Unlike the hook-driven `recordFlushes` probe this drives a
+ * genuine syscall fault on a path with no protocol hook (the post-release
+ * empty-namespace cleanup), so the propagation is verified causally.
+ */
+function failFsyncWhile(predicate: (target: string) => boolean): {
+  fired(): boolean;
+  restore(): void;
+} {
+  let fired = false;
+  const fdPaths = new Map<number, string>();
+  const originalOpen = fs.openSync.bind(fs);
+  const originalClose = fs.closeSync.bind(fs);
+  const originalFsync = fs.fsyncSync.bind(fs);
+  fs.openSync = ((p: fs.PathLike, ...rest: never[]) => {
+    const fd = (originalOpen as (p: fs.PathLike, ...rest: never[]) => number)(
+      p,
+      ...rest,
+    );
+    fdPaths.set(fd, String(p));
+    return fd;
+  }) as typeof fs.openSync;
+  fs.closeSync = ((fd: number) => {
+    fdPaths.delete(fd);
+    return originalClose(fd);
+  }) as typeof fs.closeSync;
+  fs.fsyncSync = ((fd: number) => {
+    const target = fdPaths.get(fd);
+    if (!fired && target !== undefined && predicate(target)) {
+      fired = true;
+      throw Object.assign(new Error("injected post-release fsync EIO"), {
+        code: "EIO",
+      });
+    }
+    return originalFsync(fd);
+  }) as typeof fs.fsyncSync;
+  syncBuiltinESMExports();
+  return {
+    fired: () => fired,
+    restore: () => {
+      fs.openSync = originalOpen;
+      fs.closeSync = originalClose;
+      fs.fsyncSync = originalFsync;
+      syncBuiltinESMExports();
+    },
+  };
+}
+
+/** True when the post-release empty `.svelte-ui-kit` namespace is gone. */
+function transientGone(root: string): boolean {
+  return !fs.existsSync(abs(root, `${GUARDED_STATE}/.svelte-ui-kit`));
+}
+
+test("applyPlan reports committed_needs_cleanup when the post-release flush fails", () => {
+  const root = fs.mkdtempSync(
+    path.join(os.tmpdir(), "suik-flush-postrelease-"),
+  );
+  const probe = failFsyncWhile(
+    (target) => target === abs(root, GUARDED_STATE) && transientGone(root),
+  );
+  try {
+    const outcome = applyPlan(sealed(makeGuardedPlan(root)));
+    assert.equal(probe.fired(), true, "the post-release flush must be reached");
+    // The batch committed; a cleanup durability failure must never roll back or
+    // falsely report a clean success.
+    assert.equal(
+      outcome.kind,
+      "committed_needs_cleanup",
+      JSON.stringify(outcome.issues),
+    );
+    assert.ok(
+      outcome.issues.some((entry) => entry.code === "COMMITTED_NEEDS_CLEANUP"),
+      JSON.stringify(outcome.issues),
+    );
+    assert.equal(
+      fs.readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
+      "new css\n",
+    );
+  } finally {
+    probe.restore();
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+for (const [label, recover] of [
+  [
+    "recoverTransaction",
+    (root: string) =>
+      [
+        recoverTransaction(
+          root,
+          GUARDED_STATE,
+          "44444444-4444-4444-8444-444444444444",
+          RECOVERY_ROOTS,
+        ),
+      ] as const,
+  ],
+  [
+    "recoverTransactions",
+    (root: string) => recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS),
+  ],
+] as const) {
+  test(`${label} exposes a post-release transient flush failure truthfully`, () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "suik-flush-recover-"));
+    const applied = applyPlan(sealed(makeGuardedPlan(root)));
+    assert.equal(applied.kind, "applied", JSON.stringify(applied.issues));
+    const probe = failFsyncWhile(
+      (target) => target === abs(root, GUARDED_STATE) && transientGone(root),
+    );
+    try {
+      const results = recover(root);
+      assert.equal(
+        probe.fired(),
+        true,
+        `${label}: the post-release flush must be reached`,
+      );
+      const refused = results.filter((entry) => entry.status === "refused");
+      assert.ok(
+        refused.length > 0,
+        `${label}: the cleanup failure must not be reported as clean: ${JSON.stringify(results)}`,
+      );
+      assert.ok(
+        refused.some((entry) =>
+          entry.issues.some(
+            (issue) => issue.code === "RECOVERY_CLEANUP_FAILED",
+          ),
+        ),
+        JSON.stringify(results),
+      );
+    } finally {
+      probe.restore();
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+}
