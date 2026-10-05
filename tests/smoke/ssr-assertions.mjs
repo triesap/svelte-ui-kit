@@ -56,3 +56,31 @@ export function assertServerRendered(response, expectedValue) {
   if (error) throw error;
   return stripScripts(response.body);
 }
+
+/**
+ * Assert the visible (non-script) server-rendered markup contains every
+ * expected component/marker string and none of the forbidden ones. Transport
+ * success is asserted independently so a 500 or wrong content type cannot
+ * satisfy a marker assertion. Returns the visible markup for diagnostics.
+ */
+export function assertVisibleMarkers(
+  response,
+  { present = [], absent = [] } = {},
+  label = "SSR",
+) {
+  assertHtmlTransport(response, label);
+  const visible = stripScripts(response.body);
+  for (const marker of present) {
+    assert.ok(
+      visible.includes(marker),
+      `${label}: missing visible marker ${JSON.stringify(marker)}`,
+    );
+  }
+  for (const marker of absent) {
+    assert.ok(
+      !visible.includes(marker),
+      `${label}: unexpected visible marker ${JSON.stringify(marker)}`,
+    );
+  }
+  return visible;
+}
