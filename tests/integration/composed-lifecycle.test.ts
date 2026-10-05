@@ -677,3 +677,112 @@ test("a custom mapping satisfied sync replays through the guarded path", () => {
     rmSync(consumer, { recursive: true, force: true });
   }
 });
+
+test("projected config and requested authority hold across init, add and satisfied sync", () => {
+  const registryRoot = mkdtempSync(
+    path.join(os.tmpdir(), "suik-lifecycle-auth-"),
+  );
+  const consumer = seedConsumer("<h1>AUTHORITY_PAGE</h1>\n");
+  try {
+    const registry = onDiskRegistry(registryRoot);
+    assert.equal(registry.ok, true, JSON.stringify(registry));
+    if (!registry.ok) return;
+
+    // Fresh initialization writes the configuration; the published lock must
+    // bind its exact identity.
+    const first = captureSnapshot(consumer, consumerPaths());
+    assert.equal(first.ok, true, JSON.stringify(first));
+    if (!first.ok) return;
+    const planned = planInit({
+      config: DEFAULT_KIT_CONFIG,
+      layoutFile: DEFAULT_KIT_CONFIG.layoutFile,
+      layoutSource: "",
+      snapshot: first.value,
+      registry: registry.value,
+      configHash: "b".repeat(64),
+    });
+    assert.equal(planned.ok, true, JSON.stringify(planned));
+    if (!planned.ok) return;
+    const init = applyGuarded(consumer, first.value, planned.value.writes);
+    assert.equal(init.kind, "applied", JSON.stringify(init.issues));
+    const initConfig = readFileSync(
+      abs(consumer, `${derived.stateDir}/kit.json`),
+    );
+    const initLock = currentLock(consumer);
+    assert.equal(initLock.configHash, hashBytes(initConfig) as string);
+    assert.deepEqual(initLock.requested, []);
+
+    // An explicit addition writes the requested root into both the config and
+    // the lock; the projected authority keeps them in agreement.
+    const second = captureSnapshot(consumer, consumerPaths());
+    assert.equal(second.ok, true, JSON.stringify(second));
+    if (!second.ok) return;
+    const added = planAdd({
+      registry: registry.value,
+      config: DEFAULT_KIT_CONFIG,
+      addedRoots: ["button"],
+      snapshot: second.value,
+      lock: initLock,
+      registryVersion: registry.value.root.registryVersion,
+      registryHash: registry.value.root.contentHash,
+    });
+    assert.equal(added.ok, true, JSON.stringify(added));
+    if (!added.ok) return;
+    assert.equal(
+      added.value.executable,
+      true,
+      JSON.stringify(added.value.diagnostics),
+    );
+    const addedOutcome = applyGuarded(
+      consumer,
+      second.value,
+      added.value.writes,
+    );
+    assert.equal(
+      addedOutcome.kind,
+      "applied",
+      JSON.stringify(addedOutcome.issues),
+    );
+    const addConfig = JSON.parse(
+      readFileSync(abs(consumer, `${derived.stateDir}/kit.json`), "utf8"),
+    ) as { requested: string[] };
+    const addLock = currentLock(consumer);
+    assert.equal(
+      addLock.configHash,
+      hashBytes(
+        readFileSync(abs(consumer, `${derived.stateDir}/kit.json`)),
+      ) as string,
+    );
+    assert.deepEqual(addLock.requested, ["button"]);
+    assert.deepEqual(addConfig.requested, ["button"]);
+
+    // An installed satisfied replay carries the unchanged captured config
+    // authority and publishes nothing new.
+    const before = snapshotTree(consumer);
+    const third = captureSnapshot(consumer, consumerPaths());
+    assert.equal(third.ok, true, JSON.stringify(third));
+    if (!third.ok) return;
+    const sync = planSync({
+      registry: registry.value,
+      config: { ...DEFAULT_KIT_CONFIG, requested: ["button"] },
+      snapshot: third.value,
+      lock: addLock,
+      registryVersion: registry.value.root.registryVersion,
+      registryHash: registry.value.root.contentHash,
+    });
+    assert.equal(sync.ok, true, JSON.stringify(sync));
+    if (!sync.ok) return;
+    if (sync.value.writes.length > 0) {
+      const replay = applyGuarded(consumer, third.value, sync.value.writes);
+      assert.ok(
+        replay.kind === "no_change" || replay.kind === "applied",
+        JSON.stringify(replay.issues),
+      );
+    }
+    assert.deepEqual(currentLock(consumer), addLock);
+    assert.deepEqual(snapshotTree(consumer), before);
+  } finally {
+    rmSync(registryRoot, { recursive: true, force: true });
+    rmSync(consumer, { recursive: true, force: true });
+  }
+});

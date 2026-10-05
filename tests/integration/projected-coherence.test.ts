@@ -606,3 +606,61 @@ test("a managed foundation stylesheet without its tokens block is refused", () =
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("a customized managed foundation still satisfies its contract", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-projected-css-ok-"));
+  try {
+    seed(root);
+    const derived = deriveKitPaths(DEFAULT);
+    const configPath = `${derived.stateDir}/kit.json`;
+    const lockPath = `${derived.stateDir}/kit.lock.json`;
+    const configBytes = validKitConfigBytes();
+    // A legitimate local customization keeps the owned `tokens` block but
+    // changes its effective body; contract presence, not byte equality with the
+    // canonical foundation, is the ownership proof.
+    const customized =
+      "/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens;\n/* svelte-ui-kit:end tokens */\n.keep { color: blue; }\n";
+    const snapshot = captureSnapshot(root, [
+      configPath,
+      lockPath,
+      derived.kitCss,
+      ".gitignore",
+    ]);
+    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+    if (!snapshot.ok) return;
+    const composed = composeApplyPlan({
+      root,
+      config: DEFAULT,
+      writes: [
+        { path: configPath, operation: "create", bytes: configBytes },
+        {
+          path: derived.kitCss,
+          operation: "create",
+          bytes: new TextEncoder().encode(customized),
+        },
+        {
+          path: lockPath,
+          operation: "create",
+          bytes: lockDoc({
+            configHash: sha256Hex(configBytes),
+            integrations: [
+              {
+                kind: "stylesheet",
+                path: derived.kitCss,
+                baseline: sha256Hex("tokens"),
+                contract: "foundation-tokens-v1",
+              },
+            ],
+          }),
+        },
+      ],
+      snapshot: snapshot.value,
+    });
+    assert.equal(composed.ok, true, JSON.stringify(composed));
+    if (!composed.ok) return;
+    const result = validateApplyPlan(composed.value);
+    assert.equal(result.ok, true, JSON.stringify(result));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
