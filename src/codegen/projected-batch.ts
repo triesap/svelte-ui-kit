@@ -456,6 +456,7 @@ function validateExportsIntegration(
   exportsPath: string,
   bytes: Uint8Array,
   expected: readonly ExportDeclaration[] | null,
+  baseline: string,
 ): ModelIssue[] {
   const text = decodeUtf8(bytes);
   if (text === null) {
@@ -487,7 +488,23 @@ function validateExportsIntegration(
       ),
     ];
   }
-  if (expected === null) return [];
+  if (expected === null) {
+    // No barrel write in this batch: the installed barrel is unchanged captured
+    // content. Its owned region must still match the recorded canonical
+    // baseline, so a user edit inside the managed region cannot pass as an
+    // unchanged integration on marker presence alone.
+    const effectiveRegion = text.slice(region.contentStart, region.contentEnd);
+    if (sha256Hex(effectiveRegion) !== baseline) {
+      return [
+        issue(
+          "PROJECTED_EXPORTS_BASELINE_MISMATCH",
+          `the unchanged managed export region of ${JSON.stringify(exportsPath)} does not match its recorded canonical baseline`,
+          exportsPath,
+        ),
+      ];
+    }
+    return [];
+  }
   // The effective managed region must still carry every registry-declared
   // export, compared by name/kind/exact target. A replacement barrel whose
   // region silently drops a declared export, retargets one to a different
@@ -639,6 +656,7 @@ export function validateProjectedLock(
             integration.path,
             bytes,
             authority?.declarations ?? null,
+            integration.baseline,
           ),
         );
       }

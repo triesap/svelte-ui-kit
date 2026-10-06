@@ -405,4 +405,35 @@ for (const [label, config] of CONFIGS) {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  test(`[${label}] an unchanged barrel is bound to its recorded baseline`, () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-base-"));
+    try {
+      seed(root);
+      const { plan, barrelPath } = buttonAdd(root, config);
+      // A batch that does not write the barrel carries no new cohort authority;
+      // the installed region must then still match its recorded baseline.
+      const unchanged = { ...plan, exportAuthority: [] };
+      assert.equal(validateApplyPlan(unchanged).ok, true, "canonical region");
+      const emptied = replaceTarget(
+        unchanged,
+        barrelPath,
+        new TextEncoder().encode(
+          "// svelte-ui-kit:start exports\n// svelte-ui-kit:end exports\n",
+        ),
+      );
+      const result = validateApplyPlan(emptied);
+      assert.equal(result.ok, false, JSON.stringify(result));
+      if (!result.ok) {
+        assert.ok(
+          result.issues.some(
+            (entry) => entry.code === "PROJECTED_EXPORTS_BASELINE_MISMATCH",
+          ),
+          JSON.stringify(result.issues),
+        );
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 }
