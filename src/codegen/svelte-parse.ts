@@ -169,30 +169,197 @@ function renderTargetName(expression: unknown): string | null {
 }
 
 /**
- * Walk the Svelte template AST for an executable child render. Only an actual
- * `RenderTag` of a bound child name or a legacy `SlotElement` counts; comment
- * and string text are separate nodes and cannot satisfy this.
+ * Walk the Svelte template AST for an *executable* child render.
+ *
+ * Only an actual `RenderTag` of a name that lexically resolves to the `children`
+ * prop binding, or a legacy `SlotElement`, counts. The proof is binding-aware
+ * and reachability-aware: a snippet declaration's body is deferred content, so a
+ * child render inside a declared-but-never-invoked snippet is not executable and
+ * does not count. A reachable `{@render snippet()}` does recurse into the
+ * invoked snippet's body with its parameters shadowing the prop bindings, so an
+ * actually invoked wrapper is preserved while an unreachable body is refused.
+ * Comments and unrelated render calls are separate nodes and never satisfy it.
+ *
+ * The analysis is deliberately bounded: it resolves direct/aliased children,
+ * conditional/each/await branches, invoked snippets and legacy slots, and
+ * treats anything it cannot prove as not-rendered rather than guessing.
  */
+
+interface SnippetDecl {
+  readonly params: ReadonlySet<string>;
+  readonly fragment: unknown;
+}
+
+interface ChildScope {
+  readonly bindings: ReadonlySet<string>;
+  readonly snippets: ReadonlyMap<string, SnippetDecl>;
+}
+
+/** Names bound by a Svelte binding pattern (identifier, object, array, rest). */
+function patternNames(pattern: unknown): ReadonlySet<string> {
+  const names = new Set<string>();
+  const visit = (value: unknown): void => {
+    if (value === null || typeof value !== "object") return;
+    if (Array.isArray(value)) {
+      for (const element of value) visit(element);
+      return;
+    }
+    const node = value as {
+      type?: unknown;
+      name?: unknown;
+      elements?: unknown;
+      properties?: unknown;
+      argument?: unknown;
+      left?: unknown;
+      right?: unknown;
+    };
+    switch (node.type) {
+      case "Identifier":
+        if (typeof node.name === "string") names.add(node.name);
+        return;
+      case "ObjectPattern":
+        if (Array.isArray(node.properties)) {
+          for (const property of node.properties) visit(property);
+        }
+        return;
+      case "Property":
+      case "RestElement":
+        visit(node.argument ?? node.left ?? node.right);
+        return;
+      case "ArrayPattern":
+        if (Array.isArray(node.elements)) {
+          for (const element of node.elements) visit(element);
+        }
+        return;
+      case "AssignmentPattern":
+        visit(node.left);
+        return;
+      default:
+        return;
+    }
+  };
+  visit(pattern);
+  return names;
+}
+
+function identifierName(value: unknown): string | null {
+  if (value !== null && typeof value === "object") {
+    const node = value as { type?: unknown; name?: unknown };
+    if (node.type === "Identifier" && typeof node.name === "string") {
+      return node.name;
+    }
+  }
+  return null;
+}
+
+/** Names a block node shadows inside its own body fragments. */
+function blockShadowNames(node: Record<string, unknown>): ReadonlySet<string> {
+  if (node["type"] === "EachBlock") return patternNames(node["context"]);
+  if (node["type"] === "AwaitBlock") {
+    const names = new Set<string>([
+      ...patternNames(node["value"]),
+      ...patternNames(node["error"]),
+    ]);
+    return names;
+  }
+  return new Set<string>();
+}
+
+function withoutNames(
+  source: ReadonlySet<string>,
+  remove: ReadonlySet<string>,
+): ReadonlySet<string> {
+  if (remove.size === 0) return source;
+  const next = new Set(source);
+  for (const name of remove) next.delete(name);
+  return next;
+}
+
+/** Walk one fragment, collecting its direct snippet declarations first. */
+function fragmentRendersChild(
+  fragment: Record<string, unknown>,
+  scope: ChildScope,
+  invoked: ReadonlySet<string>,
+): boolean {
+  const nodes = Array.isArray(fragment["nodes"]) ? fragment["nodes"] : [];
+  const snippets = new Map(scope.snippets);
+  for (const child of nodes) {
+    if (child === null || typeof child !== "object") continue;
+    const record = child as Record<string, unknown>;
+    if (record["type"] !== "SnippetBlock") continue;
+    const name = identifierName(record["expression"]);
+    if (name === null) continue;
+    snippets.set(name, {
+      params: patternNames(record["parameters"]),
+      fragment: record["body"],
+    });
+  }
+  // A snippet declaration shadows a same-named prop binding in this scope.
+  const bindings = withoutNames(scope.bindings, new Set(snippets.keys()));
+  const inner: ChildScope = { bindings, snippets };
+  for (const child of nodes) {
+    if (child === null || typeof child !== "object") continue;
+    if ((child as Record<string, unknown>)["type"] === "SnippetBlock") {
+      continue; // deferred until invoked
+    }
+    if (templateRendersChild(child, inner, invoked)) return true;
+  }
+  return false;
+}
+
 function templateRendersChild(
   node: unknown,
-  bindings: ReadonlySet<string>,
+  scope: ChildScope,
+  invoked: ReadonlySet<string>,
 ): boolean {
   if (node === null || typeof node !== "object") return false;
   const record = node as Record<string, unknown>;
-  if (record["type"] === "SlotElement") return true;
-  if (record["type"] === "RenderTag") {
-    const name = renderTargetName(record["expression"]);
-    if (name !== null && bindings.has(name)) return true;
+  const type = record["type"];
+  if (type === "SlotElement") return true;
+  if (type === "SnippetBlock") return false;
+  if (type === "Fragment") {
+    return fragmentRendersChild(record, scope, invoked);
   }
+  if (type === "RenderTag") {
+    const name = renderTargetName(record["expression"]);
+    if (name === null) return false;
+    const declaration = scope.snippets.get(name);
+    if (declaration !== undefined) {
+      // Invoked snippet: recurse with its parameters shadowing prop bindings.
+      // A recursion guard keeps a self-referential snippet from looping.
+      if (invoked.has(name)) return false;
+      const nextInvoked = new Set(invoked);
+      nextInvoked.add(name);
+      const innerBindings = withoutNames(scope.bindings, declaration.params);
+      const body = declaration.fragment;
+      if (body === null || typeof body !== "object") return false;
+      return fragmentRendersChild(
+        body as Record<string, unknown>,
+        { bindings: innerBindings, snippets: scope.snippets },
+        nextInvoked,
+      );
+    }
+    return scope.bindings.has(name);
+  }
+  // Any other block/element: descend into its fragment-bearing children with
+  // the block's own bindings shadowed.
+  const shadow = blockShadowNames(record);
+  const inner: ChildScope =
+    shadow.size === 0
+      ? scope
+      : {
+          bindings: withoutNames(scope.bindings, shadow),
+          snippets: scope.snippets,
+        };
   for (const key of Object.keys(record)) {
     if (SKIP_KEYS.has(key)) continue;
     const value = record[key];
     if (Array.isArray(value)) {
       for (const child of value) {
-        if (templateRendersChild(child, bindings)) return true;
+        if (templateRendersChild(child, inner, invoked)) return true;
       }
     } else if (value !== null && typeof value === "object") {
-      if (templateRendersChild(value, bindings)) return true;
+      if (templateRendersChild(value, inner, invoked)) return true;
     }
   }
   return false;
@@ -270,7 +437,14 @@ export function parseSvelteLayout(source: string): ModelResult<LayoutInfo> {
       bindings.add(name);
     }
   }
-  const rendersChildren = templateRendersChild(root.fragment, bindings);
+  const rendersChildren =
+    root.fragment === undefined || root.fragment === null
+      ? false
+      : templateRendersChild(
+          root.fragment,
+          { bindings, snippets: new Map() },
+          new Set<string>(),
+        );
   return ok({
     kind,
     instance,

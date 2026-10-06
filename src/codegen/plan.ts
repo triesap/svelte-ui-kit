@@ -12,6 +12,7 @@
  * planning, no filesystem access and no writer/package-manager work.
  */
 import { hashBytes } from "./compare.js";
+import type { BarrelExportAuthority } from "./exports.js";
 
 export interface PlanningOutcome {
   /** Whether the plan would change anything. */
@@ -35,6 +36,14 @@ export interface PlanWrite {
   readonly bytes: Uint8Array;
   /** Defaults to `create`/`update` when a planner does not state one. */
   readonly operation?: ChangeOperation;
+  /**
+   * Internal planning evidence carried on the canonical lock publication: the
+   * registry-declared export-cohort authority for every managed barrel, sourced
+   * from the validated registry closure. Composition consumes this independent
+   * authority instead of parsing candidate barrel bytes. It is never a public
+   * command flag, registry schema mode or serialized plan envelope field.
+   */
+  readonly exportAuthority?: readonly BarrelExportAuthority[];
 }
 
 export interface PlannedWriteEnvelope {

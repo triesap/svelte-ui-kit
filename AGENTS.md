@@ -25,13 +25,13 @@ references.
   mandatory independent Codex S077 review before S078. Preserve 63 accepted
   checkpoints and original criteria/statuses. Target-only coherent green commits
   are authorized within this scope; no parent/remote or reference-source changes.
-- The current return review at `d54f7d4` preserves effective-content precedence,
-  sealed-byte isolation/binding and freshly executed workflow qualification.
-  Complete original semantic layout and source/style/export cohort authority:
-  comments/strings are not executed imports or child rendering, valid aliased
-  children must remain supported, and an empty managed region cannot prove the
-  installed export cohort. Qualify these across the original default/custom
-  lifecycle and finish all remaining RCLD-04 criteria and cumulative evidence.
+- The current return review at `6f2d877` preserves real import/render AST parsing,
+  aliased children, post-composition export checks and consumer controls.
+  Complete original independent export/cohort provenance, full source binding
+  and reachable scoped child rendering. Planned output must not certify itself;
+  unchanged content needs original relationship authority, not a blanket baseline
+  byte-equality fallback. Preserve legitimate customization under frozen policies,
+  qualify the complete lifecycle and finish remaining RCLD-04 evidence together.
   Test-name inventories and author completion claims do not grant acceptance.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.

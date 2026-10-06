@@ -45,7 +45,10 @@ import { parseManagedCss } from "./css-parse.js";
 import { FOUNDATION_TOKENS_CONTRACT } from "./css.js";
 import { sha256Hex } from "./digest.js";
 import {
+  authoritativeExportKey,
+  effectiveExportKey,
   parseGeneratedDeclarations,
+  type BarrelExportAuthority,
   type ExportDeclaration,
 } from "./exports.js";
 import { parseExportRegion } from "./export-parse.js";
@@ -74,13 +77,11 @@ export interface ProjectedContent {
 /**
  * The registry-declared export cohort a managed barrel is expected to carry,
  * carried from the original planning authority. The effective region is
- * compared against this set (never against a filename guess or marker
- * presence); application-owned bytes outside the markers are never included.
+ * compared against these full relationships (owner, source binding, public
+ * name, type/value role and runtime target), never against a filename guess,
+ * marker presence or candidate output.
  */
-export interface ExportAuthority {
-  readonly path: string;
-  readonly declarations: readonly ExportDeclaration[];
-}
+export type ExportAuthority = BarrelExportAuthority;
 
 /** Versioned integration contracts proven from the effective projected bytes. */
 export const LAYOUT_CONTRACT = "layout-v1";
@@ -449,14 +450,13 @@ function validateLayoutIntegration(
  */
 /** One stable comparability key for a managed export declaration. */
 function exportKey(declaration: ExportDeclaration): string {
-  return `${declaration.name}|${declaration.kind}|${declaration.target}`;
+  return effectiveExportKey(declaration);
 }
 
 function validateExportsIntegration(
   exportsPath: string,
   bytes: Uint8Array,
-  expected: readonly ExportDeclaration[] | null,
-  baseline: string,
+  authority: ExportAuthority | null,
 ): ModelIssue[] {
   const text = decodeUtf8(bytes);
   if (text === null) {
@@ -488,41 +488,41 @@ function validateExportsIntegration(
       ),
     ];
   }
-  if (expected === null) {
-    // No barrel write in this batch: the installed barrel is unchanged captured
-    // content. Its owned region must still match the recorded canonical
-    // baseline, so a user edit inside the managed region cannot pass as an
-    // unchanged integration on marker presence alone.
-    const effectiveRegion = text.slice(region.contentStart, region.contentEnd);
-    if (sha256Hex(effectiveRegion) !== baseline) {
-      return [
-        issue(
-          "PROJECTED_EXPORTS_BASELINE_MISMATCH",
-          `the unchanged managed export region of ${JSON.stringify(exportsPath)} does not match its recorded canonical baseline`,
-          exportsPath,
-        ),
-      ];
-    }
-    return [];
+  // The `exports-v1` integration is proven from the registry-declared
+  // relationship authority, never from marker presence or a recorded baseline
+  // byte match. Without independent authority the effective region cannot be
+  // certified at all, so a missing entry is a typed refusal, not a silent pass.
+  if (authority === null || authority.declarations === undefined) {
+    return [
+      issue(
+        "PROJECTED_EXPORTS_AUTHORITY_MISSING",
+        `the projected exports barrel ${JSON.stringify(exportsPath)} has no independent registry-declared export authority; marker presence is not cohort proof`,
+        exportsPath,
+      ),
+    ];
   }
-  // The effective managed region must still carry every registry-declared
-  // export, compared by name/kind/exact target. A replacement barrel whose
-  // region silently drops a declared export, retargets one to a different
-  // module or changes a value/type kind cannot claim the contract through
-  // marker presence. Whitespace and application-owned bytes outside the
-  // markers are never compared, so formatting and app exports stay legitimate.
+  // The effective region must still carry every declared relationship: a
+  // replacement barrel that silently drops a declared export, retargets one to
+  // a different module, changes the original source binding or changes a
+  // value/type kind cannot claim the contract. Whitespace and application-owned
+  // bytes outside the markers are never compared, so a customized-but-equivalent
+  // region and app exports stay legitimate.
   const effectiveRegion = text.slice(region.contentStart, region.contentEnd);
   const effective = new Set(
     parseGeneratedDeclarations(effectiveRegion).map(exportKey),
   );
-  const missing = expected.filter(
-    (declaration) => !effective.has(exportKey(declaration)),
-  );
+  const expected = new Set(authority.declarations.map(authoritativeExportKey));
+  const missing = [...expected].filter((key) => !effective.has(key));
   if (missing.length > 0) {
+    const names = authority.declarations
+      .filter((declaration) =>
+        missing.includes(authoritativeExportKey(declaration)),
+      )
+      .map((declaration) => declaration.name);
     return [
       issue(
         "PROJECTED_EXPORTS_COHORT_MISSING",
-        `the effective managed export region of ${JSON.stringify(exportsPath)} omits or retargets ${missing.length} declared export(s): ${missing.map((entry) => entry.name).join(", ")}`,
+        `the effective managed export region of ${JSON.stringify(exportsPath)} omits, retargets or rebinds ${missing.length} declared export relationship(s): ${[...new Set(names)].join(", ")}`,
         exportsPath,
       ),
     ];
@@ -655,8 +655,7 @@ export function validateProjectedLock(
           ...validateExportsIntegration(
             integration.path,
             bytes,
-            authority?.declarations ?? null,
-            integration.baseline,
+            authority ?? null,
           ),
         );
       }

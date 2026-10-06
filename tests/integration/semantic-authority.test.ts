@@ -244,6 +244,56 @@ for (const [label, config] of CONFIGS) {
       }
     });
   });
+
+  test(`[${label}] reachable, invoked and shadowed snippet rendering is proven causally`, () => {
+    withCapturedInit(config, (_root, plan) => {
+      // A child render inside a declared-but-never-invoked snippet is deferred
+      // content: it is not executed and must not claim layout-v1.
+      const uncalled = replaceLayout(
+        plan,
+        config.layoutFile,
+        `<script>\n${IMPORTS(config)}let { children } = $props();\n</script>\n{#snippet unused()}{@render children()}{/snippet}\n`,
+      );
+      const uncalledResult = validateApplyPlan(uncalled);
+      assert.equal(uncalledResult.ok, false, JSON.stringify(uncalledResult));
+      if (!uncalledResult.ok) {
+        assert.ok(
+          uncalledResult.issues.some(
+            (entry) => entry.code === "PROJECTED_LAYOUT_RENDERING_MISSING",
+          ),
+          JSON.stringify(uncalledResult.issues),
+        );
+      }
+
+      // A reachable invocation of a wrapper snippet that renders the prop
+      // child is real rendering and stays accepted.
+      const invoked = replaceLayout(
+        plan,
+        config.layoutFile,
+        `<script>\n${IMPORTS(config)}let { children } = $props();\n</script>\n{#snippet shell()}{@render children()}{/snippet}\n{@render shell()}\n`,
+      );
+      const invokedResult = validateApplyPlan(invoked);
+      assert.equal(invokedResult.ok, true, JSON.stringify(invokedResult));
+
+      // A snippet parameter named `children` shadows the prop binding; the
+      // shadowed render is not the application's child content.
+      const shadowed = replaceLayout(
+        plan,
+        config.layoutFile,
+        `<script>\n${IMPORTS(config)}let { children } = $props();\n</script>\n{#snippet shell(children)}{@render children()}{/snippet}\n{@render shell()}\n`,
+      );
+      const shadowedResult = validateApplyPlan(shadowed);
+      assert.equal(shadowedResult.ok, false, JSON.stringify(shadowedResult));
+      if (!shadowedResult.ok) {
+        assert.ok(
+          shadowedResult.issues.some(
+            (entry) => entry.code === "PROJECTED_LAYOUT_RENDERING_MISSING",
+          ),
+          JSON.stringify(shadowedResult.issues),
+        );
+      }
+    });
+  });
 }
 
 /** A real registry-backed `planAdd(button)` composed batch for one mapping. */
@@ -406,15 +456,26 @@ for (const [label, config] of CONFIGS) {
     }
   });
 
-  test(`[${label}] an unchanged barrel is bound to its recorded baseline`, () => {
+  test(`[${label}] an unchanged barrel is proven against independent authority`, () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-base-"));
     try {
       seed(root);
       const { plan, barrelPath } = buttonAdd(root, config);
-      // A batch that does not write the barrel carries no new cohort authority;
-      // the installed region must then still match its recorded baseline.
-      const unchanged = { ...plan, exportAuthority: [] };
+      // A batch that does not write the barrel still carries the independent
+      // registry-declared cohort authority on the plan (here via the lock
+      // publication), so an unchanged region is proven against relationships,
+      // never against a recorded baseline byte match or candidate output.
+      const authority = plan.exportAuthority ?? [];
+      assert.ok(
+        authority.some(
+          (entry) => entry.path === barrelPath && entry.declarations.length > 0,
+        ),
+        JSON.stringify(authority),
+      );
+      const unchanged = { ...plan, exportAuthority: authority };
       assert.equal(validateApplyPlan(unchanged).ok, true, "canonical region");
+
+      // Dropping the declared relationship from an unchanged region is refused.
       const emptied = replaceTarget(
         unchanged,
         barrelPath,
@@ -427,9 +488,30 @@ for (const [label, config] of CONFIGS) {
       if (!result.ok) {
         assert.ok(
           result.issues.some(
-            (entry) => entry.code === "PROJECTED_EXPORTS_BASELINE_MISMATCH",
+            (entry) => entry.code === "PROJECTED_EXPORTS_COHORT_MISSING",
           ),
           JSON.stringify(result.issues),
+        );
+      }
+
+      // Rebinding the approved source (`default` -> `missing`) while keeping the
+      // public name/kind/target equal is also refused: the full relationship is
+      // authority, not just the public name.
+      const rebound = replaceTarget(
+        unchanged,
+        barrelPath,
+        new TextEncoder().encode(
+          '// svelte-ui-kit:start exports\nexport { missing as Button } from "./button.svelte";\n// svelte-ui-kit:end exports\n',
+        ),
+      );
+      const reboundResult = validateApplyPlan(rebound);
+      assert.equal(reboundResult.ok, false, JSON.stringify(reboundResult));
+      if (!reboundResult.ok) {
+        assert.ok(
+          reboundResult.issues.some(
+            (entry) => entry.code === "PROJECTED_EXPORTS_COHORT_MISSING",
+          ),
+          JSON.stringify(reboundResult.issues),
         );
       }
     } finally {

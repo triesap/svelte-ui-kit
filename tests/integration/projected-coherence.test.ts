@@ -701,6 +701,39 @@ function reCapture(root: string, config: KitConfig) {
   return snapshot.value;
 }
 
+/**
+ * The independent export authority matching an installed init lock: the
+ * installed barrel is an empty managed cohort, but the authority is still
+ * carried from the recorded registry identity rather than omitted.
+ */
+function installedExportAuthority(
+  root: string,
+  config: KitConfig,
+): {
+  readonly path: string;
+  readonly contract: "exports-v1";
+  readonly registryVersion: string;
+  readonly registryHash: string;
+  readonly declarations: readonly never[];
+}[] {
+  const derived = deriveKitPaths(config);
+  const lock = JSON.parse(
+    readFileSync(
+      path.join(root, ...`${derived.stateDir}/kit.lock.json`.split("/")),
+      "utf8",
+    ),
+  ) as { registryVersion: string; registryHash: string };
+  return [
+    {
+      path: derived.rootExports,
+      contract: "exports-v1",
+      registryVersion: lock.registryVersion,
+      registryHash: lock.registryHash,
+      declarations: [],
+    },
+  ];
+}
+
 test("a token-free target result cannot be shadowed by authentic captured old CSS", () => {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-effective-css-"));
   try {
@@ -721,6 +754,7 @@ test("a token-free target result cannot be shadowed by authentic captured old CS
         { path: lockLogical, bytes: lockBytes },
       ],
       snapshot,
+      exportAuthority: installedExportAuthority(root, DEFAULT),
     });
     assert.equal(composed.ok, true, JSON.stringify(composed));
     if (!composed.ok) return;
@@ -779,6 +813,7 @@ test("legitimate target/evidence overlap still resolves the planned result", () 
         { path: lockLogical, bytes: lockBytes },
       ],
       snapshot,
+      exportAuthority: installedExportAuthority(root, DEFAULT),
     });
     assert.equal(composed.ok, true, JSON.stringify(composed));
     if (!composed.ok) return;

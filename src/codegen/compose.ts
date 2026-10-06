@@ -25,15 +25,18 @@ import {
   type ModelResult,
 } from "../registry/errors.js";
 import { deriveKitPaths, type KitConfig } from "../project/config.js";
+import { isSafeLogicalRelativePath } from "../project/paths.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";
 import { identityDigest, type PlanReadFile } from "./authority.js";
 import type { PlanInstalledRead } from "./authority.js";
 import {
+  authoritativeExportKey,
+  effectiveExportKey,
   parseGeneratedDeclarations,
-  type ExportDeclaration,
+  type BarrelExportAuthority,
 } from "./exports.js";
 import { parseExportRegion } from "./export-parse.js";
-import type { ExportAuthority } from "./projected-batch.js";
+import { parseKitLock } from "./lock.js";
 import { hasIgnoreEntry, ignoreBlockWithEntry } from "./transaction-cleanup.js";
 import type { ApplyPlanInput, ApplyTarget } from "./apply.js";
 import type { PlanWrite } from "./plan.js";
@@ -55,6 +58,16 @@ export interface ComposeApplyPlanInput {
    * authority; a missing observation is a typed failure.
    */
   readonly snapshot: ProjectSnapshot;
+  /**
+   * Independent immutable export-cohort authority produced by the planner from
+   * the validated registry closure (owner, source binding, public name, target
+   * and value/type role), keyed by managed barrel path. Composition consumes
+   * this authority instead of parsing candidate barrel bytes, so a plan cannot
+   * certify its own expectations and a tampered or emptied barrel write is
+   * refused. It is required for every barrel the projected lock declares as an
+   * `exports-v1` integration, whether or not this batch writes the barrel.
+   */
+  readonly exportAuthority?: readonly BarrelExportAuthority[];
   /** Override the root identity digest (tests); defaults to the snapshot root. */
   readonly rootIdentity?: string;
 }
@@ -417,47 +430,206 @@ export function composeApplyPlan(
           : null,
     }));
 
-  // Carry the registry-declared export cohort of the planned root barrel as
-  // internal planning authority. The guarded boundary re-proves the effective
-  // managed region against this set, so a barrel replacement that drops,
-  // retargets or changes the kind of a declared export is refused before any
-  // effect. Only a planner-produced barrel write is inspected; a batch that
-  // leaves the installed barrel unchanged carries no new authority.
-  const exportAuthority: ExportAuthority[] = [];
-  const rootExportsWrite = input.writes.find(
-    (write) => write.path === derived.rootExports,
-  );
-  if (rootExportsWrite !== undefined) {
-    let text: string | null;
+  // Consume the independent, planner-produced export-cohort authority. The
+  // projected lock (published by this plan) declares which barrels are managed
+  // `exports-v1` integrations; each must carry an authority entry sourced from
+  // the original validated registry closure, whether or not this batch writes
+  // the barrel. Composition never derives the expected cohort from candidate
+  // output bytes, so a tampered/emptied barrel write is refused and an
+  // unchanged barrel is still proven against its original relationships.
+  const decodeLockBytes = (): unknown => {
     try {
-      text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(
-        rootExportsWrite.bytes,
-      );
+      return JSON.parse(new TextDecoder("utf-8").decode(lockWrite.bytes));
     } catch {
-      text = null;
+      return undefined;
     }
-    const parsed =
-      text === null ? null : parseExportRegion(derived.rootExports, text);
+  };
+  const parsedLockValue = decodeLockBytes();
+  const projectedLock =
+    parsedLockValue === undefined
+      ? null
+      : (() => {
+          const validated = parseKitLock(parsedLockValue, canonicalLock, {
+            stateDir,
+          });
+          return validated.ok ? validated.value : null;
+        })();
+  const managedExportPaths = new Set<string>();
+  if (projectedLock !== null) {
+    for (const integration of projectedLock.integrations) {
+      if (integration.kind === "exports") {
+        managedExportPaths.add(integration.path);
+      }
+    }
+  } else {
+    // A lock that cannot be parsed as a lock cannot declare integrations; fall
+    // back to the planned barrel write so a managed replacement is never left
+    // unqualified. This is a detection aid, never authority derivation.
+    for (const write of input.writes) {
+      if (write.path === derived.rootExports) {
+        managedExportPaths.add(write.path);
+      }
+    }
+  }
+
+  const authorityByPath = new Map<string, BarrelExportAuthority>();
+  const planningAuthority =
+    input.exportAuthority ?? lockWrite.exportAuthority ?? [];
+  for (const entry of planningAuthority) {
     if (
-      text === null ||
-      parsed === null ||
-      !parsed.ok ||
-      parsed.value.region === null
+      !isPlainObject(entry as unknown) ||
+      typeof (entry as BarrelExportAuthority).path !== "string" ||
+      !isSafeLogicalRelativePath((entry as BarrelExportAuthority).path)
     ) {
       return fail([
         issue(
           "COMPOSE_EXPORTS_AUTHORITY_INVALID",
-          `the planned root exports barrel ${derived.rootExports} does not carry a parseable managed export region; refusing to compose an incompletely qualified export cohort`,
-          derived.rootExports,
+          "the planning export authority must name safe barrel paths",
         ),
       ]);
     }
-    const region = parsed.value.region;
-    const declarations: readonly ExportDeclaration[] =
-      parseGeneratedDeclarations(
-        text.slice(region.contentStart, region.contentEnd),
+    const typed = entry as BarrelExportAuthority;
+    if (
+      typed.contract !== "exports-v1" ||
+      typeof typed.registryVersion !== "string" ||
+      typeof typed.registryHash !== "string" ||
+      !HEX64.test(typed.registryHash) ||
+      !Array.isArray(typed.declarations)
+    ) {
+      return fail([
+        issue(
+          "COMPOSE_EXPORTS_AUTHORITY_INVALID",
+          `the planning export authority for ${typed.path} is not a well-formed exports-v1 cohort`,
+          typed.path,
+        ),
+      ]);
+    }
+    for (const declaration of typed.declarations) {
+      if (
+        !isPlainObject(declaration as unknown) ||
+        typeof declaration.owner !== "string" ||
+        declaration.owner.length === 0 ||
+        typeof declaration.name !== "string" ||
+        declaration.name.length === 0 ||
+        typeof declaration.source !== "string" ||
+        declaration.source.length === 0 ||
+        typeof declaration.target !== "string" ||
+        declaration.target.length === 0 ||
+        (declaration.kind !== "value" && declaration.kind !== "type")
+      ) {
+        return fail([
+          issue(
+            "COMPOSE_EXPORTS_AUTHORITY_INVALID",
+            `the planning export authority for ${typed.path} carries a malformed declaration`,
+            typed.path,
+          ),
+        ]);
+      }
+    }
+    const folded = typed.path.toLowerCase();
+    if (authorityByPath.has(folded)) {
+      return fail([
+        issue(
+          "COMPOSE_EXPORTS_AUTHORITY_DUPLICATE",
+          `duplicate planning export authority for ${typed.path}`,
+          typed.path,
+        ),
+      ]);
+    }
+    authorityByPath.set(folded, typed);
+  }
+
+  const exportAuthority: BarrelExportAuthority[] = [];
+  for (const managedPath of managedExportPaths) {
+    const authority = authorityByPath.get(managedPath.toLowerCase());
+    if (authority === undefined) {
+      return fail([
+        issue(
+          "COMPOSE_EXPORTS_AUTHORITY_MISSING",
+          `the projected lock manages the exports barrel ${managedPath} but the plan carries no independent registry-declared authority for it; refusing to compose an unqualified export cohort`,
+          managedPath,
+        ),
+      ]);
+    }
+    if (
+      projectedLock !== null &&
+      (projectedLock.registryVersion !== authority.registryVersion ||
+        projectedLock.registryHash !== authority.registryHash)
+    ) {
+      return fail([
+        issue(
+          "COMPOSE_EXPORTS_AUTHORITY_STALE",
+          `the export authority for ${managedPath} was derived from registry ${authority.registryVersion}/${authority.registryHash} but the projected lock records ${projectedLock.registryVersion}/${projectedLock.registryHash}`,
+          managedPath,
+        ),
+      ]);
+    }
+    const barrelWrite = input.writes.find(
+      (write) => write.path === managedPath,
+    );
+    if (barrelWrite !== undefined) {
+      let text: string | null;
+      try {
+        text = new TextDecoder("utf-8", {
+          fatal: true,
+          ignoreBOM: true,
+        }).decode(barrelWrite.bytes);
+      } catch {
+        text = null;
+      }
+      const parsed =
+        text === null ? null : parseExportRegion(managedPath, text);
+      if (
+        text === null ||
+        parsed === null ||
+        !parsed.ok ||
+        parsed.value.region === null
+      ) {
+        return fail([
+          issue(
+            "COMPOSE_EXPORTS_AUTHORITY_INVALID",
+            `the planned exports barrel ${managedPath} does not carry a parseable managed export region`,
+            managedPath,
+          ),
+        ]);
+      }
+      const region = parsed.value.region;
+      const written = new Set(
+        parseGeneratedDeclarations(
+          text.slice(region.contentStart, region.contentEnd),
+        ).map(effectiveExportKey),
       );
-    exportAuthority.push({ path: derived.rootExports, declarations });
+      const missing = authority.declarations.filter(
+        (declaration) => !written.has(authoritativeExportKey(declaration)),
+      );
+      if (missing.length > 0) {
+        return fail([
+          issue(
+            "COMPOSE_EXPORTS_AUTHORITY_WRITE_MISMATCH",
+            `the planned exports barrel ${managedPath} does not carry ${missing.length} independently declared export relationship(s): ${[...new Set(missing.map((entry) => entry.name))].join(", ")}`,
+            managedPath,
+          ),
+        ]);
+      }
+    }
+    exportAuthority.push(authority);
+  }
+  if (projectedLock !== null) {
+    for (const [folded, authority] of authorityByPath) {
+      if (
+        ![...managedExportPaths].some(
+          (managedPath) => managedPath.toLowerCase() === folded,
+        )
+      ) {
+        return fail([
+          issue(
+            "COMPOSE_EXPORTS_AUTHORITY_UNEXPECTED",
+            `the plan carries export authority for ${authority.path} which the projected lock does not manage`,
+            authority.path,
+          ),
+        ]);
+      }
+    }
   }
 
   const rootIdentity =

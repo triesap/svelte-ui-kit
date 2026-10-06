@@ -197,9 +197,17 @@ const PLAN_KEYS: readonly string[] = [
   "ignoreFiles",
   "exportAuthority",
 ];
-const EXPORT_AUTHORITY_KEYS: readonly string[] = ["path", "declarations"];
+const EXPORT_AUTHORITY_KEYS: readonly string[] = [
+  "path",
+  "contract",
+  "registryVersion",
+  "registryHash",
+  "declarations",
+];
 const EXPORT_AUTHORITY_DECLARATION_KEYS: readonly string[] = [
+  "owner",
   "name",
+  "source",
   "target",
   "kind",
 ];
@@ -393,6 +401,39 @@ export function validateApplyPlan(
           );
           continue;
         }
+        if (entry["contract"] !== "exports-v1") {
+          problems.push(
+            issue(
+              "PLAN_EXPORT_AUTHORITY_INVALID",
+              `${label}.contract must be exports-v1`,
+              label,
+            ),
+          );
+          continue;
+        }
+        for (const field of ["registryVersion", "registryHash"] as const) {
+          if (
+            typeof entry[field] !== "string" ||
+            (entry[field] as string).length === 0
+          ) {
+            problems.push(
+              issue(
+                "PLAN_EXPORT_AUTHORITY_INVALID",
+                `${label}.${field} must be a non-empty string`,
+                label,
+              ),
+            );
+          }
+        }
+        if (!HEX64.test(String(entry["registryHash"]))) {
+          problems.push(
+            issue(
+              "PLAN_EXPORT_AUTHORITY_INVALID",
+              `${label}.registryHash must be a 64-hex digest`,
+              label,
+            ),
+          );
+        }
         const folded = entry["path"].toLowerCase();
         if (seenAuthority.has(folded)) {
           problems.push(
@@ -417,7 +458,9 @@ export function validateApplyPlan(
           continue;
         }
         const declarations: {
+          owner: string;
           name: string;
+          source: string;
           target: string;
           kind: "value" | "type";
         }[] = [];
@@ -440,14 +483,36 @@ export function validateApplyPlan(
             declLabel,
             problems,
           );
+          const owner = declaration["owner"];
           const name = declaration["name"];
+          const source = declaration["source"];
           const target = declaration["target"];
           const kind = declaration["kind"];
+          if (typeof owner !== "string" || owner.length === 0) {
+            problems.push(
+              issue(
+                "PLAN_EXPORT_AUTHORITY_INVALID",
+                `${declLabel}.owner must be a non-empty string`,
+                declLabel,
+              ),
+            );
+            continue;
+          }
           if (typeof name !== "string" || name.length === 0) {
             problems.push(
               issue(
                 "PLAN_EXPORT_AUTHORITY_INVALID",
                 `${declLabel}.name must be a non-empty string`,
+                declLabel,
+              ),
+            );
+            continue;
+          }
+          if (typeof source !== "string" || source.length === 0) {
+            problems.push(
+              issue(
+                "PLAN_EXPORT_AUTHORITY_INVALID",
+                `${declLabel}.source must be a non-empty string`,
                 declLabel,
               ),
             );
@@ -473,9 +538,15 @@ export function validateApplyPlan(
             );
             continue;
           }
-          declarations.push({ name, target, kind });
+          declarations.push({ owner, name, source, target, kind });
         }
-        exportAuthority.push({ path: entry["path"], declarations });
+        exportAuthority.push({
+          path: entry["path"],
+          contract: "exports-v1",
+          registryVersion: entry["registryVersion"] as string,
+          registryHash: entry["registryHash"] as string,
+          declarations,
+        });
       }
     }
   }
@@ -943,6 +1014,9 @@ export function validateApplyPlan(
       (plan.exportAuthority ?? []).map((entry) =>
         Object.freeze({
           path: entry.path,
+          contract: entry.contract,
+          registryVersion: entry.registryVersion,
+          registryHash: entry.registryHash,
           declarations: Object.freeze(
             entry.declarations.map((declaration) =>
               Object.freeze({ ...declaration }),
@@ -1002,8 +1076,13 @@ export function derivePlanDigest(input: {
     ),
     exportAuthority: (input.exportAuthority ?? []).map((entry) => ({
       path: entry.path,
+      contract: entry.contract,
+      registryVersion: entry.registryVersion,
+      registryHash: entry.registryHash,
       declarations: entry.declarations.map((declaration) => ({
+        owner: declaration.owner,
         name: declaration.name,
+        source: declaration.source,
         target: declaration.target,
         kind: declaration.kind,
       })),

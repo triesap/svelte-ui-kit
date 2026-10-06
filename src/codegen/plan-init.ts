@@ -31,6 +31,7 @@ import {
 import { hashBytes } from "./compare.js";
 import { composeManagedCss, FOUNDATION_TOKENS_CONTRACT } from "./css.js";
 import { patchExportRegion, exportRegionContent } from "./exports.js";
+import type { BarrelExportAuthority } from "./exports.js";
 import { parseManagedCss } from "./css-parse.js";
 import { parseExportRegion } from "./export-parse.js";
 import { parseKitLock, type KitLock, type LockIntegration } from "./lock.js";
@@ -56,6 +57,13 @@ import type { PlanWrite as PlannedWrite } from "./plan.js";
 export interface InitPlan {
   readonly writes: readonly PlannedWrite[];
   readonly lock: KitLock;
+  /**
+   * Independent export-cohort authority for the managed barrel. Initialization
+   * declares no items, so the cohort is legitimately empty; it is still carried
+   * from the validated registry identity rather than omitted so a composed plan
+   * always has independent authority for its managed `exports-v1` integration.
+   */
+  readonly exportAuthority: readonly BarrelExportAuthority[];
   readonly diagnostics: readonly string[];
 }
 
@@ -652,6 +660,20 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   if (!validated.ok) return fail(validated.issues);
   const finalLock = validated.value;
 
+  // Independent export-cohort authority for the managed barrel. Initialization
+  // declares no items, so the cohort is legitimately empty; it is still carried
+  // from the validated registry identity so a composed plan always has
+  // independent authority for its managed `exports-v1` integration.
+  const exportAuthority: BarrelExportAuthority[] = [
+    {
+      path: targets.rootExports,
+      contract: "exports-v1",
+      registryVersion,
+      registryHash,
+      declarations: [],
+    },
+  ];
+
   // Lock metadata is part of the explicit plan: write the deterministic lock
   // unless the effective lock is already exactly the recorded one (a satisfied
   // replay is a no_change).
@@ -663,8 +685,14 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
       path: lockPath,
       operation: existingLock === null ? "create" : "update",
       bytes: utf8(`${JSON.stringify(finalLock, null, 2)}\n`),
+      exportAuthority,
     });
   }
 
-  return ok({ writes, lock: finalLock, diagnostics });
+  return ok({
+    writes,
+    lock: finalLock,
+    exportAuthority,
+    diagnostics,
+  });
 }

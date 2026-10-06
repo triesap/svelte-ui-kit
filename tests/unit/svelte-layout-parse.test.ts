@@ -114,6 +114,52 @@ test("render-looking text and unrelated render calls are not child proof", () =>
   }
 });
 
+test("an uncalled snippet declaration is not executable child proof", () => {
+  const uncalled =
+    "<script>let { children } = $props();</script>\n{#snippet unused()}{@render children()}{/snippet}\n";
+  const result = parseSvelteLayout(uncalled);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (result.ok) assert.equal(result.value.rendersChildren, false, uncalled);
+});
+
+test("an actually invoked snippet wrapper renders its child", () => {
+  const invoked =
+    "<script>let { children } = $props();</script>\n{#snippet foo()}{@render children()}{/snippet}{@render foo()}\n";
+  const nested =
+    "<script>let { children } = $props();</script>\n{#snippet outer()}{#snippet inner()}{@render children()}{/snippet}{@render inner()}{/snippet}{@render outer()}\n";
+  for (const source of [invoked, nested]) {
+    const result = parseSvelteLayout(source);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (result.ok) assert.equal(result.value.rendersChildren, true, source);
+  }
+});
+
+test("snippet parameters and block bindings shadow the children prop", () => {
+  const snippetParam =
+    "<script>let { children } = $props();</script>\n{#snippet foo(children)}{@render children()}{/snippet}{@render foo()}\n";
+  const eachContext =
+    "<script>let { children } = $props();</script>\n{#each [] as children}{@render children()}{/each}\n";
+  const snippetNamedChildren =
+    "<script>let { children } = $props();</script>\n{#snippet children()}{/snippet}{@render children()}\n";
+  for (const source of [snippetParam, eachContext, snippetNamedChildren]) {
+    const result = parseSvelteLayout(source);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (result.ok) assert.equal(result.value.rendersChildren, false, source);
+  }
+});
+
+test("conditional branches still execute child rendering", () => {
+  const conditional =
+    "<script>let { children } = $props();</script>\n{#if true}{@render children()}{/if}\n";
+  const each =
+    "<script>let { children } = $props();</script>\n{#each [] as x}{@render children()}{/each}\n";
+  for (const source of [conditional, each]) {
+    const result = parseSvelteLayout(source);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (result.ok) assert.equal(result.value.rendersChildren, true, source);
+  }
+});
+
 test("parsing does not mutate the source string", () => {
   const source = "<script>let a = 1;</script>\n";
   const copy = `${source}`;

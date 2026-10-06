@@ -68,6 +68,7 @@ import { classifyCssBlocks } from "./css-compare.js";
 import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
 import { parseManagedCss } from "./css-parse.js";
 import {
+  authoritativeExports,
   exportDeclarationKey,
   exportRegionContent,
   findRootBarrelImportsInSource,
@@ -76,6 +77,7 @@ import {
   renderCompoundBarrel,
   rootBarrelSpecifiers,
   runtimeSpecifier,
+  type BarrelExportAuthority,
   type ExportDeclaration,
 } from "./exports.js";
 import { parseExportRegion } from "./export-parse.js";
@@ -119,6 +121,15 @@ export interface AddPlan {
   /** The effective mapping resolved from captured evidence, used by sync. */
   readonly effectiveConfig: KitConfig;
   readonly writes: readonly PlannedWrite[];
+  /**
+   * Independent export-cohort authority for the managed barrel, resolved from
+   * the validated registry closure (owner + source binding + public name +
+   * target + value/type role). Emitted whether or not this batch writes the
+   * barrel, so an unchanged/satisfied/metadata-only batch is still proven
+   * against original relationships rather than candidate output or a baseline
+   * byte match.
+   */
+  readonly exportAuthority: readonly BarrelExportAuthority[];
   readonly lock: KitLock | null;
   readonly diagnostics: readonly string[];
 }
@@ -576,6 +587,25 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     }
   }
 
+  // ---- Independent export authority -------------------------------------
+  // The expected root-barrel cohort is the validated registry closure for the
+  // desired (non-retired) owners, carrying the full relationship. It is never
+  // derived from the planned barrel bytes or from the observed region, so the
+  // guard can distinguish an omitted/retargeted/rebound declaration from a
+  // legitimately customized-but-equivalent region.
+  const exportAuthority: BarrelExportAuthority[] = [
+    {
+      path: derived.rootExports,
+      contract: "exports-v1",
+      registryVersion,
+      registryHash,
+      declarations: authoritativeExports(
+        rootDeclarationsByItem,
+        desired.order.filter((id) => !retiredOwners.has(id)),
+      ),
+    },
+  ];
+
   // ---- Source targets -----------------------------------------------------
   const sourceRecords = planSourceTargets(
     snapshot,
@@ -940,16 +970,39 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         existing,
         exportDeclarations,
       );
+      // An owned, customized region whose *relationships* already satisfy the
+      // full incoming registry surface needs no adoption: the raw customized
+      // bytes are preserved and the recorded upstream baseline stays truthful.
+      // Byte inequality with the canonical regeneration is not itself a
+      // conflict. Only a genuinely missing/retargeted/rebound incoming member
+      // requires a change to a customized owned region and remains a conflict.
+      const incomingKeys = new Set(
+        exportDeclarations.map(exportDeclarationKey),
+      );
+      const observedKeys = new Set(
+        observedExportDeclarations.map(exportDeclarationKey),
+      );
+      const missingIncoming = [...incomingKeys].filter(
+        (key) => !observedKeys.has(key),
+      );
+      const customizedEquivalent =
+        exportsIntegration !== undefined &&
+        regionCustomized &&
+        region !== null &&
+        missingIncoming.length === 0;
       if (!patched.ok) {
         diagnostics.push(...patched.issues.map((entry) => entry.message));
         hasConflict = true;
+      } else if (customizedEquivalent) {
+        // Preserve: no write, no conflict, exact customized bytes untouched.
+        finalExports = existing;
       } else if (
         exportsIntegration !== undefined &&
         regionCustomized &&
         patched.value !== existing
       ) {
         diagnostics.push(
-          `export conflict at ${rootExports}: the owned export region does not match its canonical baseline and incoming declarations would change it`,
+          `export conflict at ${rootExports}: the owned export region is customized and incoming declarations would change its public surface`,
         );
         hasConflict = true;
       } else if (patched.value !== existing) {
@@ -1230,6 +1283,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         operation: lockState.status === "absent" ? "create" : "update",
         path: lockPath,
         bytes: utf8(lockJson),
+        exportAuthority,
       });
     }
     writes.sort((left, right) =>
@@ -1251,6 +1305,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     sourcePlan,
     effectiveConfig: config,
     writes: hasConflict ? [] : writes,
+    exportAuthority,
     lock: projectedLock,
     diagnostics: diagnostics.sort(),
   });

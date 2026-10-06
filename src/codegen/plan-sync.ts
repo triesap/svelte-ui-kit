@@ -32,6 +32,7 @@ import type { RequestProjection } from "../registry/projection.js";
 import type { DependencyInstruction } from "../project/dependency-instructions.js";
 import type { DependencyStateEntry } from "../project/dependencies.js";
 import { planAdd, type AddPlanInput } from "./plan-add.js";
+import type { BarrelExportAuthority } from "./exports.js";
 import { hashBytes } from "./compare.js";
 import { composeManagedCss, FOUNDATION_TOKENS_CONTRACT } from "./css.js";
 import { retireManagedCss } from "./css-retire.js";
@@ -61,6 +62,8 @@ export interface SyncPlan {
   readonly retirement: readonly RetirementRecord[];
   readonly cssRetirement: readonly CssRetirementPlanRecord[];
   readonly writes: readonly PlannedWrite[];
+  /** Independent export-cohort authority carried from the shared add plan. */
+  readonly exportAuthority: readonly BarrelExportAuthority[];
   readonly lock: KitLock | null;
   readonly diagnostics: readonly string[];
 }
@@ -244,6 +247,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
           path: lockPath,
           operation: writes[lockIndex]?.operation ?? "update",
           bytes: utf8(lockJson),
+          exportAuthority: base.value.exportAuthority,
         };
       } else {
         const observedLock = input.snapshot.entries.get(lockPath);
@@ -258,6 +262,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
             path: lockPath,
             operation: observedLock?.kind === "absent" ? "create" : "update",
             bytes: utf8(lockJson),
+            exportAuthority: base.value.exportAuthority,
           });
         }
       }
@@ -280,6 +285,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
     retirement,
     cssRetirement,
     writes,
+    exportAuthority: base.value.exportAuthority,
     lock: finalLock,
     diagnostics: diagnostics.sort(),
   });

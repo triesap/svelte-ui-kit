@@ -1,14 +1,14 @@
 # Verification commands and known-good commits
 
-The current RCLD-04 return review at `d54f7d4` preserves target precedence,
-sealed-content isolation/binding and fresh workflow qualification. Complete
-original semantic layout and source/style/export cohort proof: actual AST
-imports/rendering rather than comments/strings, positive aliased child rendering,
-and complete expected export relationships rather than empty markers. Verify
-default/custom written/unchanged lifecycle callers, exact trees, intended refusal
-causes and real resulting-consumer check/build/render behavior. Finish remaining
-original matrices and integrated cumulative qualification with correctly captured
-underlying exits. Independent S077 acceptance before S078 remains mandatory.
+The current RCLD-04 return review at `6f2d877` preserves the previous semantic
+repairs and consumer controls. Qualify independent ORIGINAL registry/planning
+export authority before and after composition, full source/export bindings and
+reachable scoped child rendering; an uncalled snippet is not actual rendering.
+Written and unchanged metadata cases need relationship authority, not self-derived
+output or blanket baseline byte equality. Preserve specified customizations and
+genuine frozen-policy conflicts. Verify default/custom lifecycle, exact trees and
+real consumer check/build/render, then complete original protocol/process criteria
+and cumulative evidence. Independent S077 acceptance before S078 stays mandatory.
 
 <!-- Adopted at S002 from the governing RCLD sequence. This file governs product intent; implementation/COMMIT_SEQUENCE.md remains the execution/status authority. -->
 

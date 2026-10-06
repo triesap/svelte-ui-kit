@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: independent return review at `d54f7d4` preserves effective-content precedence, sealed-byte isolation/binding and fresh workflow qualification, but semantic layout and complete export/cohort authority remain incomplete. Current dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-06.
+Status: independent return review at `6f2d877` preserves real AST import/render parsing, aliased children, post-composition export checks and consumer controls, but independent export/cohort provenance, full source binding and reachable scoped child proof remain incomplete. Current dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-06.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD-04 complete projected content and protocol qualification** (current return review at `d54f7d4` requests changes; S064–S077 remain committed_pending_review and S078 stays gated).
+- Active implementation checkpoint: **RCLD-04 complete projected content and protocol qualification** (current return review at `6f2d877` requests changes; S064–S077 remain committed_pending_review and S078 stays gated).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -53,6 +53,77 @@ At S002, adopt the embedded contracts into their scheduled repository-relative f
 ## Codex dispatch — complete RCLD-04 transactions and recovery
 
 ### Current expanded dispatch — through RCLD-04
+
+#### Independent return review — 6f2d877
+
+Codex reviewed clean candidate `6f2d877c5a78f2c05702fcbca7ae938cb93b87e6`
+and seven commits from `b0c4047` through `6f2d877`. Preserve real AST imports,
+comment/unrelated-render refusals, valid aliased children, default/custom semantic
+controls, post-composition dropped/retargeted export checks, isolated/bound bytes
+and actual customized-layout/app-owned-export consumer qualification. Fresh
+integration passes 531 tests, consumer qualification passes 27 cases, and
+retained cumulative native/raw evidence substantiates broader checks. No whole
+checkpoint, R2 group or RCLD-04 acceptance is granted; prior accepted work remains.
+
+Remaining independently reproduced requirements:
+
+1. A real `planAdd(button)` barrel is emptied BEFORE composition. Compose derives
+   `exportAuthority.declarations=[]` from those same empty result bytes; validate
+   and apply succeed, publishing the explicit item/source and export integration
+   without `Button`. This authority is parsed output, not independent original
+   registry-declared planning evidence. Correct provenance across planning,
+   composition, validation, sealing and live revalidation. Required authority
+   must not be optional based on whether a barrel write happens.
+2. AFTER composition, replace `default as Button` with `missing as Button`.
+   The declaration key ignores the source binding, so validate/apply succeed
+   with an invalid source/export relationship. Carry/prove the full approved
+   relationship (owner, source module/binding, public name and type/value role),
+   not just public name/kind/target. Preserve valid aliases and mapped runtime
+   specifiers; never guess registry declarations from filenames.
+3. Child rendering inside a declared but uncalled snippet is counted by the
+   recursive AST search. Validation/apply publish `layout-v1`, but pinned
+   isolated server rendering emits no child. Prove reachable template execution
+   and lexical binding identity, including snippet scope/shadowing, rather than
+   finding a matching identifier anywhere. Preserve valid actually invoked
+   wrappers/aliases/legacy rendering and original conditional app semantics;
+   unsupported or ambiguous proof must refuse typed without inventing a broad
+   static-analysis product or changing component APIs.
+4. The new no-authority fallback compares unchanged managed-region bytes with
+   the upstream baseline. A captured indentation-only customization with the
+   full valid export surface refuses a metadata-only batch; real sync also
+   reports a coupled canonical-regeneration conflict. This is not complete
+   original unchanged-content relationship evidence. Carry independent authority
+   for unchanged/satisfied/metadata-only cases too. Preserve raw customized bytes
+   and truthful baselines under the original I=B/local-customized and frozen
+   cohort rules when no incoming public-surface/member change requires adoption.
+   Preserve genuine conflict rules and accepted conservative initialization
+   ownership behavior; no auto-format/merge, silent baseline adoption or blanket
+   acceptance of arbitrary edited regions.
+
+Codex authorizes necessary INTERNAL immutable planning-context/result/evidence
+plumbing to carry the validated original registry closure, declarations, owner/
+cohort relationships and captured installed state. Composition must consume that
+independent evidence rather than deriving expectations from candidate output or
+a caller-mutable mirror. Require strict shapes, completeness, identity, absence,
+mutation/staleness checks and a bound sealed representation. No new public CLI
+command/flag, registry schema mode, dependency or threat-model expansion. These
+are original completeness/preservation requirements, not new product scope.
+
+The next substantial batch remains `pfc through RCLD-04`: full authority and
+reachable-render corrections plus original default/custom fresh/installed,
+written/unchanged init/add/sync/update/retirement/metadata/satisfied/conflict/cohort
+qualification, real resulting-consumer check/build/render, remaining original
+filesystem/publication/recovery/process criteria and cumulative evidence. Reuse
+sound qualified cells and preserve prior causal assertions; probes are examples,
+not the endpoint. Reconcile registry-provenance/baseline/complete-render claims
+with actual source and executed causal outcomes. Native/raw cumulative exits now
+are captured correctly; retain unique attempts and factual provenance. AC20,
+reference ignores and unexecuted platform lanes remain explicit, not waived.
+No owner, external or hardware blocker prevents eligible software. Continue after
+every green slice; no intermediate management stop or commit cap. Return at the
+complete candidate for mandatory independent Codex S077 acceptance before S078,
+or a genuine user/runtime/external stop after other eligible work. Original203
+definitions, ledger counts, dependencies and accepted anchors stay unchanged.
 
 #### Independent return review — d54f7d4
 

@@ -23,9 +23,40 @@ import { parseSvelteLayout } from "./svelte-parse.js";
 
 export interface ExportDeclaration {
   readonly name: string;
+  /**
+   * The source binding re-exported under `name`, for example `default` for a
+   * Svelte component module or the public name itself for a plain module/type.
+   * Optional for convenience at construction time; the effective binding is
+   * resolved deterministically by {@link exportSource} so a declaration can
+   * never silently omit its original owner/export relationship.
+   */
+  readonly source?: string;
   /** Direct relative target, for example `./button.svelte`. */
   readonly target: string;
   readonly kind: "value" | "type";
+}
+
+/**
+ * The source binding a generated re-export must carry for a public name. A
+ * Svelte component module exposes its component as the `default` binding; every
+ * other value target and every type target uses the public name directly. This
+ * is the established rendering contract, not a filename guess about which names
+ * exist: the declared public names still come from the manifest/registry.
+ */
+export function expectedExportSource(
+  name: string,
+  target: string,
+  kind: "value" | "type",
+): string {
+  return kind === "value" && target.endsWith(".svelte") ? "default" : name;
+}
+
+/** The effective source binding of a declaration. */
+export function exportSource(declaration: ExportDeclaration): string {
+  return (
+    declaration.source ??
+    expectedExportSource(declaration.name, declaration.target, declaration.kind)
+  );
 }
 
 function compareDeclarations(
@@ -58,15 +89,17 @@ export function renderExportLines(
     .sort(compareDeclarations)
     .map((declaration) => {
       const target = runtimeSpecifier(declaration.target);
+      const source = exportSource(declaration);
       if (declaration.kind === "type") {
-        return `export type { ${declaration.name} } from "${target}";`;
+        return source === declaration.name
+          ? `export type { ${declaration.name} } from "${target}";`
+          : `export type { ${source} as ${declaration.name} } from "${target}";`;
       }
       // An ordinary Svelte component module exports the component as its
       // default binding, so the public name is an alias of `default`.
-      if (declaration.target.endsWith(".svelte")) {
-        return `export { default as ${declaration.name} } from "${target}";`;
-      }
-      return `export { ${declaration.name} } from "${target}";`;
+      return source === declaration.name
+        ? `export { ${declaration.name} } from "${target}";`
+        : `export { ${source} as ${declaration.name} } from "${target}";`;
     })
     .join("\n")
     .concat("\n");
@@ -99,6 +132,14 @@ export function parseGeneratedDeclarations(
       for (const element of statement.exportClause.elements) {
         declarations.push({
           name: element.name.text,
+          // The original source binding is carried, never discarded: a
+          // replacement `export { missing as Button }` must be distinguishable
+          // from the approved `export { default as Button }`.
+          source:
+            element.propertyName !== undefined &&
+            ts.isIdentifier(element.propertyName)
+              ? element.propertyName.text
+              : element.name.text,
           target: specifier.text,
           kind: statement.isTypeOnly || element.isTypeOnly ? "type" : "value",
         });
@@ -108,9 +149,78 @@ export function parseGeneratedDeclarations(
   return declarations;
 }
 
+/**
+ * One registry-declared export relationship carried as independent planning
+ * authority: the owning item, the source binding, the runtime target, the
+ * public name and the value/type role. The guarded boundary proves an effective
+ * managed region against these relationships, never against candidate output
+ * or a filename guess.
+ */
+export interface AuthoritativeExport {
+  readonly owner: string;
+  readonly name: string;
+  readonly source: string;
+  readonly target: string;
+  readonly kind: "value" | "type";
+}
+
+/**
+ * The complete registry-declared export cohort one managed barrel must carry,
+ * sourced from the original validated planning context. `registryVersion` and
+ * `registryHash` bind the authority to the exact registry closure it was
+ * derived from so a stale or mismatched authority cannot be substituted.
+ */
+export interface BarrelExportAuthority {
+  readonly path: string;
+  readonly contract: "exports-v1";
+  readonly registryVersion: string;
+  readonly registryHash: string;
+  readonly declarations: readonly AuthoritativeExport[];
+}
+
+/** Stable comparability key over every field of an export relationship. */
+export function authoritativeExportKey(
+  declaration: AuthoritativeExport,
+): string {
+  return `${declaration.name}|${declaration.source}|${declaration.kind}|${runtimeSpecifier(declaration.target)}`;
+}
+
+/**
+ * The relationships an effective managed region must carry. Compared by
+ * public name, source binding, value/type role and runtime target; the owning
+ * item is bound through the target in the original registry closure.
+ */
+export function effectiveExportKey(declaration: ExportDeclaration): string {
+  return `${declaration.name}|${exportSource(declaration)}|${declaration.kind}|${runtimeSpecifier(declaration.target)}`;
+}
+
+/**
+ * Resolve one barrel's declared relationships from a registry closure. Each
+ * owner contributes only the root-level declarations it owns; the closure is
+ * the source of truth, never the currently installed region.
+ */
+export function authoritativeExports(
+  byOwner: ReadonlyMap<string, readonly ExportDeclaration[]>,
+  owners: readonly string[],
+): AuthoritativeExport[] {
+  const out: AuthoritativeExport[] = [];
+  for (const owner of owners) {
+    for (const declaration of byOwner.get(owner) ?? []) {
+      out.push({
+        owner,
+        name: declaration.name,
+        source: exportSource(declaration),
+        target: runtimeSpecifier(declaration.target),
+        kind: declaration.kind,
+      });
+    }
+  }
+  return out;
+}
+
 /** Canonical comparability key for one export declaration. */
 export function exportDeclarationKey(declaration: ExportDeclaration): string {
-  return `${declaration.name}|${declaration.kind}|${declaration.target}`;
+  return effectiveExportKey(declaration);
 }
 
 /**
