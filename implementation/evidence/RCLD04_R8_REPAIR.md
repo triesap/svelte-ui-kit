@@ -3,7 +3,7 @@
 This report covers the Pi implementation for the independent return review at
 `d54f7d45f2c20288d0f22be289c6a4a8f913e89d`. It is repository-relative evidence;
 raw runtime logs, exits and checksum inventories stay under the ignored
-`implementation/evidence/logs/candidate2/` tree. S064–S077 remain
+`implementation/evidence/logs/candidate3/` tree. S064–S077 remain
 `committed_pending_review`; independent Codex S077 acceptance still gates S078.
 
 ## Ordered green commits
@@ -12,6 +12,7 @@ raw runtime logs, exits and checksum inventories stay under the ignored
 | ----- | --------- | --------------------------------------------------------------------------------------------------- |
 | 1     | `b0c4047` | AST layout import/rendering authority and registry-declared export-cohort authority; d54f7d4 probes |
 | 2     | `684a59e` | Same semantic probes qualified on the default and custom mappings                                   |
+| 3     | `88415e5` | Unchanged (no-write) export barrels bound to their recorded baseline                                |
 
 ## Finding 1 — rendering proof was a whole-text regex
 
@@ -59,16 +60,22 @@ the planned root barrel as internal planning authority
 (`ApplyPlanInput.exportAuthority`). The guarded boundary compares the effective
 managed region's parsed declarations against that set by
 name/kind/exact-target and refuses a dropped or retargeted declaration with
-`PROJECTED_EXPORTS_COHORT_MISSING`. The authority is validated strictly with
-typed refusals before hashing or effects and is bound into the sealed plan
-digest. Public command/API scope and the lock schema are unchanged.
+`PROJECTED_EXPORTS_COHORT_MISSING`. A batch that writes no barrel carries no new
+cohort authority, so its unchanged managed region must still match the recorded
+canonical baseline (`PROJECTED_EXPORTS_BASELINE_MISMATCH`). The authority is
+validated strictly with typed refusals before hashing or effects and is bound
+into the sealed plan digest. Public command/API scope and the lock schema are
+unchanged.
 
 **Causal cases.**
 `[default|custom] a real button add control validates and applies` (positive),
 `[default|custom] dropped and retargeted export cohorts are refused` (empty
 region and a region retargeted to `./elsewhere.svelte`), and
 `[default|custom] app-owned declarations outside the markers stay legitimate`
-(a valid app export appended outside the markers still validates).
+(a valid app export appended outside the markers still validates), and
+`[default|custom] an unchanged barrel is bound to its recorded baseline` (a
+no-write canonical region validates, an edited region refuses with
+`PROJECTED_EXPORTS_BASELINE_MISMATCH`).
 
 ## Finding 4 — a valid aliased child render was falsely refused
 
@@ -104,10 +111,10 @@ with a real manifest, template and `Button` value export.
 
 ## Cumulative qualification
 
-The full candidate ran on `684a59e` (Node 24.21.0, pnpm 11.22.0, macOS arm64,
+The full candidate ran on `88415e5` (Node 24.21.0, pnpm 11.22.0, macOS arm64,
 TypeScript 6.0.3). Each lane is routed through the extbuild router and its
 underlying exit is captured before any echo, pipeline or tail in
-`implementation/evidence/logs/candidate2/summary.tsv`.
+`implementation/evidence/logs/candidate3/summary.tsv`.
 
 | Lane                 | Command                                                                     | Exit | Count                                             |
 | -------------------- | --------------------------------------------------------------------------- | ---- | ------------------------------------------------- |
@@ -117,7 +124,7 @@ underlying exit is captured before any echo, pipeline or tail in
 | format               | `pnpm run format:check`                                                     | 0    | —                                                 |
 | lint                 | `pnpm run lint`                                                             | 0    | —                                                 |
 | unit                 | `pnpm run test:unit`                                                        | 0    | 286                                               |
-| integration          | `pnpm run test:integration`                                                 | 0    | 528                                               |
+| integration          | `pnpm run test:integration`                                                 | 0    | 530                                               |
 | registry             | `pnpm run test:registry`                                                    | 0    | 38                                                |
 | cli-bootstrap        | `pnpm run test:cli-bootstrap`                                               | 0    | 52                                                |
 | harness              | `pnpm run test:harness`                                                     | 0    | 37                                                |
