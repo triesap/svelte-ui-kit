@@ -106,6 +106,30 @@ after every green slice through the completed candidate; no new commit cap or
 intermediate management gate. Return before S078 for mandatory independent
 Codex S077 acceptance. Original definitions, ledger counts and dependencies stay.
 
+#### RCLD-04 implementation — effective content, integration contracts and cumulative qualification
+
+Pi implementation for the `4f33632` return review: commit `98df69c` resolves
+effective projected content once (a target result overrides captured pre-state,
+retirement removes content, case-alias/duplicate authority is a typed refusal),
+proves the `layout-v1`/`exports-v1` integration contracts from effective bytes
+with the existing pinned Svelte/TypeScript validators, and isolates/binds every
+captured authority byte buffer in the immutable plan digest. The three review
+probes now refuse with intended-cause typed codes; the legitimate
+overlap and customized-content positive controls validate. Regression coverage
+lives in `tests/integration/projected-coherence.test.ts`; the report is
+`implementation/evidence/RCLD04_R7_REPAIR.md`.
+
+The full cumulative qualification ran fresh on `98df69c` (Node 24.21.0, pnpm
+11.22.0, macOS arm64, TypeScript 6.0.3): install/build/typecheck/format/lint,
+unit 283, integration 518, registry 38, CLI 52, harness 37, components 22
+(strict declaration 17/17), fixture 27 with six consumer stages, browser 23,
+contracts 137 with zero errors, and a fresh checksum-qualified actionlint
+1.7.12 run at exit 0 over the current `ci.yml`. The read-only reference stayed
+clean at `a10fbf06` with fmt/check/test green (578 passed / 0 failed / 4
+ignored). Raw logs and underlying exits are retained under the ignored evidence
+tree. S064–S077 remain `committed_pending_review`; independent Codex S077
+acceptance still gates S078.
+
 #### Independent return review — 0ce552a
 
 Codex reviewed clean candidate `0ce552ae26336648eac035ebd5235c22096ed440`
