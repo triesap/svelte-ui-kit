@@ -13,10 +13,14 @@ import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
+  type KitConfig,
 } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
-import { compoundRegistry } from "../helpers/multi-item-fixture.js";
+import {
+  CUSTOM_MULTI_ITEM_CONFIG,
+  compoundRegistry,
+} from "../helpers/multi-item-fixture.js";
 
 /**
  * RCLD04-R2-1/R2-5 semantic integration authority.
@@ -31,11 +35,16 @@ import { compoundRegistry } from "../helpers/multi-item-fixture.js";
  * TypeScript.
  *
  * These are the four independent-review d54f7d4 probes plus their positive
- * controls.
+ * controls, qualified for the default and the independently rooted custom
+ * mapping through the production planner/composition/validation/application
+ * core.
  */
 
 const PKG_ROOT = process.cwd();
-const DEFAULT = DEFAULT_KIT_CONFIG;
+const CONFIGS: readonly [string, KitConfig][] = [
+  ["default", DEFAULT_KIT_CONFIG],
+  ["custom", CUSTOM_MULTI_ITEM_CONFIG],
+];
 
 function write(root: string, rel: string, data: string | Uint8Array): void {
   const target = path.join(root, ...rel.split("/"));
@@ -43,8 +52,8 @@ function write(root: string, rel: string, data: string | Uint8Array): void {
   writeFileSync(target, data);
 }
 
-function initPaths(): string[] {
-  const derived = deriveKitPaths(DEFAULT);
+function initPaths(config: KitConfig): string[] {
+  const derived = deriveKitPaths(config);
   return [
     `${derived.stateDir}/kit.json`,
     `${derived.stateDir}/kit.lock.json`,
@@ -52,7 +61,7 @@ function initPaths(): string[] {
     derived.kitCss,
     derived.themesCss,
     derived.appCss,
-    DEFAULT.layoutFile,
+    config.layoutFile,
     ".gitignore",
   ];
 }
@@ -74,17 +83,16 @@ function seed(root: string): void {
   );
 }
 
-/** A real captured `planInit` -> `composeApplyPlan` batch for the default mapping. */
-function capturedInit(root: string): ApplyPlanInput {
+function capturedInit(root: string, config: KitConfig): ApplyPlanInput {
   const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
   assert.equal(registry.ok, true, JSON.stringify(registry));
   if (!registry.ok) throw new Error("registry invalid");
-  const snapshot = captureSnapshot(root, initPaths());
+  const snapshot = captureSnapshot(root, initPaths(config));
   assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
   if (!snapshot.ok) throw new Error("snapshot failed");
   const planned = planInit({
-    config: DEFAULT,
-    layoutFile: DEFAULT.layoutFile,
+    config,
+    layoutFile: config.layoutFile,
     layoutSource: "",
     snapshot: snapshot.value,
     registry: registry.value,
@@ -94,7 +102,7 @@ function capturedInit(root: string): ApplyPlanInput {
   if (!planned.ok) throw new Error("plan failed");
   const composed = composeApplyPlan({
     root,
-    config: DEFAULT,
+    config,
     writes: planned.value.writes,
     snapshot: snapshot.value,
   });
@@ -103,131 +111,147 @@ function capturedInit(root: string): ApplyPlanInput {
   return composed.value;
 }
 
-function replaceLayout(plan: ApplyPlanInput, source: string): ApplyPlanInput {
+function replaceLayout(
+  plan: ApplyPlanInput,
+  layoutFile: string,
+  source: string,
+): ApplyPlanInput {
   const bytes = new TextEncoder().encode(source);
   return {
     ...plan,
     targets: plan.targets.map((target) =>
-      target.path === DEFAULT.layoutFile ? { ...target, bytes } : target,
+      target.path === layoutFile ? { ...target, bytes } : target,
     ),
   };
 }
 
-const IMPORTS =
-  'import "../styles/kit.css";\nimport "../styles/themes.css";\nimport "../styles/app.css";\n';
+const IMPORTS = (config: KitConfig): string => {
+  const derived = deriveKitPaths(config);
+  const from = path.posix.dirname(config.layoutFile);
+  return [derived.kitCss, derived.themesCss, derived.appCss]
+    .map((target) => {
+      const relative = path.posix.relative(from, target);
+      const specifier = relative.startsWith(".") ? relative : `./${relative}`;
+      return `import "${specifier}";`;
+    })
+    .join("\n")
+    .concat("\n");
+};
 
 function withCapturedInit(
+  config: KitConfig,
   body: (root: string, plan: ApplyPlanInput) => void,
 ): void {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-"));
   try {
     seed(root);
-    body(root, capturedInit(root));
+    body(root, capturedInit(root, config));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
 }
 
-test("child rendering only inside an HTML comment is refused", () => {
-  withCapturedInit((_root, plan) => {
-    const edited = replaceLayout(
-      plan,
-      `<script>\n${IMPORTS}let { children } = $props();\n</script>\n<!-- {@render children()} -->\n`,
-    );
-    const result = validateApplyPlan(edited);
-    assert.equal(result.ok, false, JSON.stringify(result));
-    if (!result.ok) {
-      assert.ok(
-        result.issues.some(
-          (entry) => entry.code === "PROJECTED_LAYOUT_RENDERING_MISSING",
-        ),
-        JSON.stringify(result.issues),
+for (const [label, config] of CONFIGS) {
+  test(`[${label}] comment-only layout rendering and imports are refused`, () => {
+    withCapturedInit(config, (_root, plan) => {
+      const renderComment = replaceLayout(
+        plan,
+        config.layoutFile,
+        `<script>\n${IMPORTS(config)}let { children } = $props();\n</script>\n<!-- {@render children()} -->\n`,
       );
-    }
-  });
-});
+      const renderResult = validateApplyPlan(renderComment);
+      assert.equal(renderResult.ok, false, JSON.stringify(renderResult));
+      if (!renderResult.ok) {
+        assert.ok(
+          renderResult.issues.some(
+            (entry) => entry.code === "PROJECTED_LAYOUT_RENDERING_MISSING",
+          ),
+          JSON.stringify(renderResult.issues),
+        );
+      }
 
-test("stylesheet imports only inside a script comment are refused", () => {
-  withCapturedInit((_root, plan) => {
-    const edited = replaceLayout(
-      plan,
-      `<script>\n/*\n${IMPORTS}*/\nlet { children } = $props();\n</script>\n{@render children()}\n`,
-    );
-    const result = validateApplyPlan(edited);
-    assert.equal(result.ok, false, JSON.stringify(result));
-    if (!result.ok) {
-      assert.ok(
-        result.issues.some(
-          (entry) => entry.code === "PROJECTED_LAYOUT_INTEGRATION_MISSING",
-        ),
-        JSON.stringify(result.issues),
+      const importComment = replaceLayout(
+        plan,
+        config.layoutFile,
+        `<script>\n/*\n${IMPORTS(config)}*/\nlet { children } = $props();\n</script>\n{@render children()}\n`,
       );
-    }
-  });
-});
+      const importResult = validateApplyPlan(importComment);
+      assert.equal(importResult.ok, false, JSON.stringify(importResult));
+      if (!importResult.ok) {
+        assert.ok(
+          importResult.issues.some(
+            (entry) => entry.code === "PROJECTED_LAYOUT_INTEGRATION_MISSING",
+          ),
+          JSON.stringify(importResult.issues),
+        );
+      }
 
-test("an unrelated render call is not child-rendering proof", () => {
-  withCapturedInit((_root, plan) => {
-    const edited = replaceLayout(
-      plan,
-      `<script>\n${IMPORTS}let { children, other } = $props();\n</script>\n{@render other()}\n`,
-    );
-    const result = validateApplyPlan(edited);
-    assert.equal(result.ok, false, JSON.stringify(result));
-    if (!result.ok) {
-      assert.ok(
-        result.issues.some(
-          (entry) => entry.code === "PROJECTED_LAYOUT_RENDERING_MISSING",
-        ),
-        JSON.stringify(result.issues),
+      const unrelated = replaceLayout(
+        plan,
+        config.layoutFile,
+        `<script>\n${IMPORTS(config)}let { children, other } = $props();\n</script>\n{@render other()}\n`,
       );
-    }
+      const unrelatedResult = validateApplyPlan(unrelated);
+      assert.equal(unrelatedResult.ok, false, JSON.stringify(unrelatedResult));
+      if (!unrelatedResult.ok) {
+        assert.ok(
+          unrelatedResult.issues.some(
+            (entry) => entry.code === "PROJECTED_LAYOUT_RENDERING_MISSING",
+          ),
+          JSON.stringify(unrelatedResult.issues),
+        );
+      }
+    });
   });
-});
 
-test("a destructuring-aliased children render is accepted", () => {
-  withCapturedInit((_root, plan) => {
-    const edited = replaceLayout(
-      plan,
-      `<script>\n${IMPORTS}let { children: content } = $props();\n</script>\n{@render content()}\n`,
-    );
-    const result = validateApplyPlan(edited);
-    assert.equal(result.ok, true, JSON.stringify(result));
-    if (!result.ok) return;
-    const outcome = applyPlan(result.value);
-    assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
-  });
-});
-
-test("a direct declared children render and a legacy slot are accepted", () => {
-  withCapturedInit((_root, plan) => {
-    const direct = replaceLayout(
-      plan,
-      `<script>\n${IMPORTS}let { children } = $props();\n</script>\n{@render children()}\n`,
-    );
-    assert.equal(validateApplyPlan(direct).ok, true);
-    const slot = replaceLayout(plan, `<main><slot /></main>\n`);
-    const slotResult = validateApplyPlan(slot);
-    // The legacy slot renders children but still needs the mapped imports, so
-    // this remains an integration refusal, never a rendering refusal.
-    assert.equal(slotResult.ok, false, JSON.stringify(slotResult));
-    if (!slotResult.ok) {
-      assert.ok(
-        slotResult.issues.every(
-          (entry) => entry.code !== "PROJECTED_LAYOUT_RENDERING_MISSING",
-        ),
-        JSON.stringify(slotResult.issues),
+  test(`[${label}] direct, aliased and legacy children rendering are accepted`, () => {
+    withCapturedInit(config, (_root, plan) => {
+      const direct = replaceLayout(
+        plan,
+        config.layoutFile,
+        `<script>\n${IMPORTS(config)}let { children } = $props();\n</script>\n{@render children()}\n`,
       );
-    }
-  });
-});
+      assert.equal(validateApplyPlan(direct).ok, true);
 
-/** A real registry-backed `planAdd(button)` composed batch. */
-function buttonAdd(root: string): {
-  readonly plan: ApplyPlanInput;
-  readonly barrelPath: string;
-} {
-  const derived = deriveKitPaths(DEFAULT);
+      const aliased = replaceLayout(
+        plan,
+        config.layoutFile,
+        `<script>\n${IMPORTS(config)}let { children: content } = $props();\n</script>\n{@render content()}\n`,
+      );
+      const aliasedResult = validateApplyPlan(aliased);
+      assert.equal(aliasedResult.ok, true, JSON.stringify(aliasedResult));
+      if (aliasedResult.ok) {
+        const outcome = applyPlan(aliasedResult.value);
+        assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+      }
+
+      const slot = replaceLayout(
+        plan,
+        config.layoutFile,
+        `<main><slot /></main>\n`,
+      );
+      const slotResult = validateApplyPlan(slot);
+      // A legacy slot renders children but still needs the mapped imports, so
+      // this stays an integration refusal, never a rendering refusal.
+      assert.equal(slotResult.ok, false, JSON.stringify(slotResult));
+      if (!slotResult.ok) {
+        assert.ok(
+          slotResult.issues.every(
+            (entry) => entry.code !== "PROJECTED_LAYOUT_RENDERING_MISSING",
+          ),
+          JSON.stringify(slotResult.issues),
+        );
+      }
+    });
+  });
+}
+
+/** A real registry-backed `planAdd(button)` composed batch for one mapping. */
+function buttonAdd(
+  root: string,
+  config: KitConfig,
+): { readonly plan: ApplyPlanInput; readonly barrelPath: string } {
+  const derived = deriveKitPaths(config);
   const registryRoot = mkdtempSync(
     path.join(os.tmpdir(), "suik-semantic-reg-"),
   );
@@ -242,7 +266,7 @@ function buttonAdd(root: string): {
       derived.kitCss,
       derived.themesCss,
       derived.appCss,
-      DEFAULT.layoutFile,
+      config.layoutFile,
       ".gitignore",
       `${derived.rootExportsDir}/button.svelte`,
     ];
@@ -251,7 +275,7 @@ function buttonAdd(root: string): {
     if (!snapshot.ok) throw new Error("snapshot failed");
     const planned = planAdd({
       registry: registry.value,
-      config: DEFAULT,
+      config,
       addedRoots: ["button"],
       snapshot: snapshot.value,
       lock: null,
@@ -267,7 +291,7 @@ function buttonAdd(root: string): {
     );
     const composed = composeApplyPlan({
       root,
-      config: DEFAULT,
+      config,
       writes: planned.value.writes,
       snapshot: snapshot.value,
     });
@@ -292,96 +316,93 @@ function replaceTarget(
   };
 }
 
-test("a real button add control validates and applies", () => {
-  const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-button-"));
-  try {
-    seed(root);
-    const { plan } = buttonAdd(root);
-    const validated = validateApplyPlan(plan);
-    assert.equal(validated.ok, true, JSON.stringify(validated));
-    if (!validated.ok) return;
-    const outcome = applyPlan(validated.value);
-    assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("a barrel that drops its declared export cohort is refused", () => {
-  const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-drop-"));
-  try {
-    seed(root);
-    const { plan, barrelPath } = buttonAdd(root);
-    const dropped = replaceTarget(
-      plan,
-      barrelPath,
-      new TextEncoder().encode(
-        "// svelte-ui-kit:start exports\n// svelte-ui-kit:end exports\n",
-      ),
-    );
-    const validated = validateApplyPlan(dropped);
-    assert.equal(validated.ok, false, JSON.stringify(validated));
-    if (!validated.ok) {
-      assert.ok(
-        validated.issues.some(
-          (entry) => entry.code === "PROJECTED_EXPORTS_COHORT_MISSING",
-        ),
-        JSON.stringify(validated.issues),
-      );
+for (const [label, config] of CONFIGS) {
+  test(`[${label}] a real button add control validates and applies`, () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-button-"));
+    try {
+      seed(root);
+      const { plan } = buttonAdd(root, config);
+      const validated = validateApplyPlan(plan);
+      assert.equal(validated.ok, true, JSON.stringify(validated));
+      if (!validated.ok) return;
+      const outcome = applyPlan(validated.value);
+      assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
     }
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
+  });
 
-test("a retargeted declared export is refused", () => {
-  const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-retarget-"));
-  try {
-    seed(root);
-    const { plan, barrelPath } = buttonAdd(root);
-    const retargeted = replaceTarget(
-      plan,
-      barrelPath,
-      new TextEncoder().encode(
-        '// svelte-ui-kit:start exports\nexport { default as Button } from "./elsewhere.svelte";\n// svelte-ui-kit:end exports\n',
-      ),
-    );
-    const validated = validateApplyPlan(retargeted);
-    assert.equal(validated.ok, false, JSON.stringify(validated));
-    if (!validated.ok) {
-      assert.ok(
-        validated.issues.some(
-          (entry) => entry.code === "PROJECTED_EXPORTS_COHORT_MISSING",
+  test(`[${label}] dropped and retargeted export cohorts are refused`, () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-drop-"));
+    try {
+      seed(root);
+      const { plan, barrelPath } = buttonAdd(root, config);
+      const dropped = replaceTarget(
+        plan,
+        barrelPath,
+        new TextEncoder().encode(
+          "// svelte-ui-kit:start exports\n// svelte-ui-kit:end exports\n",
         ),
-        JSON.stringify(validated.issues),
       );
-    }
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
+      const droppedResult = validateApplyPlan(dropped);
+      assert.equal(droppedResult.ok, false, JSON.stringify(droppedResult));
+      if (!droppedResult.ok) {
+        assert.ok(
+          droppedResult.issues.some(
+            (entry) => entry.code === "PROJECTED_EXPORTS_COHORT_MISSING",
+          ),
+          JSON.stringify(droppedResult.issues),
+        );
+      }
 
-test("app-owned declarations outside the markers stay legitimate", () => {
-  const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-app-"));
-  try {
-    seed(root);
-    const { plan, barrelPath } = buttonAdd(root);
-    const baselineBarrel = plan.targets.find(
-      (target) => target.path === barrelPath,
-    );
-    assert.ok(baselineBarrel, "the button add must plan the exports barrel");
-    if (baselineBarrel === undefined) return;
-    const decoder = new TextDecoder("utf-8");
-    const withApp =
-      decoder.decode(baselineBarrel.bytes) + "export const AppThing = 1;\n";
-    const customized = replaceTarget(
-      plan,
-      barrelPath,
-      new TextEncoder().encode(withApp),
-    );
-    const validated = validateApplyPlan(customized);
-    assert.equal(validated.ok, true, JSON.stringify(validated));
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
+      const retargeted = replaceTarget(
+        plan,
+        barrelPath,
+        new TextEncoder().encode(
+          '// svelte-ui-kit:start exports\nexport { default as Button } from "./elsewhere.svelte";\n// svelte-ui-kit:end exports\n',
+        ),
+      );
+      const retargetedResult = validateApplyPlan(retargeted);
+      assert.equal(
+        retargetedResult.ok,
+        false,
+        JSON.stringify(retargetedResult),
+      );
+      if (!retargetedResult.ok) {
+        assert.ok(
+          retargetedResult.issues.some(
+            (entry) => entry.code === "PROJECTED_EXPORTS_COHORT_MISSING",
+          ),
+          JSON.stringify(retargetedResult.issues),
+        );
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test(`[${label}] app-owned declarations outside the markers stay legitimate`, () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-app-"));
+    try {
+      seed(root);
+      const { plan, barrelPath } = buttonAdd(root, config);
+      const baselineBarrel = plan.targets.find(
+        (target) => target.path === barrelPath,
+      );
+      assert.ok(baselineBarrel, "the button add must plan the exports barrel");
+      if (baselineBarrel === undefined) return;
+      const decoder = new TextDecoder("utf-8");
+      const withApp =
+        decoder.decode(baselineBarrel.bytes) + "export const AppThing = 1;\n";
+      const customized = replaceTarget(
+        plan,
+        barrelPath,
+        new TextEncoder().encode(withApp),
+      );
+      const validated = validateApplyPlan(customized);
+      assert.equal(validated.ok, true, JSON.stringify(validated));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+}
