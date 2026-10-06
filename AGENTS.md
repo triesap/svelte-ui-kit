@@ -25,11 +25,14 @@ references.
   mandatory independent Codex S077 review before S078. Preserve 63 accepted
   checkpoints and original criteria/statuses. Target-only coherent green commits
   are authorized within this scope; no parent/remote or reference-source changes.
-- The current return review at `0ce552a` requires complete original projected
-  content authority, requested-root/ownership/integration coherence, safe malformed
-  target refusals and bounded recovery children. Preserve verified repairs and
-  finish all remaining original RCLD-04 criteria plus cumulative evidence together.
-  Test-name inventories and author completion claims do not grant acceptance.
+- The current return review at `4f33632` preserves the typed refusals, config/
+  requested-root checks, managed-token checks and bounded recovery children.
+  Complete effective-content precedence and the original layout/export integration
+  contracts: captured pre-state must not override a target result, and presence
+  alone must not prove a claimed integration. Audit immutable carried content,
+  qualify the full original lifecycle and finish cumulative evidence, including
+  an actual checksum-qualified workflow validation. Test-name inventories and
+  author completion claims do not grant acceptance.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
 - No commit, push, publication, deployment or reference-repository mutation

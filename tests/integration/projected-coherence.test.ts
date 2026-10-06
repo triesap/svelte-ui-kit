@@ -13,6 +13,7 @@ import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import type { ApplyPlanInput } from "../../src/codegen/apply.js";
+import { captureReadFile } from "../../src/codegen/authority.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit } from "../../src/codegen/plan-init.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
@@ -25,6 +26,7 @@ import type { KitConfig } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { planMutations } from "../helpers/lifecycle-assertions.js";
+import { makeGuardedPlan } from "../helpers/guarded-plan.js";
 import { validKitConfigBytes } from "../helpers/kit-config.js";
 import {
   assertTreeAfterMutations,
@@ -660,6 +662,262 @@ test("a customized managed foundation still satisfies its contract", () => {
     if (!composed.ok) return;
     const result = validateApplyPlan(composed.value);
     assert.equal(result.ok, true, JSON.stringify(result));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+/**
+ * RCLD04-R3 effective-content authority: a later captured pre-state read can
+ * never shadow a planned target result. These reproduce the independent
+ * return-review probes through the real captured planInit/compose/validate
+ * production path.
+ */
+
+/** Install a valid original tree through the production guarded apply. */
+function installedInit(root: string, config: KitConfig): void {
+  const plan = capturedInit(root, config);
+  const validated = validateApplyPlan(plan);
+  assert.equal(validated.ok, true, JSON.stringify(validated));
+  if (!validated.ok) return;
+  const outcome = applyPlan(validated.value);
+  assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+}
+
+function reCapture(root: string, config: KitConfig) {
+  const derived = deriveKitPaths(config);
+  const snapshot = captureSnapshot(root, [
+    `${derived.stateDir}/kit.json`,
+    `${derived.stateDir}/kit.lock.json`,
+    derived.rootExports,
+    derived.kitCss,
+    derived.themesCss,
+    derived.appCss,
+    config.layoutFile,
+    ".gitignore",
+  ]);
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) throw new Error("snapshot failed");
+  return snapshot.value;
+}
+
+test("a token-free target result cannot be shadowed by authentic captured old CSS", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-effective-css-"));
+  try {
+    seed(root);
+    installedInit(root, DEFAULT);
+    const derived = deriveKitPaths(DEFAULT);
+    const lockLogical = `${derived.stateDir}/kit.lock.json`;
+    const snapshot = reCapture(root, DEFAULT);
+    const lockBytes = readFileSync(path.join(root, ...lockLogical.split("/")));
+    const composed = composeApplyPlan({
+      root,
+      config: DEFAULT,
+      writes: [
+        {
+          path: derived.kitCss,
+          bytes: new TextEncoder().encode("/* no foundation */\n"),
+        },
+        { path: lockLogical, bytes: lockBytes },
+      ],
+      snapshot,
+    });
+    assert.equal(composed.ok, true, JSON.stringify(composed));
+    if (!composed.ok) return;
+    // Authentic pre-state evidence for the same path: it must not override the
+    // planned token-free target result.
+    const evidence = captureReadFile(root, derived.kitCss);
+    assert.equal(evidence.ok, true, JSON.stringify(evidence));
+    if (!evidence.ok) return;
+    const withEvidence: ApplyPlanInput = {
+      ...composed.value,
+      readset: {
+        ...composed.value.readset,
+        files: [...composed.value.readset.files, evidence.value],
+      },
+    };
+    assert.ok(
+      (evidence.value.bytes as Uint8Array).byteLength > 0,
+      "the captured pre-state must carry authentic bytes",
+    );
+    const before = snapshotTree(root);
+    const result = validateApplyPlan(withEvidence);
+    assert.equal(result.ok, false, JSON.stringify(result));
+    if (!result.ok) {
+      assert.ok(
+        result.issues.some(
+          (entry) => entry.code === "PROJECTED_FOUNDATION_MISSING",
+        ),
+        JSON.stringify(result.issues),
+      );
+    }
+    assert.deepEqual(snapshotTree(root), before);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("legitimate target/evidence overlap still resolves the planned result", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-effective-overlap-"));
+  try {
+    seed(root);
+    installedInit(root, DEFAULT);
+    const derived = deriveKitPaths(DEFAULT);
+    const lockLogical = `${derived.stateDir}/kit.lock.json`;
+    const snapshot = reCapture(root, DEFAULT);
+    const currentCss = readFileSync(
+      path.join(root, ...derived.kitCss.split("/")),
+    );
+    const lockBytes = readFileSync(path.join(root, ...lockLogical.split("/")));
+    // A token-preserving update over the same path as the captured evidence:
+    // the target result wins, so the claim stays truthful.
+    const composed = composeApplyPlan({
+      root,
+      config: DEFAULT,
+      writes: [
+        { path: derived.kitCss, bytes: new Uint8Array(currentCss) },
+        { path: lockLogical, bytes: lockBytes },
+      ],
+      snapshot,
+    });
+    assert.equal(composed.ok, true, JSON.stringify(composed));
+    if (!composed.ok) return;
+    const evidence = captureReadFile(root, derived.kitCss);
+    assert.equal(evidence.ok, true, JSON.stringify(evidence));
+    if (!evidence.ok) return;
+    const withEvidence: ApplyPlanInput = {
+      ...composed.value,
+      readset: {
+        ...composed.value.readset,
+        files: [...composed.value.readset.files, evidence.value],
+      },
+    };
+    const result = validateApplyPlan(withEvidence);
+    assert.equal(result.ok, true, JSON.stringify(result));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a comment-only layout replacement cannot claim layout-v1", () => {
+  withCapturedInit(DEFAULT, (root, plan) => {
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        const target = value.targets.find(
+          (entry) => entry.path === DEFAULT.layoutFile,
+        );
+        assert.ok(target, "the captured init must plan the layout");
+        if (target === undefined) return;
+        value.targets = value.targets.map((entry) =>
+          entry.path === DEFAULT.layoutFile
+            ? {
+                ...entry,
+                bytes: new TextEncoder().encode(
+                  "<!-- no rendering or style integration -->\n",
+                ),
+              }
+            : entry,
+        );
+      },
+      "PROJECTED_LAYOUT_INTEGRATION_MISSING",
+    );
+  });
+});
+
+test("invalid TypeScript cannot claim exports-v1 through path presence", () => {
+  withCapturedInit(DEFAULT, (root, plan) => {
+    const derived = deriveKitPaths(DEFAULT);
+    assertRefusedWithoutEffect(
+      root,
+      plan,
+      (value) => {
+        const target = value.targets.find(
+          (entry) => entry.path === derived.rootExports,
+        );
+        assert.ok(target, "the captured init must plan the exports barrel");
+        if (target === undefined) return;
+        value.targets = value.targets.map((entry) =>
+          entry.path === derived.rootExports
+            ? {
+                ...entry,
+                bytes: new TextEncoder().encode("not typescript at all\n"),
+              }
+            : entry,
+        );
+      },
+      "PROJECTED_EXPORTS_INVALID",
+    );
+  });
+});
+
+test("customized mapped layout/export forms still satisfy their contracts", () => {
+  withCapturedInit(DEFAULT, (root, plan) => {
+    const derived = deriveKitPaths(DEFAULT);
+    const customized: ApplyPlanInput = {
+      ...plan,
+      targets: plan.targets.map((target) => {
+        if (target.path === DEFAULT.layoutFile) {
+          return {
+            ...target,
+            bytes: new TextEncoder().encode(
+              '<script>\n  import "../styles/kit.css";\n  import "../styles/themes.css";\n  import "../styles/app.css";\n  let { children } = $props();\n</script>\n\n<main class="shell">{@render children()}</main>\n',
+            ),
+          };
+        }
+        if (target.path === derived.rootExports) {
+          return {
+            ...target,
+            bytes: new TextEncoder().encode(
+              "// svelte-ui-kit:start exports\n// svelte-ui-kit:end exports\nexport const AppThing = 1;\n",
+            ),
+          };
+        }
+        return target;
+      }),
+    };
+    // The lock still claims layout-v1/exports-v1 for these paths, but the
+    // baseline is the prior lineage; the semantic contract holds.
+    const result = validateApplyPlan(customized);
+    assert.equal(result.ok, true, JSON.stringify(result));
+  });
+});
+
+test("the sealed plan isolates and binds captured authority bytes", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-effective-seal-"));
+  try {
+    const plan = makeGuardedPlan(root);
+    const validated = validateApplyPlan(plan);
+    assert.equal(validated.ok, true, JSON.stringify(validated));
+    if (!validated.ok) return;
+    const callerFile = plan.readset.files.find(
+      (file) => file.bytes instanceof Uint8Array,
+    );
+    const sealedFile = validated.value.readset.files.find(
+      (file) => file.bytes instanceof Uint8Array,
+    );
+    assert.ok(callerFile !== undefined && sealedFile !== undefined);
+    if (callerFile === undefined || sealedFile === undefined) return;
+    const callerBytes = callerFile.bytes as Uint8Array;
+    const sealedBytes = sealedFile.bytes as Uint8Array;
+    // Distinct buffers: the seal owns an isolated copy.
+    assert.notStrictEqual(callerBytes, sealedBytes);
+    const sealedBefore = new Uint8Array(sealedBytes);
+    callerBytes[0] = (callerBytes[0] as number) ^ 0xff;
+    assert.deepEqual(
+      new Uint8Array(sealedBytes),
+      sealedBefore,
+      "mutating the caller's buffer after sealing must not change the sealed authority",
+    );
+    // The seal binds the bytes: mutating the sealed buffer is detected.
+    sealedBytes[0] = (sealedBytes[0] as number) ^ 0xff;
+    const outcome = applyPlan(validated.value);
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      outcome.issues.some((entry) => entry.code === "PLAN_AUTHORITY_STALE"),
+      JSON.stringify(outcome.issues),
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

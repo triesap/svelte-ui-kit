@@ -33,6 +33,8 @@
  *
  * Pure data. No filesystem observation, no coordination, no writes.
  */
+import path from "node:path";
+
 import {
   deriveKitPaths,
   parseKitConfig,
@@ -42,7 +44,9 @@ import { issue, type ModelIssue } from "../registry/errors.js";
 import { parseManagedCss } from "./css-parse.js";
 import { FOUNDATION_TOKENS_CONTRACT } from "./css.js";
 import { sha256Hex } from "./digest.js";
+import { parseExportRegion } from "./export-parse.js";
 import type { KitLock } from "./lock.js";
+import { parseSvelteLayout } from "./svelte-parse.js";
 
 /** One projected target result: `retire` means the path is absent afterwards. */
 export interface ProjectedTarget {
@@ -63,6 +67,10 @@ export interface ProjectedContent {
   readonly bytes: Uint8Array;
 }
 
+/** Versioned integration contracts proven from the effective projected bytes. */
+export const LAYOUT_CONTRACT = "layout-v1";
+export const EXPORTS_CONTRACT = "exports-v1";
+
 export interface ProjectedBatch {
   readonly stateDir: string;
   readonly uiDir: string;
@@ -71,9 +79,12 @@ export interface ProjectedBatch {
   readonly targets: readonly ProjectedTarget[];
   readonly evidence: readonly ProjectedEvidence[];
   /**
-   * Exact effective bytes carried from the original captured composition (or
-   * the planned target result). Content coherence never guesses: a stylesheet
-   * or configuration whose bytes are absent is incomplete authority.
+   * Exact captured pre-state bytes carried from the original immutable
+   * composition. These are never the target results: the effective content is
+   * resolved once by overlaying the planned target results over this captured
+   * pre-state (create/update overrides, retire removes). Content coherence
+   * never guesses: a stylesheet or configuration whose effective bytes are
+   * absent is incomplete authority.
    */
   readonly content: readonly ProjectedContent[];
 }
@@ -233,6 +244,224 @@ export function resolveProjectedConfig(batch: ProjectedBatch): ProjectedConfig {
 }
 
 /**
+ * The single effective projected content authority for one batch. Effective
+ * content is resolved once from the planned target results and the original
+ * captured pre-state: a create/update result overrides captured bytes for the
+ * same logical path, a retirement removes the content, and captured evidence
+ * supplies bytes only for a genuinely unchanged file. Two entries that alias the
+ * same path under ASCII case folding but are spelled differently cannot be
+ * ordered, so they are an ambiguous authority and are refused before any effect.
+ */
+interface EffectiveContent {
+  /** Folded logical paths present after the projected effects. */
+  readonly present: ReadonlySet<string>;
+  /** Folded logical path -> exact effective bytes (only for present paths). */
+  readonly bytes: ReadonlyMap<string, Uint8Array>;
+  readonly issues: readonly ModelIssue[];
+}
+
+function resolveEffectiveContent(batch: ProjectedBatch): EffectiveContent {
+  const issues: ModelIssue[] = [];
+  const captured = new Map<string, ProjectedContent>();
+  for (const entry of batch.content) {
+    const folded = entry.path.toLowerCase();
+    const existing = captured.get(folded);
+    if (existing !== undefined && existing.path !== entry.path) {
+      issues.push(
+        issue(
+          "PROJECTED_CONTENT_CASE_ALIAS",
+          `captured content ${JSON.stringify(existing.path)} and ${JSON.stringify(entry.path)} are ASCII case aliases with no single effective authority`,
+          entry.path,
+        ),
+      );
+      continue;
+    }
+    if (existing === undefined) captured.set(folded, entry);
+  }
+  const targets = new Map<string, ProjectedTarget>();
+  for (const target of batch.targets) {
+    const folded = target.path.toLowerCase();
+    const existing = targets.get(folded);
+    if (existing !== undefined) {
+      issues.push(
+        issue(
+          "PROJECTED_TARGET_AMBIGUOUS",
+          `projected targets ${JSON.stringify(existing.path)} and ${JSON.stringify(target.path)} alias the same logical path`,
+          target.path,
+        ),
+      );
+      continue;
+    }
+    targets.set(folded, target);
+  }
+  for (const [folded, target] of targets) {
+    const cap = captured.get(folded);
+    if (cap !== undefined && cap.path !== target.path) {
+      issues.push(
+        issue(
+          "PROJECTED_CONTENT_CASE_ALIAS",
+          `the projected target ${JSON.stringify(target.path)} and captured content ${JSON.stringify(cap.path)} are ASCII case aliases with no single effective authority`,
+          target.path,
+        ),
+      );
+    }
+  }
+  const present = new Set<string>();
+  for (const entry of batch.evidence) {
+    const folded = entry.path.toLowerCase();
+    if (entry.kind === "file") present.add(folded);
+    else present.delete(folded);
+  }
+  for (const [folded, target] of targets) {
+    if (target.operation === "retire") present.delete(folded);
+    else present.add(folded);
+  }
+  const bytes = new Map<string, Uint8Array>();
+  for (const [folded, entry] of captured) {
+    if (targets.has(folded) || !present.has(folded)) continue;
+    bytes.set(folded, entry.bytes);
+  }
+  for (const [folded, target] of targets) {
+    if (target.operation !== "retire" && present.has(folded)) {
+      bytes.set(folded, target.bytes);
+    }
+  }
+  return { present, bytes, issues };
+}
+
+/** The relative module specifier a layout uses to import one mapped stylesheet. */
+function relativeSpecifier(from: string, to: string): string {
+  const relative = path.posix.relative(path.posix.dirname(from), to);
+  return relative.startsWith(".") ? relative : `./${relative}`;
+}
+
+/**
+ * Prove an approved `layout-v1` integration from its effective bytes.
+ *
+ * The contract is semantic, not byte equality with upstream: the layout must be
+ * a parseable Svelte component that integrates the three mapped stylesheet
+ * imports (kit, then themes, then app) and still renders its child content. A
+ * comment-only or otherwise dis-integrated replacement cannot claim the owned
+ * integration merely because the path exists. Customized rendering, unmanaged
+ * markup and customized import spellings that still map to the approved
+ * stylesheets are preserved.
+ */
+function validateLayoutIntegration(
+  layoutPath: string,
+  bytes: Uint8Array,
+  config: KitConfig,
+): ModelIssue[] {
+  const issues: ModelIssue[] = [];
+  const text = decodeUtf8(bytes);
+  if (text === null) {
+    return [
+      issue(
+        "PROJECTED_LAYOUT_INVALID",
+        `the projected layout ${JSON.stringify(layoutPath)} is not valid UTF-8`,
+        layoutPath,
+      ),
+    ];
+  }
+  const parsed = parseSvelteLayout(text);
+  if (!parsed.ok) {
+    return [
+      issue(
+        "PROJECTED_LAYOUT_INVALID",
+        `the projected layout ${JSON.stringify(layoutPath)} is not a parseable Svelte component: ${parsed.issues[0]?.message ?? "unknown parse failure"}`,
+        layoutPath,
+      ),
+    ];
+  }
+  const derived = deriveKitPaths(config);
+  const desired = [derived.kitCss, derived.themesCss, derived.appCss].map(
+    (target) => relativeSpecifier(config.layoutFile, target),
+  );
+  const imports = parsed.value.instanceImports;
+  const indices: number[] = [];
+  for (const specifier of desired) {
+    const index = imports.indexOf(specifier);
+    if (index === -1) {
+      issues.push(
+        issue(
+          "PROJECTED_LAYOUT_INTEGRATION_MISSING",
+          `the projected layout ${JSON.stringify(layoutPath)} declares the ${LAYOUT_CONTRACT} contract but does not integrate the approved stylesheet import ${JSON.stringify(specifier)}`,
+          layoutPath,
+        ),
+      );
+      continue;
+    }
+    indices.push(index);
+  }
+  if (
+    indices.some(
+      (index, position) =>
+        position > 0 && index < (indices[position - 1] as number),
+    )
+  ) {
+    issues.push(
+      issue(
+        "PROJECTED_LAYOUT_ORDER",
+        `the projected layout ${JSON.stringify(layoutPath)} imports the approved stylesheets out of the required kit/themes/app order`,
+        layoutPath,
+      ),
+    );
+  }
+  if (!/\{@render\s+children\b/.test(text) && !/<slot[\s/>]/.test(text)) {
+    issues.push(
+      issue(
+        "PROJECTED_LAYOUT_RENDERING_MISSING",
+        `the projected layout ${JSON.stringify(layoutPath)} declares the ${LAYOUT_CONTRACT} contract but does not render its child content`,
+        layoutPath,
+      ),
+    );
+  }
+  return issues;
+}
+
+/**
+ * Prove an approved `exports-v1` integration from its effective bytes. The
+ * barrel must be a valid managed TypeScript module that still carries its
+ * managed export region. Valid TypeScript alone is not proof of the managed
+ * integration, and an invalid replacement cannot claim it through path
+ * presence.
+ */
+function validateExportsIntegration(
+  exportsPath: string,
+  bytes: Uint8Array,
+): ModelIssue[] {
+  const text = decodeUtf8(bytes);
+  if (text === null) {
+    return [
+      issue(
+        "PROJECTED_EXPORTS_INVALID",
+        `the projected exports barrel ${JSON.stringify(exportsPath)} is not valid UTF-8`,
+        exportsPath,
+      ),
+    ];
+  }
+  const parsed = parseExportRegion(exportsPath, text);
+  if (!parsed.ok) {
+    return [
+      issue(
+        "PROJECTED_EXPORTS_INVALID",
+        `the projected exports barrel ${JSON.stringify(exportsPath)} is not a valid managed TypeScript module: ${parsed.issues[0]?.message ?? "unknown parse failure"}`,
+        exportsPath,
+      ),
+    ];
+  }
+  if (parsed.value.region === null) {
+    return [
+      issue(
+        "PROJECTED_EXPORTS_INTEGRATION_MISSING",
+        `the projected exports barrel ${JSON.stringify(exportsPath)} declares the ${EXPORTS_CONTRACT} contract but has no managed export region`,
+        exportsPath,
+      ),
+    ];
+  }
+  return [];
+}
+
+/**
  * Validate the final lock against the projected batch. Returns every
  * inconsistency as a typed issue; an empty result means the lock truthfully
  * describes the projected tree. The caller still validates the lock's own
@@ -282,31 +511,18 @@ export function validateProjectedLock(
     );
   }
 
-  // Existence in the projected tree. Evidence is applied first, then target
-  // results override it (a planned create/update exists; a retire is absent).
-  const present = new Set<string>();
-  const record = (logical: string, exists: boolean): void => {
-    const folded = logical.toLowerCase();
-    if (exists) present.add(folded);
-    else present.delete(folded);
-  };
-  for (const evidence of batch.evidence) {
-    record(evidence.path, evidence.kind === "file");
-  }
-  for (const target of batch.targets) {
-    record(target.path, target.operation !== "retire");
-  }
-  const contentByPath = new Map<string, Uint8Array>();
-  for (const entry of batch.content) {
-    contentByPath.set(entry.path.toLowerCase(), entry.bytes);
-  }
+  // Resolve the single effective content authority first: target results
+  // override the captured pre-state and a retirement removes content. Every
+  // content-dependent check below reads this map, never the raw content list.
+  const effective = resolveEffectiveContent(batch);
+  issues.push(...effective.issues);
 
   const requirePresent = (
     logical: string,
     code: string,
     label: string,
   ): void => {
-    if (!present.has(logical.toLowerCase())) {
+    if (!effective.present.has(logical.toLowerCase())) {
       issues.push(
         issue(
           code,
@@ -321,13 +537,13 @@ export function validateProjectedLock(
     label: string,
   ): Uint8Array | null => {
     const folded = logical.toLowerCase();
-    if (!present.has(folded)) return null;
-    const bytes = contentByPath.get(folded);
+    if (!effective.present.has(folded)) return null;
+    const bytes = effective.bytes.get(folded);
     if (bytes === undefined) {
       issues.push(
         issue(
           "PROJECTED_CONTENT_MISSING",
-          `${label} ${JSON.stringify(logical)} is present in the projected tree but its exact projected content was not carried from the original capture; path presence alone is not contract proof`,
+          `${label} ${JSON.stringify(logical)} is present in the projected tree but its exact effective content was not carried from the original capture; path presence alone is not contract proof`,
           logical,
         ),
       );
@@ -342,10 +558,30 @@ export function validateProjectedLock(
       "PROJECTED_INTEGRATION_MISSING",
       `${integration.kind} integration`,
     );
-    // A `foundation-tokens-v1` stylesheet integration owns the minimal
-    // foundation `tokens` block. The projected content must actually contain
-    // that managed block; an aggregate or unmanaged file that omits it does not
-    // satisfy the claimed contract.
+    // A `layout-v1` integration owns the mapped style integration and child
+    // rendering; a `foundation-tokens-v1` stylesheet owns the foundation
+    // `tokens` block. Contract proof is read from the effective projected
+    // content, so a dis-integrated replacement is refused before any effect.
+    if (
+      integration.kind === "layout" &&
+      integration.contract === LAYOUT_CONTRACT
+    ) {
+      const bytes = requireContent(integration.path, "layout integration");
+      if (bytes !== null) {
+        issues.push(
+          ...validateLayoutIntegration(integration.path, bytes, config),
+        );
+      }
+    }
+    if (
+      integration.kind === "exports" &&
+      integration.contract === EXPORTS_CONTRACT
+    ) {
+      const bytes = requireContent(integration.path, "exports integration");
+      if (bytes !== null) {
+        issues.push(...validateExportsIntegration(integration.path, bytes));
+      }
+    }
     if (
       integration.kind === "stylesheet" &&
       integration.contract === FOUNDATION_TOKENS_CONTRACT

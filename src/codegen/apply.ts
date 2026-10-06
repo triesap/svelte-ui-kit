@@ -684,11 +684,11 @@ export function validateApplyPlan(
     // capture. A config write that changes the mapping, a lock that names an
     // absent integration/owned record, or a managed stylesheet that omits its
     // contracted content is a typed refusal before coordination.
+    // Carry only the original captured pre-state bytes here. The effective
+    // projected content is resolved once by overlaying the target results over
+    // this captured pre-state (create/update overrides, retire removes), so
+    // later read evidence can never shadow a planned target result.
     const content: { path: string; bytes: Uint8Array }[] = [];
-    for (const target of sealedTargets) {
-      if (target.operation === "retire") continue;
-      content.push({ path: target.path, bytes: target.bytes });
-    }
     for (const file of plan.readset.files) {
       if (file.kind === "file" && file.bytes instanceof Uint8Array) {
         content.push({ path: file.path, bytes: file.bytes });
@@ -769,7 +769,19 @@ export function validateApplyPlan(
         ),
       ),
       files: Object.freeze(
-        plan.readset.files.map((file) => Object.freeze({ ...file })),
+        plan.readset.files.map((file) =>
+          Object.freeze({
+            ...file,
+            // Isolate the captured byte buffer from the caller: the shallow
+            // record freeze does not make the shared Uint8Array immutable, so
+            // the sealed plan owns its own copy of every authority byte
+            // sequence. Their content digest is bound into the plan digest.
+            bytes:
+              file.bytes instanceof Uint8Array
+                ? new Uint8Array(file.bytes)
+                : file.bytes,
+          }),
+        ),
       ),
       installed: Object.freeze(
         (plan.readset.installed ?? []).map((entry) =>
@@ -861,6 +873,8 @@ export function derivePlanDigest(input: {
         kind: file.kind,
         digest: file.digest,
         mode: file.mode,
+        contentDigest:
+          file.bytes instanceof Uint8Array ? sha256Hex(file.bytes) : null,
       })),
       installed: (input.readset.installed ?? []).map((entry) => ({
         name: entry.name,

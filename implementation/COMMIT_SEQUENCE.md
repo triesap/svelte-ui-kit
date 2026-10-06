@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: independent return review at `0ce552a` verifies the previous seven refusal repairs and genuine recovery children, but complete projected-content coherence and safe malformed-target handling remain incomplete. Current dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-05.
+Status: independent return review at `4f33632` preserves the previous refusal/config/token repairs and bounded recovery children, but effective-content precedence and complete layout/export integration coherence remain incomplete. Current dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-06.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD-04 complete projected content and protocol qualification** (current return review at `0ce552a` requests changes; S064–S077 remain committed_pending_review and S078 stays gated).
+- Active implementation checkpoint: **RCLD-04 complete projected content and protocol qualification** (current return review at `4f33632` requests changes; S064–S077 remain committed_pending_review and S078 stays gated).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -53,6 +53,58 @@ At S002, adopt the embedded contracts into their scheduled repository-relative f
 ## Codex dispatch — complete RCLD-04 transactions and recovery
 
 ### Current expanded dispatch — through RCLD-04
+
+#### Independent return review — 4f33632
+
+Codex reviewed clean candidate `4f336322856697b9d8991741677d8453b5a4290d`
+and the five commits from `9780c1b` through `4f33632`. The previous thirteen
+private cases now retain their intended safe outcomes, including the valid
+control; preserve typed malformed-target refusals, effective config identity/
+requested-root checks, managed-token validation and bounded recovery children.
+Fresh independent integration passes 512 tests; inspected repairs retain their
+original causal assertions. No original checkpoint, R2 group or RCLD-04
+acceptance is granted. Earlier implementation-complete claims are pending review.
+
+Three new production-derived cases still validate and report `applied`:
+
+1. After valid initialization, a planned stylesheet replacement without tokens
+   is validated against authentic captured OLD stylesheet bytes supplied as
+   read evidence for the same path. The resulting stylesheet lacks the claimed
+   foundation contract. Presence gives targets precedence, but the content map
+   gives later read evidence precedence. Decide effective content once: target
+   results override captured pre-state; retirement removes content. Reject
+   ambiguous/inconsistent authority with typed issues before effects, preserving
+   legitimate overlap where original contracts permit it and case-fold rules.
+2. A layout target containing only a comment publishes a lock claiming
+   `layout-v1`, although no styles are integrated and children are not rendered.
+3. An exports target containing invalid TypeScript publishes a lock claiming
+   `exports-v1`, although no valid managed export integration exists.
+
+Complete ORIGINAL approved content/ownership/cohort relationships for all
+integration kinds, not only stylesheet tokens or path presence. Reuse existing
+AST/managed-region/contract validators and original semantics; do not invent
+new APIs or restrict legitimate customized source to canonical upstream bytes.
+Preserve unmanaged regions, truthful baselines, shared CSS, valid mapped layouts
+and customized rendering/import/export forms. Carry exact original unchanged
+evidence, never live recapture or fabricated fallback. Audit the new carried
+byte buffers through sealing/digest/revalidation: shallow freezing of their
+records is not isolation of mutable bytes. Bind or isolate all content used as
+validation authority under the existing immutable-plan contract.
+
+The next batch is still `pfc through RCLD-04`: combine these corrections with
+complete original default/custom fresh/installed init/add/sync, metadata-only/
+satisfied/conflict/update/retirement/cohort qualification, both recovery callers,
+remaining causal filesystem/publication/process criteria and cumulative checks.
+Use positive customizations, intended refusal causes and complete-tree evidence;
+reuse sound qualified cells rather than repeat accepted repairs. Per-criterion
+evidence must name executed behavior and outcome, not just test filenames.
+The author cumulative lanes ran, but actionlint was explicitly not freshly run;
+perform actual checksum-qualified workflow validation and retain its exit.
+Existing AC20/reference debt and unavailable platform lanes remain explicit.
+No owner, external or hardware blocker prevents eligible software. Continue
+after every green slice through the completed candidate; no new commit cap or
+intermediate management gate. Return before S078 for mandatory independent
+Codex S077 acceptance. Original definitions, ledger counts and dependencies stay.
 
 #### Independent return review — 0ce552a
 

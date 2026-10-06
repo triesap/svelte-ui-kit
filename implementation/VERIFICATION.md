@@ -1,13 +1,14 @@
 # Verification commands and known-good commits
 
-The current RCLD-04 return review at `0ce552a` requires typed malformed-target
-failures before projection and complete ORIGINAL captured/projected content:
-config existence/mapping/hash for written and unchanged states, explicit requests,
-ownership/cohorts and approved managed integration/CSS contracts. Verify full trees,
-positive customizations and intended refusal causes. Fresh recovery children must
-have enforceable termination bounds with a deliberate stalled-child control.
-Complete remaining original matrices and integrated cumulative qualification in
-this dispatch; independent S077/S078 acceptance remains mandatory.
+The current RCLD-04 return review at `4f33632` preserves verified typed refusals,
+configuration/requested-root checks, managed-token checks and bounded recovery.
+Qualify effective target content over captured pre-state, complete original
+layout/export integration contracts and immutable carried-content authority.
+Use intended-cause refusals, exact unchanged trees and positive customization
+controls through production default/custom lifecycle callers. Finish remaining
+original matrices and integrated cumulative qualification, including an actual
+checksum-qualified actionlint run; an unchanged workflow is not a fresh run.
+Independent S077 acceptance before S078 remains mandatory.
 
 <!-- Adopted at S002 from the governing RCLD sequence. This file governs product intent; implementation/COMMIT_SEQUENCE.md remains the execution/status authority. -->
 
