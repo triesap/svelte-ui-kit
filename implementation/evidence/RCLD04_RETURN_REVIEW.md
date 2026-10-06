@@ -188,3 +188,11 @@ Actionlint provenance: archive `actionlint_1.7.12_darwin_arm64.tar.gz`, SHA-256
 SHA-256 `8db11704dc296f096216db4db65d86cd7f0ebfdf4c38453a1da276b137b88388`.
 The read-only reference workspace stayed clean at
 `a10fbf06334f4648f5755e05a7147414e4e5fc98` with its four known ignored tests.
+
+## Follow-up implementation (parent `0ce552a`)
+
+The five findings reproduced by the `0ce552a` return review were then
+implemented and qualified in commits `9780c1b`, `18fd894` and `9517afc`; the
+complete disposition, per-criterion links and cumulative lanes are recorded in
+`implementation/evidence/RCLD04_R2_AUTHORITY_REPORT.md`. This file remains the
+record of the earlier `a0016eb` review and is not superseded as history.
