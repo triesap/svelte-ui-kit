@@ -14,45 +14,18 @@
  * unsafe order, or an approved import that lives in the module script, is a
  * precise nonmutating conflict.
  */
-import ts from "typescript";
-
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
-import { parseSvelteLayout } from "./svelte-parse.js";
+import {
+  parseScriptImports,
+  parseSvelteLayout,
+  type ScriptImport,
+} from "./svelte-parse.js";
 
 export interface LayoutImport {
   readonly specifier: string;
 }
 
-interface ParsedImport {
-  readonly specifier: string;
-  readonly start: number;
-  readonly end: number;
-  readonly typeOnly: boolean;
-}
-
-/** Parse real import declarations from one script's content. */
-function parseScriptImports(content: string): readonly ParsedImport[] {
-  const sourceFile = ts.createSourceFile(
-    "layout-script.ts",
-    content,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TS,
-  );
-  const imports: ParsedImport[] = [];
-  for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement)) continue;
-    const specifier = statement.moduleSpecifier;
-    if (!ts.isStringLiteral(specifier)) continue;
-    imports.push({
-      specifier: specifier.text,
-      start: statement.getStart(sourceFile),
-      end: statement.end,
-      typeOnly: statement.importClause?.isTypeOnly ?? false,
-    });
-  }
-  return imports;
-}
+type ParsedImport = ScriptImport;
 
 function importLine(specifier: string): string {
   return `import "${specifier}";`;

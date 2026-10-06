@@ -28,6 +28,12 @@ import { deriveKitPaths, type KitConfig } from "../project/config.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";
 import { identityDigest, type PlanReadFile } from "./authority.js";
 import type { PlanInstalledRead } from "./authority.js";
+import {
+  parseGeneratedDeclarations,
+  type ExportDeclaration,
+} from "./exports.js";
+import { parseExportRegion } from "./export-parse.js";
+import type { ExportAuthority } from "./projected-batch.js";
 import { hasIgnoreEntry, ignoreBlockWithEntry } from "./transaction-cleanup.js";
 import type { ApplyPlanInput, ApplyTarget } from "./apply.js";
 import type { PlanWrite } from "./plan.js";
@@ -411,6 +417,49 @@ export function composeApplyPlan(
           : null,
     }));
 
+  // Carry the registry-declared export cohort of the planned root barrel as
+  // internal planning authority. The guarded boundary re-proves the effective
+  // managed region against this set, so a barrel replacement that drops,
+  // retargets or changes the kind of a declared export is refused before any
+  // effect. Only a planner-produced barrel write is inspected; a batch that
+  // leaves the installed barrel unchanged carries no new authority.
+  const exportAuthority: ExportAuthority[] = [];
+  const rootExportsWrite = input.writes.find(
+    (write) => write.path === derived.rootExports,
+  );
+  if (rootExportsWrite !== undefined) {
+    let text: string | null;
+    try {
+      text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(
+        rootExportsWrite.bytes,
+      );
+    } catch {
+      text = null;
+    }
+    const parsed =
+      text === null ? null : parseExportRegion(derived.rootExports, text);
+    if (
+      text === null ||
+      parsed === null ||
+      !parsed.ok ||
+      parsed.value.region === null
+    ) {
+      return fail([
+        issue(
+          "COMPOSE_EXPORTS_AUTHORITY_INVALID",
+          `the planned root exports barrel ${derived.rootExports} does not carry a parseable managed export region; refusing to compose an incompletely qualified export cohort`,
+          derived.rootExports,
+        ),
+      ]);
+    }
+    const region = parsed.value.region;
+    const declarations: readonly ExportDeclaration[] =
+      parseGeneratedDeclarations(
+        text.slice(region.contentStart, region.contentEnd),
+      );
+    exportAuthority.push({ path: derived.rootExports, declarations });
+  }
+
   const rootIdentity =
     input.rootIdentity ?? identityDigest(snapshot.rootIdentity);
   if (!HEX64.test(rootIdentity)) {
@@ -502,6 +551,7 @@ export function composeApplyPlan(
       preimage: lockPreimage,
     },
     ignoreFiles: ignoreTargetAdded ? [ignorePath] : [],
+    exportAuthority,
   });
 }
 

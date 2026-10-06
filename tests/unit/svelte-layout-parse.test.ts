@@ -76,6 +76,44 @@ test("unsupported syntax is a typed failure", () => {
   }
 });
 
+test("import-looking text inside comments and strings is not an import", () => {
+  const source =
+    '<script>\n/* import "./commented"; */\nconst s = \'import "./stringed";\';\nimport real from "./real";\n</script>\n';
+  const result = parseSvelteLayout(source);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (!result.ok) return;
+  assert.deepEqual(result.value.instanceImports, ["./real"]);
+});
+
+test("child rendering proof follows the actual render node and binding", () => {
+  const direct =
+    "<script>let { children } = $props();</script>\n{@render children()}\n";
+  const aliased =
+    "<script>let { children: content } = $props();</script>\n{@render content()}\n";
+  const legacy =
+    "<script>export let children;</script>\n{@render children()}\n";
+  const slot = "<main><slot /></main>\n";
+  for (const source of [direct, aliased, legacy, slot]) {
+    const result = parseSvelteLayout(source);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (result.ok) assert.equal(result.value.rendersChildren, true, source);
+  }
+});
+
+test("render-looking text and unrelated render calls are not child proof", () => {
+  const commented =
+    "<script>let { children } = $props();</script>\n<!-- {@render children()} -->\n";
+  const unrelated =
+    "<script>let { children, other } = $props();</script>\n{@render other()}\n";
+  const undeclared =
+    "<script>let original = 1;</script>\n{@render children()}\n";
+  for (const source of [commented, unrelated, undeclared]) {
+    const result = parseSvelteLayout(source);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (result.ok) assert.equal(result.value.rendersChildren, false, source);
+  }
+});
+
 test("parsing does not mutate the source string", () => {
   const source = "<script>let a = 1;</script>\n";
   const copy = `${source}`;

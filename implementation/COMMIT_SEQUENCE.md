@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: independent return review at `4f33632` preserves the previous refusal/config/token repairs and bounded recovery children, but effective-content precedence and complete layout/export integration coherence remain incomplete. Current dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-06.
+Status: independent return review at `d54f7d4` preserves effective-content precedence, sealed-byte isolation/binding and fresh workflow qualification, but semantic layout and complete export/cohort authority remain incomplete. Current dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-06.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD-04 complete projected content and protocol qualification** (current return review at `4f33632` requests changes; S064–S077 remain committed_pending_review and S078 stays gated).
+- Active implementation checkpoint: **RCLD-04 complete projected content and protocol qualification** (current return review at `d54f7d4` requests changes; S064–S077 remain committed_pending_review and S078 stays gated).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -53,6 +53,70 @@ At S002, adopt the embedded contracts into their scheduled repository-relative f
 ## Codex dispatch — complete RCLD-04 transactions and recovery
 
 ### Current expanded dispatch — through RCLD-04
+
+#### Independent return review — d54f7d4
+
+Codex reviewed clean candidate `d54f7d45f2c20288d0f22be289c6a4a8f913e89d`
+and commits `98df69c`, `d54f7d4`. Preserve effective target-over-prestate content,
+retirement removal, case-alias refusals, isolated/bound readset bytes, prior typed
+refusals/config/token checks and bounded genuine recovery. The previous three
+bad publications now refuse for their intended causes. Fresh integration passes
+518 tests and consumer qualification passes 27 cases including six resulting
+consumer stages. Cumulative native/raw evidence substantiates fresh actionlint
+and broader lanes. The historical R3 report was restored byte-for-byte after an
+intermediate mistaken overwrite. No whole checkpoint, R2 group or RCLD-04
+acceptance is granted; preserve earlier scoped acceptance.
+
+The attempted semantic checks still leave three actual bad publications and one
+valid customized layout refusal:
+
+1. A layout with real mapped imports but child rendering only inside an HTML
+   comment validates/applies as `layout-v1`; isolated compiled server rendering
+   emits no child content. Rendering proof is still a regex over the whole text.
+2. A layout with stylesheet imports only inside a script block comment validates
+   and applies as `layout-v1`. The shared parser extracts import-looking text
+   with a regex even though the pinned compiler parsed a real AST.
+3. A real registry-backed `planAdd` of `button` remains executable/valid after
+   its managed barrel result is replaced by an empty valid region. Apply publishes
+   the explicit item/file and export integration while `Button` is absent.
+   Marker/parse presence is not the complete source/export cohort relationship.
+4. A valid mapped layout that destructures `children: content` and executes
+   `{@render content()}` refuses as missing rendering. Pinned compilation and
+   isolated server rendering prove the child is present. Preserve this legitimate
+   customization instead of enforcing one local variable spelling.
+
+Codex decisions: use actual AST imports and actual executable rendering nodes
+with binding-aware child provenance under the original Svelte/layout contract.
+Comments, strings, dead marker text and unrelated render calls are not evidence.
+Preserve valid aliased/direct child forms and accepted legacy forms; fail typed
+on genuinely unsupported/ambiguous source rather than guessing. Repair shared
+read-only planning/parser consumers as needed without changing accepted minimal
+editing, import order, mapping or unmanaged-region semantics. No new component API.
+
+Complete original registry-declared source/style/export/cohort relationships from
+the original immutable planning authority. Carry sufficient internal evidence
+through production composition/sealing/revalidation when needed; this internal
+evidence plumbing is authorized within existing requirements, with strict shape,
+identity and omission checks. No new public command, flag, registry contract mode
+or dependency. Do not infer expected public names from filenames, trust marker
+presence or relabel local bytes as upstream baselines. Preserve legitimate local
+customizations and app-owned exports, explicit/transitive distinctions and shared
+CSS. Qualify missing/retargeted/type-value/collision/cohort inconsistencies and
+positive customized/satisfied cases under the existing frozen rules.
+
+The batch remains `pfc through RCLD-04`: corrections plus complete default/custom
+fresh/installed/written/unchanged init/add/sync/update/retirement/metadata/satisfied/
+conflict/cohort qualification, actual resulting-consumer check/build/render,
+remaining original filesystem/publication/recovery/process criteria and integrated
+cumulative evidence. Reuse sound covered cells; provide causal per-criterion
+outcomes rather than filename inventories. Capture exits before any echo/pipeline;
+the author reference-test exit sidecar was written after echo, although native
+output and retained test totals substantiate its successful run. Reconcile that
+provenance honestly. No owner/external/hardware blocker prevents eligible software.
+Continue after every green checkpoint; no correction-only return or management
+commit cap. Stop at the complete candidate for independent Codex S077 review
+before S078, or a genuine user/runtime/external stop after other eligible work.
+Original definitions, counts, accepted work, dependencies and S078 gate remain.
 
 #### Independent return review — 4f33632
 

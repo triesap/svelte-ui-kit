@@ -1,14 +1,14 @@
 # Verification commands and known-good commits
 
-The current RCLD-04 return review at `4f33632` preserves verified typed refusals,
-configuration/requested-root checks, managed-token checks and bounded recovery.
-Qualify effective target content over captured pre-state, complete original
-layout/export integration contracts and immutable carried-content authority.
-Use intended-cause refusals, exact unchanged trees and positive customization
-controls through production default/custom lifecycle callers. Finish remaining
-original matrices and integrated cumulative qualification, including an actual
-checksum-qualified actionlint run; an unchanged workflow is not a fresh run.
-Independent S077 acceptance before S078 remains mandatory.
+The current RCLD-04 return review at `d54f7d4` preserves target precedence,
+sealed-content isolation/binding and fresh workflow qualification. Complete
+original semantic layout and source/style/export cohort proof: actual AST
+imports/rendering rather than comments/strings, positive aliased child rendering,
+and complete expected export relationships rather than empty markers. Verify
+default/custom written/unchanged lifecycle callers, exact trees, intended refusal
+causes and real resulting-consumer check/build/render behavior. Finish remaining
+original matrices and integrated cumulative qualification with correctly captured
+underlying exits. Independent S077 acceptance before S078 remains mandatory.
 
 <!-- Adopted at S002 from the governing RCLD sequence. This file governs product intent; implementation/COMMIT_SEQUENCE.md remains the execution/status authority. -->
 

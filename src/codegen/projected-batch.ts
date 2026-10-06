@@ -44,6 +44,10 @@ import { issue, type ModelIssue } from "../registry/errors.js";
 import { parseManagedCss } from "./css-parse.js";
 import { FOUNDATION_TOKENS_CONTRACT } from "./css.js";
 import { sha256Hex } from "./digest.js";
+import {
+  parseGeneratedDeclarations,
+  type ExportDeclaration,
+} from "./exports.js";
 import { parseExportRegion } from "./export-parse.js";
 import type { KitLock } from "./lock.js";
 import { parseSvelteLayout } from "./svelte-parse.js";
@@ -67,6 +71,17 @@ export interface ProjectedContent {
   readonly bytes: Uint8Array;
 }
 
+/**
+ * The registry-declared export cohort a managed barrel is expected to carry,
+ * carried from the original planning authority. The effective region is
+ * compared against this set (never against a filename guess or marker
+ * presence); application-owned bytes outside the markers are never included.
+ */
+export interface ExportAuthority {
+  readonly path: string;
+  readonly declarations: readonly ExportDeclaration[];
+}
+
 /** Versioned integration contracts proven from the effective projected bytes. */
 export const LAYOUT_CONTRACT = "layout-v1";
 export const EXPORTS_CONTRACT = "exports-v1";
@@ -87,6 +102,13 @@ export interface ProjectedBatch {
    * absent is incomplete authority.
    */
   readonly content: readonly ProjectedContent[];
+  /**
+   * Registry-declared export cohorts carried from the original planning
+   * authority, keyed by barrel path. A managed `exports-v1` integration's
+   * effective region must still carry every declared export; marker presence
+   * alone is not proof.
+   */
+  readonly exportAuthority?: readonly ExportAuthority[];
 }
 
 export type ProjectedConfigState =
@@ -406,7 +428,7 @@ function validateLayoutIntegration(
       ),
     );
   }
-  if (!/\{@render\s+children\b/.test(text) && !/<slot[\s/>]/.test(text)) {
+  if (!parsed.value.rendersChildren) {
     issues.push(
       issue(
         "PROJECTED_LAYOUT_RENDERING_MISSING",
@@ -425,9 +447,15 @@ function validateLayoutIntegration(
  * integration, and an invalid replacement cannot claim it through path
  * presence.
  */
+/** One stable comparability key for a managed export declaration. */
+function exportKey(declaration: ExportDeclaration): string {
+  return `${declaration.name}|${declaration.kind}|${declaration.target}`;
+}
+
 function validateExportsIntegration(
   exportsPath: string,
   bytes: Uint8Array,
+  expected: readonly ExportDeclaration[] | null,
 ): ModelIssue[] {
   const text = decodeUtf8(bytes);
   if (text === null) {
@@ -449,11 +477,35 @@ function validateExportsIntegration(
       ),
     ];
   }
-  if (parsed.value.region === null) {
+  const region = parsed.value.region;
+  if (region === null) {
     return [
       issue(
         "PROJECTED_EXPORTS_INTEGRATION_MISSING",
         `the projected exports barrel ${JSON.stringify(exportsPath)} declares the ${EXPORTS_CONTRACT} contract but has no managed export region`,
+        exportsPath,
+      ),
+    ];
+  }
+  if (expected === null) return [];
+  // The effective managed region must still carry every registry-declared
+  // export, compared by name/kind/exact target. A replacement barrel whose
+  // region silently drops a declared export, retargets one to a different
+  // module or changes a value/type kind cannot claim the contract through
+  // marker presence. Whitespace and application-owned bytes outside the
+  // markers are never compared, so formatting and app exports stay legitimate.
+  const effectiveRegion = text.slice(region.contentStart, region.contentEnd);
+  const effective = new Set(
+    parseGeneratedDeclarations(effectiveRegion).map(exportKey),
+  );
+  const missing = expected.filter(
+    (declaration) => !effective.has(exportKey(declaration)),
+  );
+  if (missing.length > 0) {
+    return [
+      issue(
+        "PROJECTED_EXPORTS_COHORT_MISSING",
+        `the effective managed export region of ${JSON.stringify(exportsPath)} omits or retargets ${missing.length} declared export(s): ${missing.map((entry) => entry.name).join(", ")}`,
         exportsPath,
       ),
     ];
@@ -579,7 +631,16 @@ export function validateProjectedLock(
     ) {
       const bytes = requireContent(integration.path, "exports integration");
       if (bytes !== null) {
-        issues.push(...validateExportsIntegration(integration.path, bytes));
+        const authority = (batch.exportAuthority ?? []).find((entry) =>
+          sameLogical(entry.path, integration.path),
+        );
+        issues.push(
+          ...validateExportsIntegration(
+            integration.path,
+            bytes,
+            authority?.declarations ?? null,
+          ),
+        );
       }
     }
     if (

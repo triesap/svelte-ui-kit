@@ -55,6 +55,7 @@ import { parseKitLock } from "./lock.js";
 import {
   resolveProjectedConfig,
   validateProjectedLock,
+  type ExportAuthority,
 } from "./projected-batch.js";
 import { deriveKitPaths } from "../project/config.js";
 import type { ChangeOperation } from "./plan.js";
@@ -123,6 +124,14 @@ export interface ApplyPlanInput {
    * guarded plan may update. Defaults to none when omitted.
    */
   readonly ignoreFiles?: readonly string[];
+  /**
+   * Internal planning authority: the registry-declared export cohort each
+   * managed barrel is expected to carry. The guarded boundary re-proves the
+   * effective managed region against this set, so a barrel replacement that
+   * silently drops a declared export cannot pass on marker presence alone.
+   * Never a public command flag or registry contract mode.
+   */
+  readonly exportAuthority?: readonly ExportAuthority[];
 }
 
 /** A sealed target: bytes are copied and their result digest is bound. */
@@ -160,6 +169,8 @@ export interface ValidatedApplyPlan {
     readonly preimage: TargetPreimage;
   };
   readonly ignoreFiles: readonly string[];
+  /** Registry-declared export cohorts carried from the original plan. */
+  readonly exportAuthority: readonly ExportAuthority[];
 }
 
 const OPERATIONS: readonly ChangeOperation[] = ["create", "update", "retire"];
@@ -184,6 +195,13 @@ const PLAN_KEYS: readonly string[] = [
   "targets",
   "lock",
   "ignoreFiles",
+  "exportAuthority",
+];
+const EXPORT_AUTHORITY_KEYS: readonly string[] = ["path", "declarations"];
+const EXPORT_AUTHORITY_DECLARATION_KEYS: readonly string[] = [
+  "name",
+  "target",
+  "kind",
 ];
 const TARGET_KEYS: readonly string[] = [
   "path",
@@ -231,6 +249,7 @@ export function validateApplyPlan(
     return fail([issue("PLAN_INCOMPLETE", "plan must be an object", "plan")]);
   }
   unknownKeys(input, PLAN_KEYS, "PLAN_UNKNOWN_FIELD", "plan", problems);
+  const exportAuthority: ExportAuthority[] = [];
   const requiredStrings: readonly (keyof ApplyPlanInput)[] = [
     "root",
     "stateDir",
@@ -328,6 +347,135 @@ export function validateApplyPlan(
             ),
           );
         }
+      }
+    }
+  }
+  // The internal export-cohort authority, when carried, must be a strict array
+  // of safe barrel paths with strict declaration records. A malformed or
+  // duplicated record is a typed refusal before hashing, sealing or effects.
+  if (input.exportAuthority !== undefined) {
+    if (!Array.isArray(input.exportAuthority)) {
+      problems.push(
+        issue(
+          "PLAN_EXPORT_AUTHORITY_INVALID",
+          "plan.exportAuthority must be an array",
+          "exportAuthority",
+        ),
+      );
+    } else {
+      const seenAuthority = new Set<string>();
+      for (const [index, entry] of input.exportAuthority.entries()) {
+        const label = `plan.exportAuthority[${index}]`;
+        if (!isPlainObject(entry)) {
+          problems.push(
+            issue(
+              "PLAN_EXPORT_AUTHORITY_INVALID",
+              `${label} must be an object`,
+              label,
+            ),
+          );
+          continue;
+        }
+        unknownKeys(
+          entry,
+          EXPORT_AUTHORITY_KEYS,
+          "PLAN_EXPORT_AUTHORITY_INVALID",
+          label,
+          problems,
+        );
+        if (!isSafeLogicalRelativePath(entry["path"])) {
+          problems.push(
+            issue(
+              "PLAN_EXPORT_AUTHORITY_INVALID",
+              `${label}.path must be a safe logical relative path`,
+              label,
+            ),
+          );
+          continue;
+        }
+        const folded = entry["path"].toLowerCase();
+        if (seenAuthority.has(folded)) {
+          problems.push(
+            issue(
+              "PLAN_EXPORT_AUTHORITY_DUPLICATE",
+              `${label} duplicates export authority for ${entry["path"]}`,
+              label,
+            ),
+          );
+          continue;
+        }
+        seenAuthority.add(folded);
+        const rawDeclarations = entry["declarations"];
+        if (!Array.isArray(rawDeclarations)) {
+          problems.push(
+            issue(
+              "PLAN_EXPORT_AUTHORITY_INVALID",
+              `${label}.declarations must be an array`,
+              label,
+            ),
+          );
+          continue;
+        }
+        const declarations: {
+          name: string;
+          target: string;
+          kind: "value" | "type";
+        }[] = [];
+        for (const [declIndex, declaration] of rawDeclarations.entries()) {
+          const declLabel = `${label}.declarations[${declIndex}]`;
+          if (!isPlainObject(declaration)) {
+            problems.push(
+              issue(
+                "PLAN_EXPORT_AUTHORITY_INVALID",
+                `${declLabel} must be an object`,
+                declLabel,
+              ),
+            );
+            continue;
+          }
+          unknownKeys(
+            declaration,
+            EXPORT_AUTHORITY_DECLARATION_KEYS,
+            "PLAN_EXPORT_AUTHORITY_INVALID",
+            declLabel,
+            problems,
+          );
+          const name = declaration["name"];
+          const target = declaration["target"];
+          const kind = declaration["kind"];
+          if (typeof name !== "string" || name.length === 0) {
+            problems.push(
+              issue(
+                "PLAN_EXPORT_AUTHORITY_INVALID",
+                `${declLabel}.name must be a non-empty string`,
+                declLabel,
+              ),
+            );
+            continue;
+          }
+          if (typeof target !== "string" || target.length === 0) {
+            problems.push(
+              issue(
+                "PLAN_EXPORT_AUTHORITY_INVALID",
+                `${declLabel}.target must be a non-empty string`,
+                declLabel,
+              ),
+            );
+            continue;
+          }
+          if (kind !== "value" && kind !== "type") {
+            problems.push(
+              issue(
+                "PLAN_EXPORT_AUTHORITY_INVALID",
+                `${declLabel}.kind must be value or type`,
+                declLabel,
+              ),
+            );
+            continue;
+          }
+          declarations.push({ name, target, kind });
+        }
+        exportAuthority.push({ path: entry["path"], declarations });
       }
     }
   }
@@ -709,6 +857,7 @@ export function validateApplyPlan(
         kind: file.kind,
       })),
       content,
+      exportAuthority,
     };
     const projected = resolveProjectedConfig(projectedBatch);
     if (projected.issues.length > 0) problems.push(...projected.issues);
@@ -790,6 +939,18 @@ export function validateApplyPlan(
       ),
     }),
     targets: Object.freeze(sealedTargets),
+    exportAuthority: Object.freeze(
+      (plan.exportAuthority ?? []).map((entry) =>
+        Object.freeze({
+          path: entry.path,
+          declarations: Object.freeze(
+            entry.declarations.map((declaration) =>
+              Object.freeze({ ...declaration }),
+            ),
+          ),
+        }),
+      ),
+    ),
     lock: Object.freeze({
       bytes: new Uint8Array(lockView.bytes),
       digest: sha256Hex(lockView.bytes),
@@ -827,6 +988,7 @@ export function derivePlanDigest(input: {
   };
   readonly readset: PlanReadset;
   readonly ignoreFiles?: readonly string[];
+  readonly exportAuthority?: readonly ExportAuthority[];
 }): string {
   return canonicalContentHash({
     root: input.root,
@@ -838,6 +1000,14 @@ export function derivePlanDigest(input: {
     ignoreFiles: [...(input.ignoreFiles ?? [])].map((entry) =>
       entry.toLowerCase(),
     ),
+    exportAuthority: (input.exportAuthority ?? []).map((entry) => ({
+      path: entry.path,
+      declarations: entry.declarations.map((declaration) => ({
+        name: declaration.name,
+        target: declaration.target,
+        kind: declaration.kind,
+      })),
+    })),
     targets: input.targets.map((target) => ({
       path: target.path,
       operation: target.operation,

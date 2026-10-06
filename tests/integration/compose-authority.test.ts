@@ -102,7 +102,7 @@ test("a post-planning layout edit is refused rather than blessed as a preimage",
       }),
     );
     const original =
-      "<script>let original = 1;</script>\n{@render children()}\n";
+      "<script>let { children } = $props();\nlet original = 1;</script>\n{@render children()}\n";
     write(root, DEFAULT_KIT_CONFIG.layoutFile, original);
 
     const { snapshot, writes } = planRealInit(root, original);
@@ -150,7 +150,7 @@ test("a post-planning manifest dependency change is refused from captured enviro
     };
     write(root, "package.json", JSON.stringify(manifest));
     const original =
-      "<script>let original = 1;</script>\n{@render children()}\n";
+      "<script>let { children } = $props();\nlet original = 1;</script>\n{@render children()}\n";
     write(root, DEFAULT_KIT_CONFIG.layoutFile, original);
 
     const { snapshot, writes } = planRealInit(root, original);
@@ -248,7 +248,7 @@ test("a guarded init plans and applies the managed ignore entry", () => {
     writeInstalledDependencies(root);
     write(root, ".gitignore", "node_modules/\n# keep me\n");
     const original =
-      "<script>let original = 1;</script>\n{@render children()}\n";
+      "<script>let { children } = $props();\nlet original = 1;</script>\n{@render children()}\n";
     write(root, DEFAULT_KIT_CONFIG.layoutFile, original);
 
     const { snapshot, writes } = planRealInit(root, original);
@@ -285,7 +285,7 @@ test("a post-planning installed-package metadata change is refused", () => {
   try {
     writeInstalledDependencies(root);
     const original =
-      "<script>let original = 1;</script>\n{@render children()}\n";
+      "<script>let { children } = $props();\nlet original = 1;</script>\n{@render children()}\n";
     write(root, DEFAULT_KIT_CONFIG.layoutFile, original);
 
     const { snapshot, writes } = planRealInit(root, original);
