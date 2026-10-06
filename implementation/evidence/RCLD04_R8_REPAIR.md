@@ -3,7 +3,7 @@
 This report covers the Pi implementation for the independent return review at
 `d54f7d45f2c20288d0f22be289c6a4a8f913e89d`. It is repository-relative evidence;
 raw runtime logs, exits and checksum inventories stay under the ignored
-`implementation/evidence/logs/candidate3/` tree. S064–S077 remain
+`implementation/evidence/logs/candidate4/` tree. S064–S077 remain
 `committed_pending_review`; independent Codex S077 acceptance still gates S078.
 
 ## Ordered green commits
@@ -13,6 +13,7 @@ raw runtime logs, exits and checksum inventories stay under the ignored
 | 1     | `b0c4047` | AST layout import/rendering authority and registry-declared export-cohort authority; d54f7d4 probes |
 | 2     | `684a59e` | Same semantic probes qualified on the default and custom mappings                                   |
 | 3     | `88415e5` | Unchanged (no-write) export barrels bound to their recorded baseline                                |
+| 4     | `42ff6a7` | Real-consumer check/build/render control for the aliased layout and app-owned export                |
 
 ## Finding 1 — rendering proof was a whole-text regex
 
@@ -102,6 +103,14 @@ proof.
 
 ## Full production lifecycle qualification
 
+A real resulting-consumer control in `tests/integration/planned-consumer.test.ts`
+installs the planned default consumer, rewrites its layout to the destructuring
+`children: content` form, appends an application-owned export outside the
+managed barrel region, then runs the real `svelte-check`, production `vite
+build` and served Node-adapter SSR render; the page child renders. The existing
+suppressed-child control at the same boundary remains the intended-cause
+counterpart.
+
 The semantic probes ran through the production
 `planInit`/`planAdd` → `composeApplyPlan` → `validateApplyPlan` → `applyPlan`
 core for the default mapping and the independently rooted custom mapping
@@ -111,10 +120,10 @@ with a real manifest, template and `Button` value export.
 
 ## Cumulative qualification
 
-The full candidate ran on `88415e5` (Node 24.21.0, pnpm 11.22.0, macOS arm64,
+The full candidate ran on `42ff6a7` (Node 24.21.0, pnpm 11.22.0, macOS arm64,
 TypeScript 6.0.3). Each lane is routed through the extbuild router and its
 underlying exit is captured before any echo, pipeline or tail in
-`implementation/evidence/logs/candidate3/summary.tsv`.
+`implementation/evidence/logs/candidate4/summary.tsv`.
 
 | Lane                 | Command                                                                     | Exit | Count                                             |
 | -------------------- | --------------------------------------------------------------------------- | ---- | ------------------------------------------------- |
@@ -124,7 +133,7 @@ underlying exit is captured before any echo, pipeline or tail in
 | format               | `pnpm run format:check`                                                     | 0    | —                                                 |
 | lint                 | `pnpm run lint`                                                             | 0    | —                                                 |
 | unit                 | `pnpm run test:unit`                                                        | 0    | 286                                               |
-| integration          | `pnpm run test:integration`                                                 | 0    | 530                                               |
+| integration          | `pnpm run test:integration`                                                 | 0    | 531                                               |
 | registry             | `pnpm run test:registry`                                                    | 0    | 38                                                |
 | cli-bootstrap        | `pnpm run test:cli-bootstrap`                                               | 0    | 52                                                |
 | harness              | `pnpm run test:harness`                                                     | 0    | 37                                                |
