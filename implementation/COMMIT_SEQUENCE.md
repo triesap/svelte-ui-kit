@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: independent return review at `6f2d877` preserves real AST import/render parsing, aliased children, post-composition export checks and consumer controls, but independent export/cohort provenance, full source binding and reachable scoped child proof remain incomplete. Current dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-06.
+Status: independent return review at `6f2d877` preserves real AST import/render parsing, aliased children, post-composition export checks and consumer controls, but independent export/cohort provenance, full source binding and reachable scoped child proof remain incomplete. Current dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-06. R9 repairs at `cecdab9` implement the four `6f2d877` findings (independent registry-declared export authority, full owner/source binding, reachable scoped child rendering and customized-region preservation); all four remain pending independent review.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,7 +17,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **RCLD-04 complete projected content and protocol qualification** (current return review at `6f2d877` requests changes; S064–S077 remain committed_pending_review and S078 stays gated).
+- Active implementation checkpoint: **RCLD-04 complete projected content and protocol qualification** (current return review at `6f2d877` requested four changes; R9 repairs at `cecdab9` are implemented and self-verified, and S064–S077 remain committed_pending_review with S078 gated).
 - Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
@@ -124,6 +124,20 @@ every green slice; no intermediate management stop or commit cap. Return at the
 complete candidate for mandatory independent Codex S077 acceptance before S078,
 or a genuine user/runtime/external stop after other eligible work. Original203
 definitions, ledger counts, dependencies and accepted anchors stay unchanged.
+
+##### R9 repairs — `cecdab9` (pending independent review)
+
+All four `6f2d877` findings are implemented in `cecdab9` and self-verified: the
+planner resolves independent registry-declared export authority (owner, source
+binding, public name, runtime target, value/type role) that composition consumes
+for every managed `exports-v1` integration regardless of a barrel write; an
+emptied or rebound barrel is refused; reachable, scope-aware child rendering is
+required; and a customized-but-equivalent managed region is preserved by
+relationship rather than canonical-baseline byte equality. Causal controls live
+in `tests/integration/review17-authority.test.ts`, `tests/integration/semantic-authority.test.ts`
+and `tests/unit/svelte-layout-parse.test.ts`; full lane evidence is in
+`implementation/evidence/RCLD04_R9_REPAIR.md`. No checkpoint, R2 group or
+RCLD-04 acceptance is claimed; S064–S077 remain `committed_pending_review`.
 
 #### Independent return review — d54f7d4
 

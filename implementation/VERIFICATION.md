@@ -9,6 +9,14 @@ output or blanket baseline byte equality. Preserve specified customizations and
 genuine frozen-policy conflicts. Verify default/custom lifecycle, exact trees and
 real consumer check/build/render, then complete original protocol/process criteria
 and cumulative evidence. Independent S077 acceptance before S078 stays mandatory.
+R9 repairs at `cecdab9` carry independent registry-declared export authority
+(owner, source binding, public name, runtime target and value/type role) through
+planning, composition, validation, sealing and live revalidation, refuse an
+emptied or rebound barrel and require reachable scope-aware child rendering while
+preserving customized-but-equivalent managed regions. The full lane evidence is
+retained in the ignored `implementation/evidence/logs/review17-20261006/` tree
+and summarized in `implementation/evidence/RCLD04_R9_REPAIR.md`; these repairs
+remain pending independent review.
 
 <!-- Adopted at S002 from the governing RCLD sequence. This file governs product intent; implementation/COMMIT_SEQUENCE.md remains the execution/status authority. -->
 
