@@ -108,6 +108,17 @@ all green slices; no intermediate Q3/Q4 management stop or commit cap. Stop befo
 S078 for mandatory independent Codex S077 acceptance, or a genuine runtime/user/
 external stop after other eligible work. All original definitions and gates remain.
 
+Implementation update (Pi, 2026-10-05): the five reproduced requirements were
+implemented and qualified in `9780c1b` (captured content authority through
+projected-batch validation, malformed-target refusal before projection),
+`18fd894` (bounded owned recovery child with a controlled stalled-child
+regression) and `9517afc` (lifecycle config/requested authority plus a positive
+customized-foundation control), with the disposition, per-criterion causal links
+and cumulative lanes recorded in
+`implementation/evidence/RCLD04_R2_AUTHORITY_REPORT.md`. S064–S077 remain
+`committed_pending_review`; the candidate is returned for independent Codex S077
+review before S078. Counts and original definitions are unchanged.
+
 #### Independent return review — a0016eb
 
 Codex reviewed clean candidate `a0016ebd0a58c9895b0516e48c7f2ee7ebbd5aaf`
