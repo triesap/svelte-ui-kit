@@ -3,7 +3,7 @@
 Author: Codex. Candidate; independent S115 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S108","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S108","kind":"report","commit":"182fddf63e6b5d40abfd7315bb0b8bdeb34e8d14","disposition":"candidate"}
 -->
 
 Content forwards the exact public pinned Props to the actual Bits part, explicitly

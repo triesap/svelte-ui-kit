@@ -52,6 +52,14 @@ the actual distinct primitive in the next sequence; no role-based emulation.
 Pure authored CSS does not promise zero primitive inline styles; S113/S114 and
 later CSP/platform checks qualify the actual behavior and limitations.
 
+Actual optional Description removal exposes a pinned stale native description
+ID. Content keeps a lifecycle-local physical relation guard: use only IDs already
+supplied by the primitive, expose references only while real nodes exist, retain
+native intent while absent and restore it when they return. Native ID changes
+remain authoritative. The observer belongs to the actual bound Content ref and
+disconnects on ref replacement/teardown. It creates no IDs, context or focus/state
+machinery and accesses browser facilities only inside the lifecycle effect.
+
 All eight sources, types, managed compound exports and one dialog style block
 form a single dialog compatibility cohort. Candidate assets remain unregistered
 until S111: view/add must not install a partially authored family. S106–S109

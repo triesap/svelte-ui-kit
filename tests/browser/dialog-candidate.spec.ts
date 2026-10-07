@@ -104,6 +104,171 @@ test.describe("actual unregistered Dialog S106 composition", () => {
   });
 });
 
+test.describe("actual unregistered Dialog S109 labeling composition", () => {
+  let consumer: ReturnType<typeof buildDialogCandidate>;
+  let hosted: FixtureServer;
+  test.beforeAll(async () => {
+    test.setTimeout(240000);
+    consumer = buildDialogCandidate("labeling");
+    try {
+      hosted = await startFixtureServer({ handler: consumer.handler });
+    } catch (error) {
+      consumer.cleanup();
+      throw error;
+    }
+  });
+  test.afterAll(async () => {
+    try {
+      if (hosted) {
+        await hosted.server.stop();
+        expect(hosted.server.failure()).toBeNull();
+      }
+    } finally {
+      consumer?.cleanup();
+    }
+  });
+  test.beforeEach(async ({ page }, info) => {
+    const file = info.outputPath("candidate-artifact.json");
+    writeFileSync(file, JSON.stringify(consumer.evidence, null, 2));
+    await info.attach("candidate-artifact", {
+      path: file,
+      contentType: "application/json",
+    });
+    await page.goto(new URL(consumer.route, hosted.baseURL).href);
+    await expect(page.locator('[data-ready="true"]')).toBeVisible();
+  });
+  test("actual default title and description name the native dialog and bind real refs", async ({
+    page,
+  }) => {
+    const dialog = page.getByRole("dialog", {
+      name: "Candidate accessible title",
+      exact: true,
+    });
+    await expect(dialog).toHaveAttribute("aria-labelledby", "candidate-title");
+    await expect(dialog).toHaveAttribute(
+      "aria-describedby",
+      "candidate-description",
+    );
+    await expect(page.locator("#candidate-title")).toHaveAttribute(
+      "role",
+      "heading",
+    );
+    await expect(page.locator("#candidate-title")).toHaveAttribute(
+      "aria-level",
+      "2",
+    );
+    await expect(page.locator("#candidate-title")).toHaveClass(
+      "kit-dialog-title caller-title",
+    );
+    await expect(page.locator("#candidate-description")).toHaveClass(
+      "kit-dialog-description caller-description",
+    );
+    await expect(page.locator("#refs")).toHaveText(
+      "DIV/DIV/BUTTON/H3/P/BUTTON",
+    );
+  });
+  test("absent and removed optional descriptions never leave an invalid native aria reference", async ({
+    page,
+  }) => {
+    await expect(
+      page.getByRole("dialog", {
+        name: "Title without description",
+        exact: true,
+      }),
+    ).not.toHaveAttribute("aria-describedby", /.+/);
+    await page.locator("#toggle-description").click();
+    await expect(page.locator("#candidate-description")).toHaveCount(0);
+    await expect(page.locator("#default-content")).not.toHaveAttribute(
+      "aria-describedby",
+      /.+/,
+    );
+    await page.locator("#toggle-description").click();
+    await expect(page.locator("#default-content")).toHaveAttribute(
+      "aria-describedby",
+      "candidate-description",
+    );
+    await expect(page.locator("#refs")).toHaveText(
+      "DIV/DIV/BUTTON/H3/P/BUTTON",
+    );
+  });
+  test("native description ID changes stay authoritative through removal and restoration", async ({
+    page,
+  }) => {
+    await page.locator("#rename-description").click();
+    await expect(page.locator("#renamed-description")).toHaveText(
+      "Candidate description text",
+    );
+    await expect(page.locator("#default-content")).toHaveAttribute(
+      "aria-describedby",
+      "renamed-description",
+    );
+    await page.locator("#toggle-description").click();
+    await expect(page.locator("#default-content")).not.toHaveAttribute(
+      "aria-describedby",
+      /.+/,
+    );
+    await page.locator("#toggle-description").click();
+    await expect(page.locator("#default-content")).toHaveAttribute(
+      "aria-describedby",
+      "renamed-description",
+    );
+    await expect(page.locator("#optional-content")).not.toHaveAttribute(
+      "aria-describedby",
+      /.+/,
+    );
+  });
+  test("actual Close native ref classes attributes and caller cancellation preserve primitive dismissal", async ({
+    page,
+  }) => {
+    const close = page.locator("#candidate-close");
+    await expect(close).toHaveAttribute("type", "button");
+    await expect(close).toHaveAttribute("data-caller", "preserved");
+    await expect(close).toHaveClass("kit-dialog-close caller-close");
+    await page.locator("#cancel-close").click();
+    await close.click();
+    await expect(page.locator("#close-count")).toHaveText(
+      "Clicks 1; open true",
+    );
+    await page.locator("#cancel-close").click();
+    await close.press("Enter");
+    await expect(page.locator("#default-content")).toHaveCount(0);
+    await expect(page.locator("#close-count")).toHaveText(
+      "Clicks 1; open false",
+    );
+  });
+  test("delegated title description and close retain actual semantics ids events and refs", async ({
+    page,
+  }) => {
+    await page.locator("#open-delegated").click();
+    const dialog = page.getByRole("dialog", {
+      name: "Delegated accessible title",
+      exact: true,
+    });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAttribute("aria-labelledby", "delegated-title");
+    await expect(dialog).toHaveAttribute(
+      "aria-describedby",
+      "delegated-description",
+    );
+    await expect(page.locator("#delegated-title")).toHaveAttribute(
+      "aria-level",
+      "3",
+    );
+    await expect(page.locator("#delegated-close")).toHaveAttribute(
+      "type",
+      "button",
+    );
+    await expect(page.locator("#delegated-close")).toHaveClass(
+      "kit-dialog-close delegated-close",
+    );
+    await page.locator("#delegated-close").click();
+    await expect(page.locator("#delegated-content")).toBeHidden();
+    await expect(page.locator("#refs")).toHaveText(
+      "DIV/DIV/BUTTON/H3/P/BUTTON",
+    );
+  });
+});
+
 test.describe("actual unregistered Dialog S108 Content composition", () => {
   let consumer: ReturnType<typeof buildDialogCandidate>;
   let hosted: FixtureServer;

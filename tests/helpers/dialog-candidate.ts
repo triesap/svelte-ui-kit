@@ -6,7 +6,8 @@ import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Compile actual unregistered parts with explicitly remaining raw primitives. */
 export function buildDialogCandidate(
-  stage: "root-trigger" | "portal-overlay" | "content" = "root-trigger",
+  stage:
+    "root-trigger" | "portal-overlay" | "content" | "labeling" = "root-trigger",
 ) {
   const fixture = copyConsumerFixture();
   try {
@@ -15,7 +16,12 @@ export function buildDialogCandidate(
       "trigger.svelte",
       "types.ts",
       ...(stage !== "root-trigger" ? ["portal.svelte", "overlay.svelte"] : []),
-      ...(stage === "content" ? ["content.svelte"] : []),
+      ...(stage === "content" || stage === "labeling"
+        ? ["content.svelte"]
+        : []),
+      ...(stage === "labeling"
+        ? ["title.svelte", "description.svelte", "close.svelte"]
+        : []),
     ];
     for (const file of files) {
       const target = path.join(fixture.root, "src/lib/candidate/dialog", file);
@@ -26,6 +32,7 @@ export function buildDialogCandidate(
       "root-trigger": "dialog-candidate",
       "portal-overlay": "dialog-portal",
       content: "dialog-content",
+      labeling: "dialog-labeling",
     }[stage];
     const route = `src/routes/${routeName}/+page.svelte`;
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
@@ -74,18 +81,18 @@ export function buildDialogCandidate(
           "root-trigger": "S106",
           "portal-overlay": "S107",
           content: "S108",
+          labeling: "S109",
         }[stage],
         authored: [
           "Root",
           "Trigger",
           ...(stage !== "root-trigger" ? ["Portal", "Overlay"] : []),
-          ...(stage === "content" ? ["Content"] : []),
+          ...(stage === "content" || stage === "labeling" ? ["Content"] : []),
+          ...(stage === "labeling" ? ["Title", "Description", "Close"] : []),
         ],
         raw: [
-          ...(stage === "content" ? [] : ["Content"]),
-          "Title",
-          "Description",
-          "Close",
+          ...(stage === "content" || stage === "labeling" ? [] : ["Content"]),
+          ...(stage === "labeling" ? [] : ["Title", "Description", "Close"]),
         ],
         unregistered: true,
         logs,
