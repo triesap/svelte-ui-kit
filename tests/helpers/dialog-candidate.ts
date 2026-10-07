@@ -7,19 +7,23 @@ import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 /** Compile actual unregistered parts with explicitly remaining raw primitives. */
 export function buildDialogCandidate(
   stage:
-    "root-trigger" | "portal-overlay" | "content" | "labeling" = "root-trigger",
+    | "root-trigger"
+    | "portal-overlay"
+    | "content"
+    | "labeling"
+    | "styles" = "root-trigger",
 ) {
   const fixture = copyConsumerFixture();
   try {
+    const contentStage = ["content", "labeling", "styles"].includes(stage);
+    const completeParts = ["labeling", "styles"].includes(stage);
     const files = [
       "root.svelte",
       "trigger.svelte",
       "types.ts",
       ...(stage !== "root-trigger" ? ["portal.svelte", "overlay.svelte"] : []),
-      ...(stage === "content" || stage === "labeling"
-        ? ["content.svelte"]
-        : []),
-      ...(stage === "labeling"
+      ...(contentStage ? ["content.svelte"] : []),
+      ...(completeParts
         ? ["title.svelte", "description.svelte", "close.svelte"]
         : []),
     ];
@@ -28,11 +32,22 @@ export function buildDialogCandidate(
       mkdirSync(path.dirname(target), { recursive: true });
       writeFileSync(target, readFileSync(`registry/ui/dialog/${file}`));
     }
+    const styles = stage === "styles" ? ["tokens", "dialog"] : [];
+    for (const style of styles) {
+      const target = path.join(
+        fixture.root,
+        "src/lib/candidate/styles",
+        `${style}.css`,
+      );
+      mkdirSync(path.dirname(target), { recursive: true });
+      writeFileSync(target, readFileSync(`registry/styles/${style}.css`));
+    }
     const routeName = {
       "root-trigger": "dialog-candidate",
       "portal-overlay": "dialog-portal",
       content: "dialog-content",
       labeling: "dialog-labeling",
+      styles: "dialog-styles",
     }[stage];
     const route = `src/routes/${routeName}/+page.svelte`;
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
@@ -69,6 +84,7 @@ export function buildDialogCandidate(
     inventory("build");
     const artifactFiles = [
       ...files.map((file) => `src/lib/candidate/dialog/${file}`),
+      ...styles.map((style) => `src/lib/candidate/styles/${style}.css`),
       route,
       ...productionFiles.sort(),
     ];
@@ -82,17 +98,18 @@ export function buildDialogCandidate(
           "portal-overlay": "S107",
           content: "S108",
           labeling: "S109",
+          styles: "S110",
         }[stage],
         authored: [
           "Root",
           "Trigger",
           ...(stage !== "root-trigger" ? ["Portal", "Overlay"] : []),
-          ...(stage === "content" || stage === "labeling" ? ["Content"] : []),
-          ...(stage === "labeling" ? ["Title", "Description", "Close"] : []),
+          ...(contentStage ? ["Content"] : []),
+          ...(completeParts ? ["Title", "Description", "Close"] : []),
         ],
         raw: [
-          ...(stage === "content" || stage === "labeling" ? [] : ["Content"]),
-          ...(stage === "labeling" ? [] : ["Title", "Description", "Close"]),
+          ...(contentStage ? [] : ["Content"]),
+          ...(completeParts ? [] : ["Title", "Description", "Close"]),
         ],
         unregistered: true,
         logs,

@@ -104,6 +104,176 @@ test.describe("actual unregistered Dialog S106 composition", () => {
   });
 });
 
+test.describe("actual unregistered Dialog S110 managed CSS", () => {
+  let consumer: ReturnType<typeof buildDialogCandidate>;
+  let hosted: FixtureServer;
+  test.beforeAll(async () => {
+    test.setTimeout(240000);
+    consumer = buildDialogCandidate("styles");
+    try {
+      hosted = await startFixtureServer({ handler: consumer.handler });
+    } catch (error) {
+      consumer.cleanup();
+      throw error;
+    }
+  });
+  test.afterAll(async () => {
+    try {
+      if (hosted) {
+        await hosted.server.stop();
+        expect(hosted.server.failure()).toBeNull();
+      }
+    } finally {
+      consumer?.cleanup();
+    }
+  });
+  test.beforeEach(async ({ page }, info) => {
+    const file = info.outputPath("candidate-artifact.json");
+    writeFileSync(file, JSON.stringify(consumer.evidence, null, 2));
+    await info.attach("candidate-artifact", {
+      path: file,
+      contentType: "application/json",
+    });
+    await page.goto(new URL(consumer.route, hosted.baseURL).href);
+    await expect(page.locator('[data-ready="true"]')).toBeVisible();
+    await page.locator("#style-trigger").press("Enter");
+    await expect(page.locator("#style-content")).toBeVisible();
+    await expect(page.locator("#style-content")).not.toHaveAttribute(
+      "data-starting-style",
+      "",
+    );
+    await expect
+      .poll(() =>
+        page
+          .locator("#style-content")
+          .evaluate(
+            (element) =>
+              element
+                .getAnimations()
+                .filter((animation) => animation.playState === "running")
+                .length,
+          ),
+      )
+      .toBe(0);
+  });
+  test("every design class resolves on actual parts with source defaults focus and disabled styling", async ({
+    page,
+  }) => {
+    for (const part of [
+      "trigger",
+      "overlay",
+      "content",
+      "title",
+      "description",
+      "close",
+    ])
+      await expect(page.locator(`#style-${part}`)).toHaveClass(
+        `kit-dialog-${part}`,
+      );
+    const style = await page.locator("#style-content").evaluate((element) => {
+      const s = getComputedStyle(element);
+      return {
+        width: s.width,
+        padding: s.padding,
+        gap: s.gap,
+        radius: s.borderRadius,
+        background: s.backgroundColor,
+        color: s.color,
+        position: s.position,
+      };
+    });
+    expect(style).toEqual({
+      width: "512px",
+      padding: "20px",
+      gap: "16px",
+      radius: "6px",
+      background: "rgb(255, 255, 255)",
+      color: "rgb(17, 24, 39)",
+      position: "fixed",
+    });
+    expect(
+      await page
+        .locator("#style-title")
+        .evaluate((element) => getComputedStyle(element).fontSize),
+    ).toBe("18px");
+    expect(
+      await page
+        .locator("#style-description")
+        .evaluate((element) => getComputedStyle(element).fontSize),
+    ).toBe("15px");
+    expect(
+      await page.locator("#disabled-close").evaluate((element) => ({
+        opacity: getComputedStyle(element).opacity,
+        cursor: getComputedStyle(element).cursor,
+      })),
+    ).toEqual({ opacity: "0.55", cursor: "not-allowed" });
+    await expect(page.locator("#style-close")).toBeFocused();
+    expect(
+      await page.locator("#style-close").evaluate((element) => ({
+        width: getComputedStyle(element).outlineWidth,
+        color: getComputedStyle(element).outlineColor,
+      })),
+    ).toEqual({ width: "2px", color: "rgb(37, 99, 235)" });
+    const overlay = await page.locator("#style-overlay").boundingBox();
+    expect(overlay).toEqual({ x: 0, y: 0, width: 1280, height: 720 });
+    expect(
+      await page
+        .locator("#style-overlay")
+        .evaluate((element) => getComputedStyle(element).backgroundColor),
+    ).toBe("rgba(0, 0, 0, 0)");
+  });
+  test("logical centered geometry, exact radius/custom hooks and reduced motion survive actual production CSS", async ({
+    page,
+  }) => {
+    const content = page.locator("#style-content");
+    await page.evaluate(() => {
+      document.documentElement.dir = "rtl";
+      document.documentElement.style.setProperty(
+        "--kit-dialog-radius",
+        "12px 18px / 20% 30%",
+      );
+      document.documentElement.style.setProperty(
+        "--kit-dialog-max-inline-size",
+        "440px",
+      );
+      document.documentElement.style.setProperty(
+        "--kit-dialog-title-font-size",
+        "21px",
+      );
+    });
+    const box = await content.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width).toBe(440);
+    expect(box!.x + box!.width / 2).toBeCloseTo(640, 1);
+    expect(box!.y + box!.height / 2).toBeCloseTo(360, 1);
+    const radii = await content.evaluate((element) => {
+      const s = getComputedStyle(element);
+      return [
+        s.borderTopLeftRadius,
+        s.borderTopRightRadius,
+        s.borderBottomRightRadius,
+        s.borderBottomLeftRadius,
+      ];
+    });
+    expect(radii).toEqual(["12px 20%", "18px 30%", "12px 20%", "18px 30%"]);
+    expect(
+      await page
+        .locator("#style-title")
+        .evaluate((element) => getComputedStyle(element).fontSize),
+    ).toBe("21px");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    for (const part of ["content", "overlay"])
+      expect(
+        await page
+          .locator(`#style-${part}`)
+          .evaluate((element) => getComputedStyle(element).transitionDuration),
+      ).toBe("0s");
+    await page.locator("#style-close").click();
+    await expect(content).toHaveCount(0);
+    await expect(page.locator("#style-overlay")).toHaveCount(0);
+  });
+});
+
 test.describe("actual unregistered Dialog S109 labeling composition", () => {
   let consumer: ReturnType<typeof buildDialogCandidate>;
   let hosted: FixtureServer;

@@ -30,6 +30,7 @@ const mappedRows = mapping
 for (const [family, count] of [
   ["button", 20],
   ["switch", 7],
+  ["dialog", 45],
 ] as const)
   test(`all ${count} ${family} hooks match actual stylesheet declarations and documented source fallbacks`, () => {
     const properties = customization.properties.filter(

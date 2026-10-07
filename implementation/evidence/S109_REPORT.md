@@ -3,7 +3,7 @@
 Author: Codex. Candidate; independent S115 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S109","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S109","kind":"report","commit":"11705ea18063e6b5b6208697af6c1df06109a2c1","disposition":"candidate"}
 -->
 
 Title, Description and Close bind exact pinned refs and preserve classes, native

@@ -17,12 +17,12 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S109 — Author Dialog title, description, and close parts**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
+- Active implementation checkpoint: **S110 — Map Dialog managed CSS to the actual compound DOM**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **91 / 203**. Remaining: **112 / 203**.
-- Committed pending review: **17 / 203**. Authored batch range: **S092–S108**.
+- Committed pending review: **18 / 203**. Authored batch range: **S092–S109**.
 - Completed RCLD sequences: **5 / 11**. Remaining: **6 / 11**.
-- Last safe target commit: `182fddf63e6b5d40abfd7315bb0b8bdeb34e8d14`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `11705ea18063e6b5b6208697af6c1df06109a2c1`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -160,6 +160,18 @@ Shared output adapters keep transient transaction identifiers out of semantic
 results and distinguish planned/applied/committed-with-cleanup outcomes.
 
 #### S105 exact compound API and advertisement decision
+
+S110 actual markup/CSS decision: the source stylesheet defines Trigger, Close,
+Content, Title and Description, with no painted Overlay counterpart. Adapt the
+approved explicit Overlay as a transparent full-viewport native part using the
+existing dialog stacking/motion hooks; add no palette/default semantic token or
+unapproved backdrop API. Preserve every source fallback and design declaration
+except Content centering: logical inset-inline0/margin-inline:auto and translateY
+keep the same centered geometry in both directions without the proven lossy
+:dir compiler path. Match actual native data-state/data-starting-style presence
+attributes, and disable transitions under reduced motion. Keep a portable source
+declaration inventory and actual DOM/computed-geometry evidence. Complete-family
+registration remains at S111, with independent S115 acceptance still required.
 
 S109 actual optional-description removal fails: pinned Bits retains its supplied
 description ID after the real node disappears (owning Chromium3pass/1fail).
@@ -6158,8 +6170,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S106 | RCLD-06  | S105       | committed_pending_review | `45eeeed775d5397329e5a5aff743c4d7b61e9173` |
 | S107 | RCLD-06  | S106       | committed_pending_review | `dcb754aa0e9302e08587dd3d88acae17c5c644c0` |
 | S108 | RCLD-06  | S107       | committed_pending_review | `182fddf63e6b5d40abfd7315bb0b8bdeb34e8d14` |
-| S109 | RCLD-06  | S108       | in_progress              | —                                          |
-| S110 | RCLD-06  | S109       | not_started              | —                                          |
+| S109 | RCLD-06  | S108       | committed_pending_review | `11705ea18063e6b5b6208697af6c1df06109a2c1` |
+| S110 | RCLD-06  | S109       | in_progress              | —                                          |
 | S111 | RCLD-06  | S110       | not_started              | —                                          |
 | S112 | RCLD-06  | S111       | not_started              | —                                          |
 | S113 | RCLD-06  | S112       | not_started              | —                                          |

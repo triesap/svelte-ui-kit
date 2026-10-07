@@ -1,0 +1,311 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "url": "https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/styles/dialog.css",
+    "sha256": "f26d4e981de3c42bf232283df79a51dcc716a83f1ec6e635dc83e0b78a4d05b0"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-dialog-trigger", ".kit-dialog-close"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "inline-flex"
+        },
+        {
+          "property": "align-items",
+          "value": "center"
+        },
+        {
+          "property": "justify-content",
+          "value": "center"
+        },
+        {
+          "property": "border",
+          "value": "var(--kit-border-width) solid var(--kit-dialog-trigger-border-color, var(--kit-color-border))"
+        },
+        {
+          "property": "border-radius",
+          "value": "var( --kit-dialog-trigger-radius, var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md))) )"
+        },
+        {
+          "property": "min-height",
+          "value": "var(--kit-dialog-trigger-min-height, 2.5rem)"
+        },
+        {
+          "property": "padding",
+          "value": "var(--kit-dialog-trigger-padding-block, 0.5rem) var(--kit-dialog-trigger-padding-inline, 0.75rem)"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-dialog-trigger-background, transparent)"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-dialog-trigger-color, var(--kit-color-text))"
+        },
+        {
+          "property": "font",
+          "value": "inherit"
+        },
+        {
+          "property": "font-weight",
+          "value": "var(--kit-dialog-trigger-font-weight, 600)"
+        },
+        {
+          "property": "cursor",
+          "value": "pointer"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-close"],
+      "declarations": [
+        {
+          "property": "border-color",
+          "value": "var(--kit-dialog-close-border-color, var(--kit-color-border))"
+        },
+        {
+          "property": "border-radius",
+          "value": "var( --kit-dialog-close-radius, var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md))) )"
+        },
+        {
+          "property": "min-height",
+          "value": "var(--kit-dialog-close-min-height, 2.5rem)"
+        },
+        {
+          "property": "padding",
+          "value": "var(--kit-dialog-close-padding-block, 0.5rem) var(--kit-dialog-close-padding-inline, 0.75rem)"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-dialog-close-background, transparent)"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-dialog-close-color, var(--kit-color-text))"
+        },
+        {
+          "property": "font-weight",
+          "value": "var(--kit-dialog-close-font-weight, 600)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-trigger:hover:not(:disabled)"],
+      "declarations": [
+        {
+          "property": "background",
+          "value": "var(--kit-dialog-trigger-background-hover, var(--kit-color-surface-hover))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-close:hover:not(:disabled)"],
+      "declarations": [
+        {
+          "property": "background",
+          "value": "var(--kit-dialog-close-background-hover, var(--kit-color-surface-hover))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-trigger:focus-visible"],
+      "declarations": [
+        {
+          "property": "outline",
+          "value": "var(--kit-dialog-focus-outline-width, 2px) solid var( --kit-dialog-trigger-focus-ring, var(--kit-dialog-focus-ring, var(--kit-focus-ring)) )"
+        },
+        {
+          "property": "outline-offset",
+          "value": "var(--kit-dialog-focus-outline-offset, 2px)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-close:focus-visible"],
+      "declarations": [
+        {
+          "property": "outline",
+          "value": "var(--kit-dialog-focus-outline-width, 2px) solid var( --kit-dialog-close-focus-ring, var(--kit-dialog-focus-ring, var(--kit-focus-ring)) )"
+        },
+        {
+          "property": "outline-offset",
+          "value": "var(--kit-dialog-focus-outline-offset, 2px)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-content:focus-visible"],
+      "declarations": [
+        {
+          "property": "outline",
+          "value": "var(--kit-dialog-focus-outline-width, 2px) solid var(--kit-dialog-focus-ring, var(--kit-focus-ring))"
+        },
+        {
+          "property": "outline-offset",
+          "value": "var(--kit-dialog-focus-outline-offset, 2px)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-trigger:disabled"],
+      "declarations": [
+        {
+          "property": "cursor",
+          "value": "not-allowed"
+        },
+        {
+          "property": "opacity",
+          "value": "var(--kit-dialog-trigger-disabled-opacity, var(--kit-disabled-opacity))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-close:disabled"],
+      "declarations": [
+        {
+          "property": "cursor",
+          "value": "not-allowed"
+        },
+        {
+          "property": "opacity",
+          "value": "var(--kit-dialog-close-disabled-opacity, var(--kit-disabled-opacity))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-content"],
+      "declarations": [
+        {
+          "property": "position",
+          "value": "fixed"
+        },
+        {
+          "property": "inset-block-start",
+          "value": "50%"
+        },
+        {
+          "property": "inset-inline-start",
+          "value": "50%"
+        },
+        {
+          "property": "z-index",
+          "value": "var(--kit-dialog-z-index, 50)"
+        },
+        {
+          "property": "display",
+          "value": "grid"
+        },
+        {
+          "property": "gap",
+          "value": "var(--kit-dialog-gap, 1rem)"
+        },
+        {
+          "property": "box-sizing",
+          "value": "border-box"
+        },
+        {
+          "property": "inline-size",
+          "value": "var(--kit-dialog-max-inline-size, min(32rem, calc(100vw - 2rem)))"
+        },
+        {
+          "property": "max-block-size",
+          "value": "var(--kit-dialog-max-block-size, min(42rem, calc(100vh - 2rem)))"
+        },
+        {
+          "property": "overflow",
+          "value": "auto"
+        },
+        {
+          "property": "border",
+          "value": "var(--kit-dialog-border-width, var(--kit-border-width)) solid var(--kit-dialog-border-color, var(--kit-color-border))"
+        },
+        {
+          "property": "border-radius",
+          "value": "var( --kit-dialog-radius, var(--kit-radius-overlay, var(--kit-radius-default, var(--kit-radius-md))) )"
+        },
+        {
+          "property": "padding",
+          "value": "var(--kit-dialog-padding-block, 1.25rem) var(--kit-dialog-padding-inline, 1.25rem)"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-dialog-background, var(--kit-color-surface-raised))"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-dialog-color, var(--kit-color-text))"
+        },
+        {
+          "property": "box-shadow",
+          "value": "var(--kit-dialog-elevation, var(--kit-shadow-lg))"
+        },
+        {
+          "property": "transform",
+          "value": "translate(-50%, -50%)"
+        },
+        {
+          "property": "transition",
+          "value": "opacity var(--kit-dialog-transition-duration, var(--kit-duration-normal)) var(--kit-dialog-transition-timing, var(--kit-easing-standard)), transform var(--kit-dialog-transition-duration, var(--kit-duration-normal)) var(--kit-dialog-transition-timing, var(--kit-easing-standard))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-content[data-state=\"closed\"]"],
+      "declarations": [
+        {
+          "property": "opacity",
+          "value": "0"
+        },
+        {
+          "property": "transform",
+          "value": "translate(-50%, calc(-50% + 0.5rem)) scale(0.98)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-title", ".kit-dialog-description"],
+      "declarations": [
+        {
+          "property": "margin",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-title"],
+      "declarations": [
+        {
+          "property": "font-size",
+          "value": "var(--kit-dialog-title-font-size, 1.125rem)"
+        },
+        {
+          "property": "font-weight",
+          "value": "var(--kit-dialog-title-font-weight, 700)"
+        },
+        {
+          "property": "line-height",
+          "value": "var(--kit-dialog-title-line-height, 1.25)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-dialog-description"],
+      "declarations": [
+        {
+          "property": "color",
+          "value": "var(--kit-dialog-description-color, var(--kit-color-text-muted))"
+        },
+        {
+          "property": "font-size",
+          "value": "var(--kit-dialog-description-font-size, 0.9375rem)"
+        },
+        {
+          "property": "line-height",
+          "value": "var(--kit-dialog-description-line-height, 1.5)"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+/* svelte-ui-kit:start dialog */
+/* Derived design defaults: Copyright (c) 2026 Tyson Lupul.
+ * Distributed under the MIT option; see the package LICENSE-MIT notice.
+ */
+@layer svelte-ui-kit.components {
+  .kit-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--kit-dialog-z-index, 50);
+    opacity: 1;
+    transition: opacity
+      var(--kit-dialog-transition-duration, var(--kit-duration-normal))
+      var(--kit-dialog-transition-timing, var(--kit-easing-standard));
+  }
+  .kit-dialog-overlay[data-state="closed"],
+  .kit-dialog-overlay[data-starting-style] {
+    opacity: 0;
+  }
+
+  .kit-dialog-trigger,
+  .kit-dialog-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: var(--kit-border-width) solid
+      var(--kit-dialog-trigger-border-color, var(--kit-color-border));
+    border-radius: var(
+      --kit-dialog-trigger-radius,
+      var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))
+    );
+    min-height: var(--kit-dialog-trigger-min-height, 2.5rem);
+    padding: var(--kit-dialog-trigger-padding-block, 0.5rem)
+      var(--kit-dialog-trigger-padding-inline, 0.75rem);
+    background: var(--kit-dialog-trigger-background, transparent);
+    color: var(--kit-dialog-trigger-color, var(--kit-color-text));
+    font: inherit;
+    font-weight: var(--kit-dialog-trigger-font-weight, 600);
+    cursor: pointer;
+  }
+
+  .kit-dialog-close {
+    border-color: var(--kit-dialog-close-border-color, var(--kit-color-border));
+    border-radius: var(
+      --kit-dialog-close-radius,
+      var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))
+    );
+    min-height: var(--kit-dialog-close-min-height, 2.5rem);
+    padding: var(--kit-dialog-close-padding-block, 0.5rem)
+      var(--kit-dialog-close-padding-inline, 0.75rem);
+    background: var(--kit-dialog-close-background, transparent);
+    color: var(--kit-dialog-close-color, var(--kit-color-text));
+    font-weight: var(--kit-dialog-close-font-weight, 600);
+  }
+
+  .kit-dialog-trigger:hover:not(:disabled) {
+    background: var(
+      --kit-dialog-trigger-background-hover,
+      var(--kit-color-surface-hover)
+    );
+  }
+
+  .kit-dialog-close:hover:not(:disabled) {
+    background: var(
+      --kit-dialog-close-background-hover,
+      var(--kit-color-surface-hover)
+    );
+  }
+
+  .kit-dialog-trigger:focus-visible {
+    outline: var(--kit-dialog-focus-outline-width, 2px) solid
+      var(
+        --kit-dialog-trigger-focus-ring,
+        var(--kit-dialog-focus-ring, var(--kit-focus-ring))
+      );
+    outline-offset: var(--kit-dialog-focus-outline-offset, 2px);
+  }
+
+  .kit-dialog-close:focus-visible {
+    outline: var(--kit-dialog-focus-outline-width, 2px) solid
+      var(
+        --kit-dialog-close-focus-ring,
+        var(--kit-dialog-focus-ring, var(--kit-focus-ring))
+      );
+    outline-offset: var(--kit-dialog-focus-outline-offset, 2px);
+  }
+
+  .kit-dialog-content:focus-visible {
+    outline: var(--kit-dialog-focus-outline-width, 2px) solid
+      var(--kit-dialog-focus-ring, var(--kit-focus-ring));
+    outline-offset: var(--kit-dialog-focus-outline-offset, 2px);
+  }
+
+  .kit-dialog-trigger:disabled {
+    cursor: not-allowed;
+    opacity: var(
+      --kit-dialog-trigger-disabled-opacity,
+      var(--kit-disabled-opacity)
+    );
+  }
+
+  .kit-dialog-close:disabled {
+    cursor: not-allowed;
+    opacity: var(
+      --kit-dialog-close-disabled-opacity,
+      var(--kit-disabled-opacity)
+    );
+  }
+
+  .kit-dialog-content {
+    position: fixed;
+    inset-block-start: 50%;
+    inset-inline: 0;
+    margin-inline: auto;
+    z-index: var(--kit-dialog-z-index, 50);
+    display: grid;
+    gap: var(--kit-dialog-gap, 1rem);
+    box-sizing: border-box;
+    inline-size: var(
+      --kit-dialog-max-inline-size,
+      min(32rem, calc(100vw - 2rem))
+    );
+    max-block-size: var(
+      --kit-dialog-max-block-size,
+      min(42rem, calc(100vh - 2rem))
+    );
+    overflow: auto;
+    border: var(--kit-dialog-border-width, var(--kit-border-width)) solid
+      var(--kit-dialog-border-color, var(--kit-color-border));
+    border-radius: var(
+      --kit-dialog-radius,
+      var(--kit-radius-overlay, var(--kit-radius-default, var(--kit-radius-md)))
+    );
+    padding: var(--kit-dialog-padding-block, 1.25rem)
+      var(--kit-dialog-padding-inline, 1.25rem);
+    background: var(--kit-dialog-background, var(--kit-color-surface-raised));
+    color: var(--kit-dialog-color, var(--kit-color-text));
+    box-shadow: var(--kit-dialog-elevation, var(--kit-shadow-lg));
+    transform: translateY(-50%);
+    transition:
+      opacity var(--kit-dialog-transition-duration, var(--kit-duration-normal))
+        var(--kit-dialog-transition-timing, var(--kit-easing-standard)),
+      transform
+        var(--kit-dialog-transition-duration, var(--kit-duration-normal))
+        var(--kit-dialog-transition-timing, var(--kit-easing-standard));
+  }
+
+  .kit-dialog-content[data-state="closed"],
+  .kit-dialog-content[data-starting-style] {
+    opacity: 0;
+    transform: translateY(calc(-50% + 0.5rem)) scale(0.98);
+  }
+
+  .kit-dialog-title,
+  .kit-dialog-description {
+    margin: 0;
+  }
+
+  .kit-dialog-title {
+    font-size: var(--kit-dialog-title-font-size, 1.125rem);
+    font-weight: var(--kit-dialog-title-font-weight, 700);
+    line-height: var(--kit-dialog-title-line-height, 1.25);
+  }
+
+  .kit-dialog-description {
+    color: var(--kit-dialog-description-color, var(--kit-color-text-muted));
+    font-size: var(--kit-dialog-description-font-size, 0.9375rem);
+    line-height: var(--kit-dialog-description-line-height, 1.5);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .kit-dialog-overlay,
+    .kit-dialog-content {
+      transition: none;
+    }
+  }
+}
+/* svelte-ui-kit:end dialog */

@@ -4,6 +4,258 @@
   "description": "Independent inherited component CSS overrides, including exact geometry-critical radius overrides.",
   "properties": [
     {
+      "name": "--kit-dialog-z-index",
+      "scope": "dialog",
+      "grammar": "<integer>",
+      "fallback": "50"
+    },
+    {
+      "name": "--kit-dialog-trigger-padding-inline",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.75rem"
+    },
+    {
+      "name": "--kit-dialog-trigger-padding-block",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-dialog-trigger-min-height",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "2.5rem"
+    },
+    {
+      "name": "--kit-dialog-trigger-font-weight",
+      "scope": "dialog",
+      "grammar": "<number>",
+      "fallback": "600"
+    },
+    {
+      "name": "--kit-dialog-trigger-focus-ring",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-dialog-focus-ring, var(--kit-focus-ring))"
+    },
+    {
+      "name": "--kit-dialog-trigger-disabled-opacity",
+      "scope": "dialog",
+      "grammar": "<number>",
+      "fallback": "var(--kit-disabled-opacity)"
+    },
+    {
+      "name": "--kit-dialog-trigger-color",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-dialog-trigger-border-color",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-border)"
+    },
+    {
+      "name": "--kit-dialog-trigger-background-hover",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface-hover)"
+    },
+    {
+      "name": "--kit-dialog-trigger-background",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "transparent"
+    },
+    {
+      "name": "--kit-dialog-transition-timing",
+      "scope": "dialog",
+      "grammar": "<easing-function>",
+      "fallback": "var(--kit-easing-standard)"
+    },
+    {
+      "name": "--kit-dialog-transition-duration",
+      "scope": "dialog",
+      "grammar": "<time>",
+      "fallback": "var(--kit-duration-normal)"
+    },
+    {
+      "name": "--kit-dialog-title-line-height",
+      "scope": "dialog",
+      "grammar": "<number>",
+      "fallback": "1.25"
+    },
+    {
+      "name": "--kit-dialog-title-font-weight",
+      "scope": "dialog",
+      "grammar": "<number>",
+      "fallback": "700"
+    },
+    {
+      "name": "--kit-dialog-title-font-size",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "1.125rem"
+    },
+    {
+      "name": "--kit-dialog-padding-inline",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "1.25rem"
+    },
+    {
+      "name": "--kit-dialog-padding-block",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "1.25rem"
+    },
+    {
+      "name": "--kit-dialog-max-inline-size",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "min(32rem, calc(100vw - 2rem))"
+    },
+    {
+      "name": "--kit-dialog-max-block-size",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "min(42rem, calc(100vh - 2rem))"
+    },
+    {
+      "name": "--kit-dialog-gap",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "1rem"
+    },
+    {
+      "name": "--kit-dialog-focus-ring",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-focus-ring)"
+    },
+    {
+      "name": "--kit-dialog-focus-outline-width",
+      "scope": "dialog",
+      "grammar": "<length>",
+      "fallback": "2px"
+    },
+    {
+      "name": "--kit-dialog-focus-outline-offset",
+      "scope": "dialog",
+      "grammar": "<length>",
+      "fallback": "2px"
+    },
+    {
+      "name": "--kit-dialog-elevation",
+      "scope": "dialog",
+      "grammar": "<shadow>",
+      "fallback": "var(--kit-shadow-lg)"
+    },
+    {
+      "name": "--kit-dialog-description-line-height",
+      "scope": "dialog",
+      "grammar": "<number>",
+      "fallback": "1.5"
+    },
+    {
+      "name": "--kit-dialog-description-font-size",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.9375rem"
+    },
+    {
+      "name": "--kit-dialog-description-color",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text-muted)"
+    },
+    {
+      "name": "--kit-dialog-color",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-dialog-close-padding-inline",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.75rem"
+    },
+    {
+      "name": "--kit-dialog-close-padding-block",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-dialog-close-min-height",
+      "scope": "dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "2.5rem"
+    },
+    {
+      "name": "--kit-dialog-close-font-weight",
+      "scope": "dialog",
+      "grammar": "<number>",
+      "fallback": "600"
+    },
+    {
+      "name": "--kit-dialog-close-focus-ring",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-dialog-focus-ring, var(--kit-focus-ring))"
+    },
+    {
+      "name": "--kit-dialog-close-disabled-opacity",
+      "scope": "dialog",
+      "grammar": "<number>",
+      "fallback": "var(--kit-disabled-opacity)"
+    },
+    {
+      "name": "--kit-dialog-close-color",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-dialog-close-border-color",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-border)"
+    },
+    {
+      "name": "--kit-dialog-close-background-hover",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface-hover)"
+    },
+    {
+      "name": "--kit-dialog-close-background",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "transparent"
+    },
+    {
+      "name": "--kit-dialog-border-width",
+      "scope": "dialog",
+      "grammar": "<length>",
+      "fallback": "var(--kit-border-width)"
+    },
+    {
+      "name": "--kit-dialog-border-color",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-border)"
+    },
+    {
+      "name": "--kit-dialog-background",
+      "scope": "dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface-raised)"
+    },
+    {
       "name": "--kit-switch-track-background-unchecked",
       "scope": "switch",
       "grammar": "<color>",

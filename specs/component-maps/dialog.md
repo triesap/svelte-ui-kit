@@ -66,3 +66,68 @@ until S111: view/add must not install a partially authored family. S106–S109
 candidate fixtures use each completed wrapper with explicitly remaining raw Bits
 parts. Tokens and bits-ui are the required source/runtime dependencies; no
 Button/Spinner or styled runtime dependency is inferred merely for styling.
+
+## Actual managed CSS mapping
+
+The immutable source has no painted Overlay. The explicit Overlay is transparent
+and fills the viewport at the existing dialog stacking level. Application classes
+may style it; no new palette or backdrop prop is introduced. Native closed and
+starting-style attributes share the source exit appearance. Reduced motion removes
+Content/Overlay transitions. Logical inset-inline0/margin-inline:auto with translateY
+preserves centered Content geometry in both directions without a :dir selector.
+
+All source declarations remain except the documented centering transform/inset
+adaptation. The portable source CSS declaration inventory is retained in the
+candidate fixture. Title/Description/Trigger/Close rules target their actual owned
+classes; no global raw-Bits selector or Tailwind is used. Existing three radius
+hooks retain their complete grammar and source fallbacks. The following45 source
+hooks are carried by the portable v1 component contract; semantic defaults stay
+unchanged.
+
+| Property                              | Source fallback                                                              |
+| ------------------------------------- | ---------------------------------------------------------------------------- |
+| --kit-dialog-background               | `var(--kit-color-surface-raised)`                                            |
+| --kit-dialog-border-color             | `var(--kit-color-border)`                                                    |
+| --kit-dialog-border-width             | `var(--kit-border-width)`                                                    |
+| --kit-dialog-close-background         | `transparent`                                                                |
+| --kit-dialog-close-background-hover   | `var(--kit-color-surface-hover)`                                             |
+| --kit-dialog-close-border-color       | `var(--kit-color-border)`                                                    |
+| --kit-dialog-close-color              | `var(--kit-color-text)`                                                      |
+| --kit-dialog-close-disabled-opacity   | `var(--kit-disabled-opacity)`                                                |
+| --kit-dialog-close-focus-ring         | `var(--kit-dialog-focus-ring, var(--kit-focus-ring))`                        |
+| --kit-dialog-close-font-weight        | `600`                                                                        |
+| --kit-dialog-close-min-height         | `2.5rem`                                                                     |
+| --kit-dialog-close-padding-block      | `0.5rem`                                                                     |
+| --kit-dialog-close-padding-inline     | `0.75rem`                                                                    |
+| --kit-dialog-close-radius             | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))` |
+| --kit-dialog-color                    | `var(--kit-color-text)`                                                      |
+| --kit-dialog-description-color        | `var(--kit-color-text-muted)`                                                |
+| --kit-dialog-description-font-size    | `0.9375rem`                                                                  |
+| --kit-dialog-description-line-height  | `1.5`                                                                        |
+| --kit-dialog-elevation                | `var(--kit-shadow-lg)`                                                       |
+| --kit-dialog-focus-outline-offset     | `2px`                                                                        |
+| --kit-dialog-focus-outline-width      | `2px`                                                                        |
+| --kit-dialog-focus-ring               | `var(--kit-focus-ring)`                                                      |
+| --kit-dialog-gap                      | `1rem`                                                                       |
+| --kit-dialog-max-block-size           | `min(42rem, calc(100vh - 2rem))`                                             |
+| --kit-dialog-max-inline-size          | `min(32rem, calc(100vw - 2rem))`                                             |
+| --kit-dialog-padding-block            | `1.25rem`                                                                    |
+| --kit-dialog-padding-inline           | `1.25rem`                                                                    |
+| --kit-dialog-radius                   | `var(--kit-radius-overlay, var(--kit-radius-default, var(--kit-radius-md)))` |
+| --kit-dialog-title-font-size          | `1.125rem`                                                                   |
+| --kit-dialog-title-font-weight        | `700`                                                                        |
+| --kit-dialog-title-line-height        | `1.25`                                                                       |
+| --kit-dialog-transition-duration      | `var(--kit-duration-normal)`                                                 |
+| --kit-dialog-transition-timing        | `var(--kit-easing-standard)`                                                 |
+| --kit-dialog-trigger-background       | `transparent`                                                                |
+| --kit-dialog-trigger-background-hover | `var(--kit-color-surface-hover)`                                             |
+| --kit-dialog-trigger-border-color     | `var(--kit-color-border)`                                                    |
+| --kit-dialog-trigger-color            | `var(--kit-color-text)`                                                      |
+| --kit-dialog-trigger-disabled-opacity | `var(--kit-disabled-opacity)`                                                |
+| --kit-dialog-trigger-focus-ring       | `var(--kit-dialog-focus-ring, var(--kit-focus-ring))`                        |
+| --kit-dialog-trigger-font-weight      | `600`                                                                        |
+| --kit-dialog-trigger-min-height       | `2.5rem`                                                                     |
+| --kit-dialog-trigger-padding-block    | `0.5rem`                                                                     |
+| --kit-dialog-trigger-padding-inline   | `0.75rem`                                                                    |
+| --kit-dialog-trigger-radius           | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))` |
+| --kit-dialog-z-index                  | `50`                                                                         |
