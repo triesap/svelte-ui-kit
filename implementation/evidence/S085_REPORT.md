@@ -4,7 +4,7 @@ Author: Codex. Implemented and locally verified; independent RCLD-05 acceptance
 remains pending. Original S085/R19 criteria and ownership rules are unchanged.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S085","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S085","kind":"report","commit":"635fa54ef0ed4cd500a8fc1a838e701fe9a3a180","disposition":"candidate"}
 -->
 
 Doctor parses owned Svelte/TypeScript source and standalone CSS with the pinned

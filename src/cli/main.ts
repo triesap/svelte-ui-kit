@@ -17,7 +17,7 @@ import { runCli } from "./run.js";
  * `./args.js` and `./run.js` modules, which perform no I/O; the adapter does
  * not duplicate their dispatch.
  *
- * This entrypoint injects read-only info alongside help/version. It performs
+ * This entrypoint lazily loads the approved command handlers. It performs
  * no network access or package installation, and it
  * exposes no consumer import surface. Product commands are added by later
  * checkpoints (S022–S023 freeze the command envelope).
@@ -243,4 +243,27 @@ async function main(argv: readonly string[]): Promise<void> {
   );
 }
 
-await main(process.argv.slice(2));
+try {
+  await main(process.argv.slice(2));
+} catch {
+  const intent = classifyArgvIntent(process.argv.slice(2));
+  const output = renderCommandOutput(
+    createEnvelope({
+      command: intent.command,
+      status: "error",
+      diagnostics: [
+        {
+          code: "CLI_EXECUTION_FAILED",
+          level: "error",
+          message: "The command could not load or complete.",
+          guidance:
+            "Verify this CLI installation and project permissions before retrying.",
+        },
+      ],
+    }),
+    intent.json,
+  );
+  if (output.stdout !== "") process.stdout.write(output.stdout);
+  if (output.stderr !== "") process.stderr.write(output.stderr);
+  process.exitCode = output.exitCode;
+}

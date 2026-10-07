@@ -23,7 +23,9 @@ export function commandFailure(
     (entry) =>
       entry.code.startsWith("REGISTRY_") ||
       entry.code.startsWith("ASSET_") ||
-      entry.code.startsWith("SCHEMA_") ||
+      (entry.code.startsWith("SCHEMA_") &&
+        (entry.locator?.startsWith("registry/") ||
+          entry.locator?.startsWith("schema/"))) ||
       entry.code.startsWith("RESOLVE_"),
   );
   return {
@@ -71,6 +73,33 @@ export function executeItemPlan(
         "Inspect incoming source with view and reconcile the reported conflict before retrying.",
     })),
   ];
+  const paths = deriveKitPaths(plan.effectiveConfig);
+  const candidateUnsafe = new Set([
+    ...plan.sourcePlan.conflicts.map((entry) => entry.path),
+    paths.rootExports,
+    paths.kitCss,
+    plan.effectiveConfig.layoutFile,
+    paths.stateDir + "/kit.json",
+  ]);
+  const unsafeIssues = [...candidateUnsafe]
+    .filter((logical) => {
+      const kind = context.snapshot.entries.get(logical)?.kind;
+      return kind !== undefined && kind !== "file" && kind !== "absent";
+    })
+    .map((logical) =>
+      issue(
+        "COMMAND_TARGET_UNSAFE",
+        "A selected generated target is not a regular contained file; no batch changes were applied.",
+        logical,
+      ),
+    );
+  if (unsafeIssues.length > 0) {
+    const failure = commandFailure(command, unsafeIssues);
+    return {
+      ...failure,
+      envelope: createEnvelope({ ...failure.envelope, data }),
+    };
+  }
   if (!plan.executable)
     return {
       envelope: createEnvelope({
