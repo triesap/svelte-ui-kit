@@ -1,8 +1,9 @@
 #!/usr/bin/env node
+import { fileURLToPath } from "node:url";
 import { renderCommandOutput } from "./output.js";
 import { readFileSync } from "node:fs";
 
-import { classifyArgvIntent, type ArgvIntent } from "./args.js";
+import { classifyArgvIntent, parseCliArgs, type ArgvIntent } from "./args.js";
 import { createEnvelope } from "./protocol.js";
 import { runCli } from "./run.js";
 
@@ -16,8 +17,8 @@ import { runCli } from "./run.js";
  * `./args.js` and `./run.js` modules, which perform no I/O; the adapter does
  * not duplicate their dispatch.
  *
- * This entrypoint deliberately implements only help and version output. It
- * performs no project inspection, network access or filesystem writes, and it
+ * This entrypoint injects read-only info alongside help/version. It performs
+ * no network access or filesystem writes, and it
  * exposes no consumer import surface. Product commands are added by later
  * checkpoints (S022–S023 freeze the command envelope).
  *
@@ -153,17 +154,33 @@ function readPackageMetadata(intent: ArgvIntent): PackageMetadata | undefined {
   return { name, version };
 }
 
-function main(argv: readonly string[]): void {
+async function main(argv: readonly string[]): Promise<void> {
   const intent = classifyArgvIntent(argv);
   const metadata = readPackageMetadata(intent);
   if (metadata === undefined) return;
 
+  const request = parseCliArgs(argv);
+  const info =
+    request.kind === "command" && request.command === "info"
+      ? (await import("./commands/info.js")).inspectInfo
+      : undefined;
+
   // The adapter keeps metadata validation and the real process effects; the
   // shared executor performs the actual classified dispatch.
-  process.exitCode = runCli(argv, metadata, {
-    stdout: (text) => process.stdout.write(text),
-    stderr: (text) => process.stderr.write(text),
-  });
+  process.exitCode = runCli(
+    argv,
+    metadata,
+    {
+      stdout: (text) => process.stdout.write(text),
+      stderr: (text) => process.stderr.write(text),
+    },
+    info === undefined
+      ? {}
+      : {
+          info: (request) =>
+            info(request, fileURLToPath(new URL("../../", import.meta.url))),
+        },
+  );
 }
 
-main(process.argv.slice(2));
+await main(process.argv.slice(2));

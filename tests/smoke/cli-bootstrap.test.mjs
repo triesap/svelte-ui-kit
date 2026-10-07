@@ -251,7 +251,6 @@ for (const args of jsonUsageFailures) {
 }
 
 const unsupportedCommands = [
-  ["info"],
   ["init"],
   ["view", "button"],
   ["add", "button"],
@@ -272,11 +271,11 @@ for (const args of unsupportedCommands) {
 }
 
 test("json mode emits exactly one unsupported envelope", () => {
-  const result = runCli(["info", "--json"]);
+  const result = runCli(["sync", "--json"]);
   assert.equal(result.status, 2);
   assert.equal(result.stderr, "");
   const envelope = JSON.parse(result.stdout);
-  assert.equal(envelope.command, "info");
+  assert.equal(envelope.command, "sync");
   assert.equal(envelope.status, "unsupported");
   assert.equal(envelope.schemaVersion, 1);
   assert.ok(
@@ -303,7 +302,7 @@ test("help, version and rejected argument lists never write to a seeded cwd", (t
     ["add"],
     [""],
     ["--"],
-    ["info", "--json"],
+    ["sync", "--json"],
     ["init"],
     ["add", "button"],
     ["sync"],

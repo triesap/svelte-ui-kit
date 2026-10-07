@@ -5,7 +5,7 @@ acceptance remains pending. Original S078 criteria and R09/R15/R30/R32/R33/R34
 apply without modification.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S078","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S078","kind":"report","commit":"eb210b0de991c8a36b53dd444930622cb5c4960f","disposition":"candidate"}
 -->
 
 `src/cli/output.ts` provides one pure JSON/human channel renderer and adapters

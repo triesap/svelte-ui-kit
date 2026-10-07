@@ -1,6 +1,16 @@
 import { renderCommandOutput } from "./output.js";
-import { parseCliArgs, type CliRequest } from "./args.js";
-import { createEnvelope, exitCodeFor } from "./protocol.js";
+import {
+  parseCliArgs,
+  type CliRequest,
+  type CommandRequest,
+  type ProductCommand,
+} from "./args.js";
+import {
+  createEnvelope,
+  exitCodeFor,
+  type CommandEnvelope,
+  type FailureClass,
+} from "./protocol.js";
 
 /**
  * Pure CLI result handling.
@@ -10,7 +20,8 @@ import { createEnvelope, exitCodeFor } from "./protocol.js";
  * reading and no direct process writes; the Node adapter in `main.ts` owns the
  * package-relative metadata read and the real stdout/stderr/exit effects.
  *
- * Only help and version have handlers. The approved product commands
+ * Help/version are built in; the adapter injects implemented use cases. Other
+ * approved product commands
  * (`info`/`init`/`view`/`add`/`sync`/`doctor`) return an honest `unsupported`
  * outcome: a single JSON envelope in `--json` mode, or a human diagnostic on
  * stderr otherwise. They never fabricate a successful plan or write.
@@ -19,6 +30,16 @@ export interface CliMetadata {
   readonly name: string;
   readonly version: string;
 }
+
+export type CommandHandlers = Partial<
+  Record<
+    ProductCommand,
+    (request: CommandRequest) => {
+      readonly envelope: CommandEnvelope;
+      readonly failureClass?: FailureClass;
+    }
+  >
+>;
 
 export interface CliIo {
   readonly stdout: (text: string) => void;
@@ -44,8 +65,7 @@ Global options:
   --help, -h           Show this help text.
   --version, -V        Print the package name and version.
 
-The product commands are not implemented yet; they return an honest
-unsupported result and never plan or write fabricated changes.
+Unavailable commands return an unsupported result without changing project files.
 `;
 
 export function formatUsageDiagnostic(
@@ -75,6 +95,7 @@ export function applyRequest(
   request: CliRequest,
   metadata: CliMetadata,
   io: CliIo,
+  handlers: CommandHandlers = {},
 ): number {
   if (request.kind === "help") {
     io.stdout(
@@ -120,6 +141,18 @@ export function applyRequest(
     }
     return exitCodeFor("error", "usage");
   }
+  const handler = handlers[request.command];
+  if (handler !== undefined) {
+    const result = handler(request);
+    const output = renderCommandOutput(
+      result.envelope,
+      request.json,
+      result.failureClass,
+    );
+    if (output.stdout !== "") io.stdout(output.stdout);
+    if (output.stderr !== "") io.stderr(output.stderr);
+    return output.exitCode;
+  }
   // Approved but not-yet-implemented product command: honest unsupported.
   const envelope = createEnvelope({
     command: request.command,
@@ -146,6 +179,7 @@ export function runCli(
   argv: readonly string[],
   metadata: CliMetadata,
   io: CliIo,
+  handlers: CommandHandlers = {},
 ): number {
-  return applyRequest(parseCliArgs(argv), metadata, io);
+  return applyRequest(parseCliArgs(argv), metadata, io, handlers);
 }
