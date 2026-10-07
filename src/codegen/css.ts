@@ -8,13 +8,40 @@
  * byte-idempotent: re-applying the same desired bodies produces identical
  * output.
  */
-import { fail, ok, type ModelResult } from "../registry/errors.js";
+import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { parseManagedCss, type CssRegion } from "./css-parse.js";
 
 export interface ManagedBlockInput {
   readonly id: string;
   /** Exact body to place between the markers. */
   readonly body: string;
+}
+
+/** Decode an authored asset without nesting markers or losing outside text. */
+export function registryStyleBody(
+  text: string,
+  blockId: string,
+): ModelResult<string> {
+  const parsed = parseManagedCss(text);
+  if (!parsed.ok) return fail(parsed.issues);
+  if (parsed.value.blocks.length === 0) return ok(text);
+  const block = parsed.value.blocks[0]!;
+  if (
+    parsed.value.blocks.length !== 1 ||
+    block.id !== blockId ||
+    parsed.value.unmanaged.some(
+      (region) => text.slice(region.start, region.end).trim().length > 0,
+    )
+  ) {
+    return fail([
+      issue(
+        "REGISTRY_STYLE_BLOCK_INVALID",
+        "a marked registry stylesheet must contain exactly its declared block and no outside content",
+        blockId,
+      ),
+    ]);
+  }
+  return ok(text.slice(block.contentStart, block.contentEnd));
 }
 
 /**

@@ -4,7 +4,7 @@ Author: Codex. Candidate; separate original S115/RCLD-06 acceptance remains
 required. S001–S091 independent acceptance is preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S092","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S092","kind":"report","commit":"039684ce57d9b81c0c975e5ab2cd4b55fa6a06f5","disposition":"candidate"}
 -->
 
 The existing independent v1 schemas now have actual portable contract assets:

@@ -114,7 +114,11 @@ test("the shipped registry is healthy with no candidates", () => {
   );
   assert.equal(result.ok, true, JSON.stringify(result));
   if (result.ok) {
-    assert.deepEqual(result.value.advertised, []);
+    const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+    assert.deepEqual(
+      result.value.advertised,
+      root.items.map((item: { id: string }) => item.id),
+    );
     assert.deepEqual(result.value.candidates, []);
   }
 });

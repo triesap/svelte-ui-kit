@@ -6,6 +6,11 @@
     "bits": "2.19.3",
     "date": "^3.8.1"
   },
-  "items": [],
-  "contentHash": "11d7567d9765056d40939b37c11be17e5b6dd511ec67ccdd81c2a444d74576aa"
+  "items": [
+    {
+      "id": "tokens",
+      "manifest": "foundation/tokens.json"
+    }
+  ],
+  "contentHash": "f5c4832c89b71704f781b7d53bbdc597e6f8970d9c9d8a264a1f5dc01674f56f"
 }

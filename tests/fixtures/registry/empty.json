@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": "0.1.0",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "items": [],
+  "contentHash": "11d7567d9765056d40939b37c11be17e5b6dd511ec67ccdd81c2a444d74576aa"
+}

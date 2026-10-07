@@ -4,6 +4,7 @@ import {
   cpSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -154,7 +155,14 @@ function runChild(
 test("emitted modules and every default parser load from an isolated package copy", (t) => {
   const installed = installedCopy(t);
   const output = runChild(t, installed);
-  assert.deepEqual(output.snapshot, { ok: true, items: 0, codes: [] });
+  const expected = JSON.parse(
+    readFileSync(path.join(installed, "registry/registry.json"), "utf8"),
+  );
+  assert.deepEqual(output.snapshot, {
+    ok: true,
+    items: expected.items.length,
+    codes: [],
+  });
   assert.deepEqual(output.config, { ok: true, codes: [] });
   assert.deepEqual(output.lock, { ok: true, codes: [] });
   assert.deepEqual(output.theme, { ok: true, codes: [] });

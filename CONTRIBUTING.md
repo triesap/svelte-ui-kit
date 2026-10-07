@@ -163,8 +163,8 @@ its inputs are included in typecheck. CI also runs this lane. Packing does not
 publish the package.
 
 The complete generator command surface is implemented: info/init/view/add/sync/
-doctor, JSON results, dry plans and guarded application. The shipped registry is
-currently empty while catalog adaptation proceeds. Synthetic registry fixtures
+doctor, JSON results, dry plans and guarded application. The shipped registry
+includes the CSS-only tokens foundation while component adaptation proceeds. Synthetic registry fixtures
 are owned tests, not published releases. Follow the executable workflow in
 [README](README.md) and [the governing sequence](implementation/COMMIT_SEQUENCE.md).
 

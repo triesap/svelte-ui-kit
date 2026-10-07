@@ -188,10 +188,13 @@ test("a tampered root content hash is rejected", (t) => {
     assert.equal(result.issues[0]?.code, "REGISTRY_HASH_MISMATCH");
 });
 
-test("the empty development registry loads with no assets", () => {
-  const result = loadRegistrySnapshot(
-    createAssetProvider(path.join(process.cwd())),
+test("the empty development registry loads with no assets", (t) => {
+  const root = buildFixture(t);
+  writeFileSync(
+    path.join(root, "registry", "registry.json"),
+    readFileSync("tests/fixtures/registry/empty.json"),
   );
+  const result = loadRegistrySnapshot(createAssetProvider(root));
   assert.equal(result.ok, true, JSON.stringify(result));
   if (result.ok) {
     assert.deepEqual(result.value.items, []);

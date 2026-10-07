@@ -60,6 +60,7 @@ import { hashBytes } from "./compare.js";
 import { canonicalJson } from "./serialize.js";
 import {
   composeManagedCss,
+  registryStyleBody,
   FOUNDATION_TOKENS_CONTRACT,
   STYLESHEET_CONTRACT,
   type ManagedBlockInput,
@@ -574,14 +575,21 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         (file) => file.blockId === style.blockId,
       );
       if (registryFile === undefined) continue;
-      const body = decodeText(registryFile.bytes);
-      if (body === null) {
+      const text = decodeText(registryFile.bytes);
+      if (text === null) {
         diagnostics.push(
           `managed block ${JSON.stringify(style.blockId)} is not valid UTF-8`,
         );
         hasConflict = true;
         continue;
       }
+      const extracted = registryStyleBody(text, style.blockId);
+      if (!extracted.ok) {
+        diagnostics.push(...extracted.issues.map((entry) => entry.message));
+        hasConflict = true;
+        continue;
+      }
+      const body = extracted.value;
       const targetBlocks = cssBlocksByTarget.get(logicalPath) ?? [];
       targetBlocks.push({ id: style.blockId, body });
       cssBlocksByTarget.set(logicalPath, targetBlocks);

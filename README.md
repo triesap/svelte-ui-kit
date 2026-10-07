@@ -6,8 +6,9 @@ Source-first UI kit for Svelte with installable component source and a CLI.
 
 The generator implements `info`, `init`, `view`, `add`, `sync` and `doctor`, with
 read-only planning and guarded recoverable application. The package is private
-and unpublished. The shipped registry currently has no qualified component items;
-representative synthetic registries qualify source/CSS updates, retirement,
+and unpublished. The shipped registry includes the CSS-only `tokens` foundation;
+component items are still being qualified.
+Representative synthetic registries qualify source/CSS updates, retirement,
 conflicts and default/custom layouts in executable and generated-consumer tests.
 The component catalog and final platform/package/release acceptance remain in
 progress under [the governing sequence](implementation/COMMIT_SEQUENCE.md).
@@ -50,7 +51,12 @@ source/CSS customization is reported without rewriting files or falsely failing
 strict checks. Doctor's structural/syntax diagnosis does not replace the app's
 own typecheck, production build, SSR and browser tests.
 
-Once a qualified item is included in the bundled registry, inspect and request
+Inspect `view tokens --source` and install the foundation with `add tokens
+--dry-run`, then `add tokens`. It contributes plain CSS without a component
+source file or runtime dependency. Component items follow their qualification
+gates.
+
+Once a qualified component item is included in the bundled registry, inspect and request
 its exact kebab-case id with `view <item> --source`, `add <item> --dry-run`, then
 `add <item>`. These placeholders do not claim a currently shipped item. `add`
 records only the explicit request; registry dependencies remain transitive.

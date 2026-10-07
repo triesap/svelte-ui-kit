@@ -41,7 +41,10 @@ const SAMPLE_BASIS: RegistryRootBasis = {
 
 test("the empty development registry validates and advertises no items", () => {
   const fromDisk: unknown = JSON.parse(
-    readFileSync(path.join(process.cwd(), "registry", "registry.json"), "utf8"),
+    readFileSync(
+      path.join(process.cwd(), "tests", "fixtures", "registry", "empty.json"),
+      "utf8",
+    ),
   );
   const result = parseRegistryRoot(fromDisk);
   assert.equal(result.ok, true, JSON.stringify(result));

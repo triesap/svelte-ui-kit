@@ -13,6 +13,7 @@
  * supplied package is the single source of truth for both schemas and assets.
  */
 import { sha256Hex } from "../codegen/digest.js";
+import { registryStyleBody } from "../codegen/css.js";
 import type { AssetProvider } from "./assets.js";
 import {
   fail,
@@ -229,6 +230,24 @@ export function loadRegistrySnapshot(
           ),
         );
         continue;
+      }
+      if (declaration.blockId !== null) {
+        const style = registryStyleBody(
+          new TextDecoder().decode(bytes.value),
+          declaration.blockId,
+        );
+        if (!style.ok) {
+          issues.push(
+            ...style.issues.map((entry) =>
+              issue(
+                "REGISTRY_STYLE_BLOCK_INVALID",
+                entry.message,
+                logicalSource,
+              ),
+            ),
+          );
+          continue;
+        }
       }
       const digest = sha256Hex(bytes.value);
       assetDigests.set(logicalSource, digest);
