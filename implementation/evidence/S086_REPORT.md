@@ -4,7 +4,7 @@ Author: Codex. Implemented and locally verified; separate RCLD-05 acceptance
 remains pending. Original S086 criteria and frozen protocol are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S086","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S086","kind":"report","commit":"5c70614220fb82b3fc55510df4f0d1931122a531","disposition":"candidate"}
 -->
 
 The built executable is qualified across all approved commands and frozen exit

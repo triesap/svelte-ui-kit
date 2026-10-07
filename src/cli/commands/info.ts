@@ -7,8 +7,9 @@ import {
 } from "../protocol.js";
 import { issueDiagnostics } from "../output.js";
 import { resolveProjectRoot } from "../../project/root.js";
-import { captureEnvironment } from "../../project/environment.js";
-import { deriveKitPaths } from "../../project/config.js";
+import { captureSnapshot } from "../../codegen/snapshot.js";
+import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
+import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
 import {
   inspectDependencyStateFromEvidence,
   validatePeerDependenciesFromEvidence,
@@ -72,20 +73,17 @@ export function inspectInfo(
     );
   const registry = loadRegistrySnapshot(createAssetProvider(registryRoot));
   if (!registry.ok) return failure(registry.issues, "registry_failure");
-  const environment = captureEnvironment(selected.value.root);
-  if (!environment.project.ok) return failure(environment.project.issues);
-  if (!environment.kitConfig.ok) return failure(environment.kitConfig.issues);
-  const project = environment.project.value;
-  const discovered = environment.kitConfig.value;
-  const config =
-    discovered.kind === "custom"
-      ? discovered.config
-      : {
-          ...discovered.config,
-          uiDir: project.uiDir,
-          stylesDir: project.stylesDir,
-          layoutFile: project.layoutFile,
-        };
+  const snapshot = captureSnapshot(selected.value.root, []);
+  if (!snapshot.ok) return failure(snapshot.issues, "unsafe_path");
+  const environment = snapshot.value.environment;
+  const resolved = resolveEffectiveConfig(snapshot.value, DEFAULT_KIT_CONFIG);
+  if (!resolved.ok) return failure(resolved.issues);
+  if (resolved.value.issues.length > 0) return failure(resolved.value.issues);
+  const effective = resolved.value;
+  const config = {
+    ...effective.config,
+    requested: effective.observedRequested,
+  };
   const closure = projectRequests(registry.value, config.requested);
   if (!closure.ok) return failure(closure.issues, "registry_failure");
   const dependencies = planDependencies(registry.value, closure.value.order);
@@ -152,11 +150,13 @@ export function inspectInfo(
         project: {
           packageName: selected.value.packageName,
           selectedBy: selected.value.selectedBy,
-          svelteConfigFile: project.svelteConfigFile,
+          ...(environment.project.ok
+            ? { svelteConfigFile: environment.project.value.svelteConfigFile }
+            : {}),
         },
         config: {
-          kind: discovered.kind,
-          path: discovered.configPath,
+          kind: effective.provenance === "explicit" ? "custom" : "default",
+          path: effective.configPath,
           requested: config.requested,
         },
         paths: {
