@@ -42,6 +42,14 @@ generated IDs remain local to each request/instance. The native first opening
 of newly portaled Content omits its animation-completion callback in Bits2.19.3;
 completed closing emits it. The kit forwards the native callback unchanged.
 
+The core qualification installs tokens, Spinner, Button, Switch and Dialog
+together through the built executable and a real locally installed tarball.
+Default/custom source layouts are compiled, built, server-rendered and exercised
+in Chromium. Owned synthetic package revisions qualify safe upgrades and atomic
+cohort-conflict refusal while preserving application customization. These checks
+are candidate evidence for the independent core review, rather than a published
+release or final platform/package acceptance.
+
 ## Use the local built CLI
 
 Build from this clone after installing its frozen development dependencies.

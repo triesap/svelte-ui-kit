@@ -34,13 +34,24 @@ module-global ID/state or disable SSR. Description observer ref replacement and
 root teardown must release every observer, with a causal owned missing-cleanup
 artifact failing the same assertion before independent S115 acceptance.
 
+S115 qualifies all five actual core items together in default/custom layouts.
+Use clearly synthetic copied package revisions for safe Button adoption and
+conflicting locally customized Dialog cohorts. Preserve source/CSS bases; the
+aggregate stylesheet-v1 observation can truthfully reconcile an application
+suffix edit once, then replay must leave the complete tree unchanged. Real local
+tarball installation is offline in an owned standalone host; execute the actual
+installed CLI for initial application generation. Copy package assets before
+synthetic revision changes, resolve its installed runtime dependencies explicitly,
+and never mutate package-store contents. No source-layout fallback, publication
+or new product/API scope is authorized by this qualification.
+
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S114 — Qualify initial Dialog state through SSR and hydration**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
+- Active implementation checkpoint: **S115 — Qualify the complete first vertical slice**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **91 / 203**. Remaining: **112 / 203**.
-- Committed pending review: **22 / 203**. Authored batch range: **S092–S113**.
+- Committed pending review: **23 / 203**. Authored batch range: **S092–S114**.
 - Completed RCLD sequences: **5 / 11**. Remaining: **6 / 11**.
-- Last safe target commit: `dec0170a298938a05f4d26085564e12ba817e4f3`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `698c1486f3de107bb5ca7fdb76b8a43963f6d790`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -6193,8 +6204,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S111 | RCLD-06  | S110       | committed_pending_review | `407b54123629f2dc32c430e6b12a5b9d885f95f2` |
 | S112 | RCLD-06  | S111       | committed_pending_review | `c7fb18429f09d2c5bf5210962e366db51a78a0a5` |
 | S113 | RCLD-06  | S112       | committed_pending_review | `dec0170a298938a05f4d26085564e12ba817e4f3` |
-| S114 | RCLD-06  | S113       | in_progress              | —                                          |
-| S115 | RCLD-06  | S114       | not_started              | —                                          |
+| S114 | RCLD-06  | S113       | committed_pending_review | `698c1486f3de107bb5ca7fdb76b8a43963f6d790` |
+| S115 | RCLD-06  | S114       | in_progress              | —                                          |
 | S116 | RCLD-07  | S115       | not_started              | —                                          |
 | S117 | RCLD-07  | S116       | not_started              | —                                          |
 | S118 | RCLD-07  | S117       | not_started              | —                                          |

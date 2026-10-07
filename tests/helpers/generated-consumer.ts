@@ -5,16 +5,19 @@ import path from "node:path";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
+  type KitConfig,
 } from "../../src/project/config.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Build real CLI-installed applications; never mutate the maintained fixture. */
 function buildComponentConsumer(
-  item: "spinner" | "button" | "switch" | "dialog",
+  item: "spinner" | "button" | "switch" | "dialog" | "core",
   custom: boolean,
   qualification: string = item,
   removeDescriptionObserverCleanup = false,
+  packageRoot = process.cwd(),
+  beforeBuild?: (root: string, config: KitConfig) => void,
 ) {
   const fixture = copyConsumerFixture();
   try {
@@ -28,16 +31,21 @@ function buildComponentConsumer(
       writeFileSync(target, body);
     };
     if (custom) write(`${paths.stateDir}/kit.json`, JSON.stringify(config));
-    for (const args of [["init"], ["add", item]]) {
+    const commands =
+      item === "core"
+        ? [
+            ["init"],
+            ...["tokens", "spinner", "button", "switch", "dialog"].map((id) => [
+              "add",
+              id,
+            ]),
+          ]
+        : [["init"], ["add", item]];
+    const executable = path.join(packageRoot, "dist/cli/main.js");
+    for (const args of commands) {
       const result = spawnSync(
         process.execPath,
-        [
-          path.resolve("dist/cli/main.js"),
-          ...args,
-          "--json",
-          "--cwd",
-          fixture.root,
-        ],
+        [executable, ...args, "--json", "--cwd", fixture.root],
         { cwd: fixture.root, encoding: "utf8", timeout: 30000 },
       );
       assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -51,7 +59,7 @@ function buildComponentConsumer(
             "spinner.svelte",
             "spinner.types.ts",
           ]
-        : item === "dialog"
+        : item === "dialog" || item === "core"
           ? [
               "root",
               "trigger",
@@ -63,14 +71,26 @@ function buildComponentConsumer(
               "close",
             ]
               .map((part) => `dialog/${part}.svelte`)
-              .concat(["dialog/types.ts", "dialog/index.ts"])
+              .concat(
+                ["dialog/types.ts", "dialog/index.ts"],
+                item === "core"
+                  ? [
+                      "spinner.svelte",
+                      "spinner.types.ts",
+                      "button.svelte",
+                      "button.types.ts",
+                      "switch.svelte",
+                      "switch.types.ts",
+                    ]
+                  : [],
+              )
           : item === "switch"
             ? ["switch.svelte", "switch.types.ts"]
             : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
       assert.ok(
         readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-          readFileSync(path.join("registry/ui", name)),
+          readFileSync(path.join(packageRoot, "registry/ui", name)),
         ),
       );
     }
@@ -101,6 +121,7 @@ function buildComponentConsumer(
     );
     assert.equal(template.match(/__UI_MODULE__/g)?.length, 2);
     write(route, template.replaceAll("__UI_MODULE__", module));
+    beforeBuild?.(fixture.root, config);
     const logRoot = "implementation/evidence/logs/generated-consumer";
     mkdirSync(logRoot, { recursive: true });
     const logPrefix = `${qualification}-${custom ? "custom" : "default"}-${process.pid}-${Date.now()}`;
@@ -141,6 +162,7 @@ function buildComponentConsumer(
     return {
       ...fixture,
       handler,
+      executable,
       route: `qualification/${qualification}`,
       evidence: {
         mapping: config,
@@ -186,4 +208,18 @@ export const buildDialogConsumer = (
     custom,
     qualification,
     removeDescriptionObserverCleanup,
+  );
+
+export const buildCoreConsumer = (
+  custom: boolean,
+  packageRoot = process.cwd(),
+  beforeBuild?: (root: string, config: KitConfig) => void,
+) =>
+  buildComponentConsumer(
+    "core",
+    custom,
+    "core",
+    false,
+    packageRoot,
+    beforeBuild,
   );
