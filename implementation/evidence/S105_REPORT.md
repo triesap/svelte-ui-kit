@@ -4,7 +4,7 @@ Author: Codex. Candidate; independent S115 acceptance remains pending.
 Original criteria and accepted S001–S091 remain preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S105","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S105","kind":"report","commit":"27307ca458be3e6975ead28bd1273eab2ed0396c","disposition":"candidate"}
 -->
 
 The eight approved flat Dialog values have corresponding exact public pinned

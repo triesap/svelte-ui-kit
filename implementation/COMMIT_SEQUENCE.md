@@ -17,12 +17,12 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S105 — Freeze the Dialog family API and ownership cohort**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
+- Active implementation checkpoint: **S106 — Author Dialog root and trigger parts**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **91 / 203**. Remaining: **112 / 203**.
-- Committed pending review: **13 / 203**. Authored batch range: **S092–S104**.
+- Committed pending review: **14 / 203**. Authored batch range: **S092–S105**.
 - Completed RCLD sequences: **5 / 11**. Remaining: **6 / 11**.
-- Last safe target commit: `03526028df9e30f93f9b13fe315ccfa90e7e82d5`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `27307ca458be3e6975ead28bd1273eab2ed0396c`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -160,6 +160,12 @@ Shared output adapters keep transient transaction identifiers out of semantic
 results and distinguish planned/applied/committed-with-cleanup outcomes.
 
 #### S105 exact compound API and advertisement decision
+
+S106 source/native adaptation: the immutable source Trigger is type=button,
+while pinned Bits leaves the HTML default implicit. Preserve the source default
+with caller-overridable native type, without changing primitive activation or
+event ordering. Actual owned candidate compilation/SSR and browser evidence use
+Root/Trigger wrappers plus raw remaining parts, and never certify installation.
 
 Freeze only the approved eight flat Dialog value names and matching Props
 aliases, directly derived from public pinned Bits Dialog types. Root owns no
@@ -6138,8 +6144,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S102 | RCLD-06  | S101       | committed_pending_review | `bf6813c1d38924300cd2a5732fcac7d70cc9c748` |
 | S103 | RCLD-06  | S102       | committed_pending_review | `67b8a83f2978410d8e00092b5ca0e104147f8f5d` |
 | S104 | RCLD-06  | S103       | committed_pending_review | `03526028df9e30f93f9b13fe315ccfa90e7e82d5` |
-| S105 | RCLD-06  | S104       | in_progress              | —                                          |
-| S106 | RCLD-06  | S105       | not_started              | —                                          |
+| S105 | RCLD-06  | S104       | committed_pending_review | `27307ca458be3e6975ead28bd1273eab2ed0396c` |
+| S106 | RCLD-06  | S105       | in_progress              | —                                          |
 | S107 | RCLD-06  | S106       | not_started              | —                                          |
 | S108 | RCLD-06  | S107       | not_started              | —                                          |
 | S109 | RCLD-06  | S108       | not_started              | —                                          |
