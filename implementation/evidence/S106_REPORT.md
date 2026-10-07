@@ -3,7 +3,7 @@
 Author: Codex. Candidate; independent S115 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S106","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S106","kind":"report","commit":"45eeeed775d5397329e5a5aff743c4d7b61e9173","disposition":"candidate"}
 -->
 
 Actual candidate wrappers import pinned public Bits Dialog parts and exact Props.

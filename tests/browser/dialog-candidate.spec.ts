@@ -103,3 +103,89 @@ test.describe("actual unregistered Dialog S106 composition", () => {
     await expect(page.locator("#refs")).toHaveText("BUTTON/BUTTON");
   });
 });
+
+test.describe("actual unregistered Dialog S107 portal composition", () => {
+  let consumer: ReturnType<typeof buildDialogCandidate>;
+  let hosted: FixtureServer;
+  test.beforeAll(async () => {
+    test.setTimeout(240000);
+    consumer = buildDialogCandidate("portal-overlay");
+    try {
+      hosted = await startFixtureServer({ handler: consumer.handler });
+    } catch (error) {
+      consumer.cleanup();
+      throw error;
+    }
+  });
+  test.afterAll(async () => {
+    try {
+      if (hosted) {
+        await hosted.server.stop();
+        expect(hosted.server.failure()).toBeNull();
+      }
+    } finally {
+      consumer?.cleanup();
+    }
+  });
+  test.beforeEach(async ({ page }, info) => {
+    const file = info.outputPath("candidate-artifact.json");
+    writeFileSync(file, JSON.stringify(consumer.evidence, null, 2));
+    await info.attach("candidate-artifact", {
+      path: file,
+      contentType: "application/json",
+    });
+    await page.goto(new URL(consumer.route, hosted.baseURL).href);
+    await expect(page.locator('[data-ready="true"]')).toBeVisible();
+  });
+  test("default body, selector, actual Element and disabled inline targets retain primitive placement", async ({
+    page,
+  }) => {
+    await expect(page.locator("body > #body-overlay")).toBeVisible();
+    await expect(page.locator("body > #body-content")).toBeVisible();
+    await expect(
+      page.locator("#selector-target > #selector-overlay"),
+    ).toBeVisible();
+    await expect(
+      page.locator("#selector-target > #selector-content"),
+    ).toBeVisible();
+    await expect(
+      page.locator("#element-target > #element-overlay"),
+    ).toHaveCount(1);
+    await expect(
+      page.locator("#element-target > #element-content"),
+    ).toBeVisible();
+    await expect(page.locator("#inline-host > #inline-overlay")).toHaveCount(1);
+    await expect(page.locator("#inline-host > #inline-content")).toBeVisible();
+    await expect(page.locator("#body-overlay")).toHaveClass(
+      "kit-dialog-overlay caller",
+    );
+    await expect(page.locator("#body-overlay")).toHaveAttribute(
+      "data-state",
+      "open",
+    );
+  });
+  test("Overlay default and delegated snippet shapes carry live state, classes and actual refs", async ({
+    page,
+  }) => {
+    await expect(page.locator("#body-state")).toHaveText("true");
+    await expect(page.locator("#selector-overlay")).toHaveAttribute(
+      "data-open",
+      "true",
+    );
+    await expect(page.locator("#selector-overlay")).toHaveClass(
+      "kit-dialog-overlay delegated",
+    );
+    await expect(page.locator("#inline-overlay")).toHaveClass(
+      "kit-dialog-overlay inline-caller",
+    );
+    await expect(page.locator("#inline-overlay")).toHaveAttribute(
+      "data-caller",
+      "preserved",
+    );
+    await expect(page.locator("#refs")).toHaveText("DIV/SECTION");
+    await expect(page.locator("#element-overlay")).toHaveAttribute(
+      "data-dialog-overlay",
+      "",
+    );
+  });
+});

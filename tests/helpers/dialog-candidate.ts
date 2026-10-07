@@ -1,44 +1,82 @@
 import assert from "node:assert/strict";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Compile actual unregistered parts with explicitly remaining raw primitives. */
-export function buildDialogCandidate() {
+export function buildDialogCandidate(
+  stage: "root-trigger" | "portal-overlay" = "root-trigger",
+) {
   const fixture = copyConsumerFixture();
   try {
-    const files = ["root.svelte", "trigger.svelte", "types.ts"];
+    const files = [
+      "root.svelte",
+      "trigger.svelte",
+      "types.ts",
+      ...(stage === "portal-overlay"
+        ? ["portal.svelte", "overlay.svelte"]
+        : []),
+    ];
     for (const file of files) {
       const target = path.join(fixture.root, "src/lib/candidate/dialog", file);
       mkdirSync(path.dirname(target), { recursive: true });
       writeFileSync(target, readFileSync(`registry/ui/dialog/${file}`));
     }
-    const route = "src/routes/dialog-candidate/+page.svelte";
+    const routeName =
+      stage === "root-trigger" ? "dialog-candidate" : "dialog-portal";
+    const route = `src/routes/${routeName}/+page.svelte`;
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
       recursive: true,
     });
     writeFileSync(
       path.join(fixture.root, route),
-      readFileSync("tests/fixtures/dialog-candidate/root-trigger.svelte"),
+      readFileSync(`tests/fixtures/dialog-candidate/${stage}.svelte`),
     );
+    const logRoot = "implementation/evidence/logs/dialog-candidate";
+    mkdirSync(logRoot, { recursive: true });
+    const logs: string[] = [];
     for (const script of ["check", "build"]) {
       const result = runFixtureScript(fixture.root, script);
+      const log = `${logRoot}/${stage}-${process.pid}-${Date.now()}-${script}.log`;
+      writeFileSync(
+        log,
+        `${result.stdout}\n${result.stderr}\nstatus=${result.status}; signal=${result.signal}\n`,
+      );
+      logs.push(log);
       assert.equal(result.status, 0, result.stdout + result.stderr);
     }
+    const productionFiles: string[] = [];
+    const inventory = (directory: string) => {
+      for (const entry of readdirSync(path.join(fixture.root, directory), {
+        withFileTypes: true,
+      })) {
+        const name = `${directory}/${entry.name}`;
+        if (entry.isDirectory()) inventory(name);
+        else if (entry.isFile()) productionFiles.push(name);
+        else throw new Error(`Unexpected candidate artifact: ${name}`);
+      }
+    };
+    inventory("build");
     const artifactFiles = [
       ...files.map((file) => `src/lib/candidate/dialog/${file}`),
       route,
-      "build/handler.js",
+      ...productionFiles.sort(),
     ];
     return {
       ...fixture,
       handler: path.join(fixture.root, "build/handler.js"),
+      route: `/${routeName}`,
       evidence: {
-        stage: "S106",
-        authored: ["Root", "Trigger"],
+        stage: stage === "root-trigger" ? "S106" : "S107",
+        authored: [
+          "Root",
+          "Trigger",
+          ...(stage === "portal-overlay" ? ["Portal", "Overlay"] : []),
+        ],
         raw: ["Content", "Title", "Description", "Close"],
         unregistered: true,
+        logs,
         files: Object.fromEntries(
           artifactFiles.map((file) => [
             file,
