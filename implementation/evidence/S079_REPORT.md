@@ -4,7 +4,7 @@ Author: Codex. Implemented and locally verified; independent RCLD-05 acceptance
 remains pending. Original S079 criteria and anchored contracts remain unchanged.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S079","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S079","kind":"report","commit":"e0ef14e507812b06c7c39316b23eca4be5d0907b","disposition":"candidate"}
 -->
 
 The executable injects `inspectInfo` only after valid info argument parsing.

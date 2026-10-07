@@ -165,6 +165,11 @@ async function main(argv: readonly string[]): Promise<void> {
       ? (await import("./commands/info.js")).inspectInfo
       : undefined;
 
+  const view =
+    request.kind === "command" && request.command === "view"
+      ? (await import("./commands/view.js")).inspectView
+      : undefined;
+
   // The adapter keeps metadata validation and the real process effects; the
   // shared executor performs the actual classified dispatch.
   process.exitCode = runCli(
@@ -174,12 +179,20 @@ async function main(argv: readonly string[]): Promise<void> {
       stdout: (text) => process.stdout.write(text),
       stderr: (text) => process.stderr.write(text),
     },
-    info === undefined
-      ? {}
-      : {
-          info: (request) =>
-            info(request, fileURLToPath(new URL("../../", import.meta.url))),
-        },
+    {
+      ...(info === undefined
+        ? {}
+        : {
+            info: (request) =>
+              info(request, fileURLToPath(new URL("../../", import.meta.url))),
+          }),
+      ...(view === undefined
+        ? {}
+        : {
+            view: (request) =>
+              view(request, fileURLToPath(new URL("../../", import.meta.url))),
+          }),
+    },
   );
 }
 

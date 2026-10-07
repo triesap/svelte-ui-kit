@@ -252,7 +252,6 @@ for (const args of jsonUsageFailures) {
 
 const unsupportedCommands = [
   ["init"],
-  ["view", "button"],
   ["add", "button"],
   ["sync"],
   ["doctor"],
