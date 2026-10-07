@@ -177,6 +177,7 @@ function makePackage(t) {
     "tsconfig.unit.json",
     "tsconfig.integration.json",
     "tsconfig.registry.json",
+    "tsconfig.package.json",
   ]) {
     cpSync(path.join(REPO_ROOT, rel), path.join(dir, rel));
   }
@@ -866,4 +867,36 @@ test("an empty registry suite fails rather than passing with zero tests", (t) =>
     result.stderr,
     /no registry test files were discovered under tests\/registry/,
   );
+});
+
+// S090: the package lane uses the same guarded selection and evidence rules.
+test("the package suite is selected and its output remains isolated", (t) => {
+  const pkg = makePackage(t);
+  writeTest(pkg, "tests/package/inventory.test.ts", PASS_TEST);
+  writeOwnedFile(pkg, ".unit-test-build/unit/retained.txt", "keep");
+  const result = runRunner(pkg, [
+    "--suite",
+    "package",
+    "tests/package/inventory.test.ts",
+  ]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(selected(result.stdout), [
+    "tests/package/inventory.test.ts",
+  ]);
+  assert.equal(
+    readFileSync(path.join(pkg, ".unit-test-build/unit/retained.txt"), "utf8"),
+    "keep",
+  );
+  const escaped = runRunner(pkg, [
+    "--suite",
+    "package",
+    "tests/unit/unowned.test.ts",
+  ]);
+  assert.equal(escaped.status, 1);
+});
+test("an empty package suite fails without inventing passing evidence", (t) => {
+  const pkg = makePackage(t);
+  const result = runRunner(pkg, ["--suite", "package"]);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /no package test files were discovered/);
 });

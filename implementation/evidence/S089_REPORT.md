@@ -4,7 +4,7 @@ Author: Codex. Implemented/locally verified; mandatory independent S091
 acceptance remains pending. These fixtures are synthetic, not shipped releases.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S089","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S089","kind":"report","commit":"9330069735a26e70ee7055c14583836c9d1e17b6","disposition":"candidate"}
 -->
 
 A checked-in synthetic fixture independently varies registry release, card item

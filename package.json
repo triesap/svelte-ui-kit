@@ -41,7 +41,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0",
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.unit.json --noEmit && tsc -p tsconfig.integration.json --noEmit && tsc -p tsconfig.components.json --noEmit && tsc -p tsconfig.registry.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.unit.json --noEmit && tsc -p tsconfig.integration.json --noEmit && tsc -p tsconfig.components.json --noEmit && tsc -p tsconfig.registry.json --noEmit && tsc -p tsconfig.package.json --noEmit",
     "test:cli-bootstrap": "node --test tests/smoke/cli-bootstrap.test.mjs",
     "test:unit": "pnpm run build && node tools/run-unit-tests.mjs",
     "test:integration": "pnpm run build && node tools/run-unit-tests.mjs --suite integration",
@@ -53,7 +53,8 @@
     "test:fixture": "pnpm run fixture:build && node --test --test-concurrency=1 tests/smoke/consumer-fixture.test.mjs tests/smoke/owned-server.test.mjs tests/smoke/lifecycle-consumer.test.mjs tests/smoke/q2-resulting-consumer.test.mjs",
     "test:browser": "pnpm run fixture:build && playwright test --config playwright.config.ts",
     "check:contracts": "node tools/check-contracts.mjs",
-    "test:contracts": "node --test tools/check-contracts.test.mjs"
+    "test:contracts": "node --test tools/check-contracts.test.mjs",
+    "test:package": "pnpm run build && node tools/run-unit-tests.mjs --suite package"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

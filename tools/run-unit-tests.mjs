@@ -76,7 +76,13 @@ const TSC_BIN = path.join(PKG_ROOT, "node_modules", "typescript", "bin", "tsc");
 const LOG_PREFIX = "run-unit-tests:";
 
 /** Approved typed suites. `components` and `registry` follow the typed runner contract. */
-const SUITE_NAMES = ["unit", "integration", "components", "registry"];
+const SUITE_NAMES = [
+  "unit",
+  "integration",
+  "components",
+  "registry",
+  "package",
+];
 
 /** A deterministic, user-facing selection problem (never a crash). */
 class SelectionError extends Error {}

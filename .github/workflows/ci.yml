@@ -70,6 +70,9 @@ jobs:
       - name: Registry
         run: pnpm run test:registry
 
+      - name: Packed inventory
+        run: pnpm run test:package
+
       - name: CLI smoke
         run: pnpm run test:cli-bootstrap
 
