@@ -230,3 +230,29 @@ test("validateVersionIdentities collects every problem in one pass", () => {
     assert.equal(nonObject.issues[0]?.code, "VERSION_IDENTITIES_INVALID");
   }
 });
+
+test("project schema dispatch is independent and refuses every unapproved transition", async () => {
+  const { selectProjectSchema } =
+    await import("../../src/project/migrations.js");
+  for (const kind of ["config", "lock"] as const) {
+    assert.equal(
+      selectProjectSchema(
+        { schemaVersion: 1, toolVersion: "9.9.9", registryVersion: "8.0.0" },
+        kind,
+        "kit.json",
+      ).ok,
+      true,
+    );
+    for (const schemaVersion of [0, 2, 999, "1", "5.57.1", null, undefined]) {
+      const result = selectProjectSchema({ schemaVersion }, kind, "kit.json");
+      assert.equal(result.ok, false);
+      if (!result.ok)
+        assert.match(result.issues[0]!.message, /Unsupported.*schemaVersion/);
+    }
+  }
+  assert.equal(
+    selectProjectSchema({ schemaVersion: 1, aliases: {} }, "config", "kit.json")
+      .ok,
+    false,
+  );
+});

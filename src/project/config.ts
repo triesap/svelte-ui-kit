@@ -1,3 +1,4 @@
+import { selectProjectSchema } from "./migrations.js";
 /**
  * Strict kit configuration (S014).
  *
@@ -130,6 +131,8 @@ export function parseKitConfig(
   locator = "kit.json",
   authority?: SchemaAuthority,
 ): ModelResult<KitConfig> {
+  const selectedSchema = selectProjectSchema(value, "config", locator);
+  if (!selectedSchema.ok) return fail(selectedSchema.issues);
   const schemaResult = validateWithSchema(
     KIT_CONFIG_SCHEMA,
     value,

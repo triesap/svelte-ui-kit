@@ -4,7 +4,7 @@ Author: Codex. Implemented and locally verified; independent RCLD-05 acceptance
 remains pending. Original S087 criteria are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S087","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S087","kind":"report","commit":"8b0da319b0a82ae21ee86393618ba175b53b6833","disposition":"candidate"}
 -->
 
 Actual built package workflows use default and explicit custom mapping (including

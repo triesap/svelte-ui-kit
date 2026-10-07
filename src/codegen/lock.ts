@@ -1,3 +1,4 @@
+import { selectProjectSchema } from "../project/migrations.js";
 /**
  * Source-file ownership lock records (S019).
  *
@@ -296,6 +297,8 @@ export function parseKitLock(
   context: LockValidationContext = {},
   authority?: SchemaAuthority,
 ): ModelResult<KitLock> {
+  const selectedSchema = selectProjectSchema(value, "lock", locator);
+  if (!selectedSchema.ok) return fail(selectedSchema.issues);
   const schemaResult = validateWithSchema(
     KIT_LOCK_SCHEMA,
     value,
