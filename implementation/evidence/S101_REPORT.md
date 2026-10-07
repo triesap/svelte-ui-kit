@@ -4,7 +4,7 @@ Author: Codex. Candidate; independent S115 acceptance remains pending.
 Original criteria and accepted S001–S091 remain unchanged.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S101","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S101","kind":"report","commit":"9d1796acae84e62c47f92ee834ff0f7382f8ce4e","disposition":"candidate"}
 -->
 
 Eight Chromium Button cases pass on actual default/custom CLI-installed,
