@@ -4,10 +4,100 @@ Source-first UI kit for Svelte with installable component source and a CLI.
 
 ## Status
 
-Bootstrap. The repository currently provides the pinned development toolchain,
-contract validation, and a minimal CLI that implements only `--help`/`-h` and
-`--version`/`-V`. Component install/inspect/update commands are planned but not
-implemented yet.
+The generator implements `info`, `init`, `view`, `add`, `sync` and `doctor`, with
+read-only planning and guarded recoverable application. The package is private
+and unpublished. The shipped registry currently has no qualified component items;
+representative synthetic registries qualify source/CSS updates, retirement,
+conflicts and default/custom layouts in executable and generated-consumer tests.
+The component catalog and final platform/package/release acceptance remain in
+progress under [the governing sequence](implementation/COMMIT_SEQUENCE.md).
+
+## Use the local built CLI
+
+Build from this clone after installing its frozen development dependencies.
+`CLI` below is the built executable's absolute path; set `APP` to an existing
+SvelteKit application package, not a monorepo workspace root. The CLI never
+executes the application's configuration, package manager or install scripts.
+
+```sh
+pnpm run build
+CLI="$(pwd)/dist/cli/main.js"
+# Set APP to the SvelteKit application package you want to inspect.
+```
+
+The application must declare SvelteKit and have its compatible Svelte dependency
+installed. Inspect `info` and perform any reported dependency setup manually
+before expecting strict diagnosis to pass.
+
+<!-- documented-cli-workflow:start -->
+
+```sh
+node "$CLI" --cwd "$APP" info
+node "$CLI" --cwd "$APP" init --dry-run
+node "$CLI" --cwd "$APP" init
+node "$CLI" --cwd "$APP" doctor --strict
+node "$CLI" --cwd "$APP" sync --dry-run
+node "$CLI" --cwd "$APP" sync
+node "$CLI" --cwd "$APP" init
+```
+
+<!-- documented-cli-workflow:end -->
+
+Install the dependencies reported by `info` or a plan yourself, then rerun the
+checks. Source installation and actual installed dependency readiness are
+separate. `doctor --strict` exits with code 3 for broken/unsafe installation evidence; valid
+source/CSS customization is reported without rewriting files or falsely failing
+strict checks. Doctor's structural/syntax diagnosis does not replace the app's
+own typecheck, production build, SSR and browser tests.
+
+Once a qualified item is included in the bundled registry, inspect and request
+its exact kebab-case id with `view <item> --source`, `add <item> --dry-run`, then
+`add <item>`. These placeholders do not claim a currently shipped item. `add`
+records only the explicit request; registry dependencies remain transitive.
+`sync` reconciles the configured requests, including intentional retirement.
+There is no network registry, automatic package installation, merge or force flag.
+Add `--json` to receive exactly one deterministic result envelope on stdout,
+including failures. Human failures use stderr; use the documented frozen exits
+in [API contracts](specs/API_CONTRACTS.md) for automation.
+
+Defaults are `src/lib/components/ui`, its `_kit` state, `src/styles`, and the
+statically detected SvelteKit root layout. A valid explicit `kit.json` under the
+chosen UI root's `_kit` selects `uiDir`, `stylesDir` and `layoutFile`; see
+[the configuration model](specs/DATA_MODEL.md). Only one installation may be
+present. Explicit mapping can resolve dynamic routes without evaluating project
+code; unsafe, malformed, ambiguous or unsupported project identity still refuses.
+
+For example, create `app/ui/_kit/kit.json` in the selected application before
+initializing this custom mapping:
+
+<!-- documented-custom-mapping:start -->
+
+```json
+{
+  "schemaVersion": 1,
+  "registry": "builtin",
+  "uiDir": "app/ui",
+  "stylesDir": "assets/styles",
+  "layoutFile": "src/routes/+layout.svelte",
+  "requested": []
+}
+```
+
+<!-- documented-custom-mapping:end -->
+
+Generated Svelte/TypeScript/plain CSS is application-owned source, with no kit
+runtime dependency. Preserve local edits: unchanged upstream keeps their original
+base, changed incompatible source/CSS/export cohorts refuse the entire batch,
+and customized retired targets remain application-owned. Inspect the incoming
+source and dry plan, reconcile the reported conflict yourself, then rerun app
+verification. Never edit base hashes to declare local edits accepted. No dry-run,
+read-only or conflict path creates hidden transaction files or changes manifests.
+Interrupted transaction evidence is retained and diagnosed; follow
+[the recovery contract](specs/SECURITY_AND_TRANSACTIONS.md) rather than deleting
+owner evidence or using PID/age takeover.
+
+`pnpm run test:package` creates and inspects a local tarball without publication;
+its extracted executable uses bundled assets without an authoring-tree fallback.
 
 ## Goals
 
@@ -30,6 +120,7 @@ pnpm run test:unit -- tests/unit/cli-bootstrap.test.ts
 pnpm run test:integration -- tests/integration/harness.test.ts
 pnpm run test:components -- tests/components/compatibility.test.ts
 pnpm run test:harness
+pnpm run test:package
 pnpm run fixture:check
 pnpm run fixture:build
 pnpm run test:fixture
@@ -80,7 +171,7 @@ reads the bundled package metadata next to the built module and applies the
 real stdout/stderr/exit effects. Minimal readonly `ProjectInput`,
 `RegistrySnapshot` and `PlanningOutcome` interfaces under `src/project`,
 `src/registry` and `src/codegen` express the already-approved responsibilities
-without implementing them. `tests/unit/boundaries.test.ts` proves the pure
+with immutable captured planning, validated registry provenance and guarded application. `tests/unit/boundaries.test.ts` proves the pure
 modules import and execute without filesystem writes, that the injected result
 handling matches the built adapter, that the boundary types reject invalid
 values at compile time, and that consumer fixture sources never import
@@ -126,10 +217,10 @@ content type fails the suite instead of satisfying the missing-markup control.
 The owned-server boundary records stderr and the exit event through teardown,
 bounds startup, request headers/body and stop deadlines, and the lifecycle
 suite drives deterministic startup-failure, stderr, post-ready exit, stalled
-header/body and cleanup faults. This is a hand-authored qualification baseline
-only: it is not evidence that the future generator or an installed tarball
-already produces this app, and no browser/hydration or release qualification is
-claimed.
+header/body and cleanup faults. The maintained baseline is separate from lifecycle suites, which run generated
+default/custom consumers through actual add/update/retirement check, production
+build and SSR stages. Packed executable inventory is qualified separately; final
+catalog/browser/platform/release acceptance remains open.
 
 `pnpm run test:browser` builds the fixture and runs the Playwright 1.63.0
 harness at `tests/browser/harness.spec.ts` with bundled headless Chromium over

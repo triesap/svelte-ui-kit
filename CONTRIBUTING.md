@@ -157,18 +157,30 @@ same commands locally as listed in the command map.
 
 ## Current scope
 
-Only help and version output are implemented: `--help`/`-h` and `--version`/`-V`
-exit 0, and every other argument list (including `--json` and `--cwd`, and all
-product command names) is rejected with a stderr diagnostic and exit code 2.
-Argument classification and result handling live in the pure `src/cli/args.ts`
-and `src/cli/run.ts` modules; `src/cli/main.ts` is the Node adapter that reads
-the bundled metadata next to the built module and applies stdout/stderr/exit.
-Readonly `ProjectInput`, `RegistrySnapshot` and `PlanningOutcome` interfaces
-under `src/project`, `src/registry` and `src/codegen` express later
-responsibilities without implementation; `tests/unit/boundaries.test.ts` guards
-the pure-import, injected-behavior, compile-negative and consumer-import
-boundaries. Component install/inspect/update work is planned but not implemented
-yet.
+`pnpm run test:package` inspects a real local tarball through the guarded
+`--suite package` lane; its isolated output is `.unit-test-build/package` and
+its inputs are included in typecheck. CI also runs this lane. Packing does not
+publish the package.
+
+The complete generator command surface is implemented: info/init/view/add/sync/
+doctor, JSON results, dry plans and guarded application. The shipped registry is
+currently empty while catalog adaptation proceeds. Synthetic registry fixtures
+are owned tests, not published releases. Follow the executable workflow in
+[README](README.md) and [the governing sequence](implementation/COMMIT_SEQUENCE.md).
+
+Keep read-only handlers and planning free of writes, dependency execution and
+application config evaluation. Apply only authenticated complete plans through
+the guarded transaction path. Preserve local source/CSS, explicit requests versus
+transitive ownership, original baselines and atomic cohort refusal. Test complete
+default/custom trees and actual generated consumer checks/build/SSR; passing
+helper tests do not establish whole feature or package acceptance.
+
+Implementation commits remain pending separate acceptance at sequence gates.
+Do not self-accept authored repairs or start the next sequence before its gate.
+Keep the two fixture-only upstream Bits union-complexity exceptions and four
+ignored reference tests explicit as open AC20 debt; do not weaken compiler,
+accessibility, SSR or original criteria to pass. No push, deployment,
+publication or reference-source edit is part of local generator qualification.
 
 ## Pull request checklist
 

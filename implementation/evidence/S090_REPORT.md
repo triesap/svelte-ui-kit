@@ -4,7 +4,7 @@ Author: Codex. Implemented/locally verified; independent S091 acceptance pending
 Original packaging and no-authoring-fallback criteria remain unchanged.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S090","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S090","kind":"report","commit":"e6f3723e94925921bf589d626cde4081bfbddfba","disposition":"candidate"}
 -->
 
 The existing explicit files/bin/module metadata is qualified against a real pnpm

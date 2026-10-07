@@ -43,3 +43,13 @@ and its freshly qualified guard are retained. No push or publication.
 
 Next: S079 after this green implementation commit is recorded within the
 existing exact RCLD-05 authorization. Completion of the MVP is not claimed.
+
+## Independent S091 boundary correction
+
+Earlier candidate checks did not cover late guarded apply refusal in init.
+Separate built-process review reproduced AUTHORITY_ANCESTOR_UNSAFE with exit1
+while add used unsafe11. S091 retains a four-case default/custom process
+regression and corrects init's refused-outcome failure classification under the
+original frozen exit contract. No guard, mutation boundary or acceptance criterion
+changed; the initial green subset alone did not establish this boundary. See
+[S091 evidence](S091_REPORT.md) and the mandatory independent sequence review.

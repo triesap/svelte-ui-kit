@@ -32,3 +32,13 @@ Logs:ignored `implementation/evidence/logs/codex-r10/s086-*`.
 No browser/reference or publication acceptance is inferred. Independent sequence
 review and remaining original gates/AC20 debt stay open. Next:S087 full workflow
 purity/idempotence, without hidden package-manager or project-config execution.
+
+## Independent S091 boundary correction
+
+Earlier candidate checks did not cover late guarded apply refusal in init.
+Separate built-process review reproduced AUTHORITY_ANCESTOR_UNSAFE with exit1
+while add used unsafe11. S091 retains a four-case default/custom process
+regression and corrects init's refused-outcome failure classification under the
+original frozen exit contract. No guard, mutation boundary or acceptance criterion
+changed; the initial green subset alone did not establish this boundary. See
+[S091 evidence](S091_REPORT.md) and the mandatory independent sequence review.

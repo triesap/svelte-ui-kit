@@ -161,5 +161,8 @@ export function initialize(
     };
   const outcome = applyPlan(validated.value);
   const envelope = applyOutcomeEnvelope("init", outcome, changes);
-  return { envelope: createEnvelope({ ...envelope, data }) };
+  return {
+    ...(outcome.kind === "refused" ? failure(outcome.issues) : {}),
+    envelope: createEnvelope({ ...envelope, data }),
+  };
 }

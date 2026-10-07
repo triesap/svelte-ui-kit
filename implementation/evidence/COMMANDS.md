@@ -53,7 +53,7 @@ rejected. Resolving that upstream exception remains an open release obligation.
 It checks out full history, sets up pnpm `11.22.0` and Node `24.21.0`, then runs
 the frozen strict install, installs bundled Chromium with system dependencies,
 and runs the format, lint, typecheck, unit, harness, integration, components,
-CLI smoke, consumer check, consumer SSR, browser, contract-validation and
+registry, packed inventory, CLI smoke, consumer check, consumer SSR, browser, contract-validation and
 contract-test lanes — the same commands recorded above.
 
 Actions are pinned to immutable revisions:
