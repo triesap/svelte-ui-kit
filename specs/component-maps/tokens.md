@@ -2,8 +2,9 @@
 
 The semantic and component-customization contracts are independently versioned
 v1 documents using the adopted target schemas. This is a design vocabulary
-mapping; token CSS installation and generated integration metadata follow at
-S093/S094, and computed browser behavior follows at S095.
+mapping. Actual CSS installation and generated integration metadata are
+implemented candidates at S093/S094; S095 adds computed contract probes. These
+probes do not replace the scheduled component wrapper end-to-end gates.
 
 Source: [immutable semantic contract](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/contracts/theme-v1.json)
 and [immutable customization contract](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/contracts/component-customization-v1.json).
@@ -115,7 +116,26 @@ Every radius property accepts the complete border-radius grammar: one to four
 length/percentage corners with optional slash-separated elliptical radii,
 calculated values, CSS variables and CSS-wide keywords. No restrictive @property
 registration or scalar-only schema is used. Invalid custom values use ordinary
-computed-value behavior; this document does not claim browser qualification.
+computed-value behavior. Bundled Chromium contract probes qualify all30 mapped
+fallback chains, exact component overrides, multi-corner/elliptical radii with
+lengths and percentages, calculated values and native initial/unset behavior.
+An invalid defined component property computes the radius to0px; it does not
+activate the `var()` fallback. Removing the property or using initial/unset at
+the document root restores the fallback. No restrictive registration is used.
+
+The maintained production consumer uses byte-exact local projections of the
+actual registry CSS/customization inputs. `fixture:tokens:check` and the browser
+gate reject stale copies; `fixture:tokens:generate` refreshes them. This keeps
+temporary consumer copies independent of the authoring directory. Document
+placement inherits document tokens; a suitable custom host preserves its
+ancestor theme scope. This qualifies CSS inheritance, not portal runtime.
+
+Measured default foreground/background contrast observations in bundled
+Chromium: text/canvas16.96, primary17.74, info4.10, success3.30, warning5.57 and
+danger4.83. These are measured pairs only; text size, state, component roles and
+application themes require their own assessment. In particular the info/success
+pairs do not establish blanket normal-text compliance. Original source defaults
+remain unchanged; no palette requirement or accessibility waiver is invented.
 
 Runtime non-radius customization hooks are mapped and qualified with their
 scheduled component families from actual source CSS. Semantic defaults and

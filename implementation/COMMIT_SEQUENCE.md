@@ -17,12 +17,12 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S094 — Emit truthful token and theme integration metadata**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
+- Active implementation checkpoint: **S095 — Qualify token override and radius fallback behavior**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **91 / 203**. Remaining: **112 / 203**.
-- Committed pending review: **2 / 203**. Authored batch range: **S092–S093**.
+- Committed pending review: **3 / 203**. Authored batch range: **S092–S094**.
 - Completed RCLD sequences: **5 / 11**. Remaining: **6 / 11**.
-- Last safe target commit: `62872a0c987e7a3e1f906b733320b2ad204c846e`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `3fa3411ee14fecaf78c0ccb89cb79bcc14cddb9c`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -158,6 +158,18 @@ This introduces no command/option, changes no exit vocabulary and relaxes no
 write boundary. Version's existing standalone grammar remains unchanged.
 Shared output adapters keep transient transaction identifiers out of semantic
 results and distinguish planned/applied/committed-with-cleanup outcomes.
+
+#### S095 computed-contract qualification decision
+
+Use the actual authored token stylesheet and independent customization mapping
+in the maintained production-built consumer route. Representative contract
+probes qualify fallback expressions; they do not stand in for scheduled actual
+component wrappers. Test all mapped radius properties, each precedence level,
+full multi-corner/elliptical grammar, native invalid-value behavior and shape
+exceptions. Theme/document/custom-host tests qualify CSS inheritance without
+claiming a generated portal implementation. Record measured baseline contrast
+pairs without a blanket accessibility claim. Keep the shared browser issue
+collector and owned ephemeral server. Family end-to-end gates remain intact.
 
 #### S094 metadata authority and reserved-path decision
 
@@ -5992,8 +6004,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S091 | RCLD-05  | S090       | complete                 | `c6aaf147dbf6316a96420fd5136a717f3665f711` |
 | S092 | RCLD-06  | S091       | committed_pending_review | `039684ce57d9b81c0c975e5ab2cd4b55fa6a06f5` |
 | S093 | RCLD-06  | S092       | committed_pending_review | `62872a0c987e7a3e1f906b733320b2ad204c846e` |
-| S094 | RCLD-06  | S093       | in_progress              | —                                          |
-| S095 | RCLD-06  | S094       | not_started              | —                                          |
+| S094 | RCLD-06  | S093       | committed_pending_review | `3fa3411ee14fecaf78c0ccb89cb79bcc14cddb9c` |
+| S095 | RCLD-06  | S094       | in_progress              | —                                          |
 | S096 | RCLD-06  | S095       | not_started              | —                                          |
 | S097 | RCLD-06  | S096       | not_started              | —                                          |
 | S098 | RCLD-06  | S097       | not_started              | —                                          |

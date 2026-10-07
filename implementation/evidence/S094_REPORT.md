@@ -4,7 +4,7 @@ Author: Codex. Candidate; separate S115 acceptance remains required.
 Previously accepted S001–S091 and original checkpoint definitions are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S094","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S094","kind":"report","commit":"3fa3411ee14fecaf78c0ccb89cb79bcc14cddb9c","disposition":"candidate"}
 -->
 
 The CSS-only tokens manifest explicitly references the independent semantic and

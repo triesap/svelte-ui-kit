@@ -1,0 +1,187 @@
+{
+  "id": "urn:svelte-ui-kit:component-customization:v1",
+  "contractVersion": 1,
+  "description": "Independent inherited radius overrides, including exact shape-critical component overrides.",
+  "properties": [
+    {
+      "name": "--kit-radius-default",
+      "scope": "semantic",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-md)"
+    },
+    {
+      "name": "--kit-radius-control",
+      "scope": "semantic",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-default, var(--kit-radius-md))"
+    },
+    {
+      "name": "--kit-radius-surface",
+      "scope": "semantic",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-default, var(--kit-radius-lg))"
+    },
+    {
+      "name": "--kit-radius-overlay",
+      "scope": "semantic",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-default, var(--kit-radius-md))"
+    },
+    {
+      "name": "--kit-radius-indicator",
+      "scope": "semantic",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-default, var(--kit-radius-full))"
+    },
+    {
+      "name": "--kit-alert-radius",
+      "scope": "alert",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-surface, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-avatar-radius",
+      "scope": "avatar",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-full)"
+    },
+    {
+      "name": "--kit-badge-radius",
+      "scope": "badge",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-indicator, var(--kit-radius-default, var(--kit-radius-full)))"
+    },
+    {
+      "name": "--kit-button-radius",
+      "scope": "button",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-card-radius",
+      "scope": "card",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-surface, var(--kit-radius-default, var(--kit-radius-lg)))"
+    },
+    {
+      "name": "--kit-checkbox-radius",
+      "scope": "checkbox",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-sm)))"
+    },
+    {
+      "name": "--kit-collapsible-trigger-radius",
+      "scope": "collapsible",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-dialog-trigger-radius",
+      "scope": "dialog",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-dialog-close-radius",
+      "scope": "dialog",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-dialog-radius",
+      "scope": "dialog",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-overlay, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-field-surface-radius",
+      "scope": "field",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-surface, var(--kit-radius-default, var(--kit-field-control-radius, var(--kit-radius-md))))"
+    },
+    {
+      "name": "--kit-field-control-radius",
+      "scope": "field",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-input-radius",
+      "scope": "field",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-field-control-radius, var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md))))"
+    },
+    {
+      "name": "--kit-select-radius",
+      "scope": "field",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-field-control-radius, var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md))))"
+    },
+    {
+      "name": "--kit-textarea-radius",
+      "scope": "field",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-field-control-radius, var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md))))"
+    },
+    {
+      "name": "--kit-menu-trigger-radius",
+      "scope": "menu",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-menu-content-radius",
+      "scope": "menu",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-overlay, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-menu-item-radius",
+      "scope": "menu",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, calc(var(--kit-radius-md) - 2px)))"
+    },
+    {
+      "name": "--kit-progress-radius",
+      "scope": "progress",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-indicator, var(--kit-radius-default, var(--kit-radius-full)))"
+    },
+    {
+      "name": "--kit-radio-radius",
+      "scope": "radio",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-full)"
+    },
+    {
+      "name": "--kit-skeleton-radius",
+      "scope": "skeleton",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-surface, var(--kit-radius-default, var(--kit-radius-sm)))"
+    },
+    {
+      "name": "--kit-spinner-radius",
+      "scope": "spinner",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-full)"
+    },
+    {
+      "name": "--kit-switch-radius",
+      "scope": "switch",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-indicator, var(--kit-radius-default, var(--kit-radius-full)))"
+    },
+    {
+      "name": "--kit-switch-thumb-radius",
+      "scope": "switch",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-full)"
+    },
+    {
+      "name": "--kit-tabs-trigger-radius",
+      "scope": "tabs",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
+    }
+  ]
+}
