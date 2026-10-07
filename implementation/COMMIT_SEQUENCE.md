@@ -17,12 +17,12 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S097 — Generate the spinner component and CSS**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
+- Active implementation checkpoint: **S098 — Qualify spinner geometry and reduced motion**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **91 / 203**. Remaining: **112 / 203**.
-- Committed pending review: **5 / 203**. Authored batch range: **S092–S096**.
+- Committed pending review: **6 / 203**. Authored batch range: **S092–S097**.
 - Completed RCLD sequences: **5 / 11**. Remaining: **6 / 11**.
-- Last safe target commit: `67fb2e7f7b87427b9be23566f46c15e83b93fe59`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `1407358fc6a3d16233f91ee6b367fa6a7739d2c5`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -158,6 +158,19 @@ This introduces no command/option, changes no exit vocabulary and relaxes no
 write boundary. Version's existing standalone grammar remains unchanged.
 Shared output adapters keep transient transaction identifiers out of semantic
 results and distinguish planned/applied/committed-with-cleanup outcomes.
+
+#### S098 actual generated-consumer qualification decision
+
+Build separate owned default/custom consumers through the real init/add CLI and
+production scripts, then host their actual handlers through the shared owned
+browser server. Keep the reusable maintained fixture pristine for fresh-install
+and conflict controls. Store the Spinner route template outside its ordinary
+source tree and insert its explicit mapped UI import only into owned generated
+apps; unresolved imports or copied mock wrappers cannot pass as installation.
+Qualify default/overridden geometry, every native CSS hook, inherited themes,
+labels/decorative changes, caller attributes, reduced motion and browser issues.
+Retain source/lock/stylesheet/handler identities and cleanup owned servers/apps.
+This adjusts only fixture placement, not original runtime acceptance criteria.
 
 #### S097 registration and customization coupling decision
 
@@ -6035,8 +6048,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S094 | RCLD-06  | S093       | committed_pending_review | `3fa3411ee14fecaf78c0ccb89cb79bcc14cddb9c` |
 | S095 | RCLD-06  | S094       | committed_pending_review | `37ecdb2764ca7581d8a611affac0f565ddbfc5f5` |
 | S096 | RCLD-06  | S095       | committed_pending_review | `67fb2e7f7b87427b9be23566f46c15e83b93fe59` |
-| S097 | RCLD-06  | S096       | in_progress              | —                                          |
-| S098 | RCLD-06  | S097       | not_started              | —                                          |
+| S097 | RCLD-06  | S096       | committed_pending_review | `1407358fc6a3d16233f91ee6b367fa6a7739d2c5` |
+| S098 | RCLD-06  | S097       | in_progress              | —                                          |
 | S099 | RCLD-06  | S098       | not_started              | —                                          |
 | S100 | RCLD-06  | S099       | not_started              | —                                          |
 | S101 | RCLD-06  | S100       | not_started              | —                                          |

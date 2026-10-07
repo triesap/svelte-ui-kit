@@ -19,6 +19,8 @@ export interface FixtureServer {
 }
 
 export interface FixtureServerOptions {
+  /** Host an actual owned generated consumer instead of the maintained build. */
+  handler?: string;
   /** Override the launcher script (a narrow test-only seam). */
   launcher?: string;
   /** Override the child command, for a real spawn-failure control. */
@@ -34,7 +36,10 @@ export async function startFixtureServer(
 ): Promise<FixtureServer> {
   const server = startOwnedServer({
     command: options.command,
-    args: options.launcher ? [options.launcher] : [DEFAULT_LAUNCHER],
+    args: [
+      options.launcher ?? DEFAULT_LAUNCHER,
+      ...(options.handler ? [options.handler] : []),
+    ],
     env: options.env,
     startTimeoutMs: options.startTimeoutMs,
     stopTimeoutMs: options.stopTimeoutMs,

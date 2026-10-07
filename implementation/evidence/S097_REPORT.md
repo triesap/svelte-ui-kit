@@ -4,7 +4,7 @@ Author: Codex. Candidate; separate S115 acceptance remains pending.
 Original checkpoint criteria and independently accepted S001–S091 remain.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S097","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S097","kind":"report","commit":"1407358fc6a3d16233f91ee6b367fa6a7739d2c5","disposition":"candidate"}
 -->
 
 The real registry advertises native Spinner, SpinnerMode and SpinnerProps,
