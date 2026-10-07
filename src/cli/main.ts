@@ -18,7 +18,7 @@ import { runCli } from "./run.js";
  * not duplicate their dispatch.
  *
  * This entrypoint injects read-only info alongside help/version. It performs
- * no network access or filesystem writes, and it
+ * no network access or package installation, and it
  * exposes no consumer import surface. Product commands are added by later
  * checkpoints (S022–S023 freeze the command envelope).
  *
@@ -170,6 +170,11 @@ async function main(argv: readonly string[]): Promise<void> {
       ? (await import("./commands/view.js")).inspectView
       : undefined;
 
+  const init =
+    request.kind === "command" && request.command === "init"
+      ? (await import("./commands/init.js")).initialize
+      : undefined;
+
   // The adapter keeps metadata validation and the real process effects; the
   // shared executor performs the actual classified dispatch.
   process.exitCode = runCli(
@@ -180,6 +185,12 @@ async function main(argv: readonly string[]): Promise<void> {
       stderr: (text) => process.stderr.write(text),
     },
     {
+      ...(init === undefined
+        ? {}
+        : {
+            init: (request) =>
+              init(request, fileURLToPath(new URL("../../", import.meta.url))),
+          }),
       ...(info === undefined
         ? {}
         : {

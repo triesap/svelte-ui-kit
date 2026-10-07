@@ -4,7 +4,7 @@ Author: Codex. Implemented and locally verified; independent RCLD-05 acceptance
 is pending. Original checkpoint and contract acceptance criteria are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S080","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S080","kind":"report","commit":"e7cefb3c4de25d724bef624e47da00a05c205250","disposition":"candidate"}
 -->
 
 The executable lazily injects read-only registry view after valid argument

@@ -251,7 +251,6 @@ for (const args of jsonUsageFailures) {
 }
 
 const unsupportedCommands = [
-  ["init"],
   ["add", "button"],
   ["sync"],
   ["doctor"],
@@ -302,7 +301,6 @@ test("help, version and rejected argument lists never write to a seeded cwd", (t
     [""],
     ["--"],
     ["sync", "--json"],
-    ["init"],
     ["add", "button"],
     ["sync"],
     ["doctor", "--strict"],
