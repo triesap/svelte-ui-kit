@@ -1,5 +1,9 @@
 import { parse, parseCss } from "svelte/compiler";
 import { sha256Hex } from "../../codegen/digest.js";
+import {
+  isTokenMetadataPath,
+  parseTokenMetadataDocument,
+} from "../../registry/theme.js";
 import { projectRequests } from "../../registry/projection.js";
 import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
 /** Structural/dependency diagnosis is strictly read-only, including recovery. */
@@ -179,7 +183,22 @@ export function diagnose(
       continue;
     }
     try {
-      if (file.path.endsWith(".svelte")) parse(decoded.text, { modern: true });
+      if (isTokenMetadataPath(file.path, derived.stateDir)) {
+        const parsed = parseTokenMetadataDocument(
+          path.posix.basename(file.path),
+          JSON.parse(decoded.text),
+        );
+        if (!parsed.ok) {
+          record(
+            parsed.issues.map((entry) =>
+              issue(entry.code, entry.message, file.path),
+            ),
+            "DOCTOR_METADATA",
+          );
+          continue;
+        }
+      } else if (file.path.endsWith(".svelte"))
+        parse(decoded.text, { modern: true });
       else if (file.path.endsWith(".ts")) {
         const parsed = parseExportRegion(file.path, decoded.text);
         if (!parsed.ok) {

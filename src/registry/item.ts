@@ -107,6 +107,10 @@ export interface RegistryItem {
   readonly registryDependencies: readonly string[];
   readonly npmDependencies: readonly NpmRequirement[];
   readonly accessibility: AccessibilityMetadata;
+  readonly contracts?: {
+    readonly tokenContract: string;
+    readonly componentCustomization: string;
+  };
 }
 
 const KEBAB = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
@@ -120,7 +124,7 @@ const EXPORT_NAME = /^[A-Z][A-Za-z0-9]*$/;
  */
 export function isSafeTarget(
   value: unknown,
-  extension: ".svelte" | ".ts" | ".css" | null,
+  extension: ".svelte" | ".ts" | ".css" | ".json" | null,
 ): value is string {
   if (typeof value !== "string" || value.length === 0) return false;
   if (value.startsWith("/") || value.includes("\\") || value.endsWith("/")) {
@@ -430,6 +434,40 @@ export function parseRegistryItem(
           tests: rawAccessibility["tests"] as string[],
         };
 
+  const contracts = record["contracts"] as RegistryItem["contracts"];
+  if (contracts !== undefined) {
+    if (
+      id !== "tokens" ||
+      kind !== "foundation" ||
+      files.length !== 0 ||
+      exports.length !== 0 ||
+      styles.length !== 1 ||
+      styles[0]?.["target"] !== "kit.css" ||
+      styles[0]?.["blockId"] !== "tokens" ||
+      styles[0]?.["cohort"] !== "tokens"
+    ) {
+      issues.push(
+        issue(
+          "REGISTRY_CONTRACT_SCOPE",
+          "portable contracts belong only to the CSS-only tokens foundation and its tokens cohort",
+          locator,
+        ),
+      );
+    }
+    for (const source of [
+      contracts.tokenContract,
+      contracts.componentCustomization,
+    ]) {
+      if (!isSafeTarget(source, ".json"))
+        issues.push(
+          issue(
+            "REGISTRY_CONTRACT_PATH_INVALID",
+            "contract sources must be safe registry-relative JSON paths",
+            locator,
+          ),
+        );
+    }
+  }
   if (issues.length > 0) return fail(issues);
   return ok({
     schemaVersion: INITIAL_SCHEMA_VERSION,
@@ -466,6 +504,7 @@ export function parseRegistryItem(
       role: dependency["role"] as NpmRole,
     })),
     accessibility,
+    ...(contracts === undefined ? {} : { contracts: { ...contracts } }),
   });
 }
 

@@ -4,7 +4,7 @@ Author: Codex. Candidate; mandatory separate S115 acceptance remains pending.
 Previously accepted S001–S091 and original checkpoint criteria are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S093","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S093","kind":"report","commit":"62872a0c987e7a3e1f906b733320b2ad204c846e","disposition":"candidate"}
 -->
 
 The builtin registry now advertises the real CSS-only tokens foundation, with

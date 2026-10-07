@@ -17,6 +17,16 @@
     "styles"
   ],
   "properties": {
+    "contracts": {
+      "description": "Explicit independent source contracts for the CSS-only tokens foundation.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tokenContract", "componentCustomization"],
+      "properties": {
+        "tokenContract": { "type": "string", "minLength": 1 },
+        "componentCustomization": { "type": "string", "minLength": 1 }
+      }
+    },
     "schemaVersion": { "const": 1 },
     "id": {
       "type": "string",

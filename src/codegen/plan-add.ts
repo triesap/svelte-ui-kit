@@ -41,6 +41,8 @@ import {
 } from "../registry/dependency-plan.js";
 import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
 import { isCompoundComponent } from "../registry/item.js";
+import { projectThemeMetadata } from "./theme-integration.js";
+import { isTokenMetadataPath } from "../registry/theme.js";
 import {
   deriveKitPaths,
   parseKitConfig,
@@ -475,6 +477,18 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       hasConflict = true;
       continue;
     }
+    if (
+      item.id === "tokens" &&
+      item.contracts === undefined &&
+      lock?.files.some((file) =>
+        isTokenMetadataPath(file.path, derived.stateDir),
+      )
+    ) {
+      diagnostics.push(
+        "token contract removal is an unsupported downgrade; retire tokens explicitly instead of relabeling its metadata",
+      );
+      hasConflict = true;
+    }
     // Manifest-driven compound barrels: when a compound item declares part
     // targets, its directory `index.ts` is generated from those declarations
     // (a pre-authored template is not trusted as generation evidence) and the
@@ -531,6 +545,15 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       }
     }
     rootDeclarationsByItem.set(id, rootDeclarations);
+    for (const file of projectThemeMetadata(item, config)) {
+      incomingSources.push(file);
+      sourceMeta.set(file.path, {
+        owner: id,
+        cohort: "tokens",
+        version: item.manifest.version,
+        bytes: file.bytes,
+      });
+    }
     for (const file of item.files) {
       if (file.blockId !== null) continue;
       const logicalPath = joinLogical(config.uiDir, file.target);

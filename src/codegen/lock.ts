@@ -41,6 +41,7 @@ import {
   validateSemVer,
 } from "../registry/versions.js";
 import { KIT_CSS_NAME, ROOT_EXPORTS_NAME } from "../project/config.js";
+import { isTokenMetadataPath } from "../registry/theme.js";
 
 /** Schema document that owns the lock shape. */
 export const KIT_LOCK_SCHEMA = "kit-lock.schema.json";
@@ -400,7 +401,11 @@ export function parseKitLock(
       } else {
         paths.set(path, index);
       }
-      if (inReservedState(path)) {
+      const tokenMetadata =
+        isTokenMetadataPath(path, context.stateDir) &&
+        file["owner"] === "tokens" &&
+        file["cohort"] === "tokens";
+      if (inReservedState(path) && !tokenMetadata) {
         issues.push(
           issue(
             "LOCK_RESERVED_STATE",

@@ -41,6 +41,42 @@ export const KIT_LAYERS = [
 ] as const;
 export type KitLayer = (typeof KIT_LAYERS)[number];
 
+export const TOKEN_METADATA_NAMES = [
+  "token-contract.json",
+  "component-customization.json",
+  "theme-integration.json",
+] as const;
+
+export function tokenMetadataPaths(stateDir: string): readonly string[] {
+  return TOKEN_METADATA_NAMES.map((name) => `${stateDir}/${name}`);
+}
+
+export function isTokenMetadataPath(path: string, stateDir?: string): boolean {
+  return stateDir !== undefined && tokenMetadataPaths(stateDir).includes(path);
+}
+
+export function parseTokenMetadataDocument(
+  name: string,
+  value: unknown,
+): ModelResult<unknown> {
+  switch (name) {
+    case "token-contract.json":
+      return parseTokenContract(value);
+    case "component-customization.json":
+      return parseComponentCustomization(value);
+    case "theme-integration.json":
+      return parseThemeIntegration(value);
+    default:
+      return fail([
+        issue(
+          "TOKEN_METADATA_UNKNOWN",
+          "Unknown token metadata document.",
+          name,
+        ),
+      ]);
+  }
+}
+
 /**
  * Source-only Rust/Leptos identity markers. These identify the reference
  * implementation and must never appear in portable Svelte metadata.

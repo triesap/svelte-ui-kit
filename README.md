@@ -8,6 +8,8 @@ The generator implements `info`, `init`, `view`, `add`, `sync` and `doctor`, wit
 read-only planning and guarded recoverable application. The package is private
 and unpublished. The shipped registry includes the CSS-only `tokens` foundation;
 component items are still being qualified.
+Tokens installs independent token, component-customization and theme-integration
+metadata under the configured UI state directory, with normal lock baselines.
 Representative synthetic registries qualify source/CSS updates, retirement,
 conflicts and default/custom layouts in executable and generated-consumer tests.
 The component catalog and final platform/package/release acceptance remain in

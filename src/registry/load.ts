@@ -14,6 +14,13 @@
  */
 import { sha256Hex } from "../codegen/digest.js";
 import { registryStyleBody } from "../codegen/css.js";
+import { validateTokenDefaults } from "./token-css.js";
+import {
+  parseTokenContract,
+  parseComponentCustomization,
+  type TokenContract,
+  type ComponentCustomization,
+} from "./theme.js";
 import type { AssetProvider } from "./assets.js";
 import {
   fail,
@@ -48,6 +55,10 @@ export interface RegistrySnapshotItem {
   readonly manifestPath: string;
   readonly manifest: RegistryItem;
   readonly files: readonly RegistrySnapshotFile[];
+  readonly contracts?: {
+    readonly tokenContract: TokenContract;
+    readonly componentCustomization: ComponentCustomization;
+  };
 }
 
 export interface RegistrySnapshot {
@@ -199,6 +210,65 @@ export function loadRegistrySnapshot(
       continue;
     }
 
+    let contracts: RegistrySnapshotItem["contracts"];
+    if (item.contracts !== undefined) {
+      const values: unknown[] = [];
+      for (const source of [
+        item.contracts.tokenContract,
+        item.contracts.componentCustomization,
+      ]) {
+        const logical = registryAssetPath(source);
+        const bytes = provider.readBytes(logical);
+        if (!bytes.ok) {
+          issues.push(...bytes.issues);
+          values.push(undefined);
+          continue;
+        }
+        assetDigests.set(logical, sha256Hex(bytes.value));
+        try {
+          values.push(
+            JSON.parse(
+              new TextDecoder("utf-8", { fatal: true }).decode(bytes.value),
+            ),
+          );
+        } catch {
+          issues.push(
+            issue(
+              "REGISTRY_CONTRACT_INVALID",
+              "a contract asset must be valid UTF-8 JSON",
+              logical,
+            ),
+          );
+          values.push(undefined);
+        }
+      }
+      const token = parseTokenContract(
+        values[0],
+        registryAssetPath(item.contracts.tokenContract),
+        authority,
+      );
+      const customization = parseComponentCustomization(
+        values[1],
+        registryAssetPath(item.contracts.componentCustomization),
+        authority,
+      );
+      for (const result of [token, customization])
+        if (!result.ok)
+          issues.push(
+            ...result.issues.map((entry) =>
+              issue(
+                "REGISTRY_CONTRACT_INVALID",
+                entry.message,
+                manifestLogical,
+              ),
+            ),
+          );
+      if (token.ok && customization.ok)
+        contracts = deepFreeze({
+          tokenContract: token.value,
+          componentCustomization: customization.value,
+        });
+    }
     const files: RegistrySnapshotFile[] = [];
     const declared = [
       ...item.files.map((file) => ({
@@ -248,6 +318,17 @@ export function loadRegistrySnapshot(
           );
           continue;
         }
+        if (contracts !== undefined) {
+          const defaults = validateTokenDefaults(
+            style.value,
+            contracts.tokenContract,
+            logicalSource,
+          );
+          if (!defaults.ok) {
+            issues.push(...defaults.issues);
+            continue;
+          }
+        }
       }
       const digest = sha256Hex(bytes.value);
       assetDigests.set(logicalSource, digest);
@@ -271,6 +352,7 @@ export function loadRegistrySnapshot(
         manifestPath: manifestLogical,
         manifest: item,
         files: Object.freeze(files),
+        ...(contracts === undefined ? {} : { contracts }),
       }),
     );
   }

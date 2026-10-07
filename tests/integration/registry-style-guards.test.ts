@@ -41,6 +41,8 @@ for (const [label, body] of malformed)
       const assets = [
         "registry/foundation/tokens.json",
         "registry/styles/tokens.css",
+        "registry/contracts/theme-v1.json",
+        "registry/contracts/component-customization-v1.json",
       ].map((file) => ({
         path: file,
         digest: sha256Hex(readFileSync(path.join(fixture.pkg, file))),

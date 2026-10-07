@@ -81,6 +81,57 @@ function codes(result: ReturnType<typeof parseKitLock>): string[] {
   return result.ok ? [] : result.issues.map((entry) => entry.code);
 }
 
+test("token metadata exception preserves operational state, owner, cohort and lexical boundaries", () => {
+  const tokenItem = {
+    id: "tokens",
+    version: "0.1.0",
+    digest: H("c"),
+    origin: "explicit",
+  };
+  const metadata = (path: string, owner = "tokens", cohort = "tokens") => ({
+    ...file(path, owner),
+    cohort,
+  });
+  const value = (entry: Record<string, unknown>) =>
+    base({ requested: ["tokens"], items: [tokenItem], files: [entry] });
+  for (const name of [
+    "token-contract.json",
+    "component-customization.json",
+    "theme-integration.json",
+  ]) {
+    const path = `${CONTEXT.stateDir}/${name}`;
+    assert.equal(parseKitLock(value(metadata(path)), "lock", CONTEXT).ok, true);
+    for (const entry of [
+      metadata(path, "button"),
+      metadata(path, "tokens", "core"),
+      metadata(path.toUpperCase()),
+      metadata(path + "/nested.json"),
+      metadata(`${CONTEXT.stateDir}/other/${name}`),
+    ]) {
+      assert.equal(
+        parseKitLock(value(entry), "lock", CONTEXT).ok,
+        false,
+        JSON.stringify(entry),
+      );
+    }
+  }
+  for (const name of [
+    "kit.json",
+    "kit.lock.json",
+    ".transient/owner.json",
+    "arbitrary.json",
+  ])
+    assert.ok(
+      codes(
+        parseKitLock(
+          value(metadata(`${CONTEXT.stateDir}/${name}`)),
+          "lock",
+          CONTEXT,
+        ),
+      ).includes("LOCK_RESERVED_STATE"),
+    );
+});
+
 interface NegativeCase {
   readonly name: string;
   readonly fields: Record<string, unknown>;

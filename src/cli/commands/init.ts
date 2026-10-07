@@ -17,6 +17,7 @@ import { composeApplyPlan } from "../../codegen/compose.js";
 import { applyPlan, validateApplyPlan } from "../../codegen/apply.js";
 import { createAssetProvider } from "../../registry/assets.js";
 import { loadRegistrySnapshot } from "../../registry/load.js";
+import { tokenMetadataPaths } from "../../registry/theme.js";
 import { issue, type ModelIssue } from "../../registry/errors.js";
 import type { InfoResult } from "./info.js";
 
@@ -72,6 +73,7 @@ export function initialize(
   const snapshot = captureSnapshot(selected.value.root, [
     paths.stateDir + "/kit.json",
     paths.stateDir + "/kit.lock.json",
+    ...tokenMetadataPaths(paths.stateDir),
     paths.rootExports,
     paths.kitCss,
     paths.themesCss,

@@ -17,12 +17,12 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S093 — Install the pure-CSS tokens foundation**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
+- Active implementation checkpoint: **S094 — Emit truthful token and theme integration metadata**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **91 / 203**. Remaining: **112 / 203**.
-- Committed pending review: **1 / 203**. Authored batch range: **S092–S092**.
+- Committed pending review: **2 / 203**. Authored batch range: **S092–S093**.
 - Completed RCLD sequences: **5 / 11**. Remaining: **6 / 11**.
-- Last safe target commit: `039684ce57d9b81c0c975e5ab2cd4b55fa6a06f5`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `62872a0c987e7a3e1f906b733320b2ad204c846e`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -158,6 +158,30 @@ This introduces no command/option, changes no exit vocabulary and relaxes no
 write boundary. Version's existing standalone grammar remains unchanged.
 Shared output adapters keep transient transaction identifiers out of semantic
 results and distinguish planned/applied/committed-with-cleanup outcomes.
+
+#### S094 metadata authority and reserved-path decision
+
+Tokens declares its semantic and customization source contract references
+explicitly in a strict optional `contracts` manifest record. Only the named
+CSS-only tokens foundation may own this record. Load/validate/freeze both
+original contracts and include their exact source digests in registry content
+identity before planning. Explicit references contribute to the unchanged raw
+manifest digest; no live recapture or arbitrary target is authorized.
+Generate the original token/theme records plus the independently versioned
+customization record at the three exact `_kit` metadata filenames. Record their
+actual output digests/owner/version/cohort in ordinary lock file lineage.
+The existing blanket reserved-state exclusion is obsolete for these originally
+scheduled public metadata files: allow only these three exact mapped names,
+owned by tokens; preserve every operational/config/lock/transient exclusion and
+all path/alias/overlap safeguards. This narrow exception implements the original
+GENERATED_LAYOUT and S094 criteria, not arbitrary state writes or a schema bypass.
+Add them to original capture, immutable planner/composition authority, atomic
+cohort comparison, retirement and read-only JSON diagnosis. Shared token CSS and
+contract metadata remain one compatible cohort. Unknown contract versions still
+refuse: synthetic supported v1 content revisions and explicit future-version
+refusal qualify upgrades, without inventing a v2 migration. Theme metadata's
+portal strategies describe document/custom-host CSS inheritance, not a generated
+portal runtime or Rust primitive claim; browser meaning remains S095/S114.
 
 #### S093 authored stylesheet boundary decision
 
@@ -5967,8 +5991,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S090 | RCLD-05  | S089       | complete                 | `c6aaf147dbf6316a96420fd5136a717f3665f711` |
 | S091 | RCLD-05  | S090       | complete                 | `c6aaf147dbf6316a96420fd5136a717f3665f711` |
 | S092 | RCLD-06  | S091       | committed_pending_review | `039684ce57d9b81c0c975e5ab2cd4b55fa6a06f5` |
-| S093 | RCLD-06  | S092       | in_progress              | —                                          |
-| S094 | RCLD-06  | S093       | not_started              | —                                          |
+| S093 | RCLD-06  | S092       | committed_pending_review | `62872a0c987e7a3e1f906b733320b2ad204c846e` |
+| S094 | RCLD-06  | S093       | in_progress              | —                                          |
 | S095 | RCLD-06  | S094       | not_started              | —                                          |
 | S096 | RCLD-06  | S095       | not_started              | —                                          |
 | S097 | RCLD-06  | S096       | not_started              | —                                          |

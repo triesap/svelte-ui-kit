@@ -53,6 +53,11 @@ import {
 } from "./exports.js";
 import { parseExportRegion } from "./export-parse.js";
 import type { KitLock } from "./lock.js";
+import {
+  isTokenMetadataPath,
+  tokenMetadataPaths,
+  parseThemeMetadata,
+} from "../registry/theme.js";
 import { parseSvelteLayout } from "./svelte-parse.js";
 
 /** One projected target result: `retire` means the path is absent afterwards. */
@@ -689,6 +694,60 @@ export function validateProjectedLock(
         }
       }
     }
+  }
+  if (
+    lock.files.some((file) => isTokenMetadataPath(file.path, batch.stateDir))
+  ) {
+    const documents: unknown[] = [];
+    for (const metadataPath of tokenMetadataPaths(batch.stateDir)) {
+      const owned = lock.files.some(
+        (file) =>
+          file.path === metadataPath &&
+          file.owner === "tokens" &&
+          file.cohort === "tokens",
+      );
+      if (!owned)
+        issues.push(
+          issue(
+            "PROJECTED_METADATA_INCOMPLETE",
+            "Token metadata must be owned as one complete tokens cohort.",
+            metadataPath,
+          ),
+        );
+      const bytes = requireContent(metadataPath, "token metadata");
+      try {
+        documents.push(
+          bytes === null
+            ? undefined
+            : JSON.parse(
+                new TextDecoder("utf-8", { fatal: true }).decode(bytes),
+              ),
+        );
+      } catch {
+        documents.push(undefined);
+        issues.push(
+          issue(
+            "PROJECTED_METADATA_INVALID",
+            "Token metadata must be valid UTF-8 JSON.",
+            metadataPath,
+          ),
+        );
+      }
+    }
+    const parsed = parseThemeMetadata({
+      tokenContract: documents[0],
+      componentCustomization: documents[1],
+      themeIntegration: documents[2],
+    });
+    if (!parsed.ok) issues.push(...parsed.issues);
+    else if (parsed.value.themeIntegration.stylesheet !== "kit.css")
+      issues.push(
+        issue(
+          "PROJECTED_METADATA_STYLESHEET",
+          "Token metadata must describe the mapped kit.css stylesheet.",
+          tokenMetadataPaths(batch.stateDir)[2],
+        ),
+      );
   }
   for (const file of lock.files) {
     requirePresent(file.path, "PROJECTED_OWNERSHIP_MISSING", "owned file");

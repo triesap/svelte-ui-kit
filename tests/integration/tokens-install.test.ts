@@ -99,7 +99,15 @@ for (const custom of [false, true])
       );
       assert.deepEqual(desired.requested, ["tokens"]);
       assert.deepEqual(lock.requested, ["tokens"]);
-      assert.deepEqual(lock.files, []);
+      assert.equal(lock.files.length, 3);
+      for (const file of lock.files) {
+        assert.equal(file.owner, "tokens");
+        assert.equal(file.cohort, "tokens");
+        assert.equal(
+          file.baseHash,
+          sha256Hex(readFileSync(path.join(fixture.root, file.path))),
+        );
+      }
       assert.equal(lock.cssBlocks.length, 1);
       assert.equal(lock.cssBlocks[0].owner, "tokens");
       assert.equal(
@@ -114,6 +122,7 @@ for (const custom of [false, true])
         ),
       );
       const after = snapshotTree(fixture.root);
+      assert.equal(run(fixture.root, ["init"]).status, "no_change");
       assert.equal(run(fixture.root, ["add", "tokens"]).status, "no_change");
       assert.equal(run(fixture.root, ["sync"]).status, "no_change");
       assert.deepEqual(snapshotTree(fixture.root), after);

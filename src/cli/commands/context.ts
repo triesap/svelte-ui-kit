@@ -1,4 +1,5 @@
 import { projectRequests } from "../../registry/projection.js";
+import { tokenMetadataPaths } from "../../registry/theme.js";
 /** Capture complete command planning authority; never fill snapshot gaps live. */
 import path from "node:path";
 import type { CommandRequest } from "../args.js";
@@ -100,13 +101,17 @@ export function captureCommandContext(
   if (!closure.ok) return closure;
   for (const item of registry.value.items.filter((entry) =>
     closure.value.order.includes(entry.id),
-  ))
+  )) {
+    if (item.contracts !== undefined)
+      for (const metadataPath of tokenMetadataPaths(derived.stateDir))
+        paths.add(metadataPath);
     for (const file of item.files)
       paths.add(
         file.blockId === null
           ? `${config.uiDir}/${file.target}`
           : `${config.stylesDir}/${file.target}`,
       );
+  }
   for (const file of old?.files ?? []) paths.add(file.path);
   for (const file of old?.cssBlocks ?? []) paths.add(file.path);
   for (const file of old?.integrations ?? []) paths.add(file.path);

@@ -53,9 +53,10 @@ foundation `tokens` body and its `baseline` hashes exactly that owned body, whil
 individual managed-block ownership by itself (registry-owned `tokens` retain
 ordinary `cssBlocks[]` item lineage). Neither contract is a schema expansion,
 tombstone store or automatic migration. When parsed with a validated
-configuration mapping, no lock record may live inside the reserved `_kit` state
-directory, `files[]` must live under the UI root and `cssBlocks[]` under the
-styles root.
+configuration mapping, operational `_kit` state paths remain reserved. The
+only file exceptions are the three exact public token metadata names below,
+owned by `tokens` in its `tokens` cohort. Other `files[]` must live under the UI
+root and `cssBlocks[]` under the styles root.
 
 For each managed target distinguish the base last accepted upstream content, current local observation, and incoming registry content. Persistent base hash is required; local hash can be observed per plan. Do not invent an automatic merge requiring base bytes when only hashes exist. Transient transaction backups are not a general merge history database.
 
@@ -66,6 +67,12 @@ A preserved customized target retains its legitimate upstream base so future inc
 `token-contract.json` describes semantic token names/types/default expectations and a versioned contract identity. `theme-integration.json` identifies stylesheet path, layers, producer, relevant primitive compatibility, and actual portal integration characteristics. Preserve separation between theme tokens and component customization properties. Do not copy the Leptos identity/presence/portal ABI numbers or Rust type names into a Svelte claim.
 
 The three metadata contracts are independent and share only identity references.
+The exact generated names are `token-contract.json`,
+`component-customization.json` and `theme-integration.json`. Tokens declares
+its semantic and customization source references in the optional `contracts`
+manifest record. Their exact source bytes contribute to registry content
+identity; the explicit references contribute to the unchanged manifest digest.
+Generated JSON bytes retain ordinary file baseline/version/cohort lineage.
 The `theme-integration` layer order is the exact ordered CSS cascade contract
 `["svelte-ui-kit.tokens", "svelte-ui-kit.themes", "svelte-ui-kit.components"]`
 (a sorted set is not cascade order); its `stylesheet` is a safe logical

@@ -26,6 +26,7 @@ src/
       kit.json
       kit.lock.json
       token-contract.json
+      component-customization.json
       theme-integration.json
   styles/
     kit.css
