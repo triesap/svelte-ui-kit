@@ -3,7 +3,7 @@
 Author: Codex. Candidate; independent S115 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S112","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S112","kind":"report","commit":"c7fb18429f09d2c5bf5210962e366db51a78a0a5","disposition":"candidate"}
 -->
 
 Actual built CLI default/custom applications exercise the installed eight-part

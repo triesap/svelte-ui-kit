@@ -16,6 +16,24 @@ conflicts and default/custom layouts in executable and generated-consumer tests.
 The component catalog and final platform/package/release acceptance remain in
 progress under [the governing sequence](implementation/COMMIT_SEQUENCE.md).
 
+## Dialog portal themes
+
+Compose DialogRoot, Trigger, Portal, Overlay, Content, Title, optional Description
+and Close explicitly. Give Content an accessible name through Title or the
+native naming attributes. Put global theme selectors on a document ancestor
+when Portal uses its default body target: tokens scoped only around Trigger do
+not follow the portaled Content. For nested themes, use Portal's native `to`
+with a suitable host inside that theme. Token changes inherit immediately while
+open; the kit does not copy computed themes into inline styles.
+
+A custom host changes the clipping and stacking environment. A transformed
+ancestor can contain fixed-position Content, while `overflow: hidden` clips it
+and an isolated stacking context constrains its z-index. Use an unclipped host
+with a suitable stacking context; the kit does not move it elsewhere to conceal
+these consequences. Global and nested hosts, live changes and an intentionally
+unsuitable transformed clipping host are tested against actual CLI-installed
+applications in default and custom source layouts.
+
 ## Use the local built CLI
 
 Build from this clone after installing its frozen development dependencies.

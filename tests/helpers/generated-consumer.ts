@@ -155,5 +155,5 @@ export const buildSwitchConsumer = (custom: boolean) =>
 
 export const buildDialogConsumer = (
   custom: boolean,
-  qualification: "dialog" | "dialog-interactions" = "dialog",
+  qualification: "dialog" | "dialog-interactions" | "dialog-themes" = "dialog",
 ) => buildComponentConsumer("dialog", custom, qualification);
