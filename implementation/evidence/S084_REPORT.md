@@ -1,10 +1,17 @@
 # S084 step report — Read-only structural doctor
 
+Current disposition: independently accepted on corrected combined candidate
+`dbd54903a5954d1139cda63413a041498379edc8`, with separate review evidence at
+`c6aaf147dbf6316a96420fd5136a717f3665f711`. See the matching review and
+[RCLD-05 qualification](RCLD-05_QUALIFICATION.md). Original implementation
+provenance and author observations below remain historical evidence; earlier
+pending-acceptance wording is superseded by this disposition.
+
 Author: Codex. Implemented and locally verified; separate RCLD-05 acceptance
 remains pending. Original S084 requirements and contracts are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S084","kind":"report","commit":"fda60ed7e0f4b02363bae1b1cbd09d7f83026533","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S084","kind":"report","commit":"c6aaf147dbf6316a96420fd5136a717f3665f711","disposition":"implemented"}
 -->
 
 Doctor consumes captured selected-project/config/lock/incoming inventory and

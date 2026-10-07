@@ -1,3 +1,11 @@
+Current qualification: original S001–S091 are independently accepted. RCLD-05
+candidate `dbd54903a5954d1139cda63413a041498379edc8` is accepted at evidence
+`c6aaf147dbf6316a96420fd5136a717f3665f711`; see RCLD-05_QUALIFICATION.md.
+Continue original S092–S115 under `pfc all`, with independent S115 acceptance
+before S116. AC20 and later catalog/platform/package/release criteria remain.
+The following prior return-review paragraphs are historical, resolved by the
+committed RCLD-04 and RCLD-05 qualifications; they do not impose a new dispatch.
+
 # Verification commands and known-good commits
 
 Independent review at `a176387` preserves the R9 direct repairs but reproduces

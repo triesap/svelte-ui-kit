@@ -1,10 +1,17 @@
 # S090 step report — Packed standalone inventory
 
+Current disposition: independently accepted on corrected combined candidate
+`dbd54903a5954d1139cda63413a041498379edc8`, with separate review evidence at
+`c6aaf147dbf6316a96420fd5136a717f3665f711`. See the matching review and
+[RCLD-05 qualification](RCLD-05_QUALIFICATION.md). Original implementation
+provenance and author observations below remain historical evidence; earlier
+pending-acceptance wording is superseded by this disposition.
+
 Author: Codex. Implemented/locally verified; independent S091 acceptance pending.
 Original packaging and no-authoring-fallback criteria remain unchanged.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S090","kind":"report","commit":"e6f3723e94925921bf589d626cde4081bfbddfba","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S090","kind":"report","commit":"c6aaf147dbf6316a96420fd5136a717f3665f711","disposition":"implemented"}
 -->
 
 The existing explicit files/bin/module metadata is qualified against a real pnpm

@@ -1,10 +1,17 @@
 # S091 step report — Working generator workflow and cumulative qualification
 
+Current disposition: independently accepted on corrected combined candidate
+`dbd54903a5954d1139cda63413a041498379edc8`, with separate review evidence at
+`c6aaf147dbf6316a96420fd5136a717f3665f711`. See the matching review and
+[RCLD-05 qualification](RCLD-05_QUALIFICATION.md). Original implementation
+provenance and author observations below remain historical evidence; earlier
+pending-acceptance wording is superseded by this disposition.
+
 Author: Codex. Implementation candidate; mandatory separate independent S091
 acceptance is required before S092. No full MVP/catalog/release completion claim.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S091","kind":"report","commit":"dbd54903a5954d1139cda63413a041498379edc8","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S091","kind":"report","commit":"c6aaf147dbf6316a96420fd5136a717f3665f711","disposition":"implemented"}
 -->
 
 README/CONTRIBUTING now describe implemented info/init/view/add/sync/doctor,

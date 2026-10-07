@@ -1,11 +1,18 @@
 # S078 step report — Render human and JSON command outcomes
 
+Current disposition: independently accepted on corrected combined candidate
+`dbd54903a5954d1139cda63413a041498379edc8`, with separate review evidence at
+`c6aaf147dbf6316a96420fd5136a717f3665f711`. See the matching review and
+[RCLD-05 qualification](RCLD-05_QUALIFICATION.md). Original implementation
+provenance and author observations below remain historical evidence; earlier
+pending-acceptance wording is superseded by this disposition.
+
 Author: Codex. Disposition: implemented and locally verified; separate RCLD-05
 acceptance remains pending. Original S078 criteria and R09/R15/R30/R32/R33/R34
 apply without modification.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S078","kind":"report","commit":"eb210b0de991c8a36b53dd444930622cb5c4960f","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S078","kind":"report","commit":"c6aaf147dbf6316a96420fd5136a717f3665f711","disposition":"implemented"}
 -->
 
 `src/cli/output.ts` provides one pure JSON/human channel renderer and adapters

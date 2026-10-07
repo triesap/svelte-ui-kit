@@ -1,10 +1,17 @@
 # S080 step report — Bundled item metadata and source
 
+Current disposition: independently accepted on corrected combined candidate
+`dbd54903a5954d1139cda63413a041498379edc8`, with separate review evidence at
+`c6aaf147dbf6316a96420fd5136a717f3665f711`. See the matching review and
+[RCLD-05 qualification](RCLD-05_QUALIFICATION.md). Original implementation
+provenance and author observations below remain historical evidence; earlier
+pending-acceptance wording is superseded by this disposition.
+
 Author: Codex. Implemented and locally verified; independent RCLD-05 acceptance
 is pending. Original checkpoint and contract acceptance criteria are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S080","kind":"report","commit":"e7cefb3c4de25d724bef624e47da00a05c205250","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S080","kind":"report","commit":"c6aaf147dbf6316a96420fd5136a717f3665f711","disposition":"implemented"}
 -->
 
 The executable lazily injects read-only registry view after valid argument

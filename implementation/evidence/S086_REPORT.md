@@ -1,10 +1,17 @@
 # S086 step report — Executable exit and JSON matrix
 
+Current disposition: independently accepted on corrected combined candidate
+`dbd54903a5954d1139cda63413a041498379edc8`, with separate review evidence at
+`c6aaf147dbf6316a96420fd5136a717f3665f711`. See the matching review and
+[RCLD-05 qualification](RCLD-05_QUALIFICATION.md). Original implementation
+provenance and author observations below remain historical evidence; earlier
+pending-acceptance wording is superseded by this disposition.
+
 Author: Codex. Implemented and locally verified; separate RCLD-05 acceptance
 remains pending. Original S086 criteria and frozen protocol are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S086","kind":"report","commit":"5c70614220fb82b3fc55510df4f0d1931122a531","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S086","kind":"report","commit":"c6aaf147dbf6316a96420fd5136a717f3665f711","disposition":"implemented"}
 -->
 
 The built executable is qualified across all approved commands and frozen exit

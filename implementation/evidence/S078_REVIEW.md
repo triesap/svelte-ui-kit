@@ -1,5 +1,9 @@
 # S078 independent review
 
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S078","kind":"review","commit":"c6aaf147dbf6316a96420fd5136a717f3665f711","disposition":"accepted"}
+-->
+
 Reviewer: separate Codex reviewer, not an author of product changes. Date:
 2026-10-07. Scope: Render human and JSON command outcomes.
 

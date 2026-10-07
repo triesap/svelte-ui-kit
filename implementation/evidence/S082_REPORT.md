@@ -1,10 +1,17 @@
 # S082 step report — Explicit add through guarded apply
 
+Current disposition: independently accepted on corrected combined candidate
+`dbd54903a5954d1139cda63413a041498379edc8`, with separate review evidence at
+`c6aaf147dbf6316a96420fd5136a717f3665f711`. See the matching review and
+[RCLD-05 qualification](RCLD-05_QUALIFICATION.md). Original implementation
+provenance and author observations below remain historical evidence; earlier
+pending-acceptance wording is superseded by this disposition.
+
 Author: Codex. Implemented and locally verified; independent RCLD-05 acceptance
 remains pending. Original checkpoint/contract criteria are unchanged.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S082","kind":"report","commit":"6fc4e612b82ffe4f2bea57d7ced4aafc1d1fd97c","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S082","kind":"report","commit":"c6aaf147dbf6316a96420fd5136a717f3665f711","disposition":"implemented"}
 -->
 
 The executable accepts the frozen one-item grammar and captures effective

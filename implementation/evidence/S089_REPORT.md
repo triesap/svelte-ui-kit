@@ -1,10 +1,17 @@
 # S089 step report — Synthetic independent upgrades
 
+Current disposition: independently accepted on corrected combined candidate
+`dbd54903a5954d1139cda63413a041498379edc8`, with separate review evidence at
+`c6aaf147dbf6316a96420fd5136a717f3665f711`. See the matching review and
+[RCLD-05 qualification](RCLD-05_QUALIFICATION.md). Original implementation
+provenance and author observations below remain historical evidence; earlier
+pending-acceptance wording is superseded by this disposition.
+
 Author: Codex. Implemented/locally verified; mandatory independent S091
 acceptance remains pending. These fixtures are synthetic, not shipped releases.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S089","kind":"report","commit":"9330069735a26e70ee7055c14583836c9d1e17b6","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S089","kind":"report","commit":"c6aaf147dbf6316a96420fd5136a717f3665f711","disposition":"implemented"}
 -->
 
 A checked-in synthetic fixture independently varies registry release, card item

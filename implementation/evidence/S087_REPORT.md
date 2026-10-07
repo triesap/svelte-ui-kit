@@ -1,10 +1,17 @@
 # S087 step report — Complete workflow purity
 
+Current disposition: independently accepted on corrected combined candidate
+`dbd54903a5954d1139cda63413a041498379edc8`, with separate review evidence at
+`c6aaf147dbf6316a96420fd5136a717f3665f711`. See the matching review and
+[RCLD-05 qualification](RCLD-05_QUALIFICATION.md). Original implementation
+provenance and author observations below remain historical evidence; earlier
+pending-acceptance wording is superseded by this disposition.
+
 Author: Codex. Implemented and locally verified; independent RCLD-05 acceptance
 remains pending. Original S087 criteria are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S087","kind":"report","commit":"8b0da319b0a82ae21ee86393618ba175b53b6833","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S087","kind":"report","commit":"c6aaf147dbf6316a96420fd5136a717f3665f711","disposition":"implemented"}
 -->
 
 Actual built package workflows use default and explicit custom mapping (including
