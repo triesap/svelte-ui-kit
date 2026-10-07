@@ -10,7 +10,10 @@ import { sha256Hex } from "../../src/codegen/digest.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Build real CLI-installed applications; never mutate the maintained fixture. */
-function buildComponentConsumer(item: "spinner" | "button", custom: boolean) {
+function buildComponentConsumer(
+  item: "spinner" | "button" | "switch",
+  custom: boolean,
+) {
   const fixture = copyConsumerFixture();
   try {
     const config = custom
@@ -46,7 +49,9 @@ function buildComponentConsumer(item: "spinner" | "button", custom: boolean) {
             "spinner.svelte",
             "spinner.types.ts",
           ]
-        : ["spinner.svelte", "spinner.types.ts"];
+        : item === "switch"
+          ? ["switch.svelte", "switch.types.ts"]
+          : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
       assert.ok(
         readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
@@ -102,3 +107,6 @@ export const buildSpinnerConsumer = (custom: boolean) =>
   buildComponentConsumer("spinner", custom);
 export const buildButtonConsumer = (custom: boolean) =>
   buildComponentConsumer("button", custom);
+
+export const buildSwitchConsumer = (custom: boolean) =>
+  buildComponentConsumer("switch", custom);

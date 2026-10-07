@@ -17,12 +17,12 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S103 — Generate the primitive-backed Switch**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
+- Active implementation checkpoint: **S104 — Qualify Switch state, forms, RTL, and motion**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **91 / 203**. Remaining: **112 / 203**.
-- Committed pending review: **11 / 203**. Authored batch range: **S092–S102**.
+- Committed pending review: **12 / 203**. Authored batch range: **S092–S103**.
 - Completed RCLD sequences: **5 / 11**. Remaining: **6 / 11**.
-- Last safe target commit: `bf6813c1d38924300cd2a5732fcac7d70cc9c748`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `67b8a83f2978410d8e00092b5ca0e104147f8f5d`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -158,6 +158,34 @@ This introduces no command/option, changes no exit vocabulary and relaxes no
 write boundary. Version's existing standalone grammar remains unchanged.
 Shared output adapters keep transient transaction identifiers out of semantic
 results and distinguish planned/applied/committed-with-cleanup outcomes.
+
+#### S104 proven native form and production-direction repairs
+
+Actual generated default/custom Chromium fails reset coherence: the pinned
+Root HiddenInput has no reset bridge. Preserve exact public RootProps and
+behavioral Root/Thumb, withhold only Root name/value, and emit one named native
+checkbox sharing checked/initial defaultChecked and actual form attributes.
+The real framework checked-binding then fails canceled reset in both layouts:
+actual event.defaultPrevented is true but bound state resets anyway (59/61
+whole browser, two focused causal failures). Use native checked/onchange and a
+lifecycle-local associated-form reset listener. Settle after the full event task,
+check defaultPrevented, restore per-instance initialChecked only if allowed,
+and remove listeners/clear pending timers on teardown/form reassociation. This
+is a native form bridge, not a cloned primitive keyboard/state engine or new
+API. Preserve actual native external association and single input, upstream
+Root callbacks/ref semantics and SSR. Earlier S102/S103 upstream-input choice
+and the initial framework-binding repair are historical implementation
+provenance; evidence-backed corrections supersede those choices, not acceptance.
+
+The production CSS artifact lowers source :dir(rtl) into a language list,
+although the real Root matches :dir(rtl) and computes direction rtl; its Thumb
+still travels right. Preserve source travel distance, dimensions, hooks and
+motion semantics with logical margin-inline-start instead of physical transforms
+and the lossy selector. Qualify actual relative geometry in both directions,
+not a particular computed matrix used by the original failing probe. No consumer
+Vite configuration or browser baseline changes are authorized. Retain exact
+causal production artifact evidence and initial four failures; no acceptance
+before repaired actual consumer checks and separate S115 review.
 
 #### S102 exact pinned Switch composition decision
 
@@ -6093,8 +6121,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S100 | RCLD-06  | S099       | committed_pending_review | `77462f798ffc8949d215da6c2ac2e90fc9d659e3` |
 | S101 | RCLD-06  | S100       | committed_pending_review | `9d1796acae84e62c47f92ee834ff0f7382f8ce4e` |
 | S102 | RCLD-06  | S101       | committed_pending_review | `bf6813c1d38924300cd2a5732fcac7d70cc9c748` |
-| S103 | RCLD-06  | S102       | in_progress              | —                                          |
-| S104 | RCLD-06  | S103       | not_started              | —                                          |
+| S103 | RCLD-06  | S102       | committed_pending_review | `67b8a83f2978410d8e00092b5ca0e104147f8f5d` |
+| S104 | RCLD-06  | S103       | in_progress              | —                                          |
 | S105 | RCLD-06  | S104       | not_started              | —                                          |
 | S106 | RCLD-06  | S105       | not_started              | —                                          |
 | S107 | RCLD-06  | S106       | not_started              | —                                          |

@@ -4,7 +4,7 @@ Author: Codex. Candidate; independent S115 acceptance remains pending.
 Original checkpoint criteria and accepted S001–S091 remain preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S103","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S103","kind":"report","commit":"67b8a83f2978410d8e00092b5ca0e104147f8f5d","disposition":"candidate"}
 -->
 
 The native target wrapper imports actual Bits Switch Root/Thumb, binds checked

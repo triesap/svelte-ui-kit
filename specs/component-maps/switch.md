@@ -22,15 +22,27 @@ mergeProps implementation. The wrapper adds no custom handler or state machine.
 Native default type button, aria-checked, role=switch, data-state checked or
 unchecked and disabled come from the actual Root, not duplicated kit markup.
 
-Bits renders a HiddenInput when name is provided and checked determines its
-form contribution. Required, disabled, value and reset behavior must be tested
-against that actual input at S104; a visible role-switch alone does not qualify
-forms. Preserve upstream value typing rather than introducing an authored any
+The pinned Root HiddenInput lacks a checked binding/reset bridge. S104's actual
+consumer tests reproduced incoherent reset. The target therefore withholds only
+name/value from Root and emits exactly one named native Svelte checkbox sharing
+checked through native attributes/onchange. Per-instance initialChecked and
+native defaultChecked are retained. The pinned framework checked-binding resets
+state despite a canceled native event in actual browser probes, so a lifecycle
+associated-form reset listener settles after the full event task and respects
+defaultPrevented. It restores only the per-instance initial checked value and
+removes listeners/clears pending timers on teardown or reassociation. No global
+state or primitive keyboard/event implementation is cloned. Name/value,
+required, disabled and external form association are native input attributes;
+Root still owns keyboard, checked callbacks, ref and switch semantics. Unnamed
+controls create no form input. The field is offscreen via kit-switch-input CSS,
+not display:none; there is no native binding/state-machine clone or new API.
+Actual form values and resets are tested rather than inferred from role markup.
+Preserve upstream value typing rather than introducing an authored any
 workaround. Upstream declaration exceptions remain exact recorded AC20 debt.
 
 CSS adapts the full source Root/Thumb selectors into a managed switch block in
 the components layer. Checked track/Thumb data-state styling, focus-visible,
-disabled appearance, RTL negative translation and reduced-motion transition
+disabled appearance, RTL logical travel and reduced-motion transition
 removal remain native computed-style obligations. Thumb uses exact
 --kit-switch-thumb-radius then full-radius fallback; broad radius overrides
 cannot change its default circular geometry. Track uses the source indicator
@@ -50,3 +62,9 @@ Registry dependency tokens and npm runtime dependency bits-ui are explicit;
 no styled kit helper, runtime auto-install, global state or root barrel import
 is required. S103 proves generated source/initial SSR and S104 proves actual
 state bindings, callbacks, forms/reset/required/disabled, refs, RTL and motion.
+
+The actual production CSS compiler lowers :dir(rtl) into language selectors.
+Thumb travel is adapted to margin-inline-start with the same 0.875rem distance
+and duration/easing hooks, so direction changes work without config changes.
+Original dimensions, track colors, radius, disabled/focus and reduced-motion
+semantics remain. S104 qualifies physical relative travel in both directions.

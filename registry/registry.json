@@ -8,5 +8,5 @@
     { "id": "switch", "manifest": "ui/switch.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "c76fe608f975ee8283616da47e4cdcceccd578be7b18bb55c66314f7d6e87ff2"
+  "contentHash": "df92afa6743ef1f8beab50d7d8d5bec0da6ded6caad4f31434b1fbd6b5d0289d"
 }

@@ -52,17 +52,26 @@
     block-size: 0.875rem;
     border-radius: var(--kit-switch-thumb-radius, var(--kit-radius-full));
     background: var(--kit-switch-thumb-background, var(--kit-color-surface));
-    transform: translateX(0);
-    transition: transform
+    margin-inline-start: 0;
+    transition: margin-inline-start
       var(--kit-switch-transition-duration, var(--kit-duration-fast))
       var(--kit-switch-transition-timing, var(--kit-easing-standard));
   }
   .kit-switch[data-state="checked"] .kit-switch-thumb {
-    transform: translateX(0.875rem);
+    margin-inline-start: 0.875rem;
   }
 
-  .kit-switch:dir(rtl)[data-state="checked"] .kit-switch-thumb {
-    transform: translateX(-0.875rem);
+  .kit-switch-input {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    border: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   @media (prefers-reduced-motion: reduce) {
