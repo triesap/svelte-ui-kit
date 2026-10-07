@@ -4,7 +4,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { cliPackage, write } from "../helpers/cli-package.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { computeRegistryContentHash } from "../../src/registry/model.js";
+import { refreshRegistryContent } from "../helpers/registry-content.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import {
   deriveKitPaths,
@@ -28,28 +28,8 @@ function fixture() {
   cpSync("registry", path.join(owned.pkg, "registry"), { recursive: true });
   return owned;
 }
-function rehash(pkg: string) {
-  const root = json(pkg, "registry/registry.json");
-  const manifest = json(pkg, "registry/foundation/tokens.json");
-  const assets = [
-    "registry/foundation/tokens.json",
-    "registry/styles/tokens.css",
-    ...Object.values(manifest.contracts ?? {}).map(
-      (value) => `registry/${value}`,
-    ),
-  ].map((file) => ({
-    path: file,
-    digest: sha256Hex(readFileSync(path.join(pkg, file))),
-  }));
-  write(
-    pkg,
-    "registry/registry.json",
-    JSON.stringify({
-      ...root,
-      contentHash: computeRegistryContentHash(root, assets),
-    }),
-  );
-}
+const rehash = refreshRegistryContent;
+
 function run(owned: ReturnType<typeof fixture>, args: string[], status = 0) {
   const result = owned.run(args);
   assert.equal(result.status, status, result.stdout + result.stderr);
@@ -114,6 +94,7 @@ test("actual metadata independently parses, tracks exact bytes and shares CSS co
       assert.equal(parsed.value.themeIntegration.producer, "svelte-ui-kit");
       assert.equal(parsed.value.tokenContract.tokens.length, 44);
     }
+    const priorFiles = json(owned.root, `${state}/kit.lock.json`).files;
     revision(owned.pkg);
     run(owned, ["sync"]);
     const lock = json(owned.root, `${state}/kit.lock.json`);
@@ -128,7 +109,11 @@ test("actual metadata independently parses, tracks exact bytes and shares CSS co
       );
       assert.equal(
         file.itemVersion,
-        file.path === paths[0] ? "0.2.0" : "0.1.0",
+        file.path === paths[0]
+          ? "0.2.0"
+          : priorFiles.find(
+              (prior: { path: string }) => prior.path === file.path,
+            ).itemVersion,
       );
     }
     assert.equal(
@@ -235,7 +220,9 @@ test("original loaded contract authority cannot be changed by provider edits or 
     const loaded = loadRegistrySnapshot(createAssetProvider(owned.pkg));
     assert.equal(loaded.ok, true, JSON.stringify(loaded));
     if (!loaded.ok) return;
-    const original = loaded.value.items[0]!.contracts!;
+    const original = loaded.value.items.find(
+      (item) => item.id === "tokens",
+    )!.contracts!;
     const before = JSON.stringify(original);
     revision(owned.pkg);
     assert.equal(JSON.stringify(original), before);

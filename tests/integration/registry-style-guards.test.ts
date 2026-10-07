@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
-import { cpSync, readFileSync, rmSync } from "node:fs";
+import { cpSync, rmSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import { cliPackage, write } from "../helpers/cli-package.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { computeRegistryContentHash } from "../../src/registry/model.js";
-import { sha256Hex } from "../../src/codegen/digest.js";
+import { refreshRegistryContent } from "../helpers/registry-content.js";
 import { renderManagedBlock } from "../../src/codegen/css.js";
 
 const malformed = [
@@ -35,26 +34,7 @@ for (const [label, body] of malformed)
       });
       assert.equal(fixture.run(["init"]).status, 0);
       write(fixture.pkg, "registry/styles/tokens.css", body);
-      const root = JSON.parse(
-        readFileSync(path.join(fixture.pkg, "registry/registry.json"), "utf8"),
-      );
-      const assets = [
-        "registry/foundation/tokens.json",
-        "registry/styles/tokens.css",
-        "registry/contracts/theme-v1.json",
-        "registry/contracts/component-customization-v1.json",
-      ].map((file) => ({
-        path: file,
-        digest: sha256Hex(readFileSync(path.join(fixture.pkg, file))),
-      }));
-      write(
-        fixture.pkg,
-        "registry/registry.json",
-        JSON.stringify({
-          ...root,
-          contentHash: computeRegistryContentHash(root, assets),
-        }),
-      );
+      refreshRegistryContent(fixture.pkg);
       const before = snapshotTree(fixture.root);
       const result = fixture.run(["add", "tokens"]);
       assert.equal(result.status, 12, result.stdout + result.stderr);

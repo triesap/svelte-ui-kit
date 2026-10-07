@@ -4,7 +4,7 @@ Author: Codex. Candidate; separate S115 acceptance remains pending.
 Previously accepted S001–S091 and original checkpoint criteria are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S096","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S096","kind":"report","commit":"67fb2e7f7b87427b9be23566f46c15e83b93fe59","disposition":"candidate"}
 -->
 
 The immutable source component/CSS mapping freezes public Spinner,

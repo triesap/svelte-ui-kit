@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "spinner",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Native decorative and status loading presentation.",
+  "compatibility": { "svelte": "5.57.1", "bits": "2.19.3", "date": "^3.8.1" },
+  "files": [
+    {
+      "source": "ui/spinner.svelte",
+      "target": "spinner.svelte",
+      "kind": "svelte",
+      "cohort": "spinner"
+    },
+    {
+      "source": "ui/spinner.types.ts",
+      "target": "spinner.types.ts",
+      "kind": "typescript",
+      "cohort": "spinner"
+    }
+  ],
+  "exports": [
+    { "name": "Spinner", "target": "spinner.svelte", "kind": "value" },
+    { "name": "SpinnerMode", "target": "spinner.types.ts", "kind": "type" },
+    { "name": "SpinnerProps", "target": "spinner.types.ts", "kind": "type" }
+  ],
+  "styles": [
+    {
+      "source": "styles/spinner.css",
+      "target": "kit.css",
+      "blockId": "spinner",
+      "cohort": "spinner"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [],
+  "accessibility": {
+    "requiredNames": ["status-label"],
+    "keyboard": [],
+    "focus": [],
+    "form": [],
+    "tests": ["spinner-contract", "spinner-install", "spinner-browser"]
+  }
+}

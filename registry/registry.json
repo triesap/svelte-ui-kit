@@ -8,9 +8,13 @@
   },
   "items": [
     {
+      "id": "spinner",
+      "manifest": "ui/spinner.json"
+    },
+    {
       "id": "tokens",
       "manifest": "foundation/tokens.json"
     }
   ],
-  "contentHash": "98e83b65ba4d750a4a46c79f47487ee47b8c15e9cff333da387ff5c5cb6a757e"
+  "contentHash": "bde8083854226d92f660f10de8addc66765b4be8686ab0f4606796a6ca7f9a41"
 }

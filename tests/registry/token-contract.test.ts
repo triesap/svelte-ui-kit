@@ -27,6 +27,47 @@ const mappedRows = mapping
       .map((cell) => cell.trim()),
   );
 
+test("source-supported Spinner hooks match actual compiler-parsed stylesheet fallbacks", () => {
+  const properties = customization.properties.filter(
+    (entry: { scope: string }) => entry.scope === "spinner",
+  );
+  assert.deepEqual(
+    properties.map((entry: { name: string }) => entry.name).sort(),
+    [
+      "--kit-spinner-inline-size",
+      "--kit-spinner-block-size",
+      "--kit-spinner-border-width",
+      "--kit-spinner-track-color",
+      "--kit-spinner-color",
+      "--kit-spinner-animation-duration",
+      "--kit-spinner-radius",
+    ].sort(),
+  );
+  const values: string[] = [];
+  const visit = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    if (value === null || typeof value !== "object") return;
+    const node = value as Record<string, unknown>;
+    if (node["type"] === "Declaration" && typeof node["value"] === "string")
+      values.push(node["value"].replace(/\s+/g, ""));
+    for (const [key, child] of Object.entries(node))
+      if (key !== "metadata") visit(child);
+  };
+  visit(parseCss(readFileSync("registry/styles/spinner.css", "utf8")).children);
+  for (const property of properties)
+    assert.ok(
+      values.some((value) =>
+        value.includes(
+          `var(${property.name},${property.fallback})`.replace(/\s+/g, ""),
+        ),
+      ),
+      property.name,
+    );
+});
+
 test("portable contracts validate independently without source ABI identities", () => {
   const tokens = parseTokenContract(semantic);
   const properties = parseComponentCustomization(customization);
@@ -112,7 +153,13 @@ test("complete source radius inventory retains roles, ordered fallbacks and exac
     "tabs-trigger-radius",
   ].map((name) => `--kit-${name}`);
   assert.deepEqual(
-    customization.properties.map((entry: { name: string }) => entry.name),
+    customization.properties
+      .filter(
+        (entry: { name: string }) =>
+          entry.name.endsWith("-radius") ||
+          entry.name.startsWith("--kit-radius-"),
+      )
+      .map((entry: { name: string }) => entry.name),
     names,
   );
   const property = (name: string) =>
@@ -143,7 +190,9 @@ test("complete source radius inventory retains roles, ordered fallbacks and exac
     assert.equal(row[2], "geometry-critical");
     assert.equal(row[3], "yes");
   }
-  for (const p of customization.properties) {
+  for (const p of customization.properties.filter((entry: { name: string }) =>
+    names.includes(entry.name),
+  )) {
     const row = mappedRows.find((row) => row[0] === p.name);
     assert.ok(row);
     assert.equal(row[1], p.scope);
@@ -157,7 +206,10 @@ test("complete radius syntax remains declared and accepted without typed registr
     elliptical: true,
     slashSeparator: true,
   });
-  for (const property of customization.properties) {
+  for (const property of customization.properties.filter(
+    (entry: { name: string }) =>
+      entry.name.endsWith("-radius") || entry.name.startsWith("--kit-radius-"),
+  )) {
     assert.ok(property.grammar.includes("{1,4}"));
     assert.ok(property.grammar.includes(" / "));
     assert.ok(property.grammar.includes("revert-layer"));

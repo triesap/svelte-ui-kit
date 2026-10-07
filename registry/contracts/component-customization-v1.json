@@ -1,8 +1,44 @@
 {
   "id": "urn:svelte-ui-kit:component-customization:v1",
   "contractVersion": 1,
-  "description": "Independent inherited radius overrides, including exact shape-critical component overrides.",
+  "description": "Independent inherited component CSS overrides, including exact geometry-critical radius overrides.",
   "properties": [
+    {
+      "name": "--kit-spinner-inline-size",
+      "scope": "spinner",
+      "grammar": "<length-percentage>",
+      "fallback": "1em"
+    },
+    {
+      "name": "--kit-spinner-block-size",
+      "scope": "spinner",
+      "grammar": "<length-percentage>",
+      "fallback": "1em"
+    },
+    {
+      "name": "--kit-spinner-border-width",
+      "scope": "spinner",
+      "grammar": "<length>",
+      "fallback": "0.125em"
+    },
+    {
+      "name": "--kit-spinner-track-color",
+      "scope": "spinner",
+      "grammar": "<color>",
+      "fallback": "color-mix(in srgb, currentColor 20%, transparent)"
+    },
+    {
+      "name": "--kit-spinner-color",
+      "scope": "spinner",
+      "grammar": "<color>",
+      "fallback": "currentColor"
+    },
+    {
+      "name": "--kit-spinner-animation-duration",
+      "scope": "spinner",
+      "grammar": "<time>",
+      "fallback": "900ms"
+    },
     {
       "name": "--kit-radius-default",
       "scope": "semantic",
