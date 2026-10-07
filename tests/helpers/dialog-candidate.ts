@@ -6,7 +6,7 @@ import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Compile actual unregistered parts with explicitly remaining raw primitives. */
 export function buildDialogCandidate(
-  stage: "root-trigger" | "portal-overlay" = "root-trigger",
+  stage: "root-trigger" | "portal-overlay" | "content" = "root-trigger",
 ) {
   const fixture = copyConsumerFixture();
   try {
@@ -14,17 +14,19 @@ export function buildDialogCandidate(
       "root.svelte",
       "trigger.svelte",
       "types.ts",
-      ...(stage === "portal-overlay"
-        ? ["portal.svelte", "overlay.svelte"]
-        : []),
+      ...(stage !== "root-trigger" ? ["portal.svelte", "overlay.svelte"] : []),
+      ...(stage === "content" ? ["content.svelte"] : []),
     ];
     for (const file of files) {
       const target = path.join(fixture.root, "src/lib/candidate/dialog", file);
       mkdirSync(path.dirname(target), { recursive: true });
       writeFileSync(target, readFileSync(`registry/ui/dialog/${file}`));
     }
-    const routeName =
-      stage === "root-trigger" ? "dialog-candidate" : "dialog-portal";
+    const routeName = {
+      "root-trigger": "dialog-candidate",
+      "portal-overlay": "dialog-portal",
+      content: "dialog-content",
+    }[stage];
     const route = `src/routes/${routeName}/+page.svelte`;
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
       recursive: true,
@@ -68,13 +70,23 @@ export function buildDialogCandidate(
       handler: path.join(fixture.root, "build/handler.js"),
       route: `/${routeName}`,
       evidence: {
-        stage: stage === "root-trigger" ? "S106" : "S107",
+        stage: {
+          "root-trigger": "S106",
+          "portal-overlay": "S107",
+          content: "S108",
+        }[stage],
         authored: [
           "Root",
           "Trigger",
-          ...(stage === "portal-overlay" ? ["Portal", "Overlay"] : []),
+          ...(stage !== "root-trigger" ? ["Portal", "Overlay"] : []),
+          ...(stage === "content" ? ["Content"] : []),
         ],
-        raw: ["Content", "Title", "Description", "Close"],
+        raw: [
+          ...(stage === "content" ? [] : ["Content"]),
+          "Title",
+          "Description",
+          "Close",
+        ],
         unregistered: true,
         logs,
         files: Object.fromEntries(

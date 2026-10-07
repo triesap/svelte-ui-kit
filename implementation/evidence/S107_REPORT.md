@@ -3,7 +3,7 @@
 Author: Codex. Candidate; independent S115 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S107","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S107","kind":"report","commit":"dcb754aa0e9302e08587dd3d88acae17c5c644c0","disposition":"candidate"}
 -->
 
 Portal forwards the exact pinned to/disabled/children API without aliases,

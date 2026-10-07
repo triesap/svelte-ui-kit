@@ -104,6 +104,78 @@ test.describe("actual unregistered Dialog S106 composition", () => {
   });
 });
 
+test.describe("actual unregistered Dialog S108 Content composition", () => {
+  let consumer: ReturnType<typeof buildDialogCandidate>;
+  let hosted: FixtureServer;
+  test.beforeAll(async () => {
+    test.setTimeout(240000);
+    consumer = buildDialogCandidate("content");
+    try {
+      hosted = await startFixtureServer({ handler: consumer.handler });
+    } catch (error) {
+      consumer.cleanup();
+      throw error;
+    }
+  });
+  test.afterAll(async () => {
+    try {
+      if (hosted) {
+        await hosted.server.stop();
+        expect(hosted.server.failure()).toBeNull();
+      }
+    } finally {
+      consumer?.cleanup();
+    }
+  });
+  test.beforeEach(async ({ page }, info) => {
+    const file = info.outputPath("candidate-artifact.json");
+    writeFileSync(file, JSON.stringify(consumer.evidence, null, 2));
+    await info.attach("candidate-artifact", {
+      path: file,
+      contentType: "application/json",
+    });
+    await page.goto(new URL(consumer.route, hosted.baseURL).href);
+    await expect(page.locator('[data-ready="true"]')).toBeVisible();
+  });
+  test("default Content forwards actual native ref, classes, caller event and dismissal cancellation", async ({
+    page,
+  }) => {
+    const content = page.locator("#default-content");
+    await expect(content).toHaveClass("kit-dialog-content caller retained");
+    await expect(content).toHaveAttribute("data-caller", "preserved");
+    await expect(content).toHaveAttribute("role", "dialog");
+    await expect(content).toHaveAttribute("data-state", "open");
+    await expect(page.locator("#refs")).toHaveText("DIV/SECTION");
+    await page.locator("#default-content [data-dialog-title]").click();
+    await expect(page.locator("#events")).toContainText("clicks 1");
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#events")).toContainText("Escapes 1");
+    await expect(content).toBeVisible();
+    await page.locator("#toggle-content").click();
+    await expect(content).toHaveCount(0);
+    await expect(page.locator("#refs")).toHaveText("none/SECTION");
+    await expect(page.locator("#events")).toContainText("closed 1");
+  });
+  test("forced delegated Content carries actual props and open state across closed/open rendering", async ({
+    page,
+  }) => {
+    const content = page.locator("#delegated-content");
+    await expect(content).toHaveCount(1);
+    await expect(content).toBeHidden();
+    await expect(content).toHaveAttribute("data-child-open", "false");
+    await expect(content).toHaveClass("kit-dialog-content delegated-caller");
+    await page.locator("#toggle-delegated").click();
+    await expect(content).toBeVisible();
+    await expect(content).toHaveAttribute("data-child-open", "true");
+    await expect(content).toHaveAttribute("data-state", "open");
+    await expect(content).toHaveAttribute("role", "dialog");
+    await page.locator("#toggle-delegated").click();
+    await expect(content).toBeHidden();
+    await expect(content).toHaveAttribute("data-state", "closed");
+    await expect(page.locator("#refs")).toHaveText("DIV/SECTION");
+  });
+});
+
 test.describe("actual unregistered Dialog S107 portal composition", () => {
   let consumer: ReturnType<typeof buildDialogCandidate>;
   let hosted: FixtureServer;
