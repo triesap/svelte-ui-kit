@@ -24,9 +24,16 @@ references.
   `pfc all`: first finish original S064–S077/R2 work and obtain independent S077
   acceptance, then continue the original S078–S203 sequence through its gates.
   Earlier Q3-only/two-or-three-commit/Q4-later management limits are superseded.
-  Continue after green slices and successful independent gates. Preserve 63 accepted
+  Continue after green slices and successful independent gates. Preserve accepted
   checkpoints and original criteria/statuses. Target-only coherent green commits
   are authorized within this scope; no parent/remote or reference-source changes.
+- The separate reviewer accepted original S064–S077 on code `ce54d7d`, with
+  committed review evidence at `fd1d0938d9ad188c5646c153b76fa2989438c727`.
+  After the atomic completion transition, S078–S091/RCLD-05 is the current
+  implementation range under `pfc all`; separate S091 acceptance gates S092.
+  Earlier RCLD-04 finding paragraphs below are historical and resolved by
+  `implementation/evidence/RCLD-04_QUALIFICATION.md`. No new owner dispatch is
+  required. Full MVP and later platform/package/AC20 acceptance remain open.
 - The current return review at `6f2d877` preserves real import/render AST parsing,
   aliased children, post-composition export checks and consumer controls.
   Complete original independent export/cohort provenance, full source binding

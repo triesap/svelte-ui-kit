@@ -1,5 +1,9 @@
 # S073 independent review
 
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S073","kind":"review","commit":"fd1d0938d9ad188c5646c153b76fa2989438c727","disposition":"accepted"}
+-->
+
 Reviewer: separate Codex reviewer, not an author of the repairs. Date:
 2026-10-07. Scope: Recover interrupted prepublication transactions.
 

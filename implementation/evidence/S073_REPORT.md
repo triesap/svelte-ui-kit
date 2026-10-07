@@ -1,11 +1,13 @@
 # S073 step report — Recover interrupted prepublication transactions
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
-alone assigns acceptance.
+The separate reviewer independently accepted the original S073 criteria on
+`ce54d7d6a93f3f7dd2d1e25038390f6d95deb033`; review evidence is committed at
+`fd1d0938d9ad188c5646c153b76fa2989438c727`. Original implementation `68af0a9440728393672dbebb5f3a8ca40a880804` remains provenance.
+See `S073_REVIEW.md` and `RCLD-04_QUALIFICATION.md`. Historical author results
+below are supplemented by the current repair and qualification records.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S073","kind":"report","commit":"68af0a9440728393672dbebb5f3a8ca40a880804","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S073","kind":"report","commit":"fd1d0938d9ad188c5646c153b76fa2989438c727","disposition":"implemented"}
 -->
 
 Step ID and title: S073 — Recover interrupted prepublication transactions.

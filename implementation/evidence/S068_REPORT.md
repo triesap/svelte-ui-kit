@@ -1,11 +1,13 @@
 # S068 step report — Stage replacement bytes with owned temporary files
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
-alone assigns acceptance.
+The separate reviewer independently accepted the original S068 criteria on
+`ce54d7d6a93f3f7dd2d1e25038390f6d95deb033`; review evidence is committed at
+`fd1d0938d9ad188c5646c153b76fa2989438c727`. Original implementation `fd9697c0046b2a135b5afdca0485bb8dde43d8ed` remains provenance.
+See `S068_REVIEW.md` and `RCLD-04_QUALIFICATION.md`. Historical author results
+below are supplemented by the current repair and qualification records.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S068","kind":"report","commit":"fd9697c0046b2a135b5afdca0485bb8dde43d8ed","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S068","kind":"report","commit":"fd1d0938d9ad188c5646c153b76fa2989438c727","disposition":"implemented"}
 -->
 
 Step ID and title: S068 — Stage replacement bytes with owned temporary files.

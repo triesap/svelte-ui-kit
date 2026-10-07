@@ -49,6 +49,8 @@ import {
   writeDerivedState,
   writeEvidence,
   writeEvidencePair,
+  writeBatchAuthorization,
+  BATCH_RCLD05,
 } from "./check-contracts.fixtures.mjs";
 import {
   computeFenceMask,
@@ -56,6 +58,7 @@ import {
   extractAnchorData,
   extractLinks,
   parseDefinitions,
+  readBatchAuthorization,
   parseEvidenceRecords,
   parseLedger,
   parseSequenceBodies,
@@ -2837,5 +2840,51 @@ test("accepted completion with a changes_requested review is rejected", () => {
       assert.match(result.output, /disposition must be "accepted"/);
     },
     { scenario: "pendingAll" },
+  );
+});
+
+test("RCLD-05 authorizes exactly the original CLI sequence after accepted S077", () => {
+  withFixture(
+    (root) => {
+      const good = runCli(root);
+      assert.equal(good.status, 0, good.output);
+      const projection = JSON.parse(read(root, PLAN_JSON_REL));
+      assert.equal(projection.steps[76].status, "complete");
+      assert.deepEqual(
+        projection.steps
+          .filter((step) => step.status === "committed_pending_review")
+          .map((step) => step.id),
+        EXPECTED_STEP_IDS.slice(77, 91),
+      );
+      setLedgerCell(root, "S092", 4, "committed_pending_review");
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 1);
+      assert.match(
+        runCli(root).output,
+        /outside.*batch|not within.*batch|MISSING_COMPLETION_EVIDENCE/,
+      );
+    },
+    { scenario: "rcld05All" },
+  );
+});
+
+test("RCLD-05 rejects narrowed widened and incomplete authority", () => {
+  withFixture(
+    (root) => {
+      for (const change of [
+        { first: "S079" },
+        { last: "S092" },
+        { review: "self-accept" },
+        { extra: true },
+      ]) {
+        writeBatchAuthorization(root, { ...BATCH_RCLD05, ...change });
+        const issues = [];
+        assert.equal(readBatchAuthorization(root, issues), null);
+        assert.ok(
+          issues.some((issue) => issue.code === "INVALID_BATCH_AUTHORIZATION"),
+        );
+      }
+    },
+    { scenario: "s001", git: false },
   );
 });

@@ -1,11 +1,13 @@
 # S067 step report — Revalidate planned preimages under coordination
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
-alone assigns acceptance.
+The separate reviewer independently accepted the original S067 criteria on
+`ce54d7d6a93f3f7dd2d1e25038390f6d95deb033`; review evidence is committed at
+`fd1d0938d9ad188c5646c153b76fa2989438c727`. Original implementation `8fee18d9dec924263bf9754a8746bb131427a024` remains provenance.
+See `S067_REVIEW.md` and `RCLD-04_QUALIFICATION.md`. Historical author results
+below are supplemented by the current repair and qualification records.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S067","kind":"report","commit":"8fee18d9dec924263bf9754a8746bb131427a024","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S067","kind":"report","commit":"fd1d0938d9ad188c5646c153b76fa2989438c727","disposition":"implemented"}
 -->
 
 Step ID and title: S067 — Revalidate planned preimages under coordination.

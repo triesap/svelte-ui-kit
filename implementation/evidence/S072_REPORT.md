@@ -1,11 +1,13 @@
 # S072 step report — Clean completed transactions without losing evidence
 
-Current disposition: implementation candidate committed pending independent
-Codex review under the RCLD-04 batch. This report is Pi-authored evidence; Codex
-alone assigns acceptance.
+The separate reviewer independently accepted the original S072 criteria on
+`ce54d7d6a93f3f7dd2d1e25038390f6d95deb033`; review evidence is committed at
+`fd1d0938d9ad188c5646c153b76fa2989438c727`. Original implementation `a55f72ded1b2499ca83779e91a2c5c2350ccbf54` remains provenance.
+See `S072_REVIEW.md` and `RCLD-04_QUALIFICATION.md`. Historical author results
+below are supplemented by the current repair and qualification records.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S072","kind":"report","commit":"a55f72ded1b2499ca83779e91a2c5c2350ccbf54","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S072","kind":"report","commit":"fd1d0938d9ad188c5646c153b76fa2989438c727","disposition":"implemented"}
 -->
 
 Step ID and title: S072 — Clean completed transactions without losing evidence.

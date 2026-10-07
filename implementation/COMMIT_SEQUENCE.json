@@ -36,7 +36,7 @@
       "first": "S064",
       "last": "S077",
       "count": 14,
-      "state": "in_progress",
+      "state": "complete",
       "predecessor": "S063"
     },
     {
@@ -929,8 +929,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S063",
       "requirements": ["R15", "R16", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S064_REPORT.md",
+        "review": "implementation/evidence/S064_REVIEW.md"
+      }
     },
     {
       "id": "S065",
@@ -938,8 +942,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S064",
       "requirements": ["R16", "R30", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S065_REPORT.md",
+        "review": "implementation/evidence/S065_REVIEW.md"
+      }
     },
     {
       "id": "S066",
@@ -947,8 +955,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S065",
       "requirements": ["R15", "R16", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S066_REPORT.md",
+        "review": "implementation/evidence/S066_REVIEW.md"
+      }
     },
     {
       "id": "S067",
@@ -956,8 +968,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S066",
       "requirements": ["R13", "R16", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S067_REPORT.md",
+        "review": "implementation/evidence/S067_REVIEW.md"
+      }
     },
     {
       "id": "S068",
@@ -965,8 +981,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S067",
       "requirements": ["R16", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S068_REPORT.md",
+        "review": "implementation/evidence/S068_REVIEW.md"
+      }
     },
     {
       "id": "S069",
@@ -974,8 +994,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S068",
       "requirements": ["R13", "R16", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S069_REPORT.md",
+        "review": "implementation/evidence/S069_REVIEW.md"
+      }
     },
     {
       "id": "S070",
@@ -983,8 +1007,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S069",
       "requirements": ["R16", "R18", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S070_REPORT.md",
+        "review": "implementation/evidence/S070_REVIEW.md"
+      }
     },
     {
       "id": "S071",
@@ -992,8 +1020,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S070",
       "requirements": ["R12", "R13", "R16", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S071_REPORT.md",
+        "review": "implementation/evidence/S071_REVIEW.md"
+      }
     },
     {
       "id": "S072",
@@ -1001,8 +1033,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S071",
       "requirements": ["R15", "R16", "R17", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S072_REPORT.md",
+        "review": "implementation/evidence/S072_REVIEW.md"
+      }
     },
     {
       "id": "S073",
@@ -1010,8 +1046,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S072",
       "requirements": ["R13", "R16", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S073_REPORT.md",
+        "review": "implementation/evidence/S073_REVIEW.md"
+      }
     },
     {
       "id": "S074",
@@ -1019,8 +1059,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S073",
       "requirements": ["R13", "R16", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S074_REPORT.md",
+        "review": "implementation/evidence/S074_REVIEW.md"
+      }
     },
     {
       "id": "S075",
@@ -1028,8 +1072,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S074",
       "requirements": ["R09", "R16", "R30", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S075_REPORT.md",
+        "review": "implementation/evidence/S075_REVIEW.md"
+      }
     },
     {
       "id": "S076",
@@ -1037,8 +1085,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S075",
       "requirements": ["R16", "R29", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S076_REPORT.md",
+        "review": "implementation/evidence/S076_REVIEW.md"
+      }
     },
     {
       "id": "S077",
@@ -1046,8 +1098,12 @@
       "sequence": "RCLD-04",
       "dependsOn": "S076",
       "requirements": ["R13", "R14", "R15", "R16", "R32", "R33", "R34"],
-      "status": "committed_pending_review",
-      "completion": null
+      "status": "complete",
+      "completion": {
+        "commit": "fd1d0938d9ad188c5646c153b76fa2989438c727",
+        "report": "implementation/evidence/S077_REPORT.md",
+        "review": "implementation/evidence/S077_REVIEW.md"
+      }
     },
     {
       "id": "S078",
