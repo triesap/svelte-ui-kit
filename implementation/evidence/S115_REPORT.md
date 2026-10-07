@@ -3,7 +3,7 @@
 Author: Codex. Candidate; independent S115 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S115","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S115","kind":"report","commit":"c94ea07133c42e98033eb8db02e9e9067ae2a415","disposition":"candidate"}
 -->
 
 Five actual registry items are explicitly installed through the built CLI in
