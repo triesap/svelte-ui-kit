@@ -4,7 +4,7 @@ Author: Codex. Candidate; independent S115 acceptance remains pending.
 Original criteria and accepted S001–S091 remain preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S104","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S104","kind":"report","commit":"03526028df9e30f93f9b13fe315ccfa90e7e82d5","disposition":"candidate"}
 -->
 
 Real default/custom installed consumers expose checked/ref bindings, pointer,
