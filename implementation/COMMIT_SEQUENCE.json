@@ -1375,7 +1375,7 @@
         "R33",
         "R34"
       ],
-      "status": "in_progress",
+      "status": "committed_pending_review",
       "completion": null
     },
     {
@@ -1384,7 +1384,7 @@
       "sequence": "RCLD-06",
       "dependsOn": "S100",
       "requirements": ["R20", "R22", "R23", "R25", "R29", "R32", "R33", "R34"],
-      "status": "not_started",
+      "status": "in_progress",
       "completion": null
     },
     {

@@ -4,7 +4,7 @@ Author: Codex. Candidate; mandatory independent S115 acceptance remains pending.
 Original checkpoint criteria and accepted S001–S091 remain preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S100","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S100","kind":"report","commit":"77462f798ffc8949d215da6c2ac2e90fc9d659e3","disposition":"candidate"}
 -->
 
 Native Button forwards actual button attributes/events, combines caller and

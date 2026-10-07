@@ -10,7 +10,7 @@ import { sha256Hex } from "../../src/codegen/digest.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Build real CLI-installed applications; never mutate the maintained fixture. */
-export function buildSpinnerConsumer(custom: boolean) {
+function buildComponentConsumer(item: "spinner" | "button", custom: boolean) {
   const fixture = copyConsumerFixture();
   try {
     const config = custom
@@ -23,7 +23,7 @@ export function buildSpinnerConsumer(custom: boolean) {
       writeFileSync(target, body);
     };
     if (custom) write(`${paths.stateDir}/kit.json`, JSON.stringify(config));
-    for (const args of [["init"], ["add", "spinner"]]) {
+    for (const args of [["init"], ["add", item]]) {
       const result = spawnSync(
         process.execPath,
         [
@@ -38,21 +38,30 @@ export function buildSpinnerConsumer(custom: boolean) {
       assert.equal(result.status, 0, result.stdout + result.stderr);
       assert.equal(result.stderr, "");
     }
-    for (const name of ["spinner.svelte", "spinner.types.ts"]) {
+    const sources =
+      item === "button"
+        ? [
+            "button.svelte",
+            "button.types.ts",
+            "spinner.svelte",
+            "spinner.types.ts",
+          ]
+        : ["spinner.svelte", "spinner.types.ts"];
+    for (const name of sources) {
       assert.ok(
         readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
           readFileSync(path.join("registry/ui", name)),
         ),
       );
     }
-    const route = "src/routes/qualification/spinner/+page.svelte";
+    const route = `src/routes/qualification/${item}/+page.svelte`;
     let module = path.posix.relative(
       path.posix.dirname(route),
       `${config.uiDir}/index.js`,
     );
     if (!module.startsWith(".")) module = `./${module}`;
     const template = readFileSync(
-      "tests/fixtures/qualification/spinner/+page.svelte",
+      `tests/fixtures/qualification/${item}/+page.svelte`,
       "utf8",
     );
     assert.equal(template.match(/__UI_MODULE__/g)?.length, 2);
@@ -63,8 +72,9 @@ export function buildSpinnerConsumer(custom: boolean) {
     }
     const handler = path.join(fixture.root, "build/handler.js");
     const files = [
-      `${config.uiDir}/spinner.svelte`,
-      `${config.uiDir}/spinner.types.ts`,
+      ...sources.map((file) => `${config.uiDir}/${file}`),
+      route,
+      `${config.uiDir}/index.ts`,
       `${paths.stateDir}/kit.lock.json`,
       paths.kitCss,
       "build/handler.js",
@@ -87,3 +97,8 @@ export function buildSpinnerConsumer(custom: boolean) {
     throw error;
   }
 }
+
+export const buildSpinnerConsumer = (custom: boolean) =>
+  buildComponentConsumer("spinner", custom);
+export const buildButtonConsumer = (custom: boolean) =>
+  buildComponentConsumer("button", custom);
