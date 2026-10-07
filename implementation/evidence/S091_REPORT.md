@@ -4,7 +4,7 @@ Author: Codex. Implementation candidate; mandatory separate independent S091
 acceptance is required before S092. No full MVP/catalog/release completion claim.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S091","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S091","kind":"report","commit":"dbd54903a5954d1139cda63413a041498379edc8","disposition":"candidate"}
 -->
 
 README/CONTRIBUTING now describe implemented info/init/view/add/sync/doctor,
