@@ -1,0 +1,281 @@
+{
+  "id": "urn:svelte-ui-kit:token-contract:v1",
+  "contractVersion": 1,
+  "description": "Portable semantic design defaults and complete CSS radius vocabulary.",
+  "layers": [
+    "svelte-ui-kit.tokens",
+    "svelte-ui-kit.themes",
+    "svelte-ui-kit.components"
+  ],
+  "tokens": [
+    {
+      "name": "--kit-color-canvas",
+      "role": "surface",
+      "type": "color",
+      "fallback": "#f8fafc"
+    },
+    {
+      "name": "--kit-color-surface",
+      "role": "surface",
+      "type": "color",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-surface-raised",
+      "role": "surface",
+      "type": "color",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-surface-hover",
+      "role": "surface",
+      "type": "color",
+      "fallback": "#f3f4f6"
+    },
+    {
+      "name": "--kit-color-surface-active",
+      "role": "surface",
+      "type": "color",
+      "fallback": "#e5e7eb"
+    },
+    {
+      "name": "--kit-color-text",
+      "role": "text",
+      "type": "color",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-color-text-secondary",
+      "role": "text",
+      "type": "color",
+      "fallback": "#374151"
+    },
+    {
+      "name": "--kit-color-text-muted",
+      "role": "text",
+      "type": "color",
+      "fallback": "#4b5563"
+    },
+    {
+      "name": "--kit-color-border",
+      "role": "border",
+      "type": "color",
+      "fallback": "#d1d5db"
+    },
+    {
+      "name": "--kit-color-border-strong",
+      "role": "border",
+      "type": "color",
+      "fallback": "#9ca3af"
+    },
+    {
+      "name": "--kit-color-primary",
+      "role": "color",
+      "type": "color",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-color-primary-hover",
+      "role": "color",
+      "type": "color",
+      "fallback": "#1f2937"
+    },
+    {
+      "name": "--kit-color-primary-foreground",
+      "role": "color",
+      "type": "color",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-selection-indicator",
+      "role": "color",
+      "type": "color",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-secondary",
+      "role": "color",
+      "type": "color",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-secondary-hover",
+      "role": "color",
+      "type": "color",
+      "fallback": "#f3f4f6"
+    },
+    {
+      "name": "--kit-color-secondary-foreground",
+      "role": "color",
+      "type": "color",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-color-accent",
+      "role": "color",
+      "type": "color",
+      "fallback": "#2563eb"
+    },
+    {
+      "name": "--kit-color-accent-hover",
+      "role": "color",
+      "type": "color",
+      "fallback": "#1d4ed8"
+    },
+    {
+      "name": "--kit-color-accent-foreground",
+      "role": "color",
+      "type": "color",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-info",
+      "role": "color",
+      "type": "color",
+      "fallback": "#0284c7"
+    },
+    {
+      "name": "--kit-color-info-foreground",
+      "role": "color",
+      "type": "color",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-success",
+      "role": "color",
+      "type": "color",
+      "fallback": "#16a34a"
+    },
+    {
+      "name": "--kit-color-success-foreground",
+      "role": "color",
+      "type": "color",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-warning",
+      "role": "color",
+      "type": "color",
+      "fallback": "#d97706"
+    },
+    {
+      "name": "--kit-color-warning-foreground",
+      "role": "color",
+      "type": "color",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-color-danger",
+      "role": "color",
+      "type": "color",
+      "fallback": "#dc2626"
+    },
+    {
+      "name": "--kit-color-danger-hover",
+      "role": "color",
+      "type": "color",
+      "fallback": "#b91c1c"
+    },
+    {
+      "name": "--kit-color-danger-foreground",
+      "role": "color",
+      "type": "color",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-link",
+      "role": "color",
+      "type": "color",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-color-link-hover",
+      "role": "color",
+      "type": "color",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-focus-ring",
+      "role": "focus",
+      "type": "color",
+      "fallback": "#2563eb"
+    },
+    {
+      "name": "--kit-radius-sm",
+      "role": "radius",
+      "type": "length",
+      "fallback": "0.25rem"
+    },
+    {
+      "name": "--kit-radius-md",
+      "role": "radius",
+      "type": "length",
+      "fallback": "0.375rem"
+    },
+    {
+      "name": "--kit-radius-lg",
+      "role": "radius",
+      "type": "length",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-radius-full",
+      "role": "radius",
+      "type": "length",
+      "fallback": "999px"
+    },
+    {
+      "name": "--kit-border-width",
+      "role": "border",
+      "type": "length",
+      "fallback": "1px"
+    },
+    {
+      "name": "--kit-shadow-sm",
+      "role": "shadow",
+      "type": "shadow",
+      "fallback": "0 1px 2px rgb(15 23 42 / 8%)"
+    },
+    {
+      "name": "--kit-shadow-md",
+      "role": "shadow",
+      "type": "shadow",
+      "fallback": "0 12px 28px rgb(15 23 42 / 14%)"
+    },
+    {
+      "name": "--kit-shadow-lg",
+      "role": "shadow",
+      "type": "shadow",
+      "fallback": "0 20px 40px rgb(15 23 42 / 18%)"
+    },
+    {
+      "name": "--kit-duration-fast",
+      "role": "motion",
+      "type": "duration",
+      "fallback": "120ms"
+    },
+    {
+      "name": "--kit-duration-normal",
+      "role": "motion",
+      "type": "duration",
+      "fallback": "140ms"
+    },
+    {
+      "name": "--kit-easing-standard",
+      "role": "easing",
+      "type": "string",
+      "fallback": "cubic-bezier(0.2, 0, 0, 1)"
+    },
+    {
+      "name": "--kit-disabled-opacity",
+      "role": "opacity",
+      "type": "number",
+      "fallback": "0.55"
+    }
+  ],
+  "radiusGrammar": {
+    "corners": 4,
+    "elliptical": true,
+    "slashSeparator": true
+  }
+}

@@ -159,6 +159,19 @@ write boundary. Version's existing standalone grammar remains unchanged.
 Shared output adapters keep transient transaction identifiers out of semantic
 results and distinguish planned/applied/committed-with-cleanup outcomes.
 
+#### S092 portable contract mapping decision
+
+Map the immutable reference semantic contract's44 properties and the separate
+customization contract's30 radius properties into the existing independent
+v1 target schemas. Preserve exact defaults and ordered fallback relationships;
+map component scope to its named owner and retain source roles, natural
+fallbacks and geometry-critical meaning in the component map. Do not add source
+ABI/version fields or invent a new schema. Full four-corner/elliptical radius
+and CSS-wide/computed-value behavior remain supported without registration.
+Preserve the source license notice and immutable public provenance. Other
+component-specific non-radius hooks are mapped with their original family
+checkpoints rather than fabricated here. Browser meaning is qualified at S095.
+
 #### Current independently accepted gate and next sequence
 
 The separate reviewer accepts original S078–S091 on frozen code
