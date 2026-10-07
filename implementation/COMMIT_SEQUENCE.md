@@ -16,13 +16,21 @@ Keep all repository content standalone and repository-relative. Record this targ
 
 ## Execution state and resume procedure
 
+S112 callback qualification uses a direct pinned Bits Dialog control alongside
+the actual CLI-installed family. Bits 2.19.3's animation tracker reads the Content
+ref before a newly portaled opening node exists, so that first opening does not
+emit onOpenChangeComplete; a completed close does. Preserve the exact forwarded
+native callback behavior rather than invent a second presence engine. Keep this
+observed upstream limitation explicit for independent S115 review; focus,
+dismissal, interrupted presence and cleanup still require actual browser proof.
+
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S111 — Register the complete Dialog family**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
+- Active implementation checkpoint: **S112 — Qualify Dialog keyboard, focus, dismissal, and presence**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **91 / 203**. Remaining: **112 / 203**.
-- Committed pending review: **19 / 203**. Authored batch range: **S092–S110**.
+- Committed pending review: **20 / 203**. Authored batch range: **S092–S111**.
 - Completed RCLD sequences: **5 / 11**. Remaining: **6 / 11**.
-- Last safe target commit: `677e3e568c5a274b76cd47c01e3aa6bdd328701a`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `407b54123629f2dc32c430e6b12a5b9d885f95f2`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -6172,8 +6180,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S108 | RCLD-06  | S107       | committed_pending_review | `182fddf63e6b5d40abfd7315bb0b8bdeb34e8d14` |
 | S109 | RCLD-06  | S108       | committed_pending_review | `11705ea18063e6b5b6208697af6c1df06109a2c1` |
 | S110 | RCLD-06  | S109       | committed_pending_review | `677e3e568c5a274b76cd47c01e3aa6bdd328701a` |
-| S111 | RCLD-06  | S110       | in_progress              | —                                          |
-| S112 | RCLD-06  | S111       | not_started              | —                                          |
+| S111 | RCLD-06  | S110       | committed_pending_review | `407b54123629f2dc32c430e6b12a5b9d885f95f2` |
+| S112 | RCLD-06  | S111       | in_progress              | —                                          |
 | S113 | RCLD-06  | S112       | not_started              | —                                          |
 | S114 | RCLD-06  | S113       | not_started              | —                                          |
 | S115 | RCLD-06  | S114       | not_started              | —                                          |

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
   DEFAULT_KIT_CONFIG,
@@ -11,8 +11,9 @@ import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Build real CLI-installed applications; never mutate the maintained fixture. */
 function buildComponentConsumer(
-  item: "spinner" | "button" | "switch",
+  item: "spinner" | "button" | "switch" | "dialog",
   custom: boolean,
+  qualification: string = item,
 ) {
   const fixture = copyConsumerFixture();
   try {
@@ -49,9 +50,22 @@ function buildComponentConsumer(
             "spinner.svelte",
             "spinner.types.ts",
           ]
-        : item === "switch"
-          ? ["switch.svelte", "switch.types.ts"]
-          : ["spinner.svelte", "spinner.types.ts"];
+        : item === "dialog"
+          ? [
+              "root",
+              "trigger",
+              "portal",
+              "overlay",
+              "content",
+              "title",
+              "description",
+              "close",
+            ]
+              .map((part) => `dialog/${part}.svelte`)
+              .concat(["dialog/types.ts", "dialog/index.ts"])
+          : item === "switch"
+            ? ["switch.svelte", "switch.types.ts"]
+            : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
       assert.ok(
         readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
@@ -59,36 +73,64 @@ function buildComponentConsumer(
         ),
       );
     }
-    const route = `src/routes/qualification/${item}/+page.svelte`;
+    const route = `src/routes/qualification/${qualification}/+page.svelte`;
     let module = path.posix.relative(
       path.posix.dirname(route),
       `${config.uiDir}/index.js`,
     );
     if (!module.startsWith(".")) module = `./${module}`;
     const template = readFileSync(
-      `tests/fixtures/qualification/${item}/+page.svelte`,
+      `tests/fixtures/qualification/${qualification}/+page.svelte`,
       "utf8",
     );
     assert.equal(template.match(/__UI_MODULE__/g)?.length, 2);
     write(route, template.replaceAll("__UI_MODULE__", module));
+    const logRoot = "implementation/evidence/logs/generated-consumer";
+    mkdirSync(logRoot, { recursive: true });
+    const logPrefix = `${qualification}-${custom ? "custom" : "default"}-${process.pid}-${Date.now()}`;
+    const logs: string[] = [];
     for (const script of ["check", "build"]) {
       const result = runFixtureScript(fixture.root, script);
+      const log = `${logRoot}/${logPrefix}-${script}.log`;
+      writeFileSync(
+        log,
+        `${result.stdout}\n${result.stderr}\nstatus=${result.status}; signal=${result.signal}\n`,
+      );
+      logs.push(log);
       assert.equal(result.status, 0, result.stdout + result.stderr);
     }
     const handler = path.join(fixture.root, "build/handler.js");
+    const productionFiles: string[] = [];
+    const inventory = (directory: string) => {
+      for (const entry of readdirSync(path.join(fixture.root, directory), {
+        withFileTypes: true,
+      })) {
+        const file = `${directory}/${entry.name}`;
+        if (entry.isDirectory()) inventory(file);
+        else {
+          assert.ok(entry.isFile(), file);
+          productionFiles.push(file);
+        }
+      }
+    };
+    inventory("build");
     const files = [
       ...sources.map((file) => `${config.uiDir}/${file}`),
       route,
       `${config.uiDir}/index.ts`,
       `${paths.stateDir}/kit.lock.json`,
       paths.kitCss,
-      "build/handler.js",
+      ...productionFiles.sort(),
     ];
     return {
       ...fixture,
       handler,
+      route: `qualification/${qualification}`,
       evidence: {
         mapping: config,
+        item,
+        qualification,
+        logs,
         files: Object.fromEntries(
           files.map((file) => [
             file,
@@ -110,3 +152,8 @@ export const buildButtonConsumer = (custom: boolean) =>
 
 export const buildSwitchConsumer = (custom: boolean) =>
   buildComponentConsumer("switch", custom);
+
+export const buildDialogConsumer = (
+  custom: boolean,
+  qualification: "dialog" | "dialog-interactions" = "dialog",
+) => buildComponentConsumer("dialog", custom, qualification);

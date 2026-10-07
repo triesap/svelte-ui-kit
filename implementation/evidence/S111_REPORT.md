@@ -3,7 +3,7 @@
 Author: Codex. Candidate; independent S115 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S111","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S111","kind":"report","commit":"407b54123629f2dc32c430e6b12a5b9d885f95f2","disposition":"candidate"}
 -->
 
 The advertised dialog item owns all eight parts, shared Props types and one
