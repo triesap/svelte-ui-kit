@@ -26,7 +26,7 @@ function usageOf(argv: readonly string[]): string {
   return request.message;
 }
 
-test("help and version remain stable and must be used alone", () => {
+test("bare help and version remain stable and reject unrelated arguments", () => {
   assert.deepEqual(parseCliArgs([]), { kind: "help" });
   assert.deepEqual(parseCliArgs(["--help"]), { kind: "help" });
   assert.deepEqual(parseCliArgs(["-h"]), { kind: "help" });
@@ -170,4 +170,19 @@ test("parsing is pure and performs no writes", () => {
   const second = parseCliArgs(frozen);
   assert.deepEqual(first, second);
   assert.deepEqual(frozen, argv);
+});
+
+test("S078 JSON help combines only existing presentation and help flags", () => {
+  for (const args of [
+    ["--json", "--help"],
+    ["--help", "--json"],
+    ["-h", "--json"],
+  ])
+    assert.deepEqual(parseCliArgs(args), { kind: "help", json: true });
+  for (const args of [
+    ["--json", "--help", "info"],
+    ["--json", "--help", "--json"],
+    ["--json", "--help", "--cwd", "."],
+  ])
+    assert.equal(parseCliArgs(args).kind, "usage-error");
 });

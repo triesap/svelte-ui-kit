@@ -54,6 +54,16 @@ At S002, adopt the embedded contracts into their scheduled repository-relative f
 
 ### Current expanded dispatch — through RCLD-04
 
+#### S078 output decision within approved CLI scope
+
+Original S078 requires JSON help alongside failure/planned/success outcomes.
+Permit the existing `--json` with existing `--help`/`-h` in either order; retain
+bare help/version behavior and reject extra/duplicate flags or command arguments.
+This introduces no command/option, changes no exit vocabulary and relaxes no
+write boundary. Version's existing standalone grammar remains unchanged.
+Shared output adapters keep transient transaction identifiers out of semantic
+results and distinguish planned/applied/committed-with-cleanup outcomes.
+
 #### Current independently accepted gate and next sequence
 
 The separate reviewer accepts original S064–S077 on code `ce54d7d`;
@@ -5595,7 +5605,7 @@ The sequence gates below supplement each checkpoint's exact scope and tests. Run
 | [RCLD-02](#rcld-02) | S013–S032   | 20    | complete    | S012                |
 | [RCLD-03](#rcld-03) | S033–S063   | 31    | complete    | S032                |
 | [RCLD-04](#rcld-04) | S064–S077   | 14    | complete    | S063                |
-| [RCLD-05](#rcld-05) | S078–S091   | 14    | not_started | S077                |
+| [RCLD-05](#rcld-05) | S078–S091   | 14    | in_progress | S077                |
 | [RCLD-06](#rcld-06) | S092–S115   | 24    | not_started | S091                |
 | [RCLD-07](#rcld-07) | S116–S128   | 13    | not_started | S115                |
 | [RCLD-08](#rcld-08) | S129–S148   | 20    | not_started | S128                |
@@ -5655,7 +5665,7 @@ Checkpoints: S064–S077. State: complete.
 
 ### RCLD-05 — CLI workflows and generator acceptance
 
-Checkpoints: S078–S091. State: not_started.
+Checkpoints: S078–S091. State: in_progress.
 
 **Scope:** Wire one outcome renderer and info/view/init/add/sync/doctor to verified use cases, then qualify process results, idempotence, schema boundaries, upgrades and package inventory.
 
@@ -5818,7 +5828,7 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S075 | RCLD-04  | S074       | complete    | `fd1d0938d9ad188c5646c153b76fa2989438c727` |
 | S076 | RCLD-04  | S075       | complete    | `fd1d0938d9ad188c5646c153b76fa2989438c727` |
 | S077 | RCLD-04  | S076       | complete    | `fd1d0938d9ad188c5646c153b76fa2989438c727` |
-| S078 | RCLD-05  | S077       | not_started | —                                          |
+| S078 | RCLD-05  | S077       | in_progress | —                                          |
 | S079 | RCLD-05  | S078       | not_started | —                                          |
 | S080 | RCLD-05  | S079       | not_started | —                                          |
 | S081 | RCLD-05  | S080       | not_started | —                                          |

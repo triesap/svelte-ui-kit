@@ -1,8 +1,9 @@
 #!/usr/bin/env node
+import { renderCommandOutput } from "./output.js";
 import { readFileSync } from "node:fs";
 
 import { classifyArgvIntent, type ArgvIntent } from "./args.js";
-import { createEnvelope, renderEnvelope } from "./protocol.js";
+import { createEnvelope } from "./protocol.js";
 import { runCli } from "./run.js";
 
 /**
@@ -62,7 +63,7 @@ function failMetadata(
 ): undefined {
   if (intent.json) {
     process.stdout.write(
-      renderEnvelope(
+      renderCommandOutput(
         createEnvelope({
           command: intent.command,
           status: "error",
@@ -76,7 +77,8 @@ function failMetadata(
             },
           ],
         }),
-      ),
+        true,
+      ).stdout,
     );
   } else {
     process.stderr.write(`svelte-ui-kit: ${message}\n`);

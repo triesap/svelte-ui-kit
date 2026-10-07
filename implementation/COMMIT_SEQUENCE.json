@@ -45,7 +45,7 @@
       "first": "S078",
       "last": "S091",
       "count": 14,
-      "state": "not_started",
+      "state": "in_progress",
       "predecessor": "S077"
     },
     {
@@ -1111,7 +1111,7 @@
       "sequence": "RCLD-05",
       "dependsOn": "S077",
       "requirements": ["R09", "R15", "R30", "R32", "R33", "R34"],
-      "status": "not_started",
+      "status": "in_progress",
       "completion": null
     },
     {

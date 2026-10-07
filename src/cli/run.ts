@@ -1,5 +1,6 @@
+import { renderCommandOutput } from "./output.js";
 import { parseCliArgs, type CliRequest } from "./args.js";
-import { createEnvelope, exitCodeFor, renderEnvelope } from "./protocol.js";
+import { createEnvelope, exitCodeFor } from "./protocol.js";
 
 /**
  * Pure CLI result handling.
@@ -76,7 +77,18 @@ export function applyRequest(
   io: CliIo,
 ): number {
   if (request.kind === "help") {
-    io.stdout(HELP_TEXT);
+    io.stdout(
+      request.json
+        ? renderCommandOutput(
+            createEnvelope({
+              command: "help",
+              status: "success",
+              data: HELP_TEXT,
+            }),
+            true,
+          ).stdout
+        : HELP_TEXT,
+    );
     return 0;
   }
   if (request.kind === "version") {
@@ -86,7 +98,7 @@ export function applyRequest(
   if (request.kind === "usage-error") {
     if (request.json) {
       io.stdout(
-        renderEnvelope(
+        renderCommandOutput(
           createEnvelope({
             command: request.command,
             status: "error",
@@ -100,7 +112,8 @@ export function applyRequest(
               },
             ],
           }),
-        ),
+          true,
+        ).stdout,
       );
     } else {
       io.stderr(formatUsageDiagnostic(request.message, request.argv));
@@ -121,7 +134,7 @@ export function applyRequest(
     ],
   });
   if (request.json) {
-    io.stdout(renderEnvelope(envelope));
+    io.stdout(renderCommandOutput(envelope, true).stdout);
   } else {
     io.stderr(formatUnsupportedDiagnostic(request.command));
   }

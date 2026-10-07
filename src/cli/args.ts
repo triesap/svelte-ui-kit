@@ -11,7 +11,8 @@
  * - duplicate flags, unknown flags, missing values, extra positionals and
  *   invalid item ids are usage errors.
  *
- * `--help`/`-h` and `--version`/`-V` remain stable and are valid only alone.
+ * Bare help/version remain stable; S078 also permits JSON help using only
+ * the existing `--json` and `--help`/`-h` flags. Version remains valid alone.
  * Rejected force/remove/auto-install/remote-registry options fail explicitly
  * rather than being quietly accepted.
  *
@@ -48,7 +49,7 @@ export interface CommandRequest {
 }
 
 export type CliRequest =
-  | { readonly kind: "help" }
+  | { readonly kind: "help"; readonly json?: true }
   | { readonly kind: "version" }
   | CommandRequest
   | {
@@ -110,6 +111,13 @@ export function classifyArgvIntent(argv: readonly string[]): ArgvIntent {
 /** Classify `argv` (already sliced past the executable/script). */
 export function parseCliArgs(argv: readonly string[]): CliRequest {
   if (argv.length === 0) return { kind: "help" };
+  if (
+    argv.length === 2 &&
+    argv.includes("--json") &&
+    (argv.includes("--help") || argv.includes("-h"))
+  ) {
+    return { kind: "help", json: true };
+  }
   const first = argv[0];
   if (argv.length === 1 && (first === "--help" || first === "-h")) {
     return { kind: "help" };
