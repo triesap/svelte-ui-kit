@@ -4,7 +4,7 @@ Author: Codex. Candidate; mandatory separate S115 acceptance remains pending.
 Original checkpoint definitions and independently accepted S001–S091 remain.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S095","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S095","kind":"report","commit":"37ecdb2764ca7581d8a611affac0f565ddbfc5f5","disposition":"candidate"}
 -->
 
 The production-built maintained consumer now renders representative contract
