@@ -727,12 +727,18 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       ]),
     );
     // An existing managed block the lock does not own is application-owned;
-    // markers alone never confer ownership. It is a conflict even when it is
-    // byte-identical to incoming. The foundation `tokens` layer is exempt only
+    // markers alone never confer ownership. Adoption is a conflict even when
+    // byte-identical to incoming; a block with no incoming claim stays untouched
+    // as application-owned content (including detached retirement). Foundation
+    // `tokens` is exempt only
     // when the versioned integration contract owns it.
     for (const block of parsedBlocks) {
       if (integrationOwnsTokens(block.id)) continue;
-      if (!lockByBlock.has(block.id) && !allLockByBlock.has(block.id)) {
+      if (
+        desiredById.has(block.id) &&
+        !lockByBlock.has(block.id) &&
+        !allLockByBlock.has(block.id)
+      ) {
         diagnostics.push(
           `css conflict at ${cssPath}#${block.id}: a managed block is present that the lock does not own; markers alone do not confer ownership`,
         );
@@ -817,6 +823,18 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         effective.push({ id: blockId, body: incomingBody ?? TOKENS_BODY });
         foundationTokensOwned = true;
         foundationBaseline = hashBytes(utf8(TOKENS_BODY)) as string;
+        continue;
+      }
+
+      // An unclaimed, unowned block is application text. Preserve its exact
+      // body without creating ownership or a fabricated base. A later incoming
+      // claim still takes the untracked-conflict path above and below.
+      if (
+        record === undefined &&
+        allRecord === undefined &&
+        incomingBody === null
+      ) {
+        if (local !== null) effective.push({ id: blockId, body: local });
         continue;
       }
 

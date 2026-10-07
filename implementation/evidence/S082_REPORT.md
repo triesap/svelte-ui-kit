@@ -4,7 +4,7 @@ Author: Codex. Implemented and locally verified; independent RCLD-05 acceptance
 remains pending. Original checkpoint/contract criteria are unchanged.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S082","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S082","kind":"report","commit":"6fc4e612b82ffe4f2bea57d7ced4aafc1d1fd97c","disposition":"candidate"}
 -->
 
 The executable accepts the frozen one-item grammar and captures effective
