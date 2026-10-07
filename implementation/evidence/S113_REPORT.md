@@ -3,7 +3,7 @@
 Author: Codex. Candidate; independent S115 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S113","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S113","kind":"report","commit":"dec0170a298938a05f4d26085564e12ba817e4f3","disposition":"candidate"}
 -->
 
 Default/custom actual CLI-installed production applications prove document-level

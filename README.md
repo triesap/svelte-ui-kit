@@ -34,6 +34,14 @@ these consequences. Global and nested hosts, live changes and an intentionally
 unsuitable transformed clipping host are tested against actual CLI-installed
 applications in default and custom source layouts.
 
+Server rendering follows the pinned primitive: body/custom portal Content is
+mounted in the browser; disabled (inline) Portal can render initially open
+Content on the server. Child Title/Description relationships are registered
+during hydration, which completes native naming attributes. Initial state and
+generated IDs remain local to each request/instance. The native first opening
+of newly portaled Content omits its animation-completion callback in Bits2.19.3;
+completed closing emits it. The kit forwards the native callback unchanged.
+
 ## Use the local built CLI
 
 Build from this clone after installing its frozen development dependencies.

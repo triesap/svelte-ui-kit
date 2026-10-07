@@ -14,6 +14,7 @@ function buildComponentConsumer(
   item: "spinner" | "button" | "switch" | "dialog",
   custom: boolean,
   qualification: string = item,
+  removeDescriptionObserverCleanup = false,
 ) {
   const fixture = copyConsumerFixture();
   try {
@@ -73,6 +74,21 @@ function buildComponentConsumer(
         ),
       );
     }
+    if (removeDescriptionObserverCleanup) {
+      assert.equal(item, "dialog");
+      const target = path.join(
+        fixture.root,
+        config.uiDir,
+        "dialog/content.svelte",
+      );
+      const source = readFileSync(target, "utf8");
+      const cleanup = "return () => observer.disconnect();";
+      assert.equal(source.split(cleanup).length, 2);
+      writeFileSync(
+        target,
+        source.replace(cleanup, "// Owned negative control: cleanup removed."),
+      );
+    }
     const route = `src/routes/qualification/${qualification}/+page.svelte`;
     let module = path.posix.relative(
       path.posix.dirname(route),
@@ -130,6 +146,9 @@ function buildComponentConsumer(
         mapping: config,
         item,
         qualification,
+        ownedMutation: removeDescriptionObserverCleanup
+          ? "description-observer-cleanup-removed"
+          : null,
         logs,
         files: Object.fromEntries(
           files.map((file) => [
@@ -155,5 +174,16 @@ export const buildSwitchConsumer = (custom: boolean) =>
 
 export const buildDialogConsumer = (
   custom: boolean,
-  qualification: "dialog" | "dialog-interactions" | "dialog-themes" = "dialog",
-) => buildComponentConsumer("dialog", custom, qualification);
+  qualification:
+    | "dialog"
+    | "dialog-interactions"
+    | "dialog-themes"
+    | "dialog-hydration" = "dialog",
+  removeDescriptionObserverCleanup = false,
+) =>
+  buildComponentConsumer(
+    "dialog",
+    custom,
+    qualification,
+    removeDescriptionObserverCleanup,
+  );
