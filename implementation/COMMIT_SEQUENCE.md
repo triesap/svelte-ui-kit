@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: `pfc all` is active with Codex implementing all remaining original requirements. S001–S077 are independently accepted; S078–S083 are committed pending RCLD-05 review and S084 is in progress. Updated 2026-10-07.
+Status: `pfc all` is active with Codex implementing all remaining original requirements. S001–S077 are independently accepted; S078–S084 are committed pending RCLD-05 review and S085 is in progress. Updated 2026-10-07.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,12 +17,12 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S084 — Implement doctor structural and dependency checks**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
+- Active implementation checkpoint: **S085 — Separate doctor customization from strict failures**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **77 / 203**. Remaining: **126 / 203**.
-- Committed pending review: **6 / 203**. Authored batch range: **S078–S083**.
+- Committed pending review: **7 / 203**. Authored batch range: **S078–S084**.
 - Completed RCLD sequences: **4 / 11**. Remaining: **7 / 11**.
-- Last safe target commit: `8dcb6db254dc4f5843112c2ea440024511c5a8d4`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `fda60ed7e0f4b02363bae1b1cbd09d7f83026533`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -53,6 +53,16 @@ At S002, adopt the embedded contracts into their scheduled repository-relative f
 ## Codex dispatch — complete RCLD-04 transactions and recovery
 
 ### Current expanded dispatch — through RCLD-04
+
+#### S085 customization qualification
+
+Use the pinned Svelte source/CSS parsers and existing TypeScript module parser
+without executing project code. Valid source/CSS drift is customization, not
+strict failure; missing required exports/targets, malformed syntax or unsafe
+entries remain broken. Preserve recorded base hashes and never rewrite local
+content. The representative test fixture now emits its declared PascalCase type
+export rather than an undeclared lowercase alias; this fixes fixture evidence,
+not product criteria.
 
 #### S084 read-only diagnosis decision
 
@@ -5874,8 +5884,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S081 | RCLD-05  | S080       | committed_pending_review | `9b3a7c2d7af82ea2e141c15c6d0aac086da463c2` |
 | S082 | RCLD-05  | S081       | committed_pending_review | `6fc4e612b82ffe4f2bea57d7ced4aafc1d1fd97c` |
 | S083 | RCLD-05  | S082       | committed_pending_review | `8dcb6db254dc4f5843112c2ea440024511c5a8d4` |
-| S084 | RCLD-05  | S083       | in_progress              | —                                          |
-| S085 | RCLD-05  | S084       | not_started              | —                                          |
+| S084 | RCLD-05  | S083       | committed_pending_review | `fda60ed7e0f4b02363bae1b1cbd09d7f83026533` |
+| S085 | RCLD-05  | S084       | in_progress              | —                                          |
 | S086 | RCLD-05  | S085       | not_started              | —                                          |
 | S087 | RCLD-05  | S086       | not_started              | —                                          |
 | S088 | RCLD-05  | S087       | not_started              | —                                          |

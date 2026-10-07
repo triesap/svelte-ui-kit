@@ -4,7 +4,7 @@ Author: Codex. Implemented and locally verified; separate RCLD-05 acceptance
 remains pending. Original S084 requirements and contracts are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S084","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S084","kind":"report","commit":"fda60ed7e0f4b02363bae1b1cbd09d7f83026533","disposition":"candidate"}
 -->
 
 Doctor consumes captured selected-project/config/lock/incoming inventory and

@@ -224,7 +224,7 @@ export function compoundRegistry(
       const body =
         file.kind === "svelte"
           ? item.body
-          : `export interface ${item.id}Props {}\n`;
+          : `export interface ${item.exports.find((entry) => entry.target === file.target && entry.kind === "type")?.name ?? `${item.id}Props`} {}\n`;
       write(root, `registry/${file.source}`, body);
       assets.push({
         path: `registry/${file.source}`,

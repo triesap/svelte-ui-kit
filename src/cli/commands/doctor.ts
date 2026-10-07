@@ -1,3 +1,5 @@
+import { parse, parseCss } from "svelte/compiler";
+import { sha256Hex } from "../../codegen/digest.js";
 import { projectRequests } from "../../registry/projection.js";
 import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
 /** Structural/dependency diagnosis is strictly read-only, including recovery. */
@@ -35,7 +37,8 @@ import { issue, type ModelIssue } from "../../registry/errors.js";
 
 export interface DoctorCheck {
   readonly code: string;
-  readonly status: "healthy" | "broken" | "unsafe" | "unverified";
+  readonly status:
+    "healthy" | "broken" | "unsafe" | "unverified" | "customized";
   readonly locator?: string;
 }
 export function diagnose(
@@ -158,6 +161,91 @@ export function diagnose(
       );
   }
   if (checks.some((check) => check.status === "unsafe")) return result();
+  for (const file of lock.files) {
+    const observed = snapshot.entries.get(file.path);
+    if (observed?.kind !== "file") continue;
+    const decoded = decodeObservedText(observed);
+    if (decoded.kind !== "text") {
+      record(
+        [
+          issue(
+            "DOCTOR_SOURCE_INVALID",
+            "Owned source is not valid UTF-8.",
+            file.path,
+          ),
+        ],
+        "DOCTOR_SOURCE",
+      );
+      continue;
+    }
+    try {
+      if (file.path.endsWith(".svelte")) parse(decoded.text, { modern: true });
+      else if (file.path.endsWith(".ts")) {
+        const parsed = parseExportRegion(file.path, decoded.text);
+        if (!parsed.ok) {
+          record(parsed.issues, "DOCTOR_SOURCE");
+          continue;
+        }
+        const item = registry.items.find((entry) => entry.id === file.owner);
+        if (
+          registry.root.contentHash === lock.registryHash &&
+          item !== undefined
+        ) {
+          const declarations = item.manifest.exports.filter(
+            (entry) => config.uiDir + "/" + entry.target === file.path,
+          );
+          const missing = declarations.filter(
+            (entry) =>
+              !parsed.value.appExports.some(
+                (actual) => actual.name === entry.name,
+              ),
+          );
+          if (missing.length > 0) {
+            record(
+              [
+                issue(
+                  "DOCTOR_SOURCE_EXPORT_MISSING",
+                  "Owned TypeScript source no longer supplies its declared public export.",
+                  file.path,
+                ),
+              ],
+              "DOCTOR_SOURCE",
+            );
+            continue;
+          }
+        }
+      }
+    } catch {
+      record(
+        [
+          issue(
+            "DOCTOR_SOURCE_INVALID",
+            "Owned source cannot be parsed by the pinned language compiler.",
+            file.path,
+          ),
+        ],
+        "DOCTOR_SOURCE",
+      );
+      continue;
+    }
+    if (observed.hash !== file.baseHash) {
+      checks.push({
+        code: "DOCTOR_SOURCE_CUSTOMIZED",
+        status: "customized",
+        locator: file.path,
+      });
+      warnings.push({
+        code: "DOCTOR_SOURCE_CUSTOMIZED",
+        level: "info",
+        message:
+          "Valid local source differs from recorded upstream; original base lineage is retained.",
+        locator: file.path,
+        guidance:
+          "Review incoming changes with view and sync --dry-run before upgrading.",
+      });
+    }
+  }
+
   const cssPaths = new Set(lock.cssBlocks.map((entry) => entry.path));
   cssPaths.add(derived.kitCss);
   for (const logical of cssPaths) {
@@ -165,8 +253,53 @@ export function diagnose(
     if (observed === undefined) continue;
     const decoded = decodeObservedText(observed);
     if (decoded.kind !== "text") continue;
+    try {
+      parseCss(decoded.text);
+    } catch {
+      record(
+        [
+          issue(
+            "DOCTOR_CSS_SYNTAX_INVALID",
+            "The installed stylesheet cannot be parsed by the pinned CSS parser.",
+            logical,
+          ),
+        ],
+        "DOCTOR_CSS",
+      );
+      continue;
+    }
     const parsed = parseManagedCss(decoded.text);
     record(parsed.ok ? [] : parsed.issues, "DOCTOR_CSS", logical);
+    if (parsed.ok)
+      for (const owned of lock.cssBlocks.filter(
+        (entry) => entry.path === logical,
+      )) {
+        const block = parsed.value.blocks.find(
+          (entry) => entry.id === owned.blockId,
+        );
+        if (
+          block !== undefined &&
+          sha256Hex(
+            new TextEncoder().encode(
+              decoded.text.slice(block.contentStart, block.contentEnd),
+            ),
+          ) !== owned.baseHash
+        ) {
+          checks.push({
+            code: "DOCTOR_CSS_CUSTOMIZED",
+            status: "customized",
+            locator: logical,
+          });
+          warnings.push({
+            code: "DOCTOR_CSS_CUSTOMIZED",
+            level: "info",
+            message: `Valid local CSS block ${owned.blockId} differs from recorded upstream; original base lineage is retained.`,
+            locator: logical,
+            guidance:
+              "Use application overrides or inspect incoming source before reconciling this customization.",
+          });
+        }
+      }
     if (parsed.ok)
       for (const owned of lock.cssBlocks.filter(
         (entry) => entry.path === logical,
