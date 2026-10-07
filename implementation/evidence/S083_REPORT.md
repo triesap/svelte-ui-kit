@@ -4,7 +4,7 @@ Author: Codex. Implemented and locally verified; independent RCLD-05 acceptance
 is pending. Original S083 criteria and ownership rules remain unchanged.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S083","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S083","kind":"report","commit":"8dcb6db254dc4f5843112c2ea440024511c5a8d4","disposition":"candidate"}
 -->
 
 The actual sync executable uses complete captured mapping/lock/incoming-closure

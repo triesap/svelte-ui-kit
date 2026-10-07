@@ -185,6 +185,11 @@ async function main(argv: readonly string[]): Promise<void> {
       ? (await import("./commands/sync.js")).synchronize
       : undefined;
 
+  const doctor =
+    request.kind === "command" && request.command === "doctor"
+      ? (await import("./commands/doctor.js")).diagnose
+      : undefined;
+
   // The adapter keeps metadata validation and the real process effects; the
   // shared executor performs the actual classified dispatch.
   process.exitCode = runCli(
@@ -195,6 +200,15 @@ async function main(argv: readonly string[]): Promise<void> {
       stderr: (text) => process.stderr.write(text),
     },
     {
+      ...(doctor === undefined
+        ? {}
+        : {
+            doctor: (request) =>
+              doctor(
+                request,
+                fileURLToPath(new URL("../../", import.meta.url)),
+              ),
+          }),
       ...(sync === undefined
         ? {}
         : {

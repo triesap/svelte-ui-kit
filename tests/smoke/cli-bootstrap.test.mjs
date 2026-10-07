@@ -250,25 +250,13 @@ for (const args of jsonUsageFailures) {
   });
 }
 
-const unsupportedCommands = [["doctor"], ["doctor", "--strict"]];
-
-for (const args of unsupportedCommands) {
-  test(`unimplemented command ${JSON.stringify(args)} exits 2 honestly`, () => {
-    const result = runCli(args);
-    assert.equal(result.status, 2);
-    assert.equal(result.stdout, "");
-    assert.match(result.stderr, /not implemented yet/);
-    assert.match(result.stderr, /svelte-ui-kit:/);
-  });
-}
-
-test("json mode emits exactly one unsupported envelope", () => {
-  const result = runCli(["doctor", "--json"]);
+test("json mode emits exactly one rejected-command envelope", () => {
+  const result = runCli(["unknown", "--json"]);
   assert.equal(result.status, 2);
   assert.equal(result.stderr, "");
   const envelope = JSON.parse(result.stdout);
-  assert.equal(envelope.command, "doctor");
-  assert.equal(envelope.status, "unsupported");
+  assert.equal(envelope.command, "help");
+  assert.equal(envelope.status, "error");
   assert.equal(envelope.schemaVersion, 1);
   assert.ok(
     Array.isArray(envelope.diagnostics) && envelope.diagnostics.length > 0,
@@ -294,8 +282,6 @@ test("help, version and rejected argument lists never write to a seeded cwd", (t
     ["add"],
     [""],
     ["--"],
-    ["doctor", "--json"],
-    ["doctor", "--strict"],
   ];
   for (const args of invocations) {
     const result = runCli(args, { cwd: dir });
