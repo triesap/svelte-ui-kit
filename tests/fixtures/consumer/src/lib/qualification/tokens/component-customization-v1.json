@@ -4,6 +4,120 @@
   "description": "Independent inherited component CSS overrides, including exact geometry-critical radius overrides.",
   "properties": [
     {
+      "name": "--kit-button-lg-font-size",
+      "scope": "button",
+      "grammar": "<length-percentage>",
+      "fallback": "1rem"
+    },
+    {
+      "name": "--kit-button-lg-padding-inline",
+      "scope": "button",
+      "grammar": "<length-percentage>",
+      "fallback": "1.25rem"
+    },
+    {
+      "name": "--kit-button-lg-min-height",
+      "scope": "button",
+      "grammar": "<length-percentage>",
+      "fallback": "3rem"
+    },
+    {
+      "name": "--kit-button-md-font-size",
+      "scope": "button",
+      "grammar": "<length-percentage>",
+      "fallback": "0.9375rem"
+    },
+    {
+      "name": "--kit-button-md-padding-inline",
+      "scope": "button",
+      "grammar": "<length-percentage>",
+      "fallback": "1rem"
+    },
+    {
+      "name": "--kit-button-md-min-height",
+      "scope": "button",
+      "grammar": "<length-percentage>",
+      "fallback": "2.5rem"
+    },
+    {
+      "name": "--kit-button-sm-font-size",
+      "scope": "button",
+      "grammar": "<length-percentage>",
+      "fallback": "0.875rem"
+    },
+    {
+      "name": "--kit-button-sm-padding-inline",
+      "scope": "button",
+      "grammar": "<length-percentage>",
+      "fallback": "0.75rem"
+    },
+    {
+      "name": "--kit-button-sm-min-height",
+      "scope": "button",
+      "grammar": "<length-percentage>",
+      "fallback": "2rem"
+    },
+    {
+      "name": "--kit-button-spinner-size",
+      "scope": "button",
+      "grammar": "<length-percentage>",
+      "fallback": "1em"
+    },
+    {
+      "name": "--kit-button-disabled-opacity",
+      "scope": "button",
+      "grammar": "<number>",
+      "fallback": "var(--kit-disabled-opacity)"
+    },
+    {
+      "name": "--kit-button-focus-outline-offset",
+      "scope": "button",
+      "grammar": "<length>",
+      "fallback": "2px"
+    },
+    {
+      "name": "--kit-button-focus-outline-width",
+      "scope": "button",
+      "grammar": "<length>",
+      "fallback": "2px"
+    },
+    {
+      "name": "--kit-button-transition-timing",
+      "scope": "button",
+      "grammar": "<easing-function>",
+      "fallback": "var(--kit-easing-standard)"
+    },
+    {
+      "name": "--kit-button-transition-duration",
+      "scope": "button",
+      "grammar": "<time>",
+      "fallback": "var(--kit-duration-fast)"
+    },
+    {
+      "name": "--kit-button-line-height",
+      "scope": "button",
+      "grammar": "<number>",
+      "fallback": "1"
+    },
+    {
+      "name": "--kit-button-font-weight",
+      "scope": "button",
+      "grammar": "<number>",
+      "fallback": "600"
+    },
+    {
+      "name": "--kit-button-border-width",
+      "scope": "button",
+      "grammar": "<length>",
+      "fallback": "var(--kit-border-width)"
+    },
+    {
+      "name": "--kit-button-gap",
+      "scope": "button",
+      "grammar": "<length-percentage>",
+      "fallback": "0.375rem"
+    },
+    {
       "name": "--kit-spinner-inline-size",
       "scope": "spinner",
       "grammar": "<length-percentage>",

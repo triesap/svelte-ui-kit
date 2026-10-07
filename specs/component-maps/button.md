@@ -38,3 +38,37 @@ svelte-ui-kit.components layer and matching managed block at S100, preserving
 all source variables/fallbacks and the documented control-radius cascade.
 S101 independently exercises native activation, forms, disabled/loading,
 accessible label changes, ref and children forwarding, and CSS customization.
+
+## Native source CSS hooks
+
+Every source Button hook remains inherited, without @property registration.
+The original radius cascade is preserved; remaining declarations publish in
+customization contract v1 with independent tokens item0.1.2 identity.
+
+| Property                          | Source fallback                                                              |
+| --------------------------------- | ---------------------------------------------------------------------------- |
+| --kit-button-radius               | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))` |
+| --kit-button-gap                  | `0.375rem`                                                                   |
+| --kit-button-border-width         | `var(--kit-border-width)`                                                    |
+| --kit-button-font-weight          | `600`                                                                        |
+| --kit-button-line-height          | `1`                                                                          |
+| --kit-button-transition-duration  | `var(--kit-duration-fast)`                                                   |
+| --kit-button-transition-timing    | `var(--kit-easing-standard)`                                                 |
+| --kit-button-focus-outline-width  | `2px`                                                                        |
+| --kit-button-focus-outline-offset | `2px`                                                                        |
+| --kit-button-disabled-opacity     | `var(--kit-disabled-opacity)`                                                |
+| --kit-button-spinner-size         | `1em`                                                                        |
+| --kit-button-sm-min-height        | `2rem`                                                                       |
+| --kit-button-sm-padding-inline    | `0.75rem`                                                                    |
+| --kit-button-sm-font-size         | `0.875rem`                                                                   |
+| --kit-button-md-min-height        | `2.5rem`                                                                     |
+| --kit-button-md-padding-inline    | `1rem`                                                                       |
+| --kit-button-md-font-size         | `0.9375rem`                                                                  |
+| --kit-button-lg-min-height        | `3rem`                                                                       |
+| --kit-button-lg-padding-inline    | `1.25rem`                                                                    |
+| --kit-button-lg-font-size         | `1rem`                                                                       |
+
+The button composition additionally assigns Spinner's published inline/block
+size properties from --kit-button-spinner-size. This preserves the source
+Button size hook under deterministic lexical managed-block order, independent
+of which component stylesheet appears later. Original declarations remain.

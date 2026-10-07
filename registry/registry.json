@@ -1,20 +1,11 @@
 {
   "schemaVersion": 1,
   "registryVersion": "0.1.0",
-  "compatibility": {
-    "svelte": "5.57.1",
-    "bits": "2.19.3",
-    "date": "^3.8.1"
-  },
+  "compatibility": { "svelte": "5.57.1", "bits": "2.19.3", "date": "^3.8.1" },
   "items": [
-    {
-      "id": "spinner",
-      "manifest": "ui/spinner.json"
-    },
-    {
-      "id": "tokens",
-      "manifest": "foundation/tokens.json"
-    }
+    { "id": "button", "manifest": "ui/button.json" },
+    { "id": "spinner", "manifest": "ui/spinner.json" },
+    { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "bde8083854226d92f660f10de8addc66765b4be8686ab0f4606796a6ca7f9a41"
+  "contentHash": "4afb68320548522c137a5e945a4c609807d497bbfc8e9d9f7e1a5bdac4758002"
 }

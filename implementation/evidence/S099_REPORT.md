@@ -4,7 +4,7 @@ Author: Codex. Candidate; independent S115 acceptance remains pending.
 Original requirements and accepted S001–S091 are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S099","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S099","kind":"report","commit":"04a7dca51a3d2b0b0d595a5d154eb138ca6dab73","disposition":"candidate"}
 -->
 
 The source component and full stylesheet mapping records immutable source links,

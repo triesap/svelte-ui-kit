@@ -7,7 +7,7 @@ Source-first UI kit for Svelte with installable component source and a CLI.
 The generator implements `info`, `init`, `view`, `add`, `sync` and `doctor`, with
 read-only planning and guarded recoverable application. The package is private
 and unpublished. The shipped registry includes the CSS-only `tokens` foundation
-and native `spinner`; component items are still being qualified.
+and native `spinner`/`button`; component items are still being qualified.
 Tokens installs independent token, component-customization and theme-integration
 metadata under the configured UI state directory, with normal lock baselines.
 Representative synthetic registries qualify source/CSS updates, retirement,

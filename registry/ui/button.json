@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "id": "button",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Native button with source design variants and loading-safe semantics.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/button.svelte",
+      "target": "button.svelte",
+      "kind": "svelte",
+      "cohort": "button"
+    },
+    {
+      "source": "ui/button.types.ts",
+      "target": "button.types.ts",
+      "kind": "typescript",
+      "cohort": "button"
+    }
+  ],
+  "exports": [
+    {
+      "name": "Button",
+      "target": "button.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "ButtonProps",
+      "target": "button.types.ts",
+      "kind": "type"
+    },
+    {
+      "name": "ButtonVariant",
+      "target": "button.types.ts",
+      "kind": "type"
+    },
+    {
+      "name": "ButtonSize",
+      "target": "button.types.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/button.css",
+      "target": "kit.css",
+      "blockId": "button",
+      "cohort": "button"
+    }
+  ],
+  "registryDependencies": ["spinner", "tokens"],
+  "npmDependencies": [],
+  "accessibility": {
+    "requiredNames": ["button-label"],
+    "keyboard": ["Enter", "Space"],
+    "focus": ["native-focus-visible"],
+    "form": ["button", "submit", "reset", "disabled", "loading"],
+    "tests": ["button-types", "button-install", "button-browser"]
+  }
+}
