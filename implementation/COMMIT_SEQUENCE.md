@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: `pfc all` is active with Codex implementing all remaining original requirements. S001–S077 are independently accepted; S078–S087 are committed pending RCLD-05 review and S088 is in progress. Updated 2026-10-07.
+Status: `pfc all` is active with Codex implementing all remaining original requirements. S001–S077 are independently accepted; S078–S088 are committed pending RCLD-05 review and S089 is in progress. Updated 2026-10-07.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -17,12 +17,12 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S088 — Reject unsupported schemas and preserve migration boundaries**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
+- Active implementation checkpoint: **S089 — Add synthetic upgrade and contract-revision fixtures**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **77 / 203**. Remaining: **126 / 203**.
-- Committed pending review: **10 / 203**. Authored batch range: **S078–S087**.
+- Committed pending review: **11 / 203**. Authored batch range: **S078–S088**.
 - Completed RCLD sequences: **4 / 11**. Remaining: **7 / 11**.
-- Last safe target commit: `8b0da319b0a82ae21ee86393618ba175b53b6833`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `e58aa2b38b37e292715b271b1b1bbca34e2b80e8`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -53,6 +53,16 @@ At S002, adopt the embedded contracts into their scheduled repository-relative f
 ## Codex dispatch — complete RCLD-04 transactions and recovery
 
 ### Current expanded dispatch — through RCLD-04
+
+#### S089 synthetic revision decision
+
+Use clearly synthetic item/source/CSS revisions and explicit cohort declaration
+changes with separate registry/item version axes. Preserve original conservative
+cohort conflicts and exact bases. CSS customization contract changes in these
+fixtures are supported v1 declaration/content changes, not authority to accept
+a new token-contract schema: unsupported contract versions remain refused by
+the existing strict contract parser. No fictional shipped historical release or
+guessed schema/contract migration is introduced.
 
 #### S088 schema dispatch decision
 
@@ -5914,8 +5924,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S085 | RCLD-05  | S084       | committed_pending_review | `635fa54ef0ed4cd500a8fc1a838e701fe9a3a180` |
 | S086 | RCLD-05  | S085       | committed_pending_review | `5c70614220fb82b3fc55510df4f0d1931122a531` |
 | S087 | RCLD-05  | S086       | committed_pending_review | `8b0da319b0a82ae21ee86393618ba175b53b6833` |
-| S088 | RCLD-05  | S087       | in_progress              | —                                          |
-| S089 | RCLD-05  | S088       | not_started              | —                                          |
+| S088 | RCLD-05  | S087       | committed_pending_review | `e58aa2b38b37e292715b271b1b1bbca34e2b80e8` |
+| S089 | RCLD-05  | S088       | in_progress              | —                                          |
 | S090 | RCLD-05  | S089       | not_started              | —                                          |
 | S091 | RCLD-05  | S090       | not_started              | —                                          |
 | S092 | RCLD-06  | S091       | not_started              | —                                          |

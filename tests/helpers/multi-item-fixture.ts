@@ -179,6 +179,10 @@ export interface CompoundRegistryOptions {
   readonly cardBody?: string;
   readonly includeCard?: boolean;
   readonly version?: string;
+  /** Synthetic independent item versions; omitted items retain registry default. */
+  readonly itemVersions?: Readonly<Record<string, string>>;
+  /** Synthetic cohort declaration changes without changing schema identities. */
+  readonly cohortOverrides?: Readonly<Record<string, string>>;
   /**
    * Override the registry CSS body for one managed block id. Used to build a
    * genuine base/local/incoming three-way conflict where the incoming block
@@ -206,12 +210,18 @@ export function compoundRegistry(
       schemaVersion: 1,
       id: item.id,
       kind: "component",
-      version,
+      version: options.itemVersions?.[item.id] ?? version,
       description: `${item.id} compound fixture item.`,
       compatibility: MULTI_ITEM_COMPATIBILITY,
-      files: item.files,
+      files: item.files.map((file) => ({
+        ...file,
+        cohort: options.cohortOverrides?.[item.id] ?? file.cohort,
+      })),
       exports: item.exports,
-      styles: item.styles,
+      styles: item.styles.map((style) => ({
+        ...style,
+        cohort: options.cohortOverrides?.[item.id] ?? style.cohort,
+      })),
       registryDependencies: item.dependencies,
     });
     write(root, `registry/ui/${item.id}.json`, manifest);

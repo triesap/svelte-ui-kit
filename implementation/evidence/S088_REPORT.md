@@ -4,7 +4,7 @@ Author: Codex. Implemented/locally verified; independent RCLD-05 acceptance pend
 Original schema and migration criteria remain unchanged.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S088","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S088","kind":"report","commit":"e58aa2b38b37e292715b271b1b1bbca34e2b80e8","disposition":"candidate"}
 -->
 
 Configuration and lock parsers dispatch their independent integer schema1 before

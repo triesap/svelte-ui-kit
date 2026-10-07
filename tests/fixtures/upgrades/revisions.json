@@ -1,0 +1,59 @@
+{
+  "synthetic": true,
+  "description": "Owned test revisions only; these versions are not shipped historical releases.",
+  "old": {
+    "version": "0.1.0",
+    "itemVersions": { "button": "1.0.0", "card": "2.0.0" }
+  },
+  "source": {
+    "version": "0.1.0",
+    "itemVersions": { "button": "1.0.0", "card": "2.1.0" },
+    "cardBody": "<div class=\"card\">SYNTHETIC_SOURCE_REVISION</div>\n"
+  },
+  "css": {
+    "version": "0.1.0",
+    "itemVersions": { "button": "1.0.0", "card": "2.1.0" },
+    "cssBodyOverrides": {
+      "card": ".card { padding: var(--kit-card-synthetic-gap, 1rem); }\n"
+    }
+  },
+  "cohort": {
+    "version": "3.0.0",
+    "itemVersions": { "button": "1.0.0", "card": "2.1.0" },
+    "cohortOverrides": { "card": "synthetic-v2" },
+    "cardBody": "<div class=\"card\">SYNTHETIC_SOURCE_REVISION</div>\n",
+    "cssBodyOverrides": {
+      "card": ".card { padding: var(--kit-card-synthetic-gap, 1rem); }\n"
+    }
+  },
+  "metadata": {
+    "version": "3.0.0",
+    "itemVersions": { "button": "1.0.0", "card": "2.0.0" }
+  },
+  "customizationOld": {
+    "id": "urn:svelte-ui-kit:component-customization:v1",
+    "contractVersion": 1,
+    "description": "Synthetic old customization declaration; not a release.",
+    "properties": [
+      {
+        "name": "--kit-card-synthetic-gap",
+        "scope": "card",
+        "grammar": "<length>",
+        "fallback": "0.5rem"
+      }
+    ]
+  },
+  "customizationIncoming": {
+    "id": "urn:svelte-ui-kit:component-customization:v1",
+    "contractVersion": 1,
+    "description": "Synthetic incoming customization declaration; not a release.",
+    "properties": [
+      {
+        "name": "--kit-card-synthetic-gap",
+        "scope": "card",
+        "grammar": "<length>",
+        "fallback": "1rem"
+      }
+    ]
+  }
+}
