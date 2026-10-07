@@ -4,7 +4,7 @@ Author: Codex. Candidate; separate S115 acceptance remains pending.
 Original checkpoint criteria and accepted S001–S091 remain unchanged.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S098","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S098","kind":"report","commit":"321eebd2e51827a4178ecbf22e3cc43cc22590a6","disposition":"candidate"}
 -->
 
 Both default and custom consumers are copied into owned directories, installed
