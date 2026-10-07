@@ -250,13 +250,7 @@ for (const args of jsonUsageFailures) {
   });
 }
 
-const unsupportedCommands = [
-  ["add", "button"],
-  ["sync"],
-  ["doctor"],
-  ["doctor", "--strict"],
-  ["add", "button", "--dry-run"],
-];
+const unsupportedCommands = [["sync"], ["doctor"], ["doctor", "--strict"]];
 
 for (const args of unsupportedCommands) {
   test(`unimplemented command ${JSON.stringify(args)} exits 2 honestly`, () => {
@@ -301,7 +295,6 @@ test("help, version and rejected argument lists never write to a seeded cwd", (t
     [""],
     ["--"],
     ["sync", "--json"],
-    ["add", "button"],
     ["sync"],
     ["doctor", "--strict"],
   ];

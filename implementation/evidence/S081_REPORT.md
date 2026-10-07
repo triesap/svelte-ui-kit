@@ -4,7 +4,7 @@ Author: Codex. Implemented and locally verified; independent RCLD-05 acceptance
 remains pending under original S081 criteria and contracts.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S081","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S081","kind":"report","commit":"9b3a7c2d7af82ea2e141c15c6d0aac086da463c2","disposition":"candidate"}
 -->
 
 The executable's init handler resolves the selected project, locates prospective

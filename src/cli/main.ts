@@ -175,6 +175,11 @@ async function main(argv: readonly string[]): Promise<void> {
       ? (await import("./commands/init.js")).initialize
       : undefined;
 
+  const add =
+    request.kind === "command" && request.command === "add"
+      ? (await import("./commands/add.js")).addItem
+      : undefined;
+
   // The adapter keeps metadata validation and the real process effects; the
   // shared executor performs the actual classified dispatch.
   process.exitCode = runCli(
@@ -185,6 +190,12 @@ async function main(argv: readonly string[]): Promise<void> {
       stderr: (text) => process.stderr.write(text),
     },
     {
+      ...(add === undefined
+        ? {}
+        : {
+            add: (request) =>
+              add(request, fileURLToPath(new URL("../../", import.meta.url))),
+          }),
       ...(init === undefined
         ? {}
         : {
