@@ -4,6 +4,36 @@
   "description": "Independent inherited component CSS overrides, including exact geometry-critical radius overrides.",
   "properties": [
     {
+      "name": "--kit-switch-track-background-unchecked",
+      "scope": "switch",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-border-strong)"
+    },
+    {
+      "name": "--kit-switch-transition-duration",
+      "scope": "switch",
+      "grammar": "<time>",
+      "fallback": "var(--kit-duration-fast)"
+    },
+    {
+      "name": "--kit-switch-transition-timing",
+      "scope": "switch",
+      "grammar": "<easing-function>",
+      "fallback": "var(--kit-easing-standard)"
+    },
+    {
+      "name": "--kit-switch-track-background-checked",
+      "scope": "switch",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-primary)"
+    },
+    {
+      "name": "--kit-switch-thumb-background",
+      "scope": "switch",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface)"
+    },
+    {
       "name": "--kit-button-lg-font-size",
       "scope": "button",
       "grammar": "<length-percentage>",

@@ -164,7 +164,7 @@ publish the package.
 
 The complete generator command surface is implemented: info/init/view/add/sync/
 doctor, JSON results, dry plans and guarded application. The shipped registry
-includes tokens, native Spinner and native Button while component adaptation proceeds. Synthetic registry fixtures
+includes tokens, native Spinner/Button and primitive-backed Switch while component adaptation proceeds. Synthetic registry fixtures
 are owned tests, not published releases. Follow the executable workflow in
 [README](README.md) and [the governing sequence](implementation/COMMIT_SEQUENCE.md).
 

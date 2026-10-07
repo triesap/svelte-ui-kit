@@ -5,7 +5,8 @@
   "items": [
     { "id": "button", "manifest": "ui/button.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
+    { "id": "switch", "manifest": "ui/switch.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "4afb68320548522c137a5e945a4c609807d497bbfc8e9d9f7e1a5bdac4758002"
+  "contentHash": "c76fe608f975ee8283616da47e4cdcceccd578be7b18bb55c66314f7d6e87ff2"
 }

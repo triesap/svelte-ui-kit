@@ -27,44 +27,53 @@ const mappedRows = mapping
       .map((cell) => cell.trim()),
   );
 
-test("all twenty Button hooks match actual stylesheet declarations and documented source fallbacks", () => {
-  const properties = customization.properties.filter(
-    (entry: { scope: string }) => entry.scope === "button",
-  );
-  assert.equal(properties.length, 20);
-  const values: string[] = [];
-  const visit = (value: unknown): void => {
-    if (Array.isArray(value)) {
-      value.forEach(visit);
-      return;
-    }
-    if (value === null || typeof value !== "object") return;
-    const node = value as Record<string, unknown>;
-    if (node["type"] === "Declaration" && typeof node["value"] === "string")
-      values.push(node["value"].replace(/\s+/g, ""));
-    for (const [key, child] of Object.entries(node))
-      if (key !== "metadata") visit(child);
-  };
-  visit(parseCss(readFileSync("registry/styles/button.css", "utf8")).children);
-  const documented = readFileSync("specs/component-maps/button.md", "utf8");
-  for (const property of properties) {
-    assert.ok(
-      values.some((value) =>
-        value.includes(
-          `var(${property.name},${property.fallback})`.replace(/\s+/g, ""),
+for (const [family, count] of [
+  ["button", 20],
+  ["switch", 7],
+] as const)
+  test(`all ${count} ${family} hooks match actual stylesheet declarations and documented source fallbacks`, () => {
+    const properties = customization.properties.filter(
+      (entry: { scope: string }) => entry.scope === family,
+    );
+    assert.equal(properties.length, count);
+    const values: string[] = [];
+    const visit = (value: unknown): void => {
+      if (Array.isArray(value)) {
+        value.forEach(visit);
+        return;
+      }
+      if (value === null || typeof value !== "object") return;
+      const node = value as Record<string, unknown>;
+      if (node["type"] === "Declaration" && typeof node["value"] === "string")
+        values.push(node["value"].replace(/\s+/g, ""));
+      for (const [key, child] of Object.entries(node))
+        if (key !== "metadata") visit(child);
+    };
+    visit(
+      parseCss(readFileSync(`registry/styles/${family}.css`, "utf8")).children,
+    );
+    const documented = readFileSync(
+      `specs/component-maps/${family}.md`,
+      "utf8",
+    );
+    for (const property of properties) {
+      assert.ok(
+        values.some((value) =>
+          value.includes(
+            `var(${property.name},${property.fallback})`.replace(/\s+/g, ""),
+          ),
         ),
-      ),
-      property.name,
-    );
-    assert.ok(documented.includes(property.name), property.name);
-    assert.ok(
-      documented
-        .replace(/\s+/g, "")
-        .includes(property.fallback.replace(/\s+/g, "")),
-      property.fallback,
-    );
-  }
-});
+        property.name,
+      );
+      assert.ok(documented.includes(property.name), property.name);
+      assert.ok(
+        documented
+          .replace(/\s+/g, "")
+          .includes(property.fallback.replace(/\s+/g, "")),
+        property.fallback,
+      );
+    }
+  });
 
 test("source-supported Spinner hooks match actual compiler-parsed stylesheet fallbacks", () => {
   const properties = customization.properties.filter(

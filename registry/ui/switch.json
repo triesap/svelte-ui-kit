@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "switch",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Thin pinned Bits Switch with owned Thumb and explicit state/ref bindings.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/switch.svelte",
+      "target": "switch.svelte",
+      "kind": "svelte",
+      "cohort": "switch"
+    },
+    {
+      "source": "ui/switch.types.ts",
+      "target": "switch.types.ts",
+      "kind": "typescript",
+      "cohort": "switch"
+    }
+  ],
+  "exports": [
+    {
+      "name": "Switch",
+      "target": "switch.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "SwitchProps",
+      "target": "switch.types.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/switch.css",
+      "target": "kit.css",
+      "blockId": "switch",
+      "cohort": "switch"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [
+    {
+      "name": "bits-ui",
+      "range": "2.19.3",
+      "role": "runtime"
+    }
+  ],
+  "accessibility": {
+    "requiredNames": ["switch-label"],
+    "keyboard": ["Enter", "Space"],
+    "focus": ["native-focus-visible"],
+    "form": ["checked", "required", "disabled", "name", "value", "reset"],
+    "tests": ["switch-types", "switch-install", "switch-browser"]
+  }
+}

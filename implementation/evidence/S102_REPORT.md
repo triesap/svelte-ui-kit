@@ -4,7 +4,7 @@ Author: Codex. Candidate; independent S115 acceptance remains pending.
 Original criteria and accepted S001–S091 remain unchanged.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S102","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S102","kind":"report","commit":"bf6813c1d38924300cd2a5732fcac7d70cc9c748","disposition":"candidate"}
 -->
 
 SwitchProps derives directly from public Bits Switch.RootProps, omitting only
