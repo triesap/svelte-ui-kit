@@ -36,7 +36,9 @@ import { identityDigest, observeRootIdentity } from "./authority.js";
 import { removeOwnedAncestors } from "./owned-ancestry.js";
 import {
   parseJournal,
+  persistJournal,
   validateJournalTargets,
+  type JournalCreatedDir,
   type JournalOperationRecord,
   type TransactionJournal,
 } from "./transaction-journal.js";
@@ -56,6 +58,7 @@ import {
 import {
   backupsDir,
   journalTempName,
+  journalPath,
   lockPath,
   publicationIntentPath,
   publicationIntentTempName,
@@ -78,6 +81,39 @@ export interface RecoveryResult {
   readonly status: RecoveryStatus;
   readonly transactionId: string | null;
   readonly issues: readonly ModelIssue[];
+}
+
+// Cleanup authority is issued only after journal, mapping and physical proof.
+const RECOVERED_DIRECTORIES = new WeakMap<
+  RecoveryResult,
+  readonly JournalCreatedDir[]
+>();
+export function recoveredCreatedDirectories(
+  result: RecoveryResult,
+): readonly JournalCreatedDir[] {
+  return RECOVERED_DIRECTORIES.get(result) ?? [];
+}
+function completedRollback(
+  journal: TransactionJournal,
+  status: "rolled_back" | "cleaned",
+  issues: readonly ModelIssue[] = [],
+): RecoveryResult {
+  const result: RecoveryResult = {
+    status,
+    transactionId: journal.transactionId,
+    issues,
+  };
+  RECOVERED_DIRECTORIES.set(result, journal.createdDirs ?? []);
+  return result;
+}
+function nonCoordinationDirectories(
+  journal: TransactionJournal,
+  stateDir: string,
+): readonly JournalCreatedDir[] {
+  // Coordination ancestry remains occupied until the exclusive writer releases.
+  return (journal.createdDirs ?? []).filter(
+    (entry) => !isWithinRoot(stateDir, entry.path),
+  );
 }
 
 /** The approved mapping required to authorize recovery of a journal. */
@@ -278,7 +314,13 @@ function createdDirIssues(
       );
       continue;
     }
-    const ancestry = unsafeAncestry(root, `${logical}/__owned__`);
+    const ancestry = unsafeAncestry(
+      root,
+      `${logical}/__owned__`,
+      journal.phase === "rolled_back"
+        ? new Set((journal.createdDirs ?? []).map((entry) => entry.path))
+        : undefined,
+    );
     if (ancestry !== null) {
       issues.push(
         issue(
@@ -375,13 +417,19 @@ function intentBindingIssues(
 }
 
 /** Non-following ancestry check for a logical target. */
-function unsafeAncestry(root: string, logicalPath: string): string | null {
+function unsafeAncestry(
+  root: string,
+  logicalPath: string,
+  removedOwned?: ReadonlySet<string>,
+): string | null {
   const segments = logicalPath.split("/");
   let current = root;
   for (let index = 0; index < segments.length - 1; index += 1) {
     current = path.join(current, segments[index] as string);
     const entry = observeEntry(current);
     if (entry.kind === "absent") {
+      if (removedOwned?.has(segments.slice(0, index + 1).join("/")))
+        return null;
       return `ancestor ${segments.slice(0, index + 1).join("/")} is absent`;
     }
     if (entry.kind === "unreadable") {
@@ -392,6 +440,167 @@ function unsafeAncestry(root: string, logicalPath: string): string | null {
     }
   }
   return null;
+}
+
+/** Terminal cleanup has no restoration authority: prove every original image. */
+function terminalRollbackIssues(
+  root: string,
+  stateDir: string,
+  journal: TransactionJournal,
+): ModelIssue[] {
+  const problems = rootBindingIssues(root, journal);
+  const removedOwned = new Set(
+    (journal.createdDirs ?? []).map((entry) => entry.path),
+  );
+  for (const operation of journal.operations) {
+    const ancestry = unsafeAncestry(root, operation.path, removedOwned);
+    if (ancestry !== null) {
+      problems.push(
+        issue("RECOVERY_UNSAFE_ANCESTRY", ancestry, operation.path),
+      );
+      continue;
+    }
+    const current = currentImage(root, operation.path);
+    const original = operation.preimage;
+    if (
+      !(original.kind === "absent" && current.kind === "absent") &&
+      !(
+        original.kind === "file" &&
+        current.kind === "file" &&
+        current.digest === original.digest &&
+        current.mode === original.mode
+      )
+    ) {
+      problems.push(
+        issue(
+          "RECOVERY_USER_EDIT",
+          `terminal rollback cannot prove the original image of ${operation.path}; preserving the edited state`,
+          operation.path,
+        ),
+      );
+    }
+    const retained = [
+      ...(operation.stagedId === null
+        ? []
+        : [
+            {
+              path: `${stagedDir(stateDir, journal.transactionId)}/${operation.stagedId}`,
+              digest: operation.resultDigest,
+              mode: operation.resultMode,
+            },
+          ]),
+      ...(operation.backupId === null
+        ? []
+        : [
+            {
+              path: `${backupsDir(stateDir, journal.transactionId)}/${operation.backupId}`,
+              digest: original.digest,
+              mode: original.mode,
+            },
+          ]),
+    ];
+    for (const record of retained) {
+      const image = currentImage(root, record.path);
+      if (
+        image.kind !== "absent" &&
+        !(
+          image.kind === "file" &&
+          image.digest === record.digest &&
+          image.mode === record.mode
+        )
+      ) {
+        problems.push(
+          issue(
+            "RECOVERY_BACKUP_CORRUPT",
+            `terminal rollback evidence ${record.path} was changed; preserving it`,
+            record.path,
+          ),
+        );
+      }
+    }
+  }
+  const witness = readPublicationIntent(
+    root,
+    publicationIntentPath(stateDir, journal.transactionId),
+  );
+  if (Array.isArray(witness)) return [...problems, ...witness];
+  if (journal.lock?.published === true) {
+    problems.push(
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "a terminal rollback cannot claim a published canonical lock",
+      ),
+    );
+  }
+  if (witness === null && journal.lock !== null) {
+    problems.push(
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "the terminal publication record has no witness; preserving evidence",
+      ),
+    );
+  }
+  if (witness !== null) {
+    if (
+      journal.lock === null ||
+      witness.transactionId !== journal.transactionId ||
+      witness.digest !== journal.lock.digest
+    ) {
+      problems.push(
+        issue(
+          "RECOVERY_AMBIGUOUS_PUBLICATION",
+          "the terminal publication witness contradicts the journal; preserving evidence",
+        ),
+      );
+    }
+    const stagedPath = `${stagedDir(stateDir, journal.transactionId)}/kit.lock.json`;
+    const staged = currentImage(root, stagedPath);
+    const stagedIdentity = observeFileIdentity(absOf(root, stagedPath));
+    if (
+      staged.kind !== "absent" &&
+      !(
+        staged.kind === "file" &&
+        staged.digest === witness.digest &&
+        staged.mode === witness.mode &&
+        stagedIdentity !== null &&
+        witness.staged !== null &&
+        stagedIdentity.device === witness.staged.device &&
+        stagedIdentity.inode === witness.staged.inode
+      )
+    ) {
+      problems.push(
+        issue(
+          "RECOVERY_AMBIGUOUS_PUBLICATION",
+          "the retained staged publication image contradicts its physical witness; preserving evidence",
+          stagedPath,
+        ),
+      );
+    }
+    problems.push(
+      ...intentBindingIssues(root, stateDir, journal.transactionId, witness),
+    );
+    const canonical = observeEntry(absOf(root, lockPath(stateDir)));
+    const identity = observeFileIdentity(absOf(root, lockPath(stateDir)));
+    if (
+      witness.planDigest !== journal.planDigest ||
+      witness.rootIdentity !== journal.rootIdentity ||
+      (!(witness.preimage === null && canonical.kind === "absent") &&
+        !(
+          witness.preimage !== null &&
+          identity !== null &&
+          witness.preimage.device === identity.device &&
+          witness.preimage.inode === identity.inode
+        ))
+    ) {
+      problems.push(
+        issue(
+          "RECOVERY_AMBIGUOUS_PUBLICATION",
+          "terminal rollback cannot prove the physical prepublication canonical image; preserving evidence",
+        ),
+      );
+    }
+  }
+  return problems;
 }
 
 type CurrentImage =
@@ -893,7 +1102,14 @@ export function recoverTransaction(
   // Remove only the empty state-directory ancestry this recovery created after
   // the transient namespace is gone, so a standalone recovery leaves no owned
   // residue. A directory that is no longer empty is preserved and reported.
-  const ancestryIssues = removeOwnedAncestors(root, ownedCreated, hooks);
+  const ancestryIssues = removeOwnedAncestors(
+    root,
+    [
+      ...ownedCreated,
+      ...(result === undefined ? [] : recoveredCreatedDirectories(result)),
+    ],
+    hooks,
+  );
   const coordinationIssues = [
     ...releaseIssues,
     ...transientIssues,
@@ -1048,8 +1264,26 @@ function recoverTransactionUnderLock(
   }
   const inventory = inventoryIssues(root, stateDir, transactionId, journal);
   if (inventory.length > 0) return refuse(transactionId, inventory);
+  if (journal.phase === "rolled_back") {
+    const terminal = terminalRollbackIssues(root, stateDir, journal);
+    if (terminal.length > 0) return refuse(transactionId, terminal);
+  }
   const createdDirs = createdDirIssues(root, stateDir, journal, roots);
   if (createdDirs.length > 0) return refuse(transactionId, createdDirs);
+
+  if (journal.phase === "rolled_back") {
+    const ancestry = removeOwnedAncestors(
+      root,
+      nonCoordinationDirectories(journal, stateDir),
+      hooks,
+    );
+    if (ancestry.length > 0) return refuse(transactionId, ancestry);
+    fireHooks(hooks, "before", "recovery:cleanup", transactionId);
+    const cleanup = removeOwnedEntries(root, stateDir, transactionId, hooks);
+    if (cleanup.length > 0) return refuse(transactionId, cleanup);
+    fireHooks(hooks, "after", "recovery:cleanup", transactionId);
+    return completedRollback(journal, "rolled_back");
+  }
 
   if (journal.phase === "planned") {
     const binding = rootBindingIssues(root, journal);
@@ -1060,7 +1294,7 @@ function recoverTransactionUnderLock(
     // rather than discarding proof while reporting clean.
     const ancestryIssues = removeOwnedAncestors(
       root,
-      journal.createdDirs ?? [],
+      nonCoordinationDirectories(journal, stateDir),
       hooks,
     );
     if (ancestryIssues.length > 0) {
@@ -1068,7 +1302,7 @@ function recoverTransactionUnderLock(
     }
     const cleanup = removeOwnedEntries(root, stateDir, transactionId, hooks);
     if (cleanup.length > 0) return refuse(transactionId, cleanup);
-    return { status: "cleaned", transactionId, issues: [] };
+    return completedRollback(journal, "cleaned");
   }
 
   if (journal.phase === "published" || journal.phase === "cleaned") {
@@ -1174,13 +1408,32 @@ function recoverTransactionUnderLock(
     // retry rather than being deleted as if the rollback completed.
     return refuse(transactionId, restoreIssues);
   }
+  // Record completion durably BEFORE removing any created ancestor. A later
+  // cleanup retry may observe those owned directories absent but can never
+  // regain authority to restore/write semantic files from a terminal record.
+  try {
+    persistJournal(
+      root,
+      journalPath(stateDir, transactionId),
+      { ...journal, phase: "rolled_back" },
+      hooks,
+    );
+  } catch (error) {
+    return refuse(transactionId, [
+      issue(
+        "RECOVERY_CLEANUP_FAILED",
+        `could not persist completed rollback (${codeOf(error)}); retaining journal and ancestry`,
+      ),
+    ]);
+  }
   // Remove only the recorded owned empty ancestry directories this attempt
   // created; a directory that is no longer empty is preserved and reported.
   const ancestryIssues = removeOwnedAncestors(
     root,
-    journal.createdDirs ?? [],
+    nonCoordinationDirectories(journal, stateDir),
     hooks,
   );
+  if (ancestryIssues.length > 0) return refuse(transactionId, ancestryIssues);
   fireHooks(hooks, "before", "recovery:cleanup", transactionId);
   const cleanupIssues = inventoryIssues(root, stateDir, transactionId, journal);
   if (cleanupIssues.length > 0) return refuse(transactionId, cleanupIssues);
@@ -1194,7 +1447,7 @@ function recoverTransactionUnderLock(
     return refuse(transactionId, [...ancestryIssues, ...removalIssues]);
   }
   fireHooks(hooks, "after", "recovery:cleanup", transactionId);
-  return { status: "rolled_back", transactionId, issues: ancestryIssues };
+  return completedRollback(journal, "rolled_back", ancestryIssues);
 }
 
 /**
@@ -1416,7 +1669,11 @@ export function recoverTransactions(
     if (!outcome.ok) releaseIssues = outcome.issues;
     transientIssues = cleanupReleasedTransient(root, stateDir);
   }
-  const ancestryIssues = removeOwnedAncestors(root, ownedCreated, hooks);
+  const ancestryIssues = removeOwnedAncestors(
+    root,
+    [...ownedCreated, ...(results ?? []).flatMap(recoveredCreatedDirectories)],
+    hooks,
+  );
   const coordinationIssues = [
     ...releaseIssues,
     ...transientIssues,

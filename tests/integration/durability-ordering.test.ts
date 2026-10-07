@@ -67,8 +67,14 @@ test("backup and replacement directory flushes bracket the renames", () => {
   withRoot((root) => {
     const events: string[] = [];
     const outcome = applyPlan(sealed(makeGuardedPlan(root)), {
-      before: (boundary) => events.push(`before:${boundary}`),
-      after: (boundary) => events.push(`after:${boundary}`),
+      before: (boundary, detail) => {
+        if (detail === `${GUARDED_STYLES}/kit.css`)
+          events.push(`before:${boundary}`);
+      },
+      after: (boundary, detail) => {
+        if (detail === `${GUARDED_STYLES}/kit.css`)
+          events.push(`after:${boundary}`);
+      },
     });
     assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
     assert.ok(
@@ -160,7 +166,11 @@ test("a durability fault at every boundary yields a truthful safe outcome", () =
         // The canonical rename already happened: the batch is committed and
         // must not be reported as an uncommitted refusal.
         assert.equal(outcome.kind, "committed_needs_cleanup", boundary);
-        assert.equal(css, "new css\n", boundary);
+        assert.equal(
+          css,
+          "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
+          boundary,
+        );
       } else {
         assert.equal(outcome.kind, "refused", boundary);
         assert.equal(css, "old css", boundary);

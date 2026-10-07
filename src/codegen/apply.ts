@@ -50,6 +50,8 @@ import {
   type PlanReadset,
 } from "./authority.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";
+import { validateExportReceipt } from "./exports.js";
+import { isOriginalComposition } from "./compose.js";
 import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
 import { parseKitLock } from "./lock.js";
 import {
@@ -69,7 +71,10 @@ import {
   createOwnedAncestors,
   removeOwnedAncestors,
 } from "./owned-ancestry.js";
-import { recoverTransactions } from "./recovery.js";
+import {
+  recoverTransactions,
+  recoveredCreatedDirectories,
+} from "./recovery.js";
 import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
 import { applyReplacements } from "./replace.js";
 import { publishLock } from "./publish-lock.js";
@@ -106,6 +111,8 @@ export interface ApplyTarget {
 }
 
 export interface ApplyPlanInput {
+  /** Process-local proof of the complete original composition. */
+  readonly compositionAuthority?: object;
   readonly root: string;
   readonly stateDir: string;
   readonly uiDir: string;
@@ -196,6 +203,7 @@ const PLAN_KEYS: readonly string[] = [
   "lock",
   "ignoreFiles",
   "exportAuthority",
+  "compositionAuthority",
 ];
 const EXPORT_AUTHORITY_KEYS: readonly string[] = [
   "path",
@@ -958,6 +966,20 @@ export function validateApplyPlan(
         if (!validatedLock.ok) {
           problems.push(...validatedLock.issues);
         } else {
+          if (
+            validatedLock.value.integrations.some(
+              (entry) => entry.kind === "exports",
+            ) &&
+            !validateExportReceipt(plan.exportAuthority, validatedLock.value)
+          ) {
+            problems.push(
+              issue(
+                "PLAN_EXPORT_AUTHORITY_UNAUTHENTICATED",
+                "export expectations require the original immutable planning receipt",
+                "exportAuthority",
+              ),
+            );
+          }
           problems.push(
             ...validateProjectedLock(
               projectedBatch,
@@ -972,6 +994,14 @@ export function validateApplyPlan(
   if (problems.length > 0) return fail(problems);
 
   const derivedRootIdentity = identityDigest(plan.readset.root);
+  if (!isOriginalComposition(plan)) {
+    return fail([
+      issue(
+        "PLAN_COMPOSITION_UNAUTHENTICATED",
+        "application requires the complete original composition; changed or omitted authority requires fresh planning",
+      ),
+    ]);
+  }
   const lockView = plan.lock as { bytes: Uint8Array; preimage: TargetPreimage };
   const sealed: ValidatedApplyPlan = {
     root: plan.root,
@@ -1010,21 +1040,7 @@ export function validateApplyPlan(
       ),
     }),
     targets: Object.freeze(sealedTargets),
-    exportAuthority: Object.freeze(
-      (plan.exportAuthority ?? []).map((entry) =>
-        Object.freeze({
-          path: entry.path,
-          contract: entry.contract,
-          registryVersion: entry.registryVersion,
-          registryHash: entry.registryHash,
-          declarations: Object.freeze(
-            entry.declarations.map((declaration) =>
-              Object.freeze({ ...declaration }),
-            ),
-          ),
-        }),
-      ),
-    ),
+    exportAuthority: plan.exportAuthority ?? Object.freeze([]),
     lock: Object.freeze({
       bytes: new Uint8Array(lockView.bytes),
       digest: sha256Hex(lockView.bytes),
@@ -1444,7 +1460,10 @@ export function applyPlan(
   // A refused or no-change attempt leaves no committed install, so remove only
   // the empty directories this attempt created. A committed install keeps them.
   const ancestryIssues =
-    outcome.kind === "applied" || outcome.kind === "committed_needs_cleanup"
+    outcome.kind === "applied" ||
+    outcome.kind === "committed_needs_cleanup" ||
+    observeEntry(absOf(plan.root, transactionDir(plan.stateDir, transactionId)))
+      .kind !== "absent"
       ? []
       : removeOwnedAncestors(plan.root, ownedCreated, hooks);
   const cleanupIssues = [...transientIssues, ...ancestryIssues];
@@ -1488,6 +1507,7 @@ function applyUnderLock(
     },
     hooks,
   );
+  ownedCreated.push(...recovery.flatMap(recoveredCreatedDirectories));
   const refusedRecovery = recovery.filter(
     (entry) => entry.status === "refused",
   );
@@ -1618,10 +1638,9 @@ function applyUnderLock(
   ownedCreated.push(...created.created);
   const preparedWithAncestry: TransactionJournal = {
     ...prepared,
-    // Only the extra generated ancestry this attempt created is recorded for
-    // recovery; the coordination state-directory chain is transient and is
-    // removed by the guarded release/cleanup path.
-    createdDirs: created.created,
+    // Persist both target and coordination ancestry so a fresh recovery can
+    // remove the exact owned empty directories after releasing its writer.
+    createdDirs: [...ownedCreated],
   };
   try {
     persistJournal(

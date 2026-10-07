@@ -30,7 +30,11 @@ import {
 } from "../project/config.js";
 import { hashBytes } from "./compare.js";
 import { composeManagedCss, FOUNDATION_TOKENS_CONTRACT } from "./css.js";
-import { patchExportRegion, exportRegionContent } from "./exports.js";
+import {
+  patchExportRegion,
+  exportRegionContent,
+  createExportAuthority,
+} from "./exports.js";
 import type { BarrelExportAuthority } from "./exports.js";
 import { parseManagedCss } from "./css-parse.js";
 import { parseExportRegion } from "./export-parse.js";
@@ -53,6 +57,13 @@ export type { ChangeOperation } from "./plan.js";
 export type { PlanWrite as PlannedWrite } from "./plan.js";
 
 import type { PlanWrite as PlannedWrite } from "./plan.js";
+import { describePlanning, type OriginalPlanningReceipt } from "./plan.js";
+const ORIGINAL_INIT_PLANS = new WeakMap<object, OriginalPlanningReceipt>();
+export function originalInitPlanning(
+  authority: object,
+): OriginalPlanningReceipt | undefined {
+  return ORIGINAL_INIT_PLANS.get(authority);
+}
 
 export interface InitPlan {
   readonly writes: readonly PlannedWrite[];
@@ -664,15 +675,13 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   // declares no items, so the cohort is legitimately empty; it is still carried
   // from the validated registry identity so a composed plan always has
   // independent authority for its managed `exports-v1` integration.
-  const exportAuthority: BarrelExportAuthority[] = [
-    {
-      path: targets.rootExports,
-      contract: "exports-v1",
-      registryVersion,
-      registryHash,
-      declarations: [],
-    },
-  ];
+  const authorityResult = createExportAuthority(
+    input.registry,
+    config,
+    finalLock.items.map((item) => item.id),
+  );
+  if (!authorityResult.ok) return fail(authorityResult.issues);
+  const exportAuthority = authorityResult.value;
 
   // Lock metadata is part of the explicit plan: write the deterministic lock
   // unless the effective lock is already exactly the recorded one (a satisfied
@@ -689,6 +698,10 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
     });
   }
 
+  ORIGINAL_INIT_PLANS.set(
+    exportAuthority,
+    describePlanning(writes, finalLock, snapshot, lockPath),
+  );
   return ok({
     writes,
     lock: finalLock,

@@ -131,7 +131,7 @@ test("a sealed plan is immune to post-validation caller mutation", () => {
     assert.equal(outcome.kind, "applied");
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css\n",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
   });
 });
@@ -141,7 +141,12 @@ test("in-place mutation of sealed bytes is refused by the digest binding", () =>
     const validated = sealed(makeGuardedPlan(root));
     // Mutate the sealed byte array in place; the bound result digest no longer
     // matches, so the old authority cannot be reused.
-    (validated.targets[2].bytes as Uint8Array)[0] = 0x6d;
+    const bytes = validated.targets.find(
+      (target) => target.bytes.byteLength > 0,
+    )?.bytes;
+    assert.ok(bytes);
+    if (!bytes) return;
+    bytes[0] = (bytes[0] as number) ^ 0xff;
     const outcome = applyPlan(validated);
     assert.equal(outcome.kind, "refused");
     assert.equal(outcome.issues[0].code, "PLAN_AUTHORITY_STALE");

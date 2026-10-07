@@ -437,7 +437,7 @@ test("a kill after the writer release is finished by a fresh recovery", () => {
     // The commit is durable and the writer lock was released before the kill.
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
     assert.equal(existsSync(abs(root, lockPath(GUARDED_STATE))), true);
     assert.equal(existsSync(abs(root, writerLockDir(GUARDED_STATE))), false);
@@ -458,7 +458,7 @@ test("a kill after the writer release is finished by a fresh recovery", () => {
     );
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
       "recovery must never roll back a committed batch",
     );
   });

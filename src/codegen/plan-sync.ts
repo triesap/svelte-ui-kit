@@ -31,7 +31,7 @@ import type { DependencyPlan } from "../registry/dependency-plan.js";
 import type { RequestProjection } from "../registry/projection.js";
 import type { DependencyInstruction } from "../project/dependency-instructions.js";
 import type { DependencyStateEntry } from "../project/dependencies.js";
-import { planAdd, type AddPlanInput } from "./plan-add.js";
+import { planAdd, revokeAddPlanning, type AddPlanInput } from "./plan-add.js";
 import type { BarrelExportAuthority } from "./exports.js";
 import { hashBytes } from "./compare.js";
 import { composeManagedCss, FOUNDATION_TOKENS_CONTRACT } from "./css.js";
@@ -46,6 +46,13 @@ import {
 } from "./retire.js";
 import type { SourcePlan } from "./source-plan.js";
 import type { ProjectSnapshot } from "./snapshot.js";
+import { describePlanning, type OriginalPlanningReceipt } from "./plan.js";
+const ORIGINAL_SYNC_PLANS = new WeakMap<object, OriginalPlanningReceipt>();
+export function originalSyncPlanning(
+  authority: object,
+): OriginalPlanningReceipt | undefined {
+  return ORIGINAL_SYNC_PLANS.get(authority);
+}
 
 export type SyncPlanInput = Omit<AddPlanInput, "addedRoots">;
 
@@ -94,6 +101,7 @@ function observedText(
 export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
   const base = planAdd({ ...input, addedRoots: [] });
   if (!base.ok) return fail(base.issues);
+  revokeAddPlanning(base.value.exportAuthority);
   // The shared compose step resolves one effective mapping; retirement and the
   // final lock projection use the same mapping rather than the stale supplied
   // defaults.
@@ -273,6 +281,17 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
     );
   }
 
+  if (executable && finalLock !== null) {
+    ORIGINAL_SYNC_PLANS.set(
+      base.value.exportAuthority,
+      describePlanning(
+        writes,
+        finalLock,
+        input.snapshot,
+        `${deriveKitPaths(effectiveConfig).stateDir}/kit.lock.json`,
+      ),
+    );
+  }
   return ok({
     executable,
     projection: base.value.projection,

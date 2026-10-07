@@ -20,6 +20,12 @@ import {
   type AppExport,
 } from "./export-parse.js";
 import { parseSvelteLayout } from "./svelte-parse.js";
+import {
+  isValidatedRegistrySnapshot,
+  type RegistrySnapshot,
+} from "../registry/load.js";
+import { deriveKitPaths, type KitConfig } from "../project/config.js";
+import type { KitLock } from "./lock.js";
 
 export interface ExportDeclaration {
   readonly name: string;
@@ -176,6 +182,93 @@ export interface BarrelExportAuthority {
   readonly registryVersion: string;
   readonly registryHash: string;
   readonly declarations: readonly AuthoritativeExport[];
+}
+
+// Receipts are process-local capabilities, not serialized or caller-recreated
+// authority. Frozen declarations are derived directly from the validated
+// registry, independently of candidate writes. Weak keys avoid retaining plans.
+const EXPORT_RECEIPTS = new WeakMap<object, readonly string[]>();
+
+export function createExportAuthority(
+  registry: RegistrySnapshot,
+  config: KitConfig,
+  owners: readonly string[],
+): ModelResult<readonly BarrelExportAuthority[]> {
+  const byOwner = new Map<string, ExportDeclaration[]>();
+  for (const owner of owners) {
+    const item = registry.items.find((entry) => entry.id === owner);
+    if (item === undefined)
+      return fail([
+        issue("EXPORT_OWNER_MISSING", `registry does not declare ${owner}`),
+      ]);
+    const compound = isCompoundComponent(item.manifest)
+      ? item.files.find(
+          (file) => file.blockId === null && file.target.endsWith("/index.ts"),
+        )
+      : undefined;
+    const barrel =
+      compound === undefined ? null : runtimeSpecifier(`./${compound.target}`);
+    const generated =
+      barrel !== null &&
+      item.manifest.exports.some(
+        (entry) =>
+          runtimeSpecifier(
+            entry.target.startsWith(".") ? entry.target : `./${entry.target}`,
+          ) !== barrel,
+      );
+    byOwner.set(
+      owner,
+      item.manifest.exports.map((entry) => ({
+        name: entry.name,
+        target: generated
+          ? barrel!
+          : runtimeSpecifier(
+              entry.target.startsWith(".") ? entry.target : `./${entry.target}`,
+            ),
+        kind: entry.kind,
+      })),
+    );
+  }
+  const authority = Object.freeze([
+    Object.freeze({
+      path: deriveKitPaths(config).rootExports,
+      contract: "exports-v1" as const,
+      registryVersion: registry.root.registryVersion,
+      registryHash: registry.root.contentHash,
+      declarations: Object.freeze(
+        authoritativeExports(byOwner, owners).map((entry) =>
+          Object.freeze(entry),
+        ),
+      ),
+    }),
+  ]);
+  // Pure planner fixtures can describe candidate registries. Only the loader's
+  // integrity-validated snapshot can grant authority at the mutation boundary.
+  if (isValidatedRegistrySnapshot(registry)) {
+    EXPORT_RECEIPTS.set(authority, Object.freeze([...owners].sort()));
+  }
+  return ok(authority);
+}
+
+/** Shape, hashes and copyable fields alone cannot authenticate expectations. */
+export function validateExportReceipt(
+  authority: unknown,
+  lock?: KitLock,
+): boolean {
+  if (typeof authority !== "object" || authority === null) return false;
+  const owners = EXPORT_RECEIPTS.get(authority);
+  if (owners === undefined) return false;
+  if (lock === undefined) return true;
+  const entries = authority as readonly BarrelExportAuthority[];
+  return (
+    entries.every(
+      (entry) =>
+        entry.registryVersion === lock.registryVersion &&
+        entry.registryHash === lock.registryHash,
+    ) &&
+    JSON.stringify(owners) ===
+      JSON.stringify(lock.items.map((entry) => entry.id).sort())
+  );
 }
 
 /** Stable comparability key over every field of an export relationship. */

@@ -1,3 +1,4 @@
+import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -19,7 +20,6 @@ import {
   applyPlan,
   validateApplyPlan,
   type ApplyPlanInput,
-  type ApplyTarget,
 } from "../../src/codegen/apply.js";
 import {
   captureReadset,
@@ -27,10 +27,7 @@ import {
   type PlanInstalledRead,
 } from "../../src/codegen/authority.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
-import {
-  capturePreimage,
-  revalidatePreimages,
-} from "../../src/codegen/revalidate.js";
+import { revalidatePreimages } from "../../src/codegen/revalidate.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import {
   recoverTransaction,
@@ -49,7 +46,7 @@ import {
   type CapturedEnvironment,
 } from "../../src/project/environment.js";
 import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
-import { sha256Hex } from "../../src/codegen/digest.js";
+
 import type { PlanWrite } from "../../src/codegen/plan.js";
 import { validKitConfigBytes } from "../helpers/kit-config.js";
 
@@ -140,43 +137,17 @@ function writeManifest(targetRoot: string, version: string): void {
 }
 
 function makePlan(root: string): ApplyPlanInput {
-  write(root, `${STATE}/kit.json`, "old config");
   write(
     root,
-    `${STATE}/kit.lock.json`,
+    STATE + "/kit.json",
+    Buffer.from(validKitConfigBytes(ROOTS)).toString("utf8"),
+  );
+  write(
+    root,
+    lockPath(STATE),
     Buffer.from(lockBytes("c".repeat(64))).toString("utf8"),
   );
-  const configBytes = validKitConfigBytes(ROOTS);
-  const targets: ApplyTarget[] = [
-    {
-      path: `${STATE}/kit.json`,
-      operation: "update",
-      bytes: configBytes,
-      mode: 0o644,
-      preimage: capturePreimage(root, `${STATE}/kit.json`),
-    },
-  ];
-  const readset = captureReadset(
-    root,
-    [...targets.map((target) => target.path), lockPath(STATE)],
-    [],
-  );
-  if (!readset.ok) throw new Error("readset capture failed");
-  return {
-    root,
-    stateDir: STATE,
-    uiDir: UI,
-    stylesDir: STYLES,
-    layoutFile: LAYOUT,
-    rootIdentity: "a".repeat(64),
-    planDigest: "b".repeat(64),
-    readset: readset.value,
-    targets,
-    lock: {
-      bytes: lockBytes(sha256Hex(configBytes)),
-      preimage: capturePreimage(root, lockPath(STATE)),
-    },
-  };
+  return capturedFixtureInit(root, { ...DEFAULT_KIT_CONFIG, ...ROOTS });
 }
 
 function validatedPlan(root: string) {
@@ -295,35 +266,24 @@ test("an unobserved required ignore file is a typed compose refusal", () => {
 test("a composed guarded ignore operation recovers without an unapproved-target refusal", () => {
   withRoot((root) => {
     seedPackage(root);
-    write(root, `${STATE}/kit.json`, "old config");
-    const snapshot = captureSnapshot(root, [
-      `${STATE}/kit.json`,
-      lockPath(STATE),
-      ".gitignore",
-      "package.json",
-    ]);
-    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-    if (!snapshot.ok) return;
-    const writes: PlanWrite[] = [
-      {
-        path: `${STATE}/kit.json`,
-        operation: "update",
-        bytes: validKitConfigBytes(ROOTS),
-      },
-      {
-        path: lockPath(STATE),
-        operation: "create",
-        bytes: lockBytes(sha256Hex(validKitConfigBytes(ROOTS))),
-      },
-    ];
-    const composed = composeApplyPlan({
+    write(
       root,
-      config: DEFAULT_KIT_CONFIG,
-      writes,
-      snapshot: snapshot.value,
-    });
-    assert.equal(composed.ok, true, JSON.stringify(composed));
-    if (!composed.ok) return;
+      "package.json",
+      JSON.stringify({
+        name: "consumer",
+        type: "module",
+        dependencies: { svelte: "5.57.1", "@sveltejs/kit": "2.70.3" },
+      }),
+    );
+    write(
+      root,
+      `${STATE}/kit.json`,
+      Buffer.from(validKitConfigBytes(ROOTS)).toString("utf8"),
+    );
+    const composed = {
+      ok: true as const,
+      value: capturedFixtureInit(root, DEFAULT_KIT_CONFIG, false),
+    };
     assert.deepEqual(composed.value.ignoreFiles, [".gitignore"]);
     const validated = validateApplyPlan(composed.value);
     assert.equal(validated.ok, true, JSON.stringify(validated));

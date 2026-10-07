@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: independent return review at `6f2d877` preserves real AST import/render parsing, aliased children, post-composition export checks and consumer controls, but independent export/cohort provenance, full source binding and reachable scoped child proof remain incomplete. Current dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 implementation and qualification together before independent S077 acceptance/S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-06. R9 repairs at `cecdab9` implement the four `6f2d877` findings (independent registry-declared export authority, full owner/source binding, reachable scoped child rendering and customized-region preservation); all four remain pending independent review.
+Status: `pfc all` is active with Codex implementing the remaining original S064–S203 requirements. Current slice repairs the `a176387` mutable export-authority and lexical child-shadowing findings, pending separate S077 review before S078. Preserve 63 accepted / 14 committed_pending_review / 126 not_started. Updated 2026-10-07.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -18,7 +18,7 @@ Keep all repository content standalone and repository-relative. Record this targ
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
 - Active implementation checkpoint: **RCLD-04 complete projected content and protocol qualification** (current return review at `6f2d877` requested four changes; R9 repairs at `cecdab9` are implemented and self-verified, and S064–S077 remain committed_pending_review with S078 gated).
-- Execution responsibility (recorded at S001): Pi authors implementation and corrections; Codex reviews the actual changes, independently verifies them, and controls acceptance and progression.
+- Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **63 / 203**. Remaining: **140 / 203**.
 - Committed pending review: **14 / 203**. Authored batch range: **S064–S077**.
 - Completed RCLD sequences: **3 / 11**. Remaining: **8 / 11**.
@@ -53,6 +53,87 @@ At S002, adopt the embedded contracts into their scheduled repository-relative f
 ## Codex dispatch — complete RCLD-04 transactions and recovery
 
 ### Current expanded dispatch — through RCLD-04
+
+#### Independent return review and Codex takeover — a176387
+
+The owner activated `pfc all` on 2026-10-07: Codex implements, verifies and
+locally commits all remaining original S064–S203 work. Obtain separate reviewer
+acceptance at required gates, first S077 before S078; no self-acceptance. Continue
+after green checkpoints and accepted gates without another dispatch. The current
+live RCLD-04 tuple remains until its independent acceptance is finalized; update
+subsequent execution records within this same governing plan as gates pass.
+No push, publication, parent-index update or reference-source mutation.
+
+The owner transferred delivery responsibility to Codex on 2026-10-07 and
+requested review followed by the command authorizing the remaining full range.
+The subsequent `pfc all` instruction activated that authorization. Retain the existing approved product
+scope, original203 checkpoint definitions and dependencies, one governing plan
+and the existing coordination tracker. Independent acceptance remains required;
+Codex must not accept its own authored repairs solely on self-review.
+
+Reviewed candidate `a17638701e835a25e6920db1ab0370ad7b9b5a52` contains the
+implementation commit `cecdab9` and evidence commit `a176387`. Preserve the R9
+full source-binding comparison, equivalent customized-barrel preservation and
+uncalled-snippet refusal, along with earlier scoped accepted progress. Broader
+author lane evidence is retained; passing checks do not establish whole R4
+acceptance. S064–S077 remain committed_pending_review; S078 stays gated.
+
+Independent remaining findings under the original authority/render criteria:
+
+1. The planner's export authority is ordinary caller-mutable data carried on
+   the lock write or supplied to composition. Emptying BOTH the real planned
+   barrel and its declarations before composition validates/applies an empty
+   barrel while the projected lock still owns the explicit item/source. Shape
+   and matching caller-supplied registry hashes do not authenticate original
+   registry relationships. Bind trusted original immutable planning evidence
+   across all stages; a mutable mirror cannot replace that authority. Preserve
+   the strict stale/omission checks, full source bindings and written/unchanged
+   lifecycle coverage rather than fixing only one mutation example.
+2. ObjectPattern Property values are not traversed by `patternNames`, and each
+   index bindings are omitted by `blockShadowNames`. Rendering a local children
+   binding destructured from each context validates/applies layout-v1 but pinned
+   isolated SSR emits no child; rendering a same-named numeric each index also
+   validates/applies and then throws. Correct lexical scope proof, including
+   declaration-site snippet capture and branch-specific bindings where relevant.
+   Preserve valid aliases/wrappers/conditionals and typed refusal of ambiguous
+   cases; no new general static-analysis product or component API.
+
+Codex repair decisions and current implementation (independent acceptance pending):
+
+- Authenticate loader-created registry relationships and original executable
+  init/add/sync receipts. Require the exact captured snapshot, complete original
+  operations and final lock at composition, including zero-item initialization.
+  Revoke Sync's internal Add receipt; a conflicting Sync cannot authorize its
+  partial proposal. Satisfied planning permits only the captured publication
+  bytes. Authenticate the entire composed value before sealing so omitted
+  source operations, read dependencies or ownership claims cannot grant apply.
+- Prove branch-specific lexical bindings, declaration-site snippet closures,
+  const/destructured/index shadowing and direct default legacy slots. Deferred
+  component children and named slots are insufficient proof. Keep valid direct,
+  aliased, invoked-wrapper and unrelated-component sibling cases.
+- Real production-planner fixtures exposed partial rollback retry failures.
+  Preserve ancestry while restoration evidence remains, persist terminal
+  `rolled_back` before removing owned target ancestry, and limit terminal retry
+  to cleanup after complete preimage/publication/evidence proof. Missing or
+  contradictory publication witness or staged identity is a typed refusal.
+  Record both target and coordination ancestry; remove coordination ancestors
+  only after exclusive writer release, using recorded identity and empty-only
+  removal. Never regain restoration authority from a terminal record.
+- Replace hand-assembled positive apply fixtures with actual captured planners;
+  preserve explicit malformed-projection tests as negative validation only.
+  Actual multi-item add/update/retirement/conflict consumer qualification remains
+  required separately; initialization fixtures do not prove those dispositions.
+
+Current repair evidence: `implementation/evidence/RCLD04_CODEX_REPAIR.md`.
+No checkpoint acceptance or S078 activation is inferred from author verification.
+
+Finish these repairs and all original R2/S064–S077 qualification before
+independent S077 acceptance. Then the remaining approved frontier is S078–S203:
+CLI generator workflows, component/catalog families, cross-component/platform
+qualification and packed acceptance/delivery. The remaining total is140
+checkpoints:14 pending acceptance and126 not_started, not all unimplemented.
+Full-range authorization may continue after green checkpoints and successful
+independent gates; it cannot waive original gates, criteria or AC20 debt.
 
 #### Independent return review — 6f2d877
 

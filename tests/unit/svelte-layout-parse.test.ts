@@ -166,3 +166,51 @@ test("parsing does not mutate the source string", () => {
   parseSvelteLayout(source);
   assert.equal(source, copy);
 });
+
+test("destructuring and index bindings cannot stand in for the layout child", () => {
+  const script = "<script>let { children } = $props();</script>";
+  for (const body of [
+    "{#each [{children: () => {}}] as {children}}{@render children()}{/each}",
+    "{#each [1] as item, children}{@render children()}{/each}",
+    "{#each [{nested: {children: () => {}}}] as {nested: {children}}}{@render children()}{/each}",
+    "{#snippet show()}{@render children()}{/snippet}{#each [() => {}] as show}{@render show()}{/each}",
+    "{#if true}{@const children = () => {}}{@render children()}{/if}",
+    "{#if true}{@const { child: children } = { child: () => {} }}{@render children()}{/if}",
+    "<Hidden>{@render children()}</Hidden>",
+    "<Visible let:children>{@render children()}</Visible>",
+  ]) {
+    const result = parseSvelteLayout(script + body);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (result.ok) assert.equal(result.value.rendersChildren, false, body);
+  }
+});
+
+test("snippet closures and fallback branches retain declaration-site children", () => {
+  const script = "<script>let { children } = $props();</script>";
+  for (const body of [
+    "{#snippet show()}{@render children()}{/snippet}{#each [1] as children}{@render show()}{/each}",
+    "{#each [] as children}{:else}{@render children()}{/each}",
+    "{#await Promise.resolve(1)}{@render children()}{:then children}<p>resolved</p>{/await}",
+    "{#if true}{@const unrelated = 1}{@render children()}{/if}",
+    "{#snippet show()}{@render children()}{/snippet}{#if true}{@const children = () => {}}{@render show()}{/if}",
+    "<Hidden /><div>{@render children()}</div>",
+  ]) {
+    const result = parseSvelteLayout(script + body);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (result.ok) assert.equal(result.value.rendersChildren, true, body);
+  }
+});
+
+test("only a direct default slot proves legacy layout children", () => {
+  for (const source of [
+    '<slot name="other" />',
+    "<svelte:fragment><slot /></svelte:fragment>",
+  ]) {
+    const result = parseSvelteLayout(source);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (result.ok) assert.equal(result.value.rendersChildren, false, source);
+  }
+  const direct = parseSvelteLayout("<main><slot /></main>");
+  assert.equal(direct.ok, true, JSON.stringify(direct));
+  if (direct.ok) assert.equal(direct.value.rendersChildren, true);
+});

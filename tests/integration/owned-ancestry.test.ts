@@ -1,9 +1,11 @@
+import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
 import {
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
 } from "node:fs";
 import os from "node:os";
@@ -11,14 +13,14 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import type { ApplyPlanInput, ApplyTarget } from "../../src/codegen/apply.js";
-import { captureReadset } from "../../src/codegen/authority.js";
-import { sha256Hex } from "../../src/codegen/digest.js";
-import { capturePreimage } from "../../src/codegen/revalidate.js";
+import type { ApplyPlanInput } from "../../src/codegen/apply.js";
+import { recoverTransactions } from "../../src/codegen/recovery.js";
+import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
+
 import { faultAt } from "../../src/codegen/transaction-hooks.js";
 import { lockPath } from "../../src/codegen/transaction-types.js";
-import { abs, lockJson } from "../helpers/guarded-plan.js";
-import { validKitConfigBytes } from "../helpers/kit-config.js";
+import { abs } from "../helpers/guarded-plan.js";
 
 /**
  * RCLD04-R2-2: owned creation and empty-only rollback of absent generated
@@ -28,78 +30,11 @@ import { validKitConfigBytes } from "../helpers/kit-config.js";
 
 const UI_DIR = "src/lib/components/ui";
 const STYLES_DIR = "src/styles";
-const LAYOUT_FILE = "src/routes/+layout.svelte";
+
 const STATE_DIR = `${UI_DIR}/_kit`;
 
-function enc(value: string): Uint8Array {
-  return new TextEncoder().encode(value);
-}
-
 function emptyTreePlan(root: string): ApplyPlanInput {
-  const targets: ApplyTarget[] = [
-    {
-      path: `${STATE_DIR}/kit.json`,
-      operation: "create",
-      bytes: validKitConfigBytes({
-        uiDir: UI_DIR,
-        stylesDir: STYLES_DIR,
-        layoutFile: LAYOUT_FILE,
-      }),
-      mode: 0o644,
-      preimage: capturePreimage(root, `${STATE_DIR}/kit.json`),
-    },
-    {
-      path: `${UI_DIR}/button.svelte`,
-      operation: "create",
-      bytes: enc("<button />\n"),
-      mode: 0o644,
-      preimage: capturePreimage(root, `${UI_DIR}/button.svelte`),
-    },
-    {
-      path: `${STYLES_DIR}/kit.css`,
-      operation: "create",
-      bytes: enc("css\n"),
-      mode: 0o644,
-      preimage: capturePreimage(root, `${STYLES_DIR}/kit.css`),
-    },
-    {
-      path: LAYOUT_FILE,
-      operation: "create",
-      bytes: enc("<layout />\n"),
-      mode: 0o644,
-      preimage: capturePreimage(root, LAYOUT_FILE),
-    },
-  ];
-  const readset = captureReadset(
-    root,
-    [...targets.map((target) => target.path), lockPath(STATE_DIR)],
-    [],
-  );
-  assert.equal(readset.ok, true, JSON.stringify(readset));
-  if (!readset.ok) throw new Error("readset failed");
-  return {
-    root,
-    stateDir: STATE_DIR,
-    uiDir: UI_DIR,
-    stylesDir: STYLES_DIR,
-    layoutFile: LAYOUT_FILE,
-    rootIdentity: "a".repeat(64),
-    planDigest: "b".repeat(64),
-    readset: readset.value,
-    targets,
-    lock: {
-      bytes: lockJson(
-        sha256Hex(
-          validKitConfigBytes({
-            uiDir: UI_DIR,
-            stylesDir: STYLES_DIR,
-            layoutFile: LAYOUT_FILE,
-          }),
-        ),
-      ),
-      preimage: capturePreimage(root, lockPath(STATE_DIR)),
-    },
-  };
+  return capturedFixtureInit(root);
 }
 
 function sealed(plan: unknown) {
@@ -137,14 +72,46 @@ test("a successful fresh install keeps its created ancestry and publishes", () =
     const outcome = applyPlan(sealed(emptyTreePlan(root)));
     assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
     assert.equal(
-      readFileSync(abs(root, `${UI_DIR}/button.svelte`), "utf8"),
-      "<button />\n",
+      readFileSync(abs(root, `${UI_DIR}/index.ts`), "utf8").includes(
+        "svelte-ui-kit:start exports",
+      ),
+      true,
     );
     assert.equal(
-      readFileSync(abs(root, `${STYLES_DIR}/kit.css`), "utf8"),
-      "css\n",
+      readFileSync(abs(root, `${STYLES_DIR}/kit.css`), "utf8").includes(
+        "svelte-ui-kit:start tokens",
+      ),
+      true,
     );
     assert.equal(existsSync(abs(root, lockPath(STATE_DIR))), true);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("fresh rollback cleanup can resume after its recorded empty directories were removed", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-rollback-cleanup-"));
+  try {
+    const plan = sealed(emptyTreePlan(root));
+    const before = snapshotTree(root);
+    const outcome = applyPlan(plan, {
+      before: (boundary) => {
+        if (boundary === "replace:apply")
+          throw new Error("interrupt before semantic replacement");
+        if (boundary === "recovery:cleanup")
+          throw new Error("interrupt after owned-directory rollback");
+      },
+    });
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome));
+    const recovered = recoverTransactions(root, STATE_DIR, DEFAULT_KIT_CONFIG);
+    assert.ok(recovered.length > 0);
+    assert.ok(
+      recovered.every(
+        (entry) => entry.status === "rolled_back" || entry.status === "cleaned",
+      ),
+      JSON.stringify(recovered),
+    );
+    assert.deepEqual(snapshotTree(root), before);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -165,6 +132,42 @@ test("an unrelated directory appearing after planning is refused, not adopted", 
       JSON.stringify(outcome.issues),
     );
     assert.equal(existsSync(abs(root, STYLES_DIR)), true);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("an owned-directory removal flush failure retains terminal proof for a clean retry", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-owned-flush-retry-"));
+  try {
+    const plan = sealed(emptyTreePlan(root));
+    const initial = snapshotTree(root);
+    const outcome = applyPlan(plan, {
+      before: (boundary) => {
+        if (boundary === "replace:apply")
+          throw new Error("stop before replacement");
+        if (boundary === "durability:owned-remove")
+          throw new Error(
+            "actual removed ancestor cannot yet be durably confirmed",
+          );
+      },
+    });
+    assert.equal(outcome.kind, "refused");
+    const namespace = abs(root, `${STATE_DIR}/.svelte-ui-kit/transactions`);
+    const [id] = readdirSync(namespace);
+    assert.ok(id, "cleanup failure must retain restoration proof");
+    const journal = JSON.parse(
+      readFileSync(path.join(namespace, id, "journal.json"), "utf8"),
+    );
+    assert.equal(journal.phase, "rolled_back");
+    const recovered = recoverTransactions(root, STATE_DIR, DEFAULT_KIT_CONFIG);
+    assert.ok(
+      recovered.every(
+        (entry) => entry.status === "rolled_back" || entry.status === "cleaned",
+      ),
+      JSON.stringify(recovered),
+    );
+    assert.deepEqual(snapshotTree(root), initial);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

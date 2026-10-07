@@ -118,7 +118,7 @@ test("a contender never recovers a live owner; the first writer applies", () => 
     assert.equal(contender.issues[0].code, "WRITER_BUSY");
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css\n",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
   });
 });
@@ -152,7 +152,7 @@ test("a crash after lock publication preserves committed source", () => {
     assert.equal(outcome.kind, "committed_needs_cleanup");
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css\n",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
     const recovered = recoverTransactions(root, GUARDED_STATE, RECOVERY_ROOTS);
     assert.equal(recovered[0].status, "committed");
@@ -400,7 +400,7 @@ test("real SIGKILL after lock publication is classified as committed", () => {
     assert.equal(recovered[0].status, "committed");
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
   });
 });
@@ -423,7 +423,7 @@ test("real SIGKILL during cleanup leaves a committed batch", () => {
     );
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
   });
 });
@@ -486,7 +486,7 @@ test("two composed writers: a real holder is never recovered by a contender", as
     await waitForExit(holder);
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
   } finally {
     rmSync(root, { recursive: true, force: true });

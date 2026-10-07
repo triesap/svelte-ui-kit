@@ -13,6 +13,45 @@
  */
 import { hashBytes } from "./compare.js";
 import type { BarrelExportAuthority } from "./exports.js";
+import { canonicalContentHash } from "./digest.js";
+import type { ProjectSnapshot } from "./snapshot.js";
+import type { KitLock } from "./lock.js";
+
+export interface OriginalPlanningReceipt {
+  readonly snapshot: ProjectSnapshot;
+  readonly writesDigest: string;
+  readonly lockDigest: string;
+  readonly publicationDigest: string | null;
+}
+
+/** A description alone grants no authority; only private planner registries do. */
+export function describePlanning(
+  writes: readonly PlanWrite[],
+  lock: KitLock,
+  snapshot: ProjectSnapshot,
+  canonicalLock: string,
+): OriginalPlanningReceipt {
+  return Object.freeze({
+    snapshot,
+    writesDigest: planningWritesDigest(writes),
+    lockDigest: canonicalContentHash(lock),
+    publicationDigest: hashBytes(
+      writes.find((write) => write.path === canonicalLock)?.bytes ??
+        snapshot.entries.get(canonicalLock)?.bytes ??
+        new Uint8Array(),
+    ),
+  });
+}
+
+export function planningWritesDigest(writes: readonly PlanWrite[]): string {
+  return canonicalContentHash(
+    writes.map((entry) => ({
+      path: entry.path,
+      operation: entry.operation ?? null,
+      digest: hashBytes(entry.bytes),
+    })),
+  );
+}
 
 export interface PlanningOutcome {
   /** Whether the plan would change anything. */

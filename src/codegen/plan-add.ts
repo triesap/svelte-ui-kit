@@ -68,7 +68,7 @@ import { classifyCssBlocks } from "./css-compare.js";
 import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
 import { parseManagedCss } from "./css-parse.js";
 import {
-  authoritativeExports,
+  createExportAuthority,
   exportDeclarationKey,
   exportRegionContent,
   findRootBarrelImportsInSource,
@@ -80,6 +80,18 @@ import {
   type BarrelExportAuthority,
   type ExportDeclaration,
 } from "./exports.js";
+import { describePlanning, type OriginalPlanningReceipt } from "./plan.js";
+
+const ORIGINAL_ADD_PLANS = new WeakMap<object, OriginalPlanningReceipt>();
+/** Sync's internal Add proposal cannot authorize a final Sync outcome. */
+export function revokeAddPlanning(authority: object): void {
+  ORIGINAL_ADD_PLANS.delete(authority);
+}
+export function originalAddPlanning(
+  authority: object,
+): OriginalPlanningReceipt | undefined {
+  return ORIGINAL_ADD_PLANS.get(authority);
+}
 import { parseExportRegion } from "./export-parse.js";
 import type { OwnershipDisposition } from "./ownership-policy.js";
 import type { KitLock, LockIntegration, LockOrigin } from "./lock.js";
@@ -593,18 +605,13 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   // derived from the planned barrel bytes or from the observed region, so the
   // guard can distinguish an omitted/retargeted/rebound declaration from a
   // legitimately customized-but-equivalent region.
-  const exportAuthority: BarrelExportAuthority[] = [
-    {
-      path: derived.rootExports,
-      contract: "exports-v1",
-      registryVersion,
-      registryHash,
-      declarations: authoritativeExports(
-        rootDeclarationsByItem,
-        desired.order.filter((id) => !retiredOwners.has(id)),
-      ),
-    },
-  ];
+  const authorityResult = createExportAuthority(
+    registry,
+    config,
+    desired.order.filter((id) => !retiredOwners.has(id)),
+  );
+  if (!authorityResult.ok) return fail(authorityResult.issues);
+  const exportAuthority = authorityResult.value;
 
   // ---- Source targets -----------------------------------------------------
   const sourceRecords = planSourceTargets(
@@ -1295,6 +1302,12 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     );
   }
 
+  if (!hasConflict && projectedLock !== null) {
+    ORIGINAL_ADD_PLANS.set(
+      exportAuthority,
+      describePlanning(writes, projectedLock, snapshot, lockPath),
+    );
+  }
   return ok({
     executable: !hasConflict,
     projection: desired,

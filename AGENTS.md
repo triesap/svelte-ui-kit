@@ -13,16 +13,18 @@ references.
   `implementation/` and `references/` documents govern product intent.
   `implementation/COMMIT_SEQUENCE.json` is a derived projection; never edit it
   independently of its Markdown source.
-- Pi (the implementation agent) authors implementation and corrections and
-  self-reviews within the dispatched checkpoint. Codex owns scope,
-  contract/API decisions, dependency-selection approval, deviations,
-  acceptance, checkpoint commits and dispatch between coding periods.
-- Complete one checkpoint at a time in documented order. Current owner-expanded
-  dispatch is `pfc through RCLD-04`: all remaining original S064–S077/R2 work,
-  Q3 protocol corrections/qualification and Q4 cumulative checks together.
+- The owner transferred implementation responsibility from Pi to Codex on
+  2026-10-07. Codex now owns implementation and corrections as well as scope,
+  contract/API decisions, dependency approval, deviations and coordination.
+  Preserve required independent review: implementation self-review is not
+  independent acceptance. Historical Pi dispatches/reports remain provenance.
+  The owner activated `pfc all` on 2026-10-07 for all remaining original S064–S203
+  work, with a separate reviewer at mandatory independent acceptance gates.
+- Complete one checkpoint at a time in documented order. Current dispatch is
+  `pfc all`: first finish original S064–S077/R2 work and obtain independent S077
+  acceptance, then continue the original S078–S203 sequence through its gates.
   Earlier Q3-only/two-or-three-commit/Q4-later management limits are superseded.
-  Continue after green slices through the complete candidate, then return for
-  mandatory independent Codex S077 review before S078. Preserve 63 accepted
+  Continue after green slices and successful independent gates. Preserve 63 accepted
   checkpoints and original criteria/statuses. Target-only coherent green commits
   are authorized within this scope; no parent/remote or reference-source changes.
 - The current return review at `6f2d877` preserves real import/render AST parsing,
@@ -35,6 +37,12 @@ references.
   Test-name inventories and author completion claims do not grant acceptance.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
+- Latest independent review at `a176387` preserves the R9 source-binding and
+  equivalent-customization repairs, but mutable export-authority substitution
+  still publishes a dropped barrel. Object-destructured each bindings and each
+  indices also bypass child shadowing proof, publishing layouts that omit the
+  child or throw on rendering. Complete authenticated immutable authority and
+  lexical render proof under the original criteria before S077 acceptance.
 - No commit, push, publication, deployment or reference-repository mutation
   occurs without explicit authorization for that action.
 

@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readFileSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -93,7 +100,9 @@ function capturedInit(root: string, config: KitConfig): ApplyPlanInput {
   const planned = planInit({
     config,
     layoutFile: config.layoutFile,
-    layoutSource: "",
+    layoutSource: existsSync(path.join(root, config.layoutFile))
+      ? readFileSync(path.join(root, config.layoutFile), "utf8")
+      : "",
     snapshot: snapshot.value,
     registry: registry.value,
     configHash: "b".repeat(64),
@@ -206,18 +215,15 @@ for (const [label, config] of CONFIGS) {
 
   test(`[${label}] direct, aliased and legacy children rendering are accepted`, () => {
     withCapturedInit(config, (_root, plan) => {
-      const direct = replaceLayout(
-        plan,
-        config.layoutFile,
-        `<script>\n${IMPORTS(config)}let { children } = $props();\n</script>\n{@render children()}\n`,
-      );
+      const direct = plan;
       assert.equal(validateApplyPlan(direct).ok, true);
 
-      const aliased = replaceLayout(
-        plan,
+      write(
+        _root,
         config.layoutFile,
         `<script>\n${IMPORTS(config)}let { children: content } = $props();\n</script>\n{@render content()}\n`,
       );
+      const aliased = capturedInit(_root, config);
       const aliasedResult = validateApplyPlan(aliased);
       assert.equal(aliasedResult.ok, true, JSON.stringify(aliasedResult));
       if (aliasedResult.ok) {
@@ -267,11 +273,12 @@ for (const [label, config] of CONFIGS) {
 
       // A reachable invocation of a wrapper snippet that renders the prop
       // child is real rendering and stays accepted.
-      const invoked = replaceLayout(
-        plan,
+      write(
+        _root,
         config.layoutFile,
         `<script>\n${IMPORTS(config)}let { children } = $props();\n</script>\n{#snippet shell()}{@render children()}{/snippet}\n{@render shell()}\n`,
       );
+      const invoked = capturedInit(_root, config);
       const invokedResult = validateApplyPlan(invoked);
       assert.equal(invokedResult.ok, true, JSON.stringify(invokedResult));
 
@@ -435,21 +442,13 @@ for (const [label, config] of CONFIGS) {
     const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-app-"));
     try {
       seed(root);
-      const { plan, barrelPath } = buttonAdd(root, config);
-      const baselineBarrel = plan.targets.find(
-        (target) => target.path === barrelPath,
+      write(
+        root,
+        deriveKitPaths(config).rootExports,
+        "export const AppThing = 1;\n",
       );
-      assert.ok(baselineBarrel, "the button add must plan the exports barrel");
-      if (baselineBarrel === undefined) return;
-      const decoder = new TextDecoder("utf-8");
-      const withApp =
-        decoder.decode(baselineBarrel.bytes) + "export const AppThing = 1;\n";
-      const customized = replaceTarget(
-        plan,
-        barrelPath,
-        new TextEncoder().encode(withApp),
-      );
-      const validated = validateApplyPlan(customized);
+      const { plan } = buttonAdd(root, config);
+      const validated = validateApplyPlan(plan);
       assert.equal(validated.ok, true, JSON.stringify(validated));
     } finally {
       rmSync(root, { recursive: true, force: true });

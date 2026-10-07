@@ -110,7 +110,7 @@ test("a canonical lock deleted before the rename is a contradiction that preserv
     );
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css\n",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
   });
 });
@@ -145,7 +145,7 @@ test("a published canonical mode edit refuses cleanup and preserves evidence", (
     );
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css\n",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
   });
 });
@@ -168,7 +168,7 @@ test("a post-publication lock edit does not roll back committed source", () => {
     );
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css\n",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
     assert.equal(
       readFileSync(abs(root, lockPath(GUARDED_STATE)), "utf8"),
@@ -210,7 +210,7 @@ test("an equal-byte canonical at a different inode is not a proven publication",
     );
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css\n",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
   });
 });
@@ -251,7 +251,7 @@ test("a missing witness with an edited canonical mode refuses cleanup", () => {
     );
     assert.equal(
       readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css\n",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
   });
 });

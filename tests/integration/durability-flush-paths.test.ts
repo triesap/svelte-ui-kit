@@ -1,3 +1,5 @@
+import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
+import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { syncBuiltinESMExports } from "node:module";
@@ -8,15 +10,12 @@ import { test } from "node:test";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import type {
   ApplyPlanInput,
-  ApplyTarget,
   ValidatedApplyPlan,
 } from "../../src/codegen/apply.js";
-import { captureReadset } from "../../src/codegen/authority.js";
-import { capturePreimage } from "../../src/codegen/revalidate.js";
+
 import { persistJournal } from "../../src/codegen/transaction-journal.js";
 import {
   journalPath,
-  lockPath,
   transientRoot,
 } from "../../src/codegen/transaction-types.js";
 import {
@@ -28,11 +27,9 @@ import {
   GUARDED_STYLES,
   abs,
   makeGuardedPlan,
-  lockJson,
   write,
 } from "../helpers/guarded-plan.js";
-import { validKitConfigBytes } from "../helpers/kit-config.js";
-import { sha256Hex } from "../../src/codegen/digest.js";
+
 import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
 
 /**
@@ -173,48 +170,12 @@ test("cross-directory renames flush both affected parents and the staged lock pa
 
 /** A plan whose generated mapping and state directory do not exist yet. */
 function absentAncestryPlan(root: string): ApplyPlanInput {
-  const uiDir = "app/ui";
-  const stylesDir = "app/styles";
-  const layoutFile = "app/routes/+layout.svelte";
-  const stateDir = `${uiDir}/_kit`;
-  const configBytes = validKitConfigBytes({ uiDir, stylesDir, layoutFile });
-  const targets: ApplyTarget[] = [
-    {
-      path: `${stateDir}/kit.json`,
-      operation: "create",
-      bytes: configBytes,
-      mode: 0o644,
-      preimage: capturePreimage(root, `${stateDir}/kit.json`),
-    },
-    {
-      path: `${uiDir}/button.svelte`,
-      operation: "create",
-      bytes: new TextEncoder().encode("<button />\n"),
-      mode: 0o644,
-      preimage: capturePreimage(root, `${uiDir}/button.svelte`),
-    },
-  ];
-  const readset = captureReadset(
-    root,
-    [...targets.map((target) => target.path), lockPath(stateDir)],
-    [],
-  );
-  if (!readset.ok) throw new Error("readset capture failed");
-  return {
-    root,
-    stateDir,
-    uiDir,
-    stylesDir,
-    layoutFile,
-    rootIdentity: "a".repeat(64),
-    planDigest: "b".repeat(64),
-    readset: readset.value,
-    targets,
-    lock: {
-      bytes: lockJson(sha256Hex(configBytes)),
-      preimage: capturePreimage(root, lockPath(stateDir)),
-    },
-  };
+  return capturedFixtureInit(root, {
+    ...DEFAULT_KIT_CONFIG,
+    uiDir: "app/ui",
+    stylesDir: "app/styles",
+    layoutFile: "app/routes/+layout.svelte",
+  });
 }
 
 test("newly created ancestry and cleanup/release removals are flushed in their parents", () => {
@@ -391,7 +352,7 @@ test("applyPlan reports committed_needs_cleanup when the post-release flush fail
     );
     assert.equal(
       fs.readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css\n",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
   } finally {
     probe.restore();
@@ -523,7 +484,7 @@ test("applyPlan reports committed_needs_cleanup when the owned namespace removal
     );
     assert.equal(
       fs.readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "new css\n",
+      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
     );
     assert.ok(
       fs.existsSync(transactionsNamespace(root)),

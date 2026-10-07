@@ -1,3 +1,4 @@
+import { capturePreimage } from "../../src/codegen/revalidate.js";
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -13,7 +14,10 @@ import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import type { ApplyPlanInput } from "../../src/codegen/apply.js";
-import { captureReadFile } from "../../src/codegen/authority.js";
+import {
+  captureReadset,
+  captureReadFile,
+} from "../../src/codegen/authority.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit } from "../../src/codegen/plan-init.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
@@ -109,7 +113,9 @@ function capturedInit(root: string, config: KitConfig): ApplyPlanInput {
   const planned = planInit({
     config,
     layoutFile: config.layoutFile,
-    layoutSource: "",
+    layoutSource: existsSync(path.join(root, config.layoutFile))
+      ? readFileSync(path.join(root, config.layoutFile), "utf8")
+      : "",
     snapshot: snapshot.value,
     registry: registry.value,
     configHash: "b".repeat(64),
@@ -119,7 +125,18 @@ function capturedInit(root: string, config: KitConfig): ApplyPlanInput {
   const composed = composeApplyPlan({
     root,
     config,
-    writes: planned.value.writes,
+    writes:
+      planned.value.writes.length > 0
+        ? planned.value.writes
+        : [
+            {
+              path: deriveKitPaths(config).stateDir + "/kit.lock.json",
+              bytes: new TextEncoder().encode(
+                JSON.stringify(planned.value.lock, null, 2) + "\n",
+              ),
+            },
+          ],
+    exportAuthority: planned.value.exportAuthority,
     snapshot: snapshot.value,
   });
   assert.equal(composed.ok, true, JSON.stringify(composed));
@@ -147,7 +164,10 @@ function assertRefusedWithoutEffect(
   mutate: (plan: MutablePlan) => void,
   expectedCode: string,
 ): void {
-  const mutated = structuredClone(plan) as unknown as MutablePlan;
+  const mutated = {
+    ...structuredClone(plan),
+    exportAuthority: plan.exportAuthority,
+  } as unknown as MutablePlan;
   mutate(mutated);
   const before = snapshotTree(root);
   const result = validateApplyPlan(mutated as unknown as ApplyPlanInput);
@@ -422,16 +442,41 @@ function assertComposedRefused(
   const snapshot = captureSnapshot(root, paths);
   assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
   if (!snapshot.ok) return;
-  const composed = composeApplyPlan({
+  const derived = deriveKitPaths(config);
+  const lockLogical = derived.stateDir + "/kit.lock.json";
+  const publication = writes.find((entry) => entry.path === lockLogical);
+  assert.ok(publication);
+  if (!publication) return;
+  const targets = writes.filter((entry) => entry.path !== lockLogical);
+  const readset = captureReadset(
     root,
-    config,
-    writes,
-    snapshot: snapshot.value,
-  });
-  assert.equal(composed.ok, true, JSON.stringify(composed));
-  if (!composed.ok) return;
+    writes.map((entry) => entry.path),
+    paths.filter((p) => !writes.some((entry) => entry.path === p)),
+  );
+  assert.equal(readset.ok, true);
+  if (!readset.ok) return;
   const before = snapshotTree(root);
-  const result = validateApplyPlan(composed.value);
+  // Structural/projection diagnostics precede provenance checks. Negative raw
+  // inputs can exercise those diagnostics but can never be applied.
+  const result = validateApplyPlan({
+    root,
+    stateDir: derived.stateDir,
+    uiDir: config.uiDir,
+    stylesDir: config.stylesDir,
+    layoutFile: config.layoutFile,
+    rootIdentity: "a".repeat(64),
+    planDigest: "b".repeat(64),
+    readset: readset.value,
+    targets: targets.map((entry) => ({
+      ...entry,
+      mode: 0o644,
+      preimage: capturePreimage(root, entry.path),
+    })),
+    lock: {
+      bytes: publication.bytes,
+      preimage: capturePreimage(root, lockLogical),
+    },
+  });
   assert.equal(result.ok, false, JSON.stringify(result));
   if (!result.ok) {
     assert.ok(
@@ -513,25 +558,8 @@ test("a metadata-only batch cannot publish an arbitrary configHash over a captur
       "PROJECTED_CONFIG_HASH_MISMATCH",
     );
     // Positive control: the exact captured configuration identity validates.
-    const snapshot = captureSnapshot(root, paths);
-    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-    if (!snapshot.ok) return;
-    const good = composeApplyPlan({
-      root,
-      config: DEFAULT,
-      writes: [
-        {
-          path: lockPath,
-          operation: "create",
-          bytes: lockDoc({ configHash: sha256Hex(configBytes) }),
-        },
-      ],
-      snapshot: snapshot.value,
-    });
-    assert.equal(good.ok, true, JSON.stringify(good));
-    if (!good.ok) return;
-    const result = validateApplyPlan(good.value);
-    assert.equal(result.ok, true, JSON.stringify(result));
+    const good = capturedInit(root, DEFAULT);
+    assert.equal(validateApplyPlan(good).ok, true);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -614,53 +642,16 @@ test("a customized managed foundation still satisfies its contract", () => {
   try {
     seed(root);
     const derived = deriveKitPaths(DEFAULT);
-    const configPath = `${derived.stateDir}/kit.json`;
-    const lockPath = `${derived.stateDir}/kit.lock.json`;
-    const configBytes = validKitConfigBytes();
-    // A legitimate local customization keeps the owned `tokens` block but
-    // changes its effective body; contract presence, not byte equality with the
-    // canonical foundation, is the ownership proof.
-    const customized =
-      "/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens;\n/* svelte-ui-kit:end tokens */\n.keep { color: blue; }\n";
-    const snapshot = captureSnapshot(root, [
-      configPath,
-      lockPath,
-      derived.kitCss,
-      ".gitignore",
-    ]);
-    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-    if (!snapshot.ok) return;
-    const composed = composeApplyPlan({
+    const installed = validateApplyPlan(capturedInit(root, DEFAULT));
+    assert.equal(installed.ok, true, JSON.stringify(installed));
+    if (!installed.ok) return;
+    assert.equal(applyPlan(installed.value).kind, "applied");
+    write(
       root,
-      config: DEFAULT,
-      writes: [
-        { path: configPath, operation: "create", bytes: configBytes },
-        {
-          path: derived.kitCss,
-          operation: "create",
-          bytes: new TextEncoder().encode(customized),
-        },
-        {
-          path: lockPath,
-          operation: "create",
-          bytes: lockDoc({
-            configHash: sha256Hex(configBytes),
-            integrations: [
-              {
-                kind: "stylesheet",
-                path: derived.kitCss,
-                baseline: sha256Hex("tokens"),
-                contract: "foundation-tokens-v1",
-              },
-            ],
-          }),
-        },
-      ],
-      snapshot: snapshot.value,
-    });
-    assert.equal(composed.ok, true, JSON.stringify(composed));
-    if (!composed.ok) return;
-    const result = validateApplyPlan(composed.value);
+      derived.kitCss,
+      "/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens;\n/* svelte-ui-kit:end tokens */\n.keep { color: blue; }\n",
+    );
+    const result = validateApplyPlan(capturedInit(root, DEFAULT));
     assert.equal(result.ok, true, JSON.stringify(result));
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -674,100 +665,34 @@ test("a customized managed foundation still satisfies its contract", () => {
  * production path.
  */
 
-/** Install a valid original tree through the production guarded apply. */
-function installedInit(root: string, config: KitConfig): void {
-  const plan = capturedInit(root, config);
-  const validated = validateApplyPlan(plan);
-  assert.equal(validated.ok, true, JSON.stringify(validated));
-  if (!validated.ok) return;
-  const outcome = applyPlan(validated.value);
-  assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
-}
-
-function reCapture(root: string, config: KitConfig) {
-  const derived = deriveKitPaths(config);
-  const snapshot = captureSnapshot(root, [
-    `${derived.stateDir}/kit.json`,
-    `${derived.stateDir}/kit.lock.json`,
-    derived.rootExports,
-    derived.kitCss,
-    derived.themesCss,
-    derived.appCss,
-    config.layoutFile,
-    ".gitignore",
-  ]);
-  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-  if (!snapshot.ok) throw new Error("snapshot failed");
-  return snapshot.value;
-}
-
-/**
- * The independent export authority matching an installed init lock: the
- * installed barrel is an empty managed cohort, but the authority is still
- * carried from the recorded registry identity rather than omitted.
- */
-function installedExportAuthority(
-  root: string,
-  config: KitConfig,
-): {
-  readonly path: string;
-  readonly contract: "exports-v1";
-  readonly registryVersion: string;
-  readonly registryHash: string;
-  readonly declarations: readonly never[];
-}[] {
-  const derived = deriveKitPaths(config);
-  const lock = JSON.parse(
-    readFileSync(
-      path.join(root, ...`${derived.stateDir}/kit.lock.json`.split("/")),
-      "utf8",
-    ),
-  ) as { registryVersion: string; registryHash: string };
-  return [
-    {
-      path: derived.rootExports,
-      contract: "exports-v1",
-      registryVersion: lock.registryVersion,
-      registryHash: lock.registryHash,
-      declarations: [],
-    },
-  ];
-}
-
 test("a token-free target result cannot be shadowed by authentic captured old CSS", () => {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-effective-css-"));
   try {
     seed(root);
-    installedInit(root, DEFAULT);
     const derived = deriveKitPaths(DEFAULT);
-    const lockLogical = `${derived.stateDir}/kit.lock.json`;
-    const snapshot = reCapture(root, DEFAULT);
-    const lockBytes = readFileSync(path.join(root, ...lockLogical.split("/")));
-    const composed = composeApplyPlan({
-      root,
-      config: DEFAULT,
-      writes: [
-        {
-          path: derived.kitCss,
-          bytes: new TextEncoder().encode("/* no foundation */\n"),
-        },
-        { path: lockLogical, bytes: lockBytes },
-      ],
-      snapshot,
-      exportAuthority: installedExportAuthority(root, DEFAULT),
-    });
-    assert.equal(composed.ok, true, JSON.stringify(composed));
-    if (!composed.ok) return;
+    write(root, derived.kitCss, "/* captured application CSS */\n");
+    const original = capturedInit(root, DEFAULT);
+    const corrupted: ApplyPlanInput = {
+      ...original,
+      targets: original.targets.map((target) =>
+        target.path === derived.kitCss
+          ? {
+              ...target,
+              bytes: new TextEncoder().encode("/* no foundation */\n"),
+            }
+          : target,
+      ),
+    };
     // Authentic pre-state evidence for the same path: it must not override the
     // planned token-free target result.
     const evidence = captureReadFile(root, derived.kitCss);
     assert.equal(evidence.ok, true, JSON.stringify(evidence));
     if (!evidence.ok) return;
     const withEvidence: ApplyPlanInput = {
-      ...composed.value,
+      ...corrupted,
       readset: {
-        ...composed.value.readset,
-        files: [...composed.value.readset.files, evidence.value],
+        ...corrupted.readset,
+        files: [...corrupted.readset.files, evidence.value],
       },
     };
     assert.ok(
@@ -791,44 +716,28 @@ test("a token-free target result cannot be shadowed by authentic captured old CS
   }
 });
 
-test("legitimate target/evidence overlap still resolves the planned result", () => {
+test("legitimate captured CSS update resolves the planned result", () => {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-effective-overlap-"));
   try {
     seed(root);
-    installedInit(root, DEFAULT);
     const derived = deriveKitPaths(DEFAULT);
-    const lockLogical = `${derived.stateDir}/kit.lock.json`;
-    const snapshot = reCapture(root, DEFAULT);
-    const currentCss = readFileSync(
-      path.join(root, ...derived.kitCss.split("/")),
-    );
-    const lockBytes = readFileSync(path.join(root, ...lockLogical.split("/")));
-    // A token-preserving update over the same path as the captured evidence:
-    // the target result wins, so the claim stays truthful.
-    const composed = composeApplyPlan({
+    write(
       root,
-      config: DEFAULT,
-      writes: [
-        { path: derived.kitCss, bytes: new Uint8Array(currentCss) },
-        { path: lockLogical, bytes: lockBytes },
-      ],
-      snapshot,
-      exportAuthority: installedExportAuthority(root, DEFAULT),
-    });
-    assert.equal(composed.ok, true, JSON.stringify(composed));
-    if (!composed.ok) return;
-    const evidence = captureReadFile(root, derived.kitCss);
-    assert.equal(evidence.ok, true, JSON.stringify(evidence));
-    if (!evidence.ok) return;
-    const withEvidence: ApplyPlanInput = {
-      ...composed.value,
-      readset: {
-        ...composed.value.readset,
-        files: [...composed.value.readset.files, evidence.value],
-      },
-    };
-    const result = validateApplyPlan(withEvidence);
+      derived.kitCss,
+      "/* application CSS */\n.keep { color: blue; }\n",
+    );
+    const original = capturedInit(root, DEFAULT);
+    const target = original.targets.find(
+      (entry) => entry.path === derived.kitCss,
+    );
+    assert.equal(target?.operation, "update");
+    const result = validateApplyPlan(original);
     assert.equal(result.ok, true, JSON.stringify(result));
+    if (result.ok) assert.equal(applyPlan(result.value).kind, "applied");
+    assert.match(
+      readFileSync(path.join(root, derived.kitCss), "utf8"),
+      /color: blue/,
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -888,35 +797,21 @@ test("invalid TypeScript cannot claim exports-v1 through path presence", () => {
 });
 
 test("customized mapped layout/export forms still satisfy their contracts", () => {
-  withCapturedInit(DEFAULT, (root, plan) => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-effective-custom-"));
+  try {
+    seed(root);
     const derived = deriveKitPaths(DEFAULT);
-    const customized: ApplyPlanInput = {
-      ...plan,
-      targets: plan.targets.map((target) => {
-        if (target.path === DEFAULT.layoutFile) {
-          return {
-            ...target,
-            bytes: new TextEncoder().encode(
-              '<script>\n  import "../styles/kit.css";\n  import "../styles/themes.css";\n  import "../styles/app.css";\n  let { children } = $props();\n</script>\n\n<main class="shell">{@render children()}</main>\n',
-            ),
-          };
-        }
-        if (target.path === derived.rootExports) {
-          return {
-            ...target,
-            bytes: new TextEncoder().encode(
-              "// svelte-ui-kit:start exports\n// svelte-ui-kit:end exports\nexport const AppThing = 1;\n",
-            ),
-          };
-        }
-        return target;
-      }),
-    };
-    // The lock still claims layout-v1/exports-v1 for these paths, but the
-    // baseline is the prior lineage; the semantic contract holds.
-    const result = validateApplyPlan(customized);
+    write(
+      root,
+      DEFAULT.layoutFile,
+      '<script>let { children } = $props();</script>\n<main class="shell">{@render children()}</main>\n',
+    );
+    write(root, derived.rootExports, "export const AppThing = 1;\n");
+    const result = validateApplyPlan(capturedInit(root, DEFAULT));
     assert.equal(result.ok, true, JSON.stringify(result));
-  });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("the sealed plan isolates and binds captured authority bytes", () => {

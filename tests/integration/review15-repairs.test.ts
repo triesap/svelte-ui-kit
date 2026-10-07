@@ -1,3 +1,4 @@
+import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -15,7 +16,6 @@ import {
   applyPlan,
   validateApplyPlan,
   type ApplyPlanInput,
-  type ApplyTarget,
 } from "../../src/codegen/apply.js";
 import {
   captureReadset,
@@ -147,44 +147,17 @@ function seedPackage(root: string): void {
 }
 
 function makePlan(root: string): ApplyPlanInput {
-  write(root, `${STATE}/kit.json`, "old config");
+  write(
+    root,
+    STATE + "/kit.json",
+    Buffer.from(validKitConfigBytes(ROOTS)).toString("utf8"),
+  );
   write(
     root,
     lockPath(STATE),
-    Buffer.from(lockBytes("c".repeat(64))).toString(),
+    Buffer.from(lockBytes("c".repeat(64))).toString("utf8"),
   );
-  const configBytes = validKitConfigBytes(ROOTS);
-  const targets: ApplyTarget[] = [
-    {
-      path: `${STATE}/kit.json`,
-      operation: "update",
-      bytes: configBytes,
-      mode: 0o644,
-      preimage: capturePreimage(root, `${STATE}/kit.json`),
-    },
-  ];
-  const readset = captureReadset(
-    root,
-    [...targets.map((target) => target.path), lockPath(STATE)],
-    [],
-  );
-  assert.equal(readset.ok, true);
-  if (!readset.ok) throw new Error("readset capture failed");
-  return {
-    root,
-    stateDir: STATE,
-    uiDir: UI,
-    stylesDir: STYLES,
-    layoutFile: LAYOUT,
-    rootIdentity: "a".repeat(64),
-    planDigest: "b".repeat(64),
-    readset: readset.value,
-    targets,
-    lock: {
-      bytes: lockBytes(sha256Hex(configBytes)),
-      preimage: capturePreimage(root, lockPath(STATE)),
-    },
-  };
+  return capturedFixtureInit(root, { ...DEFAULT_KIT_CONFIG, ...ROOTS });
 }
 
 function validatedPlan(root: string) {
@@ -621,6 +594,7 @@ test("guarded apply refuses a dead writer and restarts after operator resolution
     // fresh observation/planning pass then restarts through the guarded core,
     // which recovers the killed writer's transaction before applying.
     clearOrphanedWriterLock(root, STATE);
+    write(root, `${STYLES}/kit.css`, "old css");
     const restart = validateApplyPlan(makePlan(root));
     assert.equal(restart.ok, true, JSON.stringify(restart));
     if (!restart.ok) return;

@@ -1,5 +1,14 @@
 # Verification commands and known-good commits
 
+Independent review at `a176387` preserves the R9 direct repairs but reproduces
+mutable export-authority substitution and object-destructured/index each child
+shadowing failures through validation/application. Pinned isolated SSR proves
+missing child output and a runtime exception respectively. Qualify authenticated
+original authority and complete lexical bindings, preserving positive controls
+and original lifecycle/protocol criteria. The owner transferred implementation
+to Codex on 2026-10-07; required independent acceptance remains distinct from
+self-review. S064–S077 remain pending and S078 remains gated.
+
 The current RCLD-04 return review at `6f2d877` preserves the previous semantic
 repairs and consumer controls. Qualify independent ORIGINAL registry/planning
 export authority before and after composition, full source/export bindings and

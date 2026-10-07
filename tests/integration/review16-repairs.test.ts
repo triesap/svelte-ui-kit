@@ -1,3 +1,7 @@
+import {
+  capturedFixtureInit,
+  makeGuardedPlan,
+} from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -15,6 +19,7 @@ import { syncBuiltinESMExports } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 import {
   applyPlan,
@@ -23,7 +28,7 @@ import {
 } from "../../src/codegen/apply.js";
 import { captureReadset, identityDigest } from "../../src/codegen/authority.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { capturePreimage } from "../../src/codegen/revalidate.js";
+
 import {
   recoverTransaction,
   type RecoveryResult,
@@ -131,72 +136,19 @@ function journalRecord(
 
 /** A minimal valid plan with one CSS update. */
 function makePlan(root: string): ApplyPlanInput {
-  const css = `${STYLES}/kit.css`;
-  write(root, css, "old css");
-  const configBytes = validKitConfigBytes(ROOTS);
-  const configPath = `${STATE}/kit.json`;
-  write(root, configPath, configBytes);
+  write(root, STYLES + "/kit.css", "old css");
+  write(root, STATE + "/kit.json", validKitConfigBytes(ROOTS));
   write(
     root,
     lockPath(STATE),
-    Buffer.from(lockBytes(sha256Hex(configBytes))).toString(),
+    Buffer.from(lockBytes(sha256Hex(validKitConfigBytes(ROOTS)))).toString(),
   );
-  const readset = captureReadset(root, [css, lockPath(STATE)], [configPath]);
-  assert.equal(readset.ok, true);
-  if (!readset.ok) throw new Error("readset capture failed");
-  return {
-    root,
-    stateDir: STATE,
-    uiDir: UI,
-    stylesDir: STYLES,
-    layoutFile: LAYOUT,
-    rootIdentity: "a".repeat(64),
-    planDigest: "b".repeat(64),
-    readset: readset.value,
-    targets: [
-      {
-        path: css,
-        operation: "update",
-        bytes: enc("new css"),
-        mode: 0o644,
-        preimage: capturePreimage(root, css),
-      },
-    ],
-    lock: {
-      bytes: lockBytes(sha256Hex(configBytes)),
-      preimage: capturePreimage(root, lockPath(STATE)),
-    },
-  };
+  return capturedFixtureInit(root, { ...DEFAULT_KIT_CONFIG, ...ROOTS });
 }
 
 /** A metadata-only plan whose lock alone carries integrations. */
 function metadataOnlyPlan(root: string): ApplyPlanInput {
-  const configBytes = validKitConfigBytes(ROOTS);
-  const configPath = `${STATE}/kit.json`;
-  write(root, configPath, configBytes);
-  write(
-    root,
-    lockPath(STATE),
-    Buffer.from(lockBytes(sha256Hex(configBytes))).toString(),
-  );
-  const readset = captureReadset(root, [lockPath(STATE)], [configPath]);
-  assert.equal(readset.ok, true);
-  if (!readset.ok) throw new Error("readset capture failed");
-  return {
-    root,
-    stateDir: STATE,
-    uiDir: UI,
-    stylesDir: STYLES,
-    layoutFile: LAYOUT,
-    rootIdentity: "a".repeat(64),
-    planDigest: "b".repeat(64),
-    readset: readset.value,
-    targets: [],
-    lock: {
-      bytes: lockBytes(sha256Hex(configBytes)),
-      preimage: capturePreimage(root, lockPath(STATE)),
-    },
-  };
+  return makeGuardedPlan(root, { ...ROOTS, metadataOnly: true });
 }
 
 test("same bytes at a new physical owner inode is not acquired authority", () => {
@@ -447,20 +399,26 @@ test("an actual exported restore rename failure is a typed partial outcome", () 
     const validated = validateApplyPlan(makePlan(root));
     assert.equal(validated.ok, true, JSON.stringify(validated));
     if (!validated.ok) return;
+    const before = snapshotTree(root);
     let tid: string | undefined;
     const seed = applyPlan(validated.value, {
-      before: (boundary) => {
-        if (boundary === "replace:apply") {
+      before: (boundary, detail) => {
+        if (boundary === "replace:apply" && detail === `${STYLES}/kit.css`) {
           tid = readdirSync(abs(root, transactionsDir(STATE)))[0];
           throw new Error("interrupt before replacement");
         }
-        if (boundary === "recovery:restore") {
+        if (boundary === "recovery:restore" && detail === `${STYLES}/kit.css`) {
           throw new Error("retain prepared recovery");
         }
       },
     });
     assert.ok(tid, JSON.stringify(seed));
     if (!tid) return;
+    assert.equal(
+      existsSync(abs(root, "src/routes")),
+      true,
+      "retained journal keeps its created ancestry until recovery succeeds",
+    );
     const css = abs(root, `${STYLES}/kit.css`);
     const original = fsDefault.renameSync;
     let fired = false;
@@ -483,11 +441,18 @@ test("an actual exported restore rename failure is a typed partial outcome", () 
         syncBuiltinESMExports();
       }
     });
-    assert.equal(fired, true);
+    assert.equal(fired, true, JSON.stringify(result));
     assert.equal(result?.status, "refused", JSON.stringify(result));
     assert.ok(
       result?.issues.some((entry) => entry.code === "RECOVERY_RESTORE_FAILED"),
       JSON.stringify(result?.issues),
+    );
+    const retry = recoverTransaction(root, STATE, tid, ROOTS);
+    assert.equal(retry.status, "rolled_back", JSON.stringify(retry));
+    assert.deepEqual(
+      snapshotTree(root),
+      before,
+      "fresh coordinated retry restores the exact original consumer tree",
     );
   });
 });
@@ -523,14 +488,10 @@ test("failed-release restoration never overwrites a new unrelated owner", () => 
 
 test("guarded apply refuses a cross-device state directory with no semantic writes", () => {
   withRoot((root) => {
-    const plan = makePlan(root);
-    const readset = {
-      ...plan.readset,
-      ancestors: plan.readset.ancestors.filter(
-        (ancestor) => ancestor.path !== STATE,
-      ),
-    };
-    const validated = validateApplyPlan({ ...plan, readset });
+    makePlan(root);
+    const validated = withForeignStateDevice(root, () =>
+      validateApplyPlan(capturedFixtureInit(root, DEFAULT_KIT_CONFIG)),
+    );
     assert.equal(validated.ok, true, JSON.stringify(validated));
     if (!validated.ok) return;
     const cssBefore = readFileSync(abs(root, `${STYLES}/kit.css`), "utf8");
@@ -554,14 +515,10 @@ test("guarded apply refuses a cross-device state directory with no semantic writ
 
 test("metadata-only guarded apply refuses a cross-device state directory", () => {
   withRoot((root) => {
-    const plan = metadataOnlyPlan(root);
-    const readset = {
-      ...plan.readset,
-      ancestors: plan.readset.ancestors.filter(
-        (ancestor) => ancestor.path !== STATE,
-      ),
-    };
-    const validated = validateApplyPlan({ ...plan, readset });
+    metadataOnlyPlan(root);
+    const validated = withForeignStateDevice(root, () =>
+      validateApplyPlan(capturedFixtureInit(root, DEFAULT_KIT_CONFIG)),
+    );
     assert.equal(validated.ok, true, JSON.stringify(validated));
     if (!validated.ok) return;
     const lockBefore = readFileSync(abs(root, lockPath(STATE)), "utf8");

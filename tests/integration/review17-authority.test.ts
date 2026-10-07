@@ -16,6 +16,7 @@ import {
 } from "../../src/codegen/snapshot.js";
 import type { KitLock } from "../../src/codegen/lock.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
@@ -142,6 +143,73 @@ for (const [label, config] of CONFIGS) {
       if (!good.ok) return;
       assert.equal(validateApplyPlan(good.value).ok, true);
 
+      // Neither a copied receipt nor a replaced mirror can supply authority,
+      // even when its advertised hash/path matches the real registry exactly.
+      const forged = writes.map((entry) => ({
+        ...entry,
+        ...(entry.path === derived.rootExports
+          ? {
+              bytes: utf8(
+                "// svelte-ui-kit:start exports\n// svelte-ui-kit:end exports\n",
+              ),
+            }
+          : {}),
+        ...(entry.exportAuthority === undefined
+          ? {}
+          : {
+              exportAuthority: entry.exportAuthority.map((authority) => ({
+                ...authority,
+                declarations: [],
+              })),
+            }),
+      }));
+      const forgedCompose = composeApplyPlan({
+        root,
+        config,
+        writes: forged,
+        snapshot,
+      });
+      assert.equal(forgedCompose.ok, false, JSON.stringify(forgedCompose));
+      if (!forgedCompose.ok)
+        assert.ok(
+          forgedCompose.issues.some(
+            (entry) =>
+              entry.code === "COMPOSE_EXPORTS_AUTHORITY_UNAUTHENTICATED",
+          ),
+        );
+
+      const replacedAuthority = {
+        ...good.value,
+        exportAuthority: good.value.exportAuthority?.map((entry) => ({
+          ...entry,
+          declarations: [],
+        })),
+        targets: good.value.targets.map((entry) =>
+          entry.path === derived.rootExports
+            ? {
+                ...entry,
+                bytes: utf8(
+                  "// svelte-ui-kit:start exports\n// svelte-ui-kit:end exports\n",
+                ),
+              }
+            : entry,
+        ),
+      };
+      const forgedValidation = validateApplyPlan(replacedAuthority);
+      assert.equal(
+        forgedValidation.ok,
+        false,
+        JSON.stringify(forgedValidation),
+      );
+      if (!forgedValidation.ok)
+        assert.ok(
+          forgedValidation.issues.some(
+            (entry) => entry.code === "PLAN_EXPORT_AUTHORITY_UNAUTHENTICATED",
+          ),
+        );
+      assert.ok(Object.isFrozen(good.value.exportAuthority));
+      assert.ok(Object.isFrozen(good.value.exportAuthority?.[0]?.declarations));
+
       // The reviewer's probe: empty the managed barrel region BEFORE compose.
       const empty =
         "// svelte-ui-kit:start exports\n// svelte-ui-kit:end exports\n";
@@ -167,6 +235,123 @@ for (const [label, config] of CONFIGS) {
           JSON.stringify(bad.issues),
         );
       }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+      rmSync(registryRoot, { recursive: true, force: true });
+    }
+  });
+
+  test(`[${label}] complete original operations and readset cannot be omitted`, () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "suik-original-plan-"));
+    const registryRoot = mkdtempSync(
+      path.join(os.tmpdir(), "suik-original-reg-"),
+    );
+    try {
+      seed(root);
+      const { snapshot, writes } = buttonPlan(root, config, registryRoot);
+      const derived = deriveKitPaths(config);
+      const good = composeApplyPlan({ root, config, writes, snapshot });
+      assert.equal(good.ok, true, JSON.stringify(good));
+      if (!good.ok) return;
+      const before = snapshotTree(root);
+      const sourcePath = derived.rootExportsDir + "/button.svelte";
+      const alteredLock = JSON.parse(
+        Buffer.from(good.value.lock.bytes).toString("utf8"),
+      );
+      alteredLock.files = alteredLock.files.filter(
+        (entry: { path: string }) => entry.path !== sourcePath,
+      );
+      const omittedSource = {
+        ...good.value,
+        targets: good.value.targets.filter(
+          (entry) => entry.path !== sourcePath,
+        ),
+        lock: {
+          ...good.value.lock,
+          bytes: utf8(JSON.stringify(alteredLock, null, 2) + "\n"),
+        },
+      };
+      const omittedRead = {
+        ...good.value,
+        readset: {
+          ...good.value.readset,
+          files: good.value.readset.files.filter(
+            (entry) => entry.path !== "package.json",
+          ),
+        },
+      };
+      assert.ok(
+        good.value.readset.files.some((entry) => entry.path === "package.json"),
+      );
+      for (const changed of [
+        omittedSource,
+        omittedRead,
+        { ...good.value, compositionAuthority: {} },
+        { ...good.value, compositionAuthority: undefined },
+      ]) {
+        const result = validateApplyPlan(changed);
+        assert.equal(result.ok, false, JSON.stringify(result));
+        if (!result.ok)
+          assert.ok(
+            result.issues.some(
+              (entry) => entry.code === "PLAN_COMPOSITION_UNAUTHENTICATED",
+            ),
+            JSON.stringify(result),
+          );
+        assert.deepEqual(snapshotTree(root), before);
+      }
+      const beforeCompose = writes
+        .filter((entry) => entry.path !== sourcePath)
+        .map((entry) =>
+          entry.path === derived.stateDir + "/kit.lock.json"
+            ? {
+                ...entry,
+                bytes: utf8(JSON.stringify(alteredLock, null, 2) + "\n"),
+              }
+            : entry,
+        );
+      const refused = composeApplyPlan({
+        root,
+        config,
+        snapshot,
+        writes: beforeCompose,
+      });
+      assert.equal(refused.ok, false, JSON.stringify(refused));
+      if (!refused.ok)
+        assert.ok(
+          refused.issues.some(
+            (entry) => entry.code === "COMPOSE_PLANNING_AUTHORITY_CHANGED",
+          ),
+          JSON.stringify(refused),
+        );
+      const emptyLock = {
+        ...alteredLock,
+        requested: [],
+        items: [],
+        files: [],
+        cssBlocks: [],
+        integrations: [],
+      };
+      const stripped = composeApplyPlan({
+        root,
+        config,
+        snapshot,
+        writes: [
+          {
+            path: derived.stateDir + "/kit.lock.json",
+            bytes: utf8(JSON.stringify(emptyLock, null, 2) + "\n"),
+          },
+        ],
+      });
+      assert.equal(stripped.ok, false, JSON.stringify(stripped));
+      if (!stripped.ok)
+        assert.ok(
+          stripped.issues.some(
+            (entry) => entry.code === "COMPOSE_PLANNING_AUTHORITY_CHANGED",
+          ),
+          JSON.stringify(stripped),
+        );
+      assert.deepEqual(snapshotTree(root), before);
     } finally {
       rmSync(root, { recursive: true, force: true });
       rmSync(registryRoot, { recursive: true, force: true });
@@ -277,6 +462,9 @@ for (const [label, config] of CONFIGS) {
       const lock = JSON.parse(
         readFileSync(abs(root, `${derived.stateDir}/kit.lock.json`), "utf8"),
       ) as KitLock;
+      const installedConfig = JSON.parse(
+        readFileSync(abs(root, `${derived.stateDir}/kit.json`), "utf8"),
+      ) as KitConfig;
       const recaptured = captureSnapshot(
         root,
         pathsFor(config, [`${derived.rootExportsDir}/button.svelte`]),
@@ -285,7 +473,7 @@ for (const [label, config] of CONFIGS) {
       if (!recaptured.ok) return;
       const sync = planSync({
         registry: registry.value,
-        config,
+        config: installedConfig,
         snapshot: recaptured.value,
         lock,
         registryVersion: registry.value.root.registryVersion,
@@ -305,6 +493,11 @@ for (const [label, config] of CONFIGS) {
 
       // A metadata-only batch carrying the same independent authority validates
       // and leaves the raw customized bytes untouched.
+      assert.deepEqual(
+        sync.value.lock?.items.map((item) => item.id),
+        lock.items.map((item) => item.id),
+        "satisfied sync must retain the installed owners",
+      );
       const lockBytes = utf8(`${JSON.stringify(lock, null, 2)}\n`);
       const meta = composeApplyPlan({
         root,
@@ -318,6 +511,30 @@ for (const [label, config] of CONFIGS) {
         snapshot: recaptured.value,
         exportAuthority: sync.value.exportAuthority,
       });
+      const reformatted = composeApplyPlan({
+        root,
+        config,
+        snapshot: recaptured.value,
+        writes: [
+          {
+            path: `${derived.stateDir}/kit.lock.json`,
+            bytes: utf8(JSON.stringify(lock)),
+          },
+        ],
+        exportAuthority: sync.value.exportAuthority,
+      });
+      assert.equal(
+        reformatted.ok,
+        false,
+        "satisfied planning cannot authorize changed publication bytes",
+      );
+      if (!reformatted.ok)
+        assert.ok(
+          reformatted.issues.some(
+            (entry) => entry.code === "COMPOSE_PLANNING_AUTHORITY_CHANGED",
+          ),
+          JSON.stringify(reformatted),
+        );
       assert.equal(meta.ok, true, JSON.stringify(meta));
       if (!meta.ok) return;
       const metaValidated = validateApplyPlan(meta.value);

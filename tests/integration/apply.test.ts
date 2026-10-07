@@ -16,20 +16,20 @@ import {
   applyPlan,
   validateApplyPlan,
   type ApplyPlanInput,
-  type ApplyTarget,
 } from "../../src/codegen/apply.js";
-import { captureReadset } from "../../src/codegen/authority.js";
+
+import {
+  makeGuardedPlan,
+  capturedFixtureInit,
+} from "../helpers/guarded-plan.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { capturePreimage } from "../../src/codegen/revalidate.js";
+
 import { faultAtOccurrence } from "../../src/codegen/transaction-hooks.js";
 import {
   lockPath,
   transactionsDir,
 } from "../../src/codegen/transaction-types.js";
-import {
-  validKitConfigBytes,
-  validKitConfigText,
-} from "../helpers/kit-config.js";
+import { validKitConfigText } from "../helpers/kit-config.js";
 
 const UI = "src/lib/components/ui";
 const STYLES = "src/styles";
@@ -54,27 +54,6 @@ function write(root: string, logical: string, text: string | Uint8Array): void {
   writeFileSync(target, text);
 }
 
-function lockBytes(configHash: string): Uint8Array {
-  return new TextEncoder().encode(
-    `${JSON.stringify(
-      {
-        schemaVersion: 1,
-        toolVersion: "0.1.0",
-        registryVersion: "0.1.0",
-        registryHash: "a".repeat(64),
-        configHash,
-        requested: [],
-        items: [],
-        files: [],
-        cssBlocks: [],
-        integrations: [],
-      },
-      null,
-      2,
-    )}\n`,
-  );
-}
-
 interface PlanOptions {
   readonly uiDir?: string;
   readonly stylesDir?: string;
@@ -84,82 +63,7 @@ interface PlanOptions {
 }
 
 function makePlan(root: string, options: PlanOptions = {}): ApplyPlanInput {
-  const uiDir = options.uiDir ?? UI;
-  const stylesDir = options.stylesDir ?? STYLES;
-  const layoutFile = options.layoutFile ?? LAYOUT;
-  const stateDir = `${uiDir}/_kit`;
-
-  const configBytes = validKitConfigBytes({ uiDir, stylesDir, layoutFile });
-
-  // Live preimages. The captured configuration must be the exact effective
-  // bytes so a metadata-only batch can prove its identity against the lock.
-  write(root, `${uiDir}/old.svelte`, "old component");
-  write(root, `${uiDir}/keep.svelte`, "keep me");
-  write(root, `${stylesDir}/kit.css`, "old css");
-  write(root, layoutFile, "<script>old layout</script>");
-  write(root, `${uiDir}/_kit/kit.json`, configBytes);
-
-  const targets: ApplyTarget[] = options.metadataOnly
-    ? []
-    : [
-        {
-          path: `${uiDir}/_kit/kit.json`,
-          operation: "update",
-          bytes: configBytes,
-          mode: 0o644,
-          preimage: capturePreimage(root, `${uiDir}/_kit/kit.json`),
-        },
-        {
-          path: `${uiDir}/button.svelte`,
-          operation: "create",
-          bytes: new TextEncoder().encode("<button />\n"),
-          mode: 0o644,
-          preimage: capturePreimage(root, `${uiDir}/button.svelte`),
-        },
-        {
-          path: `${stylesDir}/kit.css`,
-          operation: "update",
-          bytes: new TextEncoder().encode("new css\n"),
-          mode: 0o644,
-          preimage: capturePreimage(root, `${stylesDir}/kit.css`),
-        },
-        {
-          path: layoutFile,
-          operation: "update",
-          bytes: new TextEncoder().encode("<script>new layout</script>\n"),
-          mode: 0o644,
-          preimage: capturePreimage(root, layoutFile),
-        },
-        {
-          path: `${uiDir}/old.svelte`,
-          operation: "retire",
-          bytes: new Uint8Array(0),
-          mode: 0o644,
-          preimage: capturePreimage(root, `${uiDir}/old.svelte`),
-        },
-      ];
-
-  const readset = captureReadset(
-    root,
-    [...targets.map((target) => target.path), lockPath(stateDir)],
-    [`${uiDir}/_kit/kit.json`],
-  );
-  if (!readset.ok) throw new Error("readset capture failed");
-  return {
-    root,
-    stateDir,
-    uiDir,
-    stylesDir,
-    layoutFile,
-    rootIdentity: "a".repeat(64),
-    planDigest: "b".repeat(64),
-    readset: readset.value,
-    targets,
-    lock: {
-      bytes: lockBytes(options.lockConfigHash ?? sha256Hex(configBytes)),
-      preimage: capturePreimage(root, lockPath(stateDir)),
-    },
-  };
+  return makeGuardedPlan(root, options);
 }
 
 function validated(plan: ApplyPlanInput) {
@@ -178,19 +82,16 @@ test("a successful batch changes exactly the planned files and publishes last", 
       readFileSync(abs(root, `${UI}/_kit/kit.json`), "utf8"),
       validKitConfigText(),
     );
+    for (const target of plan.targets) {
+      assert.deepEqual(
+        new Uint8Array(readFileSync(abs(root, target.path))),
+        target.bytes,
+      );
+    }
     assert.equal(
-      readFileSync(abs(root, `${UI}/button.svelte`), "utf8"),
-      "<button />\n",
+      readFileSync(abs(root, `${UI}/old.svelte`), "utf8"),
+      "old component",
     );
-    assert.equal(
-      readFileSync(abs(root, `${STYLES}/kit.css`), "utf8"),
-      "new css\n",
-    );
-    assert.equal(
-      readFileSync(abs(root, LAYOUT), "utf8"),
-      "<script>new layout</script>\n",
-    );
-    assert.equal(existsSync(abs(root, `${UI}/old.svelte`)), false);
     assert.equal(
       readFileSync(abs(root, `${UI}/keep.svelte`), "utf8"),
       "keep me",
@@ -259,10 +160,7 @@ test("a satisfied plan is a no-change with no transaction", () => {
     const plan = makePlan(root, { metadataOnly: true });
     // Write the already-satisfied lock.
     write(root, lockPath(STATE), Buffer.from(plan.lock.bytes).toString("utf8"));
-    const satisfied: ApplyPlanInput = {
-      ...plan,
-      lock: { ...plan.lock, preimage: capturePreimage(root, lockPath(STATE)) },
-    };
+    const satisfied = capturedFixtureInit(root);
     const outcome = applyPlan(validated(satisfied));
     assert.equal(outcome.kind, "no_change");
     assert.equal(existsSync(abs(root, transactionsDir(STATE))), false);
@@ -295,10 +193,15 @@ test("a custom mapping applies only within its approved roots", () => {
     const outcome = applyPlan(validated(plan));
     assert.equal(outcome.kind, "applied");
     assert.equal(
-      readFileSync(abs(root, "app/ui/button.svelte"), "utf8"),
-      "<button />\n",
+      readFileSync(abs(root, "app/ui/index.ts"), "utf8").includes(
+        "svelte-ui-kit:start exports",
+      ),
+      true,
     );
-    assert.equal(existsSync(abs(root, "app/ui/old.svelte")), false);
+    assert.equal(
+      readFileSync(abs(root, "app/ui/old.svelte"), "utf8"),
+      "old component",
+    );
     assert.equal(existsSync(abs(root, lockPath("app/ui/_kit"))), true);
   });
 });
@@ -323,7 +226,7 @@ test("a recoverable failure rolls back and preserves a consistent state", () => 
     );
     assert.equal(
       readFileSync(abs(root, LAYOUT), "utf8"),
-      "<script>old layout</script>",
+      "<main><slot /></main>\n",
     );
     assert.equal(
       readFileSync(abs(root, `${UI}/old.svelte`), "utf8"),

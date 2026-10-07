@@ -31,6 +31,7 @@ import { identityDigest, type PlanReadFile } from "./authority.js";
 import type { PlanInstalledRead } from "./authority.js";
 import {
   authoritativeExportKey,
+  validateExportReceipt,
   effectiveExportKey,
   parseGeneratedDeclarations,
   type BarrelExportAuthority,
@@ -39,7 +40,12 @@ import { parseExportRegion } from "./export-parse.js";
 import { parseKitLock } from "./lock.js";
 import { hasIgnoreEntry, ignoreBlockWithEntry } from "./transaction-cleanup.js";
 import type { ApplyPlanInput, ApplyTarget } from "./apply.js";
+import { derivePlanDigest } from "./apply.js";
 import type { PlanWrite } from "./plan.js";
+import { planningWritesDigest } from "./plan.js";
+import { originalAddPlanning } from "./plan-add.js";
+import { originalInitPlanning } from "./plan-init.js";
+import { originalSyncPlanning } from "./plan-sync.js";
 import { decodeObservedText } from "./snapshot.js";
 import { ignoreEntryFor, lockPath } from "./transaction-types.js";
 import type {
@@ -73,6 +79,25 @@ export interface ComposeApplyPlanInput {
 }
 
 const HEX64 = /^[0-9a-f]{64}$/;
+const COMPOSITION_RECEIPTS = new WeakMap<object, string>();
+
+function compositionDigest(plan: ApplyPlanInput): string {
+  return derivePlanDigest({
+    ...plan,
+    targets: plan.targets.map((target) => ({
+      ...target,
+      resultDigest: sha256Hex(target.bytes),
+    })),
+  });
+}
+
+/** Exact complete original composition, not a caller-supplied subset/digest. */
+export function isOriginalComposition(plan: ApplyPlanInput): boolean {
+  const receipt = plan.compositionAuthority;
+  if (typeof receipt !== "object" || receipt === null) return false;
+  const digest = COMPOSITION_RECEIPTS.get(receipt);
+  return digest !== undefined && digest === compositionDigest(plan);
+}
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -475,6 +500,24 @@ export function composeApplyPlan(
   const authorityByPath = new Map<string, BarrelExportAuthority>();
   const planningAuthority =
     input.exportAuthority ?? lockWrite.exportAuthority ?? [];
+  if (
+    input.writes.some((write) => write.path === derived.rootExports) ||
+    snapshot.entries.get(derived.rootExports)?.kind === "file" ||
+    (projectedLock?.items.length ?? 0) > 0
+  ) {
+    managedExportPaths.add(derived.rootExports);
+  }
+  if (
+    managedExportPaths.size > 0 &&
+    !validateExportReceipt(planningAuthority, projectedLock ?? undefined)
+  ) {
+    return fail([
+      issue(
+        "COMPOSE_EXPORTS_AUTHORITY_UNAUTHENTICATED",
+        "export authority must be the original immutable registry planning receipt with the projected owners",
+      ),
+    ]);
+  }
   for (const entry of planningAuthority) {
     if (
       !isPlainObject(entry as unknown) ||
@@ -632,6 +675,38 @@ export function composeApplyPlan(
     }
   }
 
+  {
+    const original =
+      originalSyncPlanning(planningAuthority) ??
+      originalAddPlanning(planningAuthority) ??
+      originalInitPlanning(planningAuthority);
+    const plannedWithoutLock = input.writes.filter(
+      (write) => write.path !== canonicalLock,
+    );
+    const sameWrites =
+      original !== undefined &&
+      (original.writesDigest === planningWritesDigest(input.writes) ||
+        // A satisfied planner may have no writes. Composition still needs its
+        // identical canonical publication bytes to exercise a no-change batch.
+        (original.writesDigest === planningWritesDigest([]) &&
+          plannedWithoutLock.length === 0 &&
+          original.publicationDigest === sha256Hex(lockWrite.bytes)));
+    if (
+      original === undefined ||
+      original.snapshot !== snapshot ||
+      !sameWrites ||
+      projectedLock === null ||
+      original.lockDigest !== canonicalContentHash(projectedLock)
+    ) {
+      return fail([
+        issue(
+          "COMPOSE_PLANNING_AUTHORITY_CHANGED",
+          "composition requires the original conflict-free planner operations, lock and captured snapshot",
+        ),
+      ]);
+    }
+  }
+
   const rootIdentity =
     input.rootIdentity ?? identityDigest(snapshot.rootIdentity);
   if (!HEX64.test(rootIdentity)) {
@@ -700,7 +775,7 @@ export function composeApplyPlan(
     },
   });
 
-  return ok({
+  const result: ApplyPlanInput = {
     root,
     stateDir,
     uiDir: input.config.uiDir,
@@ -723,8 +798,11 @@ export function composeApplyPlan(
       preimage: lockPreimage,
     },
     ignoreFiles: ignoreTargetAdded ? [ignorePath] : [],
-    exportAuthority,
-  });
+    exportAuthority: planningAuthority,
+  };
+  const compositionAuthority = Object.freeze({});
+  COMPOSITION_RECEIPTS.set(compositionAuthority, compositionDigest(result));
+  return ok({ ...result, compositionAuthority });
 }
 
 // Imported for type stability in the public signature.

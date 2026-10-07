@@ -55,6 +55,19 @@ export interface RegistrySnapshot {
   readonly assets: readonly RegistryAssetDigest[];
 }
 
+const VALIDATED_SNAPSHOTS = new WeakSet<object>();
+
+/** Only the exact immutable instance loaded and integrity-checked here. */
+export function isValidatedRegistrySnapshot(
+  value: unknown,
+): value is RegistrySnapshot {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    VALIDATED_SNAPSHOTS.has(value)
+  );
+}
+
 /** Registry-relative asset reference to a package-root logical path. */
 export function registryAssetPath(relativePath: string): string {
   return `registry/${relativePath}`;
@@ -259,5 +272,6 @@ export function loadRegistrySnapshot(
     items: Object.freeze(items),
     assets: Object.freeze(assets),
   });
+  VALIDATED_SNAPSHOTS.add(snapshot);
   return ok(snapshot);
 }

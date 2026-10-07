@@ -29,13 +29,15 @@ Author: Pi. Runtime: Node `24.21.0` / `pnpm 11.22.0`. No dependency change.
 - Outcomes are `applied`, `no_change` (satisfied plan, no transaction),
   `committed_needs_cleanup` and `refused`; a failed replacement is rolled back
   to its exact preimages and the writer lock is always released in `finally`.
-- `tests/integration/apply.test.ts` covers a complete init/add/sync-shaped batch
-  (config/source/CSS/layout/retirement + lock), stale-plan refusal with no new
-  write, partial/unsafe/out-of-root rejection, the satisfied no-change case,
-  metadata-only publication, a custom mapping within its own roots, and a
-  recoverable mid-batch failure that rolls back to the exact preimages.
+- The original hand-assembled positive apply fixture has been superseded by
+  authentic captured production initialization. `tests/integration/apply.test.ts`
+  now proves that guarded init batch, stale/unsafe refusal, satisfied replay,
+  metadata-only publication, mapped roots and exact rollback. Actual multi-item
+  add/update/retirement/conflict and resulting-consumer qualification are proved
+  separately by the composed lifecycle suites. Initialization alone does not
+  establish those dispositions. See `RCLD04_CODEX_REPAIR.md` for current repairs.
 
-## Cumulative qualification (S077 candidate)
+## Historical cumulative qualification (original S077 candidate)
 
 Repository-owned commands; raw logs retained at
 `implementation/evidence/logs/rcl04-s077-20261002/`.

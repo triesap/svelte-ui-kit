@@ -188,6 +188,7 @@ function renderTargetName(expression: unknown): string | null {
 interface SnippetDecl {
   readonly params: ReadonlySet<string>;
   readonly fragment: unknown;
+  readonly scope: () => ChildScope;
 }
 
 interface ChildScope {
@@ -212,6 +213,7 @@ function patternNames(pattern: unknown): ReadonlySet<string> {
       argument?: unknown;
       left?: unknown;
       right?: unknown;
+      value?: unknown;
     };
     switch (node.type) {
       case "Identifier":
@@ -223,6 +225,8 @@ function patternNames(pattern: unknown): ReadonlySet<string> {
         }
         return;
       case "Property":
+        visit(node.value);
+        return;
       case "RestElement":
         visit(node.argument ?? node.left ?? node.right);
         return;
@@ -253,16 +257,13 @@ function identifierName(value: unknown): string | null {
 }
 
 /** Names a block node shadows inside its own body fragments. */
-function blockShadowNames(node: Record<string, unknown>): ReadonlySet<string> {
-  if (node["type"] === "EachBlock") return patternNames(node["context"]);
-  if (node["type"] === "AwaitBlock") {
-    const names = new Set<string>([
-      ...patternNames(node["value"]),
-      ...patternNames(node["error"]),
-    ]);
-    return names;
-  }
-  return new Set<string>();
+function shadowScope(
+  scope: ChildScope,
+  names: ReadonlySet<string>,
+): ChildScope {
+  const snippets = new Map(scope.snippets);
+  for (const name of names) snippets.delete(name);
+  return { bindings: withoutNames(scope.bindings, names), snippets };
 }
 
 function withoutNames(
@@ -283,20 +284,30 @@ function fragmentRendersChild(
 ): boolean {
   const nodes = Array.isArray(fragment["nodes"]) ? fragment["nodes"] : [];
   const snippets = new Map(scope.snippets);
+  const constNames = new Set<string>();
   for (const child of nodes) {
     if (child === null || typeof child !== "object") continue;
     const record = child as Record<string, unknown>;
+    if (record["type"] === "ConstTag") {
+      const declaration = record["declaration"] as
+        { declarations?: { id?: unknown }[] } | undefined;
+      for (const entry of declaration?.declarations ?? []) {
+        for (const name of patternNames(entry.id)) constNames.add(name);
+      }
+      continue;
+    }
     if (record["type"] !== "SnippetBlock") continue;
     const name = identifierName(record["expression"]);
     if (name === null) continue;
     snippets.set(name, {
       params: patternNames(record["parameters"]),
       fragment: record["body"],
+      scope: () => inner,
     });
   }
   // A snippet declaration shadows a same-named prop binding in this scope.
   const bindings = withoutNames(scope.bindings, new Set(snippets.keys()));
-  const inner: ChildScope = { bindings, snippets };
+  const inner = shadowScope({ bindings, snippets }, constNames);
   for (const child of nodes) {
     if (child === null || typeof child !== "object") continue;
     if ((child as Record<string, unknown>)["type"] === "SnippetBlock") {
@@ -315,8 +326,29 @@ function templateRendersChild(
   if (node === null || typeof node !== "object") return false;
   const record = node as Record<string, unknown>;
   const type = record["type"];
-  if (type === "SlotElement") return true;
+  if (type === "SlotElement") {
+    const attributes = Array.isArray(record["attributes"])
+      ? record["attributes"]
+      : [];
+    return !attributes.some(
+      (attribute) =>
+        typeof attribute === "object" &&
+        attribute !== null &&
+        (attribute as Record<string, unknown>)["name"] === "name",
+    );
+  }
   if (type === "SnippetBlock") return false;
+  // Component children are a deferred snippet/slot. An unknown component may
+  // discard them entirely or supply its own slot bindings; visiting that body
+  // is not proof of executable page rendering. Other executable siblings can
+  // still establish the contract, so unrelated components remain legitimate.
+  if (
+    type === "Component" ||
+    type === "SvelteComponent" ||
+    type === "SvelteSelf" ||
+    type === "SvelteFragment"
+  )
+    return false;
   if (type === "Fragment") {
     return fragmentRendersChild(record, scope, invoked);
   }
@@ -330,36 +362,54 @@ function templateRendersChild(
       if (invoked.has(name)) return false;
       const nextInvoked = new Set(invoked);
       nextInvoked.add(name);
-      const innerBindings = withoutNames(scope.bindings, declaration.params);
+      const captured = shadowScope(declaration.scope(), declaration.params);
       const body = declaration.fragment;
       if (body === null || typeof body !== "object") return false;
       return fragmentRendersChild(
         body as Record<string, unknown>,
-        { bindings: innerBindings, snippets: scope.snippets },
+        captured,
         nextInvoked,
       );
     }
     return scope.bindings.has(name);
   }
-  // Any other block/element: descend into its fragment-bearing children with
-  // the block's own bindings shadowed.
-  const shadow = blockShadowNames(record);
-  const inner: ChildScope =
-    shadow.size === 0
-      ? scope
-      : {
-          bindings: withoutNames(scope.bindings, shadow),
-          snippets: scope.snippets,
-        };
+  // A binding belongs to its branch, never its sibling/fallback. Snippet
+  // closures capture their declaration scope, not the scope of an invocation.
+  if (type === "EachBlock") {
+    const names = new Set(patternNames(record["context"]));
+    if (typeof record["index"] === "string") names.add(record["index"]);
+    return (
+      templateRendersChild(
+        record["body"],
+        shadowScope(scope, names),
+        invoked,
+      ) || templateRendersChild(record["fallback"], scope, invoked)
+    );
+  }
+  if (type === "AwaitBlock") {
+    return (
+      templateRendersChild(record["pending"], scope, invoked) ||
+      templateRendersChild(
+        record["then"],
+        shadowScope(scope, patternNames(record["value"])),
+        invoked,
+      ) ||
+      templateRendersChild(
+        record["catch"],
+        shadowScope(scope, patternNames(record["error"])),
+        invoked,
+      )
+    );
+  }
   for (const key of Object.keys(record)) {
     if (SKIP_KEYS.has(key)) continue;
     const value = record[key];
     if (Array.isArray(value)) {
       for (const child of value) {
-        if (templateRendersChild(child, inner, invoked)) return true;
+        if (templateRendersChild(child, scope, invoked)) return true;
       }
     } else if (value !== null && typeof value === "object") {
-      if (templateRendersChild(value, inner, invoked)) return true;
+      if (templateRendersChild(value, scope, invoked)) return true;
     }
   }
   return false;
