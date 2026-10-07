@@ -3,7 +3,7 @@
 Author: Codex. Candidate; independent S115 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S110","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S110","kind":"report","commit":"677e3e568c5a274b76cd47c01e3aa6bdd328701a","disposition":"candidate"}
 -->
 
 One standalone managed dialog block carries all58 immutable source declarations,

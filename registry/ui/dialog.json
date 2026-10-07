@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "id": "dialog",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Complete pinned Dialog compound family with explicit state, refs, snippets and portal composition.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/dialog/root.svelte",
+      "target": "dialog/root.svelte",
+      "kind": "svelte",
+      "cohort": "dialog"
+    },
+    {
+      "source": "ui/dialog/trigger.svelte",
+      "target": "dialog/trigger.svelte",
+      "kind": "svelte",
+      "cohort": "dialog"
+    },
+    {
+      "source": "ui/dialog/portal.svelte",
+      "target": "dialog/portal.svelte",
+      "kind": "svelte",
+      "cohort": "dialog"
+    },
+    {
+      "source": "ui/dialog/overlay.svelte",
+      "target": "dialog/overlay.svelte",
+      "kind": "svelte",
+      "cohort": "dialog"
+    },
+    {
+      "source": "ui/dialog/content.svelte",
+      "target": "dialog/content.svelte",
+      "kind": "svelte",
+      "cohort": "dialog"
+    },
+    {
+      "source": "ui/dialog/title.svelte",
+      "target": "dialog/title.svelte",
+      "kind": "svelte",
+      "cohort": "dialog"
+    },
+    {
+      "source": "ui/dialog/description.svelte",
+      "target": "dialog/description.svelte",
+      "kind": "svelte",
+      "cohort": "dialog"
+    },
+    {
+      "source": "ui/dialog/close.svelte",
+      "target": "dialog/close.svelte",
+      "kind": "svelte",
+      "cohort": "dialog"
+    },
+    {
+      "source": "ui/dialog/types.ts",
+      "target": "dialog/types.ts",
+      "kind": "typescript",
+      "cohort": "dialog"
+    },
+    {
+      "source": "ui/dialog/index.ts",
+      "target": "dialog/index.ts",
+      "kind": "typescript",
+      "cohort": "dialog"
+    }
+  ],
+  "exports": [
+    {
+      "name": "DialogRoot",
+      "target": "dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "DialogTrigger",
+      "target": "dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "DialogPortal",
+      "target": "dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "DialogOverlay",
+      "target": "dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "DialogContent",
+      "target": "dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "DialogTitle",
+      "target": "dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "DialogDescription",
+      "target": "dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "DialogClose",
+      "target": "dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "DialogRootProps",
+      "target": "dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "DialogTriggerProps",
+      "target": "dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "DialogPortalProps",
+      "target": "dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "DialogOverlayProps",
+      "target": "dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "DialogContentProps",
+      "target": "dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "DialogTitleProps",
+      "target": "dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "DialogDescriptionProps",
+      "target": "dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "DialogCloseProps",
+      "target": "dialog/index.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/dialog.css",
+      "target": "kit.css",
+      "blockId": "dialog",
+      "cohort": "dialog"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [
+    {
+      "name": "bits-ui",
+      "range": "2.19.3",
+      "role": "runtime"
+    }
+  ],
+  "accessibility": {
+    "requiredNames": ["dialog-title-or-explicit-name"],
+    "keyboard": ["Enter", "Space", "Escape", "Tab", "Shift+Tab"],
+    "focus": ["native-trap-focus", "native-return-focus"],
+    "form": [],
+    "tests": [
+      "dialog-types",
+      "dialog-install",
+      "dialog-interactions",
+      "dialog-themes",
+      "dialog-hydration"
+    ]
+  }
+}

@@ -4,9 +4,10 @@
   "compatibility": { "svelte": "5.57.1", "bits": "2.19.3", "date": "^3.8.1" },
   "items": [
     { "id": "button", "manifest": "ui/button.json" },
+    { "id": "dialog", "manifest": "ui/dialog.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
     { "id": "switch", "manifest": "ui/switch.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "c65b020d7dabea187d6b42edb8fc1cb7f4cb42f58633ed398def1c0020129d50"
+  "contentHash": "5ed9f08b447b487da89ea4a8ee0009fbb431c7afcba51a10c10ed5f77fe5abec"
 }

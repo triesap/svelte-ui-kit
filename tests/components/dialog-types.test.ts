@@ -118,12 +118,18 @@ for (const [name, body] of [
     );
   });
 
-test("Dialog candidate is not advertised or confused with a role-based Alert Dialog", () => {
+test("Dialog registration requires the complete single cohort and distinct Alert Dialog remains separate", () => {
   const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  assert.ok(root.items.some((item: { id: string }) => item.id === "dialog"));
   assert.ok(
-    root.items.every(
-      (item: { id: string }) =>
-        item.id !== "dialog" && item.id !== "alert-dialog",
+    root.items.every((item: { id: string }) => item.id !== "alert-dialog"),
+  );
+  const item = JSON.parse(readFileSync("registry/ui/dialog.json", "utf8"));
+  assert.equal(item.files.length, 10);
+  assert.equal(item.exports.length, 16);
+  assert.ok(
+    [...item.files, ...item.styles].every(
+      (file: { cohort: string }) => file.cohort === "dialog",
     ),
   );
   const mapping = readFileSync("specs/component-maps/dialog.md", "utf8");

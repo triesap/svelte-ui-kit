@@ -4,7 +4,7 @@ import path from "node:path";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
-/** Compile actual unregistered parts with explicitly remaining raw primitives. */
+/** Compile owned incremental compositions with explicitly remaining raw parts. */
 export function buildDialogCandidate(
   stage:
     | "root-trigger"
@@ -111,7 +111,10 @@ export function buildDialogCandidate(
           ...(contentStage ? [] : ["Content"]),
           ...(completeParts ? [] : ["Title", "Description", "Close"]),
         ],
-        unregistered: true,
+        installation: "candidate-copy",
+        catalogRegistered: JSON.parse(
+          readFileSync("registry/registry.json", "utf8"),
+        ).items.some((item: { id: string }) => item.id === "dialog"),
         logs,
         files: Object.fromEntries(
           artifactFiles.map((file) => [

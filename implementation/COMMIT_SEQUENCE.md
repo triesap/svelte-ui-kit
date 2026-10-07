@@ -17,12 +17,12 @@ Keep all repository content standalone and repository-relative. Record this targ
 ## Execution state and resume procedure
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S110 — Map Dialog managed CSS to the actual compound DOM**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
+- Active implementation checkpoint: **S111 — Register the complete Dialog family**. Independent S064–S077/RCLD-04 acceptance on `ce54d7d` is recorded at `fd1d0938d9ad188c5646c153b76fa2989438c727`; the atomic completion transition is committed at `d913fdf`.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **91 / 203**. Remaining: **112 / 203**.
-- Committed pending review: **18 / 203**. Authored batch range: **S092–S109**.
+- Committed pending review: **19 / 203**. Authored batch range: **S092–S110**.
 - Completed RCLD sequences: **5 / 11**. Remaining: **6 / 11**.
-- Last safe target commit: `11705ea18063e6b5b6208697af6c1df06109a2c1`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `677e3e568c5a274b76cd47c01e3aa6bdd328701a`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -6171,8 +6171,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S107 | RCLD-06  | S106       | committed_pending_review | `dcb754aa0e9302e08587dd3d88acae17c5c644c0` |
 | S108 | RCLD-06  | S107       | committed_pending_review | `182fddf63e6b5d40abfd7315bb0b8bdeb34e8d14` |
 | S109 | RCLD-06  | S108       | committed_pending_review | `11705ea18063e6b5b6208697af6c1df06109a2c1` |
-| S110 | RCLD-06  | S109       | in_progress              | —                                          |
-| S111 | RCLD-06  | S110       | not_started              | —                                          |
+| S110 | RCLD-06  | S109       | committed_pending_review | `677e3e568c5a274b76cd47c01e3aa6bdd328701a` |
+| S111 | RCLD-06  | S110       | in_progress              | —                                          |
 | S112 | RCLD-06  | S111       | not_started              | —                                          |
 | S113 | RCLD-06  | S112       | not_started              | —                                          |
 | S114 | RCLD-06  | S113       | not_started              | —                                          |
