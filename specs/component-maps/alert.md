@@ -53,3 +53,16 @@ RTL/reduced motion and isolated SSR/hydration. Browser semantics/accessibility
 tree evidence does not claim measured speech from every screen reader. Mandatory
 separate S181 and final platform/MVP acceptance remain open; author checks are
 candidates only.
+
+S166 real default/custom generated production apps retain alert nodes/refs and
+application focus across message updates, including initially empty content.
+Chromium accessibility evidence exposes assertive/atomic defaults and excludes
+aria-hidden decorative duplicates, matching a direct native role control.
+Explicit off/false/removals attributes survive unchanged; Chromium omits the
+live-region properties for the off case, just as for the direct native control.
+Native until-found keeps an empty accessible alert node while concealing its
+children. This is actual browser evidence, not measured screen-reader speech.
+All six source declarations/radius fallbacks, native focus/events/form defaults,
+hiding/ref teardown, RTL/reduced motion and eight distinct concurrent SSR
+responses per layout are qualified. Three actual baseline/night/caller color
+pairs meet 4.5:1 text contrast; arbitrary custom themes remain caller-owned.

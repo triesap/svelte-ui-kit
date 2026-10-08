@@ -1,7 +1,11 @@
 # S165 step report — Generate source-native Alert presentation
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `739bff8b4ce395a335a3167b511958863f9e2279`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S165","kind":"report","commit":"739bff8b4ce395a335a3167b511958863f9e2279","disposition":"candidate"}
+-->
 
 Original R02, R03, R04, R06, R08, R20, R22, R26, R32, R33, R34.
 Starting `880f09fa5181dcb71330b55dbfe47d9f7a956254` on `master`.
