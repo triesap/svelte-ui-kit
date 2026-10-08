@@ -6,7 +6,7 @@ import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Owned incremental candidate-copy composition, distinct from CLI installation. */
 export function buildMenuCandidate(
-  stage: "root-trigger" | "content" = "root-trigger",
+  stage: "root-trigger" | "content" | "items" = "root-trigger",
 ) {
   const fixture = copyConsumerFixture();
   try {
@@ -14,14 +14,27 @@ export function buildMenuCandidate(
       "root.svelte",
       "trigger.svelte",
       "types.ts",
-      ...(stage === "content" ? ["portal.svelte", "content.svelte"] : []),
+      ...(stage !== "root-trigger" ? ["portal.svelte", "content.svelte"] : []),
+      ...(stage === "items"
+        ? [
+            "item.svelte",
+            "radio-group.svelte",
+            "radio-item.svelte",
+            "item-indicator.svelte",
+          ]
+        : []),
     ];
     for (const file of sources) {
       const target = path.join(fixture.root, "src/lib/candidate/menu", file);
       mkdirSync(path.dirname(target), { recursive: true });
       writeFileSync(target, readFileSync(`registry/ui/menu/${file}`));
     }
-    const routeName = stage === "content" ? "menu-content" : "menu-candidate";
+    const routeName =
+      stage === "items"
+        ? "menu-items"
+        : stage === "content"
+          ? "menu-content"
+          : "menu-candidate";
     const route = `src/routes/${routeName}/+page.svelte`;
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
       recursive: true,
@@ -67,13 +80,20 @@ export function buildMenuCandidate(
       handler: path.join(fixture.root, "build/handler.js"),
       route: `/${routeName}`,
       evidence: {
-        stage: stage === "content" ? "S124" : "S123",
+        stage:
+          stage === "items" ? "S125" : stage === "content" ? "S124" : "S123",
         authored: [
           "Root",
           "Trigger",
-          ...(stage === "content" ? ["Portal", "Content"] : []),
+          ...(stage !== "root-trigger" ? ["Portal", "Content"] : []),
+          ...(stage === "items"
+            ? ["Item", "RadioGroup", "RadioItem", "ItemIndicator"]
+            : []),
         ],
-        raw: [...(stage === "root-trigger" ? ["Content"] : []), "Item"],
+        raw:
+          stage === "items"
+            ? []
+            : [...(stage === "root-trigger" ? ["Content"] : []), "Item"],
         installation: "candidate-copy",
         catalogRegistered: JSON.parse(
           readFileSync("registry/registry.json", "utf8"),

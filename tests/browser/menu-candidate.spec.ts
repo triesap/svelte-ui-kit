@@ -259,3 +259,142 @@ test.describe("actual incremental Menu S124 floating composition", () => {
       .toBeLessThan(1);
   });
 });
+
+test.describe("actual incremental Menu S125 item composition", () => {
+  let consumer: ReturnType<typeof buildMenuCandidate>;
+  let hosted: FixtureServer;
+  test.beforeAll(async () => {
+    test.setTimeout(240000);
+    consumer = buildMenuCandidate("items");
+    try {
+      hosted = await startFixtureServer({ handler: consumer.handler });
+    } catch (error) {
+      consumer.cleanup();
+      throw error;
+    }
+  });
+  test.afterAll(async () => {
+    try {
+      if (hosted) {
+        await hosted.server.stop();
+        expect(hosted.server.failure()).toBeNull();
+      }
+    } finally {
+      consumer?.cleanup();
+    }
+  });
+  test.beforeEach(async ({ page }, info) => {
+    const file = info.outputPath("candidate-artifact.json");
+    writeFileSync(file, JSON.stringify(consumer.evidence, null, 2));
+    await info.attach("candidate-artifact", {
+      path: file,
+      contentType: "application/json",
+    });
+    await page.goto(new URL(consumer.route, hosted.baseURL).href);
+    await expect(page.locator('[data-ready="true"]')).toBeVisible();
+  });
+  test("actual item group radio and indicator refs classes roles and child props survive", async ({
+    page,
+  }) => {
+    await expect(page.locator("#refs")).toHaveText(
+      "DIV/DIV/DIV/SPAN/SECTION/SECTION/DIV",
+    );
+    await expect(page.locator("#ordinary")).toHaveClass(
+      "kit-menu-item caller-item",
+    );
+    await expect(page.locator("#ordinary")).toHaveAttribute(
+      "data-caller",
+      "ordinary",
+    );
+    await expect(page.locator("#group")).toHaveClass(
+      "kit-menu-radio-group caller-group",
+    );
+    await expect(page.locator("#alpha")).toHaveClass(
+      "kit-menu-item kit-menu-radio-item caller-radio",
+    );
+    await expect(page.locator("#alpha")).toHaveAttribute(
+      "role",
+      "menuitemradio",
+    );
+    await expect(page.locator("#alpha-indicator")).toHaveClass(
+      "kit-menu-item-indicator caller-indicator",
+    );
+    await expect(page.locator("#alpha-indicator")).toBeVisible();
+    await expect(page.locator("#beta-indicator")).toBeHidden();
+    await expect(page.locator("#delegated")).toHaveAttribute(
+      "data-delegated",
+      "item",
+    );
+    await expect(page.locator("#beta")).toHaveAttribute(
+      "data-delegated",
+      "radio",
+    );
+    await expect(page.locator("#delegated-group")).toHaveAttribute(
+      "data-delegated",
+      "group",
+    );
+  });
+  test("controlled selection callback bind value parent updates and actual checked snippets agree", async ({
+    page,
+  }) => {
+    await page.locator("#beta").click();
+    await expect(page.locator("#state")).toHaveText(
+      "Open true; value beta; selected 1; changed 1",
+    );
+    await expect(page.locator("#beta")).toHaveAttribute("aria-checked", "true");
+    await expect(page.locator("#beta-indicator")).toBeVisible();
+    await expect(page.locator("#alpha-indicator")).toBeHidden();
+    await page.locator("#alpha").click();
+    await expect(page.locator("#state")).toHaveText(
+      "Open true; value alpha; selected 2; changed 2",
+    );
+    await page.locator("#parent-value").click();
+    await expect(page.locator("#beta")).toHaveAttribute("aria-checked", "true");
+    await expect(page.locator("#state")).toContainText(
+      "value beta; selected 2; changed 2",
+    );
+  });
+  test("caller selection cancellation preserves group value and native open", async ({
+    page,
+  }) => {
+    await page.locator("#cancel").click();
+    await page.locator("#beta").click();
+    await page.locator("#closing").click();
+    await expect(page.locator("#state")).toHaveText(
+      "Open true; value alpha; selected 2; changed 0",
+    );
+    await expect(page.locator("#alpha-indicator")).toBeVisible();
+    await expect(page.locator("#beta-indicator")).toBeHidden();
+  });
+  test("disabled ordinary and radio items refuse selection", async ({
+    page,
+  }) => {
+    await page.locator("#disabled").click({ force: true });
+    await page.locator("#disabled-radio").click({ force: true });
+    await expect(page.locator("#state")).toHaveText(
+      "Open true; value alpha; selected 0; changed 0",
+    );
+    await expect(page.locator("#disabled-radio")).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  });
+  test("delegated ordinary and uncontrolled group preserve native selection then default close", async ({
+    page,
+  }) => {
+    await page.locator("#delegated").click();
+    await expect(page.locator("#state")).toHaveText(
+      "Open true; value alpha; selected 1; changed 0",
+    );
+    await expect(page.locator("#uncontrolled-indicator")).toBeHidden();
+    await page.locator("#delegated-radio").click();
+    await expect(page.locator("#delegated-radio")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await expect(page.locator("#uncontrolled-indicator")).toBeVisible();
+    await page.locator("#closing").click();
+    await expect(page.locator("#state")).toContainText("Open false");
+    await expect(page.locator("#content")).toHaveCount(0);
+  });
+});

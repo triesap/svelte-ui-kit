@@ -3,7 +3,7 @@
 Author: Codex. Candidate; separate S128/RCLD-07 acceptance pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S124","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S124","kind":"report","commit":"687e6c1972b94d470d58598acd6413c69e5ec513","disposition":"candidate"}
 -->
 
 Requirements R20, R21, R23, R24, R32, R33, R34. Starting code `a0050fe` on
