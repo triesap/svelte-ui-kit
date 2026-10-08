@@ -24,6 +24,17 @@ existing owner `pfc all`, one checkpoint at a time, with verified implementation
 commits pending separate S128 acceptance before S129. No new owner dispatch is
 required. Preserve all original criteria and AC20/platform/final delivery debt.
 
+RCLD-07 starts from pinned Bits AlertDialog's nine actual parts: Root, Trigger,
+Portal, Overlay, Content, Title, Description, Action and Cancel. Freeze exact
+native types and flat exports; no Close alias, Dialog role-switch API or kit
+confirmation state is introduced. Native Action has no automatic close handler;
+application-owned decisions may explicitly update bound open. Native Cancel
+closes, outside interaction defaults to ignore, Escape closes unless canceled,
+and default opening autofocus targets Content. Preserve actual callbacks and
+native policy configuration rather than assuming generic Dialog behavior or a
+default Cancel focus rule. The family remains unregistered until original S120;
+S121 proves these boundaries in real installed consumers.
+
 Independent S115 review of `c94ea07` reproduced two original native-preservation
 defects. An external form replaced by another element of the same ID resets the
 native checkbox without resetting Switch state. Capture reset on the field's
