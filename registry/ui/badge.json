@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "badge",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Native text-bearing span presentation with source badge styles.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/badge.svelte",
+      "target": "badge.svelte",
+      "kind": "svelte",
+      "cohort": "badge"
+    },
+    {
+      "source": "ui/badge.types.ts",
+      "target": "badge.types.ts",
+      "kind": "typescript",
+      "cohort": "badge"
+    }
+  ],
+  "exports": [
+    {
+      "name": "Badge",
+      "target": "badge.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "BadgeProps",
+      "target": "badge.types.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/badge.css",
+      "target": "kit.css",
+      "blockId": "badge",
+      "cohort": "badge"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [],
+  "accessibility": {
+    "requiredNames": ["meaningful-children-or-caller-native-name"],
+    "keyboard": [],
+    "focus": [],
+    "form": [],
+    "tests": ["badge-types", "badge-css", "badge-install", "badge"]
+  }
+}

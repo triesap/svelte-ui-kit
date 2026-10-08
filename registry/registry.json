@@ -6,6 +6,7 @@
     { "id": "alert-dialog", "manifest": "ui/alert-dialog.json" },
     { "id": "anchor", "manifest": "ui/anchor.json" },
     { "id": "avatar", "manifest": "ui/avatar.json" },
+    { "id": "badge", "manifest": "ui/badge.json" },
     { "id": "button", "manifest": "ui/button.json" },
     { "id": "checkbox", "manifest": "ui/checkbox.json" },
     { "id": "collapsible", "manifest": "ui/collapsible.json" },
@@ -19,5 +20,5 @@
     { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "481daf23e92c54eb98bc513046f2bec19de3e0a6aaacbaa27b8d0ca7fca95695"
+  "contentHash": "2794f51ed0a4a0ad249f6f705633f8e2f5c655e802ca87e588f31374f8321adc"
 }

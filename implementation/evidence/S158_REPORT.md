@@ -1,7 +1,11 @@
 # S158 step report — Freeze native Badge presentation
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `eb468371733fe04426342d457ef417b6f9682797`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S158","kind":"report","commit":"eb468371733fe04426342d457ef417b6f9682797","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R25, R26, R32, R33, R34.
 Starting `080c7cdf4ff7fdf4fc2ee011767c9deeab23a750` on `master`.

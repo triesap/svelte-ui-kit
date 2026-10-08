@@ -1,0 +1,53 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "a520251050ae00a0c969220b6d3c44c0fec57de6920e6e0a2804069552608246"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-badge"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "inline-flex"
+        },
+        {
+          "property": "align-items",
+          "value": "center"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-badge-radius,\n    var(--kit-radius-indicator, var(--kit-radius-default, var(--kit-radius-full)))\n  )"
+        },
+        {
+          "property": "padding",
+          "value": "0.125rem 0.5rem"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-color-surface-hover)"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-color-text)"
+        },
+        {
+          "property": "font",
+          "value": "inherit"
+        },
+        {
+          "property": "font-size",
+          "value": "0.75rem"
+        },
+        {
+          "property": "font-weight",
+          "value": "600"
+        },
+        {
+          "property": "line-height",
+          "value": "1"
+        }
+      ]
+    }
+  ]
+}
