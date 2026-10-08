@@ -81,3 +81,14 @@ platform checks. Internal native indeterminate animation remains user-agent
 behavior: no kit CSS animation/transition does not certify every browser's
 internal animation or an arbitrary theme's contrast. Initial negative/nonfinite
 SSR-to-hydration cases also match independent native attributes with no errors.
+
+Initial absent VALUE must use undefined for both null and undefined public inputs.
+Pinned Svelte's first explicit-null spread path reads input defaultValue and
+writes undefined through the native progress value setter before effects,
+throwing instead of mounting/hydrating indeterminate progress. Normalize initial
+absence without changing numeric String serialization or the dynamic removal
+effect. Source cohort0.1.2 preserves the approved null API. Owning qualification
+now includes initial null/undefined with default/null max, real SSR-to-hydration
+and repeated fresh client-only mounts, native attribute/state comparisons,
+names/ref cleanup and strict lifecycle error collection in both layouts.
+Mandatory separate S181 repair reassessment remains open.
