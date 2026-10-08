@@ -37,6 +37,14 @@ silently change ownership to retain generated authority. This concrete policy
 boundary remains subject to independent S193 review. No product source or
 retirement policy is changed.
 
+Independent RCLD-10 review later reproduced a clean-only retirement with no
+manual import-review warning: the customization diagnostics above accidentally
+masked that distinct case. The bounded follow-up repair and actual positive/
+omission controls are recorded in
+[retirement warning qualification](RCLD-10_RETIREMENT_WARNING_QUALIFICATION.md).
+Its acceptance remains separate and pending; the original checkpoint criteria
+and arbitrary-import preservation policy remain unchanged.
+
 An initial test assertion used the conceptual word dependency instead of the
 actual lock enum transitive; the assertion was corrected to the frozen model.
 The conflict-exit assertion was likewise aligned with the frozen CLI code 10.

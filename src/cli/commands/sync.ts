@@ -25,7 +25,7 @@ export function synchronize(
     (entry) =>
       entry.action === "retain" && entry.reason.startsWith("customized"),
   );
-  const warnings = retained.map((entry) => ({
+  const retainedWarnings = retained.map((entry) => ({
     code: "RETIRED_CUSTOMIZATION_PRESERVED",
     level: "warn" as const,
     message: `Retired customized content at ${entry.path} follows the preserve-and-detach retirement policy.`,
@@ -33,6 +33,23 @@ export function synchronize(
     guidance:
       "Review application imports and preserved content manually; sync never rewrites application callsites.",
   }));
+  const retiredSource = plan.value.retirement.find(
+    (entry) => entry.detachOwnership,
+  );
+  const importWarnings = retiredSource
+    ? [
+        {
+          code: "RETIRED_IMPORTS_REVIEW_REQUIRED",
+          level: "warn" as const,
+          message:
+            "Retiring generated source can leave application imports pointing at removed or detached files.",
+          locator: retiredSource.path,
+          guidance:
+            "Review application imports of retired components manually; sync never rewrites application callsites.",
+        },
+      ]
+    : [];
+  const warnings = [...retainedWarnings, ...importWarnings];
   return {
     ...result,
     envelope: createEnvelope({
