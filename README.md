@@ -21,6 +21,51 @@ conflicts and default/custom layouts in executable and generated-consumer tests.
 The component catalog and final platform/package/release acceptance remain in
 progress under [the governing sequence](implementation/COMMIT_SEQUENCE.md).
 
+## Native links and the optional RouterLink recipe
+
+Install `anchor` for a styled native link, or request the optional `router-link`
+recipe to install RouterLink and its Anchor dependency together:
+
+```sh
+node "$CLI" --cwd "$APP" view router-link --source
+node "$CLI" --cwd "$APP" add router-link --dry-run
+node "$CLI" --cwd "$APP" add router-link
+```
+
+Set `CLI` and `APP` as described below. RouterLink composes Anchor directly and
+uses its styles; it adds no router runtime or stylesheet. Import from your
+configured UI directory (the default is `$lib/components/ui`):
+
+```svelte
+<script lang="ts">
+  import { resolve, asset } from "$app/paths";
+  import { RouterLink, Anchor } from "$lib/components/ui";
+</script>
+
+<RouterLink href={resolve("/settings")} data-sveltekit-preload-data="hover">
+  Settings
+</RouterLink>
+<Anchor href="https://example.com" target="_blank">External site</Anchor>
+<Anchor href={asset("/report.pdf")} download>Download report</Anchor>
+```
+
+The application resolves its own internal routes, including route parameters,
+query strings and fragments. SvelteKit's `resolve`/`asset` account for configured
+base paths; RouterLink forwards the resulting URL unchanged. Supply external
+URLs directly. SvelteKit owns native `data-sveltekit-*` navigation options,
+including focus/scroll retention, history replacement, reload and preloading.
+Their types come from the application's actual SvelteKit augmentation. Set
+`aria-current="page"` or a class yourself for current-page presentation.
+
+Both components render one native anchor, support native events/cancellation,
+children snippets and `bind:ref`, and preserve native target/download behavior.
+An omitted `rel` on `target="_blank"` defaults to `noopener noreferrer`; an
+explicit value, including an empty string, is preserved. For an action, install
+`button` separately and compose a native Button beside the link, for example
+`<Button onclick={save}>Save</Button>` with an application-owned `save` function.
+Navigation uses an anchor; actions use a button. Do not nest these interactive
+elements or expect Button to accept a navigation `href`.
+
 ## Dialog portal themes
 
 Compose DialogRoot, Trigger, Portal, Overlay, Content, Title, optional Description

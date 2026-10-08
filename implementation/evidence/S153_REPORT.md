@@ -1,7 +1,11 @@
 # S153 step report — Generate the thin Router Link recipe
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `a9eeda45302854f1911d7319f73359f4d7a6dcc3`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S153","kind":"report","commit":"a9eeda45302854f1911d7319f73359f4d7a6dcc3","disposition":"candidate"}
+-->
 
 Original R02, R06, R10, R28, R32, R33, R34.
 Starting `68d46280f572e551cc862163a3274bd56de75cad` on `master`.

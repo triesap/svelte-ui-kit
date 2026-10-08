@@ -16,6 +16,7 @@ function buildComponentConsumer(
     | "spinner"
     | "button"
     | "anchor"
+    | "router-link"
     | "switch"
     | "checkbox"
     | "collapsible"
@@ -195,11 +196,18 @@ function buildComponentConsumer(
                                 ]
                               : [],
                           )
-                      : item === "switch" ||
-                          item === "checkbox" ||
-                          item === "anchor"
-                        ? [`${item}.svelte`, `${item}.types.ts`]
-                        : ["spinner.svelte", "spinner.types.ts"];
+                      : item === "router-link"
+                        ? [
+                            "router-link.svelte",
+                            "router-link.types.ts",
+                            "anchor.svelte",
+                            "anchor.types.ts",
+                          ]
+                        : item === "switch" ||
+                            item === "checkbox" ||
+                            item === "anchor"
+                          ? [`${item}.svelte`, `${item}.types.ts`]
+                          : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
       assert.ok(
         readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
@@ -319,6 +327,72 @@ export const buildAnchorConsumer = (custom: boolean) =>
       );
     },
   );
+
+export const buildRouterLinkConsumer = (custom: boolean, based: boolean) => {
+  const base = based ? "/recipe-base" : "";
+  const consumer = buildComponentConsumer(
+    "router-link",
+    custom,
+    "router-link",
+    false,
+    process.cwd(),
+    (root) => {
+      mkdirSync(path.join(root, "static"), { recursive: true });
+      writeFileSync(
+        path.join(root, "static/anchor-download.txt"),
+        "Native Anchor download\n",
+      );
+      const configFile = path.join(root, "svelte.config.js");
+      const config = readFileSync(configFile, "utf8");
+      assert.equal(config.split("adapter: adapter(),").length, 2);
+      writeFileSync(
+        configFile,
+        config.replace(
+          "adapter: adapter(),",
+          `adapter: adapter(), paths: { base: ${JSON.stringify(base)} },`,
+        ),
+      );
+      writeFileSync(
+        path.join(root, "src/routes/qualification/router-link/+page.server.ts"),
+        readFileSync(
+          "tests/fixtures/qualification/router-link/+page.server.ts",
+        ),
+      );
+      mkdirSync(
+        path.join(root, "src/routes/qualification/router-link-target"),
+        { recursive: true },
+      );
+      writeFileSync(
+        path.join(
+          root,
+          "src/routes/qualification/router-link-target/+page.svelte",
+        ),
+        "<h1>Native code preload destination</h1>\n",
+      );
+    },
+  );
+  return {
+    ...consumer,
+    route: `${base.slice(1)}${base ? "/" : ""}${consumer.route}`,
+    evidence: {
+      ...consumer.evidence,
+      base,
+      files: {
+        ...consumer.evidence.files,
+        ...Object.fromEntries(
+          [
+            "svelte.config.js",
+            "src/routes/qualification/router-link/+page.server.ts",
+            "src/routes/qualification/router-link-target/+page.svelte",
+          ].map((file) => [
+            file,
+            sha256Hex(readFileSync(path.join(consumer.root, file))),
+          ]),
+        ),
+      },
+    },
+  };
+};
 
 export const buildSwitchConsumer = (custom: boolean) =>
   buildComponentConsumer("switch", custom);
