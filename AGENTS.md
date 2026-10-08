@@ -33,8 +33,9 @@ references.
   `c6aaf147dbf6316a96420fd5136a717f3665f711`. After the atomic transition,
   S092–S115/RCLD-06 is accepted on `5c235ee`, with independent review evidence at
   `6e087c10b441712d82c70230c3db7f8490ea787f`. S116–S128/RCLD-07 is accepted on `21c72d21fd78a34f12099b94b0d4fddff779d911`, with independent
-  evidence at `f9dc56f1921024c426b8df59c0c08abb28e2af7c`. S129–S148/RCLD-08 is current
-  under `pfc all`; separate S148 acceptance gates S149.
+  evidence at `f9dc56f1921024c426b8df59c0c08abb28e2af7c`. S129–S148/RCLD-08 is accepted on `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5`, with independent
+  evidence at `bd2613c050c37cd883d4e2155a6eb264ce66c484`. S149–S181/RCLD-09 is current
+  under `pfc all`; separate S181 acceptance gates S182.
   Earlier RCLD-04 finding paragraphs below are historical and resolved by
   `implementation/evidence/RCLD-04_QUALIFICATION.md`. No new owner dispatch is
   required. Full MVP and later platform/package/AC20 acceptance remain open.

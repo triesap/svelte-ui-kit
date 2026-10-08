@@ -1,10 +1,12 @@
 # S135 step report — Installed Radio keyboard and forms
 
-Author: Codex. Locally verified candidate; independent S148 acceptance pending.
+Author: Codex. Independently accepted on code `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5` at evidence `bd2613c050c37cd883d4e2155a6eb264ce66c484`.
+Original implementation commit: `e00898ce42c2f7d9bce6683416e815fe81c70c9b`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `e00898ce42c2f7d9bce6683416e815fe81c70c9b`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S135","kind":"report","commit":"e00898ce42c2f7d9bce6683416e815fe81c70c9b","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S135","kind":"report","commit":"bd2613c050c37cd883d4e2155a6eb264ce66c484","disposition":"implemented"}
 -->
 
 Original R20, R22, R23, R29, R32, R33, R34. Starting

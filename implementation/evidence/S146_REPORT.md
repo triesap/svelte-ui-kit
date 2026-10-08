@@ -1,10 +1,12 @@
 # S146 step report — Author Field semantic source parts
 
-Author: Codex. Locally verified candidate; independent S148 acceptance pending.
+Author: Codex. Independently accepted on code `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5` at evidence `bd2613c050c37cd883d4e2155a6eb264ce66c484`.
+Original implementation commit: `991b51ed04d759969b440fd04c7dcc44a8c398cd`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `991b51ed04d759969b440fd04c7dcc44a8c398cd`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S146","kind":"report","commit":"991b51ed04d759969b440fd04c7dcc44a8c398cd","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S146","kind":"report","commit":"bd2613c050c37cd883d4e2155a6eb264ce66c484","disposition":"implemented"}
 -->
 
 Original R03, R20, R21, R22, R28, R32, R33, R34. Starting

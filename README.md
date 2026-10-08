@@ -11,8 +11,7 @@ native `spinner`/`button`, primitive-backed `switch` and the complete compound
 `dialog` family. This core has passed separate independent review; the remaining
 catalog is still being implemented and qualified.
 The separately installable nine-part `alert-dialog` family is implemented and
-qualified in installed consumers; independent sequence acceptance remains
-pending. It uses the distinct pinned primitive rather than
+qualified and independently accepted in installed consumers. It uses the distinct pinned primitive rather than
 a Dialog role switch. Native Action leaves closure to the application; Cancel
 owns native close.
 Tokens installs independent token, component-customization and theme-integration
@@ -57,8 +56,12 @@ passed [independent core review](implementation/evidence/RCLD-06_QUALIFICATION.m
 Distinct Alert Dialog and Menu also passed
 [independent family review](implementation/evidence/RCLD-07_QUALIFICATION.md),
 including actual selection, floating placement, live themes and measured CSP
-limits. Original S129–S203 catalog and final platform/package acceptance remain
-open. The package remains unpublished.
+limits. Checkbox, Radio, Tabs, Collapsible and Field passed
+[independent forms and disclosures review](implementation/evidence/RCLD-08_QUALIFICATION.md),
+including real form submission/reset, keyboard behavior, dynamic associations,
+SSR/hydration, retained child state and measured CSP/motion limits. Original
+S149–S203 catalog and final platform/package acceptance remain open. The package
+remains unpublished.
 
 ## Use the local built CLI
 

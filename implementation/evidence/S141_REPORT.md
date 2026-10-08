@@ -1,10 +1,12 @@
 # S141 step report — Source-scoped Collapsible presence contract
 
-Author: Codex. Locally verified candidate; independent S148 acceptance pending.
+Author: Codex. Independently accepted on code `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5` at evidence `bd2613c050c37cd883d4e2155a6eb264ce66c484`.
+Original implementation commit: `d9a0b505631a595f30ab8e044ce00978eda30d03`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `d9a0b505631a595f30ab8e044ce00978eda30d03`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S141","kind":"report","commit":"d9a0b505631a595f30ab8e044ce00978eda30d03","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S141","kind":"report","commit":"bd2613c050c37cd883d4e2155a6eb264ce66c484","disposition":"implemented"}
 -->
 
 Original R03, R20, R22, R26, R32, R33, R34. Starting

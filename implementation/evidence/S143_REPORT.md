@@ -1,10 +1,12 @@
 # S143 step report — Style and register Collapsible
 
-Author: Codex. Locally verified candidate; independent S148 acceptance pending.
+Author: Codex. Independently accepted on code `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5` at evidence `bd2613c050c37cd883d4e2155a6eb264ce66c484`.
+Original implementation commit: `68577a42f1c210181060e9e347becb59a1f3ef05`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `68577a42f1c210181060e9e347becb59a1f3ef05`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S143","kind":"report","commit":"68577a42f1c210181060e9e347becb59a1f3ef05","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S143","kind":"report","commit":"bd2613c050c37cd883d4e2155a6eb264ce66c484","disposition":"implemented"}
 -->
 
 Original R04, R06, R14, R26, R32, R33, R34. Starting

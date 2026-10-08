@@ -1,10 +1,12 @@
 # S147 step report — Style and register Field
 
-Author: Codex. Locally verified candidate; independent S148 acceptance pending.
+Author: Codex. Independently accepted on code `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5` at evidence `bd2613c050c37cd883d4e2155a6eb264ce66c484`.
+Original implementation commit: `a05e20bf9b3251b8c47bd4d77c28296f4966bd37`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `a05e20bf9b3251b8c47bd4d77c28296f4966bd37`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S147","kind":"report","commit":"a05e20bf9b3251b8c47bd4d77c28296f4966bd37","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S147","kind":"report","commit":"bd2613c050c37cd883d4e2155a6eb264ce66c484","disposition":"implemented"}
 -->
 
 Original R02, R04, R06, R10, R32, R33, R34. Starting

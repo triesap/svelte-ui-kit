@@ -11,3 +11,9 @@ Relevant independently executed probes: radio-types.test.ts. The fresh owning ga
 The initial cumulative component run's stale pre-registration Alert Dialog absence assertion was reported as blocking, repaired by the implementation owner, then independently inspected and rerun 14/14 plus full 219/219. No product source, original criterion or dependency was waived. See [RCLD-08 qualification](RCLD-08_QUALIFICATION.md) for exact invocations, retained evidence, repair history and measured native/CSP/SSR limits.
 
 No blocking finding or repair remains. All 203 original definitions remain unchanged against `a176387`. This accepts this checkpoint's original scope; later S149–S203, platform/package/release and AC20 obligations remain open. Only the coordinator may commit this plain evidence and finalize the real anchored acceptance transition.
+
+Independent acceptance is anchored at reachable evidence `bd2613c050c37cd883d4e2155a6eb264ce66c484`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S132","kind":"review","commit":"bd2613c050c37cd883d4e2155a6eb264ce66c484","disposition":"accepted"}
+-->
