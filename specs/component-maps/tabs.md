@@ -79,3 +79,13 @@ hydrated DOM has both exact relationships. Retained SSR artifacts show the
 boundary explicitly. Do not certify server linkage from browser-only effects or
 introduce a parallel ID registry. Original S138/S140 must preserve and measure
 complete candidate/installed identities, relationships and hydration separately.
+
+S138 completes thin Trigger/Content candidates. Actual compiled default and
+delegated button/section paths retain native props and refs; all three hydrated
+groups (candidate default, delegated and raw Bits) have exact reciprocal links.
+Hidden panels preserve the same input DOM/state while selection changes.
+Manual click cancellation precedes native selection; Enter and disabled refusal
+retain native behavior. Full candidate and direct raw Bits SSR both omit the
+pre-registration links, demonstrating the pinned boundary independently of the
+wrappers. The complete unadvertised candidate remains pending S139 installation,
+S140 browser/hydration and separate S148 acceptance.

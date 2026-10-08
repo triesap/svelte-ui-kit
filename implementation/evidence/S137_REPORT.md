@@ -1,7 +1,11 @@
 # S137 step report — Native Tabs Root and List candidates
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `902933058ddc403018d3fc6e8e6f1a73adce79ac`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S137","kind":"report","commit":"902933058ddc403018d3fc6e8e6f1a73adce79ac","disposition":"candidate"}
+-->
 
 Original R03, R20, R21, R32, R33, R34. Starting
 `23bcfaaa3dad6a0e43557b8e4536bb28bfaf38e8` on `master`.

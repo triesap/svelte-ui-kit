@@ -4,22 +4,29 @@ import path from "node:path";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
-export function buildTabsCandidate() {
+export function buildTabsCandidate(complete = false) {
   const fixture = copyConsumerFixture();
   try {
-    const sources = ["root.svelte", "list.svelte", "types.ts"];
+    const sources = [
+      "root.svelte",
+      "list.svelte",
+      "types.ts",
+      ...(complete ? ["trigger.svelte", "content.svelte"] : []),
+    ];
     for (const file of sources) {
       const target = path.join(fixture.root, "src/lib/candidate/tabs", file);
       mkdirSync(path.dirname(target), { recursive: true });
       writeFileSync(target, readFileSync(`registry/ui/tabs/${file}`));
     }
-    const route = "src/routes/tabs-candidate/+page.svelte";
+    const route = `src/routes/${complete ? "tabs-parts" : "tabs-candidate"}/+page.svelte`;
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
       recursive: true,
     });
     writeFileSync(
       path.join(fixture.root, route),
-      readFileSync("tests/fixtures/tabs-candidate/+page.svelte"),
+      readFileSync(
+        `tests/fixtures/${complete ? "tabs-parts" : "tabs-candidate"}/+page.svelte`,
+      ),
     );
     const logRoot = "implementation/evidence/logs/tabs-candidate";
     mkdirSync(logRoot, { recursive: true });
@@ -58,11 +65,15 @@ export function buildTabsCandidate() {
     return {
       ...fixture,
       handler: path.join(fixture.root, "build/handler.js"),
-      route: "/tabs-candidate",
+      route: complete ? "/tabs-parts" : "/tabs-candidate",
       evidence: {
-        stage: "S137",
+        stage: complete ? "S138" : "S137",
         installation: "candidate-copy",
-        authored: ["TabsRoot", "TabsList"],
+        authored: [
+          "TabsRoot",
+          "TabsList",
+          ...(complete ? ["TabsTrigger", "TabsContent"] : []),
+        ],
         catalogRegistered: JSON.parse(
           readFileSync("registry/registry.json", "utf8"),
         ).items.some((item: { id: string }) => item.id === "tabs"),
