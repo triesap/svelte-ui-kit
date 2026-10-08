@@ -1,7 +1,11 @@
 # S189 implementation report — full catalog SSR and hydration
 
 Author: Codex. Candidate; separate S193 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `6184d823fbc2ac24ba05384b20ec9e76547b4515`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S189","kind":"report","commit":"6184d823fbc2ac24ba05384b20ec9e76547b4515","disposition":"candidate"}
+-->
 
 ## Changes and evidence
 

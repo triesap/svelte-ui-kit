@@ -1,5 +1,32 @@
 # Dependency compatibility evidence — S003
 
+## S190 complete-catalog layout qualification candidate
+
+The current pinned toolchain qualifies actual CLI installation of all 22 items
+in three explicit mappings inside selected workspace applications:
+
+| Mapping                  | UI source               | CSS                   | Routes/layout                                          |
+| ------------------------ | ----------------------- | --------------------- | ------------------------------------------------------ |
+| Default                  | `src/lib/components/ui` | `src/styles`          | `src/routes/+layout.svelte`                            |
+| Outside source directory | `app/ui`                | `assets/styles`       | `src/routes/+layout.svelte`                            |
+| Spaces and static routes | `app/design system/ui`  | `assets/theme styles` | `app/views/+layout.svelte`, literal `kit.files.routes` |
+
+Real installed source hashes, sibling/barrel resolution, Svelte checks,
+production builds and actual SSR catalog responses are recorded by
+`tests/integration/layout-matrix.test.ts`. Every CLI call selects the application
+with `--cwd` from the workspace root; complete snapshots preserve the workspace
+and neighboring application bytes, modes and links. Ambiguous root commands
+fail read-only. Application `themes.css`/`app.css` customizations survive full
+sync; dry-run sync and strict doctor preserve the entire selected tree.
+
+Unconfigured dynamic `kit.files.routes` fails visibly without evaluating the
+configuration's sentinel side effect or writing state. Normal doctor reports
+`ready: false` with a warning and its documented zero exit status; strict doctor
+fails. This is explicit mapping support, not arbitrary configuration execution,
+automatic workspace-wide installation or OS/browser acceptance. Separate S193
+acceptance and the existing strict-declaration qualifications remain required.
+The original S003 and subsequent evidence below retain their historical scope.
+
 Implementation evidence for the S003 checkpoint ("Select a reproducible Node and
 dependency baseline"). This file is implementation evidence, not a governing
 contract. `implementation/COMMIT_SEQUENCE.md` remains the execution/status
