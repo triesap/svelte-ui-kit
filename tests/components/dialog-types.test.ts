@@ -120,10 +120,11 @@ for (const [name, body] of [
 
 test("Dialog registration requires the complete single cohort and distinct Alert Dialog remains separate", () => {
   const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
-  assert.ok(root.items.some((item: { id: string }) => item.id === "dialog"));
-  assert.ok(
-    root.items.every((item: { id: string }) => item.id !== "alert-dialog"),
-  );
+  for (const id of ["dialog", "alert-dialog"])
+    assert.equal(
+      root.items.filter((item: { id: string }) => item.id === id).length,
+      1,
+    );
   const item = JSON.parse(readFileSync("registry/ui/dialog.json", "utf8"));
   assert.equal(item.files.length, 10);
   assert.equal(item.exports.length, 16);
@@ -132,6 +133,50 @@ test("Dialog registration requires the complete single cohort and distinct Alert
       (file: { cohort: string }) => file.cohort === "dialog",
     ),
   );
+  const alert = JSON.parse(
+    readFileSync("registry/ui/alert-dialog.json", "utf8"),
+  );
+  const parts = [
+    "Root",
+    "Trigger",
+    "Portal",
+    "Overlay",
+    "Content",
+    "Title",
+    "Description",
+    "Action",
+    "Cancel",
+  ];
+  assert.deepEqual(
+    alert.exports.map((entry: { name: string }) => entry.name),
+    [
+      ...parts.map((part) => `AlertDialog${part}`),
+      ...parts.map((part) => `AlertDialog${part}Props`),
+    ],
+  );
+  assert.equal(alert.files.length, 11);
+  assert.ok(
+    [...alert.files, ...alert.styles].every(
+      (file: { cohort: string }) => file.cohort === "alert-dialog",
+    ),
+  );
+  assert.deepEqual(alert.registryDependencies, ["tokens"]);
+  assert.deepEqual(
+    alert.styles.map((style: { blockId: string }) => style.blockId),
+    ["alert-dialog"],
+  );
+  for (const part of parts) {
+    const source = readFileSync(
+      `registry/ui/alert-dialog/${part.toLowerCase()}.svelte`,
+      "utf8",
+    );
+    assert.match(
+      source,
+      /import \{ AlertDialog as BitsAlertDialog \} from "bits-ui"/,
+    );
+    assert.match(source, new RegExp(`<BitsAlertDialog\\.${part}\\b`));
+    assert.doesNotMatch(source, /BitsDialog\.|role=["']alertdialog/);
+  }
   const mapping = readFileSync("specs/component-maps/dialog.md", "utf8");
   assert.match(mapping, /actual distinct primitive/);
   assert.match(mapping, /single dialog compatibility cohort/);
