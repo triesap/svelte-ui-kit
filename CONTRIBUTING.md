@@ -15,6 +15,21 @@ Thanks for your interest in contributing to svelte-ui-kit.
 Node.js `24.21.0` and pnpm `11.22.0` are pinned by `.node-version` and
 `package.json`. This root package is private and is not published.
 
+Test local distribution through an explicitly installed tarball, using the
+[README installation and upgrade workflow](README.md#use-the-local-built-cli).
+Keep the CLI host separate from the application. Consumer package installation
+is an explicit application operation; generation must leave its manifest and
+dependency lockfile unchanged. Preserve source/license notices when copying
+generated assets. Use app-owned CSS token overrides for portable themes and
+record deliberate component source edits in application version control.
+
+Upgrade verification must distinguish a valid customization from a broken
+installation and a genuine incoming conflict. Test dry-run purity, whole-batch
+conflict refusal, stable replay and strict diagnosis. After retiring requests,
+review remaining application imports even when the transaction succeeds;
+the CLI's retirement warning does not promise application-source rewriting.
+Run the app's check/build/browser checks after deliberate reconciliation.
+
 1. Fork and clone the repository, then create a branch for your change.
 2. Install the frozen dependency set:
 

@@ -1,7 +1,11 @@
 # S196 implementation report — bounded release metadata
 
 Author: Codex. Candidate; separate final S203 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `d9f3d733cadbc11bb3e9110a8f0e72a7ebb158c6`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S196","kind":"report","commit":"d9f3d733cadbc11bb3e9110a8f0e72a7ebb158c6","disposition":"candidate"}
+-->
 
 The package engine now bounds Node to `>=24.21.0 <25`, matching the executed
 Node 24 baseline without advertising future untested majors or earlier patches.

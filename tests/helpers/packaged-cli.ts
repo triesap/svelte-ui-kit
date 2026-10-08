@@ -171,7 +171,8 @@ export function installIndependentCli() {
     const archive = path.join(archives, names[0]!);
     const archiveBytes = readFileSync(archive);
     // Retain the actual distribution for inspection, outside the runtime allowance.
-    writeFileSync(path.join(logRoot, `${prefix}.tgz`), archiveBytes);
+    const retainedArchive = path.join(logRoot, `${prefix}.tgz`);
+    writeFileSync(retainedArchive, archiveBytes);
     mkdirSync(host);
     writeFileSync(
       path.join(host, "package.json"),
@@ -339,6 +340,7 @@ export function installIndependentCli() {
     };
     return {
       root,
+      retainedArchive,
       checkout,
       author,
       packageRoot,

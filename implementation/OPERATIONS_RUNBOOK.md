@@ -2,13 +2,24 @@
 
 <!-- Adopted at S002 from the governing RCLD sequence. This file governs product intent; implementation/COMMIT_SEQUENCE.md remains the execution/status authority. -->
 
-Status: instructions for what the implementation must support and later verify. The new CLI is not supplied as a working binary in this specification. Replace command paths only with actual built/installed executable evidence; no npm publication is assumed.
+Status: operational guidance for the locally built or locally installed private
+CLI. The [README workflow](../README.md#use-the-local-built-cli) records actual
+commands; no npm publication is assumed. Original acceptance and the separate
+final S203 gate remain required.
 
 #### Initial installation
 
 Start at one authorized SvelteKit application root (or use --cwd). Preserve a clean known baseline or record existing changes. Run info to inspect integration/dependency state. Inspect an item's metadata/source with view. Review init/add dry runs and all proposed paths. Apply initialization and requested items. Install reported consumer dependencies explicitly using the actual project manager. Check the generated app with Svelte check, production build and relevant browser tests. Commit application source/CSS/config/lock/contract metadata; do not commit transient writer state.
 
 The init contract does not preinstall the complete catalog. Component requests remain distinct from their dependencies. Existing themes.css/app.css/layouts are application-owned and must survive integration.
+
+The complete-catalog runtime pins are Svelte 5.57.1, Bits UI 2.19.3 and its date
+peer 3.12.4. Install them explicitly with the detected project manager; pnpm
+11.22.0 is the executed baseline. The [consumer manifest](../tests/fixtures/consumer/package.json)
+records the separate tested framework/check/build tooling. The CLI package uses
+its own parser/validation dependencies and is not an application runtime facade.
+Use the actual local archive returned by pack; do not substitute an assumed
+published package version. Preserve the distribution's source/license notices.
 
 #### Customization
 
@@ -20,9 +31,24 @@ Choose a tested CLI/registry version and review dependency compatibility. Run sy
 
 Do not use invented --force, auto-merge, accept-hash or dependency-install options. Hashes alone cannot reconstruct a merge base. An application's Git history is useful to review changes but must not be silently treated as authority to overwrite local content.
 
+Keep the incoming executable in a separately installed CLI host while reviewing
+an upgrade. A conflict exits 10 with no application writes; valid customization
+alone does not make strict doctor fail. Missing or broken owned content does.
+Review both source versions and reconcile explicitly, then repeat dry sync,
+sync, strict doctor and application check/build/browser verification. Do not
+rewrite ownership hashes to suppress a conflict. The current registry's stable
+replay is verified independently of synthetic test revisions; test revisions
+are not claimed as actual release history.
+
 #### Removing desired items
 
 Edit the explicit requested set in kit.json and inspect sync --dry-run. Shared dependencies remain while needed. Clean obsolete owned targets may retire under the frozen policy; customized assets remain with diagnostics and explicit ownership changes. Resolve remaining application imports manually; the CLI does not promise arbitrary source rewriting. No remove command is part of the approved interface.
+
+`RETIRED_IMPORTS_REVIEW_REQUIRED` is a manual application-import review warning,
+including clean-only retirement. An exit-0 warning can accompany an applied
+retirement, so inspect the envelope, not just the process status. Run the app's
+verification after repairing imports. A replay with nothing left to retire does
+not repeat a new retirement warning.
 
 #### Interrupted writes
 

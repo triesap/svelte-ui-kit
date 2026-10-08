@@ -123,10 +123,42 @@ SSR/hydration, retained child state and measured CSP/motion limits. Original
 S149–S181 catalog passed
 [independent complete catalog review](implementation/evidence/RCLD-09_QUALIFICATION.md),
 including native links, image fallback, presentation and request-local identity.
-S182–S203 platform/package/full-MVP acceptance remains open. The package
-remains unpublished.
+S182–S193 passed the separate cross-component/platform gate. S194–S196 are
+verified implementation candidates; the final S203 gate remains open. The
+package remains unpublished, and two upstream strict-declaration diagnostics
+still block final AC20. See [compatibility evidence](implementation/evidence/COMPATIBILITY.md).
 
 ## Use the local built CLI
+
+For an isolated installation, build and pack this repository, then explicitly
+install the local archive in an empty CLI host project. Set `ARCHIVES` to a
+directory for local artifacts, `CLI_HOST` to that project and `APP` to your
+existing SvelteKit application. Create those directories and initialize the
+empty standalone host with a `package.json` containing `{ "private": true }`.
+This does not assume an npm release:
+
+```sh
+pnpm run build
+pnpm pack --json --pack-destination "$ARCHIVES"
+# Set ARCHIVE to the actual .tgz path returned by pack.
+pnpm --dir "$CLI_HOST" add --ignore-scripts "$ARCHIVE"
+CLI="$CLI_HOST/node_modules/svelte-ui-kit/dist/cli/main.js"
+```
+
+Use Node `24.21.0` and pnpm `11.22.0` for the qualified baseline. In the
+application, explicitly install the reported runtime dependencies. For the
+complete current catalog the tested runtime pins are:
+
+```sh
+pnpm --dir "$APP" add svelte@5.57.1 bits-ui@2.19.3 @internationalized/date@3.12.4
+```
+
+The app supplies its SvelteKit/check/build tooling separately; the
+[consumer manifest](tests/fixtures/consumer/package.json) records the tested
+tooling pins. The CLI never installs packages or changes the app manifest.
+When redistributing copied source, retain the distribution's `NOTICE.md`,
+`LICENSE-MIT` and `LICENSE-APACHE` in your application's source notices.
+Installing the kit in `CLI_HOST` does not add a kit runtime dependency to `APP`.
 
 Build from this clone after installing its frozen development dependencies.
 `CLI` below is the built executable's absolute path; set `APP` to an existing
@@ -175,6 +207,22 @@ its exact kebab-case id with `view <item> --source`, `add <item> --dry-run`, the
 records only the explicit request; registry dependencies remain transitive.
 `sync` reconciles the configured requests, including intentional retirement.
 There is no network registry, automatic package installation, merge or force flag.
+
+These current requests use actual bundled items:
+
+<!-- documented-item-install:start -->
+
+```sh
+node "$CLI" --cwd "$APP" view button --source
+node "$CLI" --cwd "$APP" add button --dry-run
+node "$CLI" --cwd "$APP" add button
+node "$CLI" --cwd "$APP" add dialog
+node "$CLI" --cwd "$APP" add menu
+node "$CLI" --cwd "$APP" add field
+```
+
+<!-- documented-item-install:end -->
+
 Add `--json` to receive exactly one deterministic result envelope on stdout,
 including failures. Human failures use stderr; use the documented frozen exits
 in [API contracts](specs/API_CONTRACTS.md) for automation.
@@ -214,6 +262,36 @@ read-only or conflict path creates hidden transaction files or changes manifests
 Interrupted transaction evidence is retained and diagnosed; follow
 [the recovery contract](specs/SECURITY_AND_TRANSACTIONS.md) rather than deleting
 owner evidence or using PID/age takeover.
+
+For a reviewed incoming local archive, install it in a separate CLI host and
+set `INCOMING_CLI` to that installed executable. Inspect and apply the upgrade:
+
+<!-- documented-upgrade-workflow:start -->
+
+```sh
+node "$INCOMING_CLI" --cwd "$APP" view button --source
+node "$INCOMING_CLI" --cwd "$APP" sync --dry-run
+node "$INCOMING_CLI" --cwd "$APP" sync
+node "$INCOMING_CLI" --cwd "$APP" doctor --strict
+```
+
+<!-- documented-upgrade-workflow:end -->
+
+Keep theme overrides in the app-owned stylesheet, such as
+`:root { --kit-color-primary: rgb(12, 34, 56); }`. Valid source customization is
+reported separately from missing/broken source. A genuine local/incoming
+conflict exits 10 and stops the entire batch. Back up and review both versions;
+deliberately reconcile the app source, then rerun dry sync, sync, strict doctor
+and the app's check/build/browser scripts. The CLI supplies neither a merge base
+nor an automatic merge. Do not alter baseline hashes to conceal edits.
+
+To retire requests, edit only the desired `requested` list in `_kit/kit.json`
+and review `sync --dry-run`. Dependencies still needed by surviving requests
+remain. A clean retired target is removed; a customized target is retained and
+detached with diagnostics. `RETIRED_IMPORTS_REVIEW_REQUIRED` means application
+imports may need manual repair even when sync exits 0. Inspect every retired
+import and rerun application verification; a successful CLI transaction is not
+a promise that arbitrary application imports were rewritten.
 
 `pnpm run test:package` creates and inspects a local tarball without publication;
 its extracted executable uses bundled assets without an authoring-tree fallback.
