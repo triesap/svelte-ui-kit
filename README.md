@@ -351,6 +351,11 @@ stderr/exits, page exceptions, console errors and hydration warnings fail the
 lane. The initially qualified platform is bundled Chromium on macOS with Node
 24.21.0; no Firefox/WebKit/Windows or CI-execution claim is made.
 
+The [filesystem platform matrix](implementation/evidence/PLATFORMS.md) records
+separate local macOS and isolated Linux transaction/recovery evidence. It does
+not establish Linux browser support. Windows remains unqualified, and configured
+remote CI lanes remain unexecuted evidence.
+
 ## Contributing
 
 See `CONTRIBUTING.md`.

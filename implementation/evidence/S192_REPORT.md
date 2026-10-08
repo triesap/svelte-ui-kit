@@ -2,7 +2,11 @@
 
 Author: Codex. Candidate; separate S193 acceptance remains required, including
 the product repair in this slice.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `6bdf06f4b59b039fd0e1486bc7abb12ea10dc47c`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S192","kind":"report","commit":"6bdf06f4b59b039fd0e1486bc7abb12ea10dc47c","disposition":"candidate"}
+-->
 
 ## Qualification and implementation
 

@@ -153,8 +153,8 @@ test("noncooperative edits are not overwritten after a crash", () => {
 
 test("the qualified platform is recorded explicitly", () => {
   assert.ok(
-    ["darwin", "linux"].includes(process.platform) ||
-      process.platform.length > 0,
+    ["darwin", "linux"].includes(process.platform),
+    `unqualified platform ${process.platform}`,
   );
   // Unrun platforms (Windows) are documented as unverified in the checkpoint
   // report rather than claimed as passing.
