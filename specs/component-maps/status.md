@@ -42,3 +42,14 @@ CLI compile/build/SSR/replay is S168; live/AX/decoration/update/ref semantics,
 computed hook values/themes/contrast/RTL/reduced motion are S169. Browser evidence
 does not imply measured speech from every screen reader. Mandatory separate S181
 and later platform/MVP acceptance remain open.
+
+S169 real default/custom production apps qualify native paragraph role/polite/
+atomic defaults against direct controls, urgent source role/politeness/atomic
+changes on one retained node, caller off behavior, meaningful empty-to-message
+updates, accessible naming and exclusion of decorative copies. Chromium exposes
+an empty until-found status node while concealing children. Retained content does
+not move focus, clone messages or create a notification service. Strict browser
+and server collectors remain active. All five computed declarations, four direct
+source hooks/fallbacks, live themes, three measured contrast combinations, caller
+native focus/events/forms/refs, RTL/reduced motion and sixteen distinct production
+SSR responses are qualified. This is browser/tree evidence, not measured speech.

@@ -1,7 +1,11 @@
 # S168 step report — Generate native Status source and managed styles
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `4f62fa478c3d28184ac60378d8a9dd8d48f0a70f`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S168","kind":"report","commit":"4f62fa478c3d28184ac60378d8a9dd8d48f0a70f","disposition":"candidate"}
+-->
 
 Original R02, R03, R04, R06, R08, R20, R22, R26, R32, R33, R34.
 Starting `e944354a9e7059d4750c51fb1f245b0765bc5e96` on `master`.
