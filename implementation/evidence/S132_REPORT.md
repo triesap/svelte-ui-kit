@@ -1,7 +1,11 @@
 # S132 step report — Radio group selection and form API
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `1182f90024ff5bdd45e1681ec5fa185fd3669f49`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S132","kind":"report","commit":"1182f90024ff5bdd45e1681ec5fa185fd3669f49","disposition":"candidate"}
+-->
 
 Original requirements R03, R20, R22, R26, R32, R33, R34. Starting
 `175c15b6404f04bc4bf7d634afce24993e97f3e7` on `master`.

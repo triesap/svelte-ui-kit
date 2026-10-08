@@ -39,13 +39,14 @@ values, and Group disabled omits the field. Item disabled refuses activation;
 Group value remains the primitive's authoritative selection when choices change.
 
 The actual pinned field defaults to text, receives required/disabled/name/value,
-and focuses the native current tabstop on validation focus. It has no explicit
-Group reset bridge. S133/S135 must qualify actual reset/validation before claiming
-native form completion. If the control demonstrates stale Group state after
-reset, withhold name only from the primitive and emit one native offscreen text
-field, preserving this exact existing successful-value and required policy.
-Use per-instance initial value/defaultValue, native input ownership and a
-cancellation-aware tree-local reset bridge, with no duplicate named field.
+and focuses the native current tabstop on validation focus. A direct S133 raw
+primitive control reproduces reset clearing the field while Group still selects
+the old value. Withhold name only from the primitive and emit one native
+offscreen text field, preserving its existing successful-value/required policy.
+Capture per-instance initial value/defaultValue and resolve input.form at each
+reset. Settle only after native cancellation, restore the bound initial value
+for uncanceled current-owner resets and emit no duplicate named field. Actual
+S133 candidate reset proof and original S135 installed qualification are required.
 The native current tabstop can receive field focus using its actual rendered
 item/tabindex; no roving-focus algorithm or new context is justified. Cleanup
 must remove the actual reset listener and pending timers. Unnamed groups remain
