@@ -4,6 +4,13 @@ Codex author candidate, required by the separate reviewer's preliminary S193
 assessment. This repairs an evidence gap; no original checkpoint is accepted
 and no product wrapper, dependency or force-mount default is changed.
 
+The separate reviewer subsequently accepted this narrow repair on
+`1285154671e05e41f7d78feb1786042a523601c0`. Plain independent evidence is
+[RCLD-10_FORCE_MOUNT_REVIEW.md](RCLD-10_FORCE_MOUNT_REVIEW.md), committed at
+`dfeb9b3d787b26e7cbd42dc5a8ccd5099ffae0b8`. Fresh independent 12/12 browser,
+432 source-digest checks, static checks and contract validation passed. The
+original S182–S193 sequence gate and AC20 acceptance remain open.
+
 `tests/browser/modal-force-mount.spec.ts` builds real installed default/custom
 Dialog and Alert Dialog consumers and compares each against direct pinned
 Bits components on the same production route. Twelve cases cover both modal

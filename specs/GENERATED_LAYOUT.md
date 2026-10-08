@@ -58,6 +58,14 @@ Public dialog exports: `DialogRoot`, `DialogTrigger`, `DialogPortal`, `DialogOve
 
 Do not generate `src/lib/components/index.ts` merely to imitate Rust parent modules. Generated source uses direct sibling imports, not the generated root barrel. Manifest declarations determine source targets and public exports. Reject duplicate symbols, conflicting paths, and case-colliding names before writes.
 
+If a compound family declares any public export through its authored directory
+barrel, preserve that complete source, including when other declarations target
+direct part files. Root declarations retain their manifest targets. When all
+public declarations target direct parts, generate the compound barrel from the
+complete declaration set and re-export through it. A direct subset must never
+replace an authored barrel needed by the remaining declarations. Existing
+source/export and final-composition validation applies to both shapes.
+
 #### Ownership
 
 Component sources and their supporting TS files are initially generated but freely editable. The root and compound barrels have clearly managed export regions; preserve unrelated application text and detect conflicting declarations. Exact TS comment marker syntax is frozen at its dedicated contract step; CSS marker syntax is already specified.

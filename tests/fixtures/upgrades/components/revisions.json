@@ -1,0 +1,40 @@
+{
+  "synthetic": true,
+  "description": "Owned copies of current actual Button/Dialog/Menu assets; version labels do not describe shipped historical releases.",
+  "oldVersion": "1.0.0",
+  "incomingVersion": "1.1.0",
+  "families": [
+    {
+      "id": "button",
+      "source": "button.svelte",
+      "types": "button.types.ts",
+      "marker": "ButtonUpgradeMarker",
+      "className": "kit-button"
+    },
+    {
+      "id": "dialog",
+      "source": "dialog/content.svelte",
+      "types": "dialog/types.ts",
+      "marker": "DialogUpgradeMarker",
+      "className": "kit-dialog-content"
+    },
+    {
+      "id": "menu",
+      "source": "menu/content.svelte",
+      "types": "menu/types.ts",
+      "marker": "MenuUpgradeMarker",
+      "className": "kit-menu-content"
+    }
+  ],
+  "scenarios": [
+    "safe",
+    "source-conflict",
+    "style-conflict",
+    "export-conflict",
+    "cohort-menu",
+    "preserve-menu",
+    "unrelated-badge",
+    "dependent-api",
+    "dropped-barrel-control"
+  ]
+}

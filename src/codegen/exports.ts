@@ -210,7 +210,8 @@ export function createExportAuthority(
       compound === undefined ? null : runtimeSpecifier(`./${compound.target}`);
     const generated =
       barrel !== null &&
-      item.manifest.exports.some(
+      item.manifest.exports.length > 0 &&
+      item.manifest.exports.every(
         (entry) =>
           runtimeSpecifier(
             entry.target.startsWith(".") ? entry.target : `./${entry.target}`,

@@ -489,8 +489,8 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       );
       hasConflict = true;
     }
-    // Manifest-driven compound barrels: when a compound item declares part
-    // targets, its directory `index.ts` is generated from those declarations
+    // Manifest-driven compound barrels: when all public declarations target
+    // parts, its directory `index.ts` is generated from those declarations
     // (a pre-authored template is not trusted as generation evidence) and the
     // root barrel re-exports the public names from the compound barrel.
     const generatedBarrels = new Map<string, Uint8Array>();
@@ -508,7 +508,13 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
           : `./${entry.target}`;
         return runtimeSpecifier(target) !== barrelSpecifier;
       });
-      if (partExports.length > 0) {
+      // A declaration through the authored barrel requires that complete
+      // source to survive. Mixed direct-part/barrel declarations must not
+      // replace it with only the direct subset and drop the other exports.
+      if (
+        partExports.length === item.manifest.exports.length &&
+        partExports.length > 0
+      ) {
         generatedBarrels.set(
           compoundBarrel.target,
           utf8(
