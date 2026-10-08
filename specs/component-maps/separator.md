@@ -44,3 +44,20 @@ metadata change. Actual CLI registration/install/compile/build/SSR/replay is S17
 native accessible orientation/decorative/ref/attrs, live geometry/theme/contrast,
 RTL/reduced motion and SSR/hydration are S175. Mandatory separate S181 and later
 platform/MVP acceptance remain open.
+
+S175 actual default/custom production apps qualify native accessible orientation,
+name/description and decorative/caller concealment against a direct separator
+control. Dynamic horizontal/vertical and meaningful/decorative transitions keep
+the div/ref and synchronize ARIA/data/geometry. All six CSS declarations, native
+caller focus/events/form defaults, hidden/until-found/ref cleanup, theme border
+width/colors, caller geometry, RTL/reduced motion and sixteen isolated SSR
+responses pass. Vertical percentage geometry uses a definite80px viewport.
+
+AC18 baseline contrast concern: source border209/213/219 against white is below
+3:1. Keep the source semantic color and record the measured combination rather
+than certify it. The application night border140/150/170 against25/30/40 exceeds
+3:1; the independent caller bar80/90/100 against that dark surface also measures
+below3:1. These exact captured source/application choices do not certify arbitrary
+themes, graphic meaning or essential boundary contrast. Native semantic roles
+remain accessible; applications that need stronger visual boundaries own their
+existing border token/inline overrides. No new palette or hook is introduced.

@@ -1,7 +1,11 @@
 # S174 step report — Generate native Separator source and managed styles
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `04a71f87f8b53fe557ce6fc583c91071decae98f`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S174","kind":"report","commit":"04a71f87f8b53fe557ce6fc583c91071decae98f","disposition":"candidate"}
+-->
 
 Original R02, R03, R04, R06, R08, R20, R22, R26, R32, R33, R34.
 Starting `47dc157fb1a06762c0af2a6dd688ae280faca0a1` on `master`.
