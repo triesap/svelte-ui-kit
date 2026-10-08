@@ -48,6 +48,7 @@ is Node 24.21.0, pnpm 11.22.0, pinned Svelte 5.57.1/Bits 2.19.3, macOS arm64.
 No browser/product behavior changes require another browser full run; preceding
 S189 owning 22 cases and S188 full 685 remain separately scoped evidence.
 No Rust changes: Cargo guards N/A. Existing two pinned strict-declaration
-exceptions and native boundaries remain explicit final AC20 obligations. Parent
-index, reference source and unrelated work remain untouched. Only a verified
+exceptions and native boundaries remain explicit final AC20 obligations.
+Reference source and unrelated work remain untouched; repository boundaries
+are preserved. Only a verified
 green commit enables S191; separate S193 acceptance gates S194.

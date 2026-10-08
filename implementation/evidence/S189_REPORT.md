@@ -66,6 +66,7 @@ The S188 full 685-case browser run remains the preceding full-suite evidence;
 this slice reruns its new owning cases. Existing two pinned strict-declaration
 exceptions and native boundaries remain explicit final AC20 obligations, not
 claimed raw declaration success. No Rust changes: Cargo guards N/A. Reference
-source, dependency pins, public product assets and parent index are untouched.
+source, dependency pins and public product assets are untouched; unrelated
+changes and repository boundaries are preserved.
 S190 becomes eligible only after this candidate is verified and committed;
 separate S193 acceptance gates S194.

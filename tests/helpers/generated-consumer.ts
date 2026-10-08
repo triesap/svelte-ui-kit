@@ -644,6 +644,15 @@ export function buildOverlayCompositionConsumer(custom: boolean) {
   ]);
 }
 
+export function buildModalForceMountConsumer(custom: boolean) {
+  return buildInstalledItemsConsumer(custom, "modal-force-mount", [
+    "tokens",
+    "field",
+    "dialog",
+    "alert-dialog",
+  ]);
+}
+
 function buildInstalledItemsConsumer(
   custom: boolean,
   qualification: string,

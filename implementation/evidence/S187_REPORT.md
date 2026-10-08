@@ -1,5 +1,12 @@
 # S187 implementation report — full catalog theme scopes
 
+Later paired raw Bits/generated closed-forceMount runtime evidence is recorded
+in [RCLD-10_FORCE_MOUNT_QUALIFICATION.md](RCLD-10_FORCE_MOUNT_QUALIFICATION.md).
+It verifies default body locking, caller preventScroll/delegated-child controls,
+actual outside pointer activation and teardown. The source-inspection inference
+below remains historical; independent acceptance of the new evidence and the
+full S193 gate remain separate.
+
 Author: Codex. Implemented candidate; separate S193 acceptance remains required.
 Implementation commit: `57172cf304f3649562061eb9630a8fa6971c62b5`.
 

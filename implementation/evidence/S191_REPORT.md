@@ -1,7 +1,11 @@
 # S191 implementation report — catalog retirement and re-add
 
 Author: Codex. Candidate; separate S193 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `9cc50290df4ed68436318833ae33965774695d9f`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S191","kind":"report","commit":"9cc50290df4ed68436318833ae33965774695d9f","disposition":"candidate"}
+-->
 
 ## Implementation and policy
 
@@ -51,6 +55,6 @@ the lane is Node 24.21.0, pnpm 11.22.0 and macOS arm64.
 No new public assets/dependencies or browser behavior change; owning fixture
 check/build and browser runs remain scoped to preceding S189/S190 evidence.
 No Rust changes: Cargo guards N/A. Pinned strict-declaration exceptions/native
-boundaries remain explicit final AC20 obligations. Parent index, reference
-source and unrelated work are preserved. Only a verified green candidate
+boundaries remain explicit final AC20 obligations. Reference source, unrelated
+work and repository boundaries are preserved. Only a verified green candidate
 enables S192; separate S193 acceptance gates S194.
