@@ -1,7 +1,11 @@
 # S194 implementation report — installed runtime source independence
 
 Author: Codex. Candidate; separate final S203 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `69dfeca0cd6788ebc5d739f171c5b56bb9f19cf2`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S194","kind":"report","commit":"69dfeca0cd6788ebc5d739f171c5b56bb9f19cf2","disposition":"candidate"}
+-->
 
 The new `tests/helpers/packaged-cli.ts` builds an owned authoring copy using the
 repository's exact `tsc -p tsconfig.json` compiler command, packs that copy and
