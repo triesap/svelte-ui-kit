@@ -27,6 +27,15 @@ const packageRoot = path.resolve(
   "..",
 );
 const fixtureRoot = path.join(packageRoot, "tests/fixtures/consumer");
+const producerOverrides = {
+  runed: "0.35.1",
+  "svelte-toolbelt": "0.10.6",
+  svelte2tsx: "0.7.34",
+  "@floating-ui/core": "1.7.1",
+  "@floating-ui/dom": "1.7.1",
+  "esm-env": "1.2.2",
+  tabbable: "6.2.0",
+};
 const [profile, output] = process.argv.slice(2);
 assert.ok(
   ["current", "producer-full", "peer-floor"].includes(profile),
@@ -111,9 +120,15 @@ try {
       "@sveltejs/package": "2.5.0",
       svelte2tsx: "0.7.34",
     });
-    manifest.pnpm = {
-      overrides: { runed: "0.35.1", "svelte-toolbelt": "0.10.6" },
-    };
+    writeFileSync(
+      path.join(root, "pnpm-workspace.yaml"),
+      `overrides:\n${Object.entries(producerOverrides)
+        .map(
+          ([name, version]) =>
+            `  ${JSON.stringify(name)}: ${JSON.stringify(version)}\n`,
+        )
+        .join("")}`,
+    );
   }
   if (profile === "peer-floor") manifest.dependencies.svelte = "5.33.0";
   writeFileSync(
@@ -167,6 +182,25 @@ try {
     record.nativeTransitives[name] = JSON.parse(
       readFileSync(path.join(bits, "..", name, "package.json"), "utf8"),
     ).version;
+    if (profile !== "current")
+      assert.equal(
+        record.nativeTransitives[name],
+        producerOverrides[name],
+        `${name} producer transitive pin`,
+      );
+  }
+  if (profile !== "current") {
+    const emitterRequire = createRequire(
+      path.join(root, "node_modules/@sveltejs/package/package.json"),
+    );
+    record.packageEmitterVersion = JSON.parse(
+      readFileSync(emitterRequire.resolve("svelte2tsx/package.json"), "utf8"),
+    ).version;
+    assert.equal(
+      record.packageEmitterVersion,
+      producerOverrides.svelte2tsx,
+      "actual declaration emitter pin",
+    );
   }
   for (const rel of [
     "package.json",

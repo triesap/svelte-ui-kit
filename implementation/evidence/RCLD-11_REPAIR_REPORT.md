@@ -95,6 +95,19 @@ inventories, lockfiles/integrities and compiler traces are retained under
 records include actual native transitive versions and the checker-shim digest.
 All three owned projects were removed.
 
+Follow-up emitter investigation found that pnpm 11 ignored the first producer
+and peer-floor probes' `package.json` override field. Their complete records
+are retained as `producer-full-ignored-overrides.json` and
+`peer-floor-ignored-overrides.json`; those runs reproduce failures but do not
+authenticate the promised transitive baseline. The helper now puts overrides
+in `pnpm-workspace.yaml`, checks every actual native transitive pin and resolves
+the declaration emitter from the package tool's own context. Corrected reruns
+passed for both profiles, authenticating emitter 0.7.34 and all six native
+transitive pins; the full strict checks still fail with the same two errors
+and zero warnings. The corrected final raw records replace no historical
+attempt; both owned projects were removed.
+This correction changes no selected product dependency or acceptance status.
+
 Actual `tsc --generateTrace` records identify `checkCrossProductUnion_DepthLimit`
 on property-key unions: 444 × 449 = 199356 for Button and 458 × 458 = 209764
 for Calendar on current/producer-full; peer-floor yields 439 × 442 = 194038
