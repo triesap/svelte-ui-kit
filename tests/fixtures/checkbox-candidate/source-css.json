@@ -1,0 +1,170 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "a7ceceb1191808f8daddb2cf4ca78a5bd5cb8df5b5232d0e9feeacf3c793582c",
+    "url": "https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/styles/checkbox.css"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-checkbox-root"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "inline-grid"
+        },
+        {
+          "property": "inline-size",
+          "value": "1rem"
+        },
+        {
+          "property": "block-size",
+          "value": "1rem"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-checkbox"],
+      "declarations": [
+        {
+          "property": "appearance",
+          "value": "none"
+        },
+        {
+          "property": "grid-area",
+          "value": "1 / 1"
+        },
+        {
+          "property": "inline-size",
+          "value": "1rem"
+        },
+        {
+          "property": "block-size",
+          "value": "1rem"
+        },
+        {
+          "property": "margin",
+          "value": "0"
+        },
+        {
+          "property": "border",
+          "value": "var(--kit-border-width) solid var(--kit-color-border)"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-checkbox-radius,\n    var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-sm)))\n  )"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-color-surface)"
+        },
+        {
+          "property": "cursor",
+          "value": "pointer"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-checkbox:checked"],
+      "declarations": [
+        {
+          "property": "background",
+          "value": "var(--kit-color-primary)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-checkbox-indicator"],
+      "declarations": [
+        {
+          "property": "grid-area",
+          "value": "1 / 1"
+        },
+        {
+          "property": "inline-size",
+          "value": "1rem"
+        },
+        {
+          "property": "block-size",
+          "value": "1rem"
+        },
+        {
+          "property": "pointer-events",
+          "value": "none"
+        },
+        {
+          "property": "opacity",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-checkbox-indicator path"],
+      "declarations": [
+        {
+          "property": "fill",
+          "value": "none"
+        },
+        {
+          "property": "stroke",
+          "value": "var(--kit-color-selection-indicator)"
+        },
+        {
+          "property": "stroke-width",
+          "value": "2.25"
+        },
+        {
+          "property": "stroke-linecap",
+          "value": "round"
+        },
+        {
+          "property": "stroke-linejoin",
+          "value": "round"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-checkbox:checked + .kit-checkbox-indicator"],
+      "declarations": [
+        {
+          "property": "opacity",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-checkbox:checked:disabled + .kit-checkbox-indicator"],
+      "declarations": [
+        {
+          "property": "opacity",
+          "value": "var(--kit-disabled-opacity)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-checkbox:focus-visible"],
+      "declarations": [
+        {
+          "property": "outline",
+          "value": "2px solid var(--kit-focus-ring)"
+        },
+        {
+          "property": "outline-offset",
+          "value": "2px"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-checkbox:disabled"],
+      "declarations": [
+        {
+          "property": "cursor",
+          "value": "not-allowed"
+        },
+        {
+          "property": "opacity",
+          "value": "var(--kit-disabled-opacity)"
+        }
+      ]
+    }
+  ]
+}

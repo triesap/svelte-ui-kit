@@ -1,7 +1,11 @@
 # S129 step report — Checkbox source and semantic API
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `e598d794df9085978fbe67ff281be6f10f0707f3`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S129","kind":"report","commit":"e598d794df9085978fbe67ff281be6f10f0707f3","disposition":"candidate"}
+-->
 
 Original requirements R03, R07, R20, R22, R25, R26, R32, R33, R34. Starting
 `a30a97f4690ceeb3b41f5a7d84f2626c2907c05f` on `master`, after independent S128

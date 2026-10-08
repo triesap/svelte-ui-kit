@@ -1,0 +1,83 @@
+/* svelte-ui-kit:start checkbox */
+/* Derived design: Copyright (c) 2026 Tyson Lupul.
+ * Distributed under the MIT option; see the package LICENSE-MIT notice.
+ */
+@layer svelte-ui-kit.components {
+  .kit-checkbox-root {
+    display: inline-grid;
+    inline-size: 1rem;
+    block-size: 1rem;
+  }
+
+  .kit-checkbox {
+    padding: 0;
+    box-sizing: border-box;
+    appearance: none;
+    grid-area: 1 / 1;
+    inline-size: 1rem;
+    block-size: 1rem;
+    margin: 0;
+    border: var(--kit-border-width) solid var(--kit-color-border);
+    border-radius: var(
+      --kit-checkbox-radius,
+      var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-sm)))
+    );
+    background: var(--kit-color-surface);
+    cursor: pointer;
+  }
+
+  .kit-checkbox[data-state="checked"],
+  .kit-checkbox[data-state="indeterminate"] {
+    background: var(--kit-color-primary);
+  }
+
+  .kit-checkbox-indicator {
+    grid-area: 1 / 1;
+    inline-size: 1rem;
+    block-size: 1rem;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .kit-checkbox-indicator path {
+    fill: none;
+    stroke: var(--kit-color-selection-indicator);
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .kit-checkbox[data-state="checked"] + .kit-checkbox-indicator,
+  .kit-checkbox[data-state="indeterminate"] + .kit-checkbox-indicator {
+    opacity: 1;
+  }
+
+  .kit-checkbox[data-state="checked"]:disabled + .kit-checkbox-indicator,
+  .kit-checkbox[data-state="indeterminate"]:disabled + .kit-checkbox-indicator {
+    opacity: var(--kit-disabled-opacity);
+  }
+
+  .kit-checkbox:focus-visible {
+    outline: 2px solid var(--kit-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .kit-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: var(--kit-disabled-opacity);
+  }
+
+  .kit-checkbox-input {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    border: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+/* svelte-ui-kit:end checkbox */

@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "id": "checkbox",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Thin pinned Bits Checkbox with fixed owned SVG and native form participation.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/checkbox.svelte",
+      "target": "checkbox.svelte",
+      "kind": "svelte",
+      "cohort": "checkbox"
+    },
+    {
+      "source": "ui/checkbox.types.ts",
+      "target": "checkbox.types.ts",
+      "kind": "typescript",
+      "cohort": "checkbox"
+    }
+  ],
+  "exports": [
+    {
+      "name": "Checkbox",
+      "target": "checkbox.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "CheckboxProps",
+      "target": "checkbox.types.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/checkbox.css",
+      "target": "kit.css",
+      "blockId": "checkbox",
+      "cohort": "checkbox"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [
+    {
+      "name": "bits-ui",
+      "range": "2.19.3",
+      "role": "runtime"
+    }
+  ],
+  "accessibility": {
+    "requiredNames": ["checkbox-label"],
+    "keyboard": ["Space"],
+    "focus": ["native-focus-visible"],
+    "form": [
+      "checked",
+      "required",
+      "disabled",
+      "name",
+      "value",
+      "reset",
+      "indeterminate",
+      "form-reassociation"
+    ],
+    "tests": ["checkbox-types", "checkbox-install", "checkbox-browser"]
+  }
+}

@@ -68,7 +68,7 @@ The offscreen form field has a separate kit-checkbox-input class and never
 intercepts pointer or keyboard input.
 
 The one existing --kit-checkbox-radius source customization entry remains
-unchanged: component then control/default/sm radius fallbacks. Semantic token
+unchanged: component then var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-sm))) fallbacks. Semantic token
 values and original customization records stay intact. Managed plain CSS lives
 in one checkbox component block with tokens as the only registry dependency;
 Bits UI2.19.3 is the explicit npm dependency. S130 advertises only the complete

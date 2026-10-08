@@ -5,11 +5,12 @@
   "items": [
     { "id": "alert-dialog", "manifest": "ui/alert-dialog.json" },
     { "id": "button", "manifest": "ui/button.json" },
+    { "id": "checkbox", "manifest": "ui/checkbox.json" },
     { "id": "dialog", "manifest": "ui/dialog.json" },
     { "id": "menu", "manifest": "ui/menu.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
     { "id": "switch", "manifest": "ui/switch.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "be85a571a93145222c6d6032efe5fbd7db5f9ecd206d648a95f13d1c9ee957ba"
+  "contentHash": "fa1dbb9b49a862332dc50a5789a075316c6999c06610533b4f0e15e5b021d858"
 }
