@@ -70,3 +70,12 @@ Styles preserve source active/inactive, orientation, focus/disabled and panel
 design; exact source hooks/radius and reduced-motion/RTL qualify in S139/S140.
 The separate original S148 acceptance gates S149; this S136 freeze grants no
 independent acceptance of future implementations.
+
+S137 actual Root/List candidate with raw native Trigger/Content checks/builds
+without warnings. A/B/empty SSR preserves selected/hidden panels, mounted child
+content and delegated Root/List markup. Native server output omits trigger
+aria-controls and panel aria-labelledby before registration effects; actual
+hydrated DOM has both exact relationships. Retained SSR artifacts show the
+boundary explicitly. Do not certify server linkage from browser-only effects or
+introduce a parallel ID registry. Original S138/S140 must preserve and measure
+complete candidate/installed identities, relationships and hydration separately.

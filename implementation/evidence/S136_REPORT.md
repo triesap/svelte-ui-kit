@@ -1,7 +1,11 @@
 # S136 step report — Exact Tabs value, activation and panel contract
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `23bcfaaa3dad6a0e43557b8e4536bb28bfaf38e8`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S136","kind":"report","commit":"23bcfaaa3dad6a0e43557b8e4536bb28bfaf38e8","disposition":"candidate"}
+-->
 
 Original R03, R20, R21, R22, R26, R32, R33, R34. Starting
 `e00898ce42c2f7d9bce6683416e815fe81c70c9b` on `master`.
