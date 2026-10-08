@@ -50,6 +50,14 @@ must retain node/ref identity and attributes without warnings. S151 qualifies
 real navigation, cancellation, target/download, refs, dynamic props and computed
 CSS in actual CLI-installed default/custom consumers.
 
+The authoring lint SvelteKit navigation rule exempts link resolution only in
+`registry/ui/anchor.svelte`: this native wrapper forwards URLs the application
+already owns/resolves. Calling $app/paths.resolve here would rewrite caller URLs
+and require a routing import in the native component. The rule remains active
+for application code and all goto/pushState/replaceState calls; compiler and
+accessibility diagnostics remain errors. S152–S154 freeze and qualify explicit
+application base-path handling in the optional Router Link recipe.
+
 ## Source design coupling
 
 Preserve every source declaration under the kit component layer: kit-anchor

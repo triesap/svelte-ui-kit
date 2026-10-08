@@ -1,0 +1,55 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "398a5f8002e6b0db61aeb491d83c1066ab5f40cd46a39f5299b0dd945fbdb364"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-anchor"],
+      "declarations": [
+        {
+          "property": "color",
+          "value": "var(--kit-anchor-color, var(--kit-color-link))"
+        },
+        {
+          "property": "text-decoration-color",
+          "value": "var(--kit-anchor-text-decoration-color, currentColor)"
+        },
+        {
+          "property": "text-decoration-line",
+          "value": "var(--kit-anchor-text-decoration-line, underline)"
+        },
+        {
+          "property": "text-decoration-thickness",
+          "value": "var(--kit-anchor-text-decoration-thickness, from-font)"
+        },
+        {
+          "property": "text-underline-offset",
+          "value": "var(--kit-anchor-text-underline-offset, 0.12em)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-anchor:hover"],
+      "declarations": [
+        {
+          "property": "color",
+          "value": "var(--kit-anchor-color-hover, var(--kit-color-link-hover))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-anchor:focus-visible"],
+      "declarations": [
+        {
+          "property": "outline",
+          "value": "var(--kit-anchor-focus-outline-width, 0.125rem) solid\n    var(--kit-anchor-focus-outline-color, var(--kit-focus-ring))"
+        },
+        {
+          "property": "outline-offset",
+          "value": "var(--kit-anchor-focus-outline-offset, 0.125rem)"
+        }
+      ]
+    }
+  ]
+}

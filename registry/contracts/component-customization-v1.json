@@ -1580,6 +1580,60 @@
       "scope": "field",
       "grammar": "<color>",
       "fallback": "var(--kit-color-danger)"
+    },
+    {
+      "name": "--kit-anchor-color",
+      "scope": "anchor",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-link)"
+    },
+    {
+      "name": "--kit-anchor-text-decoration-color",
+      "scope": "anchor",
+      "grammar": "<color>",
+      "fallback": "currentColor"
+    },
+    {
+      "name": "--kit-anchor-text-decoration-line",
+      "scope": "anchor",
+      "grammar": "<text-decoration-line>",
+      "fallback": "underline"
+    },
+    {
+      "name": "--kit-anchor-text-decoration-thickness",
+      "scope": "anchor",
+      "grammar": "<length-percentage> | from-font | auto",
+      "fallback": "from-font"
+    },
+    {
+      "name": "--kit-anchor-text-underline-offset",
+      "scope": "anchor",
+      "grammar": "<length-percentage> | auto",
+      "fallback": "0.12em"
+    },
+    {
+      "name": "--kit-anchor-color-hover",
+      "scope": "anchor",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-link-hover)"
+    },
+    {
+      "name": "--kit-anchor-focus-outline-width",
+      "scope": "anchor",
+      "grammar": "<length>",
+      "fallback": "0.125rem"
+    },
+    {
+      "name": "--kit-anchor-focus-outline-color",
+      "scope": "anchor",
+      "grammar": "<color>",
+      "fallback": "var(--kit-focus-ring)"
+    },
+    {
+      "name": "--kit-anchor-focus-outline-offset",
+      "scope": "anchor",
+      "grammar": "<length>",
+      "fallback": "0.125rem"
     }
   ]
 }

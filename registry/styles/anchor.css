@@ -1,0 +1,30 @@
+/* svelte-ui-kit:start anchor */
+/* Derived design: Copyright (c) 2026 Tyson Lupul.
+ * Distributed under the MIT option; see the package LICENSE-MIT notice.
+ */
+@layer svelte-ui-kit.components {
+  .kit-anchor {
+    color: var(--kit-anchor-color, var(--kit-color-link));
+    text-decoration-color: var(
+      --kit-anchor-text-decoration-color,
+      currentColor
+    );
+    text-decoration-line: var(--kit-anchor-text-decoration-line, underline);
+    text-decoration-thickness: var(
+      --kit-anchor-text-decoration-thickness,
+      from-font
+    );
+    text-underline-offset: var(--kit-anchor-text-underline-offset, 0.12em);
+  }
+
+  .kit-anchor:hover {
+    color: var(--kit-anchor-color-hover, var(--kit-color-link-hover));
+  }
+
+  .kit-anchor:focus-visible {
+    outline: var(--kit-anchor-focus-outline-width, 0.125rem) solid
+      var(--kit-anchor-focus-outline-color, var(--kit-focus-ring));
+    outline-offset: var(--kit-anchor-focus-outline-offset, 0.125rem);
+  }
+}
+/* svelte-ui-kit:end anchor */

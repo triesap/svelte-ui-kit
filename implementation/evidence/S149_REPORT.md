@@ -1,7 +1,11 @@
 # S149 step report — Freeze Anchor props and semantic mapping
 
 Author: Codex. Locally verified candidate; independent S181 sequence acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `3fccd821faa50e99c3696593b21971ee451afbff`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S149","kind":"report","commit":"3fccd821faa50e99c3696593b21971ee451afbff","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R26, R32, R33, R34. Starting
 `cc962f83d5706e06bab0b7da3d55fbf798765b46` on `master`, after independently

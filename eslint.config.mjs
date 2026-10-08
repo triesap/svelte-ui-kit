@@ -75,6 +75,15 @@ export default tseslint.config(
     },
   },
   {
+    // Anchor forwards already-resolved/native URLs. Application code owns
+    // SvelteKit resolve(); resolving again here would alter caller navigation.
+    // Retain goto/pushState/replaceState checks and every compiler/a11y rule.
+    files: ["registry/ui/anchor.svelte"],
+    rules: {
+      "svelte/no-navigation-without-resolve": ["error", { ignoreLinks: true }],
+    },
+  },
+  {
     // Browser globals are scoped to Svelte/client authoring contexts.
     files: [
       "**/*.svelte",

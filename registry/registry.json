@@ -4,6 +4,7 @@
   "compatibility": { "svelte": "5.57.1", "bits": "2.19.3", "date": "^3.8.1" },
   "items": [
     { "id": "alert-dialog", "manifest": "ui/alert-dialog.json" },
+    { "id": "anchor", "manifest": "ui/anchor.json" },
     { "id": "button", "manifest": "ui/button.json" },
     { "id": "checkbox", "manifest": "ui/checkbox.json" },
     { "id": "collapsible", "manifest": "ui/collapsible.json" },
@@ -16,5 +17,5 @@
     { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "203527d0e1e123538fedefe8360356b8e1b3c646b53d29d3aa450a596ac7bb4d"
+  "contentHash": "c2e22d8cc12750589a0273cf403a78377772a6a7a7eb342d12849697be5ec709"
 }
