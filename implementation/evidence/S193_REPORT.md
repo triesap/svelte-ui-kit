@@ -1,7 +1,11 @@
 # S193 implementation report — filesystem platform lanes
 
 Author: Codex. Candidate; mandatory separate S193/RCLD-10 acceptance gates S194.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `ad7d1c38a3fcc3f84c1379e8a9c85939e5b55e1a`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S193","kind":"report","commit":"ad7d1c38a3fcc3f84c1379e8a9c85939e5b55e1a","disposition":"candidate"}
+-->
 
 The new owning platform integration controls execute portable path/case rules,
 real production replacement/mode/open-inode behavior and post-plan symlink

@@ -2853,7 +2853,7 @@
       "sequence": "RCLD-10",
       "dependsOn": "S192",
       "requirements": ["R16", "R24", "R29", "R32", "R33", "R34"],
-      "status": "in_progress",
+      "status": "committed_pending_review",
       "completion": null
     },
     {
