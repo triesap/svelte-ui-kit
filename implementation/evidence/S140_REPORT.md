@@ -1,7 +1,11 @@
 # S140 step report — Installed Tabs activation, teardown and hydration
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `7c057486fcb6177956464969e65606bf1061cfb9`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S140","kind":"report","commit":"7c057486fcb6177956464969e65606bf1061cfb9","disposition":"candidate"}
+-->
 
 Original R20, R21, R22, R29, R32, R33, R34. Starting
 `f0c49aa4afe1feea9012c73eb2b188c9c6ec7c19` on `master`.
