@@ -1,7 +1,11 @@
 # S181 step report — Audit complete reference-catalog coverage
 
 Author: Codex. Candidate; mandatory independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `b55522dca4f48815fc10053f49cd475e47dad06f`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S181","kind":"report","commit":"b55522dca4f48815fc10053f49cd475e47dad06f","disposition":"candidate"}
+-->
 
 Original R06, R26, R27, R28, R31, R32, R33, R34.
 Starting `8f40545f5035839133829d30b496213ca63de6e4` on `master`.

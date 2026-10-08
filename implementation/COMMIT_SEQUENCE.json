@@ -2613,7 +2613,7 @@
       "sequence": "RCLD-09",
       "dependsOn": "S180",
       "requirements": ["R06", "R26", "R27", "R28", "R31", "R32", "R33", "R34"],
-      "status": "in_progress",
+      "status": "committed_pending_review",
       "completion": null
     },
     {

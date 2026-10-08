@@ -97,9 +97,9 @@ or new product/API scope is authorized by this qualification.
 - Active implementation checkpoint: **S181 — Audit complete reference-catalog coverage**. Separate S148 acceptance on `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5` is anchored at `bd2613c050c37cd883d4e2155a6eb264ce66c484`; S181 independent acceptance gates S182.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **148 / 203**. Remaining: **55 / 203**.
-- Committed pending review: **32 / 203**. Authored batch range: **S149–S180**.
+- Committed pending review: **33 / 203**. Authored batch range: **S149–S181**.
 - Completed RCLD sequences: **8 / 11**. Remaining: **3 / 11**.
-- Last safe target commit: `8f40545f5035839133829d30b496213ca63de6e4`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `b55522dca4f48815fc10053f49cd475e47dad06f`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -6319,7 +6319,7 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S178 | RCLD-09  | S177       | committed_pending_review | `9717770223d636bf91011fa5897eed6263913e7a` |
 | S179 | RCLD-09  | S178       | committed_pending_review | `928500c8a59e11040b29cb4788c4a8d6461c324f` |
 | S180 | RCLD-09  | S179       | committed_pending_review | `8f40545f5035839133829d30b496213ca63de6e4` |
-| S181 | RCLD-09  | S180       | in_progress              | —                                          |
+| S181 | RCLD-09  | S180       | committed_pending_review | `b55522dca4f48815fc10053f49cd475e47dad06f` |
 | S182 | RCLD-10  | S181       | not_started              | —                                          |
 | S183 | RCLD-10  | S182       | not_started              | —                                          |
 | S184 | RCLD-10  | S183       | not_started              | —                                          |
