@@ -3,7 +3,7 @@
 Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S122","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S122","kind":"report","commit":"a01d348cb323880423f97f6d9dfed4259c5e4c4d","disposition":"candidate"}
 -->
 
 The worksheet maps the immutable six-part reference Menu surface and its required
