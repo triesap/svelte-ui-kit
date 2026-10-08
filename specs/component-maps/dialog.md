@@ -56,7 +56,10 @@ Actual optional Description removal exposes a pinned stale native description
 ID. Content keeps a lifecycle-local physical relation guard: use only IDs already
 supplied by the primitive, expose references only while real nodes exist, retain
 native intent while absent and restore it when they return. Native ID changes
-remain authoritative. The observer belongs to the actual bound Content ref and
+remain authoritative. Lookup and mutation observation use Content's actual
+Document or ShadowRoot, including supported native Element portal targets. This
+physical-reference proof does not add capabilities beyond the native portal.
+The observer belongs to the actual bound Content ref and
 disconnects on ref replacement/teardown. It creates no IDs, context or focus/state
 machinery and accesses browser facilities only inside the lifecycle effect.
 

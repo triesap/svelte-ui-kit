@@ -28,9 +28,12 @@ name/value from Root and emits exactly one named native Svelte checkbox sharing
 checked through native attributes/onchange. Per-instance initialChecked and
 native defaultChecked are retained. The pinned framework checked-binding resets
 state despite a canceled native event in actual browser probes, so a lifecycle
-associated-form reset listener settles after the full event task and respects
-defaultPrevented. It restores only the per-instance initial checked value and
-removes listeners/clears pending timers on teardown or reassociation. No global
+tree-local capture listener resolves the checkbox's current native form owner
+at event time, settles after the full event task and respects defaultPrevented.
+Replacing a form with another element of the same ID therefore preserves native
+reset behavior without requiring a prop/ref change. It restores only the
+per-instance initial checked value and removes listeners/clears pending timers
+on field teardown. No global
 state or primitive keyboard/event implementation is cloned. Name/value,
 required, disabled and external form association are native input attributes;
 Root still owns keyboard, checked callbacks, ref and switch semantics. Unnamed
