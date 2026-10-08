@@ -1,0 +1,562 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "url": "https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/registry.json",
+    "sha256": "d611024559ef85d1215484f3208f4cfcdaadcd1efe35a0068a720b5cd03db705"
+  },
+  "items": [
+    {
+      "id": "alert",
+      "manifest": "ui/alert.json",
+      "sha256": "36c3690805c3f7c9e09ce9609c966575e0d463f39f8675bcb3576599b72a9c70",
+      "exports": ["Alert"],
+      "files": [
+        {
+          "source": "ui/alert.rs",
+          "sha256": "d8cfdb789667253ee6d11d320897c8494fbe0ae900fb22de31ed147fcad2776d"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/alert.css",
+          "sha256": "d3dc797f513a4555791676cca10c31b501a57e92ed141c14b8adc334a48ef49a"
+        }
+      ]
+    },
+    {
+      "id": "anchor",
+      "manifest": "ui/anchor.json",
+      "sha256": "39d5fa24143f08559034fce549fdeae7d6b663565a776ec2b475c51dbbacfe9c",
+      "exports": ["Anchor", "AnchorTarget"],
+      "files": [
+        {
+          "source": "ui/anchor.rs",
+          "sha256": "2d81ce4558ee0a198c4b89e791e891d3080ad6f79a106bd201f9a794ec96635e"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/anchor.css",
+          "sha256": "398a5f8002e6b0db61aeb491d83c1066ab5f40cd46a39f5299b0dd945fbdb364"
+        }
+      ]
+    },
+    {
+      "id": "avatar",
+      "manifest": "ui/avatar.json",
+      "sha256": "629d8e2a79a4b4308c4cb27172c5b5681103f9edb0a67231c3467f0ea3df5346",
+      "exports": ["Avatar"],
+      "files": [
+        {
+          "source": "ui/avatar.rs",
+          "sha256": "9a7427ed00cf53e05ce0f3a8221d5e254f2619904e7b014d62447373b5a0d833"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/avatar.css",
+          "sha256": "1c83d6d1cdf478ea4f6f4019ad04bf37d9427274ec5bfc3613bf5f628ec95574"
+        }
+      ]
+    },
+    {
+      "id": "badge",
+      "manifest": "ui/badge.json",
+      "sha256": "1b57adda8dc5d826ce51a8923410268c830a769f5ab7c5e4ebae8da5b7920556",
+      "exports": ["Badge"],
+      "files": [
+        {
+          "source": "ui/badge.rs",
+          "sha256": "f5a5f3c661efe323bcc9277633d57b1606021b22f27eb001b17b317b59145f75"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/badge.css",
+          "sha256": "a520251050ae00a0c969220b6d3c44c0fec57de6920e6e0a2804069552608246"
+        }
+      ]
+    },
+    {
+      "id": "button",
+      "manifest": "ui/button.json",
+      "sha256": "a7d388b46dfa6788dc0b62ad1d2efc7b89882f5ccb28fd38253a428445f94e45",
+      "exports": ["Button", "ButtonSize", "ButtonType", "ButtonVariant"],
+      "files": [
+        {
+          "source": "ui/button.rs",
+          "sha256": "9a5646c65f45f5c368c4bf9e9784fe00bab08ecce2814c5481be251f701af3a4"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/button.css",
+          "sha256": "ad644b6269bbbc5fb168c6678fc8a9d0dbb808b4671911ef0192d8b8176d3b29"
+        }
+      ]
+    },
+    {
+      "id": "card",
+      "manifest": "ui/card.json",
+      "sha256": "24e76e01466be6c2ba53e06850b75b4cb1c965eccea7a1074e97cfa686bd6bf8",
+      "exports": ["Card"],
+      "files": [
+        {
+          "source": "ui/card.rs",
+          "sha256": "9b2c4a5085c19769ff5e3e8e5996afc0b42d20bdfbc02d60b032df663b96d5ce"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/card.css",
+          "sha256": "0fec46426c180b44673c7e62523b672c55f7831b2a15d441f5a7a9adf21e03fe"
+        }
+      ]
+    },
+    {
+      "id": "checkbox",
+      "manifest": "ui/checkbox.json",
+      "sha256": "11bdebe16553c48294c3a6149e30583708c48d435dccb8cace299e8924f5969a",
+      "exports": ["Checkbox"],
+      "files": [
+        {
+          "source": "ui/checkbox.rs",
+          "sha256": "aae8ad1bb15f4ef6a0dbd88c856509e43172b8ddccc009f63d99956ff7cffd6a"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/checkbox.css",
+          "sha256": "a7ceceb1191808f8daddb2cf4ca78a5bd5cb8df5b5232d0e9feeacf3c793582c"
+        }
+      ]
+    },
+    {
+      "id": "collapsible",
+      "manifest": "ui/collapsible.json",
+      "sha256": "3bef3115cad8c1cabf8773d36334bb1892ce3cfd71f8e2edae271c8b8cf9255a",
+      "exports": [
+        "CollapsibleContent",
+        "CollapsibleRoot",
+        "CollapsibleTrigger"
+      ],
+      "files": [
+        {
+          "source": "ui/collapsible/mod.rs",
+          "sha256": "f9b1c4b0110b258185c3b7dab29ea786b8fd191d1f9d88c427a28a037ca7cab7"
+        },
+        {
+          "source": "ui/collapsible/root.rs",
+          "sha256": "2270c9cb35a9aace7c5b74c585ac41528bd66af9dff1ca721ee2218c8de48d66"
+        },
+        {
+          "source": "ui/collapsible/trigger.rs",
+          "sha256": "ea8fa92366f3919db5116c099e4769be4171c48f4b3580739bddfcde3f0f4e05"
+        },
+        {
+          "source": "ui/collapsible/content.rs",
+          "sha256": "134bb9a74781905cca5d0c3369fb71bd2eb78925bdb3c815c414a93c5a0a1b91"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/collapsible.css",
+          "sha256": "50ac889f337c90144fb49172dd5f4bf745f352e0e4a1f9c02c18f81017c3ac68"
+        }
+      ]
+    },
+    {
+      "id": "dialog",
+      "manifest": "ui/dialog.json",
+      "sha256": "d6d5807ca344feafcaff56aef611b8218bc5af3bd0f8d68b68af394278c1d8a2",
+      "exports": [
+        "DialogClose",
+        "DialogContent",
+        "DialogContentRole",
+        "DialogDescription",
+        "DialogRoot",
+        "DialogTitle",
+        "DialogTrigger"
+      ],
+      "files": [
+        {
+          "source": "ui/dialog/mod.rs",
+          "sha256": "a11b37bbf784940696c5f1e3cb3ec88d2906046efe23e78907a32c6048c81d19"
+        },
+        {
+          "source": "ui/dialog/root.rs",
+          "sha256": "af85eeae99df5358fbb20387905f1ec3db887034363ab5d67d755d8576297041"
+        },
+        {
+          "source": "ui/dialog/trigger.rs",
+          "sha256": "e700c15cfbea995b45c62e051ee0dbc8584a5afd2c7ad32b286da6b99b2d1697"
+        },
+        {
+          "source": "ui/dialog/content.rs",
+          "sha256": "89ea143e25fa29c0f3d12cc3efe2340c5586def14beac2171c5f1d423c19069e"
+        },
+        {
+          "source": "ui/dialog/title.rs",
+          "sha256": "0dd20ce4b106cd54ec4aa57d30c3f763832b873c6c32149d3f1737bcc337910a"
+        },
+        {
+          "source": "ui/dialog/description.rs",
+          "sha256": "b7b312f7904805275532caf3d6bd930ce8a2a7585fd8660336617dbc2638da6c"
+        },
+        {
+          "source": "ui/dialog/close.rs",
+          "sha256": "10e1dc88c7daf817e0e2f491d85ab23422158af7339c21ff3bd6efcbf8cab794"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/dialog.css",
+          "sha256": "f26d4e981de3c42bf232283df79a51dcc716a83f1ec6e635dc83e0b78a4d05b0"
+        }
+      ]
+    },
+    {
+      "id": "field",
+      "manifest": "ui/field.json",
+      "sha256": "2a45c19fffe555d5bf886ff04f24fcc31e7d0b7d91fee9acc3cb74110a9568e5",
+      "exports": [
+        "FieldLabel",
+        "FieldMessage",
+        "FieldRequired",
+        "FieldRoot",
+        "FieldSlot",
+        "FieldSurface",
+        "NativeSelect",
+        "SelectField",
+        "SelectIcon",
+        "TextArea",
+        "TextAreaField",
+        "TextField",
+        "TextInput",
+        "TextInputType"
+      ],
+      "files": [
+        {
+          "source": "ui/field/mod.rs",
+          "sha256": "ca7d86203f91278b0194419033c8629507b1512d8e0d14e7f0ff52f7560bf16e"
+        },
+        {
+          "source": "ui/field/slot.rs",
+          "sha256": "77f0780a765a9cf1610419be85a236db847f630a17556ce623309edd11180f99"
+        },
+        {
+          "source": "ui/field/root.rs",
+          "sha256": "6a5d27dcfb272157da3a9925964eeaf38a60397fd8f8b32edbf3b56777606229"
+        },
+        {
+          "source": "ui/field/surface.rs",
+          "sha256": "35fa704c0febebeca14ad51ad9f08a7dda7a16805dbec62fcfee72769ce4fd2b"
+        },
+        {
+          "source": "ui/field/label.rs",
+          "sha256": "7378a6ff1bf5611177a85fec0b16f93e8b0569f6b2b1555ce41ead9c775cd0ee"
+        },
+        {
+          "source": "ui/field/required.rs",
+          "sha256": "1b5f49b4f1c099765cc28324e573eb6fd69b2e6141f17a22384b7bb57657ed8b"
+        },
+        {
+          "source": "ui/field/message.rs",
+          "sha256": "9a99ce16269b9e09f51f362c0b8f0b0a96681a9bc7f55ae1b07a9950bffb2d63"
+        },
+        {
+          "source": "ui/field/text_input.rs",
+          "sha256": "6ab710088d26c142eb478c80ab18fb8a085d5d87f4482b43e3d58fb2847909cd"
+        },
+        {
+          "source": "ui/field/text_area.rs",
+          "sha256": "3e88d1d34e7cff9d82715e9b994ffa8e443439aed7acf4fa01d4ea000e49ed80"
+        },
+        {
+          "source": "ui/field/text_field.rs",
+          "sha256": "12f172332703e5f6851e509a515751be48a3b6289e3560fcfc6a4149a7f94b56"
+        },
+        {
+          "source": "ui/field/text_area_field.rs",
+          "sha256": "6ee86dd292545766e400b5aefeb9dacb9430a3b31bde1550fb4659c5ca30d58e"
+        },
+        {
+          "source": "ui/field/native_select.rs",
+          "sha256": "59a36fb3c9aa5a96e102eadf9ac1230c8aa66bc4f36b6b7561747cc12227b496"
+        },
+        {
+          "source": "ui/field/select_field.rs",
+          "sha256": "4c7311d0e319fb89a36a4b2f8cec916ed02115422a980c4df8a783542c85d829"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/field.css",
+          "sha256": "5320c5a2b5b708db0618743374ce3765ce89892f1bd89c275317c0adf080d3b2"
+        }
+      ]
+    },
+    {
+      "id": "identity",
+      "manifest": "ui/identity.json",
+      "sha256": "8cba2cc982645f4ed224c620690d773dec51f89ee02b9fffc03e9afc0447d169",
+      "exports": ["KitIdProvider"],
+      "files": [
+        {
+          "source": "ui/identity.rs",
+          "sha256": "bbe250aafa0e1769860f3245115a0fb4a9d835cd61732b92062d57d8ff547db2"
+        }
+      ],
+      "styles": []
+    },
+    {
+      "id": "menu",
+      "manifest": "ui/menu.json",
+      "sha256": "90330defb099d95ed39fa0ab8a6cc4cb348f0c9aeae20120ea90114aa57cf2c2",
+      "exports": [
+        "MenuContent",
+        "MenuContentAlign",
+        "MenuContentSide",
+        "MenuDirection",
+        "MenuItem",
+        "MenuItemIndicator",
+        "MenuItemKind",
+        "MenuLoop",
+        "MenuRadioItem",
+        "MenuRoot",
+        "MenuTrigger"
+      ],
+      "files": [
+        {
+          "source": "ui/menu/mod.rs",
+          "sha256": "2cc33c029f2c90de27a15cae10a5ba712c5f6e3b710b5430be7ff1359bb0f770"
+        },
+        {
+          "source": "ui/menu/root.rs",
+          "sha256": "fded974292f52e65539556874cc9dd6c0854fc99d574ea252115615d66966f48"
+        },
+        {
+          "source": "ui/menu/trigger.rs",
+          "sha256": "8cca8a31b5150e176371385868a81466e0062fc1cbc3dbd2c7b1142415d1e6ef"
+        },
+        {
+          "source": "ui/menu/content.rs",
+          "sha256": "248176b0e112aa449b366354d3ac9e6780dd461a10e7f60f74671196035989ea"
+        },
+        {
+          "source": "ui/menu/item.rs",
+          "sha256": "8b5277fe1e6dd3f61f4ed562fa81c65b0e402760bdaf25f42aed24ee62f63ece"
+        },
+        {
+          "source": "ui/menu/radio_item.rs",
+          "sha256": "b524f33c16cbdf055fe9abe5d04a138f15302e802bcb090de2c235434d8c1e59"
+        },
+        {
+          "source": "ui/menu/item_indicator.rs",
+          "sha256": "9554787bf6653ab2ddab07648d08f5945d52346afce2c5d0b53251d01697209d"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/menu.css",
+          "sha256": "281a57e212f74efc5d84c1c9b1a6c54c0bf43de1051601c561ef912ec078bb8a"
+        }
+      ]
+    },
+    {
+      "id": "progress",
+      "manifest": "ui/progress.json",
+      "sha256": "ef986eace45118801a934513a1a93e4b9e3824808ff49af7aba8d37c01b1a203",
+      "exports": ["Progress"],
+      "files": [
+        {
+          "source": "ui/progress.rs",
+          "sha256": "908344753a606d76da7cc095de148daa14e25f6961d23859d77d084119d2d838"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/progress.css",
+          "sha256": "c77962a25571a1bfad70de958fcaf224cd860619933eadf088531984a2ff73f6"
+        }
+      ]
+    },
+    {
+      "id": "radio",
+      "manifest": "ui/radio.json",
+      "sha256": "7572d982555c715778e79096b8a2e40f1df0e169b05dcf3b6c194af0a806a453",
+      "exports": ["Radio"],
+      "files": [
+        {
+          "source": "ui/radio.rs",
+          "sha256": "00997819e2ea4fdc0f7f0799d95bdf3b60164c8273e51f7f0a88049538744190"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/radio.css",
+          "sha256": "3248117e343b3a815a16843419f8d18ac2782360b2c110e43e207b848cd2d751"
+        }
+      ]
+    },
+    {
+      "id": "router-link",
+      "manifest": "ui/router-link.json",
+      "sha256": "9b46442dee20f42010909b5f673ae2adc1659167bbba952480e51599b33e7e0a",
+      "exports": ["RouterLink"],
+      "files": [
+        {
+          "source": "ui/router_link.rs",
+          "sha256": "4dc71d2a359c8adb7b2ea60119f67cc69cd8e67d519695b3a4f0dceb5a0b1505"
+        }
+      ],
+      "styles": []
+    },
+    {
+      "id": "separator",
+      "manifest": "ui/separator.json",
+      "sha256": "f0aa1ec34caf6efb95e22d81db1a4399d410d187527708d63680c7acfd8cdede",
+      "exports": ["Separator", "SeparatorOrientation"],
+      "files": [
+        {
+          "source": "ui/separator.rs",
+          "sha256": "30cae1f8fb2d36714a931aeafd3a2ea37ceb2e3fe5bb75c53deb5b1ed1d51d93"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/separator.css",
+          "sha256": "118768c9222bdaccdccfb7c754079950fc5222e83d4e8705054fe3ea263f6c3d"
+        }
+      ]
+    },
+    {
+      "id": "skeleton",
+      "manifest": "ui/skeleton.json",
+      "sha256": "f95f2a7518f247c44ea424947aead1e0c1c91d6796cafdaaa3b84cdac407528f",
+      "exports": ["Skeleton"],
+      "files": [
+        {
+          "source": "ui/skeleton.rs",
+          "sha256": "67ce980cea287c0d5ce9513daa911662749e1e110503ddaf96f55221118c2170"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/skeleton.css",
+          "sha256": "29a902c1375e0df1cebe6e074303de3e69a39263d3346659c7ab6a05a675e896"
+        }
+      ]
+    },
+    {
+      "id": "spinner",
+      "manifest": "ui/spinner.json",
+      "sha256": "25194d441928c8fba77bf8a8c16a54fd50924cd508645d950f4fb99d415bbbb5",
+      "exports": ["Spinner", "SpinnerMode"],
+      "files": [
+        {
+          "source": "ui/spinner.rs",
+          "sha256": "963d78dab7df09c7663755a637ea84f988635a1725db9896ef9b9a6b811bc940"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/spinner.css",
+          "sha256": "1d8731d69ab2b6e0cad13b444d2028d707176435e369a07e23d52f7d8a5d352b"
+        }
+      ]
+    },
+    {
+      "id": "status",
+      "manifest": "ui/status.json",
+      "sha256": "152b0bed367e1a9887ec68fae33cf716f1a20bd395514d0b8bd0e318ff51ce2b",
+      "exports": ["Status", "StatusPoliteness", "StatusRole"],
+      "files": [
+        {
+          "source": "ui/status.rs",
+          "sha256": "aecf7057dfabad182aff6ceaf55da5bd0d7c858a0b5d7a5707208f6254f66d4a"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/status.css",
+          "sha256": "50a35c69bc9c9abc9c5934190ba6c8bd918013674c228669f8af45fe562eacb2"
+        }
+      ]
+    },
+    {
+      "id": "switch",
+      "manifest": "ui/switch.json",
+      "sha256": "270b8e4d183410f450f71d3933e3e777e763ea94ddbda4ad13f7593a1ce6cf93",
+      "exports": ["Switch"],
+      "files": [
+        {
+          "source": "ui/switch.rs",
+          "sha256": "72bfc0f0be2d9da7b35e4712ec0657092fbfee27d7979746a61bbd4b0dcfcbc3"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/switch.css",
+          "sha256": "7d44009e86ef583811ae435cba17460cc3e4c0ddc5289c5522daa331256bb19d"
+        }
+      ]
+    },
+    {
+      "id": "tabs",
+      "manifest": "ui/tabs.json",
+      "sha256": "025a04fd2375b485eed1a101db3a40b45934fe1e7bc8969ab95ef69b8bed4be8",
+      "exports": [
+        "TabsActivation",
+        "TabsDirection",
+        "TabsList",
+        "TabsLoop",
+        "TabsOrientation",
+        "TabsPanel",
+        "TabsRoot",
+        "TabsTrigger"
+      ],
+      "files": [
+        {
+          "source": "ui/tabs/mod.rs",
+          "sha256": "15d8c391e026995337a3d54686958ff200fac4d48f67c6717306fc77207da767"
+        },
+        {
+          "source": "ui/tabs/root.rs",
+          "sha256": "cad9a2bc55d15d45d68a73451ffbf3350da965c1cde4f4f4d5982cfe5037caaa"
+        },
+        {
+          "source": "ui/tabs/list.rs",
+          "sha256": "d6edf4fbfce0d53f7acc4ad710f57074ad2e0f7ed6bfe6f182de28ffcca8b770"
+        },
+        {
+          "source": "ui/tabs/trigger.rs",
+          "sha256": "8cadb4c6e6e7793bf1ccfdf1408586aa791016217593a1ed7cf3632339f96066"
+        },
+        {
+          "source": "ui/tabs/panel.rs",
+          "sha256": "392ce5d2247d5af04d666143b269d977a81ce6767d4605b7e98e1e8061994429"
+        }
+      ],
+      "styles": [
+        {
+          "source": "styles/tabs.css",
+          "sha256": "d1c4239d3b99bb7d7f30f8a9f344e5ac56f246e5ec0f20a50f9d70007436bae9"
+        }
+      ]
+    },
+    {
+      "id": "tokens",
+      "manifest": "foundation/tokens.json",
+      "sha256": "24916b8e63f83e58df2fc6c8d594d19406d15bcf368e2a343461b6a8e6b8bc0d",
+      "exports": [],
+      "files": [],
+      "styles": [
+        {
+          "source": "styles/tokens.css",
+          "sha256": "3e6d9098033b9cdd7dd0701f4ac0452152fbd592c72d9ec6a43808ce66f46dd6"
+        }
+      ]
+    }
+  ]
+}

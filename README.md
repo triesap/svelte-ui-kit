@@ -7,9 +7,12 @@ Source-first UI kit for Svelte with installable component source and a CLI.
 The generator implements `info`, `init`, `view`, `add`, `sync` and `doctor`, with
 read-only planning and guarded recoverable application. The package is private
 and unpublished. The shipped registry includes the CSS-only `tokens` foundation,
-native `spinner`/`button`, primitive-backed `switch` and the complete compound
-`dialog` family. This core has passed separate independent review; the remaining
-catalog is still being implemented and qualified.
+native and primitive-backed families covering the original catalog: 21 generated
+source items, with stable identity supplied by pinned Svelte/Bits facilities,
+plus the approved distinct Alert Dialog. See the
+[complete catalog disposition](specs/COMPONENT_CATALOG.md#complete-original-catalog-disposition).
+The core and subsequent forms/overlay families have passed separate independent
+review; the remaining catalog candidates await the S181 acceptance gate.
 The separately installable nine-part `alert-dialog` family is implemented and
 qualified and independently accepted in installed consumers. It uses the distinct pinned primitive rather than
 a Dialog role switch. Native Action leaves closure to the application; Cancel

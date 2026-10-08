@@ -1,7 +1,11 @@
 # S180 step report — Qualify request-local component identity
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `8f40545f5035839133829d30b496213ca63de6e4`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S180","kind":"report","commit":"8f40545f5035839133829d30b496213ca63de6e4","disposition":"candidate"}
+-->
 
 Original R21, R22, R28, R29, R32, R33, R34.
 Starting `928500c8a59e11040b29cb4788c4a8d6461c324f` on `master`.

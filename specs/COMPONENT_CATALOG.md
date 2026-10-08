@@ -63,6 +63,53 @@ of the inventory table above; they do not introduce new extension APIs.
   at S155 using pinned native/Bits evidence. Describe this as target behavior,
   without inventing unrelated variants or attributing fallback to the source.
 
+#### Complete original catalog disposition
+
+S181 audits the immutable a10fbf06334f4648f5755e05a7147414e4e5fc98 registry:
+22 original IDs become 21 generated items plus a documented native identity
+mapping. The distinct approved Alert Dialog makes 22 generated items in total.
+The [source inventory fixture](../tests/fixtures/catalog-source.json) records
+the actual registry/manifest/source/style hashes and every source export; it
+does not replace source inspection or behavioral qualification. Every generated
+manifest target/export/style is validated and installed together in default/
+custom production consumers, including a typed import probe of every advertised
+value/type. Individual worksheets and executable tests retain the behavior
+evidence; source CSS/defaults are preserved with documented native state mapping.
+
+| Original ID | Target disposition and worksheet                                                                                                                                                                                                                                        |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| alert       | Native fixed-role message; [Alert](component-maps/alert.md).                                                                                                                                                                                                            |
+| anchor      | Native Anchor and AnchorTarget; [Anchor](component-maps/anchor.md).                                                                                                                                                                                                     |
+| avatar      | Native image plus approved loading/fallback target behavior; [Avatar](component-maps/avatar.md).                                                                                                                                                                        |
+| badge       | Native text span; [Badge](component-maps/badge.md).                                                                                                                                                                                                                     |
+| button      | Native Button, ButtonVariant and ButtonSize; source ButtonType uses native button type, without a Rust enum alias; [Button](component-maps/button.md).                                                                                                                  |
+| card        | Native compositional section; [Card](component-maps/card.md).                                                                                                                                                                                                           |
+| checkbox    | Actual Bits checked/indeterminate control with qualified native form reset; [Checkbox](component-maps/checkbox.md).                                                                                                                                                     |
+| collapsible | Actual Root/Trigger/Content, explicit native SSR registration and motion limits; [Collapsible](component-maps/collapsible.md).                                                                                                                                          |
+| dialog      | Actual named family with Portal/Overlay composition; source DialogContentRole does not switch primitive kind; [Dialog](component-maps/dialog.md).                                                                                                                       |
+| field       | All source parts/recipes; FieldSlot becomes Snippet type, TextInputType remains native input union, complete NativeSelect/SelectField/SelectIcon; [Field](component-maps/field.md).                                                                                     |
+| identity    | Deliberately non-generated KitIdProvider/use_kit_id mapping to pinned Svelte/Bits instance facilities; real request/hydration proof; [Identity](component-maps/identity.md).                                                                                            |
+| menu        | All source ordinary/radio/indicator behavior with native RadioGroup/Portal context; MenuContentAlign/MenuContentSide/MenuDirection/MenuLoop use exact native part props and unions; MenuItemKind maps to distinct Item/RadioItem parts; [Menu](component-maps/menu.md). |
+| progress    | Native numeric progress and approved indeterminate omission, native attribute and paint repairs; [Progress](component-maps/progress.md).                                                                                                                                |
+| radio       | Source Radio becomes actual RadioGroup/RadioItem string-value composition with qualified reset; [Radio](component-maps/radio.md).                                                                                                                                       |
+| router-link | Optional RouterLink/Anchor recipe with application-owned SvelteKit path resolution and no stylesheet/router engine; [RouterLink](component-maps/router-link.md).                                                                                                        |
+| separator   | Meaningful/decorative native Separator and SeparatorOrientation, caller-owned parent geometry; [Separator](component-maps/separator.md).                                                                                                                                |
+| skeleton    | Empty concealed static decorative span; application owns loading meaning/state; [Skeleton](component-maps/skeleton.md).                                                                                                                                                 |
+| spinner     | Native Spinner and SpinnerMode, decorative/status modes and reduced motion; [Spinner](component-maps/spinner.md).                                                                                                                                                       |
+| status      | Native paragraph, StatusRole and StatusPoliteness with caller ARIA precedence; [Status](component-maps/status.md).                                                                                                                                                      |
+| switch      | Actual native primitive with labels/forms/reset and source track/indicator; [Switch](component-maps/switch.md).                                                                                                                                                         |
+| tabs        | Source TabsPanel maps to TabsContent; TabsActivation/TabsDirection/TabsLoop/TabsOrientation use exact native props/unions rather than compatibility enums; [Tabs](component-maps/tabs.md).                                                                              |
+| tokens      | CSS-only foundation plus independently versioned semantic/customization/theme metadata; [Tokens](component-maps/tokens.md).                                                                                                                                             |
+
+The sole additional component is the approved distinct [Alert Dialog](component-maps/alert-dialog.md),
+not a Dialog role switch. No future combobox/popover/selection extension is
+implicitly included. This audit is an implemented candidate awaiting separate
+S181 acceptance; later platform/package/AC20 and full-MVP acceptance remain open.
+Maintain measured native SSR child registration, runtime floating styles/CSP,
+image event recording/CSP, browser-owned progress paint/animation and decorative
+surface contrast concerns. No broad accessibility, strict-CSP or cross-browser
+certification follows from manifest coverage.
+
 #### Required component worksheet
 
 Before writing each family, capture exact exported names, .svelte/.ts targets, source counterpart, upstream/native props, bindings and refs, snippet policy, event ordering, default markup, CSS classes/state selectors, form behavior, accessibility checks, dependency closure, and source/style compatibility group. Sources not inspected in the original approved review must be inspected by the agent or replaced by explicit conservative spec-defined behavior; an inferred API is not an approved source fact.

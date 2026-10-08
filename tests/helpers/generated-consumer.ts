@@ -439,7 +439,6 @@ export const buildSkeletonConsumer = (custom: boolean) =>
 
 /** Identity is a qualification route, never an installable registry alias. */
 export function buildIdentityConsumer(custom: boolean) {
-  let additional: Record<string, string> = {};
   const requested = [
     "field",
     "switch",
@@ -451,10 +450,49 @@ export function buildIdentityConsumer(custom: boolean) {
     "alert-dialog",
     "menu",
   ];
+  return buildInstalledItemsConsumer(custom, "identity", requested);
+}
+
+export function buildCatalogConsumer(custom: boolean) {
+  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  return buildInstalledItemsConsumer(
+    custom,
+    "catalog",
+    registry.items.map((item: { id: string }) => item.id),
+    (root, config) => {
+      const manifests = registry.items.map((item: { manifest: string }) =>
+        JSON.parse(readFileSync(`registry/${item.manifest}`, "utf8")),
+      );
+      const exports = manifests.flatMap(
+        (manifest: { exports: { name: string; kind: string }[] }) =>
+          manifest.exports,
+      );
+      const module = `./${path.posix.relative("src", `${config.uiDir}/index.js`)}`;
+      const types = exports
+        .filter((entry: { kind: string }) => entry.kind === "type")
+        .map((entry: { name: string }) => entry.name);
+      const values = exports
+        .filter((entry: { kind: string }) => entry.kind === "value")
+        .map((entry: { name: string }) => `UI.${entry.name}`);
+      writeFileSync(
+        path.join(root, "src/catalog-exports.ts"),
+        `import * as UI from ${JSON.stringify(module)};\nimport type {${types.join(",")}} from ${JSON.stringify(module)};\nexport const catalogValues = [${values.join(",")}];\nexport type CatalogTypes = [${types.join(",")}];\n`,
+      );
+    },
+  );
+}
+
+function buildInstalledItemsConsumer(
+  custom: boolean,
+  qualification: string,
+  requested: string[],
+  beforeBuild?: (root: string, config: KitConfig) => void,
+) {
+  let additional: Record<string, string> = {};
   const consumer = buildComponentConsumer(
     "field",
     custom,
-    "identity",
+    qualification,
     false,
     process.cwd(),
     (root, config) => {
@@ -500,6 +538,11 @@ export function buildIdentityConsumer(custom: boolean) {
             return [file.path, file.baseHash];
           }),
       );
+      beforeBuild?.(root, config);
+      if (qualification === "catalog")
+        additional["src/catalog-exports.ts"] = sha256Hex(
+          readFileSync(path.join(root, "src/catalog-exports.ts")),
+        );
     },
   );
   return {
