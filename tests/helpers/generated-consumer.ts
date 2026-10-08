@@ -15,6 +15,7 @@ function buildComponentConsumer(
   item:
     | "spinner"
     | "button"
+    | "anchor"
     | "switch"
     | "checkbox"
     | "collapsible"
@@ -194,7 +195,9 @@ function buildComponentConsumer(
                                 ]
                               : [],
                           )
-                      : item === "switch" || item === "checkbox"
+                      : item === "switch" ||
+                          item === "checkbox" ||
+                          item === "anchor"
                         ? [`${item}.svelte`, `${item}.types.ts`]
                         : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
@@ -300,6 +303,22 @@ export const buildSpinnerConsumer = (custom: boolean) =>
   buildComponentConsumer("spinner", custom);
 export const buildButtonConsumer = (custom: boolean) =>
   buildComponentConsumer("button", custom);
+
+export const buildAnchorConsumer = (custom: boolean) =>
+  buildComponentConsumer(
+    "anchor",
+    custom,
+    "anchor",
+    false,
+    process.cwd(),
+    (root) => {
+      mkdirSync(path.join(root, "static"), { recursive: true });
+      writeFileSync(
+        path.join(root, "static/anchor-download.txt"),
+        "Native Anchor download\n",
+      );
+    },
+  );
 
 export const buildSwitchConsumer = (custom: boolean) =>
   buildComponentConsumer("switch", custom);

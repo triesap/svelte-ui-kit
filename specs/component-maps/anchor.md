@@ -68,3 +68,21 @@ motion rule exists; native layout and theme tokens remain authoritative.
 Direction must preserve link geometry and focus; reduced-motion must retain
 the source's absence of animation/transition. Customization metadata records
 these existing CSS hooks without changing semantic token defaults.
+
+## S151 installed-consumer qualification
+
+Twenty Chromium cases in actual CLI-generated default/custom production
+applications prove native pointer/Enter activation, Space matching a raw native
+control, cancellation, focus/tab order, no form submit/reset, real refs and
+conditional teardown/remount. Actual internal query/fragment navigation, native
+blank-target opener protection, named-context reuse, intercepted external URL
+navigation and exact downloaded response bytes/filename pass. Target/rel changes
+preserve native node identity and exact omitted/default/explicit/empty attributes.
+Native aria-disabled retains its attribute without an invented navigation guard.
+
+Computed source defaults, hover/focus, all nine inherited overrides, RTL and
+reduced-motion absence of animation/transition pass. Eight concurrent production
+SSR requests per layout preserve isolated query text and initial native counts;
+the hydrated browser remains in its own initial state. All unexpected page
+exceptions, console errors and hydration warnings fail the shared collector,
+including popup-page collectors. These author checks await separate S181 review.
