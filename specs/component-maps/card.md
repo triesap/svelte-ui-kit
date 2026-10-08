@@ -44,3 +44,15 @@ source computed values and radius/theme changes, RTL/reduced motion and isolated
 SSR/hydration in generated applications. Author verification remains a candidate;
 mandatory separate S181 acceptance gates S182 and final platform/MVP acceptance
 remains open.
+
+S163's actual default/custom generated consumers verify one native section per
+instance, direct application header/h2/content/inner-section/h3/form/footer,
+two independently named native regions and an unnamed ordinary section without
+automatic roles. Dynamic content preserves actual outer/inner nodes and native
+input state. Caller focus, key events, native child activation, bubbling/default
+cancellation and form submission/reset remain native; hiding/teardown clears both
+section refs. Source seven declarations and all surface/default/lg/direct radius
+paths are measured, with live parent theme and independently overridden nested
+border/background/text/radius/shadow, RTL/reduced motion and concurrent isolated
+SSR. No component/CSS/type/metadata changes were needed. These are author-verified
+candidates; mandatory independent S181 and final platform/MVP acceptance remain.

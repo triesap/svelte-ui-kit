@@ -1,7 +1,11 @@
 # S162 step report — Generate native Card and source surface styles
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `26d8332cb9433a9e23793e64956513c328a199fe`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S162","kind":"report","commit":"26d8332cb9433a9e23793e64956513c328a199fe","disposition":"candidate"}
+-->
 
 Original R02, R03, R04, R06, R08, R20, R22, R25, R26, R32, R33, R34.
 Starting `a6da35e60f8f9e4b26f34f6cb7fb78c70d9549aa` on `master`.
