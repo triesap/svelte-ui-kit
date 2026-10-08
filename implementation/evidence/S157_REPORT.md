@@ -1,7 +1,11 @@
 # S157 step report — Qualify Avatar native image and fallback behavior
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `080c7cdf4ff7fdf4fc2ee011767c9deeab23a750`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S157","kind":"report","commit":"080c7cdf4ff7fdf4fc2ee011767c9deeab23a750","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R23, R25, R26, R29, R32, R33, R34.
 Starting `ee3149e87cff48315e2db02ac2c1c634e0274a7c` on `master`.
