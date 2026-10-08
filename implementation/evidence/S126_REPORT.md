@@ -3,7 +3,7 @@
 Author: Codex. Candidate; independent S128/RCLD-07 acceptance pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S126","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S126","kind":"report","commit":"d67cc15ec8b67684b97164b531d30a6e15c19b3b","disposition":"candidate"}
 -->
 
 Requirements R04, R06, R08, R14, R26, R32, R33, R34. Starting `c02e65e` on

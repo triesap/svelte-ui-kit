@@ -145,3 +145,14 @@ radius entries remain byte-identical; no token defaults change.
 | --kit-menu-trigger-radius              | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))`             |
 | --kit-menu-content-radius              | `var(--kit-radius-overlay, var(--kit-radius-default, var(--kit-radius-md)))`             |
 | --kit-menu-item-radius                 | `var(--kit-radius-control, var(--kit-radius-default, calc(var(--kit-radius-md) - 2px)))` |
+
+## Pinned typeahead observation
+
+Bits2.19.3 exposes textValue in Item/RadioItem public types but its actual
+DOMTypeahead reads trimmed textContent; the primitive forwards textValue as a
+DOM attribute rather than using it for search. Installed candidate and direct
+native controls qualify identical behavior. DOM-text typeahead remains required
+and tested; applications should begin readable labels with searchable text.
+The wrapper forwards the exact public prop without adding a kit search engine.
+This upstream limitation is explicit evidence for independent S128 review,
+not a claim that an alias changes native search behavior.
