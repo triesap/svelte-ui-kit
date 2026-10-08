@@ -33,11 +33,47 @@ Frozen v1 protocol: the envelope is `{ schemaVersion, command, status, diagnosti
 
 Command schema version is independent from Svelte and package versions. Output is deterministic for equivalent logical inputs; avoid timestamps, random transaction identifiers, absolute sensitive paths, or filesystem iteration order in semantic output unless explicitly necessary and documented.
 
+#### Approved unchanged-command safety contract — 2026-10-08
+
+Before reporting `no_change`, init/add/sync inspect the approved mapping's
+coordination and recovery state without project writes, including unchanged
+dry-run paths. Only absent writer evidence and no retained transaction state
+permit clean exit-0 `no_change`. Safe logical diagnostics and exactly one JSON
+envelope remain mandatory. Physical safety precedes coordination, then journal
+failure/pending state; existing argument, registry and configuration failure
+precedence is preserved.
+
+Present valid writer coordination produces `error` / `WRITER_BUSY` / exit 1.
+Ambiguous or unreadable coordination produces `error` /
+`WRITER_LOCK_UNAVAILABLE` / exit 1. Corrupt/foreign/ambiguous journal state uses
+existing causal recovery diagnostics. Otherwise retained transactions, including
+valid committed cleanup, produce `error` / `RECOVERY_PENDING` / exit 1 with
+actionable evidence-preserving guidance. Existing more specific unsafe-path and
+registry exit classes remain unchanged. `RECOVERY_PENDING` is a new stable
+diagnostic code in the existing envelope, not a new command/schema/status.
+
+This inspection grants no takeover, cleanup or proof of writer acquisition.
+It does not modify state or manufacture a write. Genuine writes retain guarded
+recovery and preimage revalidation; doctor/info/view and all dry runs remain
+nonmutating. Normal clean replay retains its existing result. This is the
+approved target contract; implementation/qualification remains R11-F03 in
+[the governing plan](../implementation/COMMIT_SEQUENCE.md).
+
 #### Dependency planning
 
 Report direct package requirements, runtime versus tooling roles, relevant peer requirements, installed/declaration status, incompatible ranges, and an appropriate command for the detected package manager. Do not silently edit `package.json`/lockfiles, execute npm/pnpm/yarn, fetch mutable remote templates, or pretend missing peer dependencies are optional.
 
 The initial Bits UI source observation was 2.19.3 with Svelte `^5.33.0`, a date peer `^3.8.1`, and Node `>=20` in that source manifest. This is historical evidence, not a validated distribution baseline. Before implementation choose installed, reproducible versions that pass fixtures and record actual peer metadata. Do not automatically adopt a newer major version.
+
+The owner-approved native source-fix fallback requires truthful dependency
+instructions for a real locally bundled archive with a distinct build identity,
+authenticated provenance and upstream notices. Operator setup explicitly copies
+the archive to an application-owned location and installs it as a local-file
+Bits dependency. Do not render a registry-install command for an unpublished
+version. No automatic package installation/manifest mutation or consumer kit
+runtime is introduced. The resulting app must work without its CLI host or
+authoring source. Prefer an unmodified supported released dependency when one
+passes; no fallback artifact is selected merely by this contract amendment.
 
 #### Component interface rules
 

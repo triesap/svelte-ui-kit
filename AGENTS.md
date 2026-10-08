@@ -22,8 +22,8 @@ references.
   work, with a separate reviewer at mandatory independent acceptance gates.
 - Complete one checkpoint at a time in documented order. Current dispatch is
   `pfc all`: continue the original sequence through its independent gates.
-  S001–S193 are independently accepted; S194–S199 are committed candidates,
-  S200 is active, and S201–S203 remain dependent work. The ledger is live authority.
+  S001–S193 are independently accepted; S194–S200 are committed candidates,
+  S201 is blocked by raw strict declaration errors; S202/S203 remain dependent. The ledger is live authority.
   Earlier Q3-only/two-or-three-commit/Q4-later management limits are superseded.
   Continue after green slices and successful independent gates. Preserve accepted
   checkpoints and original criteria/statuses. Target-only coherent green commits
@@ -52,8 +52,15 @@ references.
 - Final release AC20 remains blocked by two raw upstream Bits TS2590 errors.
   The seven recorded alternatives and separate technical assessment establish
   no supported green resolution. The qualified strict-audit exception is not a
-  raw strict pass or final acceptance; do not suppress errors, patch declarations,
-  hide imports or silently change pins. Preserve every original criterion.
+  raw strict pass or final acceptance. The owner-approved 2026-10-08 completion
+  amendment in `implementation/COMMIT_SEQUENCE.md` governs R11-F01–R11-F06
+  before S201 completes. It permits a narrowly qualified source-level native
+  fix in an isolated copy if supported releases cannot pass, with authentic
+  generated declarations and reproducible local artifact delivery. Do not
+  suppress errors, patch installed declarations/package stores, hide imports,
+  change reference sources or silently change pins. Preserve every original
+  criterion. Full acceptance-suite CI is required by that amendment; configured
+  remote jobs are not execution evidence. Planning is not repair acceptance.
 - No commit, push, publication, deployment or reference-repository mutation
   occurs without explicit authorization for that action.
 

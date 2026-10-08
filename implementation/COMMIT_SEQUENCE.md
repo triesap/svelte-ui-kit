@@ -14,6 +14,339 @@ Completion includes the generator, original catalog adaptation, distinct Alert D
 
 Keep all repository content standalone and repository-relative. Record this target as `.` and the reference by its public URL and immutable revision. Do not include operator-machine locations, credentials, runtime state or external coordination paths in committed files. Preserve unrelated work. No push, publication or deployment is part of this plan.
 
+## Approved final-completion repair amendment — 2026-10-08
+
+The owner approved all completion-review recommendations, including a narrowly
+qualified native dependency source-fix fallback and full acceptance-suite CI.
+This amendment is the ordered repair scope inside **RCLD-11**, before original
+S201 can complete. It creates no additional RCLD sequence or original checkpoint,
+and does not replace the immutable S001–S203 definitions, dependencies, accepted
+history or sole batch authorization. S194–S200 remain implementation candidates;
+S201 remains blocked; S202/S203 and separate final acceptance remain outstanding.
+Approval of repair scope is not approval of a particular dependency artifact,
+proof of a fix, or acceptance of implemented repairs.
+
+The governing contracts are [scope and authority](../specs/SCOPE_AND_ASSUMPTIONS.md),
+[public APIs](../specs/API_CONTRACTS.md),
+[transaction safety](../specs/SECURITY_AND_TRANSACTIONS.md),
+[acceptance criteria](../specs/ACCEPTANCE_CRITERIA.md) and
+[verification policy](VERIFICATION.md). No decision from the preceding readiness
+review still requires owner selection. Codex owns remaining evidence-driven
+technical choices within these bounds.
+
+### Finding coverage and execution rules
+
+| Finding or remaining obligation                                                                   | Required repair scope                                                      | Original requirements / acceptance                         |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| F01: raw Bits Button/Calendar TS2590 errors and the temporary library-check exception             | R11-F01 diagnosis and R11-F02 strict-green resolution/adoption             | R03, R10, R12, R20, R21, R29; AC03, AC10, AC15, AC17, AC20 |
+| F02: unchanged init/add/sync bypass unresolved transaction inspection                             | R11-F03 shared read-only safety check, protocol and causal regressions     | R15, R16, R30; AC04, AC05, AC11, AC12, AC13                |
+| F03: incomplete browser CI, unqualified serial timeout and incorrect package-selector description | R11-F04 full-suite CI, isolated jobs and measured runtime bounds           | R29, R32, R33; AC20, AC21                                  |
+| F04: stale current guidance, questions and implementation/reviewer authority                      | R11-F05 durable guidance, evidence and native/source-boundary dispositions | R22, R24, R28, R32, R34; AC18, AC19, AC21                  |
+| Final cumulative package/platform/product verification has not run at the repaired candidate      | R11-F06 and original S201                                                  | R08, R16, R20–R22, R29, R30, R32–R34; AC01–AC21            |
+| Extension scope and verified delivery remain dependent                                            | Original S202, original S203 and separate RCLD-11 acceptance               | R01, R29, R31–R34; AC21, AC22                              |
+
+Use the following preferred repair order, one active slice and one coherent
+green commit at a time, while respecting the actual dependencies stated below.
+R11-F03 and R11-F04 do not depend on the native fix and remain eligible if
+R11-F02 is blocked; record the exact execution order and outstanding strict debt.
+This does not unlock original S202/S203 before S201. The labels R11-F01–R11-F06
+identify repair scope, not new S-checkpoints or a second status ledger. Before
+each slice inspect its owning
+contracts, live diff and affected tests. Record its actual commit, commands,
+results, failed attempts and remaining issues in the existing evidence directory
+under `RCLD-11_REPAIR_REPORT.md`, explicitly distinguishing candidate repairs
+from acceptance. Use the existing tracker for live execution state. Diagnostic
+negative controls may prove the existing failure without claiming raw strict
+success. Never commit a red repair or change expected failures merely to bless a
+defect. Unchanged original scoped exceptions remain explicit until R11-F02
+resolves them; they cannot waive S201 or final AC20.
+
+The report records actual repair outcomes; its existence does not prove every
+planned lane passed. Reuse
+repository commands and helpers; proposed new tooling/test selectors must be
+implemented and verified before they are described as executable. Each repair
+commit requires format, lint, root typecheck, contract validation and diff review,
+plus its dominant affected lane below. Do not overlap compiler, fixture, package
+or server writers. These repairs remain subject to the mandatory separate S203
+review of the complete final sequence; self-review cannot grant acceptance.
+
+### R11-F01 — Establish a minimal strict-declaration diagnosis
+
+**Scope:** Add a repository-owned reproducer and bounded compatibility probe
+using the supported public Bits root entry. Authenticate actual installed
+package versions, source revision, package integrity, emitted declarations,
+Svelte/TypeScript/checker versions, declaration-generation tooling and relevant
+transitive dependencies. Reduce the Button/Calendar interaction to a minimal
+reproducer and inspect compiler behavior before attributing a specific union
+expansion. Preserve real native types, not a substitute facade.
+
+Bits reference source at public revision
+`fd10616a873a8e6e3652e31dcc88c5c2f155a9e2` identifies version 2.19.5;
+the selected package remains 2.19.3 until qualified adoption. Reference tooling
+includes Svelte 5.46.4, TypeScript 5.9.3, checker 4.3.1, SvelteKit 2.49.5,
+plugin 6.2.0, Vite 7.1.5, package 2.5.0 and svelte2tsx 0.7.34. Verify these
+roles from its lockfile and installed artifacts. Its `skipLibCheck: true` is
+not strict-green evidence. Earlier producer-pair probes did not reproduce this
+complete toolchain. Test evidence-driven supported combinations, including
+that full combination where compatible, rather than repeating arbitrary pin
+changes. Reference sources remain read-only; builds use isolated owned copies.
+
+**Likely files:** Existing strict-audit/fixture helpers and component tests;
+repository-owned diagnostic tooling; compatibility and repair evidence.
+
+**Definition of green:** A reproducible minimal failing baseline, positive and
+causal negative controls, verified peers/engines for every trial, and complete
+raw outcomes establish the diagnosis and next supported candidate. Failed
+trials and absence of a resolution remain visible. This slice alone does not
+unblock S201.
+
+**Dominant lane:** Focused strict-declaration/component controls and the actual
+owned consumer checker, retaining exit status, signal, timeout, diagnostics and
+zero-warning requirements separately from expected baseline failures.
+
+### R11-F02 — Resolve, qualify and adopt a strict-green native baseline
+
+**Dependency:** R11-F01. Prefer a supported released package/toolchain that
+actually passes. If none succeeds, the approved fallback permits the smallest
+source-level correction in an isolated copy. It must address the demonstrated
+source/declaration-generation cause and emit authentic declarations through the
+real build. It does not authorize editing reference sources, installed `.d.ts`
+files or package-store contents, hiding imports, suppressing diagnostics,
+raising compiler limits, weakening types, disabling SSR or replacing behavior
+with a kit-owned primitive implementation.
+
+**Fallback delivery contract:** Keep the public Bits package identity and
+supported root exports, retain all upstream notices, and use a distinct,
+truthful build version with source revision, minimal patch, toolchain and
+artifact digest. Commit portable source inputs/patch/build recipe and
+provenance; never commit generated build output. Generate the real native
+archive in owned package staging and include it at a documented, authenticated
+distribution path in the locally packed CLI when this fallback is selected.
+Explicit operator setup copies it to an application-owned location and installs
+it as a local-file Bits dependency. No publication, assumed registry release,
+implicit installation, automatic package-manifest edits or private path is
+required. The actual CLI dependency instructions must describe this complete
+procedure and must not suggest fetching a nonexistent official version.
+Any needed metadata/schema change requires a versioned contract and migration
+controls before adoption; no ad hoc serialized field bypass is permitted.
+An installed consumer must continue working after the CLI host and authoring
+sources are unavailable. The fallback is a Bits dependency, not a styled kit
+runtime. If this transport or preserved contracts cannot be proved, adoption
+remains blocked rather than reducing acceptance.
+
+**Scope:** Prove before/after public type compatibility with representative
+mutual assignability and positive/negative fixtures for discriminants, state
+bindings, DOM refs, child/children snippets, attributes, events and callbacks.
+Such comparisons complement actual native controls, not a claim of exhaustive
+type equivalence. Run native and installed generated-app runtime checks on all
+affected families. Synchronize exact manifests/lockfiles, registry compatibility
+and derived content hashes, dependency plans, fixtures, component worksheets,
+notices and compatibility evidence without rewriting immutable design-source
+hashes or historical probe results.
+
+Remove the maintained consumer's temporary `skipLibCheck: true` exception only
+after the candidate passes. Convert the strict audit to require successful raw
+checking with zero errors/warnings and keep malformed/truncated/duplicate
+output, changed-version, tool-failure, authored `.svelte`/`.ts`/`.d.ts` and
+additional-dependency negative controls. Update traceability controls so that
+merely changing a configuration flag cannot prove final acceptance. The CLI
+still preserves application configuration; strict qualification is an explicit
+test/check procedure, not silent editing of user tsconfig files.
+
+**Likely files:** Strict helpers/tests, consumer manifests/configuration and
+lockfiles, package/registry metadata and schemas if required, dependency
+instruction rendering, package tests, notices, component maps and evidence.
+
+**Definition of green:** Genuine raw strict success through the supported root
+entry; reproducible installed dependency identity and delivery; preserved
+native contracts; affected component, registry, packed default/custom consumer,
+production build, SSR/hydration and browser lanes pass with causal controls.
+No particular fix or replacement pin is approved solely by this plan.
+
+**Dominant lane:** Full component qualification and affected actual packed
+consumer/runtime suites. Final complete regression remains R11-F06/S201.
+
+### R11-F03 — Refuse unresolved transaction state before no-change success
+
+**Dependency:** The approved unchanged-command contract; no dependency on
+R11-F02's native resolution. Add one shared read-only inspection before unchanged
+`init`, `add` and `sync` success, including unchanged dry-run paths. Resolve
+the approved project mapping independently of journal content. Observe state
+without following unsafe links or creating coordination/temporary files.
+Preserve existing guarded recovery for genuine writes.
+
+| Observed state at the unchanged-command boundary                        | Required disposition                                                                                          |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Safe mapping, absent writer evidence and no retained transaction state  | Existing exit-0 `no_change`, empty applied changes and no project writes                                      |
+| Unsafe ancestry, symlink/nonregular state or unsafe physical target     | Existing causal unsafe-path result; preserve the complete tree                                                |
+| Present valid writer coordination                                       | `error`, `WRITER_BUSY`, ordinary exit 1; no takeover or journal mutation                                      |
+| Ambiguous/unreadable coordination                                       | `error`, `WRITER_LOCK_UNAVAILABLE`, ordinary exit 1; retain evidence                                          |
+| Corrupt, foreign or ambiguous transaction evidence                      | Existing causal journal/recovery error, ordinary exit 1 unless an established more specific class applies     |
+| Otherwise retained transaction state, including valid committed cleanup | `error`, new stable diagnostic `RECOVERY_PENDING`, ordinary exit 1 and actionable guidance; no silent cleanup |
+
+Existing argument/registry/configuration failures retain their established
+precedence. Within state inspection, physical safety precedes coordination,
+which precedes journal failure/pending state. Emit exactly one deterministic
+JSON envelope with safe logical locators and guidance; human errors remain on
+stderr. Never call a speculative plan, successful dry run or PID lookup proof
+of writer acquisition or recovery. A clean observation is bounded by the
+trusted-local model, not a linearizable hostile-race guarantee.
+
+This repair chooses fail-closed inspection, not automatic no-change cleanup.
+Do not add a recover/force command, fake metadata write, synthetic component
+request or automatic lock reclamation. Genuine writes still acquire exclusive
+coordination and recover/revalidate under the existing protocol. If a later
+independent finding requires cleanup at this boundary, record a contract
+amendment for coordinated recovery and fresh planning before implementing it.
+
+**Likely files:** init/add/sync orchestration, safe state-inspection helpers,
+protocol tests, integration/process/package tests and recovery guidance.
+
+**Definition of green:** All three commands in default/custom mappings refuse
+retained writers, corrupt/ambiguous journals and committed cleanup truthfully;
+real SIGKILL/fresh-process and post-crash edit controls preserve exact bytes,
+modes, links and evidence. Clean no-change replay and all read-only diagnosis
+remain nonmutating. Reverting the inspection in an owned copy reproduces the
+silent-success defect. Existing full-journal recovery and publication tests
+remain green; do not replace their assertions with weaker documentation tests.
+
+**Dominant lane:** Owning integration/process/recovery suites and actual
+installed-tarball CLI controls, plus affected macOS/Linux safety replay.
+
+### R11-F04 — Configure every acceptance lane in reliable isolated CI jobs
+
+**Dependency:** The approved full-CI contract; independent of R11-F02/R11-F03
+implementation. Update the workflow to cover format, lint, all root
+typechecks, unit, harness, integration, components/strict audit, registry, full
+package, CLI smoke, consumer check/build/SSR, full configured Chromium suite,
+contract validation/tests and the existing Linux/macOS filesystem matrix.
+The browser harness selector alone cannot satisfy this requirement. Retain
+intentional owned fault controls and the suite's current supported browser
+scope; do not broaden certification to unqualified browsers/platforms.
+
+Partition expensive lanes into independent checked-out workspaces as needed.
+Keep shared writers serial inside a job, actual owned servers/ports and current
+strict console/page/hydration checks. Set bounded per-job timeouts from measured
+lane durations with headroom; do not merely retain the unqualified serial
+30-minute budget. Freeze installs/engines/peers and pinned actions; retain
+read-only permissions and no publication, deployment or secrets. Authenticate
+any transferred build artifacts against source/toolchain identity.
+
+**Likely files:** Existing CI workflow, package scripts only when required,
+command map, verification and compatibility evidence.
+
+**Definition of green:** Workflow syntax and command-to-job coverage validate;
+corresponding lanes execute locally with actual versions, durations and outcomes.
+Configured remote jobs remain unexecuted until separately authorized. Local
+Linux runtime observations are not relabeled hosted-runner evidence. If hosted
+runtime cannot be measured, keep that limitation visible and select a defensible
+bounded timeout; do not claim a remote pass or widen platform support.
+
+**Dominant lane:** Repository workflow validation, command coverage review and
+affected local CI-equivalent lane execution. R11-F06 supplies final cumulative
+results, avoiding redundant reruns when the candidate is unchanged.
+
+### R11-F05 — Reconcile durable guidance and every recorded boundary
+
+**Dependency:** R11-F02, R11-F03 and R11-F04 for their final implemented behavior.
+Update current instructions, command map, verification, open-question
+dispositions, dependency baseline, installation/upgrade/recovery
+runbooks, examples, notices and traceability to actual behavior and evidence.
+Correct the full-package versus selected-browser CI description. Mark old
+return reviews and Pi-only role statements historical; Codex implements and a
+separate reviewer accepts. Do not erase historical failures or reuse their
+results as new executions. Link all original R01–R34 and AC01–AC22 to actual
+maintained implementation/tests/evidence and honest open status.
+
+Record current dispositions for source Radio/Switch nontext contrast, native
+reset cancellation, process-counter floating IDs, closed force-mount body
+locking, first-opening callbacks, SSR relation registration, CSP positioning,
+custom-host clipping, browser scope and filesystem/platform limits. Reassess
+observations affected by changed native pins; old native comparisons cannot
+qualify a new version automatically. AC18 requires measured concerns and a
+reviewer disposition, not a guessed palette redesign or false certification.
+Any demonstrated required-criterion violation receives a bounded repair with
+new causal evidence before final acceptance. Preserve immutable design sources.
+
+**Likely files:** Existing public instructions/contracts, command/compatibility/
+accessibility evidence, runbook, examples and traceability; affected runtime or
+CSS only for a demonstrated required repair.
+
+**Definition of green:** Current commands and role/state descriptions agree;
+all recorded boundaries have evidence-backed dispositions; documentation
+workflows run through actual packaged output and preserve application work;
+traceability cannot conceal strict failures or turn candidates into accepted
+steps. No remaining owner policy question is invented from resolved discovery.
+
+**Dominant lane:** Existing documented upgrade/recovery/example and registry
+traceability controls, plus any new bounded repair's owning lane.
+
+Planning qualification also exposed isolated contract-fixture link drift:
+current guidance referenced real files absent from its explicit input allowlist.
+Repair fixture inputs with actual linked documents/source assets, never stubs
+or disabled link checks. Source inputs are inert link targets; strip imported
+live checkpoint authority records before generating fixture-owned lifecycle
+records and Git hashes. Preserve missing-target refusal and complete-tree
+read-only controls. The planning maintenance candidate in
+`tools/check-contracts.fixtures.mjs` and `tools/check-contracts.test.mjs` must
+pass the full contract regression suite; it grants no product checkpoint or
+independent acceptance. Retain the failed run as evidence. R11-F05 includes
+continued fixture-input consistency as guidance changes during implementation.
+
+### R11-F06 — Complete original S201 cumulative qualification
+
+**Dependency:** R11-F02 through R11-F05. Run every original S201 obligation
+against the repaired candidate and authenticated actual local tarball. Include the additional
+established harness, CLI smoke, consumer SSR, contract and supported platform
+lanes. Qualify all 22 items and advertised exports in default/custom mappings,
+explicit consumer dependencies, authoring-source independence, safe upgrades,
+whole-batch conflicts, customization preservation, truthful retirement/warnings,
+recovery, pure replay, production SSR/hydration and the full Chromium suite.
+If the source-fix fallback is used, prove its archive/provenance/instructions
+and application-owned dependency survive removal of the CLI host.
+
+Retain actual source/artifact inventories, tool versions, raw results, failures,
+durations, zero-skip dispositions and cleanup evidence. Recheck original 203
+definition slices, all 95 immutable design-source hashes, source revision/clean
+state and repository/index boundaries. Rust guards are N/A for this TS-only
+target unless a relevant Rust workspace is actually introduced/affected; do
+not claim a fresh Rust run from old reference evidence. Existing unsupported
+Windows/hostile-filesystem and unqualified browser limits remain explicit.
+
+**Likely files:** Original S201 evidence/report, final verification, artifacts
+and requirement evidence; only demonstrated step-scoped repairs in code/tests.
+
+**Definition of green:** All required current cumulative commands and artifact
+checks pass without strict exceptions, suppressed errors or stale attribution.
+Commit original S201 as a verified candidate, then enter S202. Full independent
+acceptance remains open; diagnostic/repair commits alone never unlock S202.
+
+**Dominant lane:** The complete original S201 release lane plus all established
+acceptance commands above, using current repository scripts.
+
+### Remaining original checkpoints and final acceptance
+
+After verified committed S201, execute original **S202** to reconcile the gated
+select/combobox/popover/date/higher-level direction against stable infrastructure,
+precise missing inventory/value/search/forms/focus/date/locale/timezone/
+serialization contracts and acceptance inputs. No unspecified extension code or
+speculative numbered extension sequence is authorized.
+
+Then execute original **S203**: final verification/delivery records, real commit
+and artifact identities, compatibility matrix and all original requirement/
+acceptance dispositions. Re-run changed-scope checks after final docs; attribute
+unchanged full results to their actual candidate. Submit the complete S194–S203
+range and repair series to a **separate reviewer**. Address findings with green
+repairs and independent affected reruns; never self-accept. Commit plain review
+evidence at a real reachable anchor, then reconcile ledger/projection/status
+atomically according to existing evidence rules. Close the existing task only
+when all original criteria and this amendment are independently satisfied.
+
+The full unfinished RCLD set is **RCLD-11 only**: R11-F01–R11-F06, original
+S201–S203, and independent acceptance of S194–S203. RCLD-01–RCLD-10 remain
+accepted. This planning amendment implements no repair and grants no new
+checkpoint acceptance, publication, deployment, push or reference-source change.
+
 ## Execution state and resume procedure
 
 Independent RCLD-10 acceptance is committed at `8ab760dc4d674853b172126b2a3ec3a0434c678f`
@@ -94,12 +427,13 @@ and never mutate package-store contents. No source-layout fallback, publication
 or new product/API scope is authorized by this qualification.
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S200 — Reconcile agent instructions and test traceability**. Separate S193 acceptance on `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` is anchored at `8ab760dc4d674853b172126b2a3ec3a0434c678f`; final S203 acceptance remains mandatory.
+- Active implementation checkpoint: **S201 — Run the final code-health and cumulative regression lane**. Separate S193 acceptance on `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` is anchored at `8ab760dc4d674853b172126b2a3ec3a0434c678f`; final S203 acceptance remains mandatory.
+- S201 is blocked: the fresh raw `skipLibCheck: false` prerequisite exits 1 with exactly two upstream Bits TS2590 errors and zero warnings. See `implementation/evidence/S201_BLOCKER.md`. No final cumulative pass or S201 commit is claimed; S202/S203 remain dependent.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **193 / 203**. Remaining: **10 / 203**.
-- Committed pending review: **6 / 203**. Authored batch range: **S194–S199**.
+- Committed pending review: **7 / 203**. Authored batch range: **S194–S200**.
 - Completed RCLD sequences: **10 / 11**. Remaining: **1 / 11**.
-- Last safe target commit: `a097624bf8ddba93fa824b9543054e49588f6bb1`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `c1a2b3321c64b8e39006e00e0abcc307222fcbf8`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -6127,11 +6461,11 @@ Checkpoints: S182–S193. State: complete.
 
 Checkpoints: S194–S203. State: in_progress.
 
-**Scope:** Prove installed CLI and generated consumer independence, verify release-shaped metadata/notices, exercise operating/recovery examples, reconcile traceability and record the extension specification gate.
+**Scope:** Prove installed CLI and generated consumer independence, verify release-shaped metadata/notices, exercise operating/recovery examples, reconcile traceability and record the extension specification gate. Complete the approved R11-F01–R11-F06 amendment above: strict native compatibility and qualified local source-fix delivery if needed, unchanged-command transaction refusal, full-suite CI, durable guidance and current cumulative S201 qualification.
 
 **Definition of green:** AC01–AC22 and R01–R34 have real evidence; all required checkpoints have reviewed commits/reports; artifact/compatibility/remaining limits are reproducible and no publication is implied.
 
-**Verification lane:** Installed-tarball and generated-consumer acceptance, documented workflows/recovery, full code-health/platform lanes, contract/traceability audit.
+**Verification lane:** Installed-tarball and generated-consumer acceptance, raw strict declarations and causal negative controls, unchanged-command/process/recovery preservation, full CI coverage/workflow validation, documented workflows, full code-health/platform lanes, contract/traceability audit and separate final acceptance.
 
 ## Checkpoint ledger
 
@@ -6338,8 +6672,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S197 | RCLD-11  | S196       | committed_pending_review | `5b28f4b1738970722b77bde79a95d9e7c02f6928` |
 | S198 | RCLD-11  | S197       | committed_pending_review | `918b503d3c18ecac64fc1943b2d632bf865aaa75` |
 | S199 | RCLD-11  | S198       | committed_pending_review | `a097624bf8ddba93fa824b9543054e49588f6bb1` |
-| S200 | RCLD-11  | S199       | in_progress              | —                                          |
-| S201 | RCLD-11  | S200       | not_started              | —                                          |
+| S200 | RCLD-11  | S199       | committed_pending_review | `c1a2b3321c64b8e39006e00e0abcc307222fcbf8` |
+| S201 | RCLD-11  | S200       | blocked                  | —                                          |
 | S202 | RCLD-11  | S201       | not_started              | —                                          |
 | S203 | RCLD-11  | S202       | not_started              | —                                          |
 

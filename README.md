@@ -127,7 +127,7 @@ SSR/hydration, retained child state and measured CSP/motion limits. Original
 S149–S181 catalog passed
 [independent complete catalog review](implementation/evidence/RCLD-09_QUALIFICATION.md),
 including native links, image fallback, presentation and request-local identity.
-S182–S193 passed the separate cross-component/platform gate. S194–S196 are
+S182–S193 passed the separate cross-component/platform gate. S194–S200 are
 verified implementation candidates; the final S203 gate remains open. The
 package remains unpublished, and two upstream strict-declaration diagnostics
 still block final AC20. See [compatibility evidence](implementation/evidence/COMPATIBILITY.md).

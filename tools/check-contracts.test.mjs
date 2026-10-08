@@ -416,6 +416,65 @@ test("fixture completion hashes are fixture-owned post-commit values", () => {
   );
 });
 
+test("linked operating guidance is real fixture input without importing live checkpoint authority", () => {
+  withFixture((root) => {
+    for (const rel of [
+      "README.md",
+      "implementation/evidence/COMMANDS.md",
+      "implementation/TRACEABILITY.md",
+      "schema/v1/kit.schema.json",
+      "tests/fixtures/consumer/package.json",
+      "tests/browser/menu-csp.spec.ts",
+    ])
+      assert.equal(read(root, rel), read(REPO_ROOT, rel), rel);
+    for (const rel of FIXTURE_FILES.filter((file) =>
+      /^implementation\/evidence\/S\d{3}_(REPORT|REVIEW)\.md$/.test(file),
+    )) {
+      assert.equal(read(root, rel).includes("<!-- checkpoint-evidence"), false);
+      const source = read(REPO_ROOT, rel);
+      const end = source.indexOf(
+        "-->",
+        source.indexOf("<!-- checkpoint-evidence"),
+      );
+      assert.ok(read(root, rel).includes(source.slice(end + 3).trim()), rel);
+    }
+    const before = snapshotTree(root);
+    const valid = runCli(root);
+    assert.equal(valid.status, 0, valid.output);
+    assert.equal(snapshotTree(root), before);
+    // Real authoring authority cannot complete a fixture-owned scenario.
+    const report = "implementation/evidence/S194_REPORT.md";
+    const fixtureProse = read(root, report);
+    write(root, report, read(REPO_ROOT, report));
+    const imported = snapshotTree(root);
+    const rejected = runCli(root);
+    assert.equal(rejected.status, 1, rejected.output);
+    assert.match(
+      rejected.output,
+      /non-complete checkpoint S194 report record must use a null commit/,
+    );
+    assert.equal(snapshotTree(root), imported);
+    write(root, report, fixtureProse);
+    for (const rel of [
+      "implementation/evidence/COMMANDS.md",
+      "implementation/TRACEABILITY.md",
+      "schema/v1/kit.schema.json",
+      "tests/fixtures/consumer/package.json",
+      "tests/browser/menu-csp.spec.ts",
+    ])
+      unlinkSync(path.join(root, rel));
+    const missing = snapshotTree(root);
+    const invalid = runCli(root);
+    assert.equal(invalid.status, 1, invalid.output);
+    assert.match(invalid.output, /BROKEN_LINK.*COMMANDS\.md/);
+    assert.match(invalid.output, /BROKEN_LINK.*TRACEABILITY\.md/);
+    assert.match(invalid.output, /BROKEN_LINK.*kit\.schema\.json/);
+    assert.match(invalid.output, /BROKEN_LINK.*consumer\/package\.json/);
+    assert.match(invalid.output, /BROKEN_LINK.*menu-csp\.spec\.ts/);
+    assert.equal(snapshotTree(root), missing);
+  });
+});
+
 test("fixture construction failure cleans only its owned temporary allocation", (t) => {
   const parent = mkdtempSync(path.join(os.tmpdir(), "suik-contracts-owner-"));
   t.after(() => rmSync(parent, { recursive: true, force: true }));

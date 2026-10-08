@@ -1,17 +1,58 @@
-Current qualification: original S001–S193 are independently accepted. RCLD-10
-reviewed code `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` is accepted at evidence
-`8ab760dc4d674853b172126b2a3ec3a0434c678f`; see RCLD-10_QUALIFICATION.md.
-Continue original S194–S203 under `pfc all`, with separate final S203 acceptance.
-AC20 and final platform/package/release criteria remain.
-
-The preceding RCLD-05 qualification remains accepted. RCLD-05
-candidate `dbd54903a5954d1139cda63413a041498379edc8` is accepted at evidence
-`c6aaf147dbf6316a96420fd5136a717f3665f711`; see RCLD-05_QUALIFICATION.md.
-Its earlier S092–S115 dispatch is complete and independently accepted above.
-The following prior return-review paragraphs are historical, resolved by the
-committed RCLD-04 and RCLD-05 qualifications; they do not impose a new dispatch.
-
 # Verification commands and known-good commits
+
+## Current completion qualification — 2026-10-08
+
+S001–S193 are independently accepted. S194–S200 are seven committed candidates;
+S201 remains blocked by two raw native TS2590 errors, and S202/S203 remain
+dependent. The owner approved R11-F01–R11-F06 in
+[the sole governing RCLD](COMMIT_SEQUENCE.md) to resolve all completion-review
+findings before original S201 completes. This planning amendment proves no
+native fix, new cumulative pass or independent acceptance.
+
+Required strict qualification uses the public Bits entry and actual
+`skipLibCheck: false` consumer checking with zero errors and warnings. Preserve
+causal authored/dependency/tool/parser negative controls. Prefer a supported
+released native/toolchain baseline; the approved minimal source-fix fallback
+must be built in an isolated copy with authentic declarations, portable patch/
+provenance/licensing and a real locally bundled archive that explicit operator
+setup installs into the application. Verify installed consumers after removal
+of authoring sources and the CLI host. No installed declaration or package-store
+patch, suppression, hidden import, weakened type or SSR disablement qualifies.
+
+Qualify unchanged init/add/sync inspection across default/custom mappings,
+including real interruption, corrupt/ambiguous evidence, committed cleanup,
+retained writers and post-crash edits. Assert exact complete-tree preservation,
+deterministic envelopes/exits and read-only diagnosis. Keep existing full-journal
+recovery, lock-last publication and durability controls. Run documented recovery
+procedures against the repaired implementation, not old silent-success expectations.
+
+Full acceptance-suite CI coverage is required. Validate workflow syntax, exact
+script-to-job coverage, isolated writers and bounded timeout rationale from
+actual lane durations. Execute corresponding commands locally. Configured
+hosted jobs remain unexecuted until separately authorized; local Linux evidence
+does not prove hosted-runner runtime or a remote pass. Full S201 additionally
+runs every original cumulative lane and established harness/CLI/SSR/contracts/
+supported platform lane against current code and actual packaged consumers.
+
+Record real versions, commands, exits, failures, durations, artifact/source
+identities, platform bounds and cleanup outcomes. Reassess source/native limits
+affected by changed pins; required violations remain blockers. S202 documents
+the precise extension gate; S203 freezes delivery and submits the full final
+sequence/repairs to a separate reviewer. Preserve original definitions/hashes,
+accepted history and repository boundaries. Use existing scripts and discovery
+rules below; do not treat a proposed future selector as a current command.
+
+## Historical return reviews and known-good evidence
+
+RCLD-10 reviewed code `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` is accepted
+at `8ab760dc4d674853b172126b2a3ec3a0434c678f`;
+see [RCLD-10 qualification](evidence/RCLD-10_QUALIFICATION.md).
+RCLD-05 candidate `dbd54903a5954d1139cda63413a041498379edc8` is accepted at
+`c6aaf147dbf6316a96420fd5136a717f3665f711`; its dispatch is complete.
+The paragraphs below retain original historical pending/gated language.
+RCLD-04 through RCLD-10 have since been accepted at the actual anchors in the
+governing ledger. These paragraphs grant no current dispatch and do not reopen
+resolved findings. Current obligations are stated above.
 
 Independent review at `a176387` preserves the R9 direct repairs but reproduces
 mutable export-authority substitution and object-destructured/index each child

@@ -58,6 +58,37 @@ AC21. Every nongated commit step is independently completed/tested/reviewed/comm
 
 AC22. The extension specification gate is documented. Unspecified select/combobox/popover/date/higher-level scope is not implemented or claimed as delivered. Any expanded release including it requires explicit contracts and its own approved coding sequence.
 
+#### Approved completion qualification — 2026-10-08
+
+The owner-approved [RCLD-11 repair amendment](../implementation/COMMIT_SEQUENCE.md)
+adds concrete qualification to the existing criteria without renumbering or
+waiving AC01–AC22:
+
+- AC03/AC10/AC15/AC17/AC20 require raw consumer declaration checking with
+  `skipLibCheck: false`, zero errors/warnings and supported public native imports.
+  Temporary exception controls do not satisfy final acceptance. A source-fix
+  fallback must preserve native contracts, use authentic generated declarations,
+  retain notices and reproducible provenance, and deliver a real installed local
+  dependency independently of authoring sources or the CLI host. Publication
+  is neither performed nor presumed.
+- AC04/AC05/AC11/AC12/AC13 require unchanged init/add/sync to inspect unresolved
+  coordination/recovery and refuse truthfully without writes. Clean replay
+  remains unchanged. Actual process, corruption, post-crash edit and complete
+  tree-preservation controls must demonstrate the repaired boundary.
+- AC20/AC21 require full acceptance-suite CI coverage, including the complete
+  configured Chromium suite, isolated writers and defensible bounded job
+  durations. Syntax/coverage and corresponding local execution are evidenced;
+  configured remote jobs are not claimed executed.
+- AC18/AC19/AC21 require current evidence-backed source/native/runtime/platform
+  dispositions and guidance. Changed native versions require affected fresh
+  controls. Documented baseline contrast concerns are not universal accessibility
+  certification; any demonstrated required violation remains a release blocker.
+- AC20/AC21/AC22 still require full current cumulative S201 qualification,
+  original S202 extension reconciliation, original S203 delivery evidence and
+  separate independent acceptance of the entire final sequence and repairs.
+  Planning approval, commit counts and implementing-agent self-review grant no
+  acceptance.
+
 #### Final deliverables
 
 Source and tests, built-in manifests/assets/contracts/schemas, generated SvelteKit consumer fixture, install/upgrade/conflict examples, packed artifact for inspection (not publication), CI and compatibility records, README/CONTRIBUTING/AGENTS, requirement/test evidence, and an honest final report containing last commit, completed step range, unresolved blockers and next safe action.

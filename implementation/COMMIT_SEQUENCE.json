@@ -2984,7 +2984,7 @@
       "sequence": "RCLD-11",
       "dependsOn": "S199",
       "requirements": ["R29", "R32", "R33", "R34"],
-      "status": "in_progress",
+      "status": "committed_pending_review",
       "completion": null
     },
     {
@@ -3004,7 +3004,7 @@
         "R33",
         "R34"
       ],
-      "status": "not_started",
+      "status": "blocked",
       "completion": null
     },
     {

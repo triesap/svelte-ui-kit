@@ -30,6 +30,35 @@ A recovery operation must not overwrite user changes made after the interrupted 
 
 Transient coordination and recovery files are not app-owned components and should not be committed. Safe ignore-file changes, when needed, must themselves be planned and preserve existing ignore rules. Do not add an undocumented recovery command/force flag; fit safe recovery and actionable manual instructions into the approved command surface.
 
+#### Approved no-change inspection boundary — 2026-10-08
+
+An unchanged write-command plan is not proof that retained writer/transaction
+state is clean. Before unchanged init/add/sync success, including unchanged
+dry-run paths, inspect the independently resolved mapping's state without
+creating, modifying or removing files. Safe physical containment/non-following
+observations precede coordination and journal checks. Journal contents cannot
+authorize their own mapping. A symlink/nonregular/unreadable state must not be
+followed or misclassified as absent.
+
+Absent coordination and transactions permit the existing clean `no_change`.
+Present/ambiguous coordination or retained/corrupt/foreign/ambiguous recovery
+evidence require truthful safe refusal under
+[the public protocol](API_CONTRACTS.md). Preserve exact application bytes,
+modes, links, owner records and transaction evidence. Age, PID death or matching
+bytes never authorize takeover. A read-only observation makes no stronger
+hostile-race/linearizability promise than the frozen trusted-local threat model.
+
+The approved repair is fail-closed inspection, not automatic no-change cleanup.
+Genuine writes retain full coordinated recovery and live revalidation. No
+recover/force command, fake metadata write, component request invented to trigger
+cleanup, or stale-lock reclamation is added. If later evidence requires a
+different cleanup boundary, amend its contract before implementing coordinated
+recovery and fresh planning. Qualify all commands/mappings with real process
+interruption, post-crash edits, committed cleanup, malformed evidence and exact
+tree-preservation controls. Reverting the inspection in an owned copy must
+reproduce the original silent-success defect. Existing whole-journal safety and
+publication tests remain required.
+
 #### Resource and error handling
 
 Bound parsing and diagnostics sensibly to the packaged local asset model; validate before allocating or writing large user-controlled structures. Prefer a single serialized writer rather than unnecessary parallel mutation. Propagate filesystem and parser errors with context, close handles, clean only owned temporary files, and retain recovery evidence when cleanup cannot safely finish.

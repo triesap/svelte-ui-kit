@@ -6,8 +6,10 @@
  * a *fixture-owned* scenario: the checkpoint ledger, sequence states, summary
  * counts and synthetic `checkpoint-evidence` records are normalised to an
  * explicit lifecycle state, and completion hashes come only from the fixture's
- * own temporary Git history. The live checkout's progress, its Git objects and
- * its real checkpoint commits are never imported. Future product build output is
+ * own temporary Git history. Linked guidance/source inputs are copied as inert
+ * data; live checkpoint authority records are removed before fixture-owned
+ * records are generated. Live progress, Git objects and real checkpoint
+ * authority are never imported. Future product build output is
  * never copied because every fixture input is named in `FIXTURE_FILES`.
  *
  * This module is shared by `check-contracts.test.mjs` and by the isolated
@@ -39,8 +41,9 @@ export const SOURCES_JSON_REL = "references/SOURCES.json";
 /**
  * The complete allowlist of fixture inputs: the 27 approved contracts, the
  * governing plan, both derived projections, the package manifest and the
- * accepted-evidence qualification and exact catalog provenance/worksheets linked
- * by the adopted specification. Nothing
+ * accepted-evidence qualification, exact catalog provenance/worksheets and
+ * current guidance's linked source/evidence inputs. Source files are inert
+ * link targets, never executed as fixture product code. Nothing
  * else is copied, so no authoring checkout state or future build artifact can
  * leak into a fixture.
  */
@@ -51,6 +54,96 @@ export const FIXTURE_FILES = [
   SOURCES_JSON_REL,
   "package.json",
   "LICENSE-MIT",
+  "NOTICE.md",
+  "README.md",
+  "implementation/TRACEABILITY.md",
+  "implementation/evidence/ACCESSIBILITY.md",
+  "implementation/evidence/COMMANDS.md",
+  "implementation/evidence/COMPATIBILITY.md",
+  "implementation/evidence/PLATFORMS.md",
+  "implementation/evidence/RCLD-06_QUALIFICATION.md",
+  "implementation/evidence/RCLD-07_QUALIFICATION.md",
+  "implementation/evidence/RCLD-08_QUALIFICATION.md",
+  "implementation/evidence/S185_REPORT.md",
+  "implementation/evidence/S189_REPORT.md",
+  "implementation/evidence/S190_REPORT.md",
+  "implementation/evidence/S193_REPORT.md",
+  "implementation/evidence/S194_REPORT.md",
+  "implementation/evidence/S195_REPORT.md",
+  "implementation/evidence/S196_REPORT.md",
+  "implementation/evidence/S196_STRICT_ASSESSMENT.md",
+  "implementation/evidence/S197_REPORT.md",
+  "implementation/evidence/S199_REPORT.md",
+  "implementation/evidence/S201_BLOCKER.md",
+  "registry/ui/alert-dialog/root.svelte",
+  "registry/ui/router-link.svelte",
+  "schema/v1/kit.schema.json",
+  "src/cli/commands/doctor.ts",
+  "src/cli/main.ts",
+  "src/codegen/apply.ts",
+  "src/codegen/cohorts.ts",
+  "src/codegen/css-parse.ts",
+  "src/codegen/exports.ts",
+  "src/codegen/plan.ts",
+  "src/codegen/svelte-parse.ts",
+  "src/project/config.ts",
+  "src/project/requests.ts",
+  "src/registry/assets.ts",
+  "src/registry/dependency-plan.ts",
+  "src/registry/versions.ts",
+  "tests/browser/accessibility-states.spec.ts",
+  "tests/browser/alert-dialog-interactions.spec.ts",
+  "tests/browser/catalog-hydration.spec.ts",
+  "tests/browser/catalog-themes.spec.ts",
+  "tests/browser/collapsible-csp.spec.ts",
+  "tests/browser/composition-examples.spec.ts",
+  "tests/browser/css-contracts.spec.ts",
+  "tests/browser/dialog-themes.spec.ts",
+  "tests/browser/forms-composition.spec.ts",
+  "tests/browser/menu-csp.spec.ts",
+  "tests/browser/overlay-composition.spec.ts",
+  "tests/components/strict-declaration.test.ts",
+  "tests/fixtures/consumer/package.json",
+  "tests/fixtures/qualification/composition-examples/+page.svelte",
+  "tests/helpers/consumer-graph.ts",
+  "tests/helpers/generated-consumer.ts",
+  "tests/helpers/tree-snapshot.ts",
+  "tests/integration/catalog-retirement.test.ts",
+  "tests/integration/clean-retirement-warning.test.ts",
+  "tests/integration/cleanup-restart-matrix.test.ts",
+  "tests/integration/compound-exports.test.ts",
+  "tests/integration/css-patch.test.ts",
+  "tests/integration/dependency-instructions.test.ts",
+  "tests/integration/dependency-state.test.ts",
+  "tests/integration/docs-recovery.test.ts",
+  "tests/integration/docs-upgrade.test.ts",
+  "tests/integration/doctor-customization.test.ts",
+  "tests/integration/documented-workflow.test.ts",
+  "tests/integration/filesystem-paths.test.ts",
+  "tests/integration/identity-ssr.test.ts",
+  "tests/integration/layout-matrix.test.ts",
+  "tests/integration/plan-retirement.test.ts",
+  "tests/integration/recovery-published.test.ts",
+  "tests/integration/root-exports.test.ts",
+  "tests/integration/schema-versions.test.ts",
+  "tests/integration/source-retirement.test.ts",
+  "tests/integration/transaction-processes.test.ts",
+  "tests/integration/transaction-safety.test.ts",
+  "tests/package/generated-consumer.test.ts",
+  "tests/package/installed-runtime.test.ts",
+  "tests/package/inventory.test.ts",
+  "tests/package/metadata.test.ts",
+  "tests/registry/catalog-parity.test.ts",
+  "tests/registry/css-contract-coverage.test.ts",
+  "tests/registry/public-exports.test.ts",
+  "tests/registry/targets.test.ts",
+  "tests/registry/token-contract.test.ts",
+  "tests/smoke/cli-bootstrap.test.mjs",
+  "tests/unit/cohorts.test.ts",
+  "tests/unit/config.test.ts",
+  "tests/unit/css-compare.test.ts",
+  "tests/unit/source-compare.test.ts",
+  "tools/check-contracts.test.mjs",
   "implementation/evidence/RCLD-03_QUALIFICATION.md",
   "implementation/evidence/RCLD-09_QUALIFICATION.md",
   "implementation/evidence/RCLD-10_QUALIFICATION.md",
@@ -587,6 +680,15 @@ function copyFixtureInputs(sourceRoot, dir) {
     const dest = path.join(dir, rel);
     mkdirSync(path.dirname(dest), { recursive: true });
     cpSync(src, dest);
+    if (/^implementation\/evidence\/S\d{3}_(REPORT|REVIEW)\.md$/.test(rel)) {
+      // Linked historical prose is fixture input, not live checkpoint authority.
+      // Scenario construction below writes its own required records/hashes.
+      const prose = readFileSync(dest, "utf8").replace(
+        /<!--\s*checkpoint-evidence\b[\s\S]*?-->\n?/g,
+        "",
+      );
+      writeFileSync(dest, prose);
+    }
   }
 }
 

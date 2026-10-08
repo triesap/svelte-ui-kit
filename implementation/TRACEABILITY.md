@@ -2,13 +2,13 @@
 
 This map supplements the [live ledger](COMMIT_SEQUENCE.md); it grants no
 acceptance and changes no original requirement. S001–S193 are independently
-accepted at the recorded sequence anchors. S194–S199 are candidates and S200
-is active. Final cumulative qualification and separate S203 acceptance remain
+accepted at the recorded sequence anchors. S194–S200 are candidates and S201
+is blocked by its raw strict prerequisite. Final cumulative qualification and separate S203 acceptance remain
 open. Links identify actual maintained implementation/tests or recorded evidence;
 they are not claims that every suite was freshly rerun at this checkpoint.
 
 The [RCLD-10 qualification](evidence/RCLD-10_QUALIFICATION.md) distinguishes
-fresh acceptance runs from unchanged historical lanes. S194–S199 reports record
+fresh acceptance runs from unchanged historical lanes. S194–S200 reports record
 new local package, metadata, operational and example checks. The
 [compatibility record](evidence/COMPATIBILITY.md) bounds Node/pnpm/Svelte/Bits,
 Chromium/macOS/Linux coverage and unexecuted CI. Raw full library checking still
@@ -70,8 +70,8 @@ no final checkpoint. Qualified exception controls do not satisfy final AC20.
 | AC09 | [Layout matrix](../tests/integration/layout-matrix.test.ts), [root exports](../tests/integration/root-exports.test.ts), [CSS patches](../tests/integration/css-patch.test.ts)                   | Structural parsing/authority and unmanaged preservation qualified.                                               |
 | AC10 | [Dependency state](../tests/integration/dependency-state.test.ts), [schema versions](../tests/integration/schema-versions.test.ts)                                                              | Actual dependency evidence and fail-closed schema/migration qualification.                                       |
 | AC11 | [Filesystem paths](../tests/integration/filesystem-paths.test.ts), [platform record](evidence/S193_REPORT.md)                                                                                   | macOS/Linux safety lanes qualified; Windows/hostile races unsupported.                                           |
-| AC12 | [Real process tests](../tests/integration/transaction-processes.test.ts), [recovery examples](../tests/integration/docs-recovery.test.ts)                                                       | Contention, actual SIGKILL, edits and corrupt-state refusal qualified.                                           |
-| AC13 | [Cleanup restart matrix](../tests/integration/cleanup-restart-matrix.test.ts), [published recovery](../tests/integration/recovery-published.test.ts)                                            | Lock-last publication and recovery-aware cleanup qualified.                                                      |
+| AC12 | [Real process tests](../tests/integration/transaction-processes.test.ts), [recovery examples](../tests/integration/docs-recovery.test.ts)                                                       | Prior recovery qualified; no-change refusal remains open under R11-F03.                                          |
+| AC13 | [Cleanup restart matrix](../tests/integration/cleanup-restart-matrix.test.ts), [published recovery](../tests/integration/recovery-published.test.ts)                                            | Lock-last recovery qualified; unchanged pending-state inspection remains open.                                   |
 | AC14 | [Catalog parity](../tests/registry/catalog-parity.test.ts), [catalog maps](../specs/COMPONENT_CATALOG.md)                                                                                       | Original source mappings qualified; identity is native, Alert Dialog distinct.                                   |
 | AC15 | [Native type fixtures](../tests/components/strict-declaration.test.ts), [strict assessment](evidence/S196_STRICT_ASSESSMENT.md)                                                                 | Wrapper types qualified; raw upstream declaration debt open.                                                     |
 | AC16 | [Forms composition](../tests/browser/forms-composition.spec.ts), [overlay composition](../tests/browser/overlay-composition.spec.ts), [examples](../tests/browser/composition-examples.spec.ts) | Chromium interaction/semantic qualification; final cumulative rerun pending.                                     |
@@ -79,10 +79,23 @@ no final checkpoint. Qualified exception controls do not satisfy final AC20.
 | AC18 | [CSS contracts](../tests/browser/css-contracts.spec.ts), [accessibility](../tests/browser/accessibility-states.spec.ts), [S185](evidence/S185_REPORT.md)                                        | Computed CSS qualified; baseline nontext contrast concerns remain documented.                                    |
 | AC19 | [Theme browsers](../tests/browser/catalog-themes.spec.ts), [CSP](../tests/browser/menu-csp.spec.ts), [S199](evidence/S199_REPORT.md)                                                            | Portal/live theme and bounded CSP qualification; no zero-inline guarantee.                                       |
 | AC20 | [Strict assessment](evidence/S196_STRICT_ASSESSMENT.md), [compatibility](evidence/COMPATIBILITY.md), [verification policy](VERIFICATION.md)                                                     | BLOCKED: two raw upstream TS2590 errors; final cumulative qualification and separate acceptance open. No waiver. |
-| AC21 | [Live ledger](COMMIT_SEQUENCE.md), [operations](OPERATIONS_RUNBOOK.md), [command map](evidence/COMMANDS.md), [S199](evidence/S199_REPORT.md)                                                    | S001–S193 accepted; current final-sequence candidates and S200–S203 work remain unaccepted.                      |
+| AC21 | [Live ledger](COMMIT_SEQUENCE.md), [operations](OPERATIONS_RUNBOOK.md), [command map](evidence/COMMANDS.md), [S199](evidence/S199_REPORT.md)                                                    | S001–S193 accepted; current final-sequence candidates and S201–S203 work remain unaccepted.                      |
 | AC22 | [Extension gate](EXTENSION_GATE.md), [open questions](OPEN_QUESTIONS.md)                                                                                                                        | Direction documented; no unspecified APIs implemented. S202 and final gate pending.                              |
 
+The [fresh S201 blocker](evidence/S201_BLOCKER.md) records the actual failed
+raw strict prerequisite and all remaining cumulative obligations. S202/S203
+remain dependent; no final acceptance or successful cumulative pass is claimed.
+
 ## Deviations and unresolved boundaries
+
+The owner approved [R11-F01–R11-F06 in the sole governing plan](COMMIT_SEQUENCE.md)
+on 2026-10-08: strict native diagnosis/resolution with a qualified source-fix
+fallback, unchanged-command transaction inspection, full-suite CI, current
+guidance/boundary dispositions and cumulative S201 qualification. Original
+S202/S203 and separate final acceptance remain dependent. These are specified
+repairs, not implemented fixes or acceptance evidence. AC12/AC13's prior
+transaction qualification does not close the newly observed no-change bypass;
+its missing refusal controls remain an explicit R11-F03 obligation.
 
 The ledger's approved source interpretations and historical repair dispositions
 remain authoritative. Authenticated export authority, lexical render proof,

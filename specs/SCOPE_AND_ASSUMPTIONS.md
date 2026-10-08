@@ -32,6 +32,37 @@ The first two stages have concrete product scope and form this specification's c
 
 The original `identity` entry describes a Leptos requirement. In the port, preserve stable identity semantics using Svelte/Bits mechanisms, not a cargo-style identity component. Whether there is any useful generated `identity` item is decided by a parity worksheet; do not ship an empty compatibility shim. `router-link` remains optional to install but its thin documented recipe is part of catalog adaptation.
 
+#### Approved completion amendment — 2026-10-08
+
+The owner approved all final-completion review recommendations. The ordered
+repair slices in [the governing RCLD](../implementation/COMMIT_SEQUENCE.md)
+implement this amendment within RCLD-11 before original S201 completion. Original
+S001–S203 identities/definitions, accepted history, dependencies, acceptance
+criteria, separate S203 review and the gated extension boundary remain intact.
+
+Prefer a supported released native package/toolchain that passes actual
+`skipLibCheck: false` checking with zero errors/warnings. If no such combination
+is established, a minimal source-level fix in an isolated owned copy is approved
+as a fallback, conditional on authentic emitted declarations, preserved native
+type/API/runtime contracts and full qualification. The reference source remains
+read-only. No installed declaration/package-store patches, type facade, hidden
+imports, suppressions, SSR disabling or fabricated upstream release qualify.
+Record actual base revision, patch, toolchain, distinct build identity, licensing
+and archive digest. A selected fallback must ship reproducibly through the local
+CLI artifact and explicit application-owned local-file dependency setup without
+requiring publication or the authoring tree. Generated archives/build outputs
+are not committed. Any necessary wire metadata change must be specified,
+versioned and migration-tested before adoption; scope approval does not choose
+a particular artifact or prove compatibility.
+
+The no-change safety repair uses read-only inspection and truthful fail-closed
+diagnostics for unresolved coordination or recovery. It adds no recovery/force
+command, implicit cleanup or synthetic write. Existing guarded recovery applies
+to genuine writes. Full acceptance suites, including the complete configured
+Chromium lane, must be represented in isolated, reliably bounded CI jobs and
+executed locally. Remote execution remains separately authorized and unclaimed.
+These policy choices are resolved; technical discovery remains Codex-owned.
+
 #### Technical choices vs product changes
 
 Agents may resolve exact type names already defined by a pinned primitive, choose an existing repository script, or select an appropriate parser after inspecting evidence. They must record the result at the scheduled contract step. They may not add a runtime component package, remote registries, broad polymorphism, automatic merging, dependency mutation, or extra components under that authority.
@@ -40,10 +71,14 @@ A repository-proven obsolete/unsafe plan step needs a deviation record before ex
 
 #### Checkpoint completion and review authority
 
-Pi authors implementation and corrections and self-reviews within the dispatched
-checkpoint; Codex independently verifies, accepts and commits. A checkpoint
-reported by Pi stays `in_progress` until Codex assigns `verified_uncommitted`
-and then `complete`. Completion evidence uses one structured
+Since the owner transfer on 2026-10-07, Codex authors implementation and
+corrections, verifies and self-reviews candidates, and commits within the active
+authorization. A separate reviewer performs independent acceptance at the
+mandatory sequence gates. Historical Pi-only author/Codex-review roles remain
+provenance, not current execution authority. Candidates stay `in_progress` or
+the authorized `committed_pending_review` state until actual independent
+acceptance; only valid evidence permits `verified_uncommitted` and `complete`
+transitions. Completion evidence uses one structured
 `checkpoint-evidence` record in `implementation/evidence/<ID>_REPORT.md` and
 `<ID>_REVIEW.md`, always with schema version 1 and exactly
 `schemaVersion`, `checkpoint`, `kind`, `commit`, `disposition`. The lifecycle is
@@ -57,5 +92,6 @@ records are rejected in every state; an absent optional record is not
 malformed. `steps[].completion`
 stays null until `complete`, and only committed completion unlocks a successor.
 An `not_applicable` status fails closed unless a separately approved,
-evidence-backed deviation exists; none does at S002. Pi must never manufacture
-review acceptance or a commit hash.
+evidence-backed deviation exists; none does at S002. No implementing agent may
+manufacture independent review acceptance or a commit hash. See the governing
+RCLD for the approved batch's pending-review records and predecessor rules.

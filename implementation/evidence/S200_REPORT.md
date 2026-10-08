@@ -1,7 +1,11 @@
 # S200 implementation report — current guidance and evidence traceability
 
 Author: Codex. Candidate; separate final S203 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `c1a2b3321c64b8e39006e00e0abcc307222fcbf8`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S200","kind":"report","commit":"c1a2b3321c64b8e39006e00e0abcc307222fcbf8","disposition":"candidate"}
+-->
 
 AGENTS now reflects actual CLI/project/registry/codegen responsibilities,
 accepted versus candidate progress, supported source/platform boundaries,

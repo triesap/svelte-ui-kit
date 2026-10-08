@@ -67,12 +67,24 @@ shared compiler, package or fixture writers.
 It checks out full history, sets up pnpm `11.22.0` and Node `24.21.0`, then runs
 the frozen strict install, installs bundled Chromium with system dependencies,
 and runs the format, lint, typecheck, unit, harness, integration, components,
-registry, selected packed inventory, CLI smoke, consumer check, consumer SSR,
+registry, the full package suite, CLI smoke, consumer check, consumer SSR,
 selected browser harness, contract-validation and contract-test lanes. The
-configured package/browser selectors do not execute the full corresponding
-local suites. Their 30-minute job limit is configuration, not demonstrated
+configured browser selector does not execute the full local browser suite;
+the package step already runs its full suite despite its inventory label.
+The 30-minute job limit is configuration, not demonstrated
 cumulative runtime qualification; full local integration/browser lanes alone
 have exceeded 20 minutes each. Do not claim CI passed from this file.
+
+The owner-approved 2026-10-08 completion amendment requires R11-F04 to replace
+this partial browser/serial-budget setup with full acceptance-suite coverage,
+isolated jobs and defensible bounded timeouts. That workflow repair has not yet
+been implemented. Until it is, this section describes actual current CI rather
+than the approved future configuration. See
+[the governing RCLD](../COMMIT_SEQUENCE.md) and
+[current verification requirements](../VERIFICATION.md). Native source-fix
+delivery, if selected after strict qualification, additionally requires explicit
+application-owned archive installation and reproducible dependency instructions;
+no such artifact is currently selected or claimed available.
 
 Actions are pinned to immutable revisions:
 
