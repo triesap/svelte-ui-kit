@@ -1,4 +1,55 @@
-# Dependency compatibility evidence — S003
+# Dependency compatibility evidence
+
+## S196 selected release metadata candidate
+
+The installed-package baseline is Node `24.21.0`, pnpm `11.22.0`, Svelte
+`5.57.1`, Bits UI `2.19.3`, date `3.12.4`, TypeScript `6.0.3`, svelte-check
+`4.7.6`, SvelteKit `2.70.3`, Vite `8.3.1` and csstype `3.1.3`. Registry
+compatibility declares the exact tested application pins rather than a new
+major-version support range. S194/S195 installed real local
+tarballs; both complete-catalog application layouts passed ordinary check,
+production build, SSR, ownership transitions and Chromium qualification.
+These are implementation results pending the separate final S203 gate.
+
+Package `engines.node` is now `>=24.21.0 <25`, replacing the earlier open-ended
+`>=24` declaration. Only Node `24.21.0` has executed the qualification. The engine
+admits subsequent Node 24 updates without advertising untested Node 25+ majors;
+every additional qualification must retain its actual version and evidence.
+ESM, the executable `dist/cli/main.js`, the product name and dual-license
+declaration remain unchanged. The package remains private and unpublished.
+
+CLI dependencies are Ajv, semver, Svelte's parser and TypeScript's parser.
+Application runtime dependencies are Svelte, Bits UI and its required date peer;
+the application explicitly installs them. Application framework/build/check
+tools are declared separately. Generated source has no kit runtime or CLI peer
+dependency. See [source and dependency notices](../../NOTICE.md). The original
+reference license files are byte-identical to the included dual-license texts.
+
+The npm registry lookup on 2026-10-08 for the exact name `svelte-ui-kit` returned
+`ERR_PNPM_FETCH_404` from `https://registry.npmjs.org/svelte-ui-kit`.
+No existing registration was observed; this neither reserves the name nor proves
+that a publisher may use it. Recheck the name and publisher authority before any
+separately authorized publication. Do not silently rename the product. The exact
+response is retained as `implementation/evidence/logs/s196-name-registry.json`.
+
+Raw strict declaration checking remains blocked by two native Bits TS2590
+diagnostics; ordinary `skipLibCheck: true` checks do not count as a raw strict
+pass. Owned strict checks reproduced the errors with the current baseline,
+TypeScript `5.9.3`, Bits `2.19.5`, and the native producer's Svelte `5.46.4`
+with both TypeScript versions. TypeScript `5.8.3` and stricter exact-optional
+checking also reproduce the same two errors. None of those failed alternatives
+was adopted.
+Full transcripts and installed versions are retained under
+`implementation/evidence/logs/s196-strict-probes`. Final AC20 remains open;
+no declaration suppression, package patch, type weakening or criterion waiver
+is authorized by this metadata checkpoint.
+
+macOS arm64 is the full local application/browser baseline. Linux arm64 has the
+separate S193 safety qualification and RCLD-10 current repair checks; remote
+Ubuntu CI is configured but has not executed here. Chromium is the qualified
+browser. Windows transaction paths are explicitly unsupported and refused;
+Firefox/WebKit, arbitrary themes and screen-reader speech are unqualified.
+Historical sections below preserve their own versions, dates and limits.
 
 ## S190 complete-catalog layout qualification candidate
 

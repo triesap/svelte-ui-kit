@@ -117,6 +117,7 @@ export function installIndependentCli() {
       "README.md",
       "CONTRIBUTING.md",
       "CHANGELOG.md",
+      "NOTICE.md",
       "LICENSE-MIT",
       "LICENSE-APACHE",
     ])

@@ -1,7 +1,11 @@
 # S195 implementation report — packed complete-catalog consumer
 
 Author: Codex. Candidate; separate final S203 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `2aeec283befbb9380a53898e2ad2b8874218f71b`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S195","kind":"report","commit":"2aeec283befbb9380a53898e2ad2b8874218f71b","disposition":"candidate"}
+-->
 
 `tests/helpers/packaged-consumer.ts` uses the actual isolated build, pack and
 offline installation from S194. Each default/custom application explicitly
