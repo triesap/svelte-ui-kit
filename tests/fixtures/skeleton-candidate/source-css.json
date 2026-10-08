@@ -1,0 +1,29 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "29a902c1375e0df1cebe6e074303de3e69a39263d3346659c7ab6a05a675e896"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-skeleton"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "block"
+        },
+        {
+          "property": "min-block-size",
+          "value": "1rem"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-skeleton-radius,\n    var(--kit-radius-surface, var(--kit-radius-default, var(--kit-radius-sm)))\n  )"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-color-surface-hover)"
+        }
+      ]
+    }
+  ]
+}

@@ -1,7 +1,11 @@
 # S176 step report — Freeze Skeleton empty decorative semantics
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `25e81435c79bd5842b4c825fe5ae8988732b6ea9`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S176","kind":"report","commit":"25e81435c79bd5842b4c825fe5ae8988732b6ea9","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R25, R26, R32, R33, R34.
 Starting `02b5bd521081052f5947499e82ade9d4e0c373b1` on `master`.

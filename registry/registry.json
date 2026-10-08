@@ -19,11 +19,12 @@
     { "id": "radio", "manifest": "ui/radio.json" },
     { "id": "router-link", "manifest": "ui/router-link.json" },
     { "id": "separator", "manifest": "ui/separator.json" },
+    { "id": "skeleton", "manifest": "ui/skeleton.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
     { "id": "status", "manifest": "ui/status.json" },
     { "id": "switch", "manifest": "ui/switch.json" },
     { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "75aa75b177109a021c272a01d5a433e08b3970e7a3f253e11d1f943bf3d056ae"
+  "contentHash": "0136f8bf0f31c96fef441d517bb9105e9530ef3f7e6f7bf1b5a70d84acd53c73"
 }

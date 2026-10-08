@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "skeleton",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Empty native decorative loading placeholder with source surface and radius styles.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/skeleton.svelte",
+      "target": "skeleton.svelte",
+      "kind": "svelte",
+      "cohort": "skeleton"
+    },
+    {
+      "source": "ui/skeleton.types.ts",
+      "target": "skeleton.types.ts",
+      "kind": "typescript",
+      "cohort": "skeleton"
+    }
+  ],
+  "exports": [
+    {
+      "name": "Skeleton",
+      "target": "skeleton.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "SkeletonProps",
+      "target": "skeleton.types.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/skeleton.css",
+      "target": "kit.css",
+      "blockId": "skeleton",
+      "cohort": "skeleton"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [],
+  "accessibility": {
+    "requiredNames": [],
+    "keyboard": [],
+    "focus": [],
+    "form": [],
+    "tests": ["skeleton-types", "skeleton-css", "skeleton-install", "skeleton"]
+  }
+}
