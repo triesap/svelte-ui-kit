@@ -8,7 +8,8 @@ The generator implements `info`, `init`, `view`, `add`, `sync` and `doctor`, wit
 read-only planning and guarded recoverable application. The package is private
 and unpublished. The shipped registry includes the CSS-only `tokens` foundation,
 native `spinner`/`button`, primitive-backed `switch` and the complete compound
-`dialog` family; component items are still being qualified.
+`dialog` family. This core has passed separate independent review; the remaining
+catalog is still being implemented and qualified.
 Tokens installs independent token, component-customization and theme-integration
 metadata under the configured UI state directory, with normal lock baselines.
 Representative synthetic registries qualify source/CSS updates, retirement,
@@ -47,8 +48,8 @@ together through the built executable and a real locally installed tarball.
 Default/custom source layouts are compiled, built, server-rendered and exercised
 in Chromium. Owned synthetic package revisions qualify safe upgrades and atomic
 cohort-conflict refusal while preserving application customization. These checks
-are candidate evidence for the independent core review, rather than a published
-release or final platform/package acceptance.
+passed [independent core review](implementation/evidence/RCLD-06_QUALIFICATION.md).
+The package remains unpublished; final platform/package acceptance is open.
 
 ## Use the local built CLI
 

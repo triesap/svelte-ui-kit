@@ -1,10 +1,11 @@
 # S102 step report — Exact pinned Switch composition contract
 
-Author: Codex. Candidate; independent S115 acceptance remains pending.
-Original criteria and accepted S001–S091 remain unchanged.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `bf6813c1d38924300cd2a5732fcac7d70cc9c748`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S102","kind":"report","commit":"bf6813c1d38924300cd2a5732fcac7d70cc9c748","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S102","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 SwitchProps derives directly from public Bits Switch.RootProps, omitting only

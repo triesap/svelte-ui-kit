@@ -1,9 +1,11 @@
 # S111 step report — Complete installable Dialog cohort
 
-Author: Codex. Candidate; independent S115 acceptance remains pending.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `407b54123629f2dc32c430e6b12a5b9d885f95f2`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S111","kind":"report","commit":"407b54123629f2dc32c430e6b12a5b9d885f95f2","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S111","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 The advertised dialog item owns all eight parts, shared Props types and one

@@ -1,10 +1,11 @@
 # S103 step report — Real pinned Bits Switch source installation
 
-Author: Codex. Candidate; independent S115 acceptance remains pending.
-Original checkpoint criteria and accepted S001–S091 remain preserved.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `67b8a83f2978410d8e00092b5ca0e104147f8f5d`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S103","kind":"report","commit":"67b8a83f2978410d8e00092b5ca0e104147f8f5d","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S103","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 The native target wrapper imports actual Bits Switch Root/Thumb, binds checked

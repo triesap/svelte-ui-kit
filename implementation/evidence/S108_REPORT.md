@@ -1,9 +1,11 @@
 # S108 step report — Native Content forwarding
 
-Author: Codex. Candidate; independent S115 acceptance remains pending.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `182fddf63e6b5d40abfd7315bb0b8bdeb34e8d14`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S108","kind":"report","commit":"182fddf63e6b5d40abfd7315bb0b8bdeb34e8d14","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S108","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 Content forwards the exact public pinned Props to the actual Bits part, explicitly

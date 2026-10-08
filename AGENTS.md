@@ -31,7 +31,9 @@ references.
   committed review evidence at `fd1d0938d9ad188c5646c153b76fa2989438c727`.
   The separate reviewer accepted S078–S091 on `dbd5490`, with evidence at
   `c6aaf147dbf6316a96420fd5136a717f3665f711`. After the atomic transition,
-  S092–S115/RCLD-06 is current under `pfc all`; separate S115 acceptance gates S116.
+  S092–S115/RCLD-06 is accepted on `5c235ee`, with independent review evidence at
+  `6e087c10b441712d82c70230c3db7f8490ea787f`. S116–S128/RCLD-07 is current
+  under `pfc all`; separate S128 acceptance gates S129.
   Earlier RCLD-04 finding paragraphs below are historical and resolved by
   `implementation/evidence/RCLD-04_QUALIFICATION.md`. No new owner dispatch is
   required. Full MVP and later platform/package/AC20 acceptance remain open.

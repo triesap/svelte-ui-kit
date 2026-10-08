@@ -1,9 +1,11 @@
 # S109 step report — Native labeling, optional description and Close
 
-Author: Codex. Candidate; independent S115 acceptance remains pending.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `11705ea18063e6b5b6208697af6c1df06109a2c1`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S109","kind":"report","commit":"11705ea18063e6b5b6208697af6c1df06109a2c1","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S109","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 Title, Description and Close bind exact pinned refs and preserve classes, native

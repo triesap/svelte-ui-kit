@@ -1,9 +1,11 @@
 # S113 step report — Real portal theme scopes
 
-Author: Codex. Candidate; independent S115 acceptance remains pending.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `dec0170a298938a05f4d26085564e12ba817e4f3`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S113","kind":"report","commit":"dec0170a298938a05f4d26085564e12ba817e4f3","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S113","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 Default/custom actual CLI-installed production applications prove document-level

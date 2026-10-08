@@ -61,7 +61,7 @@ for (const seq of EXPECTED_SEQUENCES) {
 }
 
 /**
- * The three approved owner-authorized batch tuples. A fixture explicitly sets
+ * The approved owner-authorized batch tuples. A fixture explicitly sets
  * the batch record its scenario needs instead of inheriting whatever live
  * record the copied governing document currently carries, so historical
  * RCLD-01/RCLD-02 fixtures stay valid after the live payload transitions to
@@ -117,6 +117,15 @@ export const BATCH_RCLD06 = {
   sequence: "RCLD-06",
   first: "S092",
   last: "S115",
+  mode: "pfc",
+  review: "codex-after-sequence",
+};
+
+export const BATCH_RCLD07 = {
+  schemaVersion: 1,
+  sequence: "RCLD-07",
+  first: "S116",
+  last: "S128",
   mode: "pfc",
   review: "codex-after-sequence",
 };
@@ -247,6 +256,13 @@ export const SCENARIOS = {
     accepted: [],
     pendingReview: EXPECTED_STEP_IDS.slice(91, 115),
     batch: BATCH_RCLD06,
+  },
+  rcld07All: {
+    complete: EXPECTED_STEP_IDS.slice(0, 115),
+    candidates: [],
+    accepted: [],
+    pendingReview: EXPECTED_STEP_IDS.slice(115, 128),
+    batch: BATCH_RCLD07,
   },
   rcld04Last: {
     complete: EXPECTED_STEP_IDS.slice(0, 76),

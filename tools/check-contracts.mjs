@@ -69,13 +69,13 @@ export const BATCH_KEYS = [
 ];
 
 /**
- * The six owner-authorized batch tuples. `committed_pending_review` is legal
+ * The seven owner-authorized batch tuples. `committed_pending_review` is legal
  * only for exactly one of these ranges; there is deliberately no general
  * policy engine or free-form bypass. A live record must match one tuple
  * exactly, and the plan may carry only one live record at a time. The
  * historical RCLD-01, RCLD-02 and RCLD-03 tuples stay approved so historical
  * fixtures and their accepted batch evidence remain valid; the current live
- * payload is the RCLD-06 tuple after independent RCLD-05 acceptance.
+ * payload is the RCLD-07 tuple after independent RCLD-06 acceptance.
  */
 export const AUTHORIZED_BATCHES = [
   {
@@ -123,6 +123,14 @@ export const AUTHORIZED_BATCHES = [
     sequence: "RCLD-06",
     first: "S092",
     last: "S115",
+    mode: "pfc",
+    review: "codex-after-sequence",
+  },
+  {
+    schemaVersion: BATCH_SCHEMA_VERSION,
+    sequence: "RCLD-07",
+    first: "S116",
+    last: "S128",
     mode: "pfc",
     review: "codex-after-sequence",
   },

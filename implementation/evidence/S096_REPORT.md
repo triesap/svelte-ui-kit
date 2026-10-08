@@ -1,10 +1,11 @@
 # S096 step report — Native Spinner API contract
 
-Author: Codex. Candidate; separate S115 acceptance remains pending.
-Previously accepted S001–S091 and original checkpoint criteria are preserved.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `67fb2e7f7b87427b9be23566f46c15e83b93fe59`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S096","kind":"report","commit":"67fb2e7f7b87427b9be23566f46c15e83b93fe59","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S096","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 The immutable source component/CSS mapping freezes public Spinner,

@@ -1,6 +1,8 @@
 # S115 step report — Complete installed and packed core workflow
 
-Author: Codex. Candidate; independent S115 acceptance remains pending.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `c94ea07133c42e98033eb8db02e9e9067ae2a415`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 Independent return review requested native form reassociation and tree-local
 Dialog description repairs. See [RCLD06_R1_REPAIR.md](RCLD06_R1_REPAIR.md) for
@@ -8,7 +10,7 @@ the repaired candidate and fresh owning checks. The full totals below belong to
 the preceding candidate; no independent acceptance is inferred from them.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S115","kind":"report","commit":"c94ea07133c42e98033eb8db02e9e9067ae2a415","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S115","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 Five actual registry items are explicitly installed through the built CLI in

@@ -1,9 +1,11 @@
 # S106 step report — Actual candidate Root and Trigger
 
-Author: Codex. Candidate; independent S115 acceptance remains pending.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `45eeeed775d5397329e5a5aff743c4d7b61e9173`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S106","kind":"report","commit":"45eeeed775d5397329e5a5aff743c4d7b61e9173","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S106","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 Actual candidate wrappers import pinned public Bits Dialog parts and exact Props.

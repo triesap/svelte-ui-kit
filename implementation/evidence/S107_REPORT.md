@@ -1,9 +1,11 @@
 # S107 step report — Explicit native Portal and Overlay
 
-Author: Codex. Candidate; independent S115 acceptance remains pending.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `dcb754aa0e9302e08587dd3d88acae17c5c644c0`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S107","kind":"report","commit":"dcb754aa0e9302e08587dd3d88acae17c5c644c0","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S107","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 Portal forwards the exact pinned to/disabled/children API without aliases,

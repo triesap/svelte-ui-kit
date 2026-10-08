@@ -1,10 +1,11 @@
 # S100 step report — Installable native Button and composed CSS
 
-Author: Codex. Candidate; mandatory independent S115 acceptance remains pending.
-Original checkpoint criteria and accepted S001–S091 remain preserved.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `77462f798ffc8949d215da6c2ac2e90fc9d659e3`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S100","kind":"report","commit":"77462f798ffc8949d215da6c2ac2e90fc9d659e3","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S100","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 Native Button forwards actual button attributes/events, combines caller and

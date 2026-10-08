@@ -1,9 +1,11 @@
 # S112 step report — Installed Dialog interactions
 
-Author: Codex. Candidate; independent S115 acceptance remains pending.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `c7fb18429f09d2c5bf5210962e366db51a78a0a5`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S112","kind":"report","commit":"c7fb18429f09d2c5bf5210962e366db51a78a0a5","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S112","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 Actual built CLI default/custom applications exercise the installed eight-part

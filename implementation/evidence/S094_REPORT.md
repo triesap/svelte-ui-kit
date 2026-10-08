@@ -1,10 +1,11 @@
 # S094 step report — Authenticated token and theme metadata
 
-Author: Codex. Candidate; separate S115 acceptance remains required.
-Previously accepted S001–S091 and original checkpoint definitions are preserved.
+Author: Codex. Independently accepted on repaired code `5c235eed860667d030c4f36e805d04f0acd2e91d` at evidence `6e087c10b441712d82c70230c3db7f8490ea787f`.
+Original implementation commit: `3fa3411ee14fecaf78c0ccb89cb79bcc14cddb9c`. Earlier candidate
+reporting below is retained as historical implementation provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S094","kind":"report","commit":"3fa3411ee14fecaf78c0ccb89cb79bcc14cddb9c","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S094","kind":"report","commit":"6e087c10b441712d82c70230c3db7f8490ea787f","disposition":"implemented"}
 -->
 
 The CSS-only tokens manifest explicitly references the independent semantic and
