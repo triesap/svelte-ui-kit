@@ -56,6 +56,7 @@ import {
   BATCH_RCLD08,
   BATCH_RCLD09,
   BATCH_RCLD10,
+  BATCH_RCLD11,
 } from "./check-contracts.fixtures.mjs";
 import {
   computeFenceMask,
@@ -3220,5 +3221,59 @@ test("S182 cannot advance while S181 is only pending independent review", () => 
       assert.match(result.output, /PREMATURE_ADVANCEMENT/);
     },
     { scenario: "rcld09All" },
+  );
+});
+
+test("RCLD-11 authorizes exactly final packed acceptance after accepted S193", () => {
+  withFixture(
+    (root) => {
+      const good = runCli(root);
+      assert.equal(good.status, 0, good.output);
+      const projection = JSON.parse(read(root, PLAN_JSON_REL));
+      assert.equal(projection.steps[192].status, "complete");
+      assert.equal(projection.steps.length, 203);
+      assert.deepEqual(
+        projection.steps
+          .filter((step) => step.status === "committed_pending_review")
+          .map((step) => step.id),
+        EXPECTED_STEP_IDS.slice(193, 203),
+      );
+    },
+    { scenario: "rcld11All" },
+  );
+});
+
+test("RCLD-11 rejects narrowed widened and incomplete authority", () => {
+  withFixture(
+    (root) => {
+      for (const change of [
+        { first: "S195" },
+        { last: "S204" },
+        { review: "self-accept" },
+        { extra: true },
+      ]) {
+        writeBatchAuthorization(root, { ...BATCH_RCLD11, ...change });
+        const issues = [];
+        assert.equal(readBatchAuthorization(root, issues), null);
+        assert.ok(
+          issues.some((issue) => issue.code === "INVALID_BATCH_AUTHORIZATION"),
+        );
+      }
+    },
+    { scenario: "s001", git: false },
+  );
+});
+
+test("S194 cannot advance while S193 is only pending independent review", () => {
+  withFixture(
+    (root) => {
+      setLedgerCell(root, "S194", 4, "in_progress");
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 1);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /PREMATURE_ADVANCEMENT/);
+    },
+    { scenario: "rcld10All" },
   );
 });

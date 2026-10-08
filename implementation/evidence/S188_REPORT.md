@@ -1,10 +1,12 @@
 # S188 implementation report — accessibility, direction and motion
 
-Author: Codex. Implemented candidate; separate S193 acceptance remains required.
+Author: Codex. Independently accepted on code `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` at evidence `8ab760dc4d674853b172126b2a3ec3a0434c678f`.
+Original implementation commit: `bee870dab29e3becd736ed0283816b533de33296`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `bee870dab29e3becd736ed0283816b533de33296`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S188","kind":"report","commit":"bee870dab29e3becd736ed0283816b533de33296","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S188","kind":"report","commit":"8ab760dc4d674853b172126b2a3ec3a0434c678f","disposition":"implemented"}
 -->
 
 ## Implementation and observed behavior

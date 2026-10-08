@@ -1,10 +1,12 @@
 # S182 implementation report — public exports and dependency direction
 
-Author: Codex. Implemented candidate; separate S193 acceptance remains required.
+Author: Codex. Independently accepted on code `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` at evidence `8ab760dc4d674853b172126b2a3ec3a0434c678f`.
+Original implementation commit: `fba6d1f727a7adbc111fa1c2fb8da410b43215aa`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `fba6d1f727a7adbc111fa1c2fb8da410b43215aa`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S182","kind":"report","commit":"fba6d1f727a7adbc111fa1c2fb8da410b43215aa","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S182","kind":"report","commit":"8ab760dc4d674853b172126b2a3ec3a0434c678f","disposition":"implemented"}
 -->
 
 ## Change and observed behavior

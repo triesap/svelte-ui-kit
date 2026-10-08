@@ -7,11 +7,13 @@ actual outside pointer activation and teardown. The source-inspection inference
 below remains historical; independent acceptance of the new evidence and the
 full S193 gate remain separate.
 
-Author: Codex. Implemented candidate; separate S193 acceptance remains required.
+Author: Codex. Independently accepted on code `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` at evidence `8ab760dc4d674853b172126b2a3ec3a0434c678f`.
+Original implementation commit: `57172cf304f3649562061eb9630a8fa6971c62b5`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `57172cf304f3649562061eb9630a8fa6971c62b5`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S187","kind":"report","commit":"57172cf304f3649562061eb9630a8fa6971c62b5","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S187","kind":"report","commit":"8ab760dc4d674853b172126b2a3ec3a0434c678f","disposition":"implemented"}
 -->
 
 ## Implementation and observed behavior

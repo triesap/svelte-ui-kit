@@ -1,11 +1,13 @@
 # S192 implementation report — real component upgrade cohorts
 
-Author: Codex. Candidate; separate S193 acceptance remains required, including
+Author: Codex. Independently accepted on code `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` at evidence `8ab760dc4d674853b172126b2a3ec3a0434c678f`.
+Original implementation commit: `6bdf06f4b59b039fd0e1486bc7abb12ea10dc47c`. The candidate narrative below
+is historical implementation and verification provenance.
 the product repair in this slice.
 Implementation commit: `6bdf06f4b59b039fd0e1486bc7abb12ea10dc47c`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S192","kind":"report","commit":"6bdf06f4b59b039fd0e1486bc7abb12ea10dc47c","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S192","kind":"report","commit":"8ab760dc4d674853b172126b2a3ec3a0434c678f","disposition":"implemented"}
 -->
 
 ## Qualification and implementation

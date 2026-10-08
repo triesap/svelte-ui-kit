@@ -1,10 +1,12 @@
 # S191 implementation report — catalog retirement and re-add
 
-Author: Codex. Candidate; separate S193 acceptance remains required.
+Author: Codex. Independently accepted on code `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` at evidence `8ab760dc4d674853b172126b2a3ec3a0434c678f`.
+Original implementation commit: `9cc50290df4ed68436318833ae33965774695d9f`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `9cc50290df4ed68436318833ae33965774695d9f`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S191","kind":"report","commit":"9cc50290df4ed68436318833ae33965774695d9f","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S191","kind":"report","commit":"8ab760dc4d674853b172126b2a3ec3a0434c678f","disposition":"implemented"}
 -->
 
 ## Implementation and policy

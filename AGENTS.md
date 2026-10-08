@@ -35,8 +35,9 @@ references.
   `6e087c10b441712d82c70230c3db7f8490ea787f`. S116–S128/RCLD-07 is accepted on `21c72d21fd78a34f12099b94b0d4fddff779d911`, with independent
   evidence at `f9dc56f1921024c426b8df59c0c08abb28e2af7c`. S129–S148/RCLD-08 is accepted on `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5`, with independent
   evidence at `bd2613c050c37cd883d4e2155a6eb264ce66c484`. S149–S181/RCLD-09 is accepted on `a79db79f78818797e2b3d541731797b5b19b60ce`, with independent
-  evidence at `871c1945daf660d9f0f724fb949057b4fa3a1da6`. S182–S193/RCLD-10 is current
-  under `pfc all`; separate S193 acceptance gates S194.
+  evidence at `871c1945daf660d9f0f724fb949057b4fa3a1da6`. S182–S193/RCLD-10 is accepted on `abeccabbdfda5aedb7be4f72e3b51a4675d3a609`, with independent
+  evidence at `8ab760dc4d674853b172126b2a3ec3a0434c678f`. S194–S203/RCLD-11 is current
+  under `pfc all`; final separate S203 acceptance remains mandatory.
   Earlier RCLD-04 finding paragraphs below are historical and resolved by
   `implementation/evidence/RCLD-04_QUALIFICATION.md`. No new owner dispatch is
   required. Full MVP and later platform/package/AC20 acceptance remain open.

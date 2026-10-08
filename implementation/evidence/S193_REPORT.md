@@ -1,10 +1,12 @@
 # S193 implementation report — filesystem platform lanes
 
-Author: Codex. Candidate; mandatory separate S193/RCLD-10 acceptance gates S194.
+Author: Codex. Independently accepted on code `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` at evidence `8ab760dc4d674853b172126b2a3ec3a0434c678f`.
+Original implementation commit: `ad7d1c38a3fcc3f84c1379e8a9c85939e5b55e1a`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `ad7d1c38a3fcc3f84c1379e8a9c85939e5b55e1a`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S193","kind":"report","commit":"ad7d1c38a3fcc3f84c1379e8a9c85939e5b55e1a","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S193","kind":"report","commit":"8ab760dc4d674853b172126b2a3ec3a0434c678f","disposition":"implemented"}
 -->
 
 The new owning platform integration controls execute portable path/case rules,

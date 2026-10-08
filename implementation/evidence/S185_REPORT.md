@@ -1,10 +1,12 @@
 # S185 implementation report — cross-family overlay composition
 
-Author: Codex. Implemented candidate; separate S193 acceptance remains required.
+Author: Codex. Independently accepted on code `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` at evidence `8ab760dc4d674853b172126b2a3ec3a0434c678f`.
+Original implementation commit: `232fc6e27c7fdd2848a926c95879aa296daf3097`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `232fc6e27c7fdd2848a926c95879aa296daf3097`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S185","kind":"report","commit":"232fc6e27c7fdd2848a926c95879aa296daf3097","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S185","kind":"report","commit":"8ab760dc4d674853b172126b2a3ec3a0434c678f","disposition":"implemented"}
 -->
 
 ## Implementation and observed behavior
