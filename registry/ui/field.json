@@ -1,0 +1,253 @@
+{
+  "schemaVersion": 1,
+  "id": "field",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Native form controls, labels, owned dynamic messages and complete source convenience recipes.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/field/root.svelte",
+      "target": "field/root.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/surface.svelte",
+      "target": "field/surface.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/label.svelte",
+      "target": "field/label.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/message.svelte",
+      "target": "field/message.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/required.svelte",
+      "target": "field/required.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/text-input.svelte",
+      "target": "field/text-input.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/text-area.svelte",
+      "target": "field/text-area.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/native-select.svelte",
+      "target": "field/native-select.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/select-icon.svelte",
+      "target": "field/select-icon.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/text-field.svelte",
+      "target": "field/text-field.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/text-area-field.svelte",
+      "target": "field/text-area-field.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/select-field.svelte",
+      "target": "field/select-field.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/types.ts",
+      "target": "field/types.ts",
+      "kind": "typescript",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/context.ts",
+      "target": "field/context.ts",
+      "kind": "typescript",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/index.ts",
+      "target": "field/index.ts",
+      "kind": "typescript",
+      "cohort": "field"
+    }
+  ],
+  "exports": [
+    {
+      "name": "FieldRoot",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "FieldSurface",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "FieldLabel",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "FieldMessage",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "FieldRequired",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "TextInput",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "TextArea",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "NativeSelect",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "SelectIcon",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "TextField",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "TextAreaField",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "SelectField",
+      "target": "field/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "FieldRootProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "FieldSurfaceProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "FieldLabelProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "FieldMessageProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "FieldRequiredProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "TextInputProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "TextAreaProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "NativeSelectProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "SelectIconProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "TextFieldProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "TextAreaFieldProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "SelectFieldProps",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "FieldSlot",
+      "target": "field/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "TextInputType",
+      "target": "field/index.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/field.css",
+      "target": "kit.css",
+      "blockId": "field",
+      "cohort": "field"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [],
+  "accessibility": {
+    "requiredNames": ["field-control-label"],
+    "keyboard": ["native-form-navigation"],
+    "focus": ["native-label-activation", "native-focus-visible"],
+    "form": ["required", "disabled", "readonly", "reset", "native-form-data"],
+    "tests": ["field-types", "field-parts", "field-install", "field-browser"]
+  }
+}

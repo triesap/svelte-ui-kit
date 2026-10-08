@@ -1370,6 +1370,216 @@
       "scope": "collapsible",
       "grammar": "<length-percentage>",
       "fallback": "0"
+    },
+    {
+      "name": "--kit-field-gap",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-field-disabled-opacity",
+      "scope": "field",
+      "grammar": "<number>",
+      "fallback": "var(--kit-disabled-opacity)"
+    },
+    {
+      "name": "--kit-field-surface-border-width",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "0"
+    },
+    {
+      "name": "--kit-field-surface-border-color",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "transparent"
+    },
+    {
+      "name": "--kit-field-surface-padding-block",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "var(--kit-field-control-padding-block, 0.625rem)"
+    },
+    {
+      "name": "--kit-field-control-padding-block",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "0.625rem"
+    },
+    {
+      "name": "--kit-field-surface-padding-inline",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "var(--kit-field-control-padding-inline, 0.75rem)"
+    },
+    {
+      "name": "--kit-field-control-padding-inline",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "0.75rem"
+    },
+    {
+      "name": "--kit-field-surface-background",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "var(--kit-field-control-background, var(--kit-color-surface))"
+    },
+    {
+      "name": "--kit-field-control-background",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface)"
+    },
+    {
+      "name": "--kit-field-label-gap",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "0.25rem"
+    },
+    {
+      "name": "--kit-field-label-color",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-field-label-font-size",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "0.9375rem"
+    },
+    {
+      "name": "--kit-field-label-font-weight",
+      "scope": "field",
+      "grammar": "<number>",
+      "fallback": "500"
+    },
+    {
+      "name": "--kit-field-required-color",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-danger)"
+    },
+    {
+      "name": "--kit-field-control-border-width",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "var(--kit-border-width)"
+    },
+    {
+      "name": "--kit-field-control-border-color",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-border)"
+    },
+    {
+      "name": "--kit-field-control-min-height",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "2.75rem"
+    },
+    {
+      "name": "--kit-field-control-color",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-field-control-font-size",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "1rem"
+    },
+    {
+      "name": "--kit-field-control-font-weight",
+      "scope": "field",
+      "grammar": "<number>",
+      "fallback": "400"
+    },
+    {
+      "name": "--kit-field-control-line-height",
+      "scope": "field",
+      "grammar": "<number>",
+      "fallback": "1.35"
+    },
+    {
+      "name": "--kit-field-control-transition-duration",
+      "scope": "field",
+      "grammar": "<time>",
+      "fallback": "var(--kit-duration-fast)"
+    },
+    {
+      "name": "--kit-field-control-transition-timing",
+      "scope": "field",
+      "grammar": "<easing-function>",
+      "fallback": "var(--kit-easing-standard)"
+    },
+    {
+      "name": "--kit-field-control-focus-ring",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "var(--kit-focus-ring)"
+    },
+    {
+      "name": "--kit-field-control-invalid-border-color",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-danger)"
+    },
+    {
+      "name": "--kit-text-area-min-block-size",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "7rem"
+    },
+    {
+      "name": "--kit-select-icon-inline-end",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "var(--kit-field-control-padding-inline, 0.75rem)"
+    },
+    {
+      "name": "--kit-select-icon-size",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "1rem"
+    },
+    {
+      "name": "--kit-select-icon-color",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "currentColor"
+    },
+    {
+      "name": "--kit-field-message-color",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text-muted)"
+    },
+    {
+      "name": "--kit-field-message-font-size",
+      "scope": "field",
+      "grammar": "<length-percentage>",
+      "fallback": "0.875rem"
+    },
+    {
+      "name": "--kit-field-message-font-weight",
+      "scope": "field",
+      "grammar": "<number>",
+      "fallback": "400"
+    },
+    {
+      "name": "--kit-field-message-line-height",
+      "scope": "field",
+      "grammar": "<number>",
+      "fallback": "1.35"
+    },
+    {
+      "name": "--kit-field-message-invalid-color",
+      "scope": "field",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-danger)"
     }
   ]
 }

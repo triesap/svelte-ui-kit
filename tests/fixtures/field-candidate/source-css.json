@@ -1,0 +1,503 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "5320c5a2b5b708db0618743374ce3765ce89892f1bd89c275317c0adf080d3b2",
+    "url": "https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/styles/field.css"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-field"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "grid"
+        },
+        {
+          "property": "gap",
+          "value": "var(--kit-field-gap, 0.5rem)"
+        },
+        {
+          "property": "position",
+          "value": "relative"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-field[data-disabled]"],
+      "declarations": [
+        {
+          "property": "opacity",
+          "value": "var(--kit-field-disabled-opacity, var(--kit-disabled-opacity))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-field-surface"],
+      "declarations": [
+        {
+          "property": "box-sizing",
+          "value": "border-box"
+        },
+        {
+          "property": "display",
+          "value": "grid"
+        },
+        {
+          "property": "gap",
+          "value": "var(--kit-field-gap, 0.5rem)"
+        },
+        {
+          "property": "min-inline-size",
+          "value": "0"
+        },
+        {
+          "property": "border",
+          "value": "var(--kit-field-surface-border-width, 0) solid\n    var(--kit-field-surface-border-color, transparent)"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-field-surface-radius,\n    var(\n      --kit-radius-surface,\n      var(\n        --kit-radius-default,\n        var(--kit-field-control-radius, var(--kit-radius-md))\n      )\n    )\n  )"
+        },
+        {
+          "property": "padding",
+          "value": "var(--kit-field-surface-padding-block, var(--kit-field-control-padding-block, 0.625rem))\n    var(--kit-field-surface-padding-inline, var(--kit-field-control-padding-inline, 0.75rem))"
+        },
+        {
+          "property": "background",
+          "value": "var(\n    --kit-field-surface-background,\n    var(--kit-field-control-background, var(--kit-color-surface))\n  )"
+        },
+        {
+          "property": "position",
+          "value": "relative"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-field-label"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "inline-flex"
+        },
+        {
+          "property": "align-items",
+          "value": "baseline"
+        },
+        {
+          "property": "gap",
+          "value": "var(--kit-field-label-gap, 0.25rem)"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-field-label-color, var(--kit-color-text))"
+        },
+        {
+          "property": "font",
+          "value": "inherit"
+        },
+        {
+          "property": "font-size",
+          "value": "var(--kit-field-label-font-size, 0.9375rem)"
+        },
+        {
+          "property": "font-weight",
+          "value": "var(--kit-field-label-font-weight, 500)"
+        },
+        {
+          "property": "line-height",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-field-label-row"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "inline-flex"
+        },
+        {
+          "property": "align-items",
+          "value": "baseline"
+        },
+        {
+          "property": "gap",
+          "value": "var(--kit-field-label-gap, 0.25rem)"
+        },
+        {
+          "property": "min-inline-size",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-field-required"],
+      "declarations": [
+        {
+          "property": "color",
+          "value": "var(--kit-field-required-color, var(--kit-color-danger))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-field-control"],
+      "declarations": [
+        {
+          "property": "box-sizing",
+          "value": "border-box"
+        },
+        {
+          "property": "inline-size",
+          "value": "100%"
+        },
+        {
+          "property": "border",
+          "value": "var(--kit-field-control-border-width, var(--kit-border-width)) solid\n    var(--kit-field-control-border-color, var(--kit-color-border))"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-field-control-radius,\n    var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))\n  )"
+        },
+        {
+          "property": "min-block-size",
+          "value": "var(--kit-field-control-min-height, 2.75rem)"
+        },
+        {
+          "property": "padding",
+          "value": "var(--kit-field-control-padding-block, 0.625rem)\n    var(--kit-field-control-padding-inline, 0.75rem)"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-field-control-background, var(--kit-color-surface))"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-field-control-color, var(--kit-color-text))"
+        },
+        {
+          "property": "font",
+          "value": "inherit"
+        },
+        {
+          "property": "font-size",
+          "value": "var(--kit-field-control-font-size, 1rem)"
+        },
+        {
+          "property": "font-weight",
+          "value": "var(--kit-field-control-font-weight, 400)"
+        },
+        {
+          "property": "line-height",
+          "value": "var(--kit-field-control-line-height, 1.35)"
+        },
+        {
+          "property": "transition",
+          "value": "border-color var(--kit-field-control-transition-duration, var(--kit-duration-fast))\n      var(--kit-field-control-transition-timing, var(--kit-easing-standard)),\n    box-shadow var(--kit-field-control-transition-duration, var(--kit-duration-fast))\n      var(--kit-field-control-transition-timing, var(--kit-easing-standard))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-text-input"],
+      "declarations": [
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-input-radius,\n    var(\n      --kit-field-control-radius,\n      var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))\n    )\n  )"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-native-select"],
+      "declarations": [
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-select-radius,\n    var(\n      --kit-field-control-radius,\n      var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))\n    )\n  )"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-text-area"],
+      "declarations": [
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-textarea-radius,\n    var(\n      --kit-field-control-radius,\n      var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))\n    )\n  )"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-field-control:focus-visible"],
+      "declarations": [
+        {
+          "property": "outline",
+          "value": "2px solid var(--kit-field-control-focus-ring, var(--kit-focus-ring))"
+        },
+        {
+          "property": "outline-offset",
+          "value": "2px"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-field-control[data-invalid]"],
+      "declarations": [
+        {
+          "property": "border-color",
+          "value": "var(--kit-field-control-invalid-border-color, var(--kit-color-danger))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-field-control[data-disabled]"],
+      "declarations": [
+        {
+          "property": "cursor",
+          "value": "not-allowed"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-text-area"],
+      "declarations": [
+        {
+          "property": "min-block-size",
+          "value": "var(--kit-text-area-min-block-size, 7rem)"
+        },
+        {
+          "property": "resize",
+          "value": "vertical"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-native-select"],
+      "declarations": [
+        {
+          "property": "appearance",
+          "value": "none"
+        },
+        {
+          "property": "padding-inline-end",
+          "value": "calc(\n    var(--kit-select-icon-inline-end, var(--kit-field-control-padding-inline, 0.75rem)) * 2 +\n      var(--kit-select-icon-size, 1rem)\n  )"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-select-field-surface"],
+      "declarations": [
+        {
+          "property": "position",
+          "value": "relative"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-select-field-native"],
+      "declarations": [
+        {
+          "property": "position",
+          "value": "absolute"
+        },
+        {
+          "property": "inset",
+          "value": "0"
+        },
+        {
+          "property": "z-index",
+          "value": "1"
+        },
+        {
+          "property": "block-size",
+          "value": "100%"
+        },
+        {
+          "property": "inline-size",
+          "value": "100%"
+        },
+        {
+          "property": "margin",
+          "value": "0"
+        },
+        {
+          "property": "opacity",
+          "value": "0"
+        },
+        {
+          "property": "cursor",
+          "value": "pointer"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-select-field-native:disabled"],
+      "declarations": [
+        {
+          "property": "cursor",
+          "value": "not-allowed"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-select-field-value-row"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "inline-flex"
+        },
+        {
+          "property": "align-items",
+          "value": "baseline"
+        },
+        {
+          "property": "min-inline-size",
+          "value": "0"
+        },
+        {
+          "property": "padding-inline-end",
+          "value": "calc(\n    var(--kit-select-icon-inline-end, var(--kit-field-control-padding-inline, 0.75rem)) +\n      var(--kit-select-icon-size, 1rem)\n  )"
+        },
+        {
+          "property": "pointer-events",
+          "value": "none"
+        },
+        {
+          "property": "position",
+          "value": "relative"
+        },
+        {
+          "property": "z-index",
+          "value": "2"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-select-field-value"],
+      "declarations": [
+        {
+          "property": "overflow",
+          "value": "hidden"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-field-control-color, var(--kit-color-text))"
+        },
+        {
+          "property": "font",
+          "value": "inherit"
+        },
+        {
+          "property": "font-size",
+          "value": "var(--kit-field-control-font-size, 1rem)"
+        },
+        {
+          "property": "font-weight",
+          "value": "var(--kit-field-control-font-weight, 400)"
+        },
+        {
+          "property": "line-height",
+          "value": "var(--kit-field-control-line-height, 1.35)"
+        },
+        {
+          "property": "text-overflow",
+          "value": "ellipsis"
+        },
+        {
+          "property": "white-space",
+          "value": "nowrap"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-select-icon"],
+      "declarations": [
+        {
+          "property": "position",
+          "value": "absolute"
+        },
+        {
+          "property": "inset-block-start",
+          "value": "50%"
+        },
+        {
+          "property": "inset-inline-end",
+          "value": "var(\n    --kit-select-icon-inline-end,\n    var(--kit-field-control-padding-inline, 0.75rem)\n  )"
+        },
+        {
+          "property": "display",
+          "value": "inline-flex"
+        },
+        {
+          "property": "align-items",
+          "value": "center"
+        },
+        {
+          "property": "justify-content",
+          "value": "center"
+        },
+        {
+          "property": "inline-size",
+          "value": "var(--kit-select-icon-size, 1rem)"
+        },
+        {
+          "property": "block-size",
+          "value": "var(--kit-select-icon-size, 1rem)"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-select-icon-color, currentColor)"
+        },
+        {
+          "property": "pointer-events",
+          "value": "none"
+        },
+        {
+          "property": "transform",
+          "value": "translateY(-50%)"
+        },
+        {
+          "property": "z-index",
+          "value": "2"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-field-message"],
+      "declarations": [
+        {
+          "property": "margin",
+          "value": "0"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-field-message-color, var(--kit-color-text-muted))"
+        },
+        {
+          "property": "font",
+          "value": "inherit"
+        },
+        {
+          "property": "font-size",
+          "value": "var(--kit-field-message-font-size, 0.875rem)"
+        },
+        {
+          "property": "font-weight",
+          "value": "var(--kit-field-message-font-weight, 400)"
+        },
+        {
+          "property": "line-height",
+          "value": "var(--kit-field-message-line-height, 1.35)"
+        }
+      ]
+    },
+    {
+      "selectors": [
+        ".kit-field-message[data-invalid]",
+        ".kit-field[data-invalid] .kit-field-message"
+      ],
+      "declarations": [
+        {
+          "property": "color",
+          "value": "var(--kit-field-message-invalid-color, var(--kit-color-danger))"
+        }
+      ]
+    }
+  ]
+}

@@ -34,6 +34,7 @@ for (const [family, count] of [
   ["radio", 1],
   ["tabs", 24],
   ["collapsible", 16],
+  ["field", 40],
   ["dialog", 45],
   ["alert-dialog", 56],
   ["menu", 35],

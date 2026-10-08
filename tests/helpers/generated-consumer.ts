@@ -18,6 +18,7 @@ function buildComponentConsumer(
     | "switch"
     | "checkbox"
     | "collapsible"
+    | "field"
     | "tabs"
     | "radio"
     | "dialog"
@@ -65,71 +66,61 @@ function buildComponentConsumer(
       assert.equal(result.stderr, "");
     }
     const sources =
-      item === "collapsible"
+      item === "field"
         ? [
-            ...["root", "trigger", "content"].map(
-              (part) => `collapsible/${part}.svelte`,
-            ),
-            "collapsible/types.ts",
-            "collapsible/index.ts",
+            "field/root.svelte",
+            "field/surface.svelte",
+            "field/label.svelte",
+            "field/message.svelte",
+            "field/required.svelte",
+            "field/text-input.svelte",
+            "field/text-area.svelte",
+            "field/native-select.svelte",
+            "field/select-icon.svelte",
+            "field/text-field.svelte",
+            "field/text-area-field.svelte",
+            "field/select-field.svelte",
+            "field/types.ts",
+            "field/context.ts",
+            "field/index.ts",
           ]
-        : item === "tabs"
+        : item === "collapsible"
           ? [
-              ...["root", "list", "trigger", "content"].map(
-                (part) => `tabs/${part}.svelte`,
+              ...["root", "trigger", "content"].map(
+                (part) => `collapsible/${part}.svelte`,
               ),
-              "tabs/types.ts",
-              "tabs/index.ts",
+              "collapsible/types.ts",
+              "collapsible/index.ts",
             ]
-          : item === "radio"
+          : item === "tabs"
             ? [
-                "radio/group.svelte",
-                "radio/item.svelte",
-                "radio/types.ts",
-                "radio/index.ts",
+                ...["root", "list", "trigger", "content"].map(
+                  (part) => `tabs/${part}.svelte`,
+                ),
+                "tabs/types.ts",
+                "tabs/index.ts",
               ]
-            : item === "menu"
+            : item === "radio"
               ? [
-                  ...[
-                    "root",
-                    "trigger",
-                    "portal",
-                    "content",
-                    "item",
-                    "radio-group",
-                    "radio-item",
-                    "item-indicator",
-                  ].map((part) => `menu/${part}.svelte`),
-                  "menu/types.ts",
-                  "menu/index.ts",
-                  ...[
-                    "root",
-                    "trigger",
-                    "portal",
-                    "overlay",
-                    "content",
-                    "title",
-                    "description",
-                    "close",
-                  ].map((part) => `dialog/${part}.svelte`),
-                  "dialog/types.ts",
-                  "dialog/index.ts",
+                  "radio/group.svelte",
+                  "radio/item.svelte",
+                  "radio/types.ts",
+                  "radio/index.ts",
                 ]
-              : item === "alert-dialog"
+              : item === "menu"
                 ? [
                     ...[
                       "root",
                       "trigger",
                       "portal",
-                      "overlay",
                       "content",
-                      "title",
-                      "description",
-                      "action",
-                      "cancel",
-                    ].map((part) => `alert-dialog/${part}.svelte`),
-                    "alert-dialog/types.ts",
-                    "alert-dialog/index.ts",
+                      "item",
+                      "radio-group",
+                      "radio-item",
+                      "item-indicator",
+                    ].map((part) => `menu/${part}.svelte`),
+                    "menu/types.ts",
+                    "menu/index.ts",
                     ...[
                       "root",
                       "trigger",
@@ -143,15 +134,22 @@ function buildComponentConsumer(
                     "dialog/types.ts",
                     "dialog/index.ts",
                   ]
-                : item === "button"
+                : item === "alert-dialog"
                   ? [
-                      "button.svelte",
-                      "button.types.ts",
-                      "spinner.svelte",
-                      "spinner.types.ts",
-                    ]
-                  : item === "dialog" || item === "core"
-                    ? [
+                      ...[
+                        "root",
+                        "trigger",
+                        "portal",
+                        "overlay",
+                        "content",
+                        "title",
+                        "description",
+                        "action",
+                        "cancel",
+                      ].map((part) => `alert-dialog/${part}.svelte`),
+                      "alert-dialog/types.ts",
+                      "alert-dialog/index.ts",
+                      ...[
                         "root",
                         "trigger",
                         "portal",
@@ -160,24 +158,45 @@ function buildComponentConsumer(
                         "title",
                         "description",
                         "close",
+                      ].map((part) => `dialog/${part}.svelte`),
+                      "dialog/types.ts",
+                      "dialog/index.ts",
+                    ]
+                  : item === "button"
+                    ? [
+                        "button.svelte",
+                        "button.types.ts",
+                        "spinner.svelte",
+                        "spinner.types.ts",
                       ]
-                        .map((part) => `dialog/${part}.svelte`)
-                        .concat(
-                          ["dialog/types.ts", "dialog/index.ts"],
-                          item === "core"
-                            ? [
-                                "spinner.svelte",
-                                "spinner.types.ts",
-                                "button.svelte",
-                                "button.types.ts",
-                                "switch.svelte",
-                                "switch.types.ts",
-                              ]
-                            : [],
-                        )
-                    : item === "switch" || item === "checkbox"
-                      ? [`${item}.svelte`, `${item}.types.ts`]
-                      : ["spinner.svelte", "spinner.types.ts"];
+                    : item === "dialog" || item === "core"
+                      ? [
+                          "root",
+                          "trigger",
+                          "portal",
+                          "overlay",
+                          "content",
+                          "title",
+                          "description",
+                          "close",
+                        ]
+                          .map((part) => `dialog/${part}.svelte`)
+                          .concat(
+                            ["dialog/types.ts", "dialog/index.ts"],
+                            item === "core"
+                              ? [
+                                  "spinner.svelte",
+                                  "spinner.types.ts",
+                                  "button.svelte",
+                                  "button.types.ts",
+                                  "switch.svelte",
+                                  "switch.types.ts",
+                                ]
+                              : [],
+                          )
+                      : item === "switch" || item === "checkbox"
+                        ? [`${item}.svelte`, `${item}.types.ts`]
+                        : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
       assert.ok(
         readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
@@ -392,6 +411,19 @@ export const buildCollapsibleConsumer = (
     "collapsible",
     custom,
     "collapsible",
+    false,
+    process.cwd(),
+    beforeBuild,
+  );
+
+export const buildFieldConsumer = (
+  custom: boolean,
+  beforeBuild?: (root: string, config: KitConfig) => void,
+) =>
+  buildComponentConsumer(
+    "field",
+    custom,
+    "field",
     false,
     process.cwd(),
     beforeBuild,

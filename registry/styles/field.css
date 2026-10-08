@@ -1,0 +1,253 @@
+/* svelte-ui-kit:start field */
+/* Derived design: Copyright (c) 2026 Tyson Lupul.
+ * Distributed under the MIT option; see the package LICENSE-MIT notice.
+ */
+@layer svelte-ui-kit.components {
+  .kit-field {
+    display: grid;
+    gap: var(--kit-field-gap, 0.5rem);
+    position: relative;
+  }
+
+  .kit-field[data-disabled] {
+    opacity: var(--kit-field-disabled-opacity, var(--kit-disabled-opacity));
+  }
+
+  .kit-field-surface {
+    box-sizing: border-box;
+    display: grid;
+    gap: var(--kit-field-gap, 0.5rem);
+    min-inline-size: 0;
+    border: var(--kit-field-surface-border-width, 0) solid
+      var(--kit-field-surface-border-color, transparent);
+    border-radius: var(
+      --kit-field-surface-radius,
+      var(
+        --kit-radius-surface,
+        var(
+          --kit-radius-default,
+          var(--kit-field-control-radius, var(--kit-radius-md))
+        )
+      )
+    );
+    padding: var(
+        --kit-field-surface-padding-block,
+        var(--kit-field-control-padding-block, 0.625rem)
+      )
+      var(
+        --kit-field-surface-padding-inline,
+        var(--kit-field-control-padding-inline, 0.75rem)
+      );
+    background: var(
+      --kit-field-surface-background,
+      var(--kit-field-control-background, var(--kit-color-surface))
+    );
+    position: relative;
+  }
+
+  .kit-field-label {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--kit-field-label-gap, 0.25rem);
+    color: var(--kit-field-label-color, var(--kit-color-text));
+    font: inherit;
+    font-size: var(--kit-field-label-font-size, 0.9375rem);
+    font-weight: var(--kit-field-label-font-weight, 500);
+    line-height: 1;
+  }
+
+  .kit-field-label-row {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--kit-field-label-gap, 0.25rem);
+    min-inline-size: 0;
+  }
+
+  .kit-field-required {
+    color: var(--kit-field-required-color, var(--kit-color-danger));
+  }
+
+  .kit-field-control {
+    box-sizing: border-box;
+    inline-size: 100%;
+    border: var(--kit-field-control-border-width, var(--kit-border-width)) solid
+      var(--kit-field-control-border-color, var(--kit-color-border));
+    border-radius: var(
+      --kit-field-control-radius,
+      var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))
+    );
+    min-block-size: var(--kit-field-control-min-height, 2.75rem);
+    padding: var(--kit-field-control-padding-block, 0.625rem)
+      var(--kit-field-control-padding-inline, 0.75rem);
+    background: var(--kit-field-control-background, var(--kit-color-surface));
+    color: var(--kit-field-control-color, var(--kit-color-text));
+    font: inherit;
+    font-size: var(--kit-field-control-font-size, 1rem);
+    font-weight: var(--kit-field-control-font-weight, 400);
+    line-height: var(--kit-field-control-line-height, 1.35);
+    transition:
+      border-color
+        var(--kit-field-control-transition-duration, var(--kit-duration-fast))
+        var(--kit-field-control-transition-timing, var(--kit-easing-standard)),
+      box-shadow
+        var(--kit-field-control-transition-duration, var(--kit-duration-fast))
+        var(--kit-field-control-transition-timing, var(--kit-easing-standard));
+  }
+
+  .kit-text-input {
+    border-radius: var(
+      --kit-input-radius,
+      var(
+        --kit-field-control-radius,
+        var(
+          --kit-radius-control,
+          var(--kit-radius-default, var(--kit-radius-md))
+        )
+      )
+    );
+  }
+
+  .kit-native-select {
+    border-radius: var(
+      --kit-select-radius,
+      var(
+        --kit-field-control-radius,
+        var(
+          --kit-radius-control,
+          var(--kit-radius-default, var(--kit-radius-md))
+        )
+      )
+    );
+  }
+
+  .kit-text-area {
+    border-radius: var(
+      --kit-textarea-radius,
+      var(
+        --kit-field-control-radius,
+        var(
+          --kit-radius-control,
+          var(--kit-radius-default, var(--kit-radius-md))
+        )
+      )
+    );
+  }
+
+  .kit-field-control:focus-visible {
+    outline: 2px solid
+      var(--kit-field-control-focus-ring, var(--kit-focus-ring));
+    outline-offset: 2px;
+  }
+
+  .kit-field-control[data-invalid] {
+    border-color: var(
+      --kit-field-control-invalid-border-color,
+      var(--kit-color-danger)
+    );
+  }
+
+  .kit-field-control[data-disabled] {
+    cursor: not-allowed;
+  }
+
+  .kit-text-area {
+    min-block-size: var(--kit-text-area-min-block-size, 7rem);
+    resize: vertical;
+  }
+
+  .kit-native-select {
+    appearance: none;
+    padding-inline-end: calc(
+      var(
+          --kit-select-icon-inline-end,
+          var(--kit-field-control-padding-inline, 0.75rem)
+        ) *
+        2 + var(--kit-select-icon-size, 1rem)
+    );
+  }
+
+  .kit-select-field-surface {
+    position: relative;
+  }
+
+  .kit-select-field-native {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    block-size: 100%;
+    inline-size: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .kit-select-field-native:disabled {
+    cursor: not-allowed;
+  }
+
+  .kit-select-field-value-row {
+    display: inline-flex;
+    align-items: baseline;
+    min-inline-size: 0;
+    padding-inline-end: calc(
+      var(
+          --kit-select-icon-inline-end,
+          var(--kit-field-control-padding-inline, 0.75rem)
+        ) +
+        var(--kit-select-icon-size, 1rem)
+    );
+    pointer-events: none;
+    position: relative;
+    z-index: 2;
+  }
+
+  .kit-select-field-value {
+    overflow: hidden;
+    color: var(--kit-field-control-color, var(--kit-color-text));
+    font: inherit;
+    font-size: var(--kit-field-control-font-size, 1rem);
+    font-weight: var(--kit-field-control-font-weight, 400);
+    line-height: var(--kit-field-control-line-height, 1.35);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .kit-select-icon {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-end: var(
+      --kit-select-icon-inline-end,
+      var(--kit-field-control-padding-inline, 0.75rem)
+    );
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: var(--kit-select-icon-size, 1rem);
+    block-size: var(--kit-select-icon-size, 1rem);
+    color: var(--kit-select-icon-color, currentColor);
+    pointer-events: none;
+    transform: translateY(-50%);
+    z-index: 2;
+  }
+
+  .kit-field-message {
+    margin: 0;
+    color: var(--kit-field-message-color, var(--kit-color-text-muted));
+    font: inherit;
+    font-size: var(--kit-field-message-font-size, 0.875rem);
+    font-weight: var(--kit-field-message-font-weight, 400);
+    line-height: var(--kit-field-message-line-height, 1.35);
+  }
+
+  .kit-field-message[data-invalid],
+  .kit-field[data-invalid] .kit-field-message {
+    color: var(--kit-field-message-invalid-color, var(--kit-color-danger));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kit-field-control {
+      transition: none;
+    }
+  }
+}
+/* svelte-ui-kit:end field */

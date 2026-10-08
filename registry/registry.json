@@ -8,6 +8,7 @@
     { "id": "checkbox", "manifest": "ui/checkbox.json" },
     { "id": "collapsible", "manifest": "ui/collapsible.json" },
     { "id": "dialog", "manifest": "ui/dialog.json" },
+    { "id": "field", "manifest": "ui/field.json" },
     { "id": "menu", "manifest": "ui/menu.json" },
     { "id": "radio", "manifest": "ui/radio.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
@@ -15,5 +16,5 @@
     { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "06753c124586d8876c56db3f903ade5938c378576a9a5a6428445fb7de708d95"
+  "contentHash": "203527d0e1e123538fedefe8360356b8e1b3c646b53d29d3aa450a596ac7bb4d"
 }
