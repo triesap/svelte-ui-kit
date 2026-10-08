@@ -18,5 +18,8 @@
     font-weight: 600;
     line-height: 1;
   }
+  .kit-badge[hidden]:not([hidden="until-found"]) {
+    display: none;
+  }
 }
 /* svelte-ui-kit:end badge */

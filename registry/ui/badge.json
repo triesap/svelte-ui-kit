@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "badge",
   "kind": "component",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Native text-bearing span presentation with source badge styles.",
   "compatibility": {
     "svelte": "5.57.1",

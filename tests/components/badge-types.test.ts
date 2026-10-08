@@ -68,6 +68,7 @@ for (const [name, body] of [
   ["loading", "{children,loading:true}"],
   ["link href", '{children,href:"/next"}'],
   ["button type", '{children,type:"submit"}'],
+  ["invalid native hidden", '{children,hidden:"always"}'],
   ["replacement child", "{children,child:children}"],
   ["polymorphic as", '{children,as:"button"}'],
   [

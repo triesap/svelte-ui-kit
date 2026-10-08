@@ -41,3 +41,21 @@ children, native attrs/classes/ref, foreground/background and radius combination
 theme, native focus/event/form behavior, RTL/reduced motion and SSR/hydration in
 installed applications. Separate S181 acceptance remains mandatory; this type
 freeze does not claim runtime or independent acceptance.
+
+S160's actual installed tests expose the source display rule overriding native
+hidden on the target span. Retain all ten source declarations and add only the
+scoped `.kit-badge[hidden]:not([hidden="until-found"])` display-none rule to honor
+the already inherited native prop. Preserve actual until-found content visibility;
+no target variant/state API is introduced. Advance source/style cohort to0.1.1
+and requalify real installation. Separate S181 review must assess this repair.
+
+Default/custom production consumers prove meaningful dynamic text, unchanged span
+identity, caller attrs/classes/style/name, actual span refs and teardown, native
+programmatic focus, one pointer callback and key events without synthetic
+Enter/Space activation or form submission. Source padding/font/layout and all
+indicator/default/full/direct radius paths are measured, together with RTL,
+reduced motion and concurrent request-local SSR. Record exact baseline, live night
+theme and caller-style foreground/background pairs with actual contrast ratios;
+these three measured combinations meet4.5, without certifying arbitrary application
+theme choices or the full token catalog. Author qualification remains pending
+independent S181 and final platform/MVP acceptance.

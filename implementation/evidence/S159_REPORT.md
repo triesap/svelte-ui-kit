@@ -1,7 +1,11 @@
 # S159 step report — Generate source-native Badge
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `b9bdefaf6114312bb2c089aacba9d0ad7071bc98`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S159","kind":"report","commit":"b9bdefaf6114312bb2c089aacba9d0ad7071bc98","disposition":"candidate"}
+-->
 
 Original R02, R03, R04, R06, R08, R22, R25, R26, R32, R33, R34.
 Starting `eb468371733fe04426342d457ef417b6f9682797` on `master`.
