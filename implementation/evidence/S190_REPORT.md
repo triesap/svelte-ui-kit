@@ -1,7 +1,11 @@
 # S190 implementation report — custom mappings and scoped workspaces
 
 Author: Codex. Candidate; separate S193 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `fa6a5f50f440a230490076bb3d27790000fba791`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S190","kind":"report","commit":"fa6a5f50f440a230490076bb3d27790000fba791","disposition":"candidate"}
+-->
 
 ## Implementation
 
