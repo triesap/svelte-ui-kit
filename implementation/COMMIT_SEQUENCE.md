@@ -94,12 +94,12 @@ and never mutate package-store contents. No source-layout fallback, publication
 or new product/API scope is authorized by this qualification.
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S161 — Freeze Card props and semantic mapping**. Separate S148 acceptance on `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5` is anchored at `bd2613c050c37cd883d4e2155a6eb264ce66c484`; S181 independent acceptance gates S182.
+- Active implementation checkpoint: **S162 — Generate Card source and managed styles**. Separate S148 acceptance on `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5` is anchored at `bd2613c050c37cd883d4e2155a6eb264ce66c484`; S181 independent acceptance gates S182.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **148 / 203**. Remaining: **55 / 203**.
-- Committed pending review: **12 / 203**. Authored batch range: **S149–S160**.
+- Committed pending review: **13 / 203**. Authored batch range: **S149–S161**.
 - Completed RCLD sequences: **8 / 11**. Remaining: **3 / 11**.
-- Last safe target commit: `32e7885fc7faaab7c74cee99648177aded7880c7`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `a6da35e60f8f9e4b26f34f6cb7fb78c70d9549aa`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -6299,8 +6299,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S158 | RCLD-09  | S157       | committed_pending_review | `eb468371733fe04426342d457ef417b6f9682797` |
 | S159 | RCLD-09  | S158       | committed_pending_review | `b9bdefaf6114312bb2c089aacba9d0ad7071bc98` |
 | S160 | RCLD-09  | S159       | committed_pending_review | `32e7885fc7faaab7c74cee99648177aded7880c7` |
-| S161 | RCLD-09  | S160       | in_progress              | —                                          |
-| S162 | RCLD-09  | S161       | not_started              | —                                          |
+| S161 | RCLD-09  | S160       | committed_pending_review | `a6da35e60f8f9e4b26f34f6cb7fb78c70d9549aa` |
+| S162 | RCLD-09  | S161       | in_progress              | —                                          |
 | S163 | RCLD-09  | S162       | not_started              | —                                          |
 | S164 | RCLD-09  | S163       | not_started              | —                                          |
 | S165 | RCLD-09  | S164       | not_started              | —                                          |

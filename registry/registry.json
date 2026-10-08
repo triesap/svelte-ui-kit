@@ -8,6 +8,7 @@
     { "id": "avatar", "manifest": "ui/avatar.json" },
     { "id": "badge", "manifest": "ui/badge.json" },
     { "id": "button", "manifest": "ui/button.json" },
+    { "id": "card", "manifest": "ui/card.json" },
     { "id": "checkbox", "manifest": "ui/checkbox.json" },
     { "id": "collapsible", "manifest": "ui/collapsible.json" },
     { "id": "dialog", "manifest": "ui/dialog.json" },
@@ -20,5 +21,5 @@
     { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "a508a729d26caaa7160fbe298be7421c0c8ff48ab427fc41654258760324513f"
+  "contentHash": "5b93587f6d0c055e49444830b7180265d673dbe8d34cfa75eb4132507db37e09"
 }

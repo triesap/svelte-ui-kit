@@ -1,0 +1,41 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "0fec46426c180b44673c7e62523b672c55f7831b2a15d441f5a7a9adf21e03fe"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-card"],
+      "declarations": [
+        {
+          "property": "box-sizing",
+          "value": "border-box"
+        },
+        {
+          "property": "border",
+          "value": "var(--kit-border-width) solid var(--kit-color-border)"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-card-radius,\n    var(--kit-radius-surface, var(--kit-radius-default, var(--kit-radius-lg)))\n  )"
+        },
+        {
+          "property": "padding",
+          "value": "1rem"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-color-surface-raised)"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-color-text)"
+        },
+        {
+          "property": "box-shadow",
+          "value": "var(--kit-shadow-sm)"
+        }
+      ]
+    }
+  ]
+}
