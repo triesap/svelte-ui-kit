@@ -1,10 +1,12 @@
 # S116 step report — Exact distinct Alert Dialog API
 
-Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `a78125e2e914d7073122da1bac0a5e2e26d9cebb`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 Original S001–S115 independent acceptance and all203 definitions are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S116","kind":"report","commit":"a78125e2e914d7073122da1bac0a5e2e26d9cebb","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S116","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 The component map freezes the actual pinned namespace's nine parts and eighteen

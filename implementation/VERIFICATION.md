@@ -1,8 +1,8 @@
-Current qualification: original S001–S115 are independently accepted. RCLD-06
-reviewed code `5c235eed860667d030c4f36e805d04f0acd2e91d` is accepted at evidence
-`6e087c10b441712d82c70230c3db7f8490ea787f`; see RCLD-06_QUALIFICATION.md.
-Continue original S116–S128 under `pfc all`, with separate S128 acceptance
-before S129. AC20 and later catalog/platform/package/release criteria remain.
+Current qualification: original S001–S128 are independently accepted. RCLD-07
+reviewed code `21c72d21fd78a34f12099b94b0d4fddff779d911` is accepted at evidence
+`f9dc56f1921024c426b8df59c0c08abb28e2af7c`; see RCLD-07_QUALIFICATION.md.
+Continue original S129–S148 under `pfc all`, with separate S148 acceptance
+before S149. AC20 and later catalog/platform/package/release criteria remain.
 
 The preceding RCLD-05 qualification remains accepted. RCLD-05
 candidate `dbd54903a5954d1139cda63413a041498379edc8` is accepted at evidence

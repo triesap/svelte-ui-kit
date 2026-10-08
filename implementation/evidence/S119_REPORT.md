@@ -1,9 +1,11 @@
 # S119 step report — Native labeling and decision controls
 
-Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `d1234b0c54b05bae81e997cebcfdfd37a62c3db3`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S119","kind":"report","commit":"d1234b0c54b05bae81e997cebcfdfd37a62c3db3","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S119","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 Title, Description, Action and Cancel wrap the actual distinct pinned primitives

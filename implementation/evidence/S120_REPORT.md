@@ -1,9 +1,11 @@
 # S120 step report — Complete distinct styled family registration
 
-Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `8b3618798c6fd6c246c625ca072955943da44729`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S120","kind":"report","commit":"8b3618798c6fd6c246c625ca072955943da44729","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S120","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 The complete nine-part family is advertised with eleven source files, one plain

@@ -1,9 +1,11 @@
 # S125 step report — Menu source-required item composition
 
-Author: Codex. Locally verified candidate; separate S128 acceptance pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `c02e65efcade4575012139fb0730cf0961acf934`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S125","kind":"report","commit":"c02e65efcade4575012139fb0730cf0961acf934","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S125","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 Requirements R03, R20, R22, R26, R32, R33, R34. Starting `687e6c1`, branch

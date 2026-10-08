@@ -1,9 +1,11 @@
 # S124 step report — Menu Portal and floating Content
 
-Author: Codex. Candidate; separate S128/RCLD-07 acceptance pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `687e6c1972b94d470d58598acd6413c69e5ec513`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S124","kind":"report","commit":"687e6c1972b94d470d58598acd6413c69e5ec513","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S124","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 Requirements R20, R21, R23, R24, R32, R33, R34. Starting code `a0050fe` on

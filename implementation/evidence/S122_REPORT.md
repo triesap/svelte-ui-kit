@@ -1,9 +1,11 @@
 # S122 step report — Menu source parity and floating contracts
 
-Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `a01d348cb323880423f97f6d9dfed4259c5e4c4d`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S122","kind":"report","commit":"a01d348cb323880423f97f6d9dfed4259c5e4c4d","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S122","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 The worksheet maps the immutable six-part reference Menu surface and its required

@@ -23,3 +23,9 @@ unchanged against `a176387`; no dependency, criterion or review gate was waived.
 This accepts this checkpoint's original scope, not later release, platform,
 remaining catalog or AC20 obligations. Only the coordinator may commit this
 plain evidence and finalize the real anchored acceptance transition.
+
+Independent acceptance is anchored at reachable evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S128","kind":"review","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"accepted"}
+-->

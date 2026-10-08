@@ -130,6 +130,15 @@ export const BATCH_RCLD07 = {
   review: "codex-after-sequence",
 };
 
+export const BATCH_RCLD08 = {
+  schemaVersion: 1,
+  sequence: "RCLD-08",
+  first: "S129",
+  last: "S148",
+  mode: "pfc",
+  review: "codex-after-sequence",
+};
+
 /** Fixed, fixture-owned lifecycle scenarios. `s001` is the canonical negative
  * baseline (one complete checkpoint plus the active candidate); `two` and
  * `boundary` are positive states used to prove the suite is independent of how
@@ -263,6 +272,13 @@ export const SCENARIOS = {
     accepted: [],
     pendingReview: EXPECTED_STEP_IDS.slice(115, 128),
     batch: BATCH_RCLD07,
+  },
+  rcld08All: {
+    complete: EXPECTED_STEP_IDS.slice(0, 128),
+    candidates: [],
+    accepted: [],
+    pendingReview: EXPECTED_STEP_IDS.slice(128, 148),
+    batch: BATCH_RCLD08,
   },
   rcld04Last: {
     complete: EXPECTED_STEP_IDS.slice(0, 76),

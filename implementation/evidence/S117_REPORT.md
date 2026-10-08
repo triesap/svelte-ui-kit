@@ -1,10 +1,12 @@
 # S117 step report — Native Alert Dialog state and activation
 
-Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `0fd3150f18847c8037380ad1c8bea0c4633903bb`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 Original S001–S115 acceptance and all203 definitions remain preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S117","kind":"report","commit":"0fd3150f18847c8037380ad1c8bea0c4633903bb","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S117","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 Root uses the actual distinct AlertDialog primitive with explicit bindable open

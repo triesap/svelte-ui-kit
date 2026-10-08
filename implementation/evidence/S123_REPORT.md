@@ -1,9 +1,11 @@
 # S123 step report — Menu Root and Trigger
 
-Author: Codex. Locally verified candidate; independent S128 acceptance pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `a0050fe484b3a73666a9395effcbeb73277b77de`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S123","kind":"report","commit":"a0050fe484b3a73666a9395effcbeb73277b77de","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S123","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 ## Implementation

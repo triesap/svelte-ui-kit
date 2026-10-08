@@ -1,9 +1,11 @@
 # S126 step report — Menu registration and managed styles
 
-Author: Codex. Candidate; independent S128/RCLD-07 acceptance pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `d67cc15ec8b67684b97164b531d30a6e15c19b3b`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S126","kind":"report","commit":"d67cc15ec8b67684b97164b531d30a6e15c19b3b","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S126","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 Requirements R04, R06, R08, R14, R26, R32, R33, R34. Starting `c02e65e` on

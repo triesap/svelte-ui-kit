@@ -54,7 +54,11 @@ Default/custom source layouts are compiled, built, server-rendered and exercised
 in Chromium. Owned synthetic package revisions qualify safe upgrades and atomic
 cohort-conflict refusal while preserving application customization. These checks
 passed [independent core review](implementation/evidence/RCLD-06_QUALIFICATION.md).
-The package remains unpublished; final platform/package acceptance is open.
+Distinct Alert Dialog and Menu also passed
+[independent family review](implementation/evidence/RCLD-07_QUALIFICATION.md),
+including actual selection, floating placement, live themes and measured CSP
+limits. Original S129–S203 catalog and final platform/package acceptance remain
+open. The package remains unpublished.
 
 ## Use the local built CLI
 

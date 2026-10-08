@@ -1,9 +1,11 @@
 # S121 step report — Installed distinct decisions, focus and lifecycle
 
-Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `1c3b2256919b81244988a9b6fff57287b7d7ef88`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S121","kind":"report","commit":"1c3b2256919b81244988a9b6fff57287b7d7ef88","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S121","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 Real built CLI consumers install the complete Alert Dialog and generic Dialog

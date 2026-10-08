@@ -1,9 +1,11 @@
 # S118 step report — Native Alert Dialog portal and content
 
-Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `d07f78cae6007d0c2eefb014142943339cf97b71`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S118","kind":"report","commit":"d07f78cae6007d0c2eefb014142943339cf97b71","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S118","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 Portal forwards the pinned distinct AlertDialog primitive's native target and

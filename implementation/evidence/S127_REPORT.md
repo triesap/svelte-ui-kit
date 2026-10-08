@@ -1,9 +1,11 @@
 # S127 step report — installed Menu keyboard, selection and dismissal
 
-Author: Codex. Candidate; mandatory separate S128 acceptance remains pending.
+Author: Codex. Independently accepted on code `21c72d21fd78a34f12099b94b0d4fddff779d911` at evidence `f9dc56f1921024c426b8df59c0c08abb28e2af7c`.
+Original implementation commit: `06421d71b95bc7ed792ca80f2213b242baec3528`. The candidate narrative below
+is retained as historical implementation and verification provenance.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S127","kind":"report","commit":"06421d71b95bc7ed792ca80f2213b242baec3528","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S127","kind":"report","commit":"f9dc56f1921024c426b8df59c0c08abb28e2af7c","disposition":"implemented"}
 -->
 
 Requirements R20, R22, R26, R29, R32, R33, R34. Starting `d67cc15` on
