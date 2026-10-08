@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "id": "status",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Native paragraph feedback with source role politeness atomic options and source status styles.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/status.svelte",
+      "target": "status.svelte",
+      "kind": "svelte",
+      "cohort": "status"
+    },
+    {
+      "source": "ui/status.types.ts",
+      "target": "status.types.ts",
+      "kind": "typescript",
+      "cohort": "status"
+    }
+  ],
+  "exports": [
+    {
+      "name": "Status",
+      "target": "status.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "StatusProps",
+      "target": "status.types.ts",
+      "kind": "type"
+    },
+    {
+      "name": "StatusRole",
+      "target": "status.types.ts",
+      "kind": "type"
+    },
+    {
+      "name": "StatusPoliteness",
+      "target": "status.types.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/status.css",
+      "target": "kit.css",
+      "blockId": "status",
+      "cohort": "status"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [],
+  "accessibility": {
+    "requiredNames": ["meaningful-message-content-or-caller-native-name"],
+    "keyboard": [],
+    "focus": [],
+    "form": [],
+    "tests": ["status-types", "status-css", "status-install", "status"]
+  }
+}

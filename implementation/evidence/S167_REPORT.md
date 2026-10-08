@@ -1,7 +1,11 @@
 # S167 step report — Freeze Status source live-region semantics
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `e944354a9e7059d4750c51fb1f245b0765bc5e96`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S167","kind":"report","commit":"e944354a9e7059d4750c51fb1f245b0765bc5e96","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R26, R32, R33, R34.
 Starting `dd2b89c0a60c5544be361c59e1ce75e4d23ed8ce` on `master`.

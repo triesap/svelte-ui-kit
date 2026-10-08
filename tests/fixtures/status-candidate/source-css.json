@@ -1,0 +1,33 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "50a35c69bc9c9abc9c5934190ba6c8bd918013674c228669f8af45fe562eacb2"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-status"],
+      "declarations": [
+        {
+          "property": "margin",
+          "value": "0"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-status-color, var(--kit-color-text))"
+        },
+        {
+          "property": "font-size",
+          "value": "var(--kit-status-font-size, 1rem)"
+        },
+        {
+          "property": "font-weight",
+          "value": "var(--kit-status-font-weight, 400)"
+        },
+        {
+          "property": "line-height",
+          "value": "var(--kit-status-line-height, 1.4)"
+        }
+      ]
+    }
+  ]
+}

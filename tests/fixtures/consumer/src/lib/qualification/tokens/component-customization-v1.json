@@ -1646,6 +1646,30 @@
       "scope": "avatar",
       "grammar": "<color>",
       "fallback": "var(--kit-color-text-muted)"
+    },
+    {
+      "name": "--kit-status-color",
+      "scope": "status",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-status-font-size",
+      "scope": "status",
+      "grammar": "<length-percentage>",
+      "fallback": "1rem"
+    },
+    {
+      "name": "--kit-status-font-weight",
+      "scope": "status",
+      "grammar": "<number>",
+      "fallback": "400"
+    },
+    {
+      "name": "--kit-status-line-height",
+      "scope": "status",
+      "grammar": "<number> | <length-percentage>",
+      "fallback": "1.4"
     }
   ]
 }
