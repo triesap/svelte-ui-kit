@@ -1,7 +1,11 @@
 # S145 step report — Freeze Field label, helper, and error composition
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `849ee003204c75d56b28f0123f419a67f62ab885`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S145","kind":"report","commit":"849ee003204c75d56b28f0123f419a67f62ab885","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R28, R32, R33, R34. Starting
 `3bdae0d2082440381ceb81b67dff42f8c8b30daa` on `master`.

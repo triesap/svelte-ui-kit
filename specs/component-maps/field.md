@@ -43,6 +43,9 @@ from that same current list, including before any child renders on the server.
 Removing a record removes its paragraph and reference in the same update;
 reordering preserves keyed identities. It introduces no validation or form-state
 engine and avoids claiming server effects already ran.
+Message keys are encoded as ID segments. A descriptor with a ref property owns
+that paragraph ref; use a reactive descriptor to observe its current ref and
+cleanup. Direct FieldMessage supports ordinary bind:ref independently.
 
 Root id is a caller base or native `$props.id()`; control ID defaults to
 base-control and active messages to base-message-key. Explicit Root controlId
@@ -102,3 +105,11 @@ SSR and refs; S147 installs the complete styled cohort; S148 qualifies native an
 kit label activation, validation presentation, reset, dynamic messages, multiple
 instances and actual hydration, then obtains separate independent acceptance.
 No candidate inventory or author statement supplies that acceptance.
+
+S146 actual candidate check/build and four server states measure every native
+part, unique IDs, complete initial message targets and convenience-field labels.
+Candidate Chromium measures actual refs, descriptor refs, native value/event
+bindings, retained keyed helper DOM through error addition/removal, inherited
+states with explicit false overrides and a changed control ID's live label.
+The Label target is derived reactively; no compile warning is suppressed.
+Complete registration and installed form/hydration qualification remain S147/S148.
