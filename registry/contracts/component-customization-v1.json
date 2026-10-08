@@ -1280,6 +1280,96 @@
       "scope": "tabs",
       "grammar": "<length-percentage>",
       "fallback": "2px"
+    },
+    {
+      "name": "--kit-collapsible-gap",
+      "scope": "collapsible",
+      "grammar": "<length-percentage>",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-collapsible-trigger-border-color",
+      "scope": "collapsible",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-border)"
+    },
+    {
+      "name": "--kit-collapsible-trigger-min-height",
+      "scope": "collapsible",
+      "grammar": "<length-percentage>",
+      "fallback": "2.5rem"
+    },
+    {
+      "name": "--kit-collapsible-trigger-padding-block",
+      "scope": "collapsible",
+      "grammar": "<length-percentage>",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-collapsible-trigger-padding-inline",
+      "scope": "collapsible",
+      "grammar": "<length-percentage>",
+      "fallback": "0.75rem"
+    },
+    {
+      "name": "--kit-collapsible-trigger-background",
+      "scope": "collapsible",
+      "grammar": "<color>",
+      "fallback": "transparent"
+    },
+    {
+      "name": "--kit-collapsible-trigger-color",
+      "scope": "collapsible",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-collapsible-trigger-font-weight",
+      "scope": "collapsible",
+      "grammar": "<number>",
+      "fallback": "600"
+    },
+    {
+      "name": "--kit-collapsible-trigger-background-hover",
+      "scope": "collapsible",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface-hover)"
+    },
+    {
+      "name": "--kit-collapsible-trigger-focus-outline-width",
+      "scope": "collapsible",
+      "grammar": "<length-percentage>",
+      "fallback": "2px"
+    },
+    {
+      "name": "--kit-collapsible-trigger-focus-ring",
+      "scope": "collapsible",
+      "grammar": "<color>",
+      "fallback": "var(--kit-focus-ring)"
+    },
+    {
+      "name": "--kit-collapsible-trigger-focus-outline-offset",
+      "scope": "collapsible",
+      "grammar": "<length-percentage>",
+      "fallback": "2px"
+    },
+    {
+      "name": "--kit-collapsible-trigger-disabled-opacity",
+      "scope": "collapsible",
+      "grammar": "<number>",
+      "fallback": "var(--kit-disabled-opacity)"
+    },
+    {
+      "name": "--kit-collapsible-content-padding-block",
+      "scope": "collapsible",
+      "grammar": "<length-percentage>",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-collapsible-content-padding-inline",
+      "scope": "collapsible",
+      "grammar": "<length-percentage>",
+      "fallback": "0"
     }
   ]
 }

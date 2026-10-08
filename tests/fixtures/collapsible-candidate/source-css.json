@@ -1,0 +1,119 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "50ac889f337c90144fb49172dd5f4bf745f352e0e4a1f9c02c18f81017c3ac68",
+    "url": "https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/styles/collapsible.css"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-collapsible"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "grid"
+        },
+        {
+          "property": "gap",
+          "value": "var(--kit-collapsible-gap, 0.5rem)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-collapsible-trigger"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "inline-flex"
+        },
+        {
+          "property": "align-items",
+          "value": "center"
+        },
+        {
+          "property": "justify-content",
+          "value": "center"
+        },
+        {
+          "property": "border",
+          "value": "var(--kit-border-width) solid\n    var(--kit-collapsible-trigger-border-color, var(--kit-color-border))"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-collapsible-trigger-radius,\n    var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))\n  )"
+        },
+        {
+          "property": "min-height",
+          "value": "var(--kit-collapsible-trigger-min-height, 2.5rem)"
+        },
+        {
+          "property": "padding",
+          "value": "var(--kit-collapsible-trigger-padding-block, 0.5rem)\n    var(--kit-collapsible-trigger-padding-inline, 0.75rem)"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-collapsible-trigger-background, transparent)"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-collapsible-trigger-color, var(--kit-color-text))"
+        },
+        {
+          "property": "font",
+          "value": "inherit"
+        },
+        {
+          "property": "font-weight",
+          "value": "var(--kit-collapsible-trigger-font-weight, 600)"
+        },
+        {
+          "property": "cursor",
+          "value": "pointer"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-collapsible-trigger:hover:not(:disabled)"],
+      "declarations": [
+        {
+          "property": "background",
+          "value": "var(\n    --kit-collapsible-trigger-background-hover,\n    var(--kit-color-surface-hover)\n  )"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-collapsible-trigger:focus-visible"],
+      "declarations": [
+        {
+          "property": "outline",
+          "value": "var(--kit-collapsible-trigger-focus-outline-width, 2px) solid\n    var(--kit-collapsible-trigger-focus-ring, var(--kit-focus-ring))"
+        },
+        {
+          "property": "outline-offset",
+          "value": "var(--kit-collapsible-trigger-focus-outline-offset, 2px)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-collapsible-trigger:disabled"],
+      "declarations": [
+        {
+          "property": "cursor",
+          "value": "not-allowed"
+        },
+        {
+          "property": "opacity",
+          "value": "var(--kit-collapsible-trigger-disabled-opacity, var(--kit-disabled-opacity))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-collapsible-content"],
+      "declarations": [
+        {
+          "property": "padding",
+          "value": "var(--kit-collapsible-content-padding-block, 0.5rem)\n    var(--kit-collapsible-content-padding-inline, 0)"
+        }
+      ]
+    }
+  ]
+}

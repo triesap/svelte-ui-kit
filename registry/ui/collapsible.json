@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "id": "collapsible",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Pinned native disclosure parts with bindable open state, retained content and source-owned presentation.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/collapsible/root.svelte",
+      "target": "collapsible/root.svelte",
+      "kind": "svelte",
+      "cohort": "collapsible"
+    },
+    {
+      "source": "ui/collapsible/trigger.svelte",
+      "target": "collapsible/trigger.svelte",
+      "kind": "svelte",
+      "cohort": "collapsible"
+    },
+    {
+      "source": "ui/collapsible/content.svelte",
+      "target": "collapsible/content.svelte",
+      "kind": "svelte",
+      "cohort": "collapsible"
+    },
+    {
+      "source": "ui/collapsible/types.ts",
+      "target": "collapsible/types.ts",
+      "kind": "typescript",
+      "cohort": "collapsible"
+    },
+    {
+      "source": "ui/collapsible/index.ts",
+      "target": "collapsible/index.ts",
+      "kind": "typescript",
+      "cohort": "collapsible"
+    }
+  ],
+  "exports": [
+    {
+      "name": "CollapsibleRoot",
+      "target": "collapsible/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "CollapsibleTrigger",
+      "target": "collapsible/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "CollapsibleContent",
+      "target": "collapsible/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "CollapsibleRootProps",
+      "target": "collapsible/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "CollapsibleTriggerProps",
+      "target": "collapsible/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "CollapsibleContentProps",
+      "target": "collapsible/index.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/collapsible.css",
+      "target": "kit.css",
+      "blockId": "collapsible",
+      "cohort": "collapsible"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [
+    {
+      "name": "bits-ui",
+      "range": "2.19.3",
+      "role": "runtime"
+    }
+  ],
+  "accessibility": {
+    "requiredNames": ["collapsible-trigger-label"],
+    "keyboard": ["Space", "Enter"],
+    "focus": ["native-focus-visible"],
+    "form": [],
+    "tests": [
+      "collapsible-types",
+      "collapsible-parts",
+      "collapsible-install",
+      "collapsible-browser"
+    ]
+  }
+}

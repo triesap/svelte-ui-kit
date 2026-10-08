@@ -84,3 +84,28 @@ groups. Closed content retains the same input node/state, and forceMount exposes
 closed content with expanded=false as its native caller-owned visual policy.
 Complete candidate parts remain unadvertised until S143, with installed motion/
 SSR/hydration/lifecycle qualification still required by S144 and S148.
+
+## Complete source customization hooks
+
+All prior customization records remain unchanged. Tokens0.1.8 records the
+observed source hooks without changing semantic defaults or token CSS. The
+existing exact trigger radius keeps its source control/default/md chain.
+
+| Property                                       | Grammar                                                                                                             | Source fallback                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| --kit-collapsible-trigger-radius               | `<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? \| inherit \| initial \| unset \| revert \| revert-layer` | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))` |
+| --kit-collapsible-gap                          | `<length-percentage>`                                                                                               | `0.5rem`                                                                     |
+| --kit-collapsible-trigger-border-color         | `<color>`                                                                                                           | `var(--kit-color-border)`                                                    |
+| --kit-collapsible-trigger-min-height           | `<length-percentage>`                                                                                               | `2.5rem`                                                                     |
+| --kit-collapsible-trigger-padding-block        | `<length-percentage>`                                                                                               | `0.5rem`                                                                     |
+| --kit-collapsible-trigger-padding-inline       | `<length-percentage>`                                                                                               | `0.75rem`                                                                    |
+| --kit-collapsible-trigger-background           | `<color>`                                                                                                           | `transparent`                                                                |
+| --kit-collapsible-trigger-color                | `<color>`                                                                                                           | `var(--kit-color-text)`                                                      |
+| --kit-collapsible-trigger-font-weight          | `<number>`                                                                                                          | `600`                                                                        |
+| --kit-collapsible-trigger-background-hover     | `<color>`                                                                                                           | `var(--kit-color-surface-hover)`                                             |
+| --kit-collapsible-trigger-focus-outline-width  | `<length-percentage>`                                                                                               | `2px`                                                                        |
+| --kit-collapsible-trigger-focus-ring           | `<color>`                                                                                                           | `var(--kit-focus-ring)`                                                      |
+| --kit-collapsible-trigger-focus-outline-offset | `<length-percentage>`                                                                                               | `2px`                                                                        |
+| --kit-collapsible-trigger-disabled-opacity     | `<number>`                                                                                                          | `var(--kit-disabled-opacity)`                                                |
+| --kit-collapsible-content-padding-block        | `<length-percentage>`                                                                                               | `0.5rem`                                                                     |
+| --kit-collapsible-content-padding-inline       | `<length-percentage>`                                                                                               | `0`                                                                          |

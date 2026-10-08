@@ -1,7 +1,11 @@
 # S142 step report — Native Collapsible disclosure candidates
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `2481d939dad27b3eda6c4da1569496082a9461c3`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S142","kind":"report","commit":"2481d939dad27b3eda6c4da1569496082a9461c3","disposition":"candidate"}
+-->
 
 Original R03, R20, R21, R32, R33, R34. Starting
 `d9a0b505631a595f30ab8e044ce00978eda30d03` on `master`.
