@@ -21,8 +21,14 @@
   let manual = $state(false);
   let vertical = $state(false);
   let disabled = $state(false);
-  const options: Pick<TabsRootProps, "loop"> = {
-    loop: false,
+  let loop = $state(false);
+  let showC = $state(true);
+  let showPanelC = $state(true);
+  let cRef = $state<HTMLElement | null>(null);
+  let panelCRef = $state<HTMLElement | null>(null);
+  let submits = $state(0);
+  const options: Pick<TabsRootProps, "aria-label"> = {
+    "aria-label": "Installed settings",
   };
   onMount(() => {
     ready = true;
@@ -42,6 +48,30 @@
     }}>Toggle tabs direction</button
   >
   <p data-ready={ready}>Hydrated</p>
+  <p id="dynamic-refs">
+    {cRef?.tagName ?? "none"};{panelCRef?.tagName ?? "none"}
+  </p>
+  <p id="submits">{submits}</p>
+  <button
+    onclick={() => {
+      loop = !loop;
+    }}>Toggle tabs loop</button
+  >
+  <button
+    onclick={() => {
+      showC = !showC;
+    }}>Toggle tab C</button
+  >
+  <button
+    onclick={() => {
+      showPanelC = !showPanelC;
+    }}>Toggle panel C</button
+  >
+  <button
+    onclick={() => {
+      triggerRef?.focus();
+    }}>Focus bound tab A</button
+  >
   <p id="value">{value}; callbacks {callbacks}</p>
   <p id="part-refs">
     {triggerRef?.tagName ?? "none"};{contentRef?.tagName ??
@@ -78,54 +108,68 @@
       disabled = !disabled;
     }}>Toggle candidate disabled</button
   >
-  <TabsRoot
-    id="tabs-root"
-    {...options}
-    bind:value
-    bind:ref={rootRef}
-    activationMode={manual ? "manual" : "automatic"}
-    orientation={vertical ? "vertical" : "horizontal"}
-    {disabled}
-    class={["caller", { retained: true }]}
-    data-caller="root"
-    onValueChange={() => {
-      callbacks += 1;
+  <form
+    onsubmit={(event) => {
+      event.preventDefault();
+      submits += 1;
     }}
   >
-    <TabsList
-      id="tabs-list"
-      bind:ref={listRef}
-      aria-label="Candidate settings"
-      class="caller-list"
-      data-caller="list"
+    <TabsRoot
+      id="tabs-root"
+      {...options}
+      bind:value
+      bind:ref={rootRef}
+      activationMode={manual ? "manual" : "automatic"}
+      orientation={vertical ? "vertical" : "horizontal"}
+      {disabled}
+      {loop}
+      class={["caller", { retained: true }]}
+      data-caller="root"
+      onValueChange={() => {
+        callbacks += 1;
+      }}
     >
-      <TabsTrigger
-        id="tab-a"
+      <TabsList
+        id="tabs-list"
+        bind:ref={listRef}
+        aria-label="Candidate settings"
+        class="caller-list"
+        data-caller="list"
+      >
+        <TabsTrigger
+          id="tab-a"
+          value="a"
+          bind:ref={triggerRef}
+          class={["caller-trigger", { retained: true }]}
+          data-caller="trigger"
+          onclick={(event) => {
+            clicks += 1;
+            if (cancel) event.preventDefault();
+          }}>Tab A</TabsTrigger
+        >
+        <TabsTrigger id="tab-b" value="b">Tab B</TabsTrigger>
+        <TabsTrigger id="tab-disabled" value="disabled" disabled
+          >Unavailable tab</TabsTrigger
+        >
+        {#if showC}<TabsTrigger id="tab-c" value="c" bind:ref={cRef}
+            >Tab C</TabsTrigger
+          >{/if}
+      </TabsList>
+      <TabsContent
+        id="panel-a"
         value="a"
-        bind:ref={triggerRef}
-        class={["caller-trigger", { retained: true }]}
-        data-caller="trigger"
-        onclick={(event) => {
-          clicks += 1;
-          if (cancel) event.preventDefault();
-        }}>Tab A</TabsTrigger
+        bind:ref={contentRef}
+        class="caller-panel"
+        data-caller="content"
+        ><p>Panel A</p>
+        <input aria-label="Panel A state" /></TabsContent
       >
-      <TabsTrigger id="tab-b" value="b">Tab B</TabsTrigger>
-      <TabsTrigger id="tab-disabled" value="disabled" disabled
-        >Unavailable tab</TabsTrigger
-      >
-    </TabsList>
-    <TabsContent
-      id="panel-a"
-      value="a"
-      bind:ref={contentRef}
-      class="caller-panel"
-      data-caller="content"
-      ><p>Panel A</p>
-      <input aria-label="Panel A state" /></TabsContent
-    >
-    <TabsContent id="panel-b" value="b"><p>Panel B</p></TabsContent>
-  </TabsRoot>
+      <TabsContent id="panel-b" value="b"><p>Panel B</p></TabsContent>
+      {#if showPanelC}<TabsContent id="panel-c" value="c" bind:ref={panelCRef}
+          >Panel C</TabsContent
+        >{/if}
+    </TabsRoot>
+  </form>
 
   {#snippet delegatedTabs()}
     <TabsList id="delegated-list" aria-label="Delegated settings">
@@ -178,6 +222,24 @@
     ><BitsTabs.Content id="raw-panel-b" value="b">Raw panel B</BitsTabs.Content
     ></BitsTabs.Root
   >
+  {#each [0, 1] as group (group)}
+    <TabsRoot value="a" data-auto-group={group}>
+      <TabsList aria-label={`Automatic group ${group}`}>
+        <TabsTrigger value="a" data-auto-trigger="a"
+          >Automatic A {group}</TabsTrigger
+        >
+        <TabsTrigger value="b" data-auto-trigger="b"
+          >Automatic B {group}</TabsTrigger
+        >
+      </TabsList>
+      <TabsContent value="a" data-auto-panel="a"
+        >Automatic panel A {group}</TabsContent
+      >
+      <TabsContent value="b" data-auto-panel="b"
+        >Automatic panel B {group}</TabsContent
+      >
+    </TabsRoot>
+  {/each}
 </main>
 
 <style>

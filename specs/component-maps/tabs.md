@@ -92,6 +92,19 @@ S140 browser/hydration and separate S148 acceptance.
 
 ## Source customization hooks
 
+S139 installs the complete family in actual default/custom consumers. S140
+qualifies automatic/manual activation, orientation/direction, clamp/wrap,
+disabled skipping/refusal, refs/callbacks/cancellation, mounted child state,
+independent delegated/raw/repeated groups and reciprocal native links.
+Actual trigger/panel removal clears bound refs and the opposite part's
+relationship; remount restores one current registration while the caller's
+selected string remains authoritative. Twelve concurrent same-worker responses
+per layout preserve A/B/C/empty selection and independent secondary groups.
+Every initial value hydrates with the corresponding panel visibility and no
+selection callback. Generated IDs in two repeated groups match actual SSR after
+hydration, remain unique within the response and link independently. All are
+local candidate observations pending separate S148 acceptance.
+
 All original customization records remain unchanged. The complete Tabs stylesheet
 adds observed source hooks to the independent customization metadata; the existing
 radius record retains its exact control/default/md fallback. Tokens0.1.7 records

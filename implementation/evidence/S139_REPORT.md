@@ -1,7 +1,11 @@
 # S139 step report — Complete styled Tabs installation
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `f0c49aa4afe1feea9012c73eb2b188c9c6ec7c19`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S139","kind":"report","commit":"f0c49aa4afe1feea9012c73eb2b188c9c6ec7c19","disposition":"candidate"}
+-->
 
 Original R04, R06, R14, R26, R32, R33, R34. Starting
 `27d84f097ea94a1a62cf6d3ca2d68dbf93ff7710` on `master`.
