@@ -1,7 +1,11 @@
 # S144 step report — Qualify Collapsible disclosure composition
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `3bdae0d2082440381ceb81b67dff42f8c8b30daa`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S144","kind":"report","commit":"3bdae0d2082440381ceb81b67dff42f8c8b30daa","disposition":"candidate"}
+-->
 
 Original R20, R21, R22, R29, R31, R32, R33, R34. Starting
 `68577a42f1c210181060e9e347becb59a1f3ef05` on `master`.

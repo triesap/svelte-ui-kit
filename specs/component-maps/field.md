@@ -1,0 +1,104 @@
+# Field native controls, messages and source composition contract
+
+Pinned source [family](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/field/mod.rs),
+[manifest](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/field.json)
+and [CSS](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/styles/field.css)
+define all fourteen original exports. Every source file listed below was
+inspected at that revision. Preserve MIT attribution and all source CSS geometry,
+state selectors, hooks and fallback chains. This family uses native Svelte5.57.1
+elements, typed DOM events and request-safe `$props.id()` identity. It does not
+need Bits, a schema engine, form store, global counter or identity shim.
+
+## Complete source mapping
+
+All component names have a corresponding Props type. Twelve Svelte files,
+types.ts, context.ts and index.ts form one complete source/style/export cohort
+with styles/field.css. Tokens is the only registry dependency; there is no new
+npm dependency. FieldSlot and TextInputType are types, not fake runtime exports.
+
+| Source export/file                 | Svelte target          | Markup and disposition                                                                 |
+| ---------------------------------- | ---------------------- | -------------------------------------------------------------------------------------- |
+| FieldRoot / root.rs                | root.svelte            | Native div; required/invalid/disabled context and message ownership                    |
+| FieldSurface / surface.rs          | surface.svelte         | Native div; actual invalid/disabled attributes                                         |
+| FieldLabel / label.rs              | label.svelte           | Native label targeting the actual control ID                                           |
+| FieldMessage / message.rs          | message.svelte         | Native p with explicit id and native content/attrs; Root owns active message rendering |
+| FieldRequired / required.rs        | required.svelte        | Required-only aria-hidden span containing *                                            |
+| FieldSlot / slot.rs                | types.ts               | Native Snippet type; optional snippets replace Rust Arc/empty/is_present/render APIs   |
+| TextInput / text_input.rs          | text-input.svelte      | Native input, bind:value/ref, six source text input types                              |
+| TextInputType / text_input.rs      | types.ts               | Exactly text/email/password/search/tel/url string union                                |
+| TextArea / text_area.rs            | text-area.svelte       | Native textarea, bind:value/ref, rows default4                                         |
+| NativeSelect / native_select.rs    | native-select.svelte   | Native single select, string bind:value/ref and option children                        |
+| SelectIcon / native_select.rs      | select-icon.svelte     | Native aria-hidden span with caller icon snippet                                       |
+| TextField / text_field.rs          | text-field.svelte      | Root/surface/label/required/input/message recipe with native input attrs/ref           |
+| TextAreaField / text_area_field.rs | text-area-field.svelte | Same recipe with native textarea attrs/ref                                             |
+| SelectField / select_field.rs      | select-field.svelte    | Actual native select plus source visible selected label/value row and optional icon    |
+
+## Relationships and active message ownership
+
+Implementation decision at S145: replace render-order-dependent Rust message
+registration/ordinal context with an explicit Root-owned keyed message list.
+Root messages are native paragraph props excluding id, plus a required key and
+children snippet. Root derives both its described-by IDs and rendered paragraphs
+from that same current list, including before any child renders on the server.
+Removing a record removes its paragraph and reference in the same update;
+reordering preserves keyed identities. It introduces no validation or form-state
+engine and avoids claiming server effects already ran.
+
+Root id is a caller base or native `$props.id()`; control ID defaults to
+base-control and active messages to base-message-key. Explicit Root controlId
+supports kit controls or a caller-selected native ID. Root children receive
+controlId/describedBy/required/invalid/disabled; ordinary zero-argument children
+also work. Low-level native controls inherit current Root relationships and
+states. Explicit native id/required/disabled/aria-describedby and invalid override
+context, including false. If overriding a control ID, match Root controlId or
+FieldLabel for. One control belongs to one FieldRoot. Each extra control needs
+its own Root or explicit caller relationships.
+
+FieldMessage requires an explicit id, forwards paragraph attrs/ref/children and
+inherits source invalid/disabled styling. Root renders owned messages after
+children in source visual order. Independently composed paragraphs and explicit
+aria-describedby are ordinary caller-owned native relationships: the caller
+must render their targets. They are not silently registered through browser-only
+effects. There is no automatic alert/live-region role in the source; native
+role/aria-live remain caller props. Invalid is presentation and aria-invalid,
+not validation execution.
+
+FieldLabel inherits Root controlId unless native for is supplied. Surface,
+Required and implicit Label associations require a Root. Required and SelectIcon
+pin aria-hidden=true; the marker renders only while Root required is true.
+No synthetic accessible label, redundant field-level role or schema validator.
+
+## Native controls, events and composition
+
+TextInput/TextArea expose string bind:value and exact native input/textarea refs,
+defaultValue, form/name/autocomplete/required/disabled/readonly and native event
+handlers with actual typed currentTarget. Native value binding owns input and
+reset ordering; no second reset bridge is introduced without an observed need.
+TextArea rows defaults to4. Standalone controls use their own native stable ID
+and no inherited relationships. NativeSelect remains single selection with
+string binding, native option children, form attributes and change events.
+Multiple selection and unsupported select defaultValue aliases are excluded;
+option selected defaults and initial value remain native. This implements the
+original native select, not the deferred new select/combobox extension.
+
+Convenience fields require label and name, bind string value and the actual
+native control ref, and forward remaining native attributes/events to that
+control. Their id is the field base (control gets base-control). Native class
+styles the control; rootClass/surfaceClass/labelRowClass/labelClass/requiredClass/
+messageClass target source parts. Optional message string/null controls a single
+Root-owned message. labelAction is a native optional snippet. SelectField requires
+selectedLabel and offers valueRowClass/valueClass/iconClass and optional icon
+snippet. Source invisible native select overlay, visible value row and decorative
+icon remain CSS-owned; native select owns keyboard, focus, form and selection.
+
+Preserve kit-field/surface/label/label-row/required/message/control, kit-text-input,
+kit-text-area, kit-native-select and kit-select-field-surface/native/value-row/
+value and kit-select-icon. Root has required/invalid/disabled data attributes;
+surface/message inherit invalid/disabled; controls match actual disabled/invalid.
+All source attrs use true when active and are absent otherwise.
+
+S145 freezes types and source mapping only. Original S146 must measure markup,
+SSR and refs; S147 installs the complete styled cohort; S148 qualifies native and
+kit label activation, validation presentation, reset, dynamic messages, multiple
+instances and actual hydration, then obtains separate independent acceptance.
+No candidate inventory or author statement supplies that acceptance.
