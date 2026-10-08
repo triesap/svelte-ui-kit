@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "router-link",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Optional native SvelteKit link recipe reusing Anchor source and design.",
+  "compatibility": { "svelte": "5.57.1", "bits": "2.19.3", "date": "^3.8.1" },
+  "files": [
+    {
+      "source": "ui/router-link.svelte",
+      "target": "router-link.svelte",
+      "kind": "svelte",
+      "cohort": "router-link"
+    },
+    {
+      "source": "ui/router-link.types.ts",
+      "target": "router-link.types.ts",
+      "kind": "typescript",
+      "cohort": "router-link"
+    }
+  ],
+  "exports": [
+    { "name": "RouterLink", "target": "router-link.svelte", "kind": "value" },
+    {
+      "name": "RouterLinkProps",
+      "target": "router-link.types.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [],
+  "registryDependencies": ["anchor"],
+  "npmDependencies": [],
+  "accessibility": {
+    "requiredNames": ["native-link-text-or-name"],
+    "keyboard": ["Enter"],
+    "focus": ["native-link-focus"],
+    "form": [],
+    "tests": ["router-link-types", "router-link-install", "router-link"]
+  }
+}

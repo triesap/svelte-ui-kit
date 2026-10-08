@@ -1,7 +1,11 @@
 # S152 step report — Freeze the optional Router Link recipe
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `68d46280f572e551cc862163a3274bd56de75cad`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S152","kind":"report","commit":"68d46280f572e551cc862163a3274bd56de75cad","disposition":"candidate"}
+-->
 
 Original R03, R20, R26, R28, R32, R33, R34.
 Starting `01baa6da87894397e1a22169a57158458c82fab6` on `master`.

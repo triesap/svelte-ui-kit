@@ -12,10 +12,11 @@
     { "id": "field", "manifest": "ui/field.json" },
     { "id": "menu", "manifest": "ui/menu.json" },
     { "id": "radio", "manifest": "ui/radio.json" },
+    { "id": "router-link", "manifest": "ui/router-link.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
     { "id": "switch", "manifest": "ui/switch.json" },
     { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "2913ff509098bf876bdccd6f77781075c2384c688249bdb437aed4c52472ae1d"
+  "contentHash": "ef1bd8c238f1471645c425e5b297ecd3a540422b250427ef7f8a224a6e12659d"
 }
