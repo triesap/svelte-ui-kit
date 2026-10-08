@@ -6,7 +6,7 @@ import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Owned, explicitly unregistered incremental native Alert Dialog composition. */
 export function buildAlertDialogCandidate(
-  stage: "root-trigger" | "content" = "root-trigger",
+  stage: "root-trigger" | "content" | "actions" = "root-trigger",
 ) {
   const fixture = copyConsumerFixture();
   try {
@@ -14,8 +14,16 @@ export function buildAlertDialogCandidate(
       "root.svelte",
       "trigger.svelte",
       "types.ts",
-      ...(stage === "content"
+      ...(stage !== "root-trigger"
         ? ["portal.svelte", "overlay.svelte", "content.svelte"]
+        : []),
+      ...(stage === "actions"
+        ? [
+            "title.svelte",
+            "description.svelte",
+            "action.svelte",
+            "cancel.svelte",
+          ]
         : []),
     ];
     for (const file of sources) {
@@ -28,7 +36,11 @@ export function buildAlertDialogCandidate(
       writeFileSync(target, readFileSync(`registry/ui/alert-dialog/${file}`));
     }
     const routeName =
-      stage === "content" ? "alert-dialog-content" : "alert-dialog-candidate";
+      stage === "actions"
+        ? "alert-dialog-actions"
+        : stage === "content"
+          ? "alert-dialog-content"
+          : "alert-dialog-candidate";
     const route = `src/routes/${routeName}/+page.svelte`;
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
       recursive: true,
@@ -74,17 +86,19 @@ export function buildAlertDialogCandidate(
       handler: path.join(fixture.root, "build/handler.js"),
       route: `/${routeName}`,
       evidence: {
-        stage: stage === "content" ? "S118" : "S117",
+        stage:
+          stage === "actions" ? "S119" : stage === "content" ? "S118" : "S117",
         authored: [
           "Root",
           "Trigger",
-          ...(stage === "content" ? ["Portal", "Overlay", "Content"] : []),
+          ...(stage !== "root-trigger" ? ["Portal", "Overlay", "Content"] : []),
+          ...(stage === "actions"
+            ? ["Title", "Description", "Action", "Cancel"]
+            : []),
         ],
         raw: [
           ...(stage === "root-trigger" ? ["Content"] : []),
-          "Title",
-          "Description",
-          "Cancel",
+          ...(stage !== "actions" ? ["Title", "Description", "Cancel"] : []),
         ],
         installation: "candidate-copy",
         catalogRegistered: JSON.parse(

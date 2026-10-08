@@ -3,7 +3,7 @@
 Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S118","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S118","kind":"report","commit":"d07f78cae6007d0c2eefb014142943339cf97b71","disposition":"candidate"}
 -->
 
 Portal forwards the pinned distinct AlertDialog primitive's native target and
