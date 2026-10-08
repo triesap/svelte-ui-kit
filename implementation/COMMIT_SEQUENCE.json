@@ -2021,7 +2021,7 @@
       "sequence": "RCLD-08",
       "dependsOn": "S146",
       "requirements": ["R02", "R04", "R06", "R10", "R32", "R33", "R34"],
-      "status": "in_progress",
+      "status": "committed_pending_review",
       "completion": null
     },
     {
@@ -2030,7 +2030,7 @@
       "sequence": "RCLD-08",
       "dependsOn": "S147",
       "requirements": ["R20", "R21", "R22", "R28", "R29", "R32", "R33", "R34"],
-      "status": "not_started",
+      "status": "in_progress",
       "completion": null
     },
     {

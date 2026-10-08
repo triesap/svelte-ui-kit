@@ -428,3 +428,74 @@ export const buildFieldConsumer = (
     process.cwd(),
     beforeBuild,
   );
+
+/** Mixed form qualification installs each kit control through the real CLI. */
+export function buildFieldFormsConsumer(custom: boolean) {
+  const extra = [
+    "checkbox.svelte",
+    "checkbox.types.ts",
+    "switch.svelte",
+    "switch.types.ts",
+    "radio/group.svelte",
+    "radio/item.svelte",
+    "radio/types.ts",
+    "radio/index.ts",
+  ];
+  let additional: Record<string, string> = {};
+  const consumer = buildComponentConsumer(
+    "field",
+    custom,
+    "field-forms",
+    false,
+    process.cwd(),
+    (root, config) => {
+      for (const item of ["checkbox", "switch", "radio"]) {
+        const result = spawnSync(
+          process.execPath,
+          [
+            path.resolve("dist/cli/main.js"),
+            "add",
+            item,
+            "--json",
+            "--cwd",
+            root,
+          ],
+          { cwd: root, encoding: "utf8", timeout: 30000 },
+        );
+        assert.equal(result.status, 0, result.stdout + result.stderr);
+        assert.equal(result.stderr, "");
+      }
+      const lock = JSON.parse(
+        readFileSync(
+          path.join(root, deriveKitPaths(config).stateDir, "kit.lock.json"),
+          "utf8",
+        ),
+      );
+      assert.deepEqual(lock.requested, [
+        "checkbox",
+        "field",
+        "radio",
+        "switch",
+      ]);
+      additional = Object.fromEntries(
+        extra.map((file) => {
+          const relative = `${config.uiDir}/${file}`,
+            bytes = readFileSync(path.join(root, relative));
+          assert.ok(
+            bytes.equals(readFileSync(`registry/ui/${file}`)),
+            relative,
+          );
+          return [relative, sha256Hex(bytes)];
+        }),
+      );
+    },
+  );
+  return {
+    ...consumer,
+    evidence: {
+      ...consumer.evidence,
+      coinstalled: ["checkbox", "switch", "radio"],
+      files: { ...consumer.evidence.files, ...additional },
+    },
+  };
+}

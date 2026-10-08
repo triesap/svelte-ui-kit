@@ -114,6 +114,30 @@ states with explicit false overrides and a changed control ID's live label.
 The Label target is derived reactively; no compile warning is suppressed.
 Complete registration and installed form/hydration qualification remain S147/S148.
 
+S148 real default/custom CLI consumers coinstall Checkbox, Switch and Radio
+explicitly, with every installed source byte and production identity checked.
+Native labels activate the actual checkbox/switch/radio-item buttons; the Radio
+Group additionally names its group with the rendered Plan label. Native required
+validation focuses the visible kit control through its existing hidden field;
+each named kit field submits once and disabled fields are omitted.
+
+Native input/textarea defaultValue and option defaults define reset values.
+Initial value is current bound state, not an implicit reset default; convenience
+fields forward defaultValue to their native control. Raw native input/textarea/
+select controls independently reproduce reset and cancellation behavior. Changing
+native form ownership changes which form resets/submits those fields, including
+coinstalled Checkbox/Switch. Radio keeps its actual native API and surrounding
+form ownership; no unsupported form prop is added.
+
+Removing all messages removes described-by and clears explicit descriptor refs.
+Required marker refs clear when required becomes false. Whole field teardown
+clears native and kit refs, and remount restores current state/relationships.
+Twelve concurrent requests per layout and all four initial helper/error states
+retain correct target sets, unique generated identities and actual hydration.
+An owned copied-Root mutation capturing initial descriptions preserves initial
+targets but leaves exactly the removed error reference; the same detector proves
+that fault. This author qualification remains pending separate S148 acceptance.
+
 ## Complete source customization hooks
 
 Preserve all 94 parsed source declarations. The target additionally disables

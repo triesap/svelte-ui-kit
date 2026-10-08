@@ -1,7 +1,11 @@
 # S147 step report — Style and register Field
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `a05e20bf9b3251b8c47bd4d77c28296f4966bd37`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S147","kind":"report","commit":"a05e20bf9b3251b8c47bd4d77c28296f4966bd37","disposition":"candidate"}
+-->
 
 Original R02, R04, R06, R10, R32, R33, R34. Starting
 `991b51ed04d759969b440fd04c7dcc44a8c398cd` on `master`.
