@@ -1,0 +1,38 @@
+/* svelte-ui-kit:start avatar */
+@layer svelte-ui-kit.components {
+  .kit-avatar {
+    display: block;
+    box-sizing: border-box;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    border-radius: var(--kit-avatar-radius, var(--kit-radius-full));
+    object-fit: cover;
+  }
+  .kit-avatar-frame {
+    position: relative;
+    display: inline-block;
+    box-sizing: border-box;
+    border-radius: var(--kit-avatar-radius, var(--kit-radius-full));
+    overflow: hidden;
+  }
+  .kit-avatar-frame[data-fallback-active="true"] > .kit-avatar {
+    visibility: hidden;
+  }
+  .kit-avatar-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(
+      --kit-avatar-fallback-background,
+      var(--kit-color-surface-hover)
+    );
+    color: var(--kit-avatar-fallback-color, var(--kit-color-text-muted));
+  }
+  .kit-avatar-fallback[hidden],
+  .kit-avatar[hidden]:not([hidden="until-found"]) {
+    display: none;
+  }
+}
+/* svelte-ui-kit:end avatar */

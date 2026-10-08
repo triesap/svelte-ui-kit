@@ -5,6 +5,7 @@
   "items": [
     { "id": "alert-dialog", "manifest": "ui/alert-dialog.json" },
     { "id": "anchor", "manifest": "ui/anchor.json" },
+    { "id": "avatar", "manifest": "ui/avatar.json" },
     { "id": "button", "manifest": "ui/button.json" },
     { "id": "checkbox", "manifest": "ui/checkbox.json" },
     { "id": "collapsible", "manifest": "ui/collapsible.json" },
@@ -18,5 +19,5 @@
     { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "ef1bd8c238f1471645c425e5b297ecd3a540422b250427ef7f8a224a6e12659d"
+  "contentHash": "5503d44735c7c65eed7ec5850f7489b6a5d62fcf085496c23254b7f7fb68c84f"
 }

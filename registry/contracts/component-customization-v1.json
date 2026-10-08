@@ -1634,6 +1634,18 @@
       "scope": "anchor",
       "grammar": "<length>",
       "fallback": "0.125rem"
+    },
+    {
+      "name": "--kit-avatar-fallback-background",
+      "scope": "avatar",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface-hover)"
+    },
+    {
+      "name": "--kit-avatar-fallback-color",
+      "scope": "avatar",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text-muted)"
     }
   ]
 }

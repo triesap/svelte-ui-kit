@@ -8,9 +8,9 @@ interface Rule {
   declarations: { property: string; value: string }[];
 }
 const source = JSON.parse(
-  readFileSync("tests/fixtures/anchor-candidate/source-css.json", "utf8"),
+  readFileSync("tests/fixtures/avatar-candidate/source-css.json", "utf8"),
 ) as { source: { revision: string; sha256: string }; rules: Rule[] };
-const css = readFileSync("registry/styles/anchor.css", "utf8");
+const css = readFileSync("registry/styles/avatar.css", "utf8");
 const rules: Rule[] = [];
 function collect(value: unknown): void {
   if (Array.isArray(value)) {
@@ -39,7 +39,7 @@ function collect(value: unknown): void {
 }
 collect(parseCss(css).children);
 const normalize = (v: string) => v.replace(/\s+/g, "");
-test("immutable Anchor declarations preserve all 8 source layout control and state declarations", () => {
+test("immutable Avatar declarations preserve all 6 source layout control and state declarations", () => {
   assert.equal(
     source.source.revision,
     "a10fbf06334f4648f5755e05a7147414e4e5fc98",
@@ -47,7 +47,7 @@ test("immutable Anchor declarations preserve all 8 source layout control and sta
   assert.match(source.source.sha256, /^[a-f0-9]{64}$/);
   assert.equal(
     source.rules.reduce((n, r) => n + r.declarations.length, 0),
-    8,
+    6,
   );
   for (const r of source.rules)
     for (const selector of r.selectors)
@@ -65,34 +65,28 @@ test("immutable Anchor declarations preserve all 8 source layout control and sta
           `${mapped}: ${d.property}=${d.value}`,
         );
       }
-  assert.doesNotMatch(css, /@tailwind|@apply|.kit-anchor:checked/);
+  assert.doesNotMatch(css, /@tailwind|@apply|.kit-avatar:checked/);
 });
 
-test("Anchor appends nine source hooks while preserving all263 original customization records", () => {
+test("Avatar preserves original272 customization records and appends only approved fallback hooks", () => {
   const contract = JSON.parse(
     readFileSync("registry/contracts/component-customization-v1.json", "utf8"),
   );
-  assert.ok(contract.properties.length >= 272);
+  assert.ok(contract.properties.length >= 274);
   assert.equal(
     createHash("sha256")
-      .update(JSON.stringify(contract.properties.slice(0, 263)))
+      .update(JSON.stringify(contract.properties.slice(0, 272)))
       .digest("hex"),
-    "269f287c6aacb2ef9d87f7a890de82e1f7bb6b228b7153c23f2c0cb7d7adcec6",
+    "0a0b1e2b961668d68499a4fbd68193c34027a76610b270dd83fc7002fe001393",
   );
   assert.deepEqual(
     contract.properties
-      .filter((property: { scope: string }) => property.scope === "anchor")
-      .map((property: { name: string }) => property.name),
+      .filter((p: { scope: string }) => p.scope === "avatar")
+      .map((p: { name: string }) => p.name),
     [
-      "--kit-anchor-color",
-      "--kit-anchor-text-decoration-color",
-      "--kit-anchor-text-decoration-line",
-      "--kit-anchor-text-decoration-thickness",
-      "--kit-anchor-text-underline-offset",
-      "--kit-anchor-color-hover",
-      "--kit-anchor-focus-outline-width",
-      "--kit-anchor-focus-outline-color",
-      "--kit-anchor-focus-outline-offset",
+      "--kit-avatar-radius",
+      "--kit-avatar-fallback-background",
+      "--kit-avatar-fallback-color",
     ],
   );
 });

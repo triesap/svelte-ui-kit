@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "avatar",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Native image avatar with accessible optional loading and failure fallback.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/avatar.svelte",
+      "target": "avatar.svelte",
+      "kind": "svelte",
+      "cohort": "avatar"
+    },
+    {
+      "source": "ui/avatar.types.ts",
+      "target": "avatar.types.ts",
+      "kind": "typescript",
+      "cohort": "avatar"
+    }
+  ],
+  "exports": [
+    {
+      "name": "Avatar",
+      "target": "avatar.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "AvatarProps",
+      "target": "avatar.types.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/avatar.css",
+      "target": "kit.css",
+      "blockId": "avatar",
+      "cohort": "avatar"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [],
+  "accessibility": {
+    "requiredNames": [
+      "native-alternate-text-or-decorative-empty-alt",
+      "fallback-alternate-text"
+    ],
+    "keyboard": [],
+    "focus": [],
+    "form": [],
+    "tests": ["avatar-types", "avatar-css", "avatar-install", "avatar"]
+  }
+}

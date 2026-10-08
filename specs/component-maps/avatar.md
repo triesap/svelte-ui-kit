@@ -66,3 +66,18 @@ S157 measures image transitions, stale/cached requests, names, decorative use,
 multiple instances, refs, attrs, theme, RTL, reduced motion and SSR/hydration in
 actual default/custom CLI-installed applications. Separate S181 acceptance remains
 mandatory; this freeze does not certify runtime behavior.
+
+S156 installs exactly this native two-source cohort and one stylesheet. Preserve
+the native image's six source declarations unchanged; the frame shrink-wraps that
+image, so application image dimensions still determine the fallback extent. Use
+visibility hiding during fallback rather than display hiding: a lazy native
+image must retain its viewport geometry to load. Keep explicit native hidden
+effective with a scoped display rule while preserving `until-found` behavior.
+The fallback uses `--kit-avatar-fallback-background` with surface-hover and
+`--kit-avatar-fallback-color` with text-muted. Append only these two target hooks
+to the existing272 records, retain the original avatar-radius entry and advance
+the tokens metadata cohort to0.1.11. Semantic token CSS remains unchanged.
+Real default/custom install checks compile/build and server-render initial
+loading, named/decorative fallback, native attrs and exact installed bytes.
+Browser transitions and measured presentation remain S157; neither author
+verification nor implementation commits grant independent acceptance.

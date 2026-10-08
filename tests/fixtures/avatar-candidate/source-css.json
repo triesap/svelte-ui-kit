@@ -1,0 +1,55 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "1c83d6d1cdf478ea4f6f4019ad04bf37d9427274ec5bfc3613bf5f628ec95574"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-avatar"],
+      "declarations": [
+        {
+          "type": "Declaration",
+          "start": 83,
+          "end": 97,
+          "property": "display",
+          "value": "block"
+        },
+        {
+          "type": "Declaration",
+          "start": 101,
+          "end": 123,
+          "property": "box-sizing",
+          "value": "border-box"
+        },
+        {
+          "type": "Declaration",
+          "start": 127,
+          "end": 146,
+          "property": "inline-size",
+          "value": "2.5rem"
+        },
+        {
+          "type": "Declaration",
+          "start": 150,
+          "end": 168,
+          "property": "block-size",
+          "value": "2.5rem"
+        },
+        {
+          "type": "Declaration",
+          "start": 172,
+          "end": 235,
+          "property": "border-radius",
+          "value": "var(--kit-avatar-radius, var(--kit-radius-full))"
+        },
+        {
+          "type": "Declaration",
+          "start": 239,
+          "end": 256,
+          "property": "object-fit",
+          "value": "cover"
+        }
+      ]
+    }
+  ]
+}

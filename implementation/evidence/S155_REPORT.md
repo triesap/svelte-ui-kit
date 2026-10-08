@@ -1,7 +1,11 @@
 # S155 step report — Freeze Avatar native image and fallback contract
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `a17b0af3faeee399cf1981cc501a19364e6d7f1b`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S155","kind":"report","commit":"a17b0af3faeee399cf1981cc501a19364e6d7f1b","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R25, R26, R32, R33, R34.
 Starting `53b2c0e04ccbb5000f31a8482165feb77b5ddcd0` on `master`.
