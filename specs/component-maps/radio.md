@@ -52,7 +52,21 @@ item/tabindex; no roving-focus algorithm or new context is justified. Cleanup
 must remove the actual reset listener and pending timers. Unnamed groups remain
 outside form submission, and original S135 qualifies required, disabled, checked
 selection, submission, canceled/reset, dynamic choices/refs and SSR/hydration.
-This contract does not certify those pending browser obligations from type tests.
+S135 qualifies those obligations in actual default/custom CLI installations.
+Native empty-value arrow navigation moves focus without selecting: the installed
+wrapper and a direct raw Bits control both retain empty value until Space/click.
+For a nonempty value, arrows/Home/End select the focused enabled item; native
+loop, orientation, RTL and readonly rules remain intact. Clearing the value
+retains the current native tabstop, including required-field validation focus.
+Removing a selected choice retains its string value until caller/native selection
+changes it; no normalization or alternative keyboard engine is added.
+Actual same-ID form replacement resolves the current input owner on reset.
+Destroying during reset cancels its queued timer and removes the listener; an
+owned installed copy with both cleanup statements removed demonstrably changes
+destroyed bound state and leaks an extra listener after remount. Concurrent
+same-worker SSR and hydration preserve request-local selected values and one
+named field. These are locally verified candidate observations; separate S148
+acceptance remains mandatory.
 
 ## Source design and exact inventory
 

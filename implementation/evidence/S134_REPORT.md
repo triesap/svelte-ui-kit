@@ -1,7 +1,11 @@
 # S134 step report — Radio source design and complete registration
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `2de68a337c18ff202500b682a3feffc7f630a77c`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S134","kind":"report","commit":"2de68a337c18ff202500b682a3feffc7f630a77c","disposition":"candidate"}
+-->
 
 Original requirements R04, R06, R07, R25, R26, R32, R33, R34. Starting
 `4052bf07efc4bf0a0b0e197a43f583914b9af486` on `master`.
