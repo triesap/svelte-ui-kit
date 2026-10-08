@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "alert",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Native assertive message presentation with application-owned content and source alert styles.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/alert.svelte",
+      "target": "alert.svelte",
+      "kind": "svelte",
+      "cohort": "alert"
+    },
+    {
+      "source": "ui/alert.types.ts",
+      "target": "alert.types.ts",
+      "kind": "typescript",
+      "cohort": "alert"
+    }
+  ],
+  "exports": [
+    {
+      "name": "Alert",
+      "target": "alert.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "AlertProps",
+      "target": "alert.types.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/alert.css",
+      "target": "kit.css",
+      "blockId": "alert",
+      "cohort": "alert"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [],
+  "accessibility": {
+    "requiredNames": ["meaningful-message-content-or-caller-native-name"],
+    "keyboard": [],
+    "focus": [],
+    "form": [],
+    "tests": ["alert-types", "alert-css", "alert-install", "alert"]
+  }
+}

@@ -50,4 +50,4 @@ launch retains the known NO_COLOR/FORCE_COLOR warning; actual browser, hydration
 page/console and owned-server guards remain strict. No full-suite/platform/MVP or
 independent acceptance claim. No blocker; continue original S161 after this green
 commit; separate S181 acceptance gates S182. Preserve original definitions,
-reference source, repository identity and parent index. No push/publication/deployment.
+reference source, repository identity and unrelated changes. No push/publication/deployment.

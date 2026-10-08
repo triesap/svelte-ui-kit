@@ -1,7 +1,11 @@
 # S164 step report — Freeze native Alert message semantics
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `880f09fa5181dcb71330b55dbfe47d9f7a956254`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S164","kind":"report","commit":"880f09fa5181dcb71330b55dbfe47d9f7a956254","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R26, R32, R33, R34.
 Starting `b6076e9bc0174c5efa0071f7ba083bb3978975c6` on `master`.
@@ -40,4 +44,4 @@ contrast, themes and SSR/hydration remain S165/S166. Accessibility-tree semantic
 do not assert measured speech from every screen reader. No independent/platform/
 MVP acceptance claim. No blocker; continue original S165 after this green commit;
 separate S181 acceptance gates S182. Original definitions, reference source,
-repository identity and parent index remain intact. No push/publication/deployment.
+repository identity and unrelated changes remain intact. No push/publication/deployment.

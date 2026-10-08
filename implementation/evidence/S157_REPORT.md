@@ -60,4 +60,4 @@ public map, predecessor bookkeeping and this report. CSS, types and metadata
 remain unchanged from S156. No cross-platform/full-suite/strict-CSP/MVP or
 independent acceptance claim. No blocker; continue original S158 after this green
 commit; mandatory separate S181 acceptance gates S182. Reference source, original
-criteria and parent index remain intact; no push/publication/deployment.
+criteria and unrelated changes remain intact; no push/publication/deployment.

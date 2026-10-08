@@ -44,5 +44,5 @@ remain unchanged. Actual nested style/naming behavior, native refs/controls/form
 computed presentation, SSR/hydration and themes remain original S163. No
 independent/full-platform/MVP acceptance claim. No blocker; continue original
 S163 after this green commit; mandatory separate S181 acceptance gates S182.
-Reference source, original definitions, parent index and repository identity
+Reference source, original definitions, unrelated changes and repository identity
 remain intact; no push/publication/deployment.

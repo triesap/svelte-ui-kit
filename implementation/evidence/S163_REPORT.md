@@ -45,4 +45,4 @@ NO_COLOR/FORCE_COLOR warning, with strict actual page/browser/console/hydration
 and owned-server checks. No independent/full-platform/MVP acceptance claim.
 No blocker; continue original S164 after this green commit; mandatory separate
 S181 acceptance gates S182. Original definitions, reference source, repository
-identity and parent index remain intact. No push/publication/deployment.
+identity and unrelated changes remain intact. No push/publication/deployment.

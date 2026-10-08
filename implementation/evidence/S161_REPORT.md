@@ -40,5 +40,5 @@ until complete S162; no runtime/CSS/metadata/registry changes here. Composed,
 nested, independently named/styled content and real native behavior/SSR are
 owning S162/S163 work. No independent/platform/MVP acceptance claim. No blocker;
 continue original S162 after this green commit; separate S181 acceptance gates
-S182. Preserve original criteria, reference source, parent index and repository
+S182. Preserve original criteria, reference source, unrelated changes and repository
 identity. No push/publication/deployment.

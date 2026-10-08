@@ -3,6 +3,7 @@
   "registryVersion": "0.1.0",
   "compatibility": { "svelte": "5.57.1", "bits": "2.19.3", "date": "^3.8.1" },
   "items": [
+    { "id": "alert", "manifest": "ui/alert.json" },
     { "id": "alert-dialog", "manifest": "ui/alert-dialog.json" },
     { "id": "anchor", "manifest": "ui/anchor.json" },
     { "id": "avatar", "manifest": "ui/avatar.json" },
@@ -21,5 +22,5 @@
     { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "5b93587f6d0c055e49444830b7180265d673dbe8d34cfa75eb4132507db37e09"
+  "contentHash": "ce7888b1e2316c7d9397988b5990066faf637cb504839a3d2bb40569a46e9cad"
 }

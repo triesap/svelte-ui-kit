@@ -38,4 +38,4 @@ S159; no runtime/CSS/metadata/registry changes or independent acceptance claim.
 Actual source text/attrs/theme/focus/form/SSR rendering belongs to S159/S160.
 No blocker; continue original S159 after this green commit; separate S181
 acceptance gates S182. Preserve original criteria, reference source, repository
-identity and parent index. No push/publication/deployment.
+identity and unrelated changes. No push/publication/deployment.

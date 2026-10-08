@@ -57,5 +57,5 @@ bookkeeping and this report. Real browser transitions, stale/cached requests,
 responsive image selection, themes and hydration are original S157. No independent
 acceptance, full-platform or complete-MVP claim. No blocker; continue S157 after
 this green commit; mandatory separate S181 review gates S182. Preserve reference
-source, original criteria, parent index and repository identity. No push,
+source, original criteria, unrelated changes and repository identity. No push,
 publication or deployment.
