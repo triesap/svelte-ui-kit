@@ -1,7 +1,11 @@
 # S169 step report — Qualify Status feedback and visual states
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `9b143a5e806ad297a02ac0405c84797edd7c3bc3`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S169","kind":"report","commit":"9b143a5e806ad297a02ac0405c84797edd7c3bc3","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R23, R26, R29, R32, R33, R34.
 Starting `4f62fa478c3d28184ac60378d8a9dd8d48f0a70f` on `master`.
