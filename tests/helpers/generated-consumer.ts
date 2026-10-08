@@ -491,6 +491,15 @@ export function buildWrapperConsumer(custom: boolean) {
   );
 }
 
+export function buildCssConsumer(custom: boolean) {
+  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  return buildInstalledItemsConsumer(
+    custom,
+    "css-contracts",
+    registry.items.map((item: { id: string }) => item.id),
+  );
+}
+
 export function buildFormsCompositionConsumer(custom: boolean) {
   return buildInstalledItemsConsumer(custom, "forms-composition", [
     "tokens",
