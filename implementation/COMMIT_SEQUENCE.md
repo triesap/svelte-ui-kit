@@ -16,6 +16,16 @@ Keep all repository content standalone and repository-relative. Record this targ
 
 ## Execution state and resume procedure
 
+Independent S115 review of `c94ea07` reproduced two original native-preservation
+defects. An external form replaced by another element of the same ID resets the
+native checkbox without resetting Switch state. Capture reset on the field's
+actual tree and compare its current native form owner at event time; retain
+cancellation and teardown guarantees. A supported native Element portal inside a
+ShadowRoot contains a real Dialog Description whose reference the document-only
+guard removes. Resolve and observe description IDs in the Content's actual tree,
+preserving native IDs and cleanup. Retain causal CLI-installed production browser
+regressions and independent reruns. All S092–S115 remain pending; S116 stays gated.
+
 S112 callback qualification uses a direct pinned Bits Dialog control alongside
 the actual CLI-installed family. Bits 2.19.3's animation tracker reads the Content
 ref before a newly portaled opening node exists, so that first opening does not

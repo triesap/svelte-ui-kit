@@ -200,7 +200,8 @@ export const buildDialogConsumer = (
     | "dialog"
     | "dialog-interactions"
     | "dialog-themes"
-    | "dialog-hydration" = "dialog",
+    | "dialog-hydration"
+    | "dialog-shadow" = "dialog",
   removeDescriptionObserverCleanup = false,
 ) =>
   buildComponentConsumer(

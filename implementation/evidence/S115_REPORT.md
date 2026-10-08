@@ -2,6 +2,11 @@
 
 Author: Codex. Candidate; independent S115 acceptance remains pending.
 
+Independent return review requested native form reassociation and tree-local
+Dialog description repairs. See [RCLD06_R1_REPAIR.md](RCLD06_R1_REPAIR.md) for
+the repaired candidate and fresh owning checks. The full totals below belong to
+the preceding candidate; no independent acceptance is inferred from them.
+
 <!-- checkpoint-evidence
 {"schemaVersion":1,"checkpoint":"S115","kind":"report","commit":"c94ea07133c42e98033eb8db02e9e9067ae2a415","disposition":"candidate"}
 -->

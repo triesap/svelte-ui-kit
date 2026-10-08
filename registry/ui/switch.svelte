@@ -18,21 +18,23 @@
   let inputRef = $state<HTMLInputElement | null>(null);
 
   $effect(() => {
-    // Track native form reassociation as well as insertion/removal of the field.
-    void form;
-    const owner = inputRef?.form;
-    if (!owner) return;
+    const input = inputRef;
+    if (!input) return;
+    // Native form ownership can change without a prop or field ref changing.
+    // Capture resets in the field's tree and resolve its owner at event time.
+    const tree = input.getRootNode();
     const pending: number[] = [];
     const reset = (event: Event) => {
+      if (event.target !== input.form) return;
       const timer = window.setTimeout(() => {
         pending.splice(pending.indexOf(timer), 1);
         if (!event.defaultPrevented) checked = initialChecked;
       }, 0);
       pending.push(timer);
     };
-    owner.addEventListener("reset", reset);
+    tree.addEventListener("reset", reset, true);
     return () => {
-      owner.removeEventListener("reset", reset);
+      tree.removeEventListener("reset", reset, true);
       for (const timer of pending) window.clearTimeout(timer);
     };
   });

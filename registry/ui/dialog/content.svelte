@@ -9,11 +9,12 @@
   }: DialogContentProps = $props();
 
   // Pinned Dialog retains a description ID after an optional part unmounts.
-  // Preserve native IDs, but expose only references to real document nodes.
+  // Preserve native IDs, but expose only references to nodes in its actual tree.
   $effect(() => {
     const node = ref;
     if (!node) return;
-    const document = node.ownerDocument;
+    const tree = node.getRootNode();
+    if (!(tree instanceof Document || tree instanceof ShadowRoot)) return;
     let expected = node.getAttribute("aria-describedby");
     let applied = expected;
     const synchronize = () => {
@@ -23,7 +24,7 @@
       const valid =
         expected
           ?.split(/\s+/)
-          .filter((id) => document.getElementById(id))
+          .filter((id) => tree.getElementById(id))
           .join(" ") || null;
       applied = valid;
       if (actual === valid) return;
@@ -31,7 +32,7 @@
       else node.removeAttribute("aria-describedby");
     };
     const observer = new MutationObserver(synchronize);
-    observer.observe(document.documentElement, {
+    observer.observe(tree instanceof Document ? tree.documentElement : tree, {
       subtree: true,
       childList: true,
       attributes: true,

@@ -196,6 +196,45 @@ for (const custom of [false, true])
         .click();
       await expect(page.locator("#external-submitted")).toHaveText("");
     });
+    test("external reset follows native same-id owner replacement and cancellation", async ({
+      page,
+    }) => {
+      const control = page.locator("#external");
+      const field = page.locator('input[name="outside"]');
+      await control.click();
+      await expect(control).not.toBeChecked();
+      await page.evaluate(() => {
+        const old = document.getElementById("external-form")!;
+        const replacement = document.createElement("form");
+        replacement.id = old.id;
+        old.replaceWith(replacement);
+        replacement.reset();
+      });
+      await expect(field).toBeChecked();
+      await expect(control).toBeChecked();
+      await control.click();
+      await page.evaluate(() => {
+        const owner = document.getElementById(
+          "external-form",
+        ) as HTMLFormElement;
+        owner.addEventListener("reset", (event) => event.preventDefault(), {
+          once: true,
+        });
+        owner.reset();
+      });
+      await expect(field).not.toBeChecked();
+      await expect(control).not.toBeChecked();
+      await page
+        .locator("#seed-form")
+        .evaluate((node) => (node as HTMLFormElement).reset());
+      await expect(control).not.toBeChecked();
+      await page
+        .locator("#external-form")
+        .evaluate((node) => (node as HTMLFormElement).reset());
+      await expect(field).toBeChecked();
+      await expect(control).toBeChecked();
+      await expect(field).toHaveCount(1);
+    });
     test("native reset restores bound state and coherent submitted value", async ({
       page,
     }) => {
