@@ -21,8 +21,9 @@ references.
   The owner activated `pfc all` on 2026-10-07 for all remaining original S064–S203
   work, with a separate reviewer at mandatory independent acceptance gates.
 - Complete one checkpoint at a time in documented order. Current dispatch is
-  `pfc all`: first finish original S064–S077/R2 work and obtain independent S077
-  acceptance, then continue the original S078–S203 sequence through its gates.
+  `pfc all`: continue the original sequence through its independent gates.
+  S001–S193 are independently accepted; S194–S199 are committed candidates,
+  S200 is active, and S201–S203 remain dependent work. The ledger is live authority.
   Earlier Q3-only/two-or-three-commit/Q4-later management limits are superseded.
   Continue after green slices and successful independent gates. Preserve accepted
   checkpoints and original criteria/statuses. Target-only coherent green commits
@@ -41,22 +42,18 @@ references.
   Earlier RCLD-04 finding paragraphs below are historical and resolved by
   `implementation/evidence/RCLD-04_QUALIFICATION.md`. No new owner dispatch is
   required. Full MVP and later platform/package/AC20 acceptance remain open.
-- The current return review at `6f2d877` preserves real import/render AST parsing,
-  aliased children, post-composition export checks and consumer controls.
-  Complete original independent export/cohort provenance, full source binding
-  and reachable scoped child rendering. Planned output must not certify itself;
-  unchanged content needs original relationship authority, not a blanket baseline
-  byte-equality fallback. Preserve legitimate customization under frozen policies,
-  qualify the complete lifecycle and finish remaining RCLD-04 evidence together.
-  Test-name inventories and author completion claims do not grant acceptance.
+- Preserve authenticated immutable export/cohort authority, actual import/render
+  AST parsing, lexical child-render proof and equivalent-customization controls.
+  Planned output must not certify itself. Earlier RCLD-04 return findings are
+  resolved by its independent qualification; their reports remain provenance.
+  Test inventories and author completion claims do not grant acceptance.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
-- Latest independent review at `a176387` preserves the R9 source-binding and
-  equivalent-customization repairs, but mutable export-authority substitution
-  still publishes a dropped barrel. Object-destructured each bindings and each
-  indices also bypass child shadowing proof, publishing layouts that omit the
-  child or throw on rendering. Complete authenticated immutable authority and
-  lexical render proof under the original criteria before S077 acceptance.
+- Final release AC20 remains blocked by two raw upstream Bits TS2590 errors.
+  The seven recorded alternatives and separate technical assessment establish
+  no supported green resolution. The qualified strict-audit exception is not a
+  raw strict pass or final acceptance; do not suppress errors, patch declarations,
+  hide imports or silently change pins. Preserve every original criterion.
 - No commit, push, publication, deployment or reference-repository mutation
   occurs without explicit authorization for that action.
 
@@ -72,6 +69,9 @@ auto-install, auto-merge or extra unscoped APIs.
 ## Architecture
 
 Keep `src/cli`, `src/project`, `src/registry` and `src/codegen` separated.
+CLI modules own arguments/envelopes/orchestration; project modules capture
+environment/config/paths/dependencies; registry modules authenticate bundled
+assets and resolve closure; codegen modules plan/compose/validate/apply/recover.
 Authored templates/assets live under `registry`, schemas under the versioned
 `schema` directory. Planner is read-only; application happens through guarded
 recoverable transactions. Lock metadata is final publication. Consumer wrappers
@@ -113,6 +113,20 @@ Discover actual commands and commit convention before coding. Reference fallback
 is `area: imperative summary`. Follow `implementation/VERIFICATION.md`,
 including conditional Cargo guards for any present/affected Rust workspace. Do
 not create Rust code to satisfy a generic checklist.
+
+Use the [current command map](implementation/evidence/COMMANDS.md) and
+[requirement evidence](implementation/TRACEABILITY.md). Focused typed suites use
+`node tools/run-unit-tests.mjs --suite <suite> <test-file>` after the actual CLI
+build when needed. Do not insert a literal `--` into runner arguments or overlap
+shared fixture/compiler/package writers. Browser tests own their production
+servers and enforce unexpected console/page/hydration failures.
+Generated application sources import their own sibling files and supported
+native/Bits APIs; test helpers and CLI internals are never consumer runtime APIs.
+Transactions are qualified on macOS/Linux under the trusted-local threat model;
+Windows remains unsupported and remote CI configuration is not execution evidence.
+Follow the [recovery runbook](implementation/OPERATIONS_RUNBOOK.md), including
+verified external backups and owner quarantine. A no-change replay does not
+prove recovery occurred. Unspecified extension APIs remain behind their gate.
 
 After every step report exact files, commands/results, commit hash, unverified
 issues, deviations and next-step safety. New relevant failures block progress;

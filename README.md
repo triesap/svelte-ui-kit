@@ -102,8 +102,12 @@ applications in default and custom source layouts.
 Server rendering follows the pinned primitive: body/custom portal Content is
 mounted in the browser; disabled (inline) Portal can render initially open
 Content on the server. Child Title/Description relationships are registered
-during hydration, which completes native naming attributes. Initial state and
-generated IDs remain local to each request/instance. The native first opening
+during hydration, which completes native naming attributes. Application
+state remains local to each request/instance. Field/native identity
+uses Svelte request-local IDs; native floating wrappers also use the pinned
+primitive's process counter. Semantic relationships are qualified across
+repeated/concurrent SSR and hydration; counter values are not promised to reset
+for each request. The native first opening
 of newly portaled Content omits its animation-completion callback in Bits2.19.3;
 completed closing emits it. The kit forwards the native callback unchanged.
 

@@ -1,7 +1,11 @@
 # S199 implementation report — app-owned composition examples
 
 Author: Codex. Candidate; separate final S203 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `a097624bf8ddba93fa824b9543054e49588f6bb1`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S199","kind":"report","commit":"a097624bf8ddba93fa824b9543054e49588f6bb1","disposition":"candidate"}
+-->
 
 The documented application page composes existing Collapsible, Alert/Status,
 Anchor/RouterLink/Button, native form controls and Dialog exports. Disclosures

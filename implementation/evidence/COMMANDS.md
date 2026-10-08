@@ -11,10 +11,12 @@ private tooling.
 - Node.js `24.21.0` (`.node-version`), pnpm `11.22.0`
   (`packageManager`), one root lockfile.
 - Locally qualified lane: macOS arm64 with Node `24.21.0` / pnpm `11.22.0`.
-- CI lane: GitHub Actions `ubuntu-24.04` with Node `24.21.0` / pnpm `11.22.0`.
-- No Rust/Cargo workspace exists in this public repository. The Leptos reference
-  guard is a separate, privately hosted worktree, so no Cargo job belongs in
-  this workflow and none is added.
+- Configured CI: GitHub Actions `ubuntu-24.04`; separate filesystem jobs for
+  `ubuntu-24.04` and `macos-15`, with the same Node/pnpm pins. Remote jobs have
+  not executed as part of this delivery. Local Linux qualification covers the
+  explicitly recorded safety lanes, not every browser/platform combination.
+- No Rust/Cargo workspace exists in this repository. Cargo guards are N/A for
+  its TypeScript/Svelte changes; do not add Rust solely to satisfy a checklist.
 
 ## Command map
 
@@ -23,18 +25,20 @@ private tooling.
 | Frozen install      | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | Strict peers and engine enforcement; one root lockfile.                                                                                                           |
 | Format check        | `pnpm run format:check`                                                     | Nonmutating Prettier over the maintained authoring tree.                                                                                                          |
 | Lint                | `pnpm run lint`                                                             | `eslint . --max-warnings 0`.                                                                                                                                      |
-| Typecheck           | `pnpm run typecheck`                                                        | `tsconfig.json`, `tsconfig.unit.json`, `tsconfig.integration.json`, `tsconfig.components.json`.                                                                   |
+| Typecheck           | `pnpm run typecheck`                                                        | Root, unit, integration, components, registry and package TypeScript configurations.                                                                              |
 | Unit                | `pnpm run test:unit`                                                        | Builds, then runs typed `tests/unit` via the suite runner.                                                                                                        |
 | Runner harness      | `pnpm run test:harness`                                                     | Regression suite for `tools/run-unit-tests.mjs`.                                                                                                                  |
 | Integration         | `pnpm run test:integration`                                                 | Builds, then runs typed `tests/integration` (`--suite integration`).                                                                                              |
 | Components          | `pnpm run test:components`                                                  | Runs typed `tests/components` (`--suite components`): the Bits compatibility fixture and disposable negative copies, plus the mandatory strict declaration audit. |
-| Packed inventory    | `pnpm run test:package -- tests/package/inventory.test.ts`                  | Real pnpm tarball inventory, exact assets and executable in an extracted standalone layout; no publication.                                                       |
+| Registry            | `pnpm run test:registry`                                                    | Actual registry assets, mapping, CSS, tokens, exports and contract links.                                                                                         |
+| Full package        | `pnpm run test:package`                                                     | Actual tarball inventory, installed executable isolation, mutation lifecycles, generated consumers and metadata; no publication.                                  |
 | CLI smoke           | `pnpm run test:cli-bootstrap`                                               | Real `dist` CLI process assertions.                                                                                                                               |
 | Contract validation | `pnpm run check:contracts`                                                  | Read-only document/projection/evidence validation.                                                                                                                |
 | Contract tests      | `pnpm run test:contracts`                                                   | Focused validator regression suite.                                                                                                                               |
 | Consumer check      | `pnpm run fixture:check`                                                    | `svelte-kit sync` + `svelte-check --fail-on-warnings`.                                                                                                            |
 | Consumer SSR        | `pnpm run test:fixture`                                                     | Builds, then owned-server SSR + lifecycle suites.                                                                                                                 |
-| Browser             | `pnpm run test:browser -- tests/browser/harness.spec.ts`                    | Builds, then Playwright bundled Chromium.                                                                                                                         |
+| Full browser        | `pnpm run test:browser`                                                     | Builds maintained fixture, then all configured Chromium specs with one worker and zero retries.                                                                   |
+| Consumer build      | `pnpm run fixture:build`                                                    | Token consistency followed by the actual maintained production build.                                                                                             |
 | Chromium install    | `pnpm exec playwright install [--with-deps] chromium`                       | Local (no `--with-deps`); CI adds system dependencies.                                                                                                            |
 | Diff health         | `git diff --check`                                                          | No whitespace diagnostics.                                                                                                                                        |
 
@@ -46,6 +50,16 @@ an owned copy and exactly the two pinned Bits 2.19.3 union-complexity
 diagnostics are qualified, with authored and additional-dependency errors
 rejected. Resolving that upstream exception remains an open release obligation.
 
+For focused typed execution, build the CLI when applicable and use
+`node tools/run-unit-tests.mjs --suite integration tests/integration/docs-recovery.test.ts`
+(or `unit`, `components`, `registry`, `package` with their actual files).
+The runner receives file selectors directly; a literal `--` is not supported.
+For a focused browser file use
+`pnpm exec playwright test --config playwright.config.ts tests/browser/composition-examples.spec.ts`.
+That example lane builds its own actual generated consumers. Other specs that
+use the maintained handler require its production build first. Do not overlap
+shared compiler, package or fixture writers.
+
 ## CI workflow
 
 `.github/workflows/ci.yml` runs on `pull_request` and `push` with read-only
@@ -53,8 +67,12 @@ rejected. Resolving that upstream exception remains an open release obligation.
 It checks out full history, sets up pnpm `11.22.0` and Node `24.21.0`, then runs
 the frozen strict install, installs bundled Chromium with system dependencies,
 and runs the format, lint, typecheck, unit, harness, integration, components,
-registry, packed inventory, CLI smoke, consumer check, consumer SSR, browser, contract-validation and
-contract-test lanes — the same commands recorded above.
+registry, selected packed inventory, CLI smoke, consumer check, consumer SSR,
+selected browser harness, contract-validation and contract-test lanes. The
+configured package/browser selectors do not execute the full corresponding
+local suites. Their 30-minute job limit is configuration, not demonstrated
+cumulative runtime qualification; full local integration/browser lanes alone
+have exceeded 20 minutes each. Do not claim CI passed from this file.
 
 Actions are pinned to immutable revisions:
 
