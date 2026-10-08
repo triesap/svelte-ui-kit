@@ -44,3 +44,21 @@ dimensions/radius/theme surfaces/contrast/RTL/reduced motion and SSR/hydration S
 Document source baseline contrast concerns under AC18 rather than automatically
 certify a decorative surface. Mandatory separate S181 and later platform/MVP
 acceptance remain open.
+
+S178 actual default/custom production apps qualify empty concealed spans and
+native hidden-control parity, with exactly one application status region/readable
+loading text. The owning named section changes busy/content state; removing the
+placeholder clears its actual ref and returning it remounts correctly without
+automatic focus. Native attrs/pointer/form behavior, hidden/until-found, all four
+source declarations, minimum16px height, caller80x24px/50% shape, all radius paths
+including elliptical grammar, live surfaces, RTL/static reduced motion and sixteen
+isolated SSR responses pass. No duplicate accessible loading message or source
+live/busy state is created.
+
+AC18 surface observation: light source243/244/246 on white and example night
+50/60/75 on25/30/40 each measure below3:1; independent caller140/150/170 on that
+night surface exceeds3:1. Preserve source decorative surfaces and measured JSON/
+screenshots rather than assert readability or contrast certification. Meaningful
+loading information remains in the owning region/status; placeholders do not
+carry essential readable/graphic information. Arbitrary application colors and
+animation overrides remain caller-owned.

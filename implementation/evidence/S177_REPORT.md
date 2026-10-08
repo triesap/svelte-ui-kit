@@ -1,7 +1,11 @@
 # S177 step report — Generate native Skeleton source and managed styles
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `9e109a4f8ef112f4e491d687dbfcd39908ae3ad3`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S177","kind":"report","commit":"9e109a4f8ef112f4e491d687dbfcd39908ae3ad3","disposition":"candidate"}
+-->
 
 Original R02, R03, R04, R06, R08, R22, R25, R26, R32, R33, R34.
 Starting `25e81435c79bd5842b4c825fe5ae8988732b6ea9` on `master`.

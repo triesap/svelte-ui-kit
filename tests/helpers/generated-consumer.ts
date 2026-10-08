@@ -23,6 +23,7 @@ function buildComponentConsumer(
     | "status"
     | "progress"
     | "separator"
+    | "skeleton"
     | "router-link"
     | "switch"
     | "checkbox"
@@ -219,7 +220,8 @@ function buildComponentConsumer(
                             item === "alert" ||
                             item === "status" ||
                             item === "progress" ||
-                            item === "separator"
+                            item === "separator" ||
+                            item === "skeleton"
                           ? [`${item}.svelte`, `${item}.types.ts`]
                           : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
@@ -431,6 +433,9 @@ export const buildProgressConsumer = (custom: boolean) =>
 
 export const buildSeparatorConsumer = (custom: boolean) =>
   buildComponentConsumer("separator", custom);
+
+export const buildSkeletonConsumer = (custom: boolean) =>
+  buildComponentConsumer("skeleton", custom);
 
 export const buildDialogConsumer = (
   custom: boolean,
