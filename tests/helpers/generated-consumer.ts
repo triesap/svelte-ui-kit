@@ -503,6 +503,16 @@ export function buildFormsCompositionConsumer(custom: boolean) {
   ]);
 }
 
+export function buildOverlayCompositionConsumer(custom: boolean) {
+  return buildInstalledItemsConsumer(custom, "overlay-composition", [
+    "field",
+    "tokens",
+    "dialog",
+    "alert-dialog",
+    "menu",
+  ]);
+}
+
 function buildInstalledItemsConsumer(
   custom: boolean,
   qualification: string,

@@ -1,7 +1,11 @@
 # S184 implementation report — combined native forms and reset
 
 Author: Codex. Implemented candidate; separate S193 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `e162489adba505730468a1361390a1aa42e3b900`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S184","kind":"report","commit":"e162489adba505730468a1361390a1aa42e3b900","disposition":"candidate"}
+-->
 
 ## Implementation and behavior
 
