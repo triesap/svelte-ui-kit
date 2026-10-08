@@ -1,7 +1,11 @@
 # S131 step report — Checkbox installed behavior and lifecycle
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `175c15b6404f04bc4bf7d634afce24993e97f3e7`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S131","kind":"report","commit":"175c15b6404f04bc4bf7d634afce24993e97f3e7","disposition":"candidate"}
+-->
 
 Original requirements R03, R07, R20, R22, R23, R25, R26, R29, R32, R33, R34.
 Starting `f1716d9b26ed0c5940831e23e21296e4f8edf049` on `master`. Real built-CLI
