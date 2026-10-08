@@ -94,12 +94,12 @@ and never mutate package-store contents. No source-layout fallback, publication
 or new product/API scope is authorized by this qualification.
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S175 — Qualify Separator behavior in the generated app**. Separate S148 acceptance on `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5` is anchored at `bd2613c050c37cd883d4e2155a6eb264ce66c484`; S181 independent acceptance gates S182.
+- Active implementation checkpoint: **S176 — Freeze Skeleton props and semantic mapping**. Separate S148 acceptance on `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5` is anchored at `bd2613c050c37cd883d4e2155a6eb264ce66c484`; S181 independent acceptance gates S182.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **148 / 203**. Remaining: **55 / 203**.
-- Committed pending review: **26 / 203**. Authored batch range: **S149–S174**.
+- Committed pending review: **27 / 203**. Authored batch range: **S149–S175**.
 - Completed RCLD sequences: **8 / 11**. Remaining: **3 / 11**.
-- Last safe target commit: `04a71f87f8b53fe557ce6fc583c91071decae98f`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `02b5bd521081052f5947499e82ade9d4e0c373b1`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -6313,8 +6313,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S172 | RCLD-09  | S171       | committed_pending_review | `3a69123effc6b8d9b4640b72cec6f11ee01f114d` |
 | S173 | RCLD-09  | S172       | committed_pending_review | `47dc157fb1a06762c0af2a6dd688ae280faca0a1` |
 | S174 | RCLD-09  | S173       | committed_pending_review | `04a71f87f8b53fe557ce6fc583c91071decae98f` |
-| S175 | RCLD-09  | S174       | in_progress              | —                                          |
-| S176 | RCLD-09  | S175       | not_started              | —                                          |
+| S175 | RCLD-09  | S174       | committed_pending_review | `02b5bd521081052f5947499e82ade9d4e0c373b1` |
+| S176 | RCLD-09  | S175       | in_progress              | —                                          |
 | S177 | RCLD-09  | S176       | not_started              | —                                          |
 | S178 | RCLD-09  | S177       | not_started              | —                                          |
 | S179 | RCLD-09  | S178       | not_started              | —                                          |

@@ -1,7 +1,11 @@
 # S175 step report — Qualify Separator semantics and visual states
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `02b5bd521081052f5947499e82ade9d4e0c373b1`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S175","kind":"report","commit":"02b5bd521081052f5947499e82ade9d4e0c373b1","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R23, R26, R29, R32, R33, R34.
 Starting `04a71f87f8b53fe557ce6fc583c91071decae98f` on `master`.
