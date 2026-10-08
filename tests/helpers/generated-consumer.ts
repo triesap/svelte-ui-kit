@@ -304,5 +304,16 @@ export const buildCoreConsumer = (
     beforeBuild,
   );
 
-export const buildMenuConsumer = (custom: boolean, qualification = "menu") =>
-  buildComponentConsumer("menu", custom, qualification);
+export const buildMenuConsumer = (
+  custom: boolean,
+  qualification = "menu",
+  beforeBuild?: (root: string, config: KitConfig) => void,
+) =>
+  buildComponentConsumer(
+    "menu",
+    custom,
+    qualification,
+    false,
+    process.cwd(),
+    beforeBuild,
+  );

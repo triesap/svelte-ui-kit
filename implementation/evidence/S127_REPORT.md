@@ -3,7 +3,7 @@
 Author: Codex. Candidate; mandatory separate S128 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S127","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S127","kind":"report","commit":"06421d71b95bc7ed792ca80f2213b242baec3528","disposition":"candidate"}
 -->
 
 Requirements R20, R22, R26, R29, R32, R33, R34. Starting `d67cc15` on

@@ -156,3 +156,30 @@ and tested; applications should begin readable labels with searchable text.
 The wrapper forwards the exact public prop without adding a kit search engine.
 This upstream limitation is explicit evidence for independent S128 review,
 not a claim that an alias changes native search behavior.
+
+## Installed floating qualification and CSP boundary
+
+Default/custom generated layouts exercise bottom/start/4px tracking under
+ancestor scroll, top flipping and viewport collision padding, body/inline/native
+Element portal composition, open/closed hydration and isolated concurrent SSR.
+Global themes inherit through body portals; nested themes require the actual
+explicit host. Both update live without inline kit-token copying. Transformed,
+overflow-hidden hosts can clip the content; selecting a host preserves that
+real application composition rather than escaping its stacking context.
+
+Dynamic items leave and rejoin actual native keyboard candidates. Ref replacement
+and Root destruction release native floating ResizeObserver targets; a copied
+application with real missing observer cleanup retains detached targets and
+causally qualifies the lifecycle detector. No kit cleanup/state engine is added.
+
+The CSP fixture uses real Node-adapter responses with nonce-based script policy,
+self-hosted stylesheets and either style-src-attr 'unsafe-inline' or 'none'.
+With scripts disabled, the first policy preserves the native outer absolute
+position and runtime style attributes; the latter rejects server inline geometry
+and leaves the outer element static. The actual refusal diagnostics are retained
+and individually attributed to the tested directive. Hydrated fixtures also
+capture runtime geometry and exact diagnostics. Passing hydrated positioning
+does not repair the rejected server state or establish strict no-inline parity.
+The supported tested policy permits style attributes; no claim is made for every
+browser/CSP configuration. Keep necessary native style/attachment structure and
+choose an application policy compatible with native floating behavior.

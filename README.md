@@ -290,3 +290,27 @@ See `CONTRIBUTING.md`.
 ## License
 
 MIT OR Apache-2.0. See `LICENSE-MIT` and `LICENSE-APACHE`.
+
+## Menu floating composition
+
+The installable eight-part Menu family supplies Root, Trigger, Portal, Content,
+Item, RadioGroup, RadioItem and ItemIndicator with flat `Menu*` exports. It is
+locally qualified in generated default/custom applications and awaits the
+separate sequence acceptance. Bind Root open and RadioGroup value explicitly;
+compose ItemIndicator from RadioItem's native checked snippet. Give Content an
+accessible name. Pinned Bits 2.19.3 typeahead searches visible DOM text; its public
+textValue prop is forwarded but does not change search behavior in that version.
+
+Keep delegated Content's outer wrapperProps separate from inner props; native
+floating geometry belongs to the outer element and kit styles to the inner.
+Use document themes for body portals or an explicit native host within a nested
+theme. Hosts with transforms or overflow clipping retain their actual stacking
+and clipping limitations. Force-mounted delegated Content leaves closed
+visibility to the application, using the native open snippet.
+
+Plain CSS does not guarantee no runtime inline styles. The measured production
+CSP fixture preserves geometry with self-hosted stylesheets, nonce-based script
+policy and style-src-attr 'unsafe-inline'. With style-src-attr 'none', server
+floating style attributes are refused before hydration. Do not strip those
+styles or infer strict-CSP parity from a later hydrated position. See the
+[Menu mapping and measured limits](specs/component-maps/menu.md).
