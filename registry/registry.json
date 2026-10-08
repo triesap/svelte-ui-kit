@@ -15,6 +15,7 @@
     { "id": "dialog", "manifest": "ui/dialog.json" },
     { "id": "field", "manifest": "ui/field.json" },
     { "id": "menu", "manifest": "ui/menu.json" },
+    { "id": "progress", "manifest": "ui/progress.json" },
     { "id": "radio", "manifest": "ui/radio.json" },
     { "id": "router-link", "manifest": "ui/router-link.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
@@ -23,5 +24,5 @@
     { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "e14b4303cfb74181870b6be632ee215e0441daf2be14e1a9acc0214891d05e1f"
+  "contentHash": "381f8439cbbe1e6ab3076cb86d6ef0be9de0e31926b439d0a892ea701ecdb80c"
 }

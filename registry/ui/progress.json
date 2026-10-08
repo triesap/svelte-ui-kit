@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "progress",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Native numeric progress bounds and indeterminate state with source progress styles.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/progress.svelte",
+      "target": "progress.svelte",
+      "kind": "svelte",
+      "cohort": "progress"
+    },
+    {
+      "source": "ui/progress.types.ts",
+      "target": "progress.types.ts",
+      "kind": "typescript",
+      "cohort": "progress"
+    }
+  ],
+  "exports": [
+    {
+      "name": "Progress",
+      "target": "progress.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "ProgressProps",
+      "target": "progress.types.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/progress.css",
+      "target": "kit.css",
+      "blockId": "progress",
+      "cohort": "progress"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [],
+  "accessibility": {
+    "requiredNames": ["native-label-or-caller-aria-name"],
+    "keyboard": [],
+    "focus": [],
+    "form": [],
+    "tests": ["progress-types", "progress-css", "progress-install", "progress"]
+  }
+}

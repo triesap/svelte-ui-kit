@@ -1,0 +1,45 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "c77962a25571a1bfad70de958fcaf224cd860619933eadf088531984a2ff73f6"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-progress"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "block"
+        },
+        {
+          "property": "inline-size",
+          "value": "100%"
+        },
+        {
+          "property": "block-size",
+          "value": "0.5rem"
+        },
+        {
+          "property": "border",
+          "value": "0"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-progress-radius,\n    var(--kit-radius-indicator, var(--kit-radius-default, var(--kit-radius-full)))\n  )"
+        },
+        {
+          "property": "overflow",
+          "value": "hidden"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-color-surface-hover)"
+        },
+        {
+          "property": "accent-color",
+          "value": "var(--kit-color-primary)"
+        }
+      ]
+    }
+  ]
+}

@@ -1,7 +1,11 @@
 # S170 step report — Freeze native Progress bounds and naming
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `55117a04923f15d3c98c8feccb10575dd1e3d296`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S170","kind":"report","commit":"55117a04923f15d3c98c8feccb10575dd1e3d296","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R25, R26, R32, R33, R34.
 Starting `9b143a5e806ad297a02ac0405c84797edd7c3bc3` on `master`.
