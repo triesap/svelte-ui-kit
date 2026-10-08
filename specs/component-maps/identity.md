@@ -11,6 +11,17 @@ app-owned helper improves those facilities; no new source/export/style/dependenc
 or registry target is justified. The original identity catalog entry remains an
 explicit documented adaptation, not an omitted or installable item.
 
+Full-catalog S189 qualification additionally measures the pinned Menu floating
+positioning wrapper. Bits 2.19.3 gives that nonsemantic wrapper a `useId()`
+process-counter default, distinct from its component part `$props.id()` IDs.
+The direct native Menu control and installed catalog both show varying
+`data-bits-floating-content-wrapper` IDs across repeated server requests.
+Every semantic component/form ID repeats for equivalent requests; every
+document has unique IDs and all emitted relationships resolve after hydration.
+No kit counter or identity API is added. This measured native boundary remains
+subject to independent S193 qualification; it is not a claim that the native
+floating wrapper allocation is request-local.
+
 | Affected source                            | Native identity and relationship ownership                                                                                                                                                                                                                                               |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | FieldRoot                                  | One instance `$props.id()` supplies the default root base; caller id wins. Context controlId uses caller controlId or base-control. Message IDs derive deterministically from base and URI-encoded caller message keys; keys must remain unique within the root.                         |

@@ -1,7 +1,11 @@
 # S188 implementation report — accessibility, direction and motion
 
 Author: Codex. Implemented candidate; separate S193 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `bee870dab29e3becd736ed0283816b533de33296`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S188","kind":"report","commit":"bee870dab29e3becd736ed0283816b533de33296","disposition":"candidate"}
+-->
 
 ## Implementation and observed behavior
 

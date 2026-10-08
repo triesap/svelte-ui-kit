@@ -573,6 +573,55 @@ export function buildAccessibilityConsumer(custom: boolean) {
   );
 }
 
+export function buildCatalogHydrationConsumer(custom: boolean) {
+  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  const consumer = buildInstalledItemsConsumer(
+    custom,
+    "catalog-hydration",
+    registry.items.map((item: { id: string }) => item.id),
+    (root, config) => {
+      const folder = "src/routes/qualification/catalog-hydration";
+      let module = path.posix.relative(folder, `${config.uiDir}/index.js`);
+      if (!module.startsWith(".")) module = `./${module}`;
+      writeFileSync(
+        path.join(root, folder, "Catalog.svelte"),
+        readFileSync(
+          "tests/fixtures/qualification/catalog-hydration/Catalog.svelte",
+          "utf8",
+        ).replaceAll("__UI_MODULE__", module),
+      );
+      mkdirSync(path.join(root, folder, "native"), { recursive: true });
+      writeFileSync(
+        path.join(root, folder, "native/+page.svelte"),
+        readFileSync(
+          "tests/fixtures/qualification/catalog-hydration/native-menu.svelte",
+          "utf8",
+        ),
+      );
+    },
+  );
+  const catalog = "src/routes/qualification/catalog-hydration/Catalog.svelte";
+  return {
+    ...consumer,
+    evidence: {
+      ...consumer.evidence,
+      files: {
+        ...consumer.evidence.files,
+        [catalog]: sha256Hex(readFileSync(path.join(consumer.root, catalog))),
+        "src/routes/qualification/catalog-hydration/native/+page.svelte":
+          sha256Hex(
+            readFileSync(
+              path.join(
+                consumer.root,
+                "src/routes/qualification/catalog-hydration/native/+page.svelte",
+              ),
+            ),
+          ),
+      },
+    },
+  };
+}
+
 export function buildFormsCompositionConsumer(custom: boolean) {
   return buildInstalledItemsConsumer(custom, "forms-composition", [
     "tokens",
