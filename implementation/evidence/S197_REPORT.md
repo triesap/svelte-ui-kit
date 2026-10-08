@@ -1,7 +1,11 @@
 # S197 implementation report — installation and safe upgrades
 
 Author: Codex. Candidate; separate final S203 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `5b28f4b1738970722b77bde79a95d9e7c02f6928`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S197","kind":"report","commit":"5b28f4b1738970722b77bde79a95d9e7c02f6928","disposition":"candidate"}
+-->
 
 README, CONTRIBUTING and the operations runbook now describe the actual private
 local archive and built executable, explicit application dependency installation,

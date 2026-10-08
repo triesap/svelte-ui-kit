@@ -263,6 +263,14 @@ Interrupted transaction evidence is retained and diagnosed; follow
 [the recovery contract](specs/SECURITY_AND_TRANSACTIONS.md) rather than deleting
 owner evidence or using PID/age takeover.
 
+For interrupted writes, follow the [qualified recovery procedures](implementation/OPERATIONS_RUNBOOK.md#interrupted-writes):
+stop writers, preserve an external backup including hidden transaction evidence,
+and diagnose without mutation. A verified dead owner's coordination directory
+can be quarantined only after the documented prerequisites; journals are never
+blindly cleared. Uncommitted post-crash edits cause refusal and remain intact;
+committed cleanup preserves subsequent edits. Corrupt or ambiguous evidence
+requires stopping for review.
+
 For a reviewed incoming local archive, install it in a separate CLI host and
 set `INCOMING_CLI` to that installed executable. Inspect and apply the upgrade:
 

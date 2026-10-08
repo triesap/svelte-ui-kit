@@ -54,7 +54,47 @@ not repeat a new retirement warning.
 
 Stop further mutation when a command reports pending/ambiguous recovery. Preserve current files and transaction evidence. Use read-only diagnosis to understand the state; do not delete lock/journal files based only on age, PID, or a guess. The implemented protocol must safely finish/revert a provable interrupted state or refuse with actionable guidance. It must not overwrite edits made after interruption.
 
-The implementation must provide fixture-tested instructions for prepared, partially applied, published-but-not-cleaned, and invalid/ambiguous states. It may not claim safe recovery before those fixtures pass. A cleanup failure after publication is not the same as a failed uncommitted installation; command reports must distinguish them.
+Before any manual action, stop all writers and make an external backup of the
+entire application, including hidden entries, modes, owner records, journals,
+staged images and backups. Keep it outside the active project. Read-only
+diagnosis never repairs or clears transaction evidence:
+
+<!-- documented-recovery-diagnosis:start -->
+
+```sh
+node "$CLI" --cwd "$APP" doctor --strict
+node "$CLI" --cwd "$APP" init --dry-run
+```
+
+<!-- documented-recovery-diagnosis:end -->
+
+A nonzero diagnosis is expected for retained or broken state. A successful dry
+run does not certify that a writer lock can be acquired. Preserve both output
+and backup before deciding on recovery. There is no `recover` command or force
+flag. Rerun the original write command only after resolving coordination safely;
+its guarded boundary either recovers provable state or refuses.
+
+An `init` replay that reports `no_change` performs no recovery. Run strict
+doctor again: retained evidence still requires review, even after exit 0.
+When a subsequent intentional component write passes planning, its guarded
+boundary can clean provably committed evidence. Do not invent a component
+request, force a change or delete evidence merely to trigger cleanup.
+
+Planning can also stop with `INIT_OWNERSHIP_CONFLICT` before guarded recovery
+when interrupted integration lacks canonical ownership. This is a safe stop,
+not proof that recovery ran or permission to delete the partial integration.
+Keep current work, external backup and transaction evidence for review.
+
+Prepared or partially applied uncommitted transactions can roll back only
+recorded images. If current bytes or modes have changed since interruption,
+recovery refuses and retains those edits and transaction evidence. Stop and
+review the external backup and recorded images; do not replace user work to
+make recovery pass. Published-but-not-cleaned state is already committed:
+qualified cleanup preserves committed content and subsequent user edits rather
+than reverting the installation. Missing/corrupt journals, foreign entries or
+ambiguous publication evidence require a safe stop and evidence review. Never
+delete a journal, backup, staged image, publication witness or canonical lock to
+silence a diagnostic.
 
 ##### Stale writer coordination after a killed writer
 
@@ -66,17 +106,30 @@ no writer is live. Automatic recovery therefore always refuses first. When a
 real operator has confirmed the recorded owner process is no longer running,
 the bounded manual procedure is:
 
-1. Preserve the existing transaction and journal evidence; do not delete it.
-2. Confirm the recorded `owner.json` PID is not alive in the current process
-   namespace and that no other coordinated writer is active for the project.
-3. Remove only the `_kit/.svelte-ui-kit/writer.lock` coordination directory,
-   leaving every other transient entry untouched.
-4. Re-run the original `init`/`add`/`sync` command so the guarded boundary
-   acquires coordination and performs provable recovery of the retained
-   transaction.
+1. Back up the entire current application outside the project, preserving the
+   transaction and journal evidence; verify the backup before proceeding.
+2. Independently confirm the recorded `owner.json` belongs to the interrupted
+   writer, that this process has exited in its actual namespace, and that all
+   other project writers have stopped. An old PID or failed PID lookup alone
+   does not establish these facts. Missing/corrupt owner evidence means stop.
+3. Move only the verified `writer.lock` coordination directory into a fresh
+   external quarantine on the same filesystem, leaving every transaction and
+   other transient entry untouched. Preserve the owner record in quarantine;
+   do not overwrite an existing destination. If these prerequisites cannot be
+   established or the move fails, stop without clearing other state.
+4. Re-run the original `init`/`add`/`sync` command and inspect its envelope and
+   strict doctor afterward. If planning stops or the result is `no_change`,
+   do not claim recovery ran. A genuine planned write acquires coordination
+   and performs provable recovery or refuses with retained evidence.
 
 Recursively deleting transaction, journal or staged state is not part of this
 procedure and is not a qualified production recovery path.
+
+After a successful write, repeat strict doctor and application verification.
+Retain the external backup and quarantined owner evidence until review is
+complete. The default coordination path above is illustrative: with custom
+mapping use `<uiDir>/_kit/.svelte-ui-kit/writer.lock`, resolved from the actual
+configuration. Never apply these manual actions to an unverified project path.
 
 #### Agent specification after each commit
 
