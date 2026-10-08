@@ -437,6 +437,81 @@ export const buildSeparatorConsumer = (custom: boolean) =>
 export const buildSkeletonConsumer = (custom: boolean) =>
   buildComponentConsumer("skeleton", custom);
 
+/** Identity is a qualification route, never an installable registry alias. */
+export function buildIdentityConsumer(custom: boolean) {
+  let additional: Record<string, string> = {};
+  const requested = [
+    "field",
+    "switch",
+    "checkbox",
+    "radio",
+    "tabs",
+    "collapsible",
+    "dialog",
+    "alert-dialog",
+    "menu",
+  ];
+  const consumer = buildComponentConsumer(
+    "field",
+    custom,
+    "identity",
+    false,
+    process.cwd(),
+    (root, config) => {
+      for (const item of requested.filter((item) => item !== "field")) {
+        const result = spawnSync(
+          process.execPath,
+          [
+            path.resolve("dist/cli/main.js"),
+            "add",
+            item,
+            "--json",
+            "--cwd",
+            root,
+          ],
+          { cwd: root, encoding: "utf8", timeout: 30000 },
+        );
+        assert.equal(result.status, 0, result.stdout + result.stderr);
+        assert.equal(result.stderr, "");
+      }
+      const lock = JSON.parse(
+        readFileSync(
+          path.join(root, deriveKitPaths(config).stateDir, "kit.lock.json"),
+          "utf8",
+        ),
+      );
+      assert.deepEqual(lock.requested, [...requested].sort());
+      additional = Object.fromEntries(
+        lock.files
+          .filter(
+            (file: { path: string }) =>
+              file.path.startsWith(`${config.uiDir}/`) &&
+              file.path !== `${config.uiDir}/index.ts`,
+          )
+          .map((file: { path: string; baseHash: string }) => {
+            const bytes = readFileSync(path.join(root, file.path));
+            const relative = file.path.slice(config.uiDir.length + 1);
+            if (!relative.startsWith("_kit/"))
+              assert.ok(
+                bytes.equals(readFileSync(path.join("registry/ui", relative))),
+                file.path,
+              );
+            assert.equal(sha256Hex(bytes), file.baseHash);
+            return [file.path, file.baseHash];
+          }),
+      );
+    },
+  );
+  return {
+    ...consumer,
+    evidence: {
+      ...consumer.evidence,
+      coinstalled: requested,
+      files: { ...consumer.evidence.files, ...additional },
+    },
+  };
+}
+
 export const buildDialogConsumer = (
   custom: boolean,
   qualification:

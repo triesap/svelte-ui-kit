@@ -1,7 +1,11 @@
 # S179 step report — Resolve native identity parity
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit: recorded after the green commit.
+Implementation commit: `928500c8a59e11040b29cb4788c4a8d6461c324f`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S179","kind":"report","commit":"928500c8a59e11040b29cb4788c4a8d6461c324f","disposition":"candidate"}
+-->
 
 Original R03, R21, R26, R28, R32, R33, R34.
 Starting `9717770223d636bf91011fa5897eed6263913e7a` on `master`.
