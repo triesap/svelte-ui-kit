@@ -1,7 +1,11 @@
 # S166 step report — Qualify Alert semantics and visual states
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `dd2b89c0a60c5544be361c59e1ce75e4d23ed8ce`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S166","kind":"report","commit":"dd2b89c0a60c5544be361c59e1ce75e4d23ed8ce","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R23, R26, R29, R32, R33, R34.
 Starting `739bff8b4ce395a335a3167b511958863f9e2279` on `master`.
