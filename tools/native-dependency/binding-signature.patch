@@ -1,0 +1,18 @@
+--- a/svelte-shims-v4.d.ts
++++ b/svelte-shims-v4.d.ts
+@@ -270,7 +270,14 @@
+ declare function __sveltets_2_fn_component<
+     Props extends Record<string, any>, Exports extends Record<string, any>, Bindings extends string
+     // @ts-ignore Svelte 5 only
+->(klass: {props: Props, exports?: Exports, bindings?: Bindings }): import('svelte').Component<Props, Exports, Bindings>;
++>(klass: {props: Props, exports?: Exports, bindings?: Bindings }): {
++    (this: void, internals: Parameters<import('svelte').Component>[0], props: Props):
++        Omit<ReturnType<import('svelte').Component>, '$set'> & {
++            $set?(props: Partial<Props>): void;
++        } & Exports;
++    element?: import('svelte').Component['element'];
++    z_$$bindings?: Bindings;
++};
+
+ interface __sveltets_2_IsomorphicComponent<Props extends Record<string, any> = any, Events extends Record<string, any> = any, Slots extends Record<string, any> = any, Exports = {}, Bindings = string> {
+     new (options: import('svelte').ComponentConstructorOptions<Props>): import('svelte').SvelteComponent<Props, Events, Slots> & { $$bindings?: Bindings } & Exports;

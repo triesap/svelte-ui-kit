@@ -144,17 +144,85 @@ All three diagnostic qualifications and format/lint/six typechecks/contracts
 passed; contract validation reported zero errors/warnings. The raw failing
 compiler/checker results above remain failures, not accepted strict results.
 
-The next candidate should avoid the demonstrated binding-key expansion through
-an authentic source/declaration-generation correction while preserving the
-complete discriminated props and binding contracts. No source fix is yet
-qualified. R11-F02 owns that correction, reproducible delivery and actual
-native/consumer/runtime acceptance. S201 remains blocked and no checkpoint
-acceptance changes.
+At the diagnosis checkpoint no source fix was qualified. R11-F02 owns that
+correction, reproducible delivery and actual native/consumer/runtime acceptance.
+S201 remains blocked and no checkpoint acceptance changes.
+
+## R11-F02 — Authentic producer qualification candidate
+
+The portable [producer inputs](../../tools/native-dependency/README.md) and
+`tools/build-native-dependency.mjs` now build the actual emitter from pinned
+language-tools source, apply one source-shim correction in an owned copy, and
+run the actual Bits package build. No native runtime source, reference checkout,
+installed declaration or package store is patched. The correction retains the
+native function signature, exact prop types, exports, optional legacy methods,
+custom element and `z_$$bindings` metadata while avoiding the demonstrated eager
+binding-key constraint expansion. It adds no constructor signature.
+
+The final `node --test tools/build-native-dependency.test.mjs` run passed 2/2,
+with zero failures/cancellations/skips, process exit 0 and duration 87295.924
+ms. It performed two fresh frozen builds from the pinned public source revisions
+and produced byte-identical `bits-ui-2.19.5-svelte-ui-kit.1.tgz` archives, SHA-256
+`54ad1f636d7e72269d05387f562567095816e57f15a04ede19369f87866886ee`.
+It also built an unpatched causal control through the same actual producer.
+The control reproduces both native TS2590 errors and the raw full checker exit
+1, with two errors and zero warnings. The corrected public-root import passes.
+
+The corrected and control distributions contain the same 694 runtime and
+non-component declaration files byte-for-byte. Native prop declaration unions
+are unchanged. Representative mutual Button/Calendar prop assignability and
+full Dialog/Svelte component assignability pass. Ten authored invalid type
+controls each produce the expected application-file error: incompatible
+discriminants, refs, event handlers, snippets, callbacks, bindable keys and a
+constructor. Actual Svelte ref/state bindings compile, while attempted
+`bind:disabled` on Button and Calendar each produces precisely one non-bindable
+error and zero warnings. The corrected full raw consumer check reports zero
+errors/warnings, raw tsc exits 0, and the production consumer build exits 0.
+These checks complement, and do not claim, exhaustive type equivalence.
+
+The archive preserves native package identity, public exports, exact runtime
+pins, upstream peer ranges and notices. Producer-only scripts/local emitter
+requirements are absent from its manifest. Provenance records both upstream
+source revisions, source archive hashes, the truthful emitter source-manifest
+version/tag, patch/recipe/actual frozen-lock/emitter archive digests, toolchain
+and the actual distribution's file-digest inventory. The inventory follows the
+real package-manager file selection, including upstream test/spec exclusions.
+Existing-output and symlink/dangling-ancestry refusal controls preserve both
+trees. All owned producer and consumer trees were removed.
+
+Earlier experiments remain under ignored logs. A generic-source experiment
+passed strict checking but added a constructor signature and was rejected.
+Homomorphic/intersection trials still failed. Initial emitter transport used
+ignored overrides and did not activate the correction; a replacement-string
+trial lost one `$` from binding metadata and was rejected. Initial portable
+builder trials refused an incorrect global pnpm version and invalid patch
+context. Expanded qualification first used an incorrect expected diagnostic
+message, then identified that a staging inventory included files excluded from
+the real pack; both failed runs remain recorded. The final builder inventories
+the actual pack, and the final regression authenticates every packed inventory
+entry. Staged diff checking then identified a trailing space on the patch's
+blank context line. Removing that space preserves the applied source bytes but
+changes the patch/provenance digest; the complete producer regression was
+rerun against the final bytes. No failing attempt is relabeled successful.
+
+The final producer test log is
+`implementation/evidence/logs/r11-f02-producer-qualification-final-green.log`;
+its detailed build/consumer/type outcomes use the `93580-1791497851251` prefix
+under `implementation/evidence/logs/native-producer`. Formatting, lint, all six
+root typechecks, live contract validation and diff checks accompany this slice.
+
+This is a green producer qualification slice inside active R11-F02. It does
+not complete R11-F02, change the kit's selected native dependency, remove the
+maintained strict exception, grant S201 completion or independently accept a
+repair. Authentic bundled delivery, captured local-file dependency evidence,
+strict-audit conversion and affected runtime/package/browser qualification
+remain required before adoption.
 
 ## Remaining implementation and acceptance
 
-Planning input maintenance and R11-F01 diagnosis are verified candidates;
-neither repairs native declarations nor grants independent acceptance.
+Planning input maintenance, R11-F01 diagnosis and the R11-F02 producer slice are
+verified candidates. The producer emits corrected native declarations, but
+their product adoption and independent acceptance remain open.
 Original progress remains 200 implemented candidates and 193 independently
 accepted checkpoints. R11-F02 strict resolution, R11-F03 no-change refusal,
 R11-F04 CI, R11-F05 final

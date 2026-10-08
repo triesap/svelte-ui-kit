@@ -11,5 +11,7 @@ tests/fixtures/generated/
 implementation/evidence/logs/
 *.log
 pnpm-lock.yaml
+tools/native-dependency/emitter.pnpm-lock.yaml
+tools/native-dependency/native.pnpm-lock.yaml
 LICENSE-MIT
 LICENSE-APACHE
