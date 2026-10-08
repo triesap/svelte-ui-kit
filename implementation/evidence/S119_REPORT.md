@@ -3,7 +3,7 @@
 Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S119","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S119","kind":"report","commit":"d1234b0c54b05bae81e997cebcfdfd37a62c3db3","disposition":"candidate"}
 -->
 
 Title, Description, Action and Cancel wrap the actual distinct pinned primitives

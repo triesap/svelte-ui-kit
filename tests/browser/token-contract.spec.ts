@@ -58,10 +58,16 @@ async function rootProperty(page: Page, name: string, value: string | null) {
     { name, value },
   );
 }
-test("all mapped radius fallback expressions use their actual reference defaults", async ({
+test("all source and distinct family radius fallback expressions preserve their defaults", async ({
   page,
 }) => {
-  expect(properties).toHaveLength(30);
+  expect(
+    properties.filter((property) => property.scope !== "alert-dialog"),
+  ).toHaveLength(30);
+  expect(
+    properties.filter((property) => property.scope === "alert-dialog"),
+  ).toHaveLength(4);
+  expect(properties).toHaveLength(34);
   for (const property of properties) {
     const reference = property.fallback.includes("calc(")
       ? "4px"

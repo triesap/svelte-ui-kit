@@ -49,7 +49,8 @@ test("actual distinct candidate Root and Trigger compile and render SSR with raw
         assert.match(rendered.body, /Raw primitive content composition/);
       } else assert.doesNotMatch(rendered.body, /role="alertdialog"/);
     }
-    assert.equal(consumer.evidence.catalogRegistered, false);
+    assert.equal(consumer.evidence.catalogRegistered, true);
+    assert.equal(consumer.evidence.installation, "candidate-copy");
   } finally {
     consumer.cleanup();
   }

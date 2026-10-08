@@ -614,6 +614,342 @@
       "scope": "tabs",
       "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
       "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-alert-dialog-z-index",
+      "scope": "alert-dialog",
+      "grammar": "<integer>",
+      "fallback": "50"
+    },
+    {
+      "name": "--kit-alert-dialog-trigger-padding-inline",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.75rem"
+    },
+    {
+      "name": "--kit-alert-dialog-trigger-padding-block",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-alert-dialog-trigger-min-height",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "2.5rem"
+    },
+    {
+      "name": "--kit-alert-dialog-trigger-font-weight",
+      "scope": "alert-dialog",
+      "grammar": "<number>",
+      "fallback": "600"
+    },
+    {
+      "name": "--kit-alert-dialog-trigger-focus-ring",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-alert-dialog-focus-ring, var(--kit-focus-ring))"
+    },
+    {
+      "name": "--kit-alert-dialog-trigger-disabled-opacity",
+      "scope": "alert-dialog",
+      "grammar": "<number>",
+      "fallback": "var(--kit-disabled-opacity)"
+    },
+    {
+      "name": "--kit-alert-dialog-trigger-color",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-alert-dialog-trigger-border-color",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-border)"
+    },
+    {
+      "name": "--kit-alert-dialog-trigger-background-hover",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface-hover)"
+    },
+    {
+      "name": "--kit-alert-dialog-trigger-background",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "transparent"
+    },
+    {
+      "name": "--kit-alert-dialog-transition-timing",
+      "scope": "alert-dialog",
+      "grammar": "<easing-function>",
+      "fallback": "var(--kit-easing-standard)"
+    },
+    {
+      "name": "--kit-alert-dialog-transition-duration",
+      "scope": "alert-dialog",
+      "grammar": "<time>",
+      "fallback": "var(--kit-duration-normal)"
+    },
+    {
+      "name": "--kit-alert-dialog-title-line-height",
+      "scope": "alert-dialog",
+      "grammar": "<number>",
+      "fallback": "1.25"
+    },
+    {
+      "name": "--kit-alert-dialog-title-font-weight",
+      "scope": "alert-dialog",
+      "grammar": "<number>",
+      "fallback": "700"
+    },
+    {
+      "name": "--kit-alert-dialog-title-font-size",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "1.125rem"
+    },
+    {
+      "name": "--kit-alert-dialog-padding-inline",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "1.25rem"
+    },
+    {
+      "name": "--kit-alert-dialog-padding-block",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "1.25rem"
+    },
+    {
+      "name": "--kit-alert-dialog-max-inline-size",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "min(32rem, calc(100vw - 2rem))"
+    },
+    {
+      "name": "--kit-alert-dialog-max-block-size",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "min(42rem, calc(100vh - 2rem))"
+    },
+    {
+      "name": "--kit-alert-dialog-gap",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "1rem"
+    },
+    {
+      "name": "--kit-alert-dialog-focus-ring",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-focus-ring)"
+    },
+    {
+      "name": "--kit-alert-dialog-focus-outline-width",
+      "scope": "alert-dialog",
+      "grammar": "<length>",
+      "fallback": "2px"
+    },
+    {
+      "name": "--kit-alert-dialog-focus-outline-offset",
+      "scope": "alert-dialog",
+      "grammar": "<length>",
+      "fallback": "2px"
+    },
+    {
+      "name": "--kit-alert-dialog-elevation",
+      "scope": "alert-dialog",
+      "grammar": "<shadow>",
+      "fallback": "var(--kit-shadow-lg)"
+    },
+    {
+      "name": "--kit-alert-dialog-description-line-height",
+      "scope": "alert-dialog",
+      "grammar": "<number>",
+      "fallback": "1.5"
+    },
+    {
+      "name": "--kit-alert-dialog-description-font-size",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.9375rem"
+    },
+    {
+      "name": "--kit-alert-dialog-description-color",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text-muted)"
+    },
+    {
+      "name": "--kit-alert-dialog-color",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-alert-dialog-cancel-padding-inline",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.75rem"
+    },
+    {
+      "name": "--kit-alert-dialog-cancel-padding-block",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-alert-dialog-cancel-min-height",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "2.5rem"
+    },
+    {
+      "name": "--kit-alert-dialog-cancel-font-weight",
+      "scope": "alert-dialog",
+      "grammar": "<number>",
+      "fallback": "600"
+    },
+    {
+      "name": "--kit-alert-dialog-cancel-focus-ring",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-alert-dialog-focus-ring, var(--kit-focus-ring))"
+    },
+    {
+      "name": "--kit-alert-dialog-cancel-disabled-opacity",
+      "scope": "alert-dialog",
+      "grammar": "<number>",
+      "fallback": "var(--kit-disabled-opacity)"
+    },
+    {
+      "name": "--kit-alert-dialog-cancel-color",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-alert-dialog-cancel-border-color",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-border)"
+    },
+    {
+      "name": "--kit-alert-dialog-cancel-background-hover",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface-hover)"
+    },
+    {
+      "name": "--kit-alert-dialog-cancel-background",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "transparent"
+    },
+    {
+      "name": "--kit-alert-dialog-border-width",
+      "scope": "alert-dialog",
+      "grammar": "<length>",
+      "fallback": "var(--kit-border-width)"
+    },
+    {
+      "name": "--kit-alert-dialog-border-color",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-border)"
+    },
+    {
+      "name": "--kit-alert-dialog-background",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface-raised)"
+    },
+    {
+      "name": "--kit-alert-dialog-trigger-radius",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-alert-dialog-cancel-radius",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-alert-dialog-radius",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-overlay, var(--kit-radius-default, var(--kit-radius-md)))"
+    },
+    {
+      "name": "--kit-alert-dialog-action-padding-inline",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.75rem"
+    },
+    {
+      "name": "--kit-alert-dialog-action-padding-block",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-alert-dialog-action-min-height",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>",
+      "fallback": "2.5rem"
+    },
+    {
+      "name": "--kit-alert-dialog-action-font-weight",
+      "scope": "alert-dialog",
+      "grammar": "<number>",
+      "fallback": "600"
+    },
+    {
+      "name": "--kit-alert-dialog-action-focus-ring",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-alert-dialog-focus-ring, var(--kit-focus-ring))"
+    },
+    {
+      "name": "--kit-alert-dialog-action-disabled-opacity",
+      "scope": "alert-dialog",
+      "grammar": "<number>",
+      "fallback": "var(--kit-disabled-opacity)"
+    },
+    {
+      "name": "--kit-alert-dialog-action-color",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-alert-dialog-action-border-color",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-border)"
+    },
+    {
+      "name": "--kit-alert-dialog-action-background-hover",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface-hover)"
+    },
+    {
+      "name": "--kit-alert-dialog-action-background",
+      "scope": "alert-dialog",
+      "grammar": "<color>",
+      "fallback": "transparent"
+    },
+    {
+      "name": "--kit-alert-dialog-action-radius",
+      "scope": "alert-dialog",
+      "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
     }
   ]
 }

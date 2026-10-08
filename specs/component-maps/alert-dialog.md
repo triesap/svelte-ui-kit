@@ -65,3 +65,77 @@ S116 freezes this API/types only. S117–S119 author the distinct native wrapper
 S120 registers the complete source/style/export family as one compatibility
 cohort. Until then, registry view/add must not advertise or install it. S121
 qualifies real installed browser confirmation/action/cancel/focus behavior.
+
+## Plain CSS design mapping
+
+The distinct family uses the established Dialog geometry, spacing, typography,
+focus, disabled and motion defaults. Exact native state selectors are scoped to
+Alert Dialog classes. Action and Cancel share the established control design
+with separately overridable properties; neither style implements behavior.
+There is no new palette, reset or behavioral Dialog dependency. Content uses
+logical centered fixed geometry, semantic overlay radius fallback, and reduced
+motion removes transitions. Caller classes remain available for application
+overrides. Overlay retains the established transparent default.
+
+The independently named 56 properties are recorded in the portable
+component-customization contract. Semantic defaults and the original source
+radius inventory remain unchanged; four distinct family radii extend it.
+
+| Property                                    | Grammar                                                  | Fallback                                                  |
+| ------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------- |
+| --kit-alert-dialog-z-index                  | <integer>                                                | 50                                                        |
+| --kit-alert-dialog-trigger-padding-inline   | <length-percentage>                                      | 0.75rem                                                   |
+| --kit-alert-dialog-trigger-padding-block    | <length-percentage>                                      | 0.5rem                                                    |
+| --kit-alert-dialog-trigger-min-height       | <length-percentage>                                      | 2.5rem                                                    |
+| --kit-alert-dialog-trigger-font-weight      | <number>                                                 | 600                                                       |
+| --kit-alert-dialog-trigger-focus-ring       | <color>                                                  | var(--kit-alert-dialog-focus-ring, var(--kit-focus-ring)) |
+| --kit-alert-dialog-trigger-disabled-opacity | <number>                                                 | var(--kit-disabled-opacity)                               |
+| --kit-alert-dialog-trigger-color            | <color>                                                  | var(--kit-color-text)                                     |
+| --kit-alert-dialog-trigger-border-color     | <color>                                                  | var(--kit-color-border)                                   |
+| --kit-alert-dialog-trigger-background-hover | <color>                                                  | var(--kit-color-surface-hover)                            |
+| --kit-alert-dialog-trigger-background       | <color>                                                  | transparent                                               |
+| --kit-alert-dialog-transition-timing        | <easing-function>                                        | var(--kit-easing-standard)                                |
+| --kit-alert-dialog-transition-duration      | <time>                                                   | var(--kit-duration-normal)                                |
+| --kit-alert-dialog-title-line-height        | <number>                                                 | 1.25                                                      |
+| --kit-alert-dialog-title-font-weight        | <number>                                                 | 700                                                       |
+| --kit-alert-dialog-title-font-size          | <length-percentage>                                      | 1.125rem                                                  |
+| --kit-alert-dialog-padding-inline           | <length-percentage>                                      | 1.25rem                                                   |
+| --kit-alert-dialog-padding-block            | <length-percentage>                                      | 1.25rem                                                   |
+| --kit-alert-dialog-max-inline-size          | <length-percentage>                                      | min(32rem, calc(100vw - 2rem))                            |
+| --kit-alert-dialog-max-block-size           | <length-percentage>                                      | min(42rem, calc(100vh - 2rem))                            |
+| --kit-alert-dialog-gap                      | <length-percentage>                                      | 1rem                                                      |
+| --kit-alert-dialog-focus-ring               | <color>                                                  | var(--kit-focus-ring)                                     |
+| --kit-alert-dialog-focus-outline-width      | <length>                                                 | 2px                                                       |
+| --kit-alert-dialog-focus-outline-offset     | <length>                                                 | 2px                                                       |
+| --kit-alert-dialog-elevation                | <shadow>                                                 | var(--kit-shadow-lg)                                      |
+| --kit-alert-dialog-description-line-height  | <number>                                                 | 1.5                                                       |
+| --kit-alert-dialog-description-font-size    | <length-percentage>                                      | 0.9375rem                                                 |
+| --kit-alert-dialog-description-color        | <color>                                                  | var(--kit-color-text-muted)                               |
+| --kit-alert-dialog-color                    | <color>                                                  | var(--kit-color-text)                                     |
+| --kit-alert-dialog-cancel-padding-inline    | <length-percentage>                                      | 0.75rem                                                   |
+| --kit-alert-dialog-cancel-padding-block     | <length-percentage>                                      | 0.5rem                                                    |
+| --kit-alert-dialog-cancel-min-height        | <length-percentage>                                      | 2.5rem                                                    |
+| --kit-alert-dialog-cancel-font-weight       | <number>                                                 | 600                                                       |
+| --kit-alert-dialog-cancel-focus-ring        | <color>                                                  | var(--kit-alert-dialog-focus-ring, var(--kit-focus-ring)) |
+| --kit-alert-dialog-cancel-disabled-opacity  | <number>                                                 | var(--kit-disabled-opacity)                               |
+| --kit-alert-dialog-cancel-color             | <color>                                                  | var(--kit-color-text)                                     |
+| --kit-alert-dialog-cancel-border-color      | <color>                                                  | var(--kit-color-border)                                   |
+| --kit-alert-dialog-cancel-background-hover  | <color>                                                  | var(--kit-color-surface-hover)                            |
+| --kit-alert-dialog-cancel-background        | <color>                                                  | transparent                                               |
+| --kit-alert-dialog-border-width             | <length>                                                 | var(--kit-border-width)                                   |
+| --kit-alert-dialog-border-color             | <color>                                                  | var(--kit-color-border)                                   |
+| --kit-alert-dialog-background               | <color>                                                  | var(--kit-color-surface-raised)                           |
+| --kit-alert-dialog-trigger-radius           | <length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit                                                   | initial | unset | revert | revert-layer | var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md))) |
+| --kit-alert-dialog-cancel-radius            | <length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit                                                   | initial | unset | revert | revert-layer | var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md))) |
+| --kit-alert-dialog-radius                   | <length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit                                                   | initial | unset | revert | revert-layer | var(--kit-radius-overlay, var(--kit-radius-default, var(--kit-radius-md))) |
+| --kit-alert-dialog-action-padding-inline    | <length-percentage>                                      | 0.75rem                                                   |
+| --kit-alert-dialog-action-padding-block     | <length-percentage>                                      | 0.5rem                                                    |
+| --kit-alert-dialog-action-min-height        | <length-percentage>                                      | 2.5rem                                                    |
+| --kit-alert-dialog-action-font-weight       | <number>                                                 | 600                                                       |
+| --kit-alert-dialog-action-focus-ring        | <color>                                                  | var(--kit-alert-dialog-focus-ring, var(--kit-focus-ring)) |
+| --kit-alert-dialog-action-disabled-opacity  | <number>                                                 | var(--kit-disabled-opacity)                               |
+| --kit-alert-dialog-action-color             | <color>                                                  | var(--kit-color-text)                                     |
+| --kit-alert-dialog-action-border-color      | <color>                                                  | var(--kit-color-border)                                   |
+| --kit-alert-dialog-action-background-hover  | <color>                                                  | var(--kit-color-surface-hover)                            |
+| --kit-alert-dialog-action-background        | <color>                                                  | transparent                                               |
+| --kit-alert-dialog-action-radius            | <length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit                                                   | initial | unset | revert | revert-layer | var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md))) |

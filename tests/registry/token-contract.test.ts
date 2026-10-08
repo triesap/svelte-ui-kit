@@ -31,6 +31,7 @@ for (const [family, count] of [
   ["button", 20],
   ["switch", 7],
   ["dialog", 45],
+  ["alert-dialog", 56],
 ] as const)
   test(`all ${count} ${family} hooks match actual stylesheet declarations and documented source fallbacks`, () => {
     const properties = customization.properties.filter(
@@ -168,7 +169,7 @@ test("all observed semantic defaults remain exact with explicit role and value t
   }
 });
 
-test("complete source radius inventory retains roles, ordered fallbacks and exact circular overrides", () => {
+test("complete source radius inventory and distinct family extension retain ordered fallbacks and circular overrides", () => {
   const names = [
     "radius-default",
     "radius-control",
@@ -200,6 +201,10 @@ test("complete source radius inventory retains roles, ordered fallbacks and exac
     "switch-radius",
     "switch-thumb-radius",
     "tabs-trigger-radius",
+    "alert-dialog-trigger-radius",
+    "alert-dialog-cancel-radius",
+    "alert-dialog-radius",
+    "alert-dialog-action-radius",
   ].map((name) => `--kit-${name}`);
   assert.deepEqual(
     customization.properties

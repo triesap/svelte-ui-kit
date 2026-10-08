@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "id": "alert-dialog",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Distinct complete pinned Alert Dialog family with native decisions and explicit state, refs, snippets and portal composition.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/alert-dialog/root.svelte",
+      "target": "alert-dialog/root.svelte",
+      "kind": "svelte",
+      "cohort": "alert-dialog"
+    },
+    {
+      "source": "ui/alert-dialog/trigger.svelte",
+      "target": "alert-dialog/trigger.svelte",
+      "kind": "svelte",
+      "cohort": "alert-dialog"
+    },
+    {
+      "source": "ui/alert-dialog/portal.svelte",
+      "target": "alert-dialog/portal.svelte",
+      "kind": "svelte",
+      "cohort": "alert-dialog"
+    },
+    {
+      "source": "ui/alert-dialog/overlay.svelte",
+      "target": "alert-dialog/overlay.svelte",
+      "kind": "svelte",
+      "cohort": "alert-dialog"
+    },
+    {
+      "source": "ui/alert-dialog/content.svelte",
+      "target": "alert-dialog/content.svelte",
+      "kind": "svelte",
+      "cohort": "alert-dialog"
+    },
+    {
+      "source": "ui/alert-dialog/title.svelte",
+      "target": "alert-dialog/title.svelte",
+      "kind": "svelte",
+      "cohort": "alert-dialog"
+    },
+    {
+      "source": "ui/alert-dialog/description.svelte",
+      "target": "alert-dialog/description.svelte",
+      "kind": "svelte",
+      "cohort": "alert-dialog"
+    },
+    {
+      "source": "ui/alert-dialog/action.svelte",
+      "target": "alert-dialog/action.svelte",
+      "kind": "svelte",
+      "cohort": "alert-dialog"
+    },
+    {
+      "source": "ui/alert-dialog/cancel.svelte",
+      "target": "alert-dialog/cancel.svelte",
+      "kind": "svelte",
+      "cohort": "alert-dialog"
+    },
+    {
+      "source": "ui/alert-dialog/types.ts",
+      "target": "alert-dialog/types.ts",
+      "kind": "typescript",
+      "cohort": "alert-dialog"
+    },
+    {
+      "source": "ui/alert-dialog/index.ts",
+      "target": "alert-dialog/index.ts",
+      "kind": "typescript",
+      "cohort": "alert-dialog"
+    }
+  ],
+  "exports": [
+    {
+      "name": "AlertDialogRoot",
+      "target": "alert-dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "AlertDialogTrigger",
+      "target": "alert-dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "AlertDialogPortal",
+      "target": "alert-dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "AlertDialogOverlay",
+      "target": "alert-dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "AlertDialogContent",
+      "target": "alert-dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "AlertDialogTitle",
+      "target": "alert-dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "AlertDialogDescription",
+      "target": "alert-dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "AlertDialogAction",
+      "target": "alert-dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "AlertDialogCancel",
+      "target": "alert-dialog/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "AlertDialogRootProps",
+      "target": "alert-dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "AlertDialogTriggerProps",
+      "target": "alert-dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "AlertDialogPortalProps",
+      "target": "alert-dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "AlertDialogOverlayProps",
+      "target": "alert-dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "AlertDialogContentProps",
+      "target": "alert-dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "AlertDialogTitleProps",
+      "target": "alert-dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "AlertDialogDescriptionProps",
+      "target": "alert-dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "AlertDialogActionProps",
+      "target": "alert-dialog/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "AlertDialogCancelProps",
+      "target": "alert-dialog/index.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/alert-dialog.css",
+      "target": "kit.css",
+      "blockId": "alert-dialog",
+      "cohort": "alert-dialog"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [
+    {
+      "name": "bits-ui",
+      "range": "2.19.3",
+      "role": "runtime"
+    }
+  ],
+  "accessibility": {
+    "requiredNames": ["alert-dialog-title-or-explicit-name"],
+    "keyboard": ["Enter", "Space", "Escape", "Tab", "Shift+Tab"],
+    "focus": ["native-trap-focus", "native-return-focus"],
+    "form": [],
+    "tests": [
+      "alert-dialog-types",
+      "alert-dialog-actions",
+      "alert-dialog-install",
+      "alert-dialog"
+    ]
+  }
+}

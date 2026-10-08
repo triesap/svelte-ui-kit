@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  cpSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -11,6 +12,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import ts from "typescript";
+import { refreshRegistryContent } from "../helpers/registry-content.js";
 import { inspectView } from "../../src/cli/commands/view.js";
 
 function diagnostics(body: string) {
@@ -135,40 +137,57 @@ for (const [name, body] of [
     );
   });
 
-test("incomplete Alert Dialog candidate is not registered or aliased through Dialog", () => {
-  const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
-  assert.ok(root.items.some((item: { id: string }) => item.id === "dialog"));
-  assert.ok(
-    root.items.every((item: { id: string }) => item.id !== "alert-dialog"),
+test("owned unadvertised Alert Dialog candidate is refused and never aliased through Dialog", () => {
+  const isolated = mkdtempSync(
+    path.join(os.tmpdir(), "suik-unadvertised-alert-"),
   );
-  const item = JSON.parse(readFileSync("registry/ui/dialog.json", "utf8"));
-  assert.equal(item.files.length, 10);
-  assert.equal(item.exports.length, 16);
-  assert.ok(
-    [...item.files, ...item.styles].every(
-      (file: { cohort: string }) => file.cohort === "dialog",
-    ),
-  );
-  const viewed = inspectView(
-    {
-      kind: "command",
-      command: "view",
-      item: "alert-dialog",
-      json: true,
-      cwd: null,
-      dryRun: false,
-      source: true,
-      strict: false,
-    },
-    process.cwd(),
-  );
-  assert.equal(viewed.envelope.status, "error");
-  assert.equal(viewed.failureClass, "registry_failure");
-  assert.ok(
-    viewed.envelope.diagnostics.some(
-      (diagnostic) => diagnostic.code === "REGISTRY_ITEM_UNKNOWN",
-    ),
-  );
+  try {
+    for (const directory of ["registry", "schema"])
+      cpSync(directory, path.join(isolated, directory), { recursive: true });
+    const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+    assert.ok(root.items.some((item: { id: string }) => item.id === "dialog"));
+    assert.ok(
+      root.items.some((item: { id: string }) => item.id === "alert-dialog"),
+    );
+    root.items = root.items.filter(
+      (item: { id: string }) => item.id !== "alert-dialog",
+    );
+    writeFileSync(
+      path.join(isolated, "registry/registry.json"),
+      JSON.stringify(root),
+    );
+    refreshRegistryContent(isolated);
+    const item = JSON.parse(readFileSync("registry/ui/dialog.json", "utf8"));
+    assert.equal(item.files.length, 10);
+    assert.equal(item.exports.length, 16);
+    assert.ok(
+      [...item.files, ...item.styles].every(
+        (file: { cohort: string }) => file.cohort === "dialog",
+      ),
+    );
+    const viewed = inspectView(
+      {
+        kind: "command",
+        command: "view",
+        item: "alert-dialog",
+        json: true,
+        cwd: null,
+        dryRun: false,
+        source: true,
+        strict: false,
+      },
+      isolated,
+    );
+    assert.equal(viewed.envelope.status, "error");
+    assert.equal(viewed.failureClass, "registry_failure");
+    assert.ok(
+      viewed.envelope.diagnostics.some(
+        (diagnostic) => diagnostic.code === "REGISTRY_ITEM_UNKNOWN",
+      ),
+    );
+  } finally {
+    rmSync(isolated, { recursive: true, force: true });
+  }
 });
 
 test("all nine target types equal the pinned distinct public types without narrowing or widening", () => {

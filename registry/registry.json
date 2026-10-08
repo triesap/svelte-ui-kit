@@ -3,11 +3,12 @@
   "registryVersion": "0.1.0",
   "compatibility": { "svelte": "5.57.1", "bits": "2.19.3", "date": "^3.8.1" },
   "items": [
+    { "id": "alert-dialog", "manifest": "ui/alert-dialog.json" },
     { "id": "button", "manifest": "ui/button.json" },
     { "id": "dialog", "manifest": "ui/dialog.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
     { "id": "switch", "manifest": "ui/switch.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "e03251c94e7b40d16941e4d2668d9dd178da776256370de042f909dbced22b19"
+  "contentHash": "f073d14a041abeb3de302ba0095f5cc5f6c54daf18605d521d93b6df094cfcb9"
 }

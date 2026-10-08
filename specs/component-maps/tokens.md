@@ -143,3 +143,18 @@ component properties remain distinct. Application-owned themes load after kit
 CSS and own color-scheme, selectors and persistence. Body-portaled content needs
 a document-level theme scope or a suitable custom host; no hidden theme store
 or inline computed-theme copy is introduced.
+
+## Distinct Alert Dialog extension
+
+The original thirty source-supported radius entries remain unchanged. The
+complete distinct Alert Dialog adds Trigger, Content, Action and Cancel radius
+properties plus its documented visual hooks; see [the family mapping](alert-dialog.md).
+Semantic defaults remain unchanged. These additions are target-native design
+metadata, not a claim that the reference catalog contains Alert Dialog.
+
+| Property                          | Scope        | Source role | Geometry critical | Ordered fallback expression                                                  |
+| --------------------------------- | ------------ | ----------- | ----------------- | ---------------------------------------------------------------------------- |
+| --kit-alert-dialog-trigger-radius | alert-dialog | control     | no                | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))` |
+| --kit-alert-dialog-cancel-radius  | alert-dialog | control     | no                | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))` |
+| --kit-alert-dialog-radius         | alert-dialog | overlay     | no                | `var(--kit-radius-overlay, var(--kit-radius-default, var(--kit-radius-md)))` |
+| --kit-alert-dialog-action-radius  | alert-dialog | control     | no                | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))` |

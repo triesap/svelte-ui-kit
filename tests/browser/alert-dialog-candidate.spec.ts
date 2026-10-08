@@ -3,7 +3,7 @@ import { buildAlertDialogCandidate } from "../helpers/alert-dialog-candidate.js"
 import { test, expect } from "./browser-issues.js";
 import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
 
-test.describe("actual unregistered Alert Dialog S117 composition", () => {
+test.describe("actual incremental Alert Dialog S117 composition", () => {
   let consumer: ReturnType<typeof buildAlertDialogCandidate>;
   let hosted: FixtureServer;
   test.beforeAll(async () => {
@@ -116,7 +116,7 @@ test.describe("actual unregistered Alert Dialog S117 composition", () => {
   });
 });
 
-test.describe("actual unregistered Alert Dialog S118 composition", () => {
+test.describe("actual incremental Alert Dialog S118 composition", () => {
   let consumer: ReturnType<typeof buildAlertDialogCandidate>;
   let hosted: FixtureServer;
   test.beforeAll(async () => {
@@ -224,7 +224,7 @@ test.describe("actual unregistered Alert Dialog S118 composition", () => {
   });
 });
 
-test.describe("actual unregistered Alert Dialog S119 decision composition", () => {
+test.describe("actual incremental Alert Dialog S119 decision composition", () => {
   let consumer: ReturnType<typeof buildAlertDialogCandidate>;
   let hosted: FixtureServer;
   test.beforeAll(async () => {

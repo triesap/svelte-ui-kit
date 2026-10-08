@@ -4,7 +4,7 @@ import path from "node:path";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
-/** Owned, explicitly unregistered incremental native Alert Dialog composition. */
+/** Owned incremental candidate-copy composition, distinct from CLI installation. */
 export function buildAlertDialogCandidate(
   stage: "root-trigger" | "content" | "actions" = "root-trigger",
 ) {
