@@ -4,7 +4,7 @@ Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
 Original S001–S115 independent acceptance and all203 definitions are preserved.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S116","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S116","kind":"report","commit":"a78125e2e914d7073122da1bac0a5e2e26d9cebb","disposition":"candidate"}
 -->
 
 The component map freezes the actual pinned namespace's nine parts and eighteen
