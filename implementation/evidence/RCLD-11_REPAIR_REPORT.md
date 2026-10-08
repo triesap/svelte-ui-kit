@@ -218,11 +218,71 @@ repair. Authentic bundled delivery, captured local-file dependency evidence,
 strict-audit conversion and affected runtime/package/browser qualification
 remain required before adoption.
 
+## R11-F02 — Authenticated local transport and preparation
+
+The native provenance artifact now has an explicit first supported v1 schema.
+Unknown versions/fields and missing identity are refused without mutation.
+Command/configuration/lock formats remain v1. The compiled CLI carries the
+qualified native archive and provenance digests as package-relative metadata;
+only those exact application-owned archive bytes can normalize a local-file
+Bits declaration for compatibility inspection. Other file/git/link operands
+remain invalid. A same-version SemVer-only declaration or fabricated installed
+manifest cannot grant readiness. Actual installed provenance and every packed
+file are authenticated, including refusal of missing/extra entries, internal
+links and unrecorded empty directories.
+
+Invocation capture freezes native observations and adds archive digest/mode and
+ancestry to existing read authority. Guarded installed revalidation independently
+re-proves distribution bytes and the live declared archive before writes. No new
+serialized plan field, installation or package-store repair is introduced.
+Dependency instructions use the existing manual field for explicit extraction,
+digest verification and manager installation, with a fresh application-owned
+archive and retention after the CLI host disappears. Ordinary dependencies keep
+their existing manager commands; no nonexistent native registry release is
+suggested. The POSIX extraction procedure refuses linked destinations.
+
+The developer-only preparation tool generates the real frozen producer or
+reuses only an authenticated cache, refuses corrupt/linked/extra state and
+copies authenticated bytes into declared compiler staging or an owned fixture.
+Actual generated archives remain uncommitted. Its delivery regression compiles
+an owned authoring copy through the real CLI compiler, packs that CLI, extracts
+the actual native member, removes both author and CLI archive, then proves a
+real offline application install and frozen offline reinstall pass raw strict
+public-root checking. It uses explicit csstype/Node/checker tooling and the
+checker's actual official Svelte shim. The initial minimal fixture omitted those
+inputs and failed; that run remains recorded without an acceptance claim.
+
+Actual checks for this slice:
+
+- The owning seven integration files pass 64/64, zero skips/cancellations. This
+  final run uses the repository typed runner in an owned isolated copy to avoid
+  overlapping the already-running full integration compiler/output writer.
+- Native preparation/delivery regressions pass 2/2, zero skips, exit 0
+  (92678.533125 ms). The delivery test proves real tarball transport and raw
+  strict success after removal; full generated-app runtime acceptance is later.
+- The full unit suite passed 298/298, zero skips. All six root typechecks, lint,
+  formatting and live contract validation passed; the complete contract
+  regression passed 159/159, zero skips (921991.794292 ms).
+- Executable bootstrap smoke passed 44/44 with zero skips; its causal write
+  and hard-coded-version mutation controls remain active.
+- The full integration suite started before final guard tightening remains a
+  supplementary in-progress check. Its outcome is not claimed as green here.
+
+Logs are `r11-f02-local-file-owning-final.log`,
+`r11-f02-preparation-delivery-final.log`, `r11-f02-local-file-unit.log` and
+`r11-f02-local-file-contract-tests.log` under the ignored qualification log
+root; failed attempts retain distinct names. Neither selected manifests/pins
+nor the maintained fixture's strict exception change in this slice. F02 remains
+active for actual build integration, baseline adoption, strict-audit conversion
+and affected full component/registry/packed runtime/SSR/hydration/browser lanes.
+No repair or original checkpoint is independently accepted by these author runs.
+
 ## Remaining implementation and acceptance
 
-Planning input maintenance, R11-F01 diagnosis and the R11-F02 producer slice are
-verified candidates. The producer emits corrected native declarations, but
-their product adoption and independent acceptance remain open.
+Planning input maintenance, R11-F01 diagnosis and the R11-F02 producer and
+authenticated-transport slices are verified candidates. The producer emits
+corrected native declarations and real local delivery is qualified; product
+adoption and independent acceptance remain open.
 Original progress remains 200 implemented candidates and 193 independently
 accepted checkpoints. R11-F02 strict resolution, R11-F03 no-change refusal,
 R11-F04 CI, R11-F05 final

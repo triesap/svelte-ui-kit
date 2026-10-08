@@ -77,6 +77,8 @@ export const SHIPPED_SCHEMAS: Readonly<Record<string, string>> = {
     "urn:svelte-ui-kit:schema:v1:theme-integration",
   "command-envelope.schema.json":
     "urn:svelte-ui-kit:schema:v1:command-envelope",
+  "native-provenance.schema.json":
+    "urn:svelte-ui-kit:schema:v1:native-provenance",
 };
 
 /** The `schema/v1/<file>` logical paths of every shipped schema. */

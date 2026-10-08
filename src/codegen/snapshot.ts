@@ -380,6 +380,7 @@ export function captureSnapshot(
 
   const canonical = canonicalRoot(root);
   if (!canonical.ok) return canonical;
+  const environment = captureEnvironment(canonical.value.path);
 
   const entries = new Map<string, TargetObservation>();
   const ancestorMap = new Map<string, AncestorObservation>();
@@ -395,6 +396,15 @@ export function captureSnapshot(
       observeOne(canonical.value.path, logicalPath, ancestors),
     );
   }
+  if (environment.nativeFile.kind === "value") {
+    for (const observation of observeAncestors(
+      canonical.value.path,
+      environment.nativeFile.path,
+    ).observations) {
+      if (!ancestorMap.has(observation.path))
+        ancestorMap.set(observation.path, observation);
+    }
+  }
   return ok(
     Object.freeze({
       root: canonical.value.path,
@@ -402,7 +412,7 @@ export function captureSnapshot(
       entries: new FrozenMap(entries),
       ancestors: new FrozenMap(ancestorMap),
       paths: Object.freeze([...logicalPaths]),
-      environment: captureEnvironment(canonical.value.path),
+      environment,
     }),
   );
 }

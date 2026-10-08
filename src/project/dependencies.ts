@@ -41,6 +41,12 @@ import {
 import { intersectRangesDetailed } from "../registry/dependency-plan.js";
 import type { DependencyPlan } from "../registry/dependency-plan.js";
 import { readJsonObject, observeEntry, type JsonObservation } from "./io.js";
+import {
+  authenticateNativeInstall,
+  NATIVE_BASELINE,
+  observeNativeFile,
+  type NativeFileObservation,
+} from "./native-dependency.js";
 
 export const DECLARATION_FIELDS = [
   "dependencies",
@@ -81,6 +87,7 @@ export type InstalledObservation =
       readonly kind: "value";
       readonly version: string;
       readonly manifest: Record<string, unknown>;
+      readonly nativeIssues?: readonly ModelIssue[];
     };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -121,7 +128,18 @@ export function observeInstalled(
       if (typeof version !== "string" || valid(version) === null) {
         return { kind: "malformed" };
       }
-      return { kind: "value", version, manifest };
+      return {
+        kind: "value",
+        version,
+        manifest,
+        ...(name === NATIVE_BASELINE.name && version === NATIVE_BASELINE.version
+          ? {
+              nativeIssues: authenticateNativeInstall(
+                path.join(current, "node_modules", ...segments),
+              ),
+            }
+          : {}),
+      };
     }
     if (observation.kind !== "absent") return observation;
     const parent = path.dirname(current);
@@ -227,6 +245,7 @@ function declaredRange(
 export interface DependencyEvidence {
   readonly manifest: JsonObservation;
   readonly observe: (name: string) => InstalledObservation | null;
+  readonly nativeFile?: NativeFileObservation;
 }
 
 /**
@@ -240,13 +259,19 @@ export function inspectDependencyStateFromEvidence(
   evidence: DependencyEvidence,
   requirements: readonly DependencyRequirement[],
 ): ModelResult<readonly DependencyStateEntry[]> {
-  return inspectWithEvidence(evidence.manifest, evidence.observe, requirements);
+  return inspectWithEvidence(
+    evidence.manifest,
+    evidence.observe,
+    requirements,
+    evidence.nativeFile,
+  );
 }
 
 function inspectWithEvidence(
   manifestObservation: JsonObservation,
   observeInstalled: (name: string) => InstalledObservation | null,
   requirements: readonly DependencyRequirement[],
+  nativeFile?: NativeFileObservation,
 ): ModelResult<readonly DependencyStateEntry[]> {
   const issues: ModelIssue[] = [];
   if (manifestObservation.kind === "unreadable") {
@@ -320,7 +345,22 @@ function inspectWithEvidence(
       );
       continue;
     }
-    if (declared.range !== null && validRange(declared.range) === null) {
+    let effectiveRange = declared.range;
+    if (
+      requirement.name === NATIVE_BASELINE.name &&
+      declared.range?.startsWith("file:")
+    ) {
+      if (nativeFile?.kind === "invalid") {
+        issues.push(...nativeFile.issues);
+        continue;
+      }
+      if (
+        nativeFile?.kind === "value" &&
+        nativeFile.declaration === declared.range
+      )
+        effectiveRange = nativeFile.version;
+    }
+    if (effectiveRange !== null && validRange(effectiveRange) === null) {
       issues.push(
         issue(
           "DEPENDENCY_DECLARED_INVALID",
@@ -374,6 +414,14 @@ function inspectWithEvidence(
     }
     const installedVersion =
       installed.kind === "value" ? installed.version : null;
+    if (
+      installed.kind === "value" &&
+      installed.nativeIssues &&
+      installed.nativeIssues.length > 0
+    ) {
+      issues.push(...installed.nativeIssues);
+      continue;
+    }
 
     let status: DependencyStatus;
     if (declared.range === null) {
@@ -381,7 +429,7 @@ function inspectWithEvidence(
     } else {
       const joint = intersectRangesDetailed([
         requirement.range,
-        declared.range,
+        effectiveRange as string,
       ]);
       if (joint.kind === "unable") {
         issues.push(
@@ -402,6 +450,23 @@ function inspectWithEvidence(
       } else {
         status = "ready";
       }
+    }
+
+    if (
+      status === "ready" &&
+      requirement.name === NATIVE_BASELINE.name &&
+      installedVersion === NATIVE_BASELINE.version &&
+      (nativeFile?.kind !== "value" ||
+        nativeFile.declaration !== declared.range)
+    ) {
+      issues.push(
+        issue(
+          "NATIVE_ARCHIVE_REQUIRED",
+          "The qualified local Bits build requires an explicit authenticated application-owned file declaration. Copy and verify the bundled archive, then install it explicitly.",
+          "package.json",
+        ),
+      );
+      continue;
     }
 
     entries.push({
@@ -426,10 +491,12 @@ export function inspectDependencyState(
   root: string,
   requirements: readonly DependencyRequirement[],
 ): ModelResult<readonly DependencyStateEntry[]> {
+  const manifest = readJsonObject(path.join(root, "package.json"));
   return inspectWithEvidence(
-    readJsonObject(path.join(root, "package.json")),
+    manifest,
     (name) => observeInstalled(root, name),
     requirements,
+    observeNativeFile(root, manifest.kind === "value" ? manifest.value : null),
   );
 }
 
@@ -566,6 +633,10 @@ function collectPeerConstraints(
       );
       continue;
     }
+    if (observation.nativeIssues && observation.nativeIssues.length > 0) {
+      issues.push(...observation.nativeIssues);
+      continue;
+    }
     const peerDependenciesRaw = observation.manifest["peerDependencies"];
     if (peerDependenciesRaw !== undefined && !isRecord(peerDependenciesRaw)) {
       issues.push(
@@ -649,7 +720,12 @@ export function validatePeerDependenciesFromEvidence(
   evidence: DependencyEvidence,
   plan: DependencyPlan,
 ): ModelResult<readonly DependencyStateEntry[]> {
-  return validatePeerWithEvidence(evidence.manifest, evidence.observe, plan);
+  return validatePeerWithEvidence(
+    evidence.manifest,
+    evidence.observe,
+    plan,
+    evidence.nativeFile,
+  );
 }
 
 /**
@@ -660,10 +736,12 @@ export function validatePeerDependencies(
   root: string,
   plan: DependencyPlan,
 ): ModelResult<readonly DependencyStateEntry[]> {
+  const manifest = readJsonObject(path.join(root, "package.json"));
   return validatePeerWithEvidence(
-    readJsonObject(path.join(root, "package.json")),
+    manifest,
     (name) => observeInstalled(root, name),
     plan,
+    observeNativeFile(root, manifest.kind === "value" ? manifest.value : null),
   );
 }
 
@@ -671,6 +749,7 @@ function validatePeerWithEvidence(
   manifestObservation: JsonObservation,
   observeInstalled: (name: string) => InstalledObservation | null,
   plan: DependencyPlan,
+  nativeFile?: NativeFileObservation,
 ): ModelResult<readonly DependencyStateEntry[]> {
   const issues: ModelIssue[] = [];
   if (manifestObservation.kind === "unreadable") {
@@ -707,6 +786,7 @@ function validatePeerWithEvidence(
   const installedEvidence: DependencyEvidence = {
     manifest: manifestObservation,
     observe: observeInstalled,
+    nativeFile,
   };
   const results: DependencyStateEntry[] = [];
   for (const constraint of constraints) {

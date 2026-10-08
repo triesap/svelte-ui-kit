@@ -75,6 +75,41 @@ runtime is introduced. The resulting app must work without its CLI host or
 authoring source. Prefer an unmodified supported released dependency when one
 passes; no fallback artifact is selected merely by this contract amendment.
 
+The candidate native artifact format is independently versioned as
+[`NATIVE_PROVENANCE.json` v1](../schema/v1/native-provenance.schema.json). It
+records source revisions and Git-archive digests, truthful source/build versions,
+the source patch and recipe, actual producer locks, emitter archive, exact
+toolchain and the real packed-file inventory. Inventory paths must be safe
+logical paths and unique by path; their bytes must match, with no missing or
+extra files, internal links or unrecorded directories. The provenance file is
+excluded from its own inventory and authenticated by a fixed digest in the CLI's
+qualified build identity. An unpatched causal control is never a ready artifact.
+Unknown format versions, extra fields, missing fields and altered bytes are
+refused. This is the first supported artifact format; earlier arbitrary local
+file declarations have no supported migration and remain invalid.
+
+The existing command-envelope, configuration and lock schemas remain v1.
+Dependency `declaredRange` preserves the actual explicit `file:./...tgz`
+declaration. Only the qualified Bits archive can supply an internal exact SemVer
+range for compatibility checks after authenticating application-owned bytes and
+safe physical ancestry. Installation remains a separate requirement; a
+same-version SemVer-only declaration or fabricated manifest, changed native
+runtime/declaration/provenance,
+unknown archive, escaping/linked path or other package's local source cannot
+become ready by that normalization. Capture this observation with the invocation,
+carry archive digest/mode and ancestor identities through existing read-set
+authority, and re-prove the installed distribution before guarded writes.
+There is no new ad hoc serialized plan field or implicit package repair.
+
+For the qualified local build, existing dependency instructions retain logical
+runtime/peer requirement operands, put other runtime dependencies in their
+normal manager command, and report complete native extraction, digest checking
+and explicit local installation in the existing `manual` field. They identify
+`package/dist/native/<archive>` inside the locally packed CLI, require a fresh
+application-owned destination, and report a shell procedure only for an
+established POSIX shell. Packaging and full adoption/strict/runtime acceptance
+remain separate R11-F02 obligations.
+
 #### Component interface rules
 
 Use Svelte 5 typed props and deliberate binding through wrappers. `open`, `checked`, `value`, and DOM `ref` are not made two-way merely by spreading props. Derive primitive props from the pinned Bits UI definitions; preserve union discrimination. Use native Svelte element types for native components. Do not replace a real prop contract with `any` or a generic attribute dictionary.

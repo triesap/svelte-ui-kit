@@ -10,6 +10,7 @@ import {
 import type { ModelResult } from "../../src/registry/errors.js";
 import { createTempProject, type TempProject } from "../helpers/project.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
+import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
 
 /**
  * S040 tests (repaired): instructions match the detected manager and
@@ -26,6 +27,59 @@ function codes(result: ModelResult<unknown>): string[] {
 function render(project: TempProject, runtime: string[], peers: string[]) {
   return renderDependencyInstructions(project.root, { runtime, peers });
 }
+
+test("qualified native requirements report complete explicit local setup while other dependencies keep ordinary commands", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ packageManager: "pnpm@11.22.0" }),
+  );
+  const before = snapshotTree(project.root);
+  const result = render(
+    project,
+    [`bits-ui@${NATIVE_BASELINE.version}`, "@internationalized/date@^3.8.1"],
+    ["svelte@5.57.1"],
+  );
+  assert.ok(result.ok);
+  assert.equal(
+    result.value.runtimeCommand,
+    "pnpm add '@internationalized/date@^3.8.1'",
+  );
+  assert.equal(result.value.peerCommand, "pnpm add 'svelte@5.57.1'");
+  assert.ok(
+    result.value.manual?.includes(
+      `package/dist/native/${NATIVE_BASELINE.archive}`,
+    ),
+  );
+  assert.ok(result.value.manual?.includes(NATIVE_BASELINE.archiveSha256));
+  assert.ok(
+    result.value.manual?.includes(
+      `pnpm add './vendor/${NATIVE_BASELINE.archive}'`,
+    ),
+  );
+  assert.ok(result.value.manual?.includes("fresh application-owned location"));
+  assert.ok(
+    result.value.manual?.includes(
+      "after the CLI host and authoring sources are removed",
+    ),
+  );
+  assert.ok(!result.value.runtimeCommand?.includes("bits-ui@"));
+  assert.deepEqual(snapshotTree(project.root), before);
+  const unsupported = renderDependencyInstructions(project.root, {
+    runtime: [`bits-ui@${NATIVE_BASELINE.version}`],
+    peers: [],
+    shell: "unsupported",
+  });
+  assert.ok(unsupported.ok);
+  assert.equal(unsupported.value.runtimeCommand, null);
+  assert.ok(
+    unsupported.value.manual?.includes(
+      "Extract the named tarball member yourself",
+    ),
+  );
+  assert.ok(!unsupported.value.manual?.includes("tar -xOf"));
+});
 
 test("the packageManager field selects the instruction manager", (t) => {
   const project = createTempProject();

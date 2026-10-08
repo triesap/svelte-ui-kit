@@ -36,6 +36,13 @@ import { observeEntry } from "../project/io.js";
 import { resolveInstalledManifestCandidate } from "../project/dependencies.js";
 import { sha256Hex } from "./digest.js";
 import { TRANSIENT_NAMESPACE } from "./transaction-types.js";
+import {
+  authenticateNativeInstall,
+  nativeDeclaration,
+  NATIVE_BASELINE,
+  observeNativeFile,
+} from "../project/native-dependency.js";
+import { readJsonObject } from "../project/io.js";
 
 /** Stable physical identity of a directory or root. */
 export interface PhysicalIdentity {
@@ -1068,6 +1075,56 @@ export function verifyInstalledReads(
         ),
       );
       continue;
+    }
+    // The fixed native identity authenticates every distribution file, so a
+    // changed declaration/runtime/provenance cannot hide behind an unchanged
+    // package manifest. This adds no write authority or serialized plan field.
+    if (entry.name === NATIVE_BASELINE.name) {
+      let manifest: { version?: unknown };
+      try {
+        manifest = JSON.parse(readFileSync(resolved, "utf8")) as {
+          version?: unknown;
+        };
+      } catch {
+        issues.push(
+          issue(
+            "AUTHORITY_INSTALLED_CHANGED",
+            "Installed Bits identity became invalid since planning.",
+            entry.name,
+          ),
+        );
+        continue;
+      }
+      if (
+        manifest.version === NATIVE_BASELINE.version &&
+        authenticateNativeInstall(path.dirname(resolved)).length > 0
+      ) {
+        issues.push(
+          issue(
+            "AUTHORITY_INSTALLED_CHANGED",
+            "The qualified native distribution changed since planning; recopy and reinstall the authenticated archive explicitly.",
+            entry.name,
+          ),
+        );
+        continue;
+      }
+      if (manifest.version === NATIVE_BASELINE.version) {
+        const app = readJsonObject(path.join(root, "package.json"));
+        if (
+          app.kind === "value" &&
+          nativeDeclaration(app.value) !== null &&
+          observeNativeFile(root, app.value).kind !== "value"
+        ) {
+          issues.push(
+            issue(
+              "AUTHORITY_INSTALLED_CHANGED",
+              "The declared native archive is no longer an authenticated application-owned source. Recopy and reinstall the qualified local archive explicitly.",
+              entry.name,
+            ),
+          );
+          continue;
+        }
+      }
     }
     if (entry.mode !== null && (stats.mode & 0o777) !== entry.mode) {
       issues.push(

@@ -48,6 +48,10 @@ import {
 } from "./detect.js";
 import { deepFreeze, FrozenMap } from "./immutable.js";
 import { readJsonObject, type JsonObservation } from "./io.js";
+import {
+  observeNativeFile,
+  type NativeFileObservation,
+} from "./native-dependency.js";
 
 /**
  * Physical evidence of one environment file captured with the snapshot: an
@@ -107,6 +111,8 @@ export type InstalledResolutionEvidence =
 export interface CapturedEnvironment {
   /** Typed observation of the selected package's `package.json`. */
   readonly manifest: JsonObservation;
+  /** Authenticated app-owned native file declaration; never a live planning read. */
+  readonly nativeFile: NativeFileObservation;
   /**
    * Exact physical evidence of the manifest and every recognized package-manager
    * lockfile, including absence. Carried into the guarded apply read set so a
@@ -406,6 +412,10 @@ function captureInstalledResolution(
  */
 export function captureEnvironment(root: string): CapturedEnvironment {
   const manifest = readJsonObject(path.join(root, "package.json"));
+  const nativeFile = observeNativeFile(
+    root,
+    manifest.kind === "value" ? manifest.value : null,
+  );
   const enumerated = enumerateInstalledNames(root);
   // Decision-relevant names are the union of enumerated installed names and the
   // selected package's declared dependency names. A declared-but-absent name is
@@ -427,7 +437,20 @@ export function captureEnvironment(root: string): CapturedEnvironment {
   const kitConfig = deepFreeze(discoverKitConfig(root));
   return deepFreeze({
     manifest,
-    evidence: captureEvidence(root, installedManifestPaths(root, names)),
+    nativeFile,
+    evidence: [
+      ...captureEvidence(root, installedManifestPaths(root, names)),
+      ...(nativeFile.kind === "value"
+        ? [
+            {
+              path: nativeFile.path,
+              kind: "file" as const,
+              digest: nativeFile.digest,
+              mode: nativeFile.mode,
+            },
+          ]
+        : []),
+    ],
     installed,
     installedResolution,
     enumerationComplete: enumerated.complete,

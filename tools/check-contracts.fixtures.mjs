@@ -78,6 +78,7 @@ export const FIXTURE_FILES = [
   "registry/ui/alert-dialog/root.svelte",
   "registry/ui/router-link.svelte",
   "schema/v1/kit.schema.json",
+  "schema/v1/native-provenance.schema.json",
   "src/cli/commands/doctor.ts",
   "src/cli/main.ts",
   "src/codegen/apply.ts",

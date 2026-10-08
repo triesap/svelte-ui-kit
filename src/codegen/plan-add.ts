@@ -405,6 +405,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   const environment = snapshot.environment;
   const dependencyEvidence: DependencyEvidence = {
     manifest: environment.manifest,
+    nativeFile: environment.nativeFile,
     observe: (name) => {
       const found = environment.installed.get(name);
       if (found !== undefined) return found;

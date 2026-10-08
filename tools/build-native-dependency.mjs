@@ -375,6 +375,33 @@ export function buildNativeDependency({
       archive: NATIVE_RECIPE.native.archive,
       archiveSha256: nativeDigest(bytes),
     };
+    if (!baseline && !recordLocks) {
+      const expected = JSON.parse(
+        readFileSync(
+          new URL(
+            "../src/project/native-dependency-baseline.json",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      );
+      assert.equal(expected.schemaVersion, 1, "native identity version");
+      assert.equal(
+        qualified.version,
+        expected.version,
+        "qualified native version",
+      );
+      assert.equal(
+        qualified.archiveSha256,
+        expected.archiveSha256,
+        "qualified native archive identity",
+      );
+      assert.equal(
+        nativeDigest(readFileSync(path.join(stage, "NATIVE_PROVENANCE.json"))),
+        expected.provenanceSha256,
+        "qualified native provenance identity",
+      );
+    }
     mkdirSync(outputRoot, { recursive: true });
     writeFileSync(path.join(outputRoot, qualified.archive), bytes);
     writeJson(path.join(outputRoot, "provenance.json"), qualified);
