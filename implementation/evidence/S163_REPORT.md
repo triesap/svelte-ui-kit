@@ -1,7 +1,11 @@
 # S163 step report — Qualify native Card composition and nested surfaces
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `b6076e9bc0174c5efa0071f7ba083bb3978975c6`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S163","kind":"report","commit":"b6076e9bc0174c5efa0071f7ba083bb3978975c6","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R23, R25, R26, R29, R32, R33, R34.
 Starting `26d8332cb9433a9e23793e64956513c328a199fe` on `master`.
