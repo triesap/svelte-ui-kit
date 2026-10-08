@@ -1763,7 +1763,7 @@
       "sequence": "RCLD-07",
       "dependsOn": "S127",
       "requirements": ["R21", "R23", "R24", "R26", "R29", "R32", "R33", "R34"],
-      "status": "in_progress",
+      "status": "committed_pending_review",
       "completion": null
     },
     {

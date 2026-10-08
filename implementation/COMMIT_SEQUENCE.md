@@ -97,9 +97,9 @@ or new product/API scope is authorized by this qualification.
 - Active implementation checkpoint: **S128 — Qualify Menu placement, themes, and CSP limits**. Separate S115 acceptance on `5c235eed860667d030c4f36e805d04f0acd2e91d` is anchored at `6e087c10b441712d82c70230c3db7f8490ea787f`; S128 independent acceptance gates S129.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **115 / 203**. Remaining: **88 / 203**.
-- Committed pending review: **12 / 203**. Authored batch range: **S116–S127**.
+- Committed pending review: **13 / 203**. Authored batch range: **S116–S128**.
 - Completed RCLD sequences: **6 / 11**. Remaining: **5 / 11**.
-- Last safe target commit: `06421d71b95bc7ed792ca80f2213b242baec3528`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `21c72d21fd78a34f12099b94b0d4fddff779d911`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -6266,7 +6266,7 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S125 | RCLD-07  | S124       | committed_pending_review | `c02e65efcade4575012139fb0730cf0961acf934` |
 | S126 | RCLD-07  | S125       | committed_pending_review | `d67cc15ec8b67684b97164b531d30a6e15c19b3b` |
 | S127 | RCLD-07  | S126       | committed_pending_review | `06421d71b95bc7ed792ca80f2213b242baec3528` |
-| S128 | RCLD-07  | S127       | in_progress              | —                                          |
+| S128 | RCLD-07  | S127       | committed_pending_review | `21c72d21fd78a34f12099b94b0d4fddff779d911` |
 | S129 | RCLD-08  | S128       | not_started              | —                                          |
 | S130 | RCLD-08  | S129       | not_started              | —                                          |
 | S131 | RCLD-08  | S130       | not_started              | —                                          |

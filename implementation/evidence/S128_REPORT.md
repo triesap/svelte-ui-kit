@@ -3,7 +3,7 @@
 Author: Codex. Candidate; mandatory separate RCLD-07 acceptance pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S128","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S128","kind":"report","commit":"21c72d21fd78a34f12099b94b0d4fddff779d911","disposition":"candidate"}
 -->
 
 Requirements R21, R23, R24, R26, R29, R32, R33, R34. Starting `06421d7` on
