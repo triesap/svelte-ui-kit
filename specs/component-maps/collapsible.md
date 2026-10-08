@@ -82,8 +82,25 @@ candidate Chromium measures refs, pointer/Space/Enter binding and state/completi
 callbacks, caller cancellation, disabled refusal and independent delegated/raw
 groups. Closed content retains the same input node/state, and forceMount exposes
 closed content with expanded=false as its native caller-owned visual policy.
-Complete candidate parts remain unadvertised until S143, with installed motion/
-SSR/hydration/lifecycle qualification still required by S144 and S148.
+Complete candidate parts remain unadvertised until S143. S144 installed
+qualification measures both initial states, 12 concurrent requests per layout,
+stable generated IDs in two independent recipe items, retained input DOM,
+native callbacks/cancellation/disabled/refs and source form button behavior.
+Caller-owned measured-height animations use native presence; a paused actual
+exit remains visible until completion, rapid toggles settle to the latest state,
+reduced motion disables both animations, and destruction during exit clears refs
+and cancels pending completion before remount. Separate S148 acceptance remains
+required.
+
+Actual CSP responses use nonce-bearing scripts and external source CSS. Allowing
+style attributes produces no diagnostics. Denying style attributes blocks native
+SSR measurement declarations and emits only attributed style-src-attr violations
+(six server / seven hydrated diagnostics in the measured route). Chromium's
+hydrated CSSOM property updates still provide measured dimensions under that
+policy; source padding, visibility and keyboard toggling remain functional.
+This qualifies those observed paths, not arbitrary caller height animations or
+an absence of runtime inline styles. All exceptions and warnings fail the CSP
+lane; expected violations are retained individually with policy and artifacts.
 
 ## Complete source customization hooks
 
