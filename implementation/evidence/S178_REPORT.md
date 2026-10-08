@@ -1,7 +1,11 @@
 # S178 step report — Qualify empty Skeleton presentation and visual states
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `9717770223d636bf91011fa5897eed6263913e7a`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S178","kind":"report","commit":"9717770223d636bf91011fa5897eed6263913e7a","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R23, R25, R26, R29, R32, R33, R34.
 Starting `9e109a4f8ef112f4e491d687dbfcd39908ae3ad3` on `master`.
