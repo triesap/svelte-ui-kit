@@ -129,6 +129,18 @@ native form ownership changes which form resets/submits those fields, including
 coinstalled Checkbox/Switch. Radio keeps its actual native API and surrounding
 form ownership; no unsupported form prop is added.
 
+S184 additionally measures two cancelled-reset trigger paths with direct raw
+Svelte controls. Application-invoked `form.reset()` preserves bound native and
+kit values when the reset handler prevents default. A trusted reset-button click
+under pinned Svelte 5.57.1 and Chromium instead restores the native text binding
+to its default despite the reset event being cancelable and default-prevented;
+the raw native Svelte input reproduces this same boundary. The separately guarded
+Checkbox/Switch/Radio values remain cancelled. Do not claim universal trusted-click
+reset cancellation or add a kit reset engine to conceal the framework behavior.
+The combined fixture also avoids naming a button `reset`, which would mask the
+native form method through ordinary HTML named-property lookup. S193 independent
+review and final AC20 qualification must retain these measured bounds.
+
 Removing all messages removes described-by and clears explicit descriptor refs.
 Required marker refs clear when required becomes false. Whole field teardown
 clears native and kit refs, and remount restores current state/relationships.

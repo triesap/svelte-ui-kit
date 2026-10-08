@@ -1,7 +1,11 @@
 # S183 implementation report — shared bindings, refs and delegation
 
 Author: Codex. Implemented candidate; separate S193 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `2051919ac7b4dbfc69053f7377b3253b0a8b5170`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S183","kind":"report","commit":"2051919ac7b4dbfc69053f7377b3253b0a8b5170","disposition":"candidate"}
+-->
 
 ## Implementation and observations
 

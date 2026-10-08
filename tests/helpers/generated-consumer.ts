@@ -491,6 +491,18 @@ export function buildWrapperConsumer(custom: boolean) {
   );
 }
 
+export function buildFormsCompositionConsumer(custom: boolean) {
+  return buildInstalledItemsConsumer(custom, "forms-composition", [
+    "tokens",
+    "spinner",
+    "button",
+    "field",
+    "checkbox",
+    "radio",
+    "switch",
+  ]);
+}
+
 function buildInstalledItemsConsumer(
   custom: boolean,
   qualification: string,
