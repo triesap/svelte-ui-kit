@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "avatar",
   "kind": "component",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Native image avatar with accessible optional loading and failure fallback.",
   "compatibility": {
     "svelte": "5.57.1",

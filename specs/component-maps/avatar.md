@@ -81,3 +81,32 @@ Real default/custom install checks compile/build and server-render initial
 loading, named/decorative fallback, native attrs and exact installed bytes.
 Browser transitions and measured presentation remain S157; neither author
 verification nor implementation commits grant independent acceptance.
+
+S157's installed browser fixtures expose a real stale-event callback defect in
+the initial generation: a detached image's late native event could invoke the
+current avatar's normal callback even though internal state was already guarded.
+Guard both normal load/error delivery by actual current image and request identity
+and advance the Avatar cohort to0.1.1. Native capture listeners remain caller
+attributes; current load/error callbacks preserve exact native capture ordering.
+The separate S181 reviewer must assess this repair independently.
+
+Actual browser qualification measures source 40px square, cover-fit and default
+999px radius, target fallback dimensions/colors, live8px radius/theme, caller
+64×48px image dimensions, RTL and zero added motion. Delayed image success, error
+and recovery, empty source, independent instances, stale load/error events,
+responsive srcset selection, hiding/teardown/ref cleanup and concurrent isolated
+SSR pass in real default/custom installations. A completed image source can
+return directly to loaded through the browser's image cache; a fresh request
+still shows loading until its own response settles.
+
+Pinned Svelte5.57.1 SSR emits native image load/error recorder attributes
+(`this.__e=event`), and client replay_events removes those attributes and dispatches
+the captured event once after hydration. A browser fixture with client modules
+held back proves image completion while SSR remains loading, the actual recorded
+load event, retained image node, final loaded state and exactly one replayed native
+capture/load callback pair. The kit completion effect adds no callback. This
+framework SSR boundary is not a strict-CSP guarantee: inline event recorder
+attributes exist before hydration. Preserve this fact for the later cross-catalog
+CSP qualification rather than disabling SSR or claiming zero runtime requirements.
+Author verification remains a candidate; independent S181 and final platform/MVP
+acceptance remain open.

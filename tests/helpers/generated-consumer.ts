@@ -16,6 +16,7 @@ function buildComponentConsumer(
     | "spinner"
     | "button"
     | "anchor"
+    | "avatar"
     | "router-link"
     | "switch"
     | "checkbox"
@@ -205,7 +206,8 @@ function buildComponentConsumer(
                           ]
                         : item === "switch" ||
                             item === "checkbox" ||
-                            item === "anchor"
+                            item === "anchor" ||
+                            item === "avatar"
                           ? [`${item}.svelte`, `${item}.types.ts`]
                           : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
@@ -396,6 +398,9 @@ export const buildRouterLinkConsumer = (custom: boolean, based: boolean) => {
 
 export const buildSwitchConsumer = (custom: boolean) =>
   buildComponentConsumer("switch", custom);
+
+export const buildAvatarConsumer = (custom: boolean) =>
+  buildComponentConsumer("avatar", custom);
 
 export const buildDialogConsumer = (
   custom: boolean,

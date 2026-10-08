@@ -19,5 +19,5 @@
     { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "5503d44735c7c65eed7ec5850f7489b6a5d62fcf085496c23254b7f7fb68c84f"
+  "contentHash": "481daf23e92c54eb98bc513046f2bec19de3e0a6aaacbaa27b8d0ca7fca95695"
 }

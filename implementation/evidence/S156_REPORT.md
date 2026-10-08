@@ -1,7 +1,11 @@
 # S156 step report — Generate native Avatar and fallback styles
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `ee3149e87cff48315e2db02ac2c1c634e0274a7c`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S156","kind":"report","commit":"ee3149e87cff48315e2db02ac2c1c634e0274a7c","disposition":"candidate"}
+-->
 
 Original R02, R03, R04, R06, R08, R20, R22, R25, R26, R32, R33, R34.
 Starting `a17b0af3faeee399cf1981cc501a19364e6d7f1b` on `master`.

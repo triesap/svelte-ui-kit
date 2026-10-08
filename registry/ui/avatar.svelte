@@ -71,13 +71,25 @@
       bind:this={ref}
       aria-hidden={fallbackActive ? true : ariaHidden}
       onload={(event) => {
-        if (event.currentTarget instanceof HTMLImageElement)
-          settle(event.currentTarget, source, "loaded");
+        const image = event.currentTarget;
+        if (
+          !(image instanceof HTMLImageElement) ||
+          image !== ref ||
+          source !== request
+        )
+          return;
+        settle(image, source, "loaded");
         onload?.(event);
       }}
       onerror={(event) => {
-        if (event.currentTarget instanceof HTMLImageElement)
-          settle(event.currentTarget, source, "error");
+        const image = event.currentTarget;
+        if (
+          !(image instanceof HTMLImageElement) ||
+          image !== ref ||
+          source !== request
+        )
+          return;
+        settle(image, source, "error");
         onerror?.(event);
       }}
     />
