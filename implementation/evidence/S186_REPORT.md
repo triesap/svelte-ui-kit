@@ -1,7 +1,11 @@
 # S186 implementation report — complete catalog CSS contracts
 
 Author: Codex. Implemented candidate; separate S193 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `7ce4e06c86967157fa7b572975a5e4f24dd27c8d`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S186","kind":"report","commit":"7ce4e06c86967157fa7b572975a5e4f24dd27c8d","disposition":"candidate"}
+-->
 
 ## Implementation and observed behavior
 

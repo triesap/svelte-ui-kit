@@ -1,0 +1,37 @@
+/* Application-owned themes; outside the aggregate kit stylesheet. */
+html[data-catalog-theme="one"] {
+  --catalog-ink: rgb(31, 41, 51);
+  --catalog-surface: rgb(211, 212, 213);
+}
+html[data-catalog-theme="two"] {
+  --catalog-ink: rgb(61, 71, 81);
+  --catalog-surface: rgb(181, 182, 183);
+}
+#nested-scope[data-nested-theme="one"] {
+  --catalog-ink: rgb(91, 101, 111);
+  --catalog-surface: rgb(151, 152, 153);
+}
+#nested-scope[data-nested-theme="two"] {
+  --catalog-ink: rgb(121, 131, 141);
+  --catalog-surface: rgb(221, 222, 223);
+}
+html[data-catalog-theme],
+#nested-scope[data-nested-theme] {
+  color: var(--catalog-ink);
+  --kit-color-text: var(--catalog-ink);
+  --kit-color-text-secondary: var(--catalog-ink);
+  --kit-color-text-muted: var(--catalog-ink);
+  --kit-color-link: var(--catalog-ink);
+  --kit-color-link-hover: var(--catalog-ink);
+  --kit-color-primary: var(--catalog-ink);
+  --kit-color-primary-hover: var(--catalog-ink);
+  --kit-color-primary-foreground: var(--catalog-surface);
+  --kit-color-selection-indicator: var(--catalog-surface);
+  --kit-color-border: var(--catalog-ink);
+  --kit-color-border-strong: var(--catalog-ink);
+  --kit-color-surface: var(--catalog-surface);
+  --kit-color-surface-raised: var(--catalog-surface);
+  --kit-color-surface-hover: var(--catalog-surface);
+  --kit-focus-ring: var(--catalog-ink);
+  --kit-color-danger: var(--catalog-ink);
+}

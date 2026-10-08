@@ -500,6 +500,70 @@ export function buildCssConsumer(custom: boolean) {
   );
 }
 
+export function buildCatalogThemesConsumer(custom: boolean) {
+  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  let preservation: Record<string, string> = {};
+  const consumer = buildInstalledItemsConsumer(
+    custom,
+    "catalog-themes",
+    registry.items.map((item: { id: string }) => item.id),
+    (root, config) => {
+      const paths = deriveKitPaths(config);
+      const folder = "src/routes/qualification/catalog-themes";
+      let module = path.posix.relative(folder, `${config.uiDir}/index.js`);
+      if (!module.startsWith(".")) module = `./${module}`;
+      const catalog = readFileSync(
+        "tests/fixtures/qualification/css-contracts/+page.svelte",
+        "utf8",
+      )
+        .replaceAll("__UI_MODULE__", module)
+        .replace('open={side === "bottom"}', "open={false}")
+        .replace(/\s+forceMount\b/g, "");
+      assert.ok(!catalog.includes("forceMount"));
+      writeFileSync(path.join(root, folder, "Catalog.svelte"), catalog);
+      writeFileSync(
+        path.join(root, paths.themesCss),
+        readFileSync("tests/fixtures/qualification/catalog-themes/themes.css"),
+      );
+      writeFileSync(
+        path.join(root, paths.appCss),
+        "/* Application-owned customization must survive sync exactly. */\n.catalog-owned { letter-spacing: 0.013em; }\n",
+      );
+      const files = [
+        paths.themesCss,
+        paths.appCss,
+        config.layoutFile,
+        `${folder}/Catalog.svelte`,
+      ];
+      const before = files.map((file) => readFileSync(path.join(root, file)));
+      const result = spawnSync(
+        process.execPath,
+        [path.resolve("dist/cli/main.js"), "sync", "--json", "--cwd", root],
+        { cwd: root, encoding: "utf8", timeout: 30000 },
+      );
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+      assert.equal(result.stderr, "");
+      preservation = Object.fromEntries(
+        files.map((file, index) => {
+          assert.ok(
+            readFileSync(path.join(root, file)).equals(before[index]!),
+            file,
+          );
+          return [file, sha256Hex(before[index]!)];
+        }),
+      );
+    },
+  );
+  return {
+    ...consumer,
+    evidence: {
+      ...consumer.evidence,
+      themeSyncPreservation: preservation,
+      files: { ...consumer.evidence.files, ...preservation },
+    },
+  };
+}
+
 export function buildFormsCompositionConsumer(custom: boolean) {
   return buildInstalledItemsConsumer(custom, "forms-composition", [
     "tokens",

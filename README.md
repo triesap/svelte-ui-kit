@@ -71,6 +71,16 @@ elements or expect Button to accept a navigation `href`.
 
 ## Dialog portal themes
 
+The same inherited vocabulary styles the complete catalog: keep generated
+blocks in the single `kit.css` aggregate and put application theme selectors in
+`themes.css`, followed by overrides in `app.css`. Sync preserves both
+application-owned stylesheets and existing layout imports. Document and nested
+theme changes update installed controls and surfaces, including already-open
+Dialog, Alert Dialog and Menu content under its actual portal ancestor.
+Theme choice and persistence belong to the application; for example, an
+application can restore its own stored document attribute after hydration.
+The kit adds no theme store or persistence policy.
+
 Compose DialogRoot, Trigger, Portal, Overlay, Content, Title, optional Description
 and Close explicitly. Give Content an accessible name through Title or the
 native naming attributes. Put global theme selectors on a document ancestor
