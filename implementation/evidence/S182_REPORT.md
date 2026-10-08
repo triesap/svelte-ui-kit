@@ -1,7 +1,11 @@
 # S182 implementation report — public exports and dependency direction
 
 Author: Codex. Implemented candidate; separate S193 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `fba6d1f727a7adbc111fa1c2fb8da410b43215aa`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S182","kind":"report","commit":"fba6d1f727a7adbc111fa1c2fb8da410b43215aa","disposition":"candidate"}
+-->
 
 ## Change and observed behavior
 

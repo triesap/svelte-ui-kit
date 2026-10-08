@@ -482,6 +482,15 @@ export function buildCatalogConsumer(custom: boolean) {
   );
 }
 
+export function buildWrapperConsumer(custom: boolean) {
+  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  return buildInstalledItemsConsumer(
+    custom,
+    "wrapper-contracts",
+    registry.items.map((item: { id: string }) => item.id),
+  );
+}
+
 function buildInstalledItemsConsumer(
   custom: boolean,
   qualification: string,
