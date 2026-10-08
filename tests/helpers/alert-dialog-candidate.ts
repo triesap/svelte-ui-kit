@@ -5,10 +5,19 @@ import { sha256Hex } from "../../src/codegen/digest.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Owned, explicitly unregistered incremental native Alert Dialog composition. */
-export function buildAlertDialogCandidate() {
+export function buildAlertDialogCandidate(
+  stage: "root-trigger" | "content" = "root-trigger",
+) {
   const fixture = copyConsumerFixture();
   try {
-    const sources = ["root.svelte", "trigger.svelte", "types.ts"];
+    const sources = [
+      "root.svelte",
+      "trigger.svelte",
+      "types.ts",
+      ...(stage === "content"
+        ? ["portal.svelte", "overlay.svelte", "content.svelte"]
+        : []),
+    ];
     for (const file of sources) {
       const target = path.join(
         fixture.root,
@@ -18,20 +27,22 @@ export function buildAlertDialogCandidate() {
       mkdirSync(path.dirname(target), { recursive: true });
       writeFileSync(target, readFileSync(`registry/ui/alert-dialog/${file}`));
     }
-    const route = "src/routes/alert-dialog-candidate/+page.svelte";
+    const routeName =
+      stage === "content" ? "alert-dialog-content" : "alert-dialog-candidate";
+    const route = `src/routes/${routeName}/+page.svelte`;
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
       recursive: true,
     });
     writeFileSync(
       path.join(fixture.root, route),
-      readFileSync("tests/fixtures/alert-dialog-candidate/root-trigger.svelte"),
+      readFileSync(`tests/fixtures/alert-dialog-candidate/${stage}.svelte`),
     );
     const logRoot = "implementation/evidence/logs/alert-dialog-candidate";
     mkdirSync(logRoot, { recursive: true });
     const logs: string[] = [];
     for (const script of ["check", "build"]) {
       const result = runFixtureScript(fixture.root, script);
-      const log = `${logRoot}/root-trigger-${process.pid}-${Date.now()}-${script}.log`;
+      const log = `${logRoot}/${stage}-${process.pid}-${Date.now()}-${script}.log`;
       writeFileSync(
         log,
         `${result.stdout}\n${result.stderr}\nstatus=${result.status}; signal=${result.signal}\n`,
@@ -61,11 +72,20 @@ export function buildAlertDialogCandidate() {
     return {
       ...fixture,
       handler: path.join(fixture.root, "build/handler.js"),
-      route: "/alert-dialog-candidate",
+      route: `/${routeName}`,
       evidence: {
-        stage: "S117",
-        authored: ["Root", "Trigger"],
-        raw: ["Content", "Title", "Description", "Cancel"],
+        stage: stage === "content" ? "S118" : "S117",
+        authored: [
+          "Root",
+          "Trigger",
+          ...(stage === "content" ? ["Portal", "Overlay", "Content"] : []),
+        ],
+        raw: [
+          ...(stage === "root-trigger" ? ["Content"] : []),
+          "Title",
+          "Description",
+          "Cancel",
+        ],
         installation: "candidate-copy",
         catalogRegistered: JSON.parse(
           readFileSync("registry/registry.json", "utf8"),
