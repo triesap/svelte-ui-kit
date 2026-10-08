@@ -304,6 +304,35 @@ a promise that arbitrary application imports were rewritten.
 `pnpm run test:package` creates and inspects a local tarball without publication;
 its extracted executable uses bundled assets without an authoring-tree fallback.
 
+### App-owned composition examples
+
+The [example page](tests/fixtures/qualification/composition-examples/+page.svelte)
+composes existing local flat exports into independent disclosure questions,
+a native form with application-owned Alert/Status feedback, native Anchor and
+RouterLink navigation, and a Dialog portaled into a themed application host.
+The application owns disclosure state, validation, submitted data, message
+content, URL destinations and theme properties. There is no notification queue,
+accordion coordinator, data grid or additional registry API.
+
+Request `field`, `checkbox`, `button`, `anchor`, `router-link`, `alert`, `status`,
+`collapsible` and `dialog` with the existing `add` workflow. Dependencies remain
+transitive. Copy the example into an application route and replace both
+`__UI_MODULE__` placeholders with the relative local UI barrel import for that
+route and configured mapping. Keep the portal host inside the desired theme
+scope. The fixture builder performs those substitutions against actual
+CLI-installed sources in both default and custom layouts; it retains the page,
+generated sources and production output hashes. Run the example qualification:
+
+```sh
+pnpm run build
+pnpm exec playwright test --config playwright.config.ts tests/browser/composition-examples.spec.ts
+```
+
+The maintained consumer contains no installed registry catalog, so the
+app-owned example template lives beside the other isolated qualification pages.
+The owning lane checks and builds each generated consumer before testing its
+real production handler, keyboard interactions, semantic feedback and live theme.
+
 ## Goals
 
 - Provide a consistent component and theming foundation.

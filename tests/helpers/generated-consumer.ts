@@ -634,6 +634,22 @@ export function buildFormsCompositionConsumer(custom: boolean) {
   ]);
 }
 
+export function buildCompositionExamplesConsumer(custom: boolean) {
+  return buildInstalledItemsConsumer(custom, "composition-examples", [
+    "field",
+    "tokens",
+    "spinner",
+    "button",
+    "checkbox",
+    "anchor",
+    "router-link",
+    "alert",
+    "status",
+    "collapsible",
+    "dialog",
+  ]);
+}
+
 export function buildOverlayCompositionConsumer(custom: boolean) {
   return buildInstalledItemsConsumer(custom, "overlay-composition", [
     "field",

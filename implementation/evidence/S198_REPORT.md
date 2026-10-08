@@ -1,7 +1,11 @@
 # S198 implementation report — safe recovery procedures
 
 Author: Codex. Candidate; separate final S203 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `918b503d3c18ecac64fc1943b2d632bf865aaa75`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S198","kind":"report","commit":"918b503d3c18ecac64fc1943b2d632bf865aaa75","disposition":"candidate"}
+-->
 
 The runbook and README now require a verified external application backup,
 including hidden evidence and modes, before manual action. A recorded dead
