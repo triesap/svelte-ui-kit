@@ -1142,6 +1142,144 @@
       "scope": "menu",
       "grammar": "<number>",
       "fallback": "var(--kit-disabled-opacity)"
+    },
+    {
+      "name": "--kit-tabs-gap",
+      "scope": "tabs",
+      "grammar": "<length-percentage>",
+      "fallback": "1rem"
+    },
+    {
+      "name": "--kit-tabs-list-gap",
+      "scope": "tabs",
+      "grammar": "<length-percentage>",
+      "fallback": "0.25rem"
+    },
+    {
+      "name": "--kit-tabs-trigger-border-color",
+      "scope": "tabs",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-border)"
+    },
+    {
+      "name": "--kit-tabs-trigger-min-height",
+      "scope": "tabs",
+      "grammar": "<length-percentage>",
+      "fallback": "2.5rem"
+    },
+    {
+      "name": "--kit-tabs-trigger-padding-block",
+      "scope": "tabs",
+      "grammar": "<length-percentage>",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-tabs-trigger-padding-inline",
+      "scope": "tabs",
+      "grammar": "<length-percentage>",
+      "fallback": "0.75rem"
+    },
+    {
+      "name": "--kit-tabs-trigger-background",
+      "scope": "tabs",
+      "grammar": "<color>",
+      "fallback": "transparent"
+    },
+    {
+      "name": "--kit-tabs-trigger-color-inactive",
+      "scope": "tabs",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text-secondary)"
+    },
+    {
+      "name": "--kit-tabs-trigger-font-weight",
+      "scope": "tabs",
+      "grammar": "<number>",
+      "fallback": "600"
+    },
+    {
+      "name": "--kit-tabs-trigger-background-active",
+      "scope": "tabs",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface)"
+    },
+    {
+      "name": "--kit-tabs-trigger-color",
+      "scope": "tabs",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-text)"
+    },
+    {
+      "name": "--kit-tabs-trigger-background-hover",
+      "scope": "tabs",
+      "grammar": "<color>",
+      "fallback": "var(--kit-color-surface-hover)"
+    },
+    {
+      "name": "--kit-tabs-trigger-focus-outline-width",
+      "scope": "tabs",
+      "grammar": "<length-percentage>",
+      "fallback": "2px"
+    },
+    {
+      "name": "--kit-tabs-trigger-focus-ring",
+      "scope": "tabs",
+      "grammar": "<color>",
+      "fallback": "var(--kit-focus-ring)"
+    },
+    {
+      "name": "--kit-tabs-trigger-focus-outline-offset",
+      "scope": "tabs",
+      "grammar": "<length-percentage>",
+      "fallback": "2px"
+    },
+    {
+      "name": "--kit-tabs-trigger-disabled-opacity",
+      "scope": "tabs",
+      "grammar": "<number>",
+      "fallback": "var(--kit-disabled-opacity)"
+    },
+    {
+      "name": "--kit-tabs-panel-padding-block",
+      "scope": "tabs",
+      "grammar": "<length-percentage>",
+      "fallback": "0.75rem"
+    },
+    {
+      "name": "--kit-tabs-panel-padding-inline",
+      "scope": "tabs",
+      "grammar": "<length-percentage>",
+      "fallback": "0"
+    },
+    {
+      "name": "--kit-tabs-panel-background",
+      "scope": "tabs",
+      "grammar": "<color>",
+      "fallback": "transparent"
+    },
+    {
+      "name": "--kit-tabs-panel-color",
+      "scope": "tabs",
+      "grammar": "<color>",
+      "fallback": "inherit"
+    },
+    {
+      "name": "--kit-tabs-panel-focus-outline-width",
+      "scope": "tabs",
+      "grammar": "<length-percentage>",
+      "fallback": "2px"
+    },
+    {
+      "name": "--kit-tabs-panel-focus-ring",
+      "scope": "tabs",
+      "grammar": "<color>",
+      "fallback": "var(--kit-focus-ring)"
+    },
+    {
+      "name": "--kit-tabs-panel-focus-outline-offset",
+      "scope": "tabs",
+      "grammar": "<length-percentage>",
+      "fallback": "2px"
     }
   ]
 }

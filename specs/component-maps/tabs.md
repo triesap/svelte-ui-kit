@@ -89,3 +89,37 @@ retain native behavior. Full candidate and direct raw Bits SSR both omit the
 pre-registration links, demonstrating the pinned boundary independently of the
 wrappers. The complete unadvertised candidate remains pending S139 installation,
 S140 browser/hydration and separate S148 acceptance.
+
+## Source customization hooks
+
+All original customization records remain unchanged. The complete Tabs stylesheet
+adds observed source hooks to the independent customization metadata; the existing
+radius record retains its exact control/default/md fallback. Tokens0.1.7 records
+that metadata addition without changing semantic token defaults.
+
+| Property                                | Grammar                                                                                                             | Source fallback                                                              |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| --kit-tabs-trigger-radius               | `<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? \| inherit \| initial \| unset \| revert \| revert-layer` | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))` |
+| --kit-tabs-gap                          | `<length-percentage>`                                                                                               | `1rem`                                                                       |
+| --kit-tabs-list-gap                     | `<length-percentage>`                                                                                               | `0.25rem`                                                                    |
+| --kit-tabs-trigger-border-color         | `<color>`                                                                                                           | `var(--kit-color-border)`                                                    |
+| --kit-tabs-trigger-min-height           | `<length-percentage>`                                                                                               | `2.5rem`                                                                     |
+| --kit-tabs-trigger-padding-block        | `<length-percentage>`                                                                                               | `0.5rem`                                                                     |
+| --kit-tabs-trigger-padding-inline       | `<length-percentage>`                                                                                               | `0.75rem`                                                                    |
+| --kit-tabs-trigger-background           | `<color>`                                                                                                           | `transparent`                                                                |
+| --kit-tabs-trigger-color-inactive       | `<color>`                                                                                                           | `var(--kit-color-text-secondary)`                                            |
+| --kit-tabs-trigger-font-weight          | `<number>`                                                                                                          | `600`                                                                        |
+| --kit-tabs-trigger-background-active    | `<color>`                                                                                                           | `var(--kit-color-surface)`                                                   |
+| --kit-tabs-trigger-color                | `<color>`                                                                                                           | `var(--kit-color-text)`                                                      |
+| --kit-tabs-trigger-background-hover     | `<color>`                                                                                                           | `var(--kit-color-surface-hover)`                                             |
+| --kit-tabs-trigger-focus-outline-width  | `<length-percentage>`                                                                                               | `2px`                                                                        |
+| --kit-tabs-trigger-focus-ring           | `<color>`                                                                                                           | `var(--kit-focus-ring)`                                                      |
+| --kit-tabs-trigger-focus-outline-offset | `<length-percentage>`                                                                                               | `2px`                                                                        |
+| --kit-tabs-trigger-disabled-opacity     | `<number>`                                                                                                          | `var(--kit-disabled-opacity)`                                                |
+| --kit-tabs-panel-padding-block          | `<length-percentage>`                                                                                               | `0.75rem`                                                                    |
+| --kit-tabs-panel-padding-inline         | `<length-percentage>`                                                                                               | `0`                                                                          |
+| --kit-tabs-panel-background             | `<color>`                                                                                                           | `transparent`                                                                |
+| --kit-tabs-panel-color                  | `<color>`                                                                                                           | `inherit`                                                                    |
+| --kit-tabs-panel-focus-outline-width    | `<length-percentage>`                                                                                               | `2px`                                                                        |
+| --kit-tabs-panel-focus-ring             | `<color>`                                                                                                           | `var(--kit-focus-ring)`                                                      |
+| --kit-tabs-panel-focus-outline-offset   | `<length-percentage>`                                                                                               | `2px`                                                                        |

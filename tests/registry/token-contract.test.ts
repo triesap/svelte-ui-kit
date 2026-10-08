@@ -32,6 +32,7 @@ for (const [family, count] of [
   ["switch", 7],
   ["checkbox", 1],
   ["radio", 1],
+  ["tabs", 24],
   ["dialog", 45],
   ["alert-dialog", 56],
   ["menu", 35],

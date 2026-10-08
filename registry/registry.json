@@ -11,7 +11,8 @@
     { "id": "radio", "manifest": "ui/radio.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
     { "id": "switch", "manifest": "ui/switch.json" },
+    { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "18f133e50f0cf3f75d6f882afb0b275a564c5bb25e7dbf36252fcd3ee816f174"
+  "contentHash": "fa86641336f73344507f71fecdcbd534e98d76697655ee5600ca33d99125d97e"
 }

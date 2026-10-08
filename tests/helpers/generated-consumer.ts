@@ -17,6 +17,7 @@ function buildComponentConsumer(
     | "button"
     | "switch"
     | "checkbox"
+    | "tabs"
     | "radio"
     | "dialog"
     | "alert-dialog"
@@ -63,55 +64,35 @@ function buildComponentConsumer(
       assert.equal(result.stderr, "");
     }
     const sources =
-      item === "radio"
+      item === "tabs"
         ? [
-            "radio/group.svelte",
-            "radio/item.svelte",
-            "radio/types.ts",
-            "radio/index.ts",
+            ...["root", "list", "trigger", "content"].map(
+              (part) => `tabs/${part}.svelte`,
+            ),
+            "tabs/types.ts",
+            "tabs/index.ts",
           ]
-        : item === "menu"
+        : item === "radio"
           ? [
-              ...[
-                "root",
-                "trigger",
-                "portal",
-                "content",
-                "item",
-                "radio-group",
-                "radio-item",
-                "item-indicator",
-              ].map((part) => `menu/${part}.svelte`),
-              "menu/types.ts",
-              "menu/index.ts",
-              ...[
-                "root",
-                "trigger",
-                "portal",
-                "overlay",
-                "content",
-                "title",
-                "description",
-                "close",
-              ].map((part) => `dialog/${part}.svelte`),
-              "dialog/types.ts",
-              "dialog/index.ts",
+              "radio/group.svelte",
+              "radio/item.svelte",
+              "radio/types.ts",
+              "radio/index.ts",
             ]
-          : item === "alert-dialog"
+          : item === "menu"
             ? [
                 ...[
                   "root",
                   "trigger",
                   "portal",
-                  "overlay",
                   "content",
-                  "title",
-                  "description",
-                  "action",
-                  "cancel",
-                ].map((part) => `alert-dialog/${part}.svelte`),
-                "alert-dialog/types.ts",
-                "alert-dialog/index.ts",
+                  "item",
+                  "radio-group",
+                  "radio-item",
+                  "item-indicator",
+                ].map((part) => `menu/${part}.svelte`),
+                "menu/types.ts",
+                "menu/index.ts",
                 ...[
                   "root",
                   "trigger",
@@ -125,15 +106,22 @@ function buildComponentConsumer(
                 "dialog/types.ts",
                 "dialog/index.ts",
               ]
-            : item === "button"
+            : item === "alert-dialog"
               ? [
-                  "button.svelte",
-                  "button.types.ts",
-                  "spinner.svelte",
-                  "spinner.types.ts",
-                ]
-              : item === "dialog" || item === "core"
-                ? [
+                  ...[
+                    "root",
+                    "trigger",
+                    "portal",
+                    "overlay",
+                    "content",
+                    "title",
+                    "description",
+                    "action",
+                    "cancel",
+                  ].map((part) => `alert-dialog/${part}.svelte`),
+                  "alert-dialog/types.ts",
+                  "alert-dialog/index.ts",
+                  ...[
                     "root",
                     "trigger",
                     "portal",
@@ -142,24 +130,45 @@ function buildComponentConsumer(
                     "title",
                     "description",
                     "close",
+                  ].map((part) => `dialog/${part}.svelte`),
+                  "dialog/types.ts",
+                  "dialog/index.ts",
+                ]
+              : item === "button"
+                ? [
+                    "button.svelte",
+                    "button.types.ts",
+                    "spinner.svelte",
+                    "spinner.types.ts",
                   ]
-                    .map((part) => `dialog/${part}.svelte`)
-                    .concat(
-                      ["dialog/types.ts", "dialog/index.ts"],
-                      item === "core"
-                        ? [
-                            "spinner.svelte",
-                            "spinner.types.ts",
-                            "button.svelte",
-                            "button.types.ts",
-                            "switch.svelte",
-                            "switch.types.ts",
-                          ]
-                        : [],
-                    )
-                : item === "switch" || item === "checkbox"
-                  ? [`${item}.svelte`, `${item}.types.ts`]
-                  : ["spinner.svelte", "spinner.types.ts"];
+                : item === "dialog" || item === "core"
+                  ? [
+                      "root",
+                      "trigger",
+                      "portal",
+                      "overlay",
+                      "content",
+                      "title",
+                      "description",
+                      "close",
+                    ]
+                      .map((part) => `dialog/${part}.svelte`)
+                      .concat(
+                        ["dialog/types.ts", "dialog/index.ts"],
+                        item === "core"
+                          ? [
+                              "spinner.svelte",
+                              "spinner.types.ts",
+                              "button.svelte",
+                              "button.types.ts",
+                              "switch.svelte",
+                              "switch.types.ts",
+                            ]
+                          : [],
+                      )
+                  : item === "switch" || item === "checkbox"
+                    ? [`${item}.svelte`, `${item}.types.ts`]
+                    : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
       assert.ok(
         readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
@@ -348,6 +357,19 @@ export const buildRadioConsumer = (
     "radio",
     custom,
     "radio",
+    false,
+    process.cwd(),
+    beforeBuild,
+  );
+
+export const buildTabsConsumer = (
+  custom: boolean,
+  beforeBuild?: (root: string, config: KitConfig) => void,
+) =>
+  buildComponentConsumer(
+    "tabs",
+    custom,
+    "tabs",
     false,
     process.cwd(),
     beforeBuild,

@@ -1,0 +1,183 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "d1c4239d3b99bb7d7f30f8a9f344e5ac56f246e5ec0f20a50f9d70007436bae9",
+    "url": "https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/styles/tabs.css"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-tabs"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "grid"
+        },
+        {
+          "property": "gap",
+          "value": "var(--kit-tabs-gap, 1rem)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-tabs-list"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "flex"
+        },
+        {
+          "property": "flex-wrap",
+          "value": "wrap"
+        },
+        {
+          "property": "gap",
+          "value": "var(--kit-tabs-list-gap, 0.25rem)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-tabs-list[aria-orientation=\"vertical\"]"],
+      "declarations": [
+        {
+          "property": "flex-direction",
+          "value": "column"
+        },
+        {
+          "property": "align-items",
+          "value": "flex-start"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-tabs-trigger"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "inline-flex"
+        },
+        {
+          "property": "align-items",
+          "value": "center"
+        },
+        {
+          "property": "justify-content",
+          "value": "center"
+        },
+        {
+          "property": "border",
+          "value": "var(--kit-border-width) solid\n    var(--kit-tabs-trigger-border-color, var(--kit-color-border))"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-tabs-trigger-radius,\n    var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))\n  )"
+        },
+        {
+          "property": "min-height",
+          "value": "var(--kit-tabs-trigger-min-height, 2.5rem)"
+        },
+        {
+          "property": "padding",
+          "value": "var(--kit-tabs-trigger-padding-block, 0.5rem)\n    var(--kit-tabs-trigger-padding-inline, 0.75rem)"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-tabs-trigger-background, transparent)"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-tabs-trigger-color-inactive, var(--kit-color-text-secondary))"
+        },
+        {
+          "property": "font",
+          "value": "inherit"
+        },
+        {
+          "property": "font-weight",
+          "value": "var(--kit-tabs-trigger-font-weight, 600)"
+        },
+        {
+          "property": "cursor",
+          "value": "pointer"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-tabs-trigger[data-state=\"active\"]"],
+      "declarations": [
+        {
+          "property": "background",
+          "value": "var(--kit-tabs-trigger-background-active, var(--kit-color-surface))"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-tabs-trigger-color, var(--kit-color-text))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-tabs-trigger:hover:not(:disabled)"],
+      "declarations": [
+        {
+          "property": "background",
+          "value": "var(--kit-tabs-trigger-background-hover, var(--kit-color-surface-hover))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-tabs-trigger:focus-visible"],
+      "declarations": [
+        {
+          "property": "outline",
+          "value": "var(--kit-tabs-trigger-focus-outline-width, 2px) solid\n    var(--kit-tabs-trigger-focus-ring, var(--kit-focus-ring))"
+        },
+        {
+          "property": "outline-offset",
+          "value": "var(--kit-tabs-trigger-focus-outline-offset, 2px)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-tabs-trigger:disabled"],
+      "declarations": [
+        {
+          "property": "cursor",
+          "value": "not-allowed"
+        },
+        {
+          "property": "opacity",
+          "value": "var(--kit-tabs-trigger-disabled-opacity, var(--kit-disabled-opacity))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-tabs-panel"],
+      "declarations": [
+        {
+          "property": "padding",
+          "value": "var(--kit-tabs-panel-padding-block, 0.75rem)\n    var(--kit-tabs-panel-padding-inline, 0)"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-tabs-panel-background, transparent)"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-tabs-panel-color, inherit)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-tabs-panel:focus-visible"],
+      "declarations": [
+        {
+          "property": "outline",
+          "value": "var(--kit-tabs-panel-focus-outline-width, 2px) solid\n    var(--kit-tabs-panel-focus-ring, var(--kit-focus-ring))"
+        },
+        {
+          "property": "outline-offset",
+          "value": "var(--kit-tabs-panel-focus-outline-offset, 2px)"
+        }
+      ]
+    }
+  ]
+}

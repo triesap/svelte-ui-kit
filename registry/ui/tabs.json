@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "id": "tabs",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Pinned Tabs family with string selection, native activation, stable panel identity and always-mounted hidden content.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/tabs/root.svelte",
+      "target": "tabs/root.svelte",
+      "kind": "svelte",
+      "cohort": "tabs"
+    },
+    {
+      "source": "ui/tabs/list.svelte",
+      "target": "tabs/list.svelte",
+      "kind": "svelte",
+      "cohort": "tabs"
+    },
+    {
+      "source": "ui/tabs/trigger.svelte",
+      "target": "tabs/trigger.svelte",
+      "kind": "svelte",
+      "cohort": "tabs"
+    },
+    {
+      "source": "ui/tabs/content.svelte",
+      "target": "tabs/content.svelte",
+      "kind": "svelte",
+      "cohort": "tabs"
+    },
+    {
+      "source": "ui/tabs/types.ts",
+      "target": "tabs/types.ts",
+      "kind": "typescript",
+      "cohort": "tabs"
+    },
+    {
+      "source": "ui/tabs/index.ts",
+      "target": "tabs/index.ts",
+      "kind": "typescript",
+      "cohort": "tabs"
+    }
+  ],
+  "exports": [
+    {
+      "name": "TabsRoot",
+      "target": "tabs/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "TabsList",
+      "target": "tabs/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "TabsTrigger",
+      "target": "tabs/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "TabsContent",
+      "target": "tabs/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "TabsRootProps",
+      "target": "tabs/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "TabsListProps",
+      "target": "tabs/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "TabsTriggerProps",
+      "target": "tabs/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "TabsContentProps",
+      "target": "tabs/index.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/tabs.css",
+      "target": "kit.css",
+      "blockId": "tabs",
+      "cohort": "tabs"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [
+    {
+      "name": "bits-ui",
+      "range": "2.19.3",
+      "role": "runtime"
+    }
+  ],
+  "accessibility": {
+    "requiredNames": ["tablist-label", "tab-trigger-label"],
+    "keyboard": [
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+      "Home",
+      "End",
+      "Space",
+      "Enter"
+    ],
+    "focus": ["native-roving-tabstop", "native-focus-visible"],
+    "tests": [
+      "tabs-types",
+      "tabs-root-list",
+      "tabs-parts",
+      "tabs-install",
+      "tabs-browser"
+    ],
+    "form": []
+  }
+}

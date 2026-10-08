@@ -1,0 +1,84 @@
+/* svelte-ui-kit:start tabs */
+@layer svelte-ui-kit.components {
+  .kit-tabs {
+    display: grid;
+    gap: var(--kit-tabs-gap, 1rem);
+  }
+
+  .kit-tabs-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--kit-tabs-list-gap, 0.25rem);
+  }
+
+  .kit-tabs-list[aria-orientation="vertical"] {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .kit-tabs-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: var(--kit-border-width) solid
+      var(--kit-tabs-trigger-border-color, var(--kit-color-border));
+    border-radius: var(
+      --kit-tabs-trigger-radius,
+      var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))
+    );
+    min-height: var(--kit-tabs-trigger-min-height, 2.5rem);
+    padding: var(--kit-tabs-trigger-padding-block, 0.5rem)
+      var(--kit-tabs-trigger-padding-inline, 0.75rem);
+    background: var(--kit-tabs-trigger-background, transparent);
+    color: var(
+      --kit-tabs-trigger-color-inactive,
+      var(--kit-color-text-secondary)
+    );
+    font: inherit;
+    font-weight: var(--kit-tabs-trigger-font-weight, 600);
+    cursor: pointer;
+  }
+
+  .kit-tabs-trigger[data-state="active"] {
+    background: var(
+      --kit-tabs-trigger-background-active,
+      var(--kit-color-surface)
+    );
+    color: var(--kit-tabs-trigger-color, var(--kit-color-text));
+  }
+
+  .kit-tabs-trigger:hover:not(:disabled) {
+    background: var(
+      --kit-tabs-trigger-background-hover,
+      var(--kit-color-surface-hover)
+    );
+  }
+
+  .kit-tabs-trigger:focus-visible {
+    outline: var(--kit-tabs-trigger-focus-outline-width, 2px) solid
+      var(--kit-tabs-trigger-focus-ring, var(--kit-focus-ring));
+    outline-offset: var(--kit-tabs-trigger-focus-outline-offset, 2px);
+  }
+
+  .kit-tabs-trigger:disabled {
+    cursor: not-allowed;
+    opacity: var(
+      --kit-tabs-trigger-disabled-opacity,
+      var(--kit-disabled-opacity)
+    );
+  }
+
+  .kit-tabs-panel {
+    padding: var(--kit-tabs-panel-padding-block, 0.75rem)
+      var(--kit-tabs-panel-padding-inline, 0);
+    background: var(--kit-tabs-panel-background, transparent);
+    color: var(--kit-tabs-panel-color, inherit);
+  }
+
+  .kit-tabs-panel:focus-visible {
+    outline: var(--kit-tabs-panel-focus-outline-width, 2px) solid
+      var(--kit-tabs-panel-focus-ring, var(--kit-focus-ring));
+    outline-offset: var(--kit-tabs-panel-focus-outline-offset, 2px);
+  }
+}
+/* svelte-ui-kit:end tabs */

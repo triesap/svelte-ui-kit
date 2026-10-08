@@ -1,7 +1,11 @@
 # S138 step report — Native Tabs Trigger and Content candidates
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `27d84f097ea94a1a62cf6d3ca2d68dbf93ff7710`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S138","kind":"report","commit":"27d84f097ea94a1a62cf6d3ca2d68dbf93ff7710","disposition":"candidate"}
+-->
 
 Original R20, R21, R22, R32, R33, R34. Starting
 `902933058ddc403018d3fc6e8e6f1a73adce79ac` on `master`.
