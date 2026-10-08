@@ -10,9 +10,9 @@ and unpublished. The shipped registry includes the CSS-only `tokens` foundation,
 native `spinner`/`button`, primitive-backed `switch` and the complete compound
 `dialog` family. This core has passed separate independent review; the remaining
 catalog is still being implemented and qualified.
-The separately installable nine-part `alert-dialog` family is implemented as a
-candidate; its installed interaction qualification and independent sequence
-acceptance remain pending. It uses the distinct pinned primitive rather than
+The separately installable nine-part `alert-dialog` family is implemented and
+qualified in installed consumers; independent sequence acceptance remains
+pending. It uses the distinct pinned primitive rather than
 a Dialog role switch. Native Action leaves closure to the application; Cancel
 owns native close.
 Tokens installs independent token, component-customization and theme-integration

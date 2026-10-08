@@ -139,3 +139,29 @@ radius inventory remain unchanged; four distinct family radii extend it.
 | --kit-alert-dialog-action-background-hover  | <color>                                                  | var(--kit-color-surface-hover)                            |
 | --kit-alert-dialog-action-background        | <color>                                                  | transparent                                               |
 | --kit-alert-dialog-action-radius            | <length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit                                                   | initial | unset | revert | revert-layer | var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md))) |
+
+## Installed qualification and observed native boundaries
+
+S121 candidate qualification uses real CLI-installed production apps in both
+layouts. Actual Alert Dialog role/name/description, container autofocus, focus
+containment/return, native Action/Cancel, default outside-ignore, configured
+cancellation and nested layers are verified against the pinned behavior. Shared
+visual defaults preserve the distinct primitive semantics. Document/body and
+nested/custom-host theme changes, adverse clipping, RTL/reduced motion and
+independent decision radius hooks are exercised in rendered DOM.
+
+Same-worker concurrent/repeated SSR preserves request state/identities. Enabled
+portals omit server content; inline native Content precedes child relation
+registration on the server, so hydration completes actual naming/description.
+Direct native controls establish that boundary. Physical description removal,
+ref replacement and teardown release actual-tree observers; an owned missing
+cleanup control fails the same assertion. No SSR or warning-suppression escape.
+
+Pinned first portaled opening does not emit an opening-completion callback;
+completed close emits false, matching direct Alert Dialog controls. Exact native
+forwarding is retained without a second presence engine. Default native Content
+also does not pass restoreScrollDelay to ScrollLock in its default rendering
+branch; delegated rendering does. The wrapper forwards the public prop exactly
+and does not promise stronger behavior than the pinned primitive. Separate S128
+acceptance remains pending, with all original criteria and later platform/package
+obligations preserved.

@@ -12,7 +12,7 @@ import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Build real CLI-installed applications; never mutate the maintained fixture. */
 function buildComponentConsumer(
-  item: "spinner" | "button" | "switch" | "dialog" | "core",
+  item: "spinner" | "button" | "switch" | "dialog" | "alert-dialog" | "core",
   custom: boolean,
   qualification: string = item,
   removeDescriptionObserverCleanup = false,
@@ -40,7 +40,9 @@ function buildComponentConsumer(
               id,
             ]),
           ]
-        : [["init"], ["add", item]];
+        : item === "alert-dialog"
+          ? [["init"], ["add", "dialog"], ["add", "alert-dialog"]]
+          : [["init"], ["add", item]];
     const executable = path.join(packageRoot, "dist/cli/main.js");
     for (const args of commands) {
       const result = spawnSync(
@@ -52,15 +54,22 @@ function buildComponentConsumer(
       assert.equal(result.stderr, "");
     }
     const sources =
-      item === "button"
+      item === "alert-dialog"
         ? [
-            "button.svelte",
-            "button.types.ts",
-            "spinner.svelte",
-            "spinner.types.ts",
-          ]
-        : item === "dialog" || item === "core"
-          ? [
+            ...[
+              "root",
+              "trigger",
+              "portal",
+              "overlay",
+              "content",
+              "title",
+              "description",
+              "action",
+              "cancel",
+            ].map((part) => `alert-dialog/${part}.svelte`),
+            "alert-dialog/types.ts",
+            "alert-dialog/index.ts",
+            ...[
               "root",
               "trigger",
               "portal",
@@ -69,24 +78,45 @@ function buildComponentConsumer(
               "title",
               "description",
               "close",
+            ].map((part) => `dialog/${part}.svelte`),
+            "dialog/types.ts",
+            "dialog/index.ts",
+          ]
+        : item === "button"
+          ? [
+              "button.svelte",
+              "button.types.ts",
+              "spinner.svelte",
+              "spinner.types.ts",
             ]
-              .map((part) => `dialog/${part}.svelte`)
-              .concat(
-                ["dialog/types.ts", "dialog/index.ts"],
-                item === "core"
-                  ? [
-                      "spinner.svelte",
-                      "spinner.types.ts",
-                      "button.svelte",
-                      "button.types.ts",
-                      "switch.svelte",
-                      "switch.types.ts",
-                    ]
-                  : [],
-              )
-          : item === "switch"
-            ? ["switch.svelte", "switch.types.ts"]
-            : ["spinner.svelte", "spinner.types.ts"];
+          : item === "dialog" || item === "core"
+            ? [
+                "root",
+                "trigger",
+                "portal",
+                "overlay",
+                "content",
+                "title",
+                "description",
+                "close",
+              ]
+                .map((part) => `dialog/${part}.svelte`)
+                .concat(
+                  ["dialog/types.ts", "dialog/index.ts"],
+                  item === "core"
+                    ? [
+                        "spinner.svelte",
+                        "spinner.types.ts",
+                        "button.svelte",
+                        "button.types.ts",
+                        "switch.svelte",
+                        "switch.types.ts",
+                      ]
+                    : [],
+                )
+            : item === "switch"
+              ? ["switch.svelte", "switch.types.ts"]
+              : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
       assert.ok(
         readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
@@ -95,11 +125,11 @@ function buildComponentConsumer(
       );
     }
     if (removeDescriptionObserverCleanup) {
-      assert.equal(item, "dialog");
+      assert.ok(item === "dialog" || item === "alert-dialog");
       const target = path.join(
         fixture.root,
         config.uiDir,
-        "dialog/content.svelte",
+        `${item}/content.svelte`,
       );
       const source = readFileSync(target, "utf8");
       const cleanup = "return () => observer.disconnect();";
@@ -206,6 +236,21 @@ export const buildDialogConsumer = (
 ) =>
   buildComponentConsumer(
     "dialog",
+    custom,
+    qualification,
+    removeDescriptionObserverCleanup,
+  );
+
+export const buildAlertDialogConsumer = (
+  custom: boolean,
+  qualification:
+    | "alert-dialog-interactions"
+    | "alert-dialog-themes"
+    | "alert-dialog-hydration" = "alert-dialog-interactions",
+  removeDescriptionObserverCleanup = false,
+) =>
+  buildComponentConsumer(
+    "alert-dialog",
     custom,
     qualification,
     removeDescriptionObserverCleanup,

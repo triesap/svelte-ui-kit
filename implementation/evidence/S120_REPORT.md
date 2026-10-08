@@ -3,7 +3,7 @@
 Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S120","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S120","kind":"report","commit":"8b3618798c6fd6c246c625ca072955943da44729","disposition":"candidate"}
 -->
 
 The complete nine-part family is advertised with eleven source files, one plain
