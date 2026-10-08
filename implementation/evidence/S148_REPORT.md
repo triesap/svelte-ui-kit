@@ -1,7 +1,11 @@
 # S148 step report — Qualify Field associations and form lifecycle
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `cc146ba3e04cea6b017aa45a224a0d312126ae23`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S148","kind":"report","commit":"cc146ba3e04cea6b017aa45a224a0d312126ae23","disposition":"candidate"}
+-->
 
 Original R20, R21, R22, R28, R29, R32, R33, R34. Starting
 `a05e20bf9b3251b8c47bd4d77c28296f4966bd37` on `master`.
