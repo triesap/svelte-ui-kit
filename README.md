@@ -12,7 +12,7 @@ source items, with stable identity supplied by pinned Svelte/Bits facilities,
 plus the approved distinct Alert Dialog. See the
 [complete catalog disposition](specs/COMPONENT_CATALOG.md#complete-original-catalog-disposition).
 The core and subsequent forms/overlay families have passed separate independent
-review; the remaining catalog candidates await the S181 acceptance gate.
+review; the complete original catalog passed separate S181 acceptance.
 The separately installable nine-part `alert-dialog` family is implemented and
 qualified and independently accepted in installed consumers. It uses the distinct pinned primitive rather than
 a Dialog role switch. Native Action leaves closure to the application; Cancel
@@ -108,7 +108,10 @@ limits. Checkbox, Radio, Tabs, Collapsible and Field passed
 [independent forms and disclosures review](implementation/evidence/RCLD-08_QUALIFICATION.md),
 including real form submission/reset, keyboard behavior, dynamic associations,
 SSR/hydration, retained child state and measured CSP/motion limits. Original
-S149–S203 catalog and final platform/package acceptance remain open. The package
+S149–S181 catalog passed
+[independent complete catalog review](implementation/evidence/RCLD-09_QUALIFICATION.md),
+including native links, image fallback, presentation and request-local identity.
+S182–S203 platform/package/full-MVP acceptance remains open. The package
 remains unpublished.
 
 ## Use the local built CLI

@@ -52,6 +52,7 @@ export const FIXTURE_FILES = [
   "package.json",
   "LICENSE-MIT",
   "implementation/evidence/RCLD-03_QUALIFICATION.md",
+  "implementation/evidence/RCLD-09_QUALIFICATION.md",
   "tests/fixtures/catalog-source.json",
   "specs/component-maps/alert.md",
   "specs/component-maps/alert-dialog.md",
@@ -170,6 +171,15 @@ export const BATCH_RCLD09 = {
   sequence: "RCLD-09",
   first: "S149",
   last: "S181",
+  mode: "pfc",
+  review: "codex-after-sequence",
+};
+
+export const BATCH_RCLD10 = {
+  schemaVersion: 1,
+  sequence: "RCLD-10",
+  first: "S182",
+  last: "S193",
   mode: "pfc",
   review: "codex-after-sequence",
 };
@@ -321,6 +331,13 @@ export const SCENARIOS = {
     accepted: [],
     pendingReview: EXPECTED_STEP_IDS.slice(148, 181),
     batch: BATCH_RCLD09,
+  },
+  rcld10All: {
+    complete: EXPECTED_STEP_IDS.slice(0, 181),
+    candidates: [],
+    accepted: [],
+    pendingReview: EXPECTED_STEP_IDS.slice(181, 193),
+    batch: BATCH_RCLD10,
   },
   rcld04Last: {
     complete: EXPECTED_STEP_IDS.slice(0, 76),

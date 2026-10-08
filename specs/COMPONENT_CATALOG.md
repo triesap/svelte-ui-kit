@@ -103,8 +103,9 @@ evidence; source CSS/defaults are preserved with documented native state mapping
 
 The sole additional component is the approved distinct [Alert Dialog](component-maps/alert-dialog.md),
 not a Dialog role switch. No future combobox/popover/selection extension is
-implicitly included. This audit is an implemented candidate awaiting separate
-S181 acceptance; later platform/package/AC20 and full-MVP acceptance remain open.
+implicitly included. This audit passed separate
+[S181 acceptance](../implementation/evidence/RCLD-09_QUALIFICATION.md); later
+platform/package/AC20 and full-MVP acceptance remain open.
 Maintain measured native SSR child registration, runtime floating styles/CSP,
 image event recording/CSP, browser-owned progress paint/animation and decorative
 surface contrast concerns. No broad accessibility, strict-CSP or cross-browser

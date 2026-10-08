@@ -55,6 +55,7 @@ import {
   BATCH_RCLD07,
   BATCH_RCLD08,
   BATCH_RCLD09,
+  BATCH_RCLD10,
 } from "./check-contracts.fixtures.mjs";
 import {
   computeFenceMask,
@@ -3159,5 +3160,65 @@ test("S149 cannot advance while S148 is only pending independent review", () => 
       assert.match(result.output, /PREMATURE_ADVANCEMENT/);
     },
     { scenario: "rcld08All" },
+  );
+});
+
+test("RCLD-10 authorizes exactly cross component regression after accepted S181", () => {
+  withFixture(
+    (root) => {
+      const good = runCli(root);
+      assert.equal(good.status, 0, good.output);
+      const projection = JSON.parse(read(root, PLAN_JSON_REL));
+      assert.equal(projection.steps[180].status, "complete");
+      assert.deepEqual(
+        projection.steps
+          .filter((step) => step.status === "committed_pending_review")
+          .map((step) => step.id),
+        EXPECTED_STEP_IDS.slice(181, 193),
+      );
+      setLedgerCell(root, "S194", 4, "committed_pending_review");
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 1);
+      assert.match(
+        runCli(root).output,
+        /outside.*batch|not within.*batch|MISSING_COMPLETION_EVIDENCE/,
+      );
+    },
+    { scenario: "rcld10All" },
+  );
+});
+
+test("RCLD-10 rejects narrowed widened and incomplete authority", () => {
+  withFixture(
+    (root) => {
+      for (const change of [
+        { first: "S183" },
+        { last: "S194" },
+        { review: "self-accept" },
+        { extra: true },
+      ]) {
+        writeBatchAuthorization(root, { ...BATCH_RCLD10, ...change });
+        const issues = [];
+        assert.equal(readBatchAuthorization(root, issues), null);
+        assert.ok(
+          issues.some((issue) => issue.code === "INVALID_BATCH_AUTHORIZATION"),
+        );
+      }
+    },
+    { scenario: "s001", git: false },
+  );
+});
+
+test("S182 cannot advance while S181 is only pending independent review", () => {
+  withFixture(
+    (root) => {
+      setLedgerCell(root, "S182", 4, "in_progress");
+      writeDerivedState(root, readLedgerStatuses(root));
+      regenerate(root, 1);
+      const result = runCli(root);
+      assert.equal(result.status, 1);
+      assert.match(result.output, /PREMATURE_ADVANCEMENT/);
+    },
+    { scenario: "rcld09All" },
   );
 });

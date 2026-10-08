@@ -1,10 +1,12 @@
 # S181 step report — Audit complete reference-catalog coverage
 
-Author: Codex. Candidate; mandatory independent S181 acceptance pending.
+Author: Codex. Independently accepted on code `a79db79f78818797e2b3d541731797b5b19b60ce` at evidence `871c1945daf660d9f0f724fb949057b4fa3a1da6`.
+Original implementation commit: `b55522dca4f48815fc10053f49cd475e47dad06f`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `b55522dca4f48815fc10053f49cd475e47dad06f`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S181","kind":"report","commit":"b55522dca4f48815fc10053f49cd475e47dad06f","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S181","kind":"report","commit":"871c1945daf660d9f0f724fb949057b4fa3a1da6","disposition":"implemented"}
 -->
 
 Original R06, R26, R27, R28, R31, R32, R33, R34.

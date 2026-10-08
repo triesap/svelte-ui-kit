@@ -1,10 +1,12 @@
 # S161 step report — Freeze source-native Card composition
 
-Author: Codex. Locally verified candidate; independent S181 acceptance pending.
+Author: Codex. Independently accepted on code `a79db79f78818797e2b3d541731797b5b19b60ce` at evidence `871c1945daf660d9f0f724fb949057b4fa3a1da6`.
+Original implementation commit: `a6da35e60f8f9e4b26f34f6cb7fb78c70d9549aa`. The candidate narrative below
+is historical implementation and verification provenance.
 Implementation commit: `a6da35e60f8f9e4b26f34f6cb7fb78c70d9549aa`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S161","kind":"report","commit":"a6da35e60f8f9e4b26f34f6cb7fb78c70d9549aa","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S161","kind":"report","commit":"871c1945daf660d9f0f724fb949057b4fa3a1da6","disposition":"implemented"}
 -->
 
 Original R03, R20, R22, R25, R26, R32, R33, R34.
