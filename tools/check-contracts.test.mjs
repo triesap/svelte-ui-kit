@@ -368,6 +368,35 @@ test("fixture allowlist is explicit and excludes Git and build output", () => {
   }
 });
 
+test("isolated catalog provenance links exist and their missing targets still fail read only validation", () => {
+  withFixture((root) => {
+    const catalogInputs = FIXTURE_FILES.filter(
+      (rel) =>
+        rel.startsWith("specs/component-maps/") ||
+        rel === "tests/fixtures/catalog-source.json",
+    );
+    assert.equal(catalogInputs.length, 24);
+    assert.equal(read(root, "LICENSE-MIT"), read(REPO_ROOT, "LICENSE-MIT"));
+    for (const rel of catalogInputs)
+      assert.equal(read(root, rel), read(REPO_ROOT, rel), rel);
+    const before = snapshotTree(root);
+    const valid = runCli(root);
+    assert.equal(valid.status, 0, valid.output);
+    assert.equal(snapshotTree(root), before);
+    for (const rel of [
+      "tests/fixtures/catalog-source.json",
+      "specs/component-maps/progress.md",
+    ])
+      unlinkSync(path.join(root, rel));
+    const missing = snapshotTree(root);
+    const invalid = runCli(root);
+    assert.equal(invalid.status, 1, invalid.output);
+    assert.match(invalid.output, /BROKEN_LINK.*catalog-source\.json/);
+    assert.match(invalid.output, /BROKEN_LINK.*component-maps\/progress\.md/);
+    assert.equal(snapshotTree(root), missing);
+  });
+});
+
 test("fixture completion hashes are fixture-owned post-commit values", () => {
   withFixture(
     (root) => {

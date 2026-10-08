@@ -39,7 +39,8 @@ export const SOURCES_JSON_REL = "references/SOURCES.json";
 /**
  * The complete allowlist of fixture inputs: the 27 approved contracts, the
  * governing plan, both derived projections, the package manifest and the
- * accepted-evidence qualification referenced by the governing prose. Nothing
+ * accepted-evidence qualification and exact catalog provenance/worksheets linked
+ * by the adopted specification. Nothing
  * else is copied, so no authoring checkout state or future build artifact can
  * leak into a fixture.
  */
@@ -49,7 +50,32 @@ export const FIXTURE_FILES = [
   PLAN_JSON_REL,
   SOURCES_JSON_REL,
   "package.json",
+  "LICENSE-MIT",
   "implementation/evidence/RCLD-03_QUALIFICATION.md",
+  "tests/fixtures/catalog-source.json",
+  "specs/component-maps/alert.md",
+  "specs/component-maps/alert-dialog.md",
+  "specs/component-maps/anchor.md",
+  "specs/component-maps/avatar.md",
+  "specs/component-maps/badge.md",
+  "specs/component-maps/button.md",
+  "specs/component-maps/card.md",
+  "specs/component-maps/checkbox.md",
+  "specs/component-maps/collapsible.md",
+  "specs/component-maps/dialog.md",
+  "specs/component-maps/field.md",
+  "specs/component-maps/identity.md",
+  "specs/component-maps/menu.md",
+  "specs/component-maps/progress.md",
+  "specs/component-maps/radio.md",
+  "specs/component-maps/router-link.md",
+  "specs/component-maps/separator.md",
+  "specs/component-maps/skeleton.md",
+  "specs/component-maps/spinner.md",
+  "specs/component-maps/status.md",
+  "specs/component-maps/switch.md",
+  "specs/component-maps/tabs.md",
+  "specs/component-maps/tokens.md",
 ];
 
 const SEQUENCE_BY_STEP = new Map();
