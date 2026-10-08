@@ -73,3 +73,14 @@ Original S144 qualifies multiple independent instances and composed behavior.
 Candidates stay unadvertised until the complete original S143 registration;
 separate original S148 acceptance gates S149. This freeze supplies exact types
 and policy, without granting independent acceptance of future implementations.
+
+S142 actual candidate check/build and open/closed SSR preserve expanded/hidden
+state, mounted children, source/caller classes and delegated open snippet props.
+Both candidate and raw Bits SSR omit trigger controls before the later Content
+registration; hydrated triggers link to their own actual Content IDs. Real
+candidate Chromium measures refs, pointer/Space/Enter binding and state/completion
+callbacks, caller cancellation, disabled refusal and independent delegated/raw
+groups. Closed content retains the same input node/state, and forceMount exposes
+closed content with expanded=false as its native caller-owned visual policy.
+Complete candidate parts remain unadvertised until S143, with installed motion/
+SSR/hydration/lifecycle qualification still required by S144 and S148.
