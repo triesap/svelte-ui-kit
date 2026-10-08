@@ -1,7 +1,11 @@
 # S154 step report — Qualify the native Router Link recipe
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `53b2c0e04ccbb5000f31a8482165feb77b5ddcd0`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S154","kind":"report","commit":"53b2c0e04ccbb5000f31a8482165feb77b5ddcd0","disposition":"candidate"}
+-->
 
 Original R20, R22, R28, R29, R32, R33, R34.
 Starting `a9eeda45302854f1911d7319f73359f4d7a6dcc3` on `master`.
