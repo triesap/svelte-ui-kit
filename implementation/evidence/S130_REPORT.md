@@ -1,7 +1,11 @@
 # S130 step report — Checkbox generated source and managed styles
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `f1716d9b26ed0c5940831e23e21296e4f8edf049`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S130","kind":"report","commit":"f1716d9b26ed0c5940831e23e21296e4f8edf049","disposition":"candidate"}
+-->
 
 Original requirements R02, R03, R04, R06, R07, R08, R22, R25, R26, R32, R33,
 R34. Starting `e598d794df9085978fbe67ff281be6f10f0707f3` on `master`.

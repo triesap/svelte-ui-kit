@@ -27,6 +27,12 @@ checked-string union, Rust on_change or selection store is introduced.
 | type                       | Native default button, preserving explicit primitive submit/reset opt-ins                          |
 | labels                     | Visible consuming label associates by Root id; native role checkbox, aria-checked false/true/mixed |
 
+Pinned Root consumes form for its field and does not emit form on its default
+button; the wrapper preserves this native policy, with association on the one
+actual input. Readonly Space can still synthesize a native click reaching caller
+events, while primitive checked state remains unchanged; direct native controls
+qualify that event ordering.
+
 The primitive toggles a mixed state to checked and clears indeterminate; it owns
 Space/pointer ordering and cancellation. Checked and indeterminate remain
 independent booleans, not an invented tri-state checked value. Root callbacks

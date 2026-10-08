@@ -16,6 +16,7 @@ function buildComponentConsumer(
     | "spinner"
     | "button"
     | "switch"
+    | "checkbox"
     | "dialog"
     | "alert-dialog"
     | "menu"
@@ -148,8 +149,8 @@ function buildComponentConsumer(
                         ]
                       : [],
                   )
-              : item === "switch"
-                ? ["switch.svelte", "switch.types.ts"]
+              : item === "switch" || item === "checkbox"
+                ? [`${item}.svelte`, `${item}.types.ts`]
                 : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
       assert.ok(
@@ -313,6 +314,19 @@ export const buildMenuConsumer = (
     "menu",
     custom,
     qualification,
+    false,
+    process.cwd(),
+    beforeBuild,
+  );
+
+export const buildCheckboxConsumer = (
+  custom: boolean,
+  beforeBuild?: (root: string, config: KitConfig) => void,
+) =>
+  buildComponentConsumer(
+    "checkbox",
+    custom,
+    "checkbox",
     false,
     process.cwd(),
     beforeBuild,
