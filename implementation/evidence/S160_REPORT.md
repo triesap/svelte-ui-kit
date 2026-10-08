@@ -1,7 +1,11 @@
 # S160 step report — Qualify native Badge text and presentation
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `32e7885fc7faaab7c74cee99648177aded7880c7`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S160","kind":"report","commit":"32e7885fc7faaab7c74cee99648177aded7880c7","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R23, R25, R26, R29, R32, R33, R34.
 Starting `b9bdefaf6114312bb2c089aacba9d0ad7071bc98` on `master`.
