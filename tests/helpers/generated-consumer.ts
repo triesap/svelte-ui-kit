@@ -564,6 +564,15 @@ export function buildCatalogThemesConsumer(custom: boolean) {
   };
 }
 
+export function buildAccessibilityConsumer(custom: boolean) {
+  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  return buildInstalledItemsConsumer(
+    custom,
+    "accessibility-states",
+    registry.items.map((item: { id: string }) => item.id),
+  );
+}
+
 export function buildFormsCompositionConsumer(custom: boolean) {
   return buildInstalledItemsConsumer(custom, "forms-composition", [
     "tokens",

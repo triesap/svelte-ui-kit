@@ -1,7 +1,11 @@
 # S187 implementation report — full catalog theme scopes
 
 Author: Codex. Implemented candidate; separate S193 acceptance remains required.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `57172cf304f3649562061eb9630a8fa6971c62b5`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S187","kind":"report","commit":"57172cf304f3649562061eb9630a8fa6971c62b5","disposition":"candidate"}
+-->
 
 ## Implementation and observed behavior
 
