@@ -133,3 +133,129 @@ test.describe("actual incremental Menu S123 composition", () => {
     await expect(page.locator("#native-content")).toBeVisible();
   });
 });
+
+test.describe("actual incremental Menu S124 floating composition", () => {
+  let consumer: ReturnType<typeof buildMenuCandidate>;
+  let hosted: FixtureServer;
+  test.beforeAll(async () => {
+    test.setTimeout(240000);
+    consumer = buildMenuCandidate("content");
+    try {
+      hosted = await startFixtureServer({ handler: consumer.handler });
+    } catch (error) {
+      consumer.cleanup();
+      throw error;
+    }
+  });
+  test.afterAll(async () => {
+    try {
+      if (hosted) {
+        await hosted.server.stop();
+        expect(hosted.server.failure()).toBeNull();
+      }
+    } finally {
+      consumer?.cleanup();
+    }
+  });
+  test.beforeEach(async ({ page }, info) => {
+    const file = info.outputPath("candidate-artifact.json");
+    writeFileSync(file, JSON.stringify(consumer.evidence, null, 2));
+    await info.attach("candidate-artifact", {
+      path: file,
+      contentType: "application/json",
+    });
+    await page.goto(new URL(consumer.route, hosted.baseURL).href);
+    await expect(page.locator('[data-ready="true"]')).toBeVisible();
+  });
+  for (const mode of ["inline", "body", "selector", "element"]) {
+    test(`actual ${mode} Portal retains default floating outer and inner nodes`, async ({
+      page,
+    }) => {
+      await page.goto(
+        new URL(`${consumer.route}?portal=${mode}`, hosted.baseURL).href,
+      );
+      await expect(page.locator('[data-ready="true"]')).toBeVisible();
+      const content = page.locator("#default-content");
+      await expect(content).toBeVisible();
+      await expect(content).toHaveAccessibleName("Default floating menu");
+      await expect(content).toHaveClass("kit-menu-content caller retained");
+      await expect(content).toHaveAttribute("data-caller", "preserved");
+      await expect(content).toHaveAttribute("data-side", "bottom");
+      await expect(content).toHaveAttribute("data-align", "start");
+      const structure = await content.evaluate((node) => ({
+        outer: node.parentElement?.hasAttribute(
+          "data-bits-floating-content-wrapper",
+        ),
+        position: node.parentElement?.style.position,
+        transform: node.parentElement?.style.transform,
+        host:
+          node.parentElement?.parentElement?.id ||
+          node.parentElement?.parentElement?.tagName,
+        styledOuter: node.parentElement?.classList.contains("kit-menu-content"),
+      }));
+      expect(structure.outer).toBe(true);
+      expect(structure.position).toBe("absolute");
+      expect(structure.transform).toMatch(/translate/);
+      expect(structure.host).toBe(
+        mode === "inline" ? "MAIN" : mode === "body" ? "BODY" : "portal-host",
+      );
+      expect(structure.styledOuter).toBe(false);
+      await expect(page.locator("#refs")).toHaveText("DIV/SECTION");
+      await content.press("Escape");
+      await expect(content).toBeVisible();
+      await expect(page.locator("#events")).toContainText("Escapes 1");
+      await page.locator("h1").click();
+      await expect(content).toBeVisible();
+      await expect(page.locator("#events")).toContainText("outside 1");
+    });
+  }
+  test("delegated wrapper props keep native style attachments separate from inner props", async ({
+    page,
+  }) => {
+    const content = page.locator("#delegated-content");
+    await expect(content).toBeHidden();
+    await expect(content).toHaveAttribute("data-child-open", "false");
+    await page.locator("#toggle-delegated").click();
+    await expect(content).toBeVisible();
+    await expect(content).toHaveAttribute("data-child-open", "true");
+    await expect(content).toHaveClass("kit-menu-content delegated-caller");
+    const outer = content.locator("..");
+    await expect(outer).toHaveAttribute("data-outer", "actual");
+    await expect(outer).toHaveAttribute(
+      "data-bits-floating-content-wrapper",
+      "",
+    );
+    await expect(outer).toHaveAttribute("dir", "rtl");
+    expect(
+      await outer.evaluate((node) => (node as HTMLElement).style.transform),
+    ).toMatch(/translate/);
+    await page.locator("#toggle-delegated").click();
+    await expect(content).toBeHidden();
+    await expect(page.locator("#refs")).toHaveText("DIV/SECTION");
+  });
+  test("explicit native side align offset and strategy override source defaults", async ({
+    page,
+  }) => {
+    await page.goto(
+      new URL(`${consumer.route}?placement=custom`, hosted.baseURL).href,
+    );
+    const content = page.locator("#default-content");
+    await expect(content).toBeVisible();
+    await expect(content).toHaveAttribute("data-side", "top");
+    await expect(content).toHaveAttribute("data-align", "end");
+    expect(
+      await content
+        .locator("..")
+        .evaluate((node) => (node as HTMLElement).style.position),
+    ).toBe("fixed");
+    await expect
+      .poll(async () => {
+        const anchor = await page.locator("#content-trigger").boundingBox();
+        const box = await content.boundingBox();
+        return anchor && box
+          ? Math.abs(anchor.y - (box.y + box.height) - 12)
+          : Infinity;
+      })
+      .toBeLessThan(1);
+  });
+});

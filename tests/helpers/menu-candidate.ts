@@ -5,30 +5,37 @@ import { sha256Hex } from "../../src/codegen/digest.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Owned incremental candidate-copy composition, distinct from CLI installation. */
-export function buildMenuCandidate() {
+export function buildMenuCandidate(
+  stage: "root-trigger" | "content" = "root-trigger",
+) {
   const fixture = copyConsumerFixture();
   try {
-    const sources = ["root.svelte", "trigger.svelte", "types.ts"];
+    const sources = [
+      "root.svelte",
+      "trigger.svelte",
+      "types.ts",
+      ...(stage === "content" ? ["portal.svelte", "content.svelte"] : []),
+    ];
     for (const file of sources) {
       const target = path.join(fixture.root, "src/lib/candidate/menu", file);
       mkdirSync(path.dirname(target), { recursive: true });
       writeFileSync(target, readFileSync(`registry/ui/menu/${file}`));
     }
-    const routeName = "menu-candidate";
+    const routeName = stage === "content" ? "menu-content" : "menu-candidate";
     const route = `src/routes/${routeName}/+page.svelte`;
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
       recursive: true,
     });
     writeFileSync(
       path.join(fixture.root, route),
-      readFileSync("tests/fixtures/menu-candidate/root-trigger.svelte"),
+      readFileSync(`tests/fixtures/menu-candidate/${stage}.svelte`),
     );
     const logRoot = "implementation/evidence/logs/menu-candidate";
     mkdirSync(logRoot, { recursive: true });
     const logs: string[] = [];
     for (const script of ["check", "build"]) {
       const result = runFixtureScript(fixture.root, script);
-      const log = `${logRoot}/root-trigger-${process.pid}-${Date.now()}-${script}.log`;
+      const log = `${logRoot}/${stage}-${process.pid}-${Date.now()}-${script}.log`;
       writeFileSync(
         log,
         `${result.stdout}\n${result.stderr}\nstatus=${result.status}; signal=${result.signal}\n`,
@@ -60,9 +67,13 @@ export function buildMenuCandidate() {
       handler: path.join(fixture.root, "build/handler.js"),
       route: `/${routeName}`,
       evidence: {
-        stage: "S123",
-        authored: ["Root", "Trigger"],
-        raw: ["Content", "Item"],
+        stage: stage === "content" ? "S124" : "S123",
+        authored: [
+          "Root",
+          "Trigger",
+          ...(stage === "content" ? ["Portal", "Content"] : []),
+        ],
+        raw: [...(stage === "root-trigger" ? ["Content"] : []), "Item"],
         installation: "candidate-copy",
         catalogRegistered: JSON.parse(
           readFileSync("registry/registry.json", "utf8"),

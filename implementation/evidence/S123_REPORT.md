@@ -3,7 +3,7 @@
 Author: Codex. Locally verified candidate; independent S128 acceptance pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S123","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S123","kind":"report","commit":"a0050fe484b3a73666a9395effcbeb73277b77de","disposition":"candidate"}
 -->
 
 ## Implementation
