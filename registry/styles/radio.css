@@ -1,0 +1,51 @@
+/* svelte-ui-kit:start radio */
+/* Derived design: Copyright (c) 2026 Tyson Lupul.
+ * Distributed under the MIT option; see the package LICENSE-MIT notice.
+ */
+@layer svelte-ui-kit.components {
+  .kit-radio {
+    padding: 0;
+    box-sizing: border-box;
+    appearance: none;
+    inline-size: 1rem;
+    block-size: 1rem;
+    margin: 0;
+    border: var(--kit-border-width) solid var(--kit-color-border);
+    border-radius: var(--kit-radio-radius, var(--kit-radius-full));
+    background: var(--kit-color-surface);
+    cursor: pointer;
+  }
+
+  .kit-radio[data-state="checked"] {
+    background:
+      radial-gradient(
+        circle,
+        var(--kit-color-selection-indicator) 0 28%,
+        transparent 30%
+      ),
+      var(--kit-color-primary);
+  }
+
+  .kit-radio:focus-visible {
+    outline: 2px solid var(--kit-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .kit-radio:disabled {
+    cursor: not-allowed;
+    opacity: var(--kit-disabled-opacity);
+  }
+  .kit-radio-input {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    border: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+/* svelte-ui-kit:end radio */

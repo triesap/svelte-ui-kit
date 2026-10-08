@@ -1,7 +1,11 @@
 # S133 step report — Radio candidate parts and native reset correction
 
 Author: Codex. Locally verified candidate; independent S148 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `4052bf07efc4bf0a0b0e197a43f583914b9af486`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S133","kind":"report","commit":"4052bf07efc4bf0a0b0e197a43f583914b9af486","disposition":"candidate"}
+-->
 
 Original requirements R03, R20, R21, R28, R32, R33, R34. Starting
 `1182f90024ff5bdd45e1681ec5fa185fd3669f49` on `master`.

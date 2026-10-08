@@ -8,9 +8,10 @@
     { "id": "checkbox", "manifest": "ui/checkbox.json" },
     { "id": "dialog", "manifest": "ui/dialog.json" },
     { "id": "menu", "manifest": "ui/menu.json" },
+    { "id": "radio", "manifest": "ui/radio.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
     { "id": "switch", "manifest": "ui/switch.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "fa1dbb9b49a862332dc50a5789a075316c6999c06610533b4f0e15e5b021d858"
+  "contentHash": "18f133e50f0cf3f75d6f882afb0b275a564c5bb25e7dbf36252fcd3ee816f174"
 }

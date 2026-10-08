@@ -1,0 +1,81 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "3248117e343b3a815a16843419f8d18ac2782360b2c110e43e207b848cd2d751",
+    "url": "https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/styles/radio.css"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-radio"],
+      "declarations": [
+        {
+          "property": "appearance",
+          "value": "none"
+        },
+        {
+          "property": "inline-size",
+          "value": "1rem"
+        },
+        {
+          "property": "block-size",
+          "value": "1rem"
+        },
+        {
+          "property": "margin",
+          "value": "0"
+        },
+        {
+          "property": "border",
+          "value": "var(--kit-border-width) solid var(--kit-color-border)"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(--kit-radio-radius, var(--kit-radius-full))"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-color-surface)"
+        },
+        {
+          "property": "cursor",
+          "value": "pointer"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-radio:checked"],
+      "declarations": [
+        {
+          "property": "background",
+          "value": "radial-gradient(\n      circle,\n      var(--kit-color-selection-indicator) 0 28%,\n      transparent 30%\n    ),\n    var(--kit-color-primary)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-radio:focus-visible"],
+      "declarations": [
+        {
+          "property": "outline",
+          "value": "2px solid var(--kit-focus-ring)"
+        },
+        {
+          "property": "outline-offset",
+          "value": "2px"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-radio:disabled"],
+      "declarations": [
+        {
+          "property": "cursor",
+          "value": "not-allowed"
+        },
+        {
+          "property": "opacity",
+          "value": "var(--kit-disabled-opacity)"
+        }
+      ]
+    }
+  ]
+}

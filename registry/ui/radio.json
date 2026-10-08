@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "id": "radio",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Pinned Radio group and item with controlled string selection, fixed radial mark and native one-field forms.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/radio/group.svelte",
+      "target": "radio/group.svelte",
+      "kind": "svelte",
+      "cohort": "radio"
+    },
+    {
+      "source": "ui/radio/item.svelte",
+      "target": "radio/item.svelte",
+      "kind": "svelte",
+      "cohort": "radio"
+    },
+    {
+      "source": "ui/radio/types.ts",
+      "target": "radio/types.ts",
+      "kind": "typescript",
+      "cohort": "radio"
+    },
+    {
+      "source": "ui/radio/index.ts",
+      "target": "radio/index.ts",
+      "kind": "typescript",
+      "cohort": "radio"
+    }
+  ],
+  "exports": [
+    {
+      "name": "RadioGroup",
+      "target": "radio/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "RadioItem",
+      "target": "radio/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "RadioGroupProps",
+      "target": "radio/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "RadioItemProps",
+      "target": "radio/index.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/radio.css",
+      "target": "kit.css",
+      "blockId": "radio",
+      "cohort": "radio"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [
+    {
+      "name": "bits-ui",
+      "range": "2.19.3",
+      "role": "runtime"
+    }
+  ],
+  "accessibility": {
+    "requiredNames": ["radio-group-label", "radio-item-label"],
+    "keyboard": [
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+      "Home",
+      "End",
+      "Space"
+    ],
+    "focus": ["native-roving-tabstop", "native-focus-visible"],
+    "form": ["name", "value", "required", "disabled", "reset"],
+    "tests": ["radio-types", "radio-parts", "radio-install", "radio-browser"]
+  }
+}

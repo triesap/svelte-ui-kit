@@ -46,7 +46,7 @@ test("actual candidate preserves controlled string state snippets and native rad
       assert.match(response.body, /data-delegated="group"/);
       assert.match(response.body, /data-delegated-checked="true"/);
     }
-    assert.equal(consumer.evidence.catalogRegistered, false);
+    assert.equal(consumer.evidence.catalogRegistered, true);
   } finally {
     consumer.cleanup();
   }
