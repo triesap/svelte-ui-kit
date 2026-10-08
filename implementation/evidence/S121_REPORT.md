@@ -3,7 +3,7 @@
 Author: Codex. Candidate; separate S128/RCLD-07 acceptance remains pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S121","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S121","kind":"report","commit":"1c3b2256919b81244988a9b6fff57287b7d7ef88","disposition":"candidate"}
 -->
 
 Real built CLI consumers install the complete Alert Dialog and generic Dialog
