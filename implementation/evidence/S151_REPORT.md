@@ -1,7 +1,11 @@
 # S151 step report — Qualify Anchor behavior in the generated app
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `01baa6da87894397e1a22169a57158458c82fab6`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S151","kind":"report","commit":"01baa6da87894397e1a22169a57158458c82fab6","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R23, R26, R29, R32, R33, R34.
 Starting `1737f32b2d69680c819f68316e9d08f4a8eb9a4f` on `master`.

@@ -29,6 +29,13 @@ dictionary. Caller class arrays/objects combine with kit-anchor. Children render
 once inside the real anchor. There is no child delegation, polymorphic as,
 variant, disabled/loading prop or synthesized role/button activation.
 
+S152 preserves the native interface through an intersection with the compatible
+required href/children/ref contract. Mapped Omit erased SvelteKit's known data-*
+option constraints beneath the native template index signature. A freshly
+generated native augmentation and independent raw-anchor negative control
+reproduced that loss. The intersection restores exact native constraints without
+copying option unions or changing rendering, URL ownership or existing APIs.
+
 An omitted/null rel defaults to "noopener noreferrer" only when target is
 _blank, matching the source. An explicit rel, including an empty string, is
 preserved. Other targets leave rel omitted. This is a render-time derivation

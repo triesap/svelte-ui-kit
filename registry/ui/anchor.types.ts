@@ -8,7 +8,7 @@ import type {
 export type AnchorTarget = HTMLAttributeAnchorTarget;
 
 /** Source-required href and children with actual native link attributes/ref. */
-export type AnchorProps = Omit<SvelteHTMLElements["a"], "href" | "children"> & {
+export type AnchorProps = SvelteHTMLElements["a"] & {
   href: string;
   children: Snippet;
   ref?: HTMLAnchorElement | null;
