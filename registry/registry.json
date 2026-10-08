@@ -6,9 +6,10 @@
     { "id": "alert-dialog", "manifest": "ui/alert-dialog.json" },
     { "id": "button", "manifest": "ui/button.json" },
     { "id": "dialog", "manifest": "ui/dialog.json" },
+    { "id": "menu", "manifest": "ui/menu.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
     { "id": "switch", "manifest": "ui/switch.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "f073d14a041abeb3de302ba0095f5cc5f6c54daf18605d521d93b6df094cfcb9"
+  "contentHash": "be85a571a93145222c6d6032efe5fbd7db5f9ecd206d648a95f13d1c9ee957ba"
 }

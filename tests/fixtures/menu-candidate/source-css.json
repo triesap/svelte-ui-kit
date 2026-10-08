@@ -1,0 +1,365 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "url": "https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/styles/menu.css",
+    "sha256": "281a57e212f74efc5d84c1c9b1a6c54c0bf43de1051601c561ef912ec078bb8a"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-menu"],
+      "declarations": [
+        {
+          "property": "position",
+          "value": "relative"
+        },
+        {
+          "property": "display",
+          "value": "inline-flex"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-menu-trigger"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "inline-flex"
+        },
+        {
+          "property": "align-items",
+          "value": "center"
+        },
+        {
+          "property": "justify-content",
+          "value": "center"
+        },
+        {
+          "property": "border",
+          "value": "var(--kit-border-width) solid\n    var(--kit-menu-trigger-border-color, var(--kit-color-border))"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-menu-trigger-radius,\n    var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))\n  )"
+        },
+        {
+          "property": "min-height",
+          "value": "var(--kit-menu-trigger-min-height, 2.5rem)"
+        },
+        {
+          "property": "padding",
+          "value": "var(--kit-menu-trigger-padding-block, 0.5rem)\n    var(--kit-menu-trigger-padding-inline, 0.75rem)"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-menu-trigger-background, transparent)"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-menu-trigger-color, var(--kit-color-text))"
+        },
+        {
+          "property": "font",
+          "value": "inherit"
+        },
+        {
+          "property": "font-weight",
+          "value": "var(--kit-menu-trigger-font-weight, 600)"
+        },
+        {
+          "property": "cursor",
+          "value": "pointer"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-menu-trigger:hover:not(:disabled)"],
+      "declarations": [
+        {
+          "property": "background",
+          "value": "var(--kit-menu-trigger-background-hover, var(--kit-color-surface-hover))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-menu-trigger:focus-visible"],
+      "declarations": [
+        {
+          "property": "outline",
+          "value": "2px solid var(--kit-menu-trigger-focus-ring, var(--kit-focus-ring))"
+        },
+        {
+          "property": "outline-offset",
+          "value": "2px"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-menu-trigger:disabled"],
+      "declarations": [
+        {
+          "property": "cursor",
+          "value": "not-allowed"
+        },
+        {
+          "property": "opacity",
+          "value": "var(--kit-menu-trigger-disabled-opacity, var(--kit-disabled-opacity))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-menu-content"],
+      "declarations": [
+        {
+          "property": "position",
+          "value": "fixed"
+        },
+        {
+          "property": "--kit-menu-content-translate-x",
+          "value": "0"
+        },
+        {
+          "property": "--kit-menu-content-translate-y",
+          "value": "0"
+        },
+        {
+          "property": "z-index",
+          "value": "var(--kit-menu-content-z-index, 50)"
+        },
+        {
+          "property": "display",
+          "value": "grid"
+        },
+        {
+          "property": "gap",
+          "value": "var(--kit-menu-content-gap, 0.125rem)"
+        },
+        {
+          "property": "box-sizing",
+          "value": "border-box"
+        },
+        {
+          "property": "max-inline-size",
+          "value": "var(--kit-menu-content-max-inline-size, calc(100vw - 1rem))"
+        },
+        {
+          "property": "min-inline-size",
+          "value": "var(--kit-menu-content-min-inline-size, 12rem)"
+        },
+        {
+          "property": "border",
+          "value": "var(--kit-menu-content-border-width, var(--kit-border-width)) solid\n    var(--kit-menu-content-border-color, var(--kit-color-border))"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-menu-content-radius,\n    var(--kit-radius-overlay, var(--kit-radius-default, var(--kit-radius-md)))\n  )"
+        },
+        {
+          "property": "padding",
+          "value": "var(--kit-menu-content-padding-block, 0.25rem)\n    var(--kit-menu-content-padding-inline, 0.25rem)"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-menu-content-background, var(--kit-color-surface-raised))"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-menu-content-color, var(--kit-color-text))"
+        },
+        {
+          "property": "box-shadow",
+          "value": "var(--kit-menu-content-elevation, var(--kit-shadow-md))"
+        },
+        {
+          "property": "overflow",
+          "value": "auto"
+        },
+        {
+          "property": "transform",
+          "value": "translate(\n      var(--kit-menu-content-translate-x),\n      var(--kit-menu-content-translate-y)\n    )"
+        },
+        {
+          "property": "transition",
+          "value": "opacity var(--kit-menu-content-transition-duration, var(--kit-duration-fast))\n      var(--kit-menu-content-transition-timing, var(--kit-easing-standard)),\n    transform var(--kit-menu-content-transition-duration, var(--kit-duration-fast))\n      var(--kit-menu-content-transition-timing, var(--kit-easing-standard))"
+        }
+      ]
+    },
+    {
+      "selectors": [
+        ".kit-menu-content[data-state=\"closed\"][data-side=\"bottom\"]"
+      ],
+      "declarations": [
+        {
+          "property": "opacity",
+          "value": "0"
+        },
+        {
+          "property": "--kit-menu-content-translate-y",
+          "value": "0.25rem"
+        }
+      ]
+    },
+    {
+      "selectors": [
+        ".kit-menu-content[data-state=\"closed\"][data-side=\"top\"]"
+      ],
+      "declarations": [
+        {
+          "property": "opacity",
+          "value": "0"
+        },
+        {
+          "property": "--kit-menu-content-translate-y",
+          "value": "-0.25rem"
+        }
+      ]
+    },
+    {
+      "selectors": [
+        ".kit-menu-content[data-state=\"closed\"][data-side=\"right\"]"
+      ],
+      "declarations": [
+        {
+          "property": "opacity",
+          "value": "0"
+        },
+        {
+          "property": "--kit-menu-content-translate-x",
+          "value": "0.25rem"
+        }
+      ]
+    },
+    {
+      "selectors": [
+        ".kit-menu-content[data-state=\"closed\"][data-side=\"left\"]"
+      ],
+      "declarations": [
+        {
+          "property": "opacity",
+          "value": "0"
+        },
+        {
+          "property": "--kit-menu-content-translate-x",
+          "value": "-0.25rem"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-menu-item"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "inline-grid"
+        },
+        {
+          "property": "grid-template-columns",
+          "value": "minmax(0, 1fr) var(--kit-menu-item-indicator-inline-size, 1rem)"
+        },
+        {
+          "property": "align-items",
+          "value": "center"
+        },
+        {
+          "property": "gap",
+          "value": "var(--kit-menu-item-gap, 0.5rem)"
+        },
+        {
+          "property": "border",
+          "value": "0"
+        },
+        {
+          "property": "border-radius",
+          "value": "var(\n    --kit-menu-item-radius,\n    var(\n      --kit-radius-control,\n      var(--kit-radius-default, calc(var(--kit-radius-md) - 2px))\n    )\n  )"
+        },
+        {
+          "property": "min-height",
+          "value": "var(--kit-menu-item-min-height, 2.25rem)"
+        },
+        {
+          "property": "padding",
+          "value": "var(--kit-menu-item-padding-block, 0.5rem)\n    var(--kit-menu-item-padding-inline, 0.625rem)"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-menu-item-background, transparent)"
+        },
+        {
+          "property": "color",
+          "value": "var(--kit-menu-item-color, var(--kit-color-text))"
+        },
+        {
+          "property": "font",
+          "value": "inherit"
+        },
+        {
+          "property": "text-align",
+          "value": "start"
+        },
+        {
+          "property": "cursor",
+          "value": "pointer"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-menu-item[data-highlighted]"],
+      "declarations": [
+        {
+          "property": "background",
+          "value": "var(--kit-menu-item-background-highlighted, var(--kit-color-surface-hover))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-menu-item:disabled"],
+      "declarations": [
+        {
+          "property": "cursor",
+          "value": "not-allowed"
+        },
+        {
+          "property": "opacity",
+          "value": "var(--kit-menu-item-disabled-opacity, var(--kit-disabled-opacity))"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-menu-radio-item-label"],
+      "declarations": [
+        {
+          "property": "min-inline-size",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-menu-item-indicator"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "inline-flex"
+        },
+        {
+          "property": "align-items",
+          "value": "center"
+        },
+        {
+          "property": "justify-content",
+          "value": "center"
+        },
+        {
+          "property": "inline-size",
+          "value": "var(--kit-menu-item-indicator-inline-size, 1rem)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-menu-item-indicator[hidden]"],
+      "declarations": [
+        {
+          "property": "display",
+          "value": "none"
+        }
+      ]
+    }
+  ]
+}

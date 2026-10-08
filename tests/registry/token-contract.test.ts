@@ -32,6 +32,7 @@ for (const [family, count] of [
   ["switch", 7],
   ["dialog", 45],
   ["alert-dialog", 56],
+  ["menu", 35],
 ] as const)
   test(`all ${count} ${family} hooks match actual stylesheet declarations and documented source fallbacks`, () => {
     const properties = customization.properties.filter(

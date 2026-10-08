@@ -3,7 +3,7 @@
 Author: Codex. Locally verified candidate; separate S128 acceptance pending.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S125","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S125","kind":"report","commit":"c02e65efcade4575012139fb0730cf0961acf934","disposition":"candidate"}
 -->
 
 Requirements R03, R20, R22, R26, R32, R33, R34. Starting `687e6c1`, branch

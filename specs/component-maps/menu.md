@@ -98,3 +98,50 @@ S127 covers actual installed keyboard/typeahead/selection/cancellation/disabled,
 focus return and nested Menu/Dialog layers. Dynamic cleanup, placement, themes,
 SSR/hydration and CSP are original acceptance obligations; separate S128 review
 must accept the complete RCLD-07 before S129.
+
+## Source design mapping
+
+The source virtual Root wrapper is omitted because native Root owns no DOM.
+Source fixed positioning belongs to the native outer wrapper; it is removed
+from inner content while its design z-index, grid, tokens, local motion and
+all fallback values remain. Native data-disabled replaces source :disabled
+on div items. Reduced motion disables the inner transition. The three original
+radius entries remain byte-identical; no token defaults change.
+
+| Property                               | Source fallback                                                                          |
+| -------------------------------------- | ---------------------------------------------------------------------------------------- |
+| --kit-menu-trigger-border-color        | `var(--kit-color-border)`                                                                |
+| --kit-menu-trigger-min-height          | `2.5rem`                                                                                 |
+| --kit-menu-trigger-padding-block       | `0.5rem`                                                                                 |
+| --kit-menu-trigger-padding-inline      | `0.75rem`                                                                                |
+| --kit-menu-trigger-background          | `transparent`                                                                            |
+| --kit-menu-trigger-color               | `var(--kit-color-text)`                                                                  |
+| --kit-menu-trigger-font-weight         | `600`                                                                                    |
+| --kit-menu-trigger-background-hover    | `var(--kit-color-surface-hover)`                                                         |
+| --kit-menu-trigger-focus-ring          | `var(--kit-focus-ring)`                                                                  |
+| --kit-menu-trigger-disabled-opacity    | `var(--kit-disabled-opacity)`                                                            |
+| --kit-menu-content-z-index             | `50`                                                                                     |
+| --kit-menu-content-gap                 | `0.125rem`                                                                               |
+| --kit-menu-content-max-inline-size     | `calc(100vw - 1rem)`                                                                     |
+| --kit-menu-content-min-inline-size     | `12rem`                                                                                  |
+| --kit-menu-content-border-width        | `var(--kit-border-width)`                                                                |
+| --kit-menu-content-border-color        | `var(--kit-color-border)`                                                                |
+| --kit-menu-content-padding-block       | `0.25rem`                                                                                |
+| --kit-menu-content-padding-inline      | `0.25rem`                                                                                |
+| --kit-menu-content-background          | `var(--kit-color-surface-raised)`                                                        |
+| --kit-menu-content-color               | `var(--kit-color-text)`                                                                  |
+| --kit-menu-content-elevation           | `var(--kit-shadow-md)`                                                                   |
+| --kit-menu-content-transition-duration | `var(--kit-duration-fast)`                                                               |
+| --kit-menu-content-transition-timing   | `var(--kit-easing-standard)`                                                             |
+| --kit-menu-item-indicator-inline-size  | `1rem`                                                                                   |
+| --kit-menu-item-gap                    | `0.5rem`                                                                                 |
+| --kit-menu-item-min-height             | `2.25rem`                                                                                |
+| --kit-menu-item-padding-block          | `0.5rem`                                                                                 |
+| --kit-menu-item-padding-inline         | `0.625rem`                                                                               |
+| --kit-menu-item-background             | `transparent`                                                                            |
+| --kit-menu-item-color                  | `var(--kit-color-text)`                                                                  |
+| --kit-menu-item-background-highlighted | `var(--kit-color-surface-hover)`                                                         |
+| --kit-menu-item-disabled-opacity       | `var(--kit-disabled-opacity)`                                                            |
+| --kit-menu-trigger-radius              | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))`             |
+| --kit-menu-content-radius              | `var(--kit-radius-overlay, var(--kit-radius-default, var(--kit-radius-md)))`             |
+| --kit-menu-item-radius                 | `var(--kit-radius-control, var(--kit-radius-default, calc(var(--kit-radius-md) - 2px)))` |

@@ -12,7 +12,14 @@ import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 
 /** Build real CLI-installed applications; never mutate the maintained fixture. */
 function buildComponentConsumer(
-  item: "spinner" | "button" | "switch" | "dialog" | "alert-dialog" | "core",
+  item:
+    | "spinner"
+    | "button"
+    | "switch"
+    | "dialog"
+    | "alert-dialog"
+    | "menu"
+    | "core",
   custom: boolean,
   qualification: string = item,
   removeDescriptionObserverCleanup = false,
@@ -40,8 +47,8 @@ function buildComponentConsumer(
               id,
             ]),
           ]
-        : item === "alert-dialog"
-          ? [["init"], ["add", "dialog"], ["add", "alert-dialog"]]
+        : item === "alert-dialog" || item === "menu"
+          ? [["init"], ["add", "dialog"], ["add", item]]
           : [["init"], ["add", item]];
     const executable = path.join(packageRoot, "dist/cli/main.js");
     for (const args of commands) {
@@ -54,21 +61,20 @@ function buildComponentConsumer(
       assert.equal(result.stderr, "");
     }
     const sources =
-      item === "alert-dialog"
+      item === "menu"
         ? [
             ...[
               "root",
               "trigger",
               "portal",
-              "overlay",
               "content",
-              "title",
-              "description",
-              "action",
-              "cancel",
-            ].map((part) => `alert-dialog/${part}.svelte`),
-            "alert-dialog/types.ts",
-            "alert-dialog/index.ts",
+              "item",
+              "radio-group",
+              "radio-item",
+              "item-indicator",
+            ].map((part) => `menu/${part}.svelte`),
+            "menu/types.ts",
+            "menu/index.ts",
             ...[
               "root",
               "trigger",
@@ -82,15 +88,22 @@ function buildComponentConsumer(
             "dialog/types.ts",
             "dialog/index.ts",
           ]
-        : item === "button"
+        : item === "alert-dialog"
           ? [
-              "button.svelte",
-              "button.types.ts",
-              "spinner.svelte",
-              "spinner.types.ts",
-            ]
-          : item === "dialog" || item === "core"
-            ? [
+              ...[
+                "root",
+                "trigger",
+                "portal",
+                "overlay",
+                "content",
+                "title",
+                "description",
+                "action",
+                "cancel",
+              ].map((part) => `alert-dialog/${part}.svelte`),
+              "alert-dialog/types.ts",
+              "alert-dialog/index.ts",
+              ...[
                 "root",
                 "trigger",
                 "portal",
@@ -99,24 +112,45 @@ function buildComponentConsumer(
                 "title",
                 "description",
                 "close",
+              ].map((part) => `dialog/${part}.svelte`),
+              "dialog/types.ts",
+              "dialog/index.ts",
+            ]
+          : item === "button"
+            ? [
+                "button.svelte",
+                "button.types.ts",
+                "spinner.svelte",
+                "spinner.types.ts",
               ]
-                .map((part) => `dialog/${part}.svelte`)
-                .concat(
-                  ["dialog/types.ts", "dialog/index.ts"],
-                  item === "core"
-                    ? [
-                        "spinner.svelte",
-                        "spinner.types.ts",
-                        "button.svelte",
-                        "button.types.ts",
-                        "switch.svelte",
-                        "switch.types.ts",
-                      ]
-                    : [],
-                )
-            : item === "switch"
-              ? ["switch.svelte", "switch.types.ts"]
-              : ["spinner.svelte", "spinner.types.ts"];
+            : item === "dialog" || item === "core"
+              ? [
+                  "root",
+                  "trigger",
+                  "portal",
+                  "overlay",
+                  "content",
+                  "title",
+                  "description",
+                  "close",
+                ]
+                  .map((part) => `dialog/${part}.svelte`)
+                  .concat(
+                    ["dialog/types.ts", "dialog/index.ts"],
+                    item === "core"
+                      ? [
+                          "spinner.svelte",
+                          "spinner.types.ts",
+                          "button.svelte",
+                          "button.types.ts",
+                          "switch.svelte",
+                          "switch.types.ts",
+                        ]
+                      : [],
+                  )
+              : item === "switch"
+                ? ["switch.svelte", "switch.types.ts"]
+                : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
       assert.ok(
         readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
@@ -269,3 +303,6 @@ export const buildCoreConsumer = (
     packageRoot,
     beforeBuild,
   );
+
+export const buildMenuConsumer = (custom: boolean, qualification = "menu") =>
+  buildComponentConsumer("menu", custom, qualification);

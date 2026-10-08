@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  cpSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -11,6 +12,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import ts from "typescript";
+import { refreshRegistryContent } from "../helpers/registry-content.js";
 import { inspectView } from "../../src/cli/commands/view.js";
 
 function diagnostics(body: string) {
@@ -149,35 +151,54 @@ test("all seven primitive contracts equal actual pinned Dropdown Menu public typ
     [],
   );
 });
-test("Menu source selection is explicit and an incomplete family is not advertised", () => {
-  const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
-  assert.ok(root.items.every((item: { id: string }) => item.id !== "menu"));
-  const viewed = inspectView(
-    {
-      kind: "command",
-      command: "view",
-      item: "menu",
-      json: true,
-      cwd: null,
-      dryRun: false,
-      source: true,
-      strict: false,
-    },
-    process.cwd(),
+test("Menu source selection is explicit and owned unadvertised candidate is refused", () => {
+  const isolated = mkdtempSync(
+    path.join(os.tmpdir(), "suik-unadvertised-menu-"),
   );
-  assert.equal(viewed.envelope.status, "error");
-  assert.equal(viewed.failureClass, "registry_failure");
-  assert.ok(
-    viewed.envelope.diagnostics.some((d) => d.code === "REGISTRY_ITEM_UNKNOWN"),
-  );
-  const mapping = readFileSync("specs/component-maps/menu.md", "utf8");
-  for (const boundary of [
-    "RadioGroup",
-    "RadioItem",
-    "MenuItemIndicator",
-    "wrapperProps",
-    "checked index",
-    "strict-CSP",
-  ])
-    assert.ok(mapping.includes(boundary), boundary);
+  try {
+    for (const directory of ["registry", "schema"])
+      cpSync(directory, path.join(isolated, directory), { recursive: true });
+    const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+    assert.ok(root.items.some((item: { id: string }) => item.id === "menu"));
+    root.items = root.items.filter(
+      (item: { id: string }) => item.id !== "menu",
+    );
+    writeFileSync(
+      path.join(isolated, "registry/registry.json"),
+      JSON.stringify(root),
+    );
+    refreshRegistryContent(isolated);
+    const viewed = inspectView(
+      {
+        kind: "command",
+        command: "view",
+        item: "menu",
+        json: true,
+        cwd: null,
+        dryRun: false,
+        source: true,
+        strict: false,
+      },
+      isolated,
+    );
+    assert.equal(viewed.envelope.status, "error");
+    assert.equal(viewed.failureClass, "registry_failure");
+    assert.ok(
+      viewed.envelope.diagnostics.some(
+        (d) => d.code === "REGISTRY_ITEM_UNKNOWN",
+      ),
+    );
+    const mapping = readFileSync("specs/component-maps/menu.md", "utf8");
+    for (const boundary of [
+      "RadioGroup",
+      "RadioItem",
+      "MenuItemIndicator",
+      "wrapperProps",
+      "checked index",
+      "strict-CSP",
+    ])
+      assert.ok(mapping.includes(boundary), boundary);
+  } finally {
+    rmSync(isolated, { recursive: true, force: true });
+  }
 });

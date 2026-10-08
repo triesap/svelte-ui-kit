@@ -54,7 +54,7 @@ test("actual Root Trigger candidate compiles and preserves native closed and ope
       );
     }
     assert.equal(consumer.evidence.installation, "candidate-copy");
-    assert.equal(consumer.evidence.catalogRegistered, false);
+    assert.equal(consumer.evidence.catalogRegistered, true);
   } finally {
     consumer.cleanup();
   }

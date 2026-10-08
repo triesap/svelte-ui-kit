@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "id": "menu",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Complete ordinary and controlled radio Menu family preserving native floating placement, snippets, refs and selection.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/menu/root.svelte",
+      "target": "menu/root.svelte",
+      "kind": "svelte",
+      "cohort": "menu"
+    },
+    {
+      "source": "ui/menu/trigger.svelte",
+      "target": "menu/trigger.svelte",
+      "kind": "svelte",
+      "cohort": "menu"
+    },
+    {
+      "source": "ui/menu/portal.svelte",
+      "target": "menu/portal.svelte",
+      "kind": "svelte",
+      "cohort": "menu"
+    },
+    {
+      "source": "ui/menu/content.svelte",
+      "target": "menu/content.svelte",
+      "kind": "svelte",
+      "cohort": "menu"
+    },
+    {
+      "source": "ui/menu/item.svelte",
+      "target": "menu/item.svelte",
+      "kind": "svelte",
+      "cohort": "menu"
+    },
+    {
+      "source": "ui/menu/radio-group.svelte",
+      "target": "menu/radio-group.svelte",
+      "kind": "svelte",
+      "cohort": "menu"
+    },
+    {
+      "source": "ui/menu/radio-item.svelte",
+      "target": "menu/radio-item.svelte",
+      "kind": "svelte",
+      "cohort": "menu"
+    },
+    {
+      "source": "ui/menu/item-indicator.svelte",
+      "target": "menu/item-indicator.svelte",
+      "kind": "svelte",
+      "cohort": "menu"
+    },
+    {
+      "source": "ui/menu/types.ts",
+      "target": "menu/types.ts",
+      "kind": "typescript",
+      "cohort": "menu"
+    },
+    {
+      "source": "ui/menu/index.ts",
+      "target": "menu/index.ts",
+      "kind": "typescript",
+      "cohort": "menu"
+    }
+  ],
+  "exports": [
+    {
+      "name": "MenuRoot",
+      "target": "menu/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "MenuTrigger",
+      "target": "menu/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "MenuPortal",
+      "target": "menu/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "MenuContent",
+      "target": "menu/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "MenuItem",
+      "target": "menu/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "MenuRadioGroup",
+      "target": "menu/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "MenuRadioItem",
+      "target": "menu/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "MenuItemIndicator",
+      "target": "menu/index.ts",
+      "kind": "value"
+    },
+    {
+      "name": "MenuRootProps",
+      "target": "menu/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "MenuTriggerProps",
+      "target": "menu/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "MenuPortalProps",
+      "target": "menu/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "MenuContentProps",
+      "target": "menu/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "MenuItemProps",
+      "target": "menu/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "MenuRadioGroupProps",
+      "target": "menu/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "MenuRadioItemProps",
+      "target": "menu/index.ts",
+      "kind": "type"
+    },
+    {
+      "name": "MenuItemIndicatorProps",
+      "target": "menu/index.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/menu.css",
+      "target": "kit.css",
+      "blockId": "menu",
+      "cohort": "menu"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [
+    {
+      "name": "bits-ui",
+      "range": "2.19.3",
+      "role": "runtime"
+    }
+  ],
+  "accessibility": {
+    "requiredNames": ["menu-content-explicit-name"],
+    "keyboard": [
+      "Enter",
+      "Space",
+      "ArrowDown",
+      "ArrowUp",
+      "Home",
+      "End",
+      "Escape",
+      "typeahead"
+    ],
+    "focus": ["native-roving-focus", "native-return-focus"],
+    "form": [],
+    "tests": [
+      "menu-types",
+      "menu-items",
+      "menu-install",
+      "menu-keyboard",
+      "menu-placement",
+      "menu-csp"
+    ]
+  }
+}
