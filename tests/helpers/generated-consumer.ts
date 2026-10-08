@@ -21,6 +21,7 @@ function buildComponentConsumer(
     | "card"
     | "alert"
     | "status"
+    | "progress"
     | "router-link"
     | "switch"
     | "checkbox"
@@ -215,7 +216,8 @@ function buildComponentConsumer(
                             item === "badge" ||
                             item === "card" ||
                             item === "alert" ||
-                            item === "status"
+                            item === "status" ||
+                            item === "progress"
                           ? [`${item}.svelte`, `${item}.types.ts`]
                           : ["spinner.svelte", "spinner.types.ts"];
     for (const name of sources) {
@@ -421,6 +423,9 @@ export const buildAlertConsumer = (custom: boolean) =>
 
 export const buildStatusConsumer = (custom: boolean) =>
   buildComponentConsumer("status", custom);
+
+export const buildProgressConsumer = (custom: boolean) =>
+  buildComponentConsumer("progress", custom);
 
 export const buildDialogConsumer = (
   custom: boolean,

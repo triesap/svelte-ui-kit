@@ -7,12 +7,20 @@
     class: className,
     ...rest
   }: ProgressProps = $props();
+  // The pinned generic value removal path also writes through the IDL setter.
+  // Restore true attribute absence after that update; the browser owns the state.
+  $effect(() => {
+    if (ref && value == null) ref.removeAttribute("value");
+  });
 </script>
 
+<!-- HTML attribute names are case-insensitive. Keep VALUE on the native attribute
+     path: the pinned special lowercase value setter turns omission into zero. -->
 <progress
   {...rest}
   bind:this={ref}
   class={["kit-progress", className]}
-  {value}
-  {max}>{value == null ? "" : `${value} / ${max ?? 1}`}</progress
+  VALUE={value == null ? value : String(value)}
+  max={max == null ? max : String(max)}
+  >{value == null ? "" : `${value} / ${max ?? 1}`}</progress
 >

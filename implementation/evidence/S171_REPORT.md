@@ -1,7 +1,11 @@
 # S171 step report — Generate native Progress source and managed styles
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `a454ac5d73e074a5c81510dd3845fd2c9ae692d9`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S171","kind":"report","commit":"a454ac5d73e074a5c81510dd3845fd2c9ae692d9","disposition":"candidate"}
+-->
 
 Original R02, R03, R04, R06, R08, R20, R22, R25, R26, R32, R33, R34.
 Starting `55117a04923f15d3c98c8feccb10575dd1e3d296` on `master`.

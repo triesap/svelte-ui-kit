@@ -16,6 +16,18 @@
     background: var(--kit-color-surface-hover);
     accent-color: var(--kit-color-primary);
   }
+  .kit-progress::-webkit-progress-bar {
+    background: inherit;
+    border-radius: inherit;
+  }
+  .kit-progress::-webkit-progress-value {
+    background: var(--kit-color-primary);
+    border-radius: inherit;
+  }
+  .kit-progress::-moz-progress-bar {
+    background: var(--kit-color-primary);
+    border-radius: inherit;
+  }
   .kit-progress[hidden]:not([hidden="until-found"]) {
     display: none;
   }

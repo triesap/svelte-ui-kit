@@ -68,12 +68,47 @@ test("immutable Progress declarations preserve all 8 source layout control and s
 });
 
 test("Progress scoped native hidden exception retains until-found", () => {
-  assert.equal(rules.length, 2);
-  assert.deepEqual(rules[1]!.selectors, [
+  assert.equal(rules.length, 5);
+  assert.deepEqual(rules[4]!.selectors, [
     '.kit-progress[hidden]:not([hidden="until-found"])',
   ]);
   assert.deepEqual(
-    rules[1]!.declarations.map(({ property, value }) => ({ property, value })),
+    rules[4]!.declarations.map(({ property, value }) => ({ property, value })),
     [{ property: "display", value: "none" }],
+  );
+});
+
+test("Progress native paint selectors preserve source semantic colors and inherited geometry", () => {
+  assert.deepEqual(
+    rules.slice(1, 4).map((rule) => ({
+      selectors: rule.selectors,
+      declarations: rule.declarations.map(({ property, value }) => ({
+        property,
+        value,
+      })),
+    })),
+    [
+      {
+        selectors: [".kit-progress::-webkit-progress-bar"],
+        declarations: [
+          { property: "background", value: "inherit" },
+          { property: "border-radius", value: "inherit" },
+        ],
+      },
+      {
+        selectors: [".kit-progress::-webkit-progress-value"],
+        declarations: [
+          { property: "background", value: "var(--kit-color-primary)" },
+          { property: "border-radius", value: "inherit" },
+        ],
+      },
+      {
+        selectors: [".kit-progress::-moz-progress-bar"],
+        declarations: [
+          { property: "background", value: "var(--kit-color-primary)" },
+          { property: "border-radius", value: "inherit" },
+        ],
+      },
+    ],
   );
 });
