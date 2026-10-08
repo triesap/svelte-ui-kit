@@ -18,11 +18,12 @@
     { "id": "progress", "manifest": "ui/progress.json" },
     { "id": "radio", "manifest": "ui/radio.json" },
     { "id": "router-link", "manifest": "ui/router-link.json" },
+    { "id": "separator", "manifest": "ui/separator.json" },
     { "id": "spinner", "manifest": "ui/spinner.json" },
     { "id": "status", "manifest": "ui/status.json" },
     { "id": "switch", "manifest": "ui/switch.json" },
     { "id": "tabs", "manifest": "ui/tabs.json" },
     { "id": "tokens", "manifest": "foundation/tokens.json" }
   ],
-  "contentHash": "59f46411816199ce5d957ea84e304893065835d784840973c960a53f3bb61c80"
+  "contentHash": "75aa75b177109a021c272a01d5a433e08b3970e7a3f253e11d1f943bf3d056ae"
 }

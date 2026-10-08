@@ -1,7 +1,11 @@
 # S173 step report — Freeze native Separator orientation and decoration
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `47dc157fb1a06762c0af2a6dd688ae280faca0a1`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S173","kind":"report","commit":"47dc157fb1a06762c0af2a6dd688ae280faca0a1","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R26, R32, R33, R34.
 Starting `3a69123effc6b8d9b4640b72cec6f11ee01f114d` on `master`.

@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "id": "separator",
+  "kind": "component",
+  "version": "0.1.0",
+  "description": "Native meaningful or decorative separator with source orientation and semantic border geometry.",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.3",
+    "date": "^3.8.1"
+  },
+  "files": [
+    {
+      "source": "ui/separator.svelte",
+      "target": "separator.svelte",
+      "kind": "svelte",
+      "cohort": "separator"
+    },
+    {
+      "source": "ui/separator.types.ts",
+      "target": "separator.types.ts",
+      "kind": "typescript",
+      "cohort": "separator"
+    }
+  ],
+  "exports": [
+    {
+      "name": "Separator",
+      "target": "separator.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "SeparatorProps",
+      "target": "separator.types.ts",
+      "kind": "type"
+    },
+    {
+      "name": "SeparatorOrientation",
+      "target": "separator.types.ts",
+      "kind": "type"
+    }
+  ],
+  "styles": [
+    {
+      "source": "styles/separator.css",
+      "target": "kit.css",
+      "blockId": "separator",
+      "cohort": "separator"
+    }
+  ],
+  "registryDependencies": ["tokens"],
+  "npmDependencies": [],
+  "accessibility": {
+    "requiredNames": [],
+    "keyboard": [],
+    "focus": [],
+    "form": [],
+    "tests": [
+      "separator-types",
+      "separator-css",
+      "separator-install",
+      "separator"
+    ]
+  }
+}

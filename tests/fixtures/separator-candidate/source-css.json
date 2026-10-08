@@ -1,0 +1,47 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "sha256": "118768c9222bdaccdccfb7c754079950fc5222e83d4e8705054fe3ea263f6c3d"
+  },
+  "rules": [
+    {
+      "selectors": [".kit-separator"],
+      "declarations": [
+        {
+          "property": "flex",
+          "value": "none"
+        },
+        {
+          "property": "background",
+          "value": "var(--kit-color-border)"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-separator[data-orientation=\"horizontal\"]"],
+      "declarations": [
+        {
+          "property": "block-size",
+          "value": "var(--kit-border-width)"
+        },
+        {
+          "property": "inline-size",
+          "value": "100%"
+        }
+      ]
+    },
+    {
+      "selectors": [".kit-separator[data-orientation=\"vertical\"]"],
+      "declarations": [
+        {
+          "property": "block-size",
+          "value": "100%"
+        },
+        {
+          "property": "inline-size",
+          "value": "var(--kit-border-width)"
+        }
+      ]
+    }
+  ]
+}

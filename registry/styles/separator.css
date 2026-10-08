@@ -1,0 +1,18 @@
+/* svelte-ui-kit:start separator */
+@layer svelte-ui-kit.components {
+  .kit-separator {
+    flex: none;
+    background: var(--kit-color-border);
+  }
+
+  .kit-separator[data-orientation="horizontal"] {
+    block-size: var(--kit-border-width);
+    inline-size: 100%;
+  }
+
+  .kit-separator[data-orientation="vertical"] {
+    block-size: 100%;
+    inline-size: var(--kit-border-width);
+  }
+}
+/* svelte-ui-kit:end separator */
