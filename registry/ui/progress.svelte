@@ -9,6 +9,8 @@
   }: ProgressProps = $props();
   // The pinned generic value removal path also writes through the IDL setter.
   // Restore true attribute absence after that update; the browser owns the state.
+  // Initial absence uses undefined: explicit null takes an input-only default
+  // setter path before effects and throws on the native progress element.
   $effect(() => {
     if (ref && value == null) ref.removeAttribute("value");
   });
@@ -20,7 +22,7 @@
   {...rest}
   bind:this={ref}
   class={["kit-progress", className]}
-  VALUE={value == null ? value : String(value)}
+  VALUE={value == null ? undefined : String(value)}
   max={max == null ? max : String(max)}
   >{value == null ? "" : `${value} / ${max ?? 1}`}</progress
 >

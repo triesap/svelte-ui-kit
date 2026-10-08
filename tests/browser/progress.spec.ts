@@ -481,6 +481,100 @@ for (const custom of [false, true])
           .evaluate((node) => (node as HTMLProgressElement).position),
       ).toBe(0.25);
     });
+    test("initial null and undefined indeterminate SSR hydrate with native attribute absence and stable refs", async ({
+      page,
+      request,
+    }) => {
+      for (const query of [
+        "value=null",
+        "value=null&max=null",
+        "value=undefined",
+      ]) {
+        const url = new URL(`${consumer.route}?${query}`, hosted.baseURL).href;
+        const response = await request.get(url);
+        expect(response.status()).toBe(200);
+        const body = await response.text();
+        const tag = body.match(/<progress[^>]*id="main"[^>]*>/)![0];
+        expect(tag).not.toMatch(/\svalue=/i);
+        if (query.includes("max=null")) expect(tag).not.toMatch(/\smax=/);
+        else expect(tag).toContain('max="100"');
+        await page.goto(url);
+        await expect(page.locator('[data-ready="true"]')).toBeVisible();
+        await expect(page.locator("#ref-proof")).toHaveText("PROGRESS");
+        await expect(page.locator("#main")).toHaveAccessibleName("Upload");
+        const read = (id: string) =>
+          page.locator(id).evaluate((node) => {
+            const p = node as HTMLProgressElement;
+            return {
+              value: p.value,
+              max: p.max,
+              position: p.position,
+              attribute: p.getAttribute("value"),
+              indeterminate: p.matches(":indeterminate"),
+            };
+          });
+        expect(await read("#main")).toEqual(await read("#native-control"));
+        expect(await read("#main")).toEqual({
+          value: 0,
+          max: query.includes("max=null") ? 1 : 100,
+          position: -1,
+          attribute: null,
+          indeterminate: true,
+        });
+      }
+    });
+    test("fresh client null indeterminate mounts and remounts preserve native absence and ref cleanup", async ({
+      page,
+      request,
+    }) => {
+      for (const query of [
+        "value=null",
+        "value=null&max=null",
+        "value=undefined",
+      ]) {
+        const url = new URL(
+          `${consumer.route}?${query}&mounted=0`,
+          hosted.baseURL,
+        ).href;
+        const response = await request.get(url);
+        expect(response.status()).toBe(200);
+        expect(await response.text()).not.toMatch(/<progress[^>]*id="main"/);
+        await page.goto(url);
+        await expect(page.locator('[data-ready="true"]')).toBeVisible();
+        await expect(page.locator("#ref-proof")).toHaveText("none");
+        for (let i = 0; i < 3; i++) {
+          await page
+            .getByRole("button", { name: "Toggle progress", exact: true })
+            .click();
+          await expect(page.locator("#main")).toBeVisible();
+          await expect(page.locator("#ref-proof")).toHaveText("PROGRESS");
+          await expect(page.locator("#main")).toHaveAccessibleName("Upload");
+          expect(
+            await page.locator("#main").evaluate((node) => {
+              const p = node as HTMLProgressElement;
+              return {
+                value: p.value,
+                max: p.max,
+                position: p.position,
+                attribute: p.getAttribute("value"),
+                indeterminate: p.matches(":indeterminate"),
+              };
+            }),
+          ).toEqual({
+            value: 0,
+            max: query.includes("max=null") ? 1 : 100,
+            position: -1,
+            attribute: null,
+            indeterminate: true,
+          });
+          await page
+            .getByRole("button", { name: "Toggle progress", exact: true })
+            .click();
+          await expect(page.locator("#main")).toHaveCount(0);
+          await expect(page.locator("#ref-proof")).toHaveText("none");
+        }
+      }
+    });
     test("eight concurrent production SSR responses preserve request local labels values and indeterminate omission", async ({
       request,
       page,

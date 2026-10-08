@@ -5,7 +5,7 @@
   import type { ProgressProps } from "__UI_MODULE__";
   let ready = $state(false);
   let ref = $state<HTMLProgressElement | null>(null);
-  let mounted = $state(true);
+  let mounted = $state(page.url.searchParams.get("mounted") !== "0");
   let hidden = $state(false);
   let night = $state(false);
   let rtl = $state(false);
@@ -15,11 +15,20 @@
   let keys = $state(0);
   let submits = $state(0);
   let resets = $state(0);
+  const queryValue = page.url.searchParams.get("value");
+  const queryMax = page.url.searchParams.get("max");
   const states: Pick<ProgressProps, "value" | "max">[] = [
     {
-      value: Number(page.url.searchParams.get("value") ?? 25),
+      value:
+        queryValue === "null"
+          ? null
+          : queryValue === "undefined"
+            ? undefined
+            : Number(queryValue ?? 25),
       max: page.url.searchParams.has("max")
-        ? Number(page.url.searchParams.get("max"))
+        ? queryMax === "null"
+          ? null
+          : Number(queryMax)
         : undefined,
     },
     { value: 0 },
