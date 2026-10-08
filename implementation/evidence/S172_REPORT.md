@@ -1,7 +1,11 @@
 # S172 step report — Qualify native Progress values and visual states
 
 Author: Codex. Locally verified candidate; independent S181 acceptance pending.
-Implementation commit will be recorded after the green commit.
+Implementation commit: `3a69123effc6b8d9b4640b72cec6f11ee01f114d`.
+
+<!-- checkpoint-evidence
+{"schemaVersion":1,"checkpoint":"S172","kind":"report","commit":"3a69123effc6b8d9b4640b72cec6f11ee01f114d","disposition":"candidate"}
+-->
 
 Original R03, R20, R22, R23, R25, R26, R29, R32, R33, R34.
 Starting `a454ac5d73e074a5c81510dd3845fd2c9ae692d9` on `master`.
