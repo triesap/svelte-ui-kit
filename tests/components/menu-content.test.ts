@@ -21,7 +21,7 @@ test("compiled Menu Content preserves floating structures and native portal SSR 
       assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
       const response = JSON.parse(rendered.stdout);
       writeFileSync(
-        `implementation/evidence/logs/menu-candidate/content-${process.pid}-${Date.now()}-${mode}-ssr.json`,
+        `.artifacts/verification/menu-candidate/content-${process.pid}-${Date.now()}-${mode}-ssr.json`,
         JSON.stringify(
           { mode, ...response, artifact: consumer.evidence },
           null,

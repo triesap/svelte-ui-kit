@@ -21,7 +21,7 @@ test("actual candidate preserves controlled string state snippets and native rad
       assert.equal(result.status, 0, result.stdout + result.stderr);
       const response = JSON.parse(result.stdout);
       writeFileSync(
-        `implementation/evidence/logs/radio-candidate/${process.pid}-${Date.now()}-${value}-ssr.json`,
+        `.artifacts/verification/radio-candidate/${process.pid}-${Date.now()}-${value}-ssr.json`,
         JSON.stringify(
           { value, response, artifact: consumer.evidence },
           null,

@@ -166,11 +166,11 @@ for (const custom of [false, true])
           "all semantic native and recipe IDs reset; measured native floating wrapper boundary is recorded separately",
         ),
       );
-      mkdirSync("implementation/evidence/logs/catalog-ssr", {
+      mkdirSync(".artifacts/verification/catalog-ssr", {
         recursive: true,
       });
       writeFileSync(
-        `implementation/evidence/logs/catalog-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
+        `.artifacts/verification/catalog-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
         JSON.stringify(
           { evidence: consumer.evidence, cases, responses },
           null,

@@ -20,7 +20,7 @@ test("all eight authored Menu parts compile and render actual native selection a
     assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
     const response = JSON.parse(rendered.stdout);
     writeFileSync(
-      `implementation/evidence/logs/menu-candidate/items-${process.pid}-${Date.now()}-ssr.json`,
+      `.artifacts/verification/menu-candidate/items-${process.pid}-${Date.now()}-ssr.json`,
       JSON.stringify({ ...response, artifact: consumer.evidence }, null, 2),
     );
     assert.equal(response.status, 200);

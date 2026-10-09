@@ -57,7 +57,7 @@ export function buildDialogCandidate(
       path.join(fixture.root, route),
       readFileSync(`tests/fixtures/dialog-candidate/${stage}.svelte`),
     );
-    const logRoot = "implementation/evidence/logs/dialog-candidate";
+    const logRoot = ".artifacts/verification/dialog-candidate";
     mkdirSync(logRoot, { recursive: true });
     const logs: string[] = [];
     for (const script of ["check", "build"]) {

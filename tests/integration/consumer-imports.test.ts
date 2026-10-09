@@ -59,11 +59,11 @@ for (const custom of [false, true])
       );
       assert.ok(sources.size > 70);
       assert.ok(!sources.has("components/index.ts"));
-      mkdirSync("implementation/evidence/logs/consumer-imports", {
+      mkdirSync(".artifacts/verification/consumer-imports", {
         recursive: true,
       });
       writeFileSync(
-        `implementation/evidence/logs/consumer-imports/${custom ? "custom" : "default"}-${process.pid}.json`,
+        `.artifacts/verification/consumer-imports/${custom ? "custom" : "default"}-${process.pid}.json`,
         JSON.stringify(
           {
             evidence: consumer.evidence,

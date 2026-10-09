@@ -20,7 +20,7 @@ A native image requires string src/alt, accepts optional no-argument fallback Sn
 Native srcset/sizes/loading/cross-origin/referrer hints and typed load/error events remain intact; Svelte event currentTarget is Element, narrowed for image properties.
 No children, replacement element, size/variant, delay, loading controller or Bits preloader exists.
 A noninteractive frame owns loading/loaded/error and fallback.
-SSR begins loading; src/srcset/sizes key the request, and stale detached-image events cannot settle state or invoke current callbacks.
+SSR begins loading; src/srcset/sizes key the request, and stale detached-image events cannot settle state or invoke current normal load/error callbacks. Native capture listeners remain caller attributes.
 Current load/error settle state before one caller callback; already-complete hydration adds no synthetic callback.
 Loading/error fallback has one image role/name from meaningful alt; image/fallback descendants are hidden from duplicate naming.
 Empty alt is decorative.

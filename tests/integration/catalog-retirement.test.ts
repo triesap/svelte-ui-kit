@@ -232,11 +232,11 @@ for (const custom of [false, true])
       assert.deepEqual(final.requested, [...finalDesired].sort());
       assert.equal(read(badge), customSource);
       assert.ok(read(derived.rootExports).endsWith(appExports));
-      mkdirSync("implementation/evidence/logs/catalog-retirement", {
+      mkdirSync(".artifacts/verification/catalog-retirement", {
         recursive: true,
       });
       writeFileSync(
-        `implementation/evidence/logs/catalog-retirement/${custom ? "custom" : "default"}-${process.pid}.json`,
+        `.artifacts/verification/catalog-retirement/${custom ? "custom" : "default"}-${process.pid}.json`,
         JSON.stringify(
           {
             initial,

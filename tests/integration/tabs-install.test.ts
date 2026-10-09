@@ -204,7 +204,7 @@ for (const custom of [false, true])
         typeFixture,
         `import type {${names.map((name) => `${name}Props`).join(",")}} from ${JSON.stringify(typeModule)};\n${names.map((name, i) => `const part${i}: ${name}Props = ${["TabsTrigger", "TabsContent"].includes(name) ? '{value:"a"}' : "{}"}; void part${i};`).join("\n")}\n`,
       );
-      const evidenceRoot = "implementation/evidence/logs/tabs-install";
+      const evidenceRoot = ".artifacts/verification/tabs-install";
       mkdirSync(evidenceRoot, { recursive: true });
       const evidenceName = `${custom ? "custom" : "default"}-${process.pid}-${Date.now()}`;
       for (const script of ["check", "build"]) {

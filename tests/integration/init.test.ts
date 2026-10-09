@@ -184,7 +184,7 @@ test("actual CLI initialization produces a checked production consumer", () => {
       const checked = runFixtureScript(copy.root, script);
       write(
         process.cwd(),
-        `implementation/evidence/logs/codex-r10/s081-resulting-${script}.log`,
+        `.artifacts/verification/codex-r10/s081-resulting-${script}.log`,
         checked.stdout + checked.stderr,
       );
       assert.equal(checked.status, 0, checked.stdout + checked.stderr);

@@ -414,3 +414,78 @@ test("unknown CLI arguments fail visibly", () =>
       .status,
     2,
   ));
+
+for (const file of [
+  "specs/recreated.md",
+  "implementation/recreated.md",
+  "decisions/recreated.md",
+  "references/recreated.md",
+  "CONTRIBUTING.md",
+  "CHANGELOG.md",
+  "tools/native-dependency/README.md",
+])
+  test("retired topology rejects " + file + " without writes", () =>
+    withFixture((root) => {
+      write(root, file, "# Recreated history\n");
+      const before = snapshot(root);
+      assert.ok(checkDocs(root).some((issue) => issue.code === "TOPOLOGY"));
+      const result = cli(root);
+      assert.equal(result.status, 1, result.stderr);
+      assert.match(result.stderr, /TOPOLOGY/);
+      assert.equal(snapshot(root), before);
+    }),
+  );
+
+test("retired topology rejects symlinks and empty roots", () =>
+  withFixture((root) => {
+    symlinkSync("docs", path.join(root, "specs"));
+    mkdirSync(path.join(root, "references"));
+    const before = snapshot(root);
+    assert.equal(
+      checkDocs(root).filter((issue) => issue.code === "TOPOLOGY").length,
+      2,
+    );
+    assert.equal(cli(root).status, 1);
+    assert.equal(snapshot(root), before);
+  }));
+
+test("ignored historical logs and immutable URLs remain valid without Git history", () =>
+  withFixture((root) => {
+    write(
+      root,
+      "implementation/evidence/logs/old.json",
+      "preserve operator data\n",
+    );
+    append(
+      root,
+      "docs/provenance.md",
+      "\n[Historical source](https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/specs/PRODUCT_SPEC.md)\n",
+    );
+    const before = snapshot(root);
+    assert.deepEqual(checkDocs(root), []);
+    assert.equal(cli(root).status, 0);
+    assert.equal(snapshot(root), before);
+  }));
+
+test("tracked historical logs fail even in a repository with no commits", () =>
+  withFixture((root) => {
+    write(root, "implementation/evidence/logs/old.json", "operator data\n");
+    for (const args of [
+      ["init", "--quiet"],
+      ["add", "--", "implementation/evidence/logs/old.json"],
+    ]) {
+      const result = spawnSync("git", ["-C", root, ...args], {
+        encoding: "utf8",
+      });
+      assert.equal(result.status, 0, result.stderr);
+    }
+    const before = snapshot(root);
+    assert.ok(
+      checkDocs(root).some(
+        (issue) =>
+          issue.code === "TOPOLOGY" && issue.message.includes("tracked"),
+      ),
+    );
+    assert.equal(cli(root).status, 1);
+    assert.equal(snapshot(root), before);
+  }));

@@ -32,6 +32,7 @@ export default tseslint.config(
       "**/playwright-report/",
       // Explicitly rooted authoring boundaries and the ignored log tree.
       "tests/fixtures/generated/",
+      ".artifacts/verification/",
       "implementation/evidence/logs/",
       "**/*.log",
     ],

@@ -36,11 +36,11 @@ for (const custom of [false, true])
         responses.handlerSha256,
         consumer.evidence.files["build/handler.js"],
       );
-      mkdirSync("implementation/evidence/logs/alert-dialog-ssr", {
+      mkdirSync(".artifacts/verification/alert-dialog-ssr", {
         recursive: true,
       });
       writeFileSync(
-        `implementation/evidence/logs/alert-dialog-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
+        `.artifacts/verification/alert-dialog-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
         JSON.stringify({ evidence: consumer.evidence, responses }, null, 2),
       );
       for (const lane of [responses.concurrent, responses.repeated]) {
@@ -109,11 +109,11 @@ for (const custom of [false, true])
             );
         }
       }
-      mkdirSync("implementation/evidence/logs/alert-dialog-ssr", {
+      mkdirSync(".artifacts/verification/alert-dialog-ssr", {
         recursive: true,
       });
       writeFileSync(
-        `implementation/evidence/logs/alert-dialog-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
+        `.artifacts/verification/alert-dialog-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
         JSON.stringify({ evidence: consumer.evidence, responses }, null, 2),
       );
     } finally {

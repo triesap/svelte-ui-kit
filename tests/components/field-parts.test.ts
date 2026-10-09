@@ -92,7 +92,7 @@ test("actual Field candidate compiles every source part and SSR associations des
           for (const id of match[1]!.split(" "))
             assert.ok(ids.includes(id), `phantom native association ${id}`);
         writeFileSync(
-          `implementation/evidence/logs/field-candidate/${process.pid}-${Date.now()}-${invalid}-ssr.json`,
+          `.artifacts/verification/field-candidate/${process.pid}-${Date.now()}-${invalid}-ssr.json`,
           JSON.stringify(
             { invalid, value, response, artifact: consumer.evidence },
             null,

@@ -31,9 +31,9 @@ for (const custom of [false, true])
         concurrent: { status: number; body: string }[];
         repeated: { status: number; body: string }[];
       };
-      mkdirSync("implementation/evidence/logs/menu-ssr", { recursive: true });
+      mkdirSync(".artifacts/verification/menu-ssr", { recursive: true });
       writeFileSync(
-        `implementation/evidence/logs/menu-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
+        `.artifacts/verification/menu-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
         JSON.stringify({ evidence: consumer.evidence, responses }, null, 2),
       );
       assert.equal(

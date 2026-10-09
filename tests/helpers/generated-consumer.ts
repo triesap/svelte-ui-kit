@@ -259,7 +259,7 @@ function buildComponentConsumer(
     assert.equal(template.match(/__UI_MODULE__/g)?.length, 2);
     write(route, template.replaceAll("__UI_MODULE__", module));
     beforeBuild?.(fixture.root, config);
-    const logRoot = "implementation/evidence/logs/generated-consumer";
+    const logRoot = ".artifacts/verification/generated-consumer";
     mkdirSync(logRoot, { recursive: true });
     const logPrefix = `${qualification}-${custom ? "custom" : "default"}-${process.pid}-${Date.now()}`;
     const logs: string[] = [];

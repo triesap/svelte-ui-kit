@@ -21,7 +21,7 @@ export function buildRadioCandidate() {
       path.join(fixture.root, route),
       readFileSync("tests/fixtures/radio-candidate/+page.svelte"),
     );
-    const logRoot = "implementation/evidence/logs/radio-candidate";
+    const logRoot = ".artifacts/verification/radio-candidate";
     mkdirSync(logRoot, { recursive: true });
     const logs: string[] = [];
     for (const script of ["check", "build"]) {

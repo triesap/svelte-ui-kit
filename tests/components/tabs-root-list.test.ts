@@ -22,7 +22,7 @@ test("actual candidate Root List preserve request selection mounted panels and n
       assert.equal(result.status, 0, result.stdout + result.stderr);
       const response = JSON.parse(result.stdout);
       writeFileSync(
-        `implementation/evidence/logs/tabs-candidate/${process.pid}-${Date.now()}-${value || "empty"}-ssr.json`,
+        `.artifacts/verification/tabs-candidate/${process.pid}-${Date.now()}-${value || "empty"}-ssr.json`,
         JSON.stringify(
           { value, response, artifact: consumer.evidence },
           null,

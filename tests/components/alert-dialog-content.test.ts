@@ -20,7 +20,7 @@ test("actual Content candidate forwards native policy, refs and both render path
       );
       assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
       const response = JSON.parse(rendered.stdout);
-      const logs = "implementation/evidence/logs/alert-dialog-candidate";
+      const logs = ".artifacts/verification/alert-dialog-candidate";
       mkdirSync(logs, { recursive: true });
       writeFileSync(
         `${logs}/content-${process.pid}-${Date.now()}-${mode}-ssr.json`,

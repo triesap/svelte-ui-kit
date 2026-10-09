@@ -70,7 +70,7 @@ test("portable paths and case collisions fail before filesystem mutation", (t) =
   const caseSensitive = !existsSync(path.join(project.root, "caseprobe"));
   const evidenceDir = path.join(
     process.cwd(),
-    "implementation/evidence/logs/platform-filesystem",
+    ".artifacts/verification/platform-filesystem",
   );
   mkdirSync(evidenceDir, { recursive: true });
   writeFileSync(

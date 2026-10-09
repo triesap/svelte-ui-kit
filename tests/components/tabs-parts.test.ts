@@ -27,7 +27,7 @@ test("complete candidate Tabs preserve native selected hidden snippets and raw S
       assert.equal(result.status, 0, result.stdout + result.stderr);
       const response = JSON.parse(result.stdout);
       writeFileSync(
-        `implementation/evidence/logs/tabs-candidate/${process.pid}-${Date.now()}-complete-${value || "empty"}-ssr.json`,
+        `.artifacts/verification/tabs-candidate/${process.pid}-${Date.now()}-complete-${value || "empty"}-ssr.json`,
         JSON.stringify(
           { value, response, artifact: consumer.evidence },
           null,

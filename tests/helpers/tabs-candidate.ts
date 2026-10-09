@@ -28,7 +28,7 @@ export function buildTabsCandidate(complete = false) {
         `tests/fixtures/${complete ? "tabs-parts" : "tabs-candidate"}/+page.svelte`,
       ),
     );
-    const logRoot = "implementation/evidence/logs/tabs-candidate";
+    const logRoot = ".artifacts/verification/tabs-candidate";
     mkdirSync(logRoot, { recursive: true });
     const logs: string[] = [];
     for (const script of ["check", "build"]) {

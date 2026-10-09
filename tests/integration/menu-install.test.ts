@@ -214,7 +214,7 @@ for (const custom of [false, true])
         typeFixture,
         `import type {${names.map((name) => `${name}Props`).join(",")}} from ${JSON.stringify(typeModule)};\n${names.map((name, i) => `const part${i}: ${name}Props = ${name === "MenuRadioItem" ? '{value:"a"}' : name === "MenuItemIndicator" ? "{checked:false}" : "{}"}; void part${i};`).join("\n")}\n`,
       );
-      const evidenceRoot = "implementation/evidence/logs/menu-install";
+      const evidenceRoot = ".artifacts/verification/menu-install";
       mkdirSync(evidenceRoot, { recursive: true });
       const evidenceName = `${custom ? "custom" : "default"}-${process.pid}-${Date.now()}`;
       for (const script of ["check", "build"]) {

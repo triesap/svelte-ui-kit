@@ -136,9 +136,9 @@ export function evolveCore(
   const beforeCustomizedLock = lock();
   run(["sync"]);
   run(["doctor", "--strict"]);
-  mkdirSync("implementation/evidence/logs/core-workflow", { recursive: true });
+  mkdirSync(".artifacts/verification/core-workflow", { recursive: true });
   writeFileSync(
-    `implementation/evidence/logs/core-workflow/${process.pid}-customized-locks.json`,
+    `.artifacts/verification/core-workflow/${process.pid}-customized-locks.json`,
     JSON.stringify({ before: beforeCustomizedLock, after: lock() }, null, 2),
   );
   const expectedCustomizedLock = {
@@ -232,9 +232,9 @@ export function evolveCore(
         d.code === "PLAN_DIAGNOSTIC" && /cohort|conflict/i.test(d.message),
     ),
   );
-  mkdirSync("implementation/evidence/logs/core-workflow", { recursive: true });
+  mkdirSync(".artifacts/verification/core-workflow", { recursive: true });
   writeFileSync(
-    `implementation/evidence/logs/core-workflow/${config.uiDir.includes("app/") ? "custom" : "default"}-${process.pid}-${Date.now()}.json`,
+    `.artifacts/verification/core-workflow/${config.uiDir.includes("app/") ? "custom" : "default"}-${process.pid}-${Date.now()}.json`,
     JSON.stringify(
       { synthetic: true, initial, safe, logs, conflictTree },
       null,

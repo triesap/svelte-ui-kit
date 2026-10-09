@@ -49,7 +49,7 @@ export function buildAlertDialogCandidate(
       path.join(fixture.root, route),
       readFileSync(`tests/fixtures/alert-dialog-candidate/${stage}.svelte`),
     );
-    const logRoot = "implementation/evidence/logs/alert-dialog-candidate";
+    const logRoot = ".artifacts/verification/alert-dialog-candidate";
     mkdirSync(logRoot, { recursive: true });
     const logs: string[] = [];
     for (const script of ["check", "build"]) {

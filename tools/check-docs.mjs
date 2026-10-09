@@ -7,6 +7,7 @@ import {
   readdirSync,
   realpathSync,
 } from "node:fs";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -216,6 +217,68 @@ export function checkLinks(root, documents) {
   return issues;
 }
 
+/** Reject retired authoring roots without consulting historical Git objects. */
+export function checkTopology(root) {
+  const issues = [];
+  const fail = (file, message) =>
+    issues.push({ file, code: "TOPOLOGY", message });
+  const retired = [
+    "specs",
+    "implementation",
+    "decisions",
+    "references",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
+    "tools/native-dependency/README.md",
+  ];
+  const historicalLogs = "implementation/evidence/logs";
+  const inspect = (relative) => {
+    const absolute = path.join(root, relative);
+    let info;
+    try {
+      info = lstatSync(absolute);
+    } catch (error) {
+      if (error.code === "ENOENT") return;
+      throw error;
+    }
+    if (info.isSymbolicLink()) {
+      fail(relative, "retired path cannot be a symlink");
+      return;
+    }
+    // Preserve pre-existing ignored operator evidence, without reading its content.
+    if (relative === historicalLogs && info.isDirectory()) return;
+    if (
+      ["implementation", "implementation/evidence"].includes(relative) &&
+      info.isDirectory() &&
+      existsSync(path.join(root, historicalLogs))
+    ) {
+      for (const name of readdirSync(absolute)) inspect(relative + "/" + name);
+      return;
+    }
+    fail(relative, "retired authoring path must remain absent");
+  };
+  for (const relative of retired) inspect(relative);
+  // A checkout may retain ignored old logs, but never track them again. Gitless
+  // source trees are also supported; no historical object or commit is required.
+  if (existsSync(path.join(root, ".git"))) {
+    const tracked = spawnSync(
+      "git",
+      ["-C", root, "ls-files", "-z", "--", ...retired],
+      {
+        encoding: "utf8",
+        maxBuffer: 8 * 1024 * 1024,
+        env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
+      },
+    );
+    if (tracked.status !== 0)
+      fail(".git", "cannot inspect retired-path index: " + tracked.stderr);
+    else
+      for (const file of tracked.stdout.split("\0").filter(Boolean))
+        fail(file, "retired authoring content must not be tracked");
+  }
+  return issues;
+}
+
 export function checkDocs(root) {
   root = realpathSync(root);
   const issues = [];
@@ -226,7 +289,7 @@ export function checkDocs(root) {
   } catch (error) {
     return [{ file: "docs", code: "DOCUMENT", message: error.message }];
   }
-  issues.push(...checkLinks(root, documents));
+  issues.push(...checkTopology(root), ...checkLinks(root, documents));
   for (const [file, marker, language, count] of EXAMPLES) {
     try {
       const example = readMarkedExample(

@@ -66,9 +66,7 @@ export function installIndependentCli() {
   );
   const author = path.join(root, "author"),
     host = path.join(root, "host");
-  const logRoot = path.resolve(
-    "implementation/evidence/logs/installed-runtime",
-  );
+  const logRoot = path.resolve(".artifacts/verification/installed-runtime");
   mkdirSync(logRoot, { recursive: true });
   const prefix = `${process.pid}-${Date.now()}`;
   const transcript: unknown[] = [];

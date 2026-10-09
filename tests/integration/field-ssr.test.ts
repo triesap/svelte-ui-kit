@@ -88,7 +88,7 @@ for (const custom of [false, true])
               /<button(?=[^>]*id="field-radio-control")[^>]*aria-checked="true"/,
             );
             assert.match(html, /<input(?=[^>]*name="plan")[^>]*value="a"/);
-            const directory = "implementation/evidence/logs/field-ssr";
+            const directory = ".artifacts/verification/field-ssr";
             mkdirSync(directory, { recursive: true });
             writeFileSync(
               `${directory}/${custom ? "custom" : "default"}-${process.pid}-${Date.now()}.json`,

@@ -137,7 +137,7 @@ for (const custom of [false, true])
       assert.equal(replay.status, "no_change");
       assert.equal(manualWarnings(replay).length, 0);
       assert.deepEqual(snapshotTree(fixture.root), stable);
-      const evidence = "implementation/evidence/logs/clean-retirement-warning";
+      const evidence = ".artifacts/verification/clean-retirement-warning";
       mkdirSync(evidence, { recursive: true });
       writeFileSync(
         `${evidence}/${custom ? "custom" : "default"}-${counterfactual ? "omission" : "actual"}-${process.pid}.json`,

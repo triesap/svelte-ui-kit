@@ -6,7 +6,7 @@ for (const custom of [false, true])
   test(`actual installed complete-catalog consumer ${custom ? "custom" : "default"}`, (t) => {
     const app = buildPackagedConsumer(custom);
     t.after(app.cleanup);
-    const folder = "implementation/evidence/logs/packaged-consumer";
+    const folder = ".artifacts/verification/packaged-consumer";
     mkdirSync(folder, { recursive: true });
     writeFileSync(
       `${folder}/${custom ? "custom" : "default"}-${process.pid}.json`,

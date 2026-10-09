@@ -379,11 +379,11 @@ for (const custom of [false, true])
             }
           }
         }
-        mkdirSync("implementation/evidence/logs/component-upgrades", {
+        mkdirSync(".artifacts/verification/component-upgrades", {
           recursive: true,
         });
         writeFileSync(
-          `implementation/evidence/logs/component-upgrades/${custom ? "custom" : "default"}-${scenario}-${process.pid}.json`,
+          `.artifacts/verification/component-upgrades/${custom ? "custom" : "default"}-${scenario}-${process.pid}.json`,
           JSON.stringify(
             { synthetic: true, scenario, old, after, transcript },
             null,

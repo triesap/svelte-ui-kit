@@ -30,7 +30,7 @@ test("actual candidate Collapsible preserves open closed mounted snippets and ra
         consumer.evidence.files["build/handler.js"],
       );
       writeFileSync(
-        `implementation/evidence/logs/collapsible-candidate/${process.pid}-${Date.now()}-${open}-ssr.json`,
+        `.artifacts/verification/collapsible-candidate/${process.pid}-${Date.now()}-${open}-ssr.json`,
         JSON.stringify(
           { open, response, artifact: consumer.evidence },
           null,

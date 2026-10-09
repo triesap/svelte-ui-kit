@@ -104,3 +104,9 @@ controls. Valid inventories/commit counts and author declarations are not indepe
 acceptance. Use a separate reviewer whenever the authorized task requires that gate.
 Report exact revision, commands/exits, failed attempts, changes, risks and unrun
 limits; do not relabel historical tests as freshly executed.
+
+Current test and tool logs use the ignored `.artifacts/verification/` boundary.
+Pre-existing ignored `implementation/evidence/logs/` data is preserved historical
+operator state, not an active output destination or documentation authority.
+The current documentation checker rejects recreated retired roots and tracked
+historical files; immutable historical URLs remain valid provenance.

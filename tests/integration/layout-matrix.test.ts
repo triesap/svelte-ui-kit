@@ -234,11 +234,11 @@ for (const mapping of mappings)
       assert.match(response.body, /Catalog request layout-render-extra/);
       assert.match(response.body, /kit-menu-trigger/);
       assert.deepEqual(outside(), before);
-      mkdirSync("implementation/evidence/logs/layout-matrix", {
+      mkdirSync(".artifacts/verification/layout-matrix", {
         recursive: true,
       });
       writeFileSync(
-        `implementation/evidence/logs/layout-matrix/${mapping.label}-${process.pid}.json`,
+        `.artifacts/verification/layout-matrix/${mapping.label}-${process.pid}.json`,
         JSON.stringify(
           {
             mapping,

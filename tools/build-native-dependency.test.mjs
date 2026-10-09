@@ -165,7 +165,7 @@ test(
     );
     const logs = path.join(
       repository,
-      "implementation/evidence/logs/native-producer",
+      ".artifacts/verification/native-producer",
     );
     mkdirSync(logs, { recursive: true });
     const reportFile = path.join(logs, `${process.pid}-${Date.now()}.json`);

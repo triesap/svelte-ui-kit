@@ -20,7 +20,7 @@ test("actual nine-part Alert Dialog candidate compiles native labeling decision 
     assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
     const response = JSON.parse(rendered.stdout);
     writeFileSync(
-      `implementation/evidence/logs/alert-dialog-candidate/actions-${process.pid}-${Date.now()}-ssr.json`,
+      `.artifacts/verification/alert-dialog-candidate/actions-${process.pid}-${Date.now()}-ssr.json`,
       JSON.stringify({ ...response, artifact: consumer.evidence }, null, 2),
     );
     assert.equal(response.status, 200);

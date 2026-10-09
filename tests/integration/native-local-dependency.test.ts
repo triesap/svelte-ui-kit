@@ -40,7 +40,7 @@ const archivePath = `vendor/${NATIVE_BASELINE.archive}`;
 const requirements = [
   { name: NATIVE_BASELINE.name, range: NATIVE_BASELINE.version },
 ];
-const log = path.resolve("implementation/evidence/logs/native-local-file");
+const log = path.resolve(".artifacts/verification/native-local-file");
 mkdirSync(log, { recursive: true });
 const transcript: unknown[] = [];
 const env: NodeJS.ProcessEnv = {

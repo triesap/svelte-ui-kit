@@ -17,7 +17,7 @@ import { sha256Hex } from "../../src/codegen/digest.js";
 
 export function installPackedCore() {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-core-install-"));
-  const logRoot = "implementation/evidence/logs/packed-core";
+  const logRoot = ".artifacts/verification/packed-core";
   mkdirSync(logRoot, { recursive: true });
   const prefix = `${process.pid}-${Date.now()}`;
   try {

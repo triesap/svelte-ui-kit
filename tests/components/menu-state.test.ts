@@ -21,7 +21,7 @@ test("actual Root Trigger candidate compiles and preserves native closed and ope
       assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
       const response = JSON.parse(rendered.stdout);
       writeFileSync(
-        `implementation/evidence/logs/menu-candidate/root-trigger-${process.pid}-${Date.now()}-${initial}-ssr.json`,
+        `.artifacts/verification/menu-candidate/root-trigger-${process.pid}-${Date.now()}-${initial}-ssr.json`,
         JSON.stringify(
           { initial, ...response, artifact: consumer.evidence },
           null,

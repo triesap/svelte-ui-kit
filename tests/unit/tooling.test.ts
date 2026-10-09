@@ -126,6 +126,7 @@ const RESERVED_OUTPUT_DIRS = [
 /** Explicitly rooted authoring boundaries reserved from both tools. */
 const EXPLICIT_OUTPUT_BOUNDARIES = [
   "tests/fixtures/generated",
+  ".artifacts/verification",
   "implementation/evidence/logs",
 ] as const;
 

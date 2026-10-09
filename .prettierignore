@@ -8,6 +8,7 @@ coverage/
 tests/browser/.output/
 playwright-report/
 tests/fixtures/generated/
+.artifacts/verification/
 implementation/evidence/logs/
 *.log
 pnpm-lock.yaml

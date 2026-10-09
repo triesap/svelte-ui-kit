@@ -30,7 +30,7 @@ export function buildCollapsibleCandidate() {
       path.join(fixture.root, route),
       readFileSync("tests/fixtures/collapsible-candidate/+page.svelte"),
     );
-    const logRoot = "implementation/evidence/logs/collapsible-candidate";
+    const logRoot = ".artifacts/verification/collapsible-candidate";
     mkdirSync(logRoot, { recursive: true });
     const logs: string[] = [];
     for (const script of ["check", "build"]) {

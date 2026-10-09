@@ -21,7 +21,7 @@ test("actual distinct candidate Root and Trigger compile and render SSR with raw
       );
       assert.equal(result.status, 0, result.stdout + result.stderr);
       const rendered = JSON.parse(result.stdout);
-      const logs = "implementation/evidence/logs/alert-dialog-candidate";
+      const logs = ".artifacts/verification/alert-dialog-candidate";
       mkdirSync(logs, { recursive: true });
       writeFileSync(
         `${logs}/root-trigger-${process.pid}-${Date.now()}-${initial}-ssr.json`,

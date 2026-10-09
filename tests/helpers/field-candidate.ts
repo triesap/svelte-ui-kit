@@ -38,7 +38,7 @@ export function buildFieldCandidate() {
       path.join(fixture.root, route),
       readFileSync("tests/fixtures/field-candidate/+page.svelte"),
     );
-    const logRoot = "implementation/evidence/logs/field-candidate";
+    const logRoot = ".artifacts/verification/field-candidate";
     mkdirSync(logRoot, { recursive: true });
     const logs: string[] = [];
     for (const script of ["check", "build"]) {

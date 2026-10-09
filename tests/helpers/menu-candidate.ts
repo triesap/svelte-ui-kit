@@ -43,7 +43,7 @@ export function buildMenuCandidate(
       path.join(fixture.root, route),
       readFileSync(`tests/fixtures/menu-candidate/${stage}.svelte`),
     );
-    const logRoot = "implementation/evidence/logs/menu-candidate";
+    const logRoot = ".artifacts/verification/menu-candidate";
     mkdirSync(logRoot, { recursive: true });
     const logs: string[] = [];
     for (const script of ["check", "build"]) {

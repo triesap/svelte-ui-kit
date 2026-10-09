@@ -293,11 +293,11 @@ for (const custom of [false, true])
       ])
         assert.ok(rendered.body.includes(className), className);
       assert.ok(consumer.evidence.files["src/catalog-exports.ts"]);
-      mkdirSync("implementation/evidence/logs/catalog-parity", {
+      mkdirSync(".artifacts/verification/catalog-parity", {
         recursive: true,
       });
       writeFileSync(
-        `implementation/evidence/logs/catalog-parity/${custom ? "custom" : "default"}-${process.pid}.json`,
+        `.artifacts/verification/catalog-parity/${custom ? "custom" : "default"}-${process.pid}.json`,
         JSON.stringify({ evidence: consumer.evidence, rendered }, null, 2),
       );
     } finally {

@@ -32,9 +32,9 @@ for (const custom of [false, true])
         concurrent: { status: number; body: string }[];
         repeated: { status: number; body: string }[];
       };
-      mkdirSync("implementation/evidence/logs/dialog-ssr", { recursive: true });
+      mkdirSync(".artifacts/verification/dialog-ssr", { recursive: true });
       writeFileSync(
-        `implementation/evidence/logs/dialog-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
+        `.artifacts/verification/dialog-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
         JSON.stringify({ evidence: consumer.evidence, responses }, null, 2),
       );
       for (const lane of [responses.concurrent, responses.repeated]) {
@@ -99,9 +99,9 @@ for (const custom of [false, true])
             );
         }
       }
-      mkdirSync("implementation/evidence/logs/dialog-ssr", { recursive: true });
+      mkdirSync(".artifacts/verification/dialog-ssr", { recursive: true });
       writeFileSync(
-        `implementation/evidence/logs/dialog-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
+        `.artifacts/verification/dialog-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
         JSON.stringify({ evidence: consumer.evidence, responses }, null, 2),
       );
     } finally {

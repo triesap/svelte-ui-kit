@@ -1,7 +1,7 @@
 {
   "source": {
     "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
-    "document": "references/TOKEN_BASELINE.md",
+    "document": "https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/references/TOKEN_BASELINE.md",
     "milestone": "ae136d7d08ac4efeffdd2056d49dd554557dd68d"
   },
   "tokens": [

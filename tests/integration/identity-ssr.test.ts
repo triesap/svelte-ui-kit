@@ -134,11 +134,11 @@ for (const custom of [false, true])
         ids(responses.concurrent[0]!.body),
         ids(responses.concurrent[6]!.body),
       );
-      mkdirSync("implementation/evidence/logs/identity-ssr", {
+      mkdirSync(".artifacts/verification/identity-ssr", {
         recursive: true,
       });
       writeFileSync(
-        `implementation/evidence/logs/identity-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
+        `.artifacts/verification/identity-ssr/${custom ? "custom" : "default"}-${process.pid}.json`,
         JSON.stringify({ evidence: consumer.evidence, responses }, null, 2),
       );
     } finally {

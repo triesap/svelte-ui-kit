@@ -19,6 +19,7 @@ playwright-report/
 !.env.example
 
 # Local runtime qualification evidence (raw logs, exits and checksum inventories)
+.artifacts/verification/
 implementation/evidence/logs/
 
 # OS and editor temporary files

@@ -16,7 +16,7 @@ Installation ID: `field`. Explicit requests and dependency closure remain separa
 
 ## Public contract
 
-Compose FieldRoot, Surface, Label, Message and Required with TextInput, TextArea or NativeSelect, or use TextField/TextAreaField/SelectField recipes.
+Compose FieldRoot, FieldSurface, FieldLabel, FieldMessage and FieldRequired with TextInput, TextArea or NativeSelect, or use TextField/TextAreaField/SelectField recipes.
 This is native Svelte, with no Bits dependency, validation engine, form store or provider counter.
 FieldSlot is an optional native Snippet type; TextInputType is exactly text/email/password/search/tel/url.
 Root owns keyed messages with required key/children and paragraph attrs (excluding id); both rendered paragraphs and describedBy derive from the same current list, including SSR.

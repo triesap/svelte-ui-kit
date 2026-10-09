@@ -232,7 +232,7 @@ for (const custom of [false, true])
           `import type {${names.map((name) => name + "Props").join(",")},FieldSlot,TextInputType} from ${JSON.stringify(typeModule)};\n${names.map((name, i) => `const part${i}: ${name}Props = ${{ FieldRoot: "{children}", FieldSurface: "{children}", FieldLabel: "{children}", FieldMessage: '{id:"message",children}', FieldRequired: "{}", TextInput: "{}", TextArea: "{}", NativeSelect: "{children}", SelectIcon: "{children}", TextField: '{label:"Text",name:"text"}', TextAreaField: '{label:"Body",name:"body"}', SelectField: '{label:"Choice",name:"choice",selectedLabel:"Alpha",children}' }[name]}; void part${i};`).join("\n")}\n` +
           'declare const children:Snippet;const slot:FieldSlot=children;const inputType:TextInputType="text";void slot;void inputType;\n',
       );
-      const evidenceRoot = "implementation/evidence/logs/field-install";
+      const evidenceRoot = ".artifacts/verification/field-install";
       mkdirSync(evidenceRoot, { recursive: true });
       const evidenceName = `${custom ? "custom" : "default"}-${process.pid}-${Date.now()}`;
       for (const script of ["check", "build"]) {

@@ -17,7 +17,7 @@
  * after retirement). Every check/build/render subprocess runs with the
  * inherited parent environment; per-stage raw outputs, exits/signals/errors,
  * input/served artifact digests and the response are retained under the ignored
- * `implementation/evidence/logs/` tree.
+ * `.artifacts/verification/` tree.
  *
  * Each mapping's consumer copy, every child process and every server are owned
  * by the suite and removed or stopped on success and failure; the maintained
@@ -63,9 +63,8 @@ const EVIDENCE_DIR =
   process.env["RCLD04_Q2_EVIDENCE_DIR"] ??
   path.join(
     PACKAGE_ROOT,
-    "implementation",
-    "evidence",
-    "logs",
+    ".artifacts",
+    "verification",
     `rcl04-q2-${process.pid}`,
   );
 

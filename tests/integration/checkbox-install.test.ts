@@ -129,7 +129,7 @@ for (const custom of [false, true])
         route,
         `<script lang="ts">import { Checkbox } from ${JSON.stringify(module)};import type { CheckboxProps } from ${JSON.stringify(module)};let ref=$state<HTMLElement|null>(null);let checked=$state(true);const options:Pick<CheckboxProps,"name"|"value">={name:"enabled",value:"yes"};</script><h1>Installed Checkbox</h1><Checkbox id="checked-checkbox" bind:checked bind:ref class="caller" aria-label="Enabled" {...options}/><Checkbox id="unchecked-checkbox" aria-label="Optional"/><Checkbox id="mixed-checkbox" indeterminate aria-label="Mixed"/>`,
       );
-      const logRoot = "implementation/evidence/logs/checkbox-install";
+      const logRoot = ".artifacts/verification/checkbox-install";
       mkdirSync(logRoot, { recursive: true });
       const prefix = `${custom ? "custom" : "default"}-${process.pid}-${Date.now()}`;
       for (const script of ["check", "build"]) {
