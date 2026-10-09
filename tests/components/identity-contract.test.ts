@@ -36,7 +36,7 @@ test("original identity has an explicit non generated disposition without regist
       /[/\\]identity(?:[./\\]|$)/.test(file),
     ),
   );
-  const map = read("specs/component-maps/identity.md");
+  const map = read("docs/reference/compatibility.md");
   assert.match(map, /Disposition: deliberately non-generated/);
   assert.match(map, /Svelte5\.57\.1 and Bits2\.19\.5-svelte-ui-kit\.2/);
   assert.match(map, /idPrefix/);

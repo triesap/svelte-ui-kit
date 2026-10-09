@@ -59,7 +59,7 @@ test("every authoritative kit class maps to component markup or the documented M
         .map((f) => readFileSync(`registry/${f.source}`, "utf8")),
     )
     .join("\n");
-  const map = readFileSync("specs/component-maps/menu.md", "utf8");
+  const map = readFileSync("docs/reference/components/menu.md", "utf8");
   for (const rule of rules)
     for (const selector of rule.selectors) {
       for (const [, name] of selector.matchAll(/\.(kit-[\w-]+)/g)) {

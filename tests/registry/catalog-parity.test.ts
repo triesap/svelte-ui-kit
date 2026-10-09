@@ -148,25 +148,26 @@ test("immutable original catalog inventory has exactly twenty two explicit dispo
     source.items.map((item) => item.id),
     original,
   );
-  const catalog = readFileSync("specs/COMPONENT_CATALOG.md", "utf8");
+  const catalog = readFileSync("docs/reference/components/README.md", "utf8");
   for (const item of source.items) {
     assert.match(item.sha256, /^[a-f0-9]{64}$/);
     for (const asset of [...item.files, ...item.styles])
       assert.match(asset.sha256, /^[a-f0-9]{64}$/);
-    assert.match(catalog, new RegExp(`\\| ${item.id} +\\|`));
-    const worksheet = readFileSync(
-      `specs/component-maps/${item.id}.md`,
-      "utf8",
-    );
+    const file =
+      item.id === "identity"
+        ? "docs/reference/compatibility.md"
+        : `docs/reference/components/${item.id}.md`;
+    if (item.id !== "identity")
+      assert.ok(catalog.includes(`](${item.id}.md)`), item.id);
+    const worksheet = readFileSync(file, "utf8");
     for (const name of item.exports)
       assert.ok(
         catalog.includes(name) || worksheet.includes(name),
         `${item.id}: source export ${name} needs explicit target/disposition`,
       );
-    assert.ok(catalog.includes(`component-maps/${item.id}.md`));
+    if (item.id !== "identity") assert.ok(catalog.includes(`${item.id}.md`));
   }
-  assert.match(catalog, /21 generated items/);
-  assert.match(catalog, /Deliberately non-generated/);
+  assert.match(catalog, /deliberately non-generated/);
   assert.match(catalog, /sole additional component/);
 });
 

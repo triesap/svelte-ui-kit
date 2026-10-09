@@ -177,7 +177,7 @@ test("Dialog registration requires the complete single cohort and distinct Alert
     assert.match(source, new RegExp(`<BitsAlertDialog\\.${part}\\b`));
     assert.doesNotMatch(source, /BitsDialog\.|role=["']alertdialog/);
   }
-  const mapping = readFileSync("specs/component-maps/dialog.md", "utf8");
+  const mapping = readFileSync("docs/reference/components/dialog.md", "utf8");
   assert.match(mapping, /actual distinct primitive/);
   assert.match(mapping, /single dialog compatibility cohort/);
 });

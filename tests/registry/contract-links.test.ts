@@ -88,13 +88,13 @@ test("each authenticated advertised item has a maintained source map and real as
   if (!loaded.ok) throw new Error("registry invalid");
   assert.equal(loaded.value.items.length, 22);
   for (const item of loaded.value.items) {
-    const map = `specs/component-maps/${item.manifest.id}.md`;
+    const map = `docs/reference/components/${item.manifest.id}.md`;
     assert.ok(existsSync(map), map);
     assert.ok(readFileSync(map, "utf8").trim().length > 0);
     for (const asset of [...item.manifest.files, ...item.manifest.styles])
       assert.ok(existsSync(path.join("registry", asset.source)), asset.source);
   }
-  assert.ok(existsSync("specs/component-maps/identity.md"));
+  assert.ok(existsSync("docs/reference/compatibility.md"));
   assert.equal(
     loaded.value.items.some((item) => item.manifest.id === "identity"),
     false,

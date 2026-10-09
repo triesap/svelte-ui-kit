@@ -15,8 +15,10 @@ const semantic = JSON.parse(
 const customization = JSON.parse(
   readFileSync("registry/contracts/component-customization-v1.json", "utf8"),
 );
-const mapping = readFileSync("specs/component-maps/tokens.md", "utf8");
-const baseline = readFileSync("references/TOKEN_BASELINE.md", "utf8");
+const mapping = readFileSync("docs/reference/components/tokens.md", "utf8");
+const baseline = JSON.parse(
+  readFileSync("tests/fixtures/token-source-defaults.json", "utf8"),
+) as { tokens: { name: string; fallback: string }[] };
 const mappedRows = mapping
   .split("\n")
   .filter((line) => /^\| --kit-/.test(line))
@@ -61,7 +63,7 @@ for (const [family, count] of [
       parseCss(readFileSync(`registry/styles/${family}.css`, "utf8")).children,
     );
     const documented = readFileSync(
-      `specs/component-maps/${family}.md`,
+      `docs/reference/components/${family}.md`,
       "utf8",
     );
     for (const property of properties) {
@@ -140,17 +142,15 @@ test("portable contracts validate independently without source ABI identities", 
 });
 
 test("all observed semantic defaults remain exact with explicit role and value type", () => {
-  const rows = [
-    ...baseline.matchAll(/^\|\s*(--kit-[a-z0-9-]+)\s*\|\s*([^|]+?)\s*\|/gm),
-  ];
+  const rows = baseline.tokens;
   assert.equal(rows.length, 44);
   assert.equal(semantic.tokens.length, 44);
   for (const row of rows) {
     const token = semantic.tokens.find(
-      (entry: { name: string }) => entry.name === row[1],
+      (entry: { name: string }) => entry.name === row.name,
     );
-    assert.ok(token, row[1]);
-    assert.equal(token.fallback, row[2]!.trim(), row[1]);
+    assert.ok(token, row.name);
+    assert.equal(token.fallback, row.fallback, row.name);
     assert.deepEqual(
       mappedRows.find((row) => row[0] === token.name),
       [token.name, token.role, token.type, token.fallback],

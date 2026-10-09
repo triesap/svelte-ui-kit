@@ -188,7 +188,7 @@ test("Menu source selection is explicit and owned unadvertised candidate is refu
         (d) => d.code === "REGISTRY_ITEM_UNKNOWN",
       ),
     );
-    const mapping = readFileSync("specs/component-maps/menu.md", "utf8");
+    const mapping = readFileSync("docs/reference/components/menu.md", "utf8");
     for (const boundary of [
       "RadioGroup",
       "RadioItem",

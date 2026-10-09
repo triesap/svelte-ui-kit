@@ -1,0 +1,185 @@
+{
+  "source": {
+    "revision": "a10fbf06334f4648f5755e05a7147414e4e5fc98",
+    "document": "references/TOKEN_BASELINE.md",
+    "milestone": "ae136d7d08ac4efeffdd2056d49dd554557dd68d"
+  },
+  "tokens": [
+    {
+      "name": "--kit-color-canvas",
+      "fallback": "#f8fafc"
+    },
+    {
+      "name": "--kit-color-surface",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-surface-raised",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-surface-hover",
+      "fallback": "#f3f4f6"
+    },
+    {
+      "name": "--kit-color-surface-active",
+      "fallback": "#e5e7eb"
+    },
+    {
+      "name": "--kit-color-text",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-color-text-secondary",
+      "fallback": "#374151"
+    },
+    {
+      "name": "--kit-color-text-muted",
+      "fallback": "#4b5563"
+    },
+    {
+      "name": "--kit-color-border",
+      "fallback": "#d1d5db"
+    },
+    {
+      "name": "--kit-color-border-strong",
+      "fallback": "#9ca3af"
+    },
+    {
+      "name": "--kit-color-primary",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-color-primary-hover",
+      "fallback": "#1f2937"
+    },
+    {
+      "name": "--kit-color-primary-foreground",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-selection-indicator",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-secondary",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-secondary-hover",
+      "fallback": "#f3f4f6"
+    },
+    {
+      "name": "--kit-color-secondary-foreground",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-color-accent",
+      "fallback": "#2563eb"
+    },
+    {
+      "name": "--kit-color-accent-hover",
+      "fallback": "#1d4ed8"
+    },
+    {
+      "name": "--kit-color-accent-foreground",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-info",
+      "fallback": "#0284c7"
+    },
+    {
+      "name": "--kit-color-info-foreground",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-success",
+      "fallback": "#16a34a"
+    },
+    {
+      "name": "--kit-color-success-foreground",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-warning",
+      "fallback": "#d97706"
+    },
+    {
+      "name": "--kit-color-warning-foreground",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-color-danger",
+      "fallback": "#dc2626"
+    },
+    {
+      "name": "--kit-color-danger-hover",
+      "fallback": "#b91c1c"
+    },
+    {
+      "name": "--kit-color-danger-foreground",
+      "fallback": "#ffffff"
+    },
+    {
+      "name": "--kit-color-link",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-color-link-hover",
+      "fallback": "#111827"
+    },
+    {
+      "name": "--kit-focus-ring",
+      "fallback": "#2563eb"
+    },
+    {
+      "name": "--kit-radius-sm",
+      "fallback": "0.25rem"
+    },
+    {
+      "name": "--kit-radius-md",
+      "fallback": "0.375rem"
+    },
+    {
+      "name": "--kit-radius-lg",
+      "fallback": "0.5rem"
+    },
+    {
+      "name": "--kit-radius-full",
+      "fallback": "999px"
+    },
+    {
+      "name": "--kit-border-width",
+      "fallback": "1px"
+    },
+    {
+      "name": "--kit-shadow-sm",
+      "fallback": "0 1px 2px rgb(15 23 42 / 8%)"
+    },
+    {
+      "name": "--kit-shadow-md",
+      "fallback": "0 12px 28px rgb(15 23 42 / 14%)"
+    },
+    {
+      "name": "--kit-shadow-lg",
+      "fallback": "0 20px 40px rgb(15 23 42 / 18%)"
+    },
+    {
+      "name": "--kit-duration-fast",
+      "fallback": "120ms"
+    },
+    {
+      "name": "--kit-duration-normal",
+      "fallback": "140ms"
+    },
+    {
+      "name": "--kit-easing-standard",
+      "fallback": "cubic-bezier(0.2, 0, 0, 1)"
+    },
+    {
+      "name": "--kit-disabled-opacity",
+      "fallback": "0.55"
+    }
+  ]
+}
