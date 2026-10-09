@@ -74,11 +74,18 @@ and backup before deciding on recovery. There is no `recover` command or force
 flag. Rerun the original write command only after resolving coordination safely;
 its guarded boundary either recovers provable state or refuses.
 
-An `init` replay that reports `no_change` performs no recovery. Run strict
-doctor again: retained evidence still requires review, even after exit 0.
-When a subsequent intentional component write passes planning, its guarded
-boundary can clean provably committed evidence. Do not invent a component
-request, force a change or delete evidence merely to trigger cleanup.
+Unchanged `init`, `add` and `sync`, including dry runs, inspect coordination and
+transaction state without acquiring a writer or cleaning evidence. A valid
+writer produces `WRITER_BUSY`; ambiguous ownership produces
+`WRITER_LOCK_UNAVAILABLE`. Otherwise valid retained transactions, including
+committed cleanup, produce `RECOVERY_PENDING`. Corrupt or foreign evidence
+retains its specific recovery diagnostic. Physical safety checks precede writer
+and journal diagnosis. A clean exit-0 `no_change` requires absent writer
+evidence and no retained transaction directories; it still proves no recovery
+occurred. Empty coordination namespaces are harmless and remain untouched.
+When a subsequent intentional write passes planning, its guarded boundary can
+recover provable state. Do not invent a component request, force a change or
+delete evidence merely to trigger cleanup.
 
 Planning can also stop with `INIT_OWNERSHIP_CONFLICT` before guarded recovery
 when interrupted integration lacks canonical ownership. This is a safe stop,

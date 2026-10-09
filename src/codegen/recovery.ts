@@ -32,7 +32,11 @@ import { fail, ok, type ModelResult } from "../registry/errors.js";
 import { observeEntry } from "../project/io.js";
 import { sha256Hex } from "./digest.js";
 import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
-import { identityDigest, observeRootIdentity } from "./authority.js";
+import {
+  captureAncestors,
+  identityDigest,
+  observeRootIdentity,
+} from "./authority.js";
 import { removeOwnedAncestors } from "./owned-ancestry.js";
 import {
   parseJournal,
@@ -66,12 +70,15 @@ import {
   transactionDir,
   transactionsDir,
   transientRoot,
+  isTransactionId,
+  writerLockDir,
 } from "./transaction-types.js";
 import {
   acquireWriterLock,
   holdsWriterLock,
   releaseWriterLock,
   verifyHeldWriterLock,
+  readWriterLock,
 } from "./write-lock.js";
 
 export type RecoveryStatus =
@@ -198,6 +205,29 @@ function readJournal(
   stateDir: string,
   transactionId: string,
 ): TransactionJournal | ModelIssue[] {
+  const logical = journalPath(stateDir, transactionId);
+  const ancestors = captureAncestors(root, logical);
+  if (!ancestors.ok)
+    return [
+      issue(
+        "RECOVERY_UNSAFE_ANCESTRY",
+        "The journal ancestry is not safe to inspect.",
+        "journal.json",
+      ),
+    ];
+  const observed = observeEntry(absOf(root, logical));
+  if (
+    observed.kind !== "file" &&
+    observed.kind !== "absent" &&
+    observed.kind !== "unreadable"
+  )
+    return [
+      issue(
+        "RECOVERY_UNSAFE_TARGET",
+        "The retained journal is not a regular file; preserve it.",
+        "journal.json",
+      ),
+    ];
   const file = absOf(
     root,
     `${transactionDir(stateDir, transactionId)}/journal.json`,
@@ -1712,6 +1742,329 @@ export interface JournalInspection {
   readonly transactionId: string;
   readonly ok: boolean;
   readonly issues: readonly ModelIssue[];
+}
+
+/**
+ * An unchanged plan grants no recovery authority. Observe the independently
+ * resolved mapping without acquiring a writer, removing evidence or following
+ * links. Physical safety wins over coordination; coordination wins over journal
+ * diagnosis; all journals are checked before reporting merely pending state.
+ */
+export function inspectUnchangedState(
+  root: string,
+  stateDir: string,
+  roots: RecoveryRoots,
+): readonly ModelIssue[] {
+  const namespace = transientRoot(stateDir);
+  const unreadable = (logical: string) =>
+    issue(
+      isWithinRoot(logical, writerLockDir(stateDir))
+        ? "WRITER_LOCK_UNAVAILABLE"
+        : "RECOVERY_INVENTORY_UNREADABLE",
+      "Retained state cannot be inspected; preserve it before retrying.",
+      namespace,
+    );
+  const unsafe = (locator: string) =>
+    issue(
+      "RECOVERY_UNSAFE_TARGET",
+      "Retained state or an approved target is not a safe regular entry; preserve it before retrying.",
+      locator,
+    );
+  const safeTarget = (
+    logical: string,
+    kind: "file" | "directory",
+  ): ModelIssue[] => {
+    const ancestors = captureAncestors(root, logical);
+    if (!ancestors.ok) return [unsafe(namespace)];
+    const observed = observeEntry(absOf(root, logical));
+    if (observed.kind === "absent" || observed.kind === kind) return [];
+    if (observed.kind === "unreadable") return [unreadable(logical)];
+    return [unsafe(namespace)];
+  };
+  const rootIdentity = observeRootIdentity(root);
+  if (!rootIdentity.ok) return rootIdentity.issues;
+  const physical: ModelIssue[] = [
+    ...safeTarget(roots.uiDir, "directory"),
+    ...safeTarget(roots.stylesDir, "directory"),
+    ...safeTarget(stateDir, "directory"),
+    ...safeTarget(roots.layoutFile, "file"),
+    ...safeTarget(lockPath(stateDir), "file"),
+  ];
+  if (physical.length > 0) return physical;
+  // Walk metadata first, never read a FIFO, symlink or other special entry.
+  // Unknown regular inventory is diagnosed later, after coordination.
+  const walk = (logical: string): void => {
+    const entry = observeEntry(absOf(root, logical));
+    if (entry.kind === "absent") return;
+    if (entry.kind === "unreadable") {
+      physical.push(unreadable(logical));
+    } else if (entry.kind === "directory") {
+      try {
+        for (const name of readdirSync(absOf(root, logical)).sort())
+          walk(`${logical}/${name}`);
+      } catch {
+        physical.push(unreadable(logical));
+      }
+    } else if (entry.kind !== "file") physical.push(unsafe(namespace));
+  };
+  walk(namespace);
+  // Expected directory/file kinds also matter when the wrong entry is regular.
+  for (const logical of [
+    namespace,
+    writerLockDir(stateDir),
+    transactionsDir(stateDir),
+  ])
+    physical.push(...safeTarget(logical, "directory"));
+  physical.push(...safeTarget(`${writerLockDir(stateDir)}/owner.json`, "file"));
+  if (physical.length > 0) return physical;
+  let names: string[];
+  let namespaceNames: string[];
+  try {
+    names =
+      observeEntry(absOf(root, transactionsDir(stateDir))).kind === "absent"
+        ? []
+        : readdirSync(absOf(root, transactionsDir(stateDir))).sort();
+    namespaceNames =
+      observeEntry(absOf(root, namespace)).kind === "absent"
+        ? []
+        : readdirSync(absOf(root, namespace));
+  } catch {
+    return [
+      issue(
+        "RECOVERY_SCAN_UNREADABLE",
+        "Retained transaction state cannot be listed.",
+        namespace,
+      ),
+    ];
+  }
+  const journals = new Map<string, TransactionJournal | ModelIssue[]>();
+  for (const id of names.filter(isTransactionId)) {
+    const dir = transactionDir(stateDir, id);
+    physical.push(...safeTarget(dir, "directory"));
+    for (const sub of ["staged", "backups", "progress"])
+      physical.push(...safeTarget(`${dir}/${sub}`, "directory"));
+    for (const file of [
+      "journal.json",
+      "publication.json",
+      journalTempName(id),
+      publicationIntentTempName(id),
+    ])
+      physical.push(...safeTarget(`${dir}/${file}`, "file"));
+    if (physical.length > 0) continue;
+    if (observeEntry(absOf(root, journalPath(stateDir, id))).kind === "absent")
+      continue;
+    const read = readJournal(root, stateDir, id);
+    journals.set(id, read);
+    if (Array.isArray(read)) continue;
+    const mapping = validateJournalTargets(read, { ...roots, stateDir });
+    // A journal cannot select physical inspection targets outside the mapping.
+    if (!mapping.ok) continue;
+    for (const operation of read.operations)
+      physical.push(...safeTarget(operation.path, "file"));
+    for (const created of read.createdDirs ?? []) {
+      const approved = [
+        roots.uiDir,
+        roots.stylesDir,
+        roots.layoutFile,
+        stateDir,
+      ].some(
+        (logical) =>
+          isWithinRoot(created.path, logical) ||
+          isWithinRoot(logical, created.path),
+      );
+      if (!approved) continue;
+      const ancestry = captureAncestors(root, `${created.path}/__owned__`);
+      if (!ancestry.ok) physical.push(unsafe(namespace));
+    }
+  }
+  if (physical.length > 0) return physical;
+  const writer = readWriterLock(root, stateDir);
+  if (writer.kind !== "absent") {
+    let exact = false;
+    try {
+      exact = readdirSync(absOf(root, writerLockDir(stateDir))).every(
+        (name) => name === "owner.json",
+      );
+    } catch {
+      /* Ambiguous ownership stays unavailable. */
+    }
+    return [
+      issue(
+        writer.kind === "held" && exact
+          ? "WRITER_BUSY"
+          : "WRITER_LOCK_UNAVAILABLE",
+        "Retained writer coordination prevents unchanged-command success; preserve its evidence.",
+        writerLockDir(stateDir),
+      ),
+    ];
+  }
+  const problems: ModelIssue[] = [];
+  // Never echo arbitrary journal values or unexpected filesystem names: all
+  // diagnostic locators are rooted in the independently approved namespace.
+  const retain = (entries: readonly ModelIssue[], locator: string): void => {
+    problems.push(
+      ...entries.map((entry) =>
+        issue(
+          entry.code,
+          "Retained transaction evidence could not be qualified; preserve it and follow the recovery guidance.",
+          locator,
+        ),
+      ),
+    );
+  };
+  if (
+    namespaceNames.some(
+      (name) => name !== "writer.lock" && name !== "transactions",
+    ) ||
+    names.some((name) => !isTransactionId(name))
+  )
+    problems.push(
+      issue(
+        "RECOVERY_UNEXPECTED_ENTRY",
+        "The reserved namespace contains unrecorded inventory; preserve it.",
+        namespace,
+      ),
+    );
+  for (const id of names.filter(isTransactionId)) {
+    const locator = namespace;
+    const read = journals.get(id);
+    if (Array.isArray(read)) {
+      retain(read, locator);
+      continue;
+    }
+    if (read === undefined) {
+      if (hasRollbackEvidence(root, stateDir, id)) {
+        problems.push(
+          issue(
+            "RECOVERY_AMBIGUOUS_JOURNAL",
+            "Possible mutation evidence remains without a journal; preserve it.",
+            locator,
+          ),
+        );
+        continue;
+      }
+      retain(inventoryIssues(root, stateDir, id, null), locator);
+      const intent = readPublicationIntent(
+        root,
+        publicationIntentPath(stateDir, id),
+      );
+      if (Array.isArray(intent)) {
+        retain(intent, locator);
+        continue;
+      }
+      if (intent !== null) {
+        retain(intentBindingIssues(root, stateDir, id, intent), locator);
+        if (
+          intent.transactionId !== id ||
+          classifyPublication({
+            intent,
+            canonical: observeFileIdentity(absOf(root, lockPath(stateDir))),
+            stagedIdentity: observeFileIdentity(
+              absOf(root, `${stagedDir(stateDir, id)}/kit.lock.json`),
+            ),
+            expectedDigest: intent.digest,
+            canonicalDigest: readFileSafe(root, lockPath(stateDir)),
+          }) !== "published"
+        )
+          problems.push(
+            issue(
+              "RECOVERY_AMBIGUOUS_PUBLICATION",
+              "The retained witness cannot prove publication; preserve it.",
+              locator,
+            ),
+          );
+      }
+      continue;
+    }
+    const mapping = validateJournalTargets(read, { ...roots, stateDir });
+    if (!mapping.ok) {
+      retain(mapping.issues, locator);
+      continue;
+    }
+    retain(rootBindingIssues(root, read), locator);
+    retain(inventoryIssues(root, stateDir, id, read), locator);
+    retain(createdDirIssues(root, stateDir, read, roots), locator);
+    if (read.phase === "rolled_back") {
+      retain(terminalRollbackIssues(root, stateDir, read), locator);
+      continue;
+    }
+    const intent = readPublicationIntent(
+      root,
+      publicationIntentPath(stateDir, id),
+    );
+    if (Array.isArray(intent)) {
+      retain(intent, locator);
+      continue;
+    }
+    let published = read.phase === "published" || read.phase === "cleaned";
+    if (intent !== null) {
+      retain(intentBindingIssues(root, stateDir, id, intent), locator);
+      if (
+        intent.transactionId !== id ||
+        intent.planDigest !== read.planDigest ||
+        intent.rootIdentity !== read.rootIdentity ||
+        read.lock === null ||
+        intent.digest !== read.lock.digest
+      ) {
+        problems.push(
+          issue(
+            "RECOVERY_AMBIGUOUS_PUBLICATION",
+            "The publication witness contradicts its journal; preserve both.",
+            locator,
+          ),
+        );
+        continue;
+      }
+      const classification = classifyPublication({
+        intent,
+        canonical: observeFileIdentity(absOf(root, lockPath(stateDir))),
+        stagedIdentity: observeFileIdentity(
+          absOf(root, `${stagedDir(stateDir, id)}/kit.lock.json`),
+        ),
+        expectedDigest: intent.digest,
+        canonicalDigest: readFileSafe(root, lockPath(stateDir)),
+      });
+      if (classification === "ambiguous") {
+        problems.push(
+          issue(
+            "RECOVERY_AMBIGUOUS_PUBLICATION",
+            "The publication outcome cannot be proven; preserve its evidence.",
+            locator,
+          ),
+        );
+        continue;
+      }
+      published ||= classification === "published";
+    }
+    if (published) {
+      if (
+        read.lock === null ||
+        readFileSafe(root, lockPath(stateDir)) !== read.lock.digest
+      )
+        problems.push(
+          issue(
+            "RECOVERY_AMBIGUOUS_PUBLICATION",
+            "The canonical lock contradicts the retained publication; preserve it.",
+            locator,
+          ),
+        );
+      retain(verifyPublishedEvidence(root, stateDir, id, read), locator);
+    } else if (read.phase !== "planned") {
+      for (const operation of read.operations)
+        retain(preflightRollback(root, stateDir, id, operation), locator);
+    }
+  }
+  return problems.length > 0
+    ? problems
+    : names.length > 0
+      ? [
+          issue(
+            "RECOVERY_PENDING",
+            "Retained transactions require recovery disposition before unchanged-command success.",
+            transactionsDir(stateDir),
+          ),
+        ]
+      : [];
 }
 
 /**

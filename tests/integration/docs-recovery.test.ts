@@ -141,8 +141,13 @@ for (const custom of [false, true])
       }
       const busy = run(["init"]);
       if (scenario === "committed-cleanup" || scenario === "corrupt-journal") {
-        assert.equal(busy.result.status, 0);
-        assert.equal(busy.envelope.status, "no_change");
+        assert.equal(busy.result.status, 1);
+        assert.equal(busy.envelope.status, "error");
+        assert.ok(
+          busy.envelope.diagnostics.some(
+            (d: { code: string }) => d.code === "WRITER_BUSY",
+          ),
+        );
       } else {
         assert.notEqual(busy.result.status, 0);
         assert.ok(
@@ -170,12 +175,22 @@ for (const custom of [false, true])
       const quarantined = snapshotTree(root);
       const replay = run(["init"]);
       if (scenario === "committed-cleanup" || scenario === "corrupt-journal") {
-        assert.equal(replay.result.status, 0);
-        assert.equal(replay.envelope.status, "no_change");
+        assert.equal(replay.result.status, 1);
+        assert.equal(replay.envelope.status, "error");
+        assert.ok(
+          replay.envelope.diagnostics.some(
+            (d: { code: string }) =>
+              d.code ===
+              (scenario === "corrupt-journal"
+                ? "JOURNAL_MALFORMED"
+                : "RECOVERY_PENDING"),
+          ),
+          replay.result.stdout,
+        );
         assert.deepEqual(snapshotTree(root), quarantined);
       }
       // A separate intentional component request supplies a genuine write;
-      // init's no-change result is never mislabeled as cleanup or forced repair.
+      // Unchanged inspection is never mislabeled as cleanup or forced repair.
       const recovered =
         scenario === "committed-cleanup" || scenario === "corrupt-journal"
           ? run(["add", "button"])

@@ -214,6 +214,8 @@ test("recovery diagnostics carry code-specific manual guidance", () => {
     "RECOVERY_ROOT_MISMATCH",
     "RECOVERY_ANCESTRY_NOT_EMPTY",
     "RECOVERY_AMBIGUOUS_JOURNAL",
+    "RECOVERY_PENDING",
+    "WRITER_LOCK_UNAVAILABLE",
     "WRITER_BUSY",
     "WRITER_LOCK_UNOWNED",
   ];

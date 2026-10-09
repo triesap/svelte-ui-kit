@@ -15,6 +15,7 @@ import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
 import { planInit } from "../../codegen/plan-init.js";
 import { composeApplyPlan } from "../../codegen/compose.js";
 import { applyPlan, validateApplyPlan } from "../../codegen/apply.js";
+import { inspectUnchangedState } from "../../codegen/recovery.js";
 import { createAssetProvider } from "../../registry/assets.js";
 import { loadRegistrySnapshot } from "../../registry/load.js";
 import { tokenMetadataPaths } from "../../registry/theme.js";
@@ -122,10 +123,17 @@ export function initialize(
     dependencies: instructions.value,
     integration: { layoutFile: config.layoutFile, ...deriveKitPaths(config) },
   };
-  if (planned.value.writes.length === 0)
+  if (planned.value.writes.length === 0) {
+    const retained = inspectUnchangedState(
+      snapshot.value.root,
+      paths.stateDir,
+      config,
+    );
+    if (retained.length > 0) return failure(retained);
     return {
       envelope: createEnvelope({ command: "init", status: "no_change", data }),
     };
+  }
   const composed = composeApplyPlan({
     root: snapshot.value.root,
     config,

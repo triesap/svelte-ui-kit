@@ -453,6 +453,72 @@ delivery are qualified by these owning lanes. The full amendment and final
 cumulative release gate remain outstanding; this slice grants no independent
 acceptance or S201 completion.
 
+The portable adoption is committed at
+`909eaba7aefcb1f8552dad8307470c5109a9014b`.
+
+## R11-F03 — Read-only unchanged-command safety
+
+Unchanged init/add/sync now share `inspectUnchangedState` before returning
+`no_change`, including dry runs. The caller supplies its independently resolved
+mapping. Non-following physical inspection precedes writer coordination, then
+journal qualification and pending-state disposition. The inspection never
+acquires a writer, recovers, cleans or manufactures a write. Clean absent state
+and harmless empty namespaces retain exit-0 replay without project writes.
+
+Valid writer evidence produces `WRITER_BUSY`; ambiguous/unreadable ownership
+produces `WRITER_LOCK_UNAVAILABLE`. All retained transactions are inspected
+before a generic pending result, so a corrupt later journal cannot hide behind
+an earlier empty transaction. Mapping/root/inventory/created-directory and
+publication witness checks reuse the existing recovery proofs. Valid committed
+cleanup produces `RECOVERY_PENDING` while preserving subsequent application
+edits. Diagnostics retain causal codes with independently rooted logical
+locators, without exposing arbitrary journal paths or transient identifiers.
+Journal reads now preflight ancestry and regular-file kind so read-only
+diagnosis cannot open a retained FIFO or follow a linked journal.
+
+The owning macOS integration run passes 172/172 across 17 files, zero skips,
+failures or cancellations. Its 50 new controls cover default/custom mappings,
+all three commands and dry runs, unsafe links/FIFOs, malformed and foreign
+records, writer priority, unknown inventory, genuine SIGKILL publication and
+released-but-retained cleanup, post-crash edits, exact tree preservation and
+human stderr errors. Permission denial is observed as actual EACCES under the
+unprivileged owner. Removing only the inspection in an owned executable copy
+causally restores the original silent success; restoring it restores refusal.
+The existing full-journal, publication, process, durability, cleanup, recovery
+and filesystem assertions remain green.
+
+The actual installed-tarball runtime file passes 4/4, zero skips. After removal
+of the owned authoring copy, both mappings and all three commands refuse writer
+and pending transaction state. An owned copy of that actual installed artifact
+with inspection removed restores silent success. Runtime guards record no
+authoring-source, network or subprocess access. The public protocol controls
+pass 10/10. CLI build, lint, all six root typechecks, format and live contract
+validation pass. Transcripts use `r11-f03-*` in the ignored logs directory.
+Twelve additional fresh-process diagnosis invocations of strict doctor, info
+and view cover real FIFO and linked journals in both mappings. Doctor refuses
+with `RECOVERY_UNSAFE_TARGET` without blocking; info/view remain read-only.
+Complete project trees and the linked external evidence remain unchanged.
+
+A fresh local Linux arm64 transfer prepares the authentic native dependency,
+installs frozen strict peers/engines, builds the CLI and passes the same 172/172
+integration controls under uid/gid 65534, zero skips/cancellations. The owning
+container is removed. Total preparation/install/build/test duration is
+298853 ms; process exit is zero with no signal or error. The pinned image is
+`sha256:3d27e5c11e5786e309ec3e03f93ae536eb36e6e5eb3714d5eb3300a36157add0`;
+source transfer SHA-256 is
+`4d85319c90c1d434de55365acb9858f94d719422d577435926012e698038c072`.
+The source inventory, raw transcript and actual case-sensitive filesystem
+observations remain under `r11-f03-linux-replay`. This qualifies the executed
+local Linux lane, not hosted CI, Windows or hostile concurrent races.
+
+The initial owning run passed 35/56 and failed 21, zero skips/cancellations:
+the new custom fixture put configuration at an unsupported root path and then
+asserted against an unused custom namespace. Its failure remains retained as
+`r11-f03-initial-owning.log`. The fixture now seeds the real custom `_kit`
+configuration path; no product guard or recovery assertion was weakened.
+Current owning qualification is green. R11-F03 is a verified implementation
+candidate; independent final acceptance and S201 remain open.
+
 ## Remaining implementation and acceptance
 
 Planning input maintenance, R11-F01 diagnosis and the R11-F02 producer and
@@ -462,7 +528,7 @@ initial baseline. The portable `.2` adoption candidate passes its required
 strict, delivery and runtime lanes. Independent acceptance
 remains open.
 Original progress remains 200 implemented candidates and 193 independently
-accepted checkpoints. R11-F03 no-change refusal,
+accepted checkpoints. R11-F03 no-change refusal is a verified candidate.
 R11-F04 CI, R11-F05 final
 guidance/boundary qualification, R11-F06/S201 full cumulative release checks,
 S202 extension reconciliation, S203 delivery and separate final acceptance of

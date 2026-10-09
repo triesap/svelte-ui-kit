@@ -433,7 +433,7 @@ or new product/API scope is authorized by this qualification.
 - Completed implementation checkpoints: **193 / 203**. Remaining: **10 / 203**.
 - Committed pending review: **7 / 203**. Authored batch range: **S194–S200**.
 - Completed RCLD sequences: **10 / 11**. Remaining: **1 / 11**.
-- Last safe target commit: `55604af60a29ed56e8a2cb427b3da25707019563`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `909eaba7aefcb1f8552dad8307470c5109a9014b`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.

@@ -6,6 +6,7 @@ import { captureCommandContext } from "./context.js";
 import { planAdd, type AddPlan } from "../../codegen/plan-add.js";
 import { composeApplyPlan } from "../../codegen/compose.js";
 import { validateApplyPlan, applyPlan } from "../../codegen/apply.js";
+import { inspectUnchangedState } from "../../codegen/recovery.js";
 import { deriveKitPaths } from "../../project/config.js";
 import { issue, type ModelIssue } from "../../registry/errors.js";
 import type { InfoResult } from "./info.js";
@@ -109,7 +110,13 @@ export function executeItemPlan(
         data,
       }),
     };
-  if (plan.writes.length === 0)
+  if (plan.writes.length === 0) {
+    const retained = inspectUnchangedState(
+      context.snapshot.root,
+      paths.stateDir,
+      plan.effectiveConfig,
+    );
+    if (retained.length > 0) return commandFailure(command, retained);
     return {
       envelope: createEnvelope({
         command,
@@ -118,6 +125,7 @@ export function executeItemPlan(
         data,
       }),
     };
+  }
   const composed = composeApplyPlan({
     root: context.snapshot.root,
     config: plan.effectiveConfig,

@@ -1,11 +1,21 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { before, after, test } from "node:test";
 import type { KitLock } from "../../src/codegen/lock.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { installIndependentCli } from "../helpers/packaged-cli.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
+import {
+  transientRoot,
+  writerLockDir,
+} from "../../src/codegen/transaction-types.js";
 
 let installed: ReturnType<typeof installIndependentCli>;
 before(() => {
@@ -127,6 +137,78 @@ for (const custom of [false, true])
     assert.deepEqual(snapshotTree(consumer.root), installedTree);
     for (const item of ["button", "dialog", "field", "menu"])
       assert.equal(run(["add", item]).status, "no_change");
+    assert.deepEqual(snapshotTree(consumer.root), installedTree);
+    const writer = writerLockDir(consumer.paths.stateDir);
+    consumer.write(
+      `${writer}/owner.json`,
+      JSON.stringify({
+        schemaVersion: 1,
+        transactionId: "11111111-1111-4111-8111-111111111111",
+        pid: 999999999,
+      }),
+    );
+    const retained = snapshotTree(consumer.root);
+    const omission = installed.clone(
+      `owned-unchanged-omission-${custom ? "custom" : "default"}`,
+    );
+    const module = path.join(omission, "dist/codegen/recovery.js");
+    const source = readFileSync(module, "utf8");
+    const start = source.indexOf("export function inspectUnchangedState(");
+    const end = source.indexOf("export function inspectTransactions(", start);
+    assert.ok(start >= 0 && end > start);
+    writeFileSync(
+      module,
+      source.slice(0, start) +
+        "export function inspectUnchangedState() { return []; }\n" +
+        source.slice(end),
+    );
+    for (const args of [["init"], ["add", "button"], ["sync"]])
+      for (const dry of [false, true]) {
+        const operands = [...args, ...(dry ? ["--dry-run"] : [])];
+        const refused = installed.run(operands, consumer.root);
+        assert.equal(refused.status, 1, refused.stdout + refused.stderr);
+        assert.deepEqual(refused.guardEvents, []);
+        const envelope = JSON.parse(refused.stdout);
+        assert.equal(envelope.status, "error");
+        assert.deepEqual(envelope.changes, []);
+        assert.ok(
+          envelope.diagnostics.some(
+            (entry: { code: string }) => entry.code === "WRITER_BUSY",
+          ),
+        );
+        assert.deepEqual(snapshotTree(consumer.root), retained);
+        const bypassed = installed.run(operands, consumer.root, omission);
+        assert.equal(bypassed.status, 0, bypassed.stdout + bypassed.stderr);
+        assert.equal(JSON.parse(bypassed.stdout).status, "no_change");
+        assert.deepEqual(bypassed.guardEvents, []);
+        assert.deepEqual(snapshotTree(consumer.root), retained);
+      }
+    // Exact owned test setup; the product never takes over this writer.
+    rmSync(path.join(consumer.root, transientRoot(consumer.paths.stateDir)), {
+      recursive: true,
+    });
+    const transaction = path.join(
+      consumer.root,
+      transientRoot(consumer.paths.stateDir),
+      "transactions",
+      "11111111-1111-4111-8111-111111111111",
+    );
+    mkdirSync(transaction, { recursive: true });
+    const pending = snapshotTree(consumer.root);
+    for (const args of [["init"], ["add", "button"], ["sync"]]) {
+      const refused = installed.run(args, consumer.root);
+      assert.equal(refused.status, 1, refused.stdout + refused.stderr);
+      assert.deepEqual(refused.guardEvents, []);
+      assert.ok(
+        JSON.parse(refused.stdout).diagnostics.some(
+          (entry: { code: string }) => entry.code === "RECOVERY_PENDING",
+        ),
+      );
+      assert.deepEqual(snapshotTree(consumer.root), pending);
+    }
+    rmSync(path.join(consumer.root, transientRoot(consumer.paths.stateDir)), {
+      recursive: true,
+    });
     assert.deepEqual(snapshotTree(consumer.root), installedTree);
   });
 

@@ -275,6 +275,10 @@ export function renderEnvelope(envelope: CommandEnvelope): string {
  */
 export function recoveryGuidance(code: string): string {
   const guidance: Readonly<Record<string, string>> = {
+    RECOVERY_PENDING:
+      "Preserve the retained transaction evidence and follow the recovery runbook before retrying. This unchanged command inspected state without recovering or cleaning it.",
+    WRITER_LOCK_UNAVAILABLE:
+      "Preserve the ambiguous writer evidence and reconcile it using the recovery runbook. Process age or PID death does not grant ownership.",
     RECOVERY_JOURNAL_UNREADABLE:
       "Inspect the retained transaction directory under the reserved _kit state namespace and reconcile it manually before retrying; do not delete unknown state.",
     RECOVERY_IDENTITY_MISMATCH:
