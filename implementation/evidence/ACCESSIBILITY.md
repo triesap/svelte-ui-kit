@@ -1,7 +1,11 @@
 # Observed catalog accessibility states
 
-S188 author qualification candidate. Mandatory independent S193 acceptance and
-final AC20 remain open. This records the pinned Chromium/native primitive
+Original S188 evidence was independently accepted through S193/RCLD-10.
+R11-F02's selected local Bits 2.19.5-svelte-ui-kit.2 full Chromium run reconfirmed
+the contrast, semantic, keyboard, RTL and reduced-motion controls. Its 733 cases
+are recorded in [the repair report](RCLD-11_REPAIR_REPORT.md); they are author
+qualification, with cumulative final qualification and separate S203/AC20
+acceptance still open. This records the pinned Chromium/native primitive
 boundary; it is not screen-reader interoperability or whole-application WCAG
 certification.
 
@@ -45,7 +49,8 @@ Both fall below the 3:1 comparison discussed in
 Identifying required boundaries and the effects of the rest of a particular
 application still requires assessment. These are recorded source concerns
 under AC18, not a claim that they pass that threshold or an unapproved palette
-redesign. The independent gate must assess this bounded original-source
+redesign. The prior independent gate accepted this bounded original-source
+disposition; the final independent gate must reassess the current candidate's
 disposition; any required unresolved issue blocks release. Arbitrary caller
 themes, disabled affordances, every token combination, all fonts and every
 assistive technology are not certified by these observations.

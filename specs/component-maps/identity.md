@@ -1,5 +1,11 @@
 # Identity parity through pinned native component facilities
 
+Current qualification status: original family gates through S193 are independently
+accepted. Checkpoint-era pending/gated statements below retain historical
+provenance. The selected native baseline and final release remain candidates
+under [current qualification](../../implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
+and the sole governing ledger; separate S203 acceptance remains required.
+
 Original S179–S180, R03, R21, R22, R26, R28, R29, R32, R33, R34.
 
 Disposition: deliberately non-generated. Immutable source KitIdProvider and
@@ -11,15 +17,17 @@ app-owned helper improves those facilities; no new source/export/style/dependenc
 or registry target is justified. The original identity catalog entry remains an
 explicit documented adaptation, not an omitted or installable item.
 
-Full-catalog S189 qualification additionally measures the pinned Menu floating
-positioning wrapper. Bits 2.19.5-svelte-ui-kit.2 gives that nonsemantic wrapper a `useId()`
+Original full-catalog S189 qualification measured the native Menu floating
+positioning wrapper. Current R11-F05 catalog SSR replay reassesses it on the
+selected Bits 2.19.5-svelte-ui-kit.2 build, which gives that nonsemantic wrapper a `useId()`
 process-counter default, distinct from its component part `$props.id()` IDs.
 The direct native Menu control and installed catalog both show varying
 `data-bits-floating-content-wrapper` IDs across repeated server requests.
 Every semantic component/form ID repeats for equivalent requests; every
 document has unique IDs and all emitted relationships resolve after hydration.
-No kit counter or identity API is added. This measured native boundary remains
-subject to independent S193 qualification; it is not a claim that the native
+No kit counter or identity API is added. The original bounded disposition passed
+independent S193 qualification; the current native candidate still requires
+separate S203 acceptance. It is not a claim that the native
 floating wrapper allocation is request-local.
 
 | Affected source                            | Native identity and relationship ownership                                                                                                                                                                                                                                               |
@@ -56,6 +64,7 @@ Where initial SSR needs a name, native caller aria-label remains available; real
 controls and conditional/repeated lifecycles must qualify actual live references.
 S179 contract/source audit establishes this bounded non-generated strategy; S180
 tests actual installed multiple controls/fields/dialogs, repeated/concurrent SSR,
-hydration, explicit overrides and conditional lifecycle. Separate S181 acceptance
-and later platform/MVP gates remain open. No primitive state/provider clone,
+hydration, explicit overrides and conditional lifecycle. Original S181 and S193
+gates are accepted; the changed native baseline and final MVP gate remain open.
+No primitive state/provider clone,
 compatibility alias or identity styling is introduced.

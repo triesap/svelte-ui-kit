@@ -1,5 +1,11 @@
 # Avatar source and target contract
 
+Current qualification status: original family gates through S193 are independently
+accepted. Checkpoint-era pending/gated statements below retain historical
+provenance. The selected native baseline and final release remain candidates
+under [current qualification](../../implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
+and the sole governing ledger; separate S203 acceptance remains required.
+
 Original S155–S157, R03, R20, R22, R25, R26, R32, R33, R34.
 
 The immutable source Avatar component is a native image with required string src

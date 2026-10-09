@@ -1,5 +1,11 @@
 # Status native feedback and decorative content contract
 
+Current qualification status: original family gates through S193 are independently
+accepted. Checkpoint-era pending/gated statements below retain historical
+provenance. The selected native baseline and final release remain candidates
+under [current qualification](../../implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
+and the sole governing ledger; separate S203 acceptance remains required.
+
 Original S167–S169, R03, R20, R22, R26, R32, R33, R34.
 
 The immutable source renders one paragraph with `.kit-status`, caller class and

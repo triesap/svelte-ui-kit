@@ -1,6 +1,6 @@
 # Verification commands and known-good commits
 
-## Current completion qualification — 2026-10-08
+## Current completion qualification — 2026-10-09
 
 S001–S193 are independently accepted. S194–S200 are seven committed candidates;
 S201 awaits the repaired cumulative qualification, and S202/S203 remain
@@ -44,6 +44,13 @@ pins, platform coverage and failure policy. Actionlint checks Actions syntax.
 The current command map records the exact jobs and bounds. This configuration
 does not constitute a hosted execution or independent acceptance; R11-F06
 records the remaining current cumulative local results.
+
+Current guidance and [native/source boundaries](evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
+distinguish verified repaired behavior from historical qualification. Use the
+complete command map for acceptance: the historical S008 harness selector and
+early two-file SSR description below cannot substitute for the full browser
+or four-suite production/SSR lanes. The actual root scripts own their current
+scope; every original S201 criterion and separate S203 decision remain required.
 
 Record real versions, commands, exits, failures, durations, artifact/source
 identities, platform bounds and cleanup outcomes. Reassess source/native limits

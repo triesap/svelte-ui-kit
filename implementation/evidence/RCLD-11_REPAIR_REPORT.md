@@ -578,6 +578,72 @@ R11-F03 is committed at `9fe3668451763bd89bdf88f43d1bad7a7a668a44`.
 R11-F04 is a verified CI implementation candidate. No hosted workflow,
 independent acceptance or final S201 pass is claimed by this checkpoint.
 
+## R11-F05 — Current guidance and evidence-backed boundary dispositions
+
+Current README, CONTRIBUTING, the operations runbook, open-question table,
+verification policy, compatibility/accessibility/platform records and complete
+R01–R34/AC01–AC22 traceability now agree with the implemented candidate.
+Installation explicitly retains the authentic application-owned native file
+dependency, rather than suggesting a registry release. Browser guidance uses
+the full configured suite, consumer SSR names all four actual suites, and CI
+describes the nine isolated configured jobs without claiming hosted execution.
+Historical checkpoint-era pending prose in component maps and the original
+S201 strict failure is visibly qualified as provenance. Original gates through
+S193 remain accepted; the current native candidate and final sequence are not
+self-accepted.
+
+The selected native baseline's complete 733-case F02 run reconfirmed direct
+native/generated reset cancellation, force-mounted pointer locking, first-open
+callbacks, relation registration, CSP and adverse clipping controls. Current
+F05 catalog/identity SSR replays additionally reconfirm native nonsemantic
+floating process-counter allocation, semantic ID uniqueness/request locality
+and actual request-state isolation on the final YAML peer graph. No kit identity,
+presence, form or positioning engine is invented. Current compatibility records
+link each boundary's actual owning tests and qualify browser/filesystem limits.
+The original Radio/Switch nontext ratios remain measured source concerns under
+AC18; no palette redesign or universal accessibility claim is introduced.
+The separate final reviewer must assess any required unresolved violation.
+
+F02's actual browser output is preserved before cumulative rerun: 1556 files
+were copied byte-for-byte with a complete SHA-256 inventory, including all four
+rendered-contrast mapping/direction records. The source run's final status is
+passed with no failed tests. Retained records are under
+`logs/r11-f02-portable-browser-artifacts/` and
+`logs/r11-f05-native-boundary-inventory.json`; this retention is not a new browser
+execution. The native archive remains the selected authenticated `.2` bytes.
+
+The busy-lock diagnostic now matches the verified runbook: preserve evidence,
+verify an external backup, independently establish the recorded owner's exit
+and cessation of all writers, and quarantine only the verified coordination
+directory without deleting transaction evidence. PID age/death grants no
+ownership. Command behavior, statuses and wire schema remain unchanged.
+Contract fixtures include the actual newly linked controls as inert inputs;
+no stubs, link-check suppression or imported live authority is used.
+
+Actual current verification, with zero skips/cancellations:
+
+| Lane                                                             | Result               | Duration  |
+| ---------------------------------------------------------------- | -------------------- | --------- |
+| Five documented workflow/recovery/catalog and identity SSR files | 16/16                | 288257 ms |
+| Protocol guidance/envelopes                                      | 10/10                | 1787 ms   |
+| Actual installed-tarball runtime/unchanged-state controls        | 4/4                  | 135379 ms |
+| Complete registry/traceability                                   | 66/66                | 80171 ms  |
+| All six TypeScript configurations                                | exit 0               | 8962 ms   |
+| Full lint                                                        | exit 0               | 5361 ms   |
+| Full formatting check                                            | exit 0               | 7614 ms   |
+| Live contracts                                                   | zero errors/warnings | 5070 ms   |
+| Real linked-guidance fixture                                     | 1/1                  | 1243 ms   |
+
+CLI build/authentic bundling also passed. Exact command arrays, source inventory,
+raw transcripts, statuses/signals/errors, durations and log SHA-256 values are
+retained in `logs/r11-f05-owning-outcome.json` and `r11-f05-owning-*.log`.
+The documented procedures run against actual installed archives, including
+whole-tree customization/conflict/recovery preservation. Existing examples and
+notices remain valid; full current example/interaction qualification follows
+in F06. Full 159-case contract regression is a required F06 lane after these
+fixture-input changes. No original checkpoint definition or immutable design
+source is changed, and original progress remains 200 candidates/193 accepted.
+
 ## Remaining implementation and acceptance
 
 Planning input maintenance, R11-F01 diagnosis and the R11-F02 producer and
@@ -588,8 +654,8 @@ strict, delivery and runtime lanes. Independent acceptance
 remains open.
 Original progress remains 200 implemented candidates and 193 independently
 accepted checkpoints. R11-F03 no-change refusal and R11-F04 complete CI coverage
-are verified candidates. R11-F05 final
-guidance/boundary qualification, R11-F06/S201 full cumulative release checks,
+are verified candidates. R11-F05 guidance/boundary reconciliation is also a
+verified candidate. R11-F06/S201 full cumulative release checks,
 S202 extension reconciliation, S203 delivery and separate final acceptance of
 S194–S203 remain required. The corrected candidate passes raw strict checking;
 the remaining amendment and cumulative obligations still block S201 completion.

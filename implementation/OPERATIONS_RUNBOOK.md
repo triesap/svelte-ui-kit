@@ -13,12 +13,15 @@ Start at one authorized SvelteKit application root (or use --cwd). Preserve a cl
 
 The init contract does not preinstall the complete catalog. Component requests remain distinct from their dependencies. Existing themes.css/app.css/layouts are application-owned and must survive integration.
 
-The complete-catalog runtime pins are Svelte 5.57.1, Bits UI 2.19.3 and its date
-peer 3.12.4. Install them explicitly with the detected project manager; pnpm
+The complete-catalog runtime pins are Svelte 5.57.1, the authenticated local
+Bits UI 2.19.5-svelte-ui-kit.2 archive and its date peer 3.12.4. Follow the
+[application-owned native setup](../README.md#application-owned-native-dependency)
+to extract the bundled archive and install it explicitly with the detected
+project manager; this local version is not a registry operand. pnpm
 11.22.0 is the executed baseline. The [consumer manifest](../tests/fixtures/consumer/package.json)
 records the separate tested framework/check/build tooling. The CLI package uses
 its own parser/validation dependencies and is not an application runtime facade.
-Use the actual local archive returned by pack; do not substitute an assumed
+Use the actual CLI archive returned by pack; do not substitute an assumed
 published package version. Preserve the distribution's source/license notices.
 
 #### Customization

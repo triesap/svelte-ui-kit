@@ -1,5 +1,11 @@
 # Distinct Alert Dialog contract
 
+Current qualification status: original family gates through S193 are independently
+accepted. Checkpoint-era pending/gated statements below retain historical
+provenance. The selected native baseline and final release remain candidates
+under [current qualification](../../implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
+and the sole governing ledger; separate S203 acceptance remains required.
+
 Alert Dialog is the approved distinct Bits UI 2.19.5-svelte-ui-kit.2 primitive family. The
 immutable reference catalog has no Alert Dialog family to mechanically port;
 shared visual design will use the established Dialog/token vocabulary at S120.

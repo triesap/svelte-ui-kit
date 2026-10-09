@@ -146,17 +146,18 @@ not be committed.
 
 ### Browser harness
 
-The S008 browser lane uses the pinned `@playwright/test 1.63.0` runner with
+The complete browser lane uses the pinned `@playwright/test 1.63.0` runner with
 bundled headless Chromium. Install the browser once (network required):
 
 ```sh
 pnpm exec playwright install chromium
-pnpm run test:browser -- tests/browser/harness.spec.ts
+pnpm run test:browser
 ```
 
 `test:browser` builds the fixture first and then runs Playwright over
 `playwright.config.ts`. The spec starts the production handler through the
-shared owned-server boundary on an OS-assigned loopback port and fails on
+shared owned-server boundary on an OS-assigned loopback port. All configured
+specs run with one worker and zero retries, and fail on
 unexpected server stderr/exits, page exceptions, console errors or hydration
 warnings. Failure traces and screenshots land in the ignored
 `tests/browser/.output/` tree. The initial qualified lane is bundled Chromium
@@ -167,12 +168,17 @@ Commit dependency changes together with `pnpm-lock.yaml`.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs the baseline verification lanes on
+`.github/workflows/ci.yml` configures all acceptance verification lanes on
 `pull_request` and `push` against `ubuntu-24.04` with Node 24.21.0 and pnpm
 11.22.0, using the immutable action revisions recorded in
 `implementation/evidence/COMMANDS.md`. It publishes nothing, reads no secrets
 and adds no private tooling. The workflow has not been run remotely; run the
-same commands locally as listed in the command map.
+same commands locally as listed in the command map. Nine independent job
+definitions cover foundation, integration, components/registry, package,
+consumer strict check/build/SSR, full Chromium, contracts, native producer/
+delivery and Linux/macOS filesystem qualification. Prepare native archives
+before the frozen strict install. Run `pnpm run check:ci` and `pnpm run test:ci`
+to verify script coverage, bootstrap order and failure policy.
 
 ## Current scope
 
@@ -183,8 +189,9 @@ publish the package.
 
 The complete generator command surface is implemented: info/init/view/add/sync/
 doctor, JSON results, dry plans and guarded application. The shipped registry
-includes tokens, native Spinner/Button, primitive-backed Switch and the complete
-compound Dialog family while component adaptation proceeds. Synthetic registry fixtures
+includes all 22 original installable items, including the distinct Alert Dialog;
+identity is the documented native adaptation. Original gates through S193 are
+independently accepted. Synthetic registry fixtures
 are owned tests, not published releases. Follow the executable workflow in
 [README](README.md) and [the governing sequence](implementation/COMMIT_SEQUENCE.md).
 
@@ -197,8 +204,10 @@ helper tests do not establish whole feature or package acceptance.
 
 Implementation commits remain pending separate acceptance at sequence gates.
 Do not self-accept authored repairs or start the next sequence before its gate.
-Keep the two fixture-only upstream Bits union-complexity exceptions and four
-ignored reference tests explicit as open AC20 debt; do not weaken compiler,
+Historical upstream union-complexity failures remain evidence. The selected
+authenticated native producer passes raw strict checking with skipLibCheck=false
+and zero errors/warnings. Final cumulative qualification and separate S203
+acceptance remain open; do not weaken compiler,
 accessibility, SSR or original criteria to pass. No push, deployment,
 publication or reference-source edit is part of local generator qualification.
 
@@ -210,8 +219,9 @@ publication or reference-source edit is part of local generator qualification.
   `pnpm run test:unit`, `pnpm run test:integration`,
   `pnpm run test:components`, `pnpm run test:harness`,
   `pnpm run fixture:check`,
-  `pnpm run test:fixture`, `pnpm run test:browser --
-tests/browser/harness.spec.ts`, `pnpm run lint` and `pnpm run format:check`
+  `pnpm run test:fixture`, `pnpm run test:browser`, `pnpm run test:registry`,
+  `pnpm run test:package`, `pnpm run lint`, `pnpm run format:check`,
+  `pnpm run check:ci` and `pnpm run test:ci`
   (plus `pnpm run check:contracts` and `pnpm run test:contracts` for contract
   or evidence changes).
 - Update documentation when setup or scope changes.
@@ -226,9 +236,11 @@ tests/browser/harness.spec.ts`, `pnpm run lint` and `pnpm run format:check`
 
 ## Accessibility
 
-Future components should follow WAI-ARIA APG patterns where applicable.
-When component implementation begins, changes affecting keyboard interaction or
-focus should include tests.
+Components follow their measured native semantics and applicable WAI-ARIA APG
+patterns. Changes affecting keyboard interaction or focus need actual installed
+consumer verification. The accessibility record preserves measured source
+contrast concerns and the supported Chromium scope; it certifies no arbitrary
+theme or assistive technology.
 
 ## License
 

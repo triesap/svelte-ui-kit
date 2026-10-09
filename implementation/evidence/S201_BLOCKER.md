@@ -8,6 +8,13 @@ No S201 implementation commit, checkpoint acceptance, final release or AC20
 waiver is claimed. The account below retains its original candidate and failed
 observations; it is not the current native candidate's outcome.
 
+## Original blocked attempt and approved repair boundary
+
+The paragraphs below describe the stopping point before R11-F02 adoption.
+Their blocked status is historical; the current selected native candidate has
+passed raw strict checking, and remaining cumulative/final obligations are
+tracked by the live ledger and repair report above.
+
 The owner approved the 2026-10-08 completion-review repair scope in
 [the governing RCLD](../COMMIT_SEQUENCE.md). R11-F01–R11-F06 now specify strict
 diagnosis/adoption, a conditional source-level native fix with reproducible local

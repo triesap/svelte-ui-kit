@@ -1,8 +1,49 @@
 # Filesystem platform qualification
 
-Candidate S193 evidence; independent RCLD-10 acceptance remains required.
+Original S193 evidence was independently accepted through RCLD-10.
 This matrix concerns the frozen trusted-local transaction model, not general
 browser/runtime compatibility or release acceptance.
+
+## Current repaired candidate
+
+R11-F03 replayed all 17 owning filesystem, durability, process, recovery and
+no-change inspection files on the selected authenticated Bits
+2.19.5-svelte-ui-kit.2 baseline. Each lane passed 172/172, zero skips or
+cancellations. These are author qualification results, with final cumulative
+qualification and separate S203 acceptance still required.
+
+| Lane                                                    | Actual execution                                                           | Filesystem observation                                  | Result                                                             |
+| ------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------ |
+| macOS arm64, kernel 25.5.0                              | Local Node 24.21.0 / pnpm 11.22.0                                          | Native temporary directory, type 26, case-insensitive   | 172 safety/recovery tests passed, zero skips                       |
+| Linux arm64, kernel 7.0.14-orbstack-00380-ga7e0a2dc9535 | Isolated Debian bookworm, Node 24.21.0 / pnpm 11.22.0; tests uid/gid 65534 | Container-owned case-sensitive overlay, type 2035054128 | 172 passed, zero skips; actual owner-record EACCES controls passed |
+| GitHub ubuntu-24.04 / macos-15                          | Configured complete 17-file filesystem jobs; unexecuted                    | Unmeasured                                              | No passing hosted result claimed                                   |
+| Windows                                                 | No native execution                                                        | Unmeasured                                              | Unsupported/unqualified                                            |
+
+The current Linux image remains the immutable digest below. Preparation,
+frozen strict installation and build run in the disposable container; its test
+process drops to uid/gid 65534 before accessing owned temporary project trees.
+Unreadable-owner controls chmod the actual record to mode 0 and observe EACCES;
+the test owner restores only read access for complete-tree comparison. No
+ordinary-user access-control claim extends beyond these measured controls.
+Total preparation/install/build/replay took 298853 ms, exit 0, null signal/error.
+The transferred source archive SHA-256 is
+`4d85319c90c1d434de55365acb9858f94d719422d577435926012e698038c072`.
+Read-only source/tool mounts, writable owned evidence and container removal
+remain the execution boundary. Actual transcripts and inventories are retained
+under `logs/r11-f03-linux-replay/` and `logs/r11-f03-current-recovery-macos.log`.
+
+The [current CI command map](COMMANDS.md) and actual workflow list all 17 files;
+R11-F04 validates the same scope and Linux/macOS matrix. The six additions to
+the historical eleven-file lane are cleanup-restart-matrix, docs-recovery,
+lock-publication, publication-witness, transaction-cleanup and unchanged-state.
+They preserve real SIGKILL, pending cleanup, owner-bound publication,
+post-interruption edits and exact unchanged-command refusal. Remote runner
+configuration does not establish execution or filesystem equivalence.
+
+## Historical S193 execution
+
+The following 83-case records retain their original pins and root-user Linux
+limitation; they are not the current repaired candidate's execution.
 
 | Lane                                                    | Actual execution                                                | Filesystem observation                                                      | Result                                                     |
 | ------------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------- |
@@ -60,8 +101,9 @@ runner rejected them during compilation. The corrected transfer disables
 archive metadata, with the original failure retained separately. No test or
 production safety check was suppressed.
 
-The CI job runs the same eleven files with pinned dependencies on the two
-configured labels. The existing browser harness invocation removes a literal
+The historical CI job ran the same eleven files with pinned dependencies on the two
+configured labels; current CI uses the 17-file lane above and the full configured
+Chromium suite. The historical browser harness invocation removed a literal
 separator that Playwright would treat as an operand. Runner labels are from
 [GitHub's runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
 Configuration does not establish remote execution, architecture equality or
@@ -73,7 +115,8 @@ Windows lexical portability is tested on POSIX; it is not Windows rename,
 directory-fsync, mode or recovery evidence. No Windows pass or support claim is
 made. Linux filesystem-only evidence does not qualify Linux browser/rendering,
 the packed executable, every distribution/architecture, NFS/network mounts,
-cross-device staging, power-loss guarantees or ordinary-user access controls.
+cross-device staging, power-loss guarantees or access-control behavior beyond
+the current narrowly measured owner-record permission-denial controls.
 Atomic replacement is per file and staging must remain on the same filesystem;
 the lock is the final publication marker, not native multi-file atomicity.
 Observed ancestry/preimage checks do not eliminate hostile directory replacement

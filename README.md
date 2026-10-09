@@ -108,8 +108,15 @@ uses Svelte request-local IDs; native floating wrappers also use the pinned
 primitive's process counter. Semantic relationships are qualified across
 repeated/concurrent SSR and hydration; counter values are not promised to reset
 for each request. The native first opening
-of newly portaled Content omits its animation-completion callback in Bits2.19.3;
+of newly portaled Content omits its animation-completion callback in the selected
+Bits 2.19.5-svelte-ui-kit.2 build;
 completed closing emits it. The kit forwards the native callback unchanged.
+Closed force-mounted default nondelegated Dialog/Alert Dialog Content also
+retains native body pointer locking. Delegated rendering and preventScroll=false
+have separate measured behavior. Use the native open snippet and deliberate
+caller visibility/teardown; retained closed content is not a promise of an
+interactive background. The [current native boundary record](implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
+links direct native comparisons and their qualification scope.
 
 The core qualification installs tokens, Spinner, Button, Switch and Dialog
 together through the built executable and a real locally installed tarball.
@@ -149,6 +156,8 @@ pnpm pack --json --pack-destination "$ARCHIVES"
 pnpm --dir "$CLI_HOST" add --ignore-scripts "$ARCHIVE"
 CLI="$CLI_HOST/node_modules/svelte-ui-kit/dist/cli/main.js"
 ```
+
+### Application-owned native dependency
 
 Use Node `24.21.0` and pnpm `11.22.0` for the qualified baseline. In the
 application, explicitly install the reported runtime dependencies. For the
@@ -467,7 +476,8 @@ SSR/browser qualification or release readiness.
 The maintained consumer fixture is the private ESM workspace package
 `svelte-ui-kit-consumer-fixture` at `tests/fixtures/consumer/`. It is the
 second explicit member of `pnpm-workspace.yaml` and shares the single root
-lockfile; it pins `svelte 5.57.1` as its only runtime dependency and exact
+lockfile; its runtime dependencies are `svelte 5.57.1`, the explicit local
+`bits-ui 2.19.5-svelte-ui-kit.2` archive and `@internationalized/date 3.12.4`, with exact
 development pins for `@sveltejs/kit`, `@sveltejs/vite-plugin-svelte`,
 `@sveltejs/adapter-node`, `svelte-check`, `vite`, `typescript` and
 `@types/node`. It is a hand-authored Svelte 5/SvelteKit application with SSR
@@ -478,8 +488,9 @@ into the route markup.
 `svelte-check --tsconfig ./tsconfig.json --fail-on-warnings`; `pnpm run
 fixture:build` runs the real Vite production build through the Node adapter;
 `pnpm run test:fixture` builds the fixture and then runs the focused
-`node:test` suites at `tests/smoke/consumer-fixture.test.mjs` and
-`tests/smoke/owned-server.test.mjs`. The SSR suite hosts the adapter's
+`node:test` suites at `tests/smoke/consumer-fixture.test.mjs`,
+`tests/smoke/owned-server.test.mjs`, `tests/smoke/lifecycle-consumer.test.mjs`
+and `tests/smoke/q2-resulting-consumer.test.mjs`. The SSR suite hosts the adapter's
 production handler in an owned child process on an OS-assigned loopback port
 and asserts the actual server-rendered HTTP HTML before client JavaScript runs,
 distinct repeated/concurrent request values, HTML escaping, and the real
@@ -495,9 +506,10 @@ build and SSR stages. Packed executable inventory is qualified separately; final
 catalog/browser/platform/release acceptance remains open.
 
 `pnpm run test:browser` builds the fixture and runs the Playwright 1.63.0
-harness at `tests/browser/harness.spec.ts` with bundled headless Chromium over
+full configured suite under `tests/browser/` with bundled headless Chromium over
 `playwright.config.ts`. Install the pinned browser once with
-`pnpm exec playwright install chromium`. The harness starts the built
+`pnpm exec playwright install chromium`. The suite uses one worker, zero retries
+and owned production servers. The original harness starts the built
 production handler through the same owned-server boundary and asserts the
 accessible heading/labels, Tab/Shift+Tab focus order, native checkbox keyboard
 activation, form navigation with a request-time query update, and a fixture-only
@@ -523,11 +535,13 @@ MIT OR Apache-2.0. See `LICENSE-MIT` and `LICENSE-APACHE`.
 
 The installable eight-part Menu family supplies Root, Trigger, Portal, Content,
 Item, RadioGroup, RadioItem and ItemIndicator with flat `Menu*` exports. It is
-locally qualified in generated default/custom applications and awaits the
-separate sequence acceptance. Bind Root open and RadioGroup value explicitly;
+qualified and independently accepted through the original family gate in
+generated default/custom applications. Final qualification of the changed
+native baseline remains pending S203. Bind Root open and RadioGroup value explicitly;
 compose ItemIndicator from RadioItem's native checked snippet. Give Content an
-accessible name. Pinned Bits 2.19.3 typeahead searches visible DOM text; its public
-textValue prop is forwarded but does not change search behavior in that version.
+accessible name. Selected Bits 2.19.5-svelte-ui-kit.2 typeahead searches visible
+DOM text; its public textValue prop is forwarded but does not change search
+behavior in the measured direct native comparison.
 
 Keep delegated Content's outer wrapperProps separate from inner props; native
 floating geometry belongs to the outer element and kit styles to the inner.

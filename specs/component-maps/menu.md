@@ -1,5 +1,11 @@
 # Menu source parity and floating contract
 
+Current qualification status: original family gates through S193 are independently
+accepted. Checkpoint-era pending/gated statements below retain historical
+provenance. The selected native baseline and final release remain candidates
+under [current qualification](../../implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
+and the sole governing ledger; separate S203 acceptance remains required.
+
 This family adapts the approved ordinary/radio menu surface from the
 [immutable Menu source](https://github.com/triesap/leptos_ui_kit/tree/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/menu)
 and its

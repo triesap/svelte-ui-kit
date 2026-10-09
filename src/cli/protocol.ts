@@ -312,7 +312,7 @@ export function recoveryGuidance(code: string): string {
     RECOVERY_ANCESTRY_NOT_EMPTY:
       "A directory created by the interrupted batch now holds unrelated content. Preserve it and reconcile the batch manually.",
     WRITER_BUSY:
-      "Another cooperative writer owns the mutation lock. Wait for it to finish, or if it is an orphaned lock left by a killed process, confirm no writer is active and remove the reserved writer.lock directory manually.",
+      "Preserve the writer evidence and wait for the owner to finish. After an interruption, follow the recovery runbook: verify an external backup, independently confirm the recorded owner and all project writers have stopped, then quarantine only the verified writer.lock directory without deleting transaction evidence. PID death or age alone does not grant ownership.",
     WRITER_LOCK_UNOWNED:
       "The writer lock is missing or its owner record is ambiguous. Inspect the reserved writer.lock directory and reconcile manually; ownership is never taken over by process age or PID alone.",
     WRITER_LOCK_RELEASE_FAILED:
