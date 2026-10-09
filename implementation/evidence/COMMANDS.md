@@ -1,9 +1,9 @@
-# Command map and baseline CI
+# Command map and acceptance CI
 
 <!-- Adopted at S010. Implementation/status authority remains `implementation/COMMIT_SEQUENCE.md`. -->
 
 This file records the real local commands for this repository and how the
-baseline CI workflow maps to them. It names no operator-machine path, secret or
+current CI workflow maps to them. It names no operator-machine path, secret or
 private tooling.
 
 ## Runtime and platform
@@ -20,28 +20,30 @@ private tooling.
 
 ## Command map
 
-| Purpose             | Local command                                                               | Notes                                                                                                                                                             |
-| ------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Native bootstrap    | `node tools/prepare-native-dependency.mjs --fixture`                        | Before the first install, build or authenticate the frozen native archive and copy it to the maintained fixture.                                                  |
-| Frozen install      | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | Strict peers and engine enforcement; one root lockfile.                                                                                                           |
-| Format check        | `pnpm run format:check`                                                     | Nonmutating Prettier over the maintained authoring tree.                                                                                                          |
-| Lint                | `pnpm run lint`                                                             | `eslint . --max-warnings 0`.                                                                                                                                      |
-| Typecheck           | `pnpm run typecheck`                                                        | Root, unit, integration, components, registry and package TypeScript configurations.                                                                              |
-| Unit                | `pnpm run test:unit`                                                        | Builds, then runs typed `tests/unit` via the suite runner.                                                                                                        |
-| Runner harness      | `pnpm run test:harness`                                                     | Regression suite for `tools/run-unit-tests.mjs`.                                                                                                                  |
-| Integration         | `pnpm run test:integration`                                                 | Builds, then runs typed `tests/integration` (`--suite integration`).                                                                                              |
-| Components          | `pnpm run test:components`                                                  | Runs typed `tests/components` (`--suite components`): the Bits compatibility fixture and disposable negative copies, plus the mandatory strict declaration audit. |
-| Registry            | `pnpm run test:registry`                                                    | Actual registry assets, mapping, CSS, tokens, exports and contract links.                                                                                         |
-| Full package        | `pnpm run test:package`                                                     | Actual tarball inventory, installed executable isolation, mutation lifecycles, generated consumers and metadata; no publication.                                  |
-| CLI smoke           | `pnpm run test:cli-bootstrap`                                               | Real `dist` CLI process assertions.                                                                                                                               |
-| Contract validation | `pnpm run check:contracts`                                                  | Read-only document/projection/evidence validation.                                                                                                                |
-| Contract tests      | `pnpm run test:contracts`                                                   | Focused validator regression suite.                                                                                                                               |
-| Consumer check      | `pnpm run fixture:check`                                                    | `svelte-kit sync` + `svelte-check --fail-on-warnings`.                                                                                                            |
-| Consumer SSR        | `pnpm run test:fixture`                                                     | Builds, then owned-server SSR + lifecycle suites.                                                                                                                 |
-| Full browser        | `pnpm run test:browser`                                                     | Builds maintained fixture, then all configured Chromium specs with one worker and zero retries.                                                                   |
-| Consumer build      | `pnpm run fixture:build`                                                    | Token consistency followed by the actual maintained production build.                                                                                             |
-| Chromium install    | `pnpm exec playwright install [--with-deps] chromium`                       | Local (no `--with-deps`); CI adds system dependencies.                                                                                                            |
-| Diff health         | `git diff --check`                                                          | No whitespace diagnostics.                                                                                                                                        |
+| Purpose              | Local command                                                               | Notes                                                                                                                                                             |
+| -------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native bootstrap     | `node tools/prepare-native-dependency.mjs --fixture`                        | Before the first install, build or authenticate the frozen native archive and copy it to the maintained fixture.                                                  |
+| Frozen install       | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | Strict peers and engine enforcement; one root lockfile.                                                                                                           |
+| Format check         | `pnpm run format:check`                                                     | Nonmutating Prettier over the maintained authoring tree.                                                                                                          |
+| Lint                 | `pnpm run lint`                                                             | `eslint . --max-warnings 0`.                                                                                                                                      |
+| Typecheck            | `pnpm run typecheck`                                                        | Root, unit, integration, components, registry and package TypeScript configurations.                                                                              |
+| Unit                 | `pnpm run test:unit`                                                        | Builds, then runs typed `tests/unit` via the suite runner.                                                                                                        |
+| Runner harness       | `pnpm run test:harness`                                                     | Regression suite for `tools/run-unit-tests.mjs`.                                                                                                                  |
+| Integration          | `pnpm run test:integration`                                                 | Builds, then runs typed `tests/integration` (`--suite integration`).                                                                                              |
+| Components           | `pnpm run test:components`                                                  | Runs typed `tests/components` (`--suite components`): the Bits compatibility fixture and disposable negative copies, plus the mandatory strict declaration audit. |
+| Registry             | `pnpm run test:registry`                                                    | Actual registry assets, mapping, CSS, tokens, exports and contract links.                                                                                         |
+| Full package         | `pnpm run test:package`                                                     | Actual tarball inventory, installed executable isolation, mutation lifecycles, generated consumers and metadata; no publication.                                  |
+| CLI smoke            | `pnpm run test:cli-bootstrap`                                               | Real `dist` CLI process assertions.                                                                                                                               |
+| Contract validation  | `pnpm run check:contracts`                                                  | Read-only document/projection/evidence validation.                                                                                                                |
+| Contract tests       | `pnpm run test:contracts`                                                   | Focused validator regression suite.                                                                                                                               |
+| CI coverage          | `pnpm run check:ci`                                                         | Parses real YAML and validates every job, pinned bootstrap, complete script, platform and timeout against the acceptance policy.                                  |
+| CI coverage controls | `pnpm run test:ci`                                                          | Meaningful omission, selector, install, permission, failure-mask, strict-consumer and read-only controls.                                                         |
+| Consumer check       | `pnpm run fixture:check`                                                    | `svelte-kit sync` + `svelte-check --fail-on-warnings`.                                                                                                            |
+| Consumer SSR         | `pnpm run test:fixture`                                                     | Builds, then owned-server SSR + lifecycle suites.                                                                                                                 |
+| Full browser         | `pnpm run test:browser`                                                     | Builds maintained fixture, then all configured Chromium specs with one worker and zero retries.                                                                   |
+| Consumer build       | `pnpm run fixture:build`                                                    | Token consistency followed by the actual maintained production build.                                                                                             |
+| Chromium install     | `pnpm exec playwright install [--with-deps] chromium`                       | Local (no `--with-deps`); CI adds system dependencies.                                                                                                            |
+| Diff health          | `git diff --check`                                                          | No whitespace diagnostics.                                                                                                                                        |
 
 The component qualification lane (`pnpm run test:components`) includes the
 mandatory raw strict declaration audit. The maintained fixture and owned audit
@@ -69,29 +71,40 @@ shared compiler, package or fixture writers.
 
 ## CI workflow
 
-`.github/workflows/ci.yml` runs on `pull_request` and `push` with read-only
-`contents` permission, a `30`-minute job timeout and the `ubuntu-24.04` runner.
-It checks out full history, sets up pnpm `11.22.0` and Node `24.21.0`, then runs
-the frozen strict install, installs bundled Chromium with system dependencies,
-and runs the format, lint, typecheck, unit, harness, integration, components,
-registry, the full package suite, CLI smoke, consumer check, consumer SSR,
-selected browser harness, contract-validation and contract-test lanes. The
-configured browser selector does not execute the full local browser suite;
-the package step already runs its full suite despite its inventory label.
-The 30-minute job limit is configuration, not demonstrated
-cumulative runtime qualification; full local integration/browser lanes alone
-have exceeded 20 minutes each. Do not claim CI passed from this file.
+`.github/workflows/ci.yml` covers unfiltered `pull_request` and `push` events
+with read-only `contents` permission. Each job checks out its own full history
+without retaining credentials, sets up pnpm `11.22.0` and Node `24.21.0`,
+prepares the authenticated native archive **before** frozen strict installation,
+then executes its complete lane. Writers remain serial within each independent
+workspace. No build artifacts cross jobs, and no publication, deployment or
+secret-backed operation is configured.
 
-The owner-approved 2026-10-08 completion amendment requires R11-F04 to replace
-this partial browser/serial-budget setup with full acceptance-suite coverage,
-isolated jobs and defensible bounded timeouts. That workflow repair has not yet
-been implemented. Until it is, this section describes actual current CI rather
-than the approved future configuration. See
-[the governing RCLD](../COMMIT_SEQUENCE.md) and
-[current verification requirements](../VERIFICATION.md). The selected native
-source-fix artifact is built reproducibly and bundled in the locally packed CLI.
-Application setup explicitly extracts, authenticates and installs its own archive;
-the CLI reports those instructions without performing installation.
+| Job         | Complete lane                                                                      | Timeout | Local duration evidence informing headroom                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| foundation  | Format, lint, six typechecks, unit, harness, CLI smoke and CI policy controls      | 30 min  | Unit 34.00 s; additional static/harness/smoke and cold bootstrap headroom.                                                  |
+| integration | Full integration suite                                                             | 120 min | Prior full run 2486.05 s; its failures remain historical, not a current pass.                                               |
+| components  | Complete component strict audit and registry suites                                | 60 min  | Components 566.79 s and registry 115.10 s.                                                                                  |
+| package     | Complete real tarball/installed/runtime/consumer/metadata suite                    | 45 min  | Full package 551.22 s before the added unchanged-command controls.                                                          |
+| consumer    | CLI build, raw strict consumer check and production build/SSR lifecycle suites     | 60 min  | Current raw strict and production/SSR lanes executed locally; conservative cold-run budget pending cumulative measurements. |
+| browser     | CLI build, bundled Chromium install and full configured suite                      | 120 min | Full current native baseline 2390.73 s, 733 tests, zero skips/retries.                                                      |
+| contracts   | Live contract validation and full contract regressions                             | 45 min  | Complete 159-test regression 1062.32 s.                                                                                     |
+| native      | Actual reproducible producer and authenticated preparation/delivery controls       | 45 min  | Producer 127.55 s and preparation/delivery 60.42 s.                                                                         |
+| filesystem  | Linux/macOS matrix with all 17 owning recovery/process/durability/filesystem files | 60 min  | Fresh unprivileged Linux preparation/install/build plus 172 tests took 298.853 s.                                           |
+
+These are measured **local** observations and conservative bounded headroom,
+not hosted-runner timings. They do not certify a past red integration run or
+replace the remaining current S201 cumulative qualification. Hosted jobs,
+Ubuntu system-dependency installation and their actual durations remain
+unexecuted. Local Linux runtime evidence covers its explicitly recorded lanes.
+
+The [CI coverage policy](../../tools/check-ci.mjs) parses YAML with the explicit
+development pin `yaml@2.9.1`; [its controls](../../tools/check-ci.test.mjs)
+reject missing jobs, selected suites, incomplete scripts, unqualified budgets,
+weakened installs/strict checking, unsafe actions/permissions and skipped or
+masked checks. Actionlint separately verifies GitHub Actions syntax. The policy
+is repository development tooling, not a CLI runtime dependency. The selected
+native source-fix archive remains reproducibly bundled; applications explicitly
+extract, authenticate and install their own archive without CLI installation.
 
 Actions are pinned to immutable revisions:
 

@@ -519,6 +519,65 @@ configuration path; no product guard or recovery assertion was weakened.
 Current owning qualification is green. R11-F03 is a verified implementation
 candidate; independent final acceptance and S201 remain open.
 
+## R11-F04 — Complete isolated acceptance CI
+
+The workflow replaces the previous serial 30-minute job and browser-harness
+selector with nine independent job definitions: foundation, integration,
+components/registry, package, consumer strict/production/SSR, full Chromium,
+contracts, native producer/delivery, and the Linux/macOS filesystem matrix.
+Every job owns a full checkout, pinned actions and exact Node/pnpm setup. Each
+prepares the authentic native archive before frozen strict peer/engine install.
+Shared writers stay serial inside a job; artifacts never cross jobs. Read-only
+permissions, no retained checkout credentials, unfiltered source triggers and
+no publication/deployment/secret operation remain explicit.
+
+The current command map records every job's bounded timeout and the actual
+local measurements informing its headroom. Integration/browser have 120-minute
+bounds; components/consumer/filesystem have 60; package/contracts/native have
+45; foundation has 30. Historical failed integration timing is labeled as
+timing evidence, never acceptance. Conservative hosted headroom is configured;
+actual hosted timing and execution remain unqualified. The remaining current
+cumulative lanes belong to R11-F06 rather than a repeated, mislabeled remote run.
+
+The repository-owned YAML policy and meaningful controls validate exact job
+coverage, complete underlying scripts, preparation/install order, tool/action
+pins, full history, both filesystem platforms, timeout rationale and strict
+failure handling. They reject missing jobs, selectors hidden in scripts or
+comments, relaxed installs, unsupported overrides, conditional skips, failure
+masks, unsafe permissions and consumer library/warning suppression. YAML
+2.9.1 is an explicit pinned development dependency using its documented
+[parser API](https://eemeli.org/yaml/#parsing-documents); no CLI runtime
+dependency or application pin changes. This also resolves
+Vite's optional YAML peer in the root/fixture lock graph. The current raw strict
+and production/SSR runs qualify that graph; final cumulative qualification
+remains required. Authentic linked policy files are included as real inert
+contract fixture inputs, with byte-preservation and authority controls retained.
+
+Current owning results are green: YAML coverage reports zero issues; its 20/20
+controls pass with zero skips/cancellations. Checksum-authenticated actionlint
+1.7.12 validates the actual complete workflow at exit zero, including available
+shellcheck 0.11.0. The owned actionlint tool is removed and its checksum/process
+records remain retained. Frozen strict install, CLI build, 298/298 unit tests,
+39/39 harness tests (76022.328791 ms), 44/44 CLI smoke tests (10329.677625 ms),
+all six typechecks and lint pass. Actual package inventory/metadata controls
+pass 2/2. Raw consumer checking reports zero errors/warnings. The complete
+production/SSR smoke command passes 27/27, zero skips/cancellations; its Node
+test portion takes 52548.860459 ms and the maintained production build passes.
+The linked-guidance contract fixture passes 1/1 without importing live authority.
+Raw transcripts use `r11-f04-*` under the ignored logs directory.
+
+The first complete SSR run passed 25/27 and failed two, zero skips/cancellations
+(25042.585958 ms for its Node test portion). Default/custom Q2 consumers copied
+the genuine manifest and physical installation but omitted the declared native
+archive. The production authority correctly refused `AUTHORITY_INSTALLED_CHANGED`.
+Their setup now retains the real `.native-build` source alongside the manifest;
+the full check/build/SSR rerun passes without changing the production guard or
+any lifecycle assertion. The failed `r11-f04-fixture-ssr.log` remains evidence.
+
+R11-F03 is committed at `9fe3668451763bd89bdf88f43d1bad7a7a668a44`.
+R11-F04 is a verified CI implementation candidate. No hosted workflow,
+independent acceptance or final S201 pass is claimed by this checkpoint.
+
 ## Remaining implementation and acceptance
 
 Planning input maintenance, R11-F01 diagnosis and the R11-F02 producer and
@@ -528,8 +587,8 @@ initial baseline. The portable `.2` adoption candidate passes its required
 strict, delivery and runtime lanes. Independent acceptance
 remains open.
 Original progress remains 200 implemented candidates and 193 independently
-accepted checkpoints. R11-F03 no-change refusal is a verified candidate.
-R11-F04 CI, R11-F05 final
+accepted checkpoints. R11-F03 no-change refusal and R11-F04 complete CI coverage
+are verified candidates. R11-F05 final
 guidance/boundary qualification, R11-F06/S201 full cumulative release checks,
 S202 extension reconciliation, S203 delivery and separate final acceptance of
 S194–S203 remain required. The corrected candidate passes raw strict checking;

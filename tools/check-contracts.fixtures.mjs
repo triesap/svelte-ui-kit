@@ -83,6 +83,8 @@ export const FIXTURE_FILES = [
   "tools/native-dependency/README.md",
   "tools/native-dependency/recipe.json",
   "tools/native-dependency/binding-signature.patch",
+  "tools/check-ci.mjs",
+  "tools/check-ci.test.mjs",
   "src/cli/commands/doctor.ts",
   "src/cli/main.ts",
   "src/codegen/apply.ts",

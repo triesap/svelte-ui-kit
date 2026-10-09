@@ -228,6 +228,7 @@ function seedConsumer() {
   const root = path.join(base, "consumer");
   for (const file of [
     "package.json",
+    ".native-build",
     "vite.config.ts",
     "svelte.config.js",
     "tsconfig.json",
@@ -236,7 +237,9 @@ function seedConsumer() {
     "src/routes/+page.server.ts",
   ]) {
     mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-    cpSync(path.join(FIXTURE_ROOT, file), path.join(root, file));
+    cpSync(path.join(FIXTURE_ROOT, file), path.join(root, file), {
+      recursive: true,
+    });
   }
   // The maintained fixture's own node_modules tree is linked by entry, never
   // copied or mutated, so the shared dependency pins are identical.

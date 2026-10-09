@@ -36,6 +36,15 @@ does not prove hosted-runner runtime or a remote pass. Full S201 additionally
 runs every original cumulative lane and established harness/CLI/SSR/contracts/
 supported platform lane against current code and actual packaged consumers.
 
+R11-F04 configures nine independent job definitions with complete suite commands
+and measured local timeout headroom, including native producer/delivery controls
+and the Linux/macOS owning safety matrix. `pnpm run check:ci` and
+`pnpm run test:ci` verify actual YAML, script implementations, bootstrap order,
+pins, platform coverage and failure policy. Actionlint checks Actions syntax.
+The current command map records the exact jobs and bounds. This configuration
+does not constitute a hosted execution or independent acceptance; R11-F06
+records the remaining current cumulative local results.
+
 Record real versions, commands, exits, failures, durations, artifact/source
 identities, platform bounds and cleanup outcomes. Reassess source/native limits
 affected by changed pins; required violations remain blockers. S202 documents

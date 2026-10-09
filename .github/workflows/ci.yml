@@ -1,141 +1,272 @@
+# Complete local acceptance lanes in independent checked-out workspaces.
+# Shared writers remain serial within each job; no artifacts cross jobs.
+# Timeouts retain measured local headroom; hosted execution remains unqualified.
+# Chromium and macOS/Linux are the approved scopes; no publication or secrets.
 name: ci
-
-# Baseline verification workflow for the public svelte-ui-kit repository.
-#
-# This target contains no Rust workspace, so no Cargo job belongs here; the
-# separately hosted Leptos reference guard is intentionally outside this public
-# repository. The workflow performs no publication, deployment or release and
-# reads no secrets or private tooling. Remote execution of this workflow is not
-# claimed by the S010 commit; the same commands are run locally.
 on:
-  pull_request:
-  push:
-
+  pull_request: null
+  push: null
 permissions:
   contents: read
-
 jobs:
-  verify:
-    name: verify (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+  foundation:
+    name: foundation
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04]
     steps:
-      - name: Check out full history
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out independent full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
-
+          persist-credentials: false
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
         with:
           version: 11.22.0
-
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24.21.0
           cache: pnpm
-
       - name: Prepare authenticated native dependency
         run: node tools/prepare-native-dependency.mjs --fixture
-
-      - name: Install dependencies (frozen, strict peers)
+      - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
-
-      - name: Install bundled Chromium with system dependencies
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Format check
+      - name: pnpm run format:check
         run: pnpm run format:check
-
-      - name: Lint
+      - name: pnpm run lint
         run: pnpm run lint
-
-      - name: Typecheck
+      - name: pnpm run typecheck
         run: pnpm run typecheck
-
-      - name: Unit
+      - name: pnpm run test:unit
         run: pnpm run test:unit
-
-      - name: Runner harness
+      - name: pnpm run test:harness
         run: pnpm run test:harness
-
-      - name: Integration
-        run: pnpm run test:integration
-
-      - name: Components
-        run: pnpm run test:components
-
-      - name: Registry
-        run: pnpm run test:registry
-
-      - name: Packed inventory
-        run: pnpm run test:package
-
-      - name: CLI smoke
+      - name: pnpm run test:cli-bootstrap
         run: pnpm run test:cli-bootstrap
-
-      - name: Consumer check
+      - name: pnpm run check:ci
+        run: pnpm run check:ci
+      - name: pnpm run test:ci
+        run: pnpm run test:ci
+  integration:
+    name: integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out independent full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 11.22.0
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - name: Prepare authenticated native dependency
+        run: node tools/prepare-native-dependency.mjs --fixture
+      - name: Install frozen strict dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
+      - name: pnpm run test:integration
+        run: pnpm run test:integration
+  components:
+    name: components
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Check out independent full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 11.22.0
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - name: Prepare authenticated native dependency
+        run: node tools/prepare-native-dependency.mjs --fixture
+      - name: Install frozen strict dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
+      - name: pnpm run build
+        run: pnpm run build
+      - name: pnpm run test:components
+        run: pnpm run test:components
+      - name: pnpm run test:registry
+        run: pnpm run test:registry
+  package:
+    name: package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out independent full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 11.22.0
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - name: Prepare authenticated native dependency
+        run: node tools/prepare-native-dependency.mjs --fixture
+      - name: Install frozen strict dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
+      - name: pnpm run test:package
+        run: pnpm run test:package
+  consumer:
+    name: consumer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Check out independent full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 11.22.0
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - name: Prepare authenticated native dependency
+        run: node tools/prepare-native-dependency.mjs --fixture
+      - name: Install frozen strict dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
+      - name: pnpm run build
+        run: pnpm run build
+      - name: pnpm run fixture:check
         run: pnpm run fixture:check
-
-      - name: Consumer SSR
+      - name: pnpm run test:fixture
         run: pnpm run test:fixture
-
-      - name: Browser
-        run: pnpm run test:browser tests/browser/harness.spec.ts
-
-      - name: Contract validation
+  browser:
+    name: browser
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out independent full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 11.22.0
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - name: Prepare authenticated native dependency
+        run: node tools/prepare-native-dependency.mjs --fixture
+      - name: Install frozen strict dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
+      - name: pnpm run build
+        run: pnpm run build
+      - name: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: pnpm run test:browser
+        run: pnpm run test:browser
+  contracts:
+    name: contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out independent full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 11.22.0
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - name: Prepare authenticated native dependency
+        run: node tools/prepare-native-dependency.mjs --fixture
+      - name: Install frozen strict dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
+      - name: pnpm run check:contracts
         run: pnpm run check:contracts
-
-      - name: Contract tests
+      - name: pnpm run test:contracts
         run: pnpm run test:contracts
-
+  native:
+    name: native
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out independent full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 11.22.0
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - name: Prepare authenticated native dependency
+        run: node tools/prepare-native-dependency.mjs --fixture
+      - name: Install frozen strict dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
+      - name: node --test --test-concurrency=1 tools/build-native-dependency.test.mjs tools/prepare-native-dependency.test.mjs
+        run: node --test --test-concurrency=1 tools/build-native-dependency.test.mjs tools/prepare-native-dependency.test.mjs
   filesystem:
-    # Configured lanes are not evidence of execution. Windows remains
-    # unqualified: portable lexical paths do not prove Windows recovery.
     name: filesystem (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-15]
+        os:
+          - ubuntu-24.04
+          - macos-15
     steps:
-      - name: Check out full history
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out independent full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
         with:
           version: 11.22.0
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24.21.0
           cache: pnpm
       - name: Prepare authenticated native dependency
         run: node tools/prepare-native-dependency.mjs --fixture
-
-      - name: Install dependencies (frozen, strict peers)
+      - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
-      - name: Build
+      - name: pnpm run build
         run: pnpm run build
-      - name: Filesystem, process, durability and recovery controls
-        run: >-
-          node tools/run-unit-tests.mjs --suite integration
-          tests/integration/platform-filesystem.test.ts
-          tests/integration/transaction-processes.test.ts
-          tests/integration/transaction-safety.test.ts
-          tests/integration/filesystem-paths.test.ts
-          tests/integration/durability-ordering.test.ts
-          tests/integration/durability-flush-paths.test.ts
-          tests/integration/recovery-prepublication.test.ts
-          tests/integration/recovery-published.test.ts
-          tests/integration/recovery-invalid.test.ts
-          tests/integration/recovery-ownership.test.ts
-          tests/integration/transaction-authority.test.ts
+      - name: node tools/run-unit-tests.mjs --suite integration tests/integration/cleanup-restart-matrix.test.ts tests/integration/docs-recovery.test.ts tests/integration/durability-flush-paths.test.ts tests/integration/durability-ordering.test.ts tests/integration/filesystem-paths.test.ts tests/integration/lock-publication.test.ts tests/integration/platform-filesystem.test.ts tests/integration/publication-witness.test.ts tests/integration/recovery-invalid.test.ts tests/integration/recovery-ownership.test.ts tests/integration/recovery-prepublication.test.ts tests/integration/recovery-published.test.ts tests/integration/transaction-authority.test.ts tests/integration/transaction-cleanup.test.ts tests/integration/transaction-processes.test.ts tests/integration/transaction-safety.test.ts tests/integration/unchanged-state.test.ts
+        run: node tools/run-unit-tests.mjs --suite integration tests/integration/cleanup-restart-matrix.test.ts tests/integration/docs-recovery.test.ts tests/integration/durability-flush-paths.test.ts tests/integration/durability-ordering.test.ts tests/integration/filesystem-paths.test.ts tests/integration/lock-publication.test.ts tests/integration/platform-filesystem.test.ts tests/integration/publication-witness.test.ts tests/integration/recovery-invalid.test.ts tests/integration/recovery-ownership.test.ts tests/integration/recovery-prepublication.test.ts tests/integration/recovery-published.test.ts tests/integration/transaction-authority.test.ts tests/integration/transaction-cleanup.test.ts tests/integration/transaction-processes.test.ts tests/integration/transaction-safety.test.ts tests/integration/unchanged-state.test.ts

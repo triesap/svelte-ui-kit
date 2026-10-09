@@ -428,6 +428,8 @@ test("linked operating guidance is real fixture input without importing live che
       "tools/native-dependency/README.md",
       "tools/native-dependency/recipe.json",
       "tools/native-dependency/binding-signature.patch",
+      "tools/check-ci.mjs",
+      "tools/check-ci.test.mjs",
       "tests/fixtures/consumer/package.json",
       "tests/browser/menu-csp.spec.ts",
     ])

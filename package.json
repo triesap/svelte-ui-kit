@@ -58,7 +58,9 @@
     "check:contracts": "node tools/check-contracts.mjs",
     "test:contracts": "node --test tools/check-contracts.test.mjs",
     "test:package": "pnpm run build && node tools/run-unit-tests.mjs --suite package",
-    "native:prepare": "node tools/prepare-native-dependency.mjs --fixture"
+    "native:prepare": "node tools/prepare-native-dependency.mjs --fixture",
+    "check:ci": "node tools/check-ci.mjs",
+    "test:ci": "node --test tools/check-ci.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -76,6 +78,7 @@
     "prettier": "3.9.6",
     "prettier-plugin-svelte": "4.1.1",
     "typescript-eslint": "8.71.0",
-    "vite": "8.3.1"
+    "vite": "8.3.1",
+    "yaml": "2.9.1"
   }
 }
