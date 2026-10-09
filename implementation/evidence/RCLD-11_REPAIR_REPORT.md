@@ -684,14 +684,15 @@ corrected native declarations and real local delivery is qualified on the
 initial baseline. The portable `.2` adoption candidate passes its required
 strict, delivery and runtime lanes. Independent acceptance
 remains open.
-Original progress is 202 committed implemented candidates and 193 independently
-accepted checkpoints; S203 delivery is active. R11-F03 no-change refusal and R11-F04 complete CI coverage
+Original progress is 203 committed implemented candidates and 193 independently
+accepted checkpoints; separate final acceptance is active. R11-F03 no-change refusal and R11-F04 complete CI coverage
 are verified candidates. R11-F05 guidance/boundary reconciliation is also a
 verified candidate. R11-F06/S201 full cumulative release checks pass and its
 verified implementation commit is `5ee6a2d89057396e0041695b7d0a18dd306285bc`.
 S202 extension reconciliation is committed at
-`01ec4d1e02bdc7361f1e74025c54e4351ca4db53`. S203 delivery and separate final
-acceptance of S194–S203 remain required. The
+`01ec4d1e02bdc7361f1e74025c54e4351ca4db53`. S203 delivery is committed at
+`96fee1012e61fa57ad02faa7025de89e85937d0d`. Separate final acceptance of
+S194–S203 and all repairs remains required. The
 corrected candidate passes raw strict checking; the original failed attempt
 remains provenance. No independent acceptance is manufactured by this report.
 Continue to record actual repair outcomes here;

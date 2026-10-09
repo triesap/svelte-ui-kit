@@ -3022,7 +3022,7 @@
       "sequence": "RCLD-11",
       "dependsOn": "S202",
       "requirements": ["R01", "R29", "R31", "R32", "R33", "R34"],
-      "status": "in_progress",
+      "status": "committed_pending_review",
       "completion": null
     }
   ]

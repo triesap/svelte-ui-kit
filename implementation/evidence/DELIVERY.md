@@ -8,24 +8,26 @@ is performed or required for this local delivery.
 ## Implementation and acceptance
 
 S001–S193 and RCLD-01–RCLD-10 remain independently accepted at their recorded
-anchors. S194–S202 are verified committed candidates; S203 freezes final
-delivery. The complete repaired cumulative lane passes on source
+anchors. S194–S203 are verified committed candidates; all 203 original checkpoints
+are implemented, with 193 independently accepted and ten awaiting final review.
+S203 delivery is committed at `96fee1012e61fa57ad02faa7025de89e85937d0d`.
+The complete repaired cumulative lane passes on source
 `7756b5cbb53d5be7f6c25622e57da78edb283f51`. Subsequent changes concern execution
 evidence, extension scope, linked fixtures and current documentation, with
 affected checks rerun rather than old runs relabeled fresh.
 
-| Original checkpoint | Verified implementation commit                 | Conventional report |
-| ------------------- | ---------------------------------------------- | ------------------- |
-| S194                | `69dfeca0cd6788ebc5d739f171c5b56bb9f19cf2`     | `S194_REPORT.md`    |
-| S195                | `2aeec283befbb9380a53898e2ad2b8874218f71b`     | `S195_REPORT.md`    |
-| S196                | `d9f3d733cadbc11bb3e9110a8f0e72a7ebb158c6`     | `S196_REPORT.md`    |
-| S197                | `5b28f4b1738970722b77bde79a95d9e7c02f6928`     | `S197_REPORT.md`    |
-| S198                | `918b503d3c18ecac64fc1943b2d632bf865aaa75`     | `S198_REPORT.md`    |
-| S199                | `a097624bf8ddba93fa824b9543054e49588f6bb1`     | `S199_REPORT.md`    |
-| S200                | `c1a2b3321c64b8e39006e00e0abcc307222fcbf8`     | `S200_REPORT.md`    |
-| S201                | `5ee6a2d89057396e0041695b7d0a18dd306285bc`     | `S201_REPORT.md`    |
-| S202                | `01ec4d1e02bdc7361f1e74025c54e4351ca4db53`     | `S202_REPORT.md`    |
-| S203                | Being verified and committed; no hash invented | `S203_REPORT.md`    |
+| Original checkpoint | Verified implementation commit             | Conventional report |
+| ------------------- | ------------------------------------------ | ------------------- |
+| S194                | `69dfeca0cd6788ebc5d739f171c5b56bb9f19cf2` | `S194_REPORT.md`    |
+| S195                | `2aeec283befbb9380a53898e2ad2b8874218f71b` | `S195_REPORT.md`    |
+| S196                | `d9f3d733cadbc11bb3e9110a8f0e72a7ebb158c6` | `S196_REPORT.md`    |
+| S197                | `5b28f4b1738970722b77bde79a95d9e7c02f6928` | `S197_REPORT.md`    |
+| S198                | `918b503d3c18ecac64fc1943b2d632bf865aaa75` | `S198_REPORT.md`    |
+| S199                | `a097624bf8ddba93fa824b9543054e49588f6bb1` | `S199_REPORT.md`    |
+| S200                | `c1a2b3321c64b8e39006e00e0abcc307222fcbf8` | `S200_REPORT.md`    |
+| S201                | `5ee6a2d89057396e0041695b7d0a18dd306285bc` | `S201_REPORT.md`    |
+| S202                | `01ec4d1e02bdc7361f1e74025c54e4351ca4db53` | `S202_REPORT.md`    |
+| S203                | `96fee1012e61fa57ad02faa7025de89e85937d0d` | `S203_REPORT.md`    |
 
 [The repair report](RCLD-11_REPAIR_REPORT.md) retains the source/emitter diagnosis,
 genuine producer and portable `.2` adoption, application-owned local delivery,
@@ -112,14 +114,14 @@ coverage and measured local lanes; hosted runs are not claimed.
 
 ## Exact next action and remaining scope
 
-After green S203 commit, freeze the actual candidate and submit S194–S203 plus
+The green S203 commit now permits freezing the actual candidate and submitting S194–S203 plus
 all repairs to the existing separate reviewer. Repair any demonstrated relevant
 finding and obtain independent affected reruns. Only actual final acceptance
 permits atomic ledger/projection/status completion and task closure. Preserve
 all existing acceptance/history and no-push/publication/deployment boundaries.
 
-The complete unfinished original RCLD set is **RCLD-11 only**, pending S203
-commit and separate final acceptance. Gated Select/Combobox/Popover/date/
+The complete unfinished original RCLD set is **RCLD-11 only**, pending separate
+final acceptance. Gated Select/Combobox/Popover/date/
 higher-level work requires its own finite approved product contracts and future
 sequence; it is intentionally outside this original MVP delivery.
 

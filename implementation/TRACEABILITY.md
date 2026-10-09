@@ -2,8 +2,8 @@
 
 This map supplements the [live ledger](COMMIT_SEQUENCE.md); it grants no
 acceptance and changes no original requirement. S001–S193 are independently
-accepted at the recorded sequence anchors. S194–S202 are committed candidates;
-S203 records final delivery. [The current cumulative lane](evidence/FINAL_VERIFICATION.md)
+accepted at the recorded sequence anchors. S194–S203 are committed candidates.
+S203 freezes final delivery. [The current cumulative lane](evidence/FINAL_VERIFICATION.md)
 passes on the repaired native candidate. Separate S203 acceptance remains open.
 Links identify actual maintained implementation/tests or recorded evidence;
 they are not claims that every suite was freshly rerun at this checkpoint.
@@ -86,7 +86,7 @@ bound the changed candidate without borrowing acceptance from the old pin.
 | AC18 | [CSS contracts](../tests/browser/css-contracts.spec.ts), [accessibility](../tests/browser/accessibility-states.spec.ts), [S185](evidence/S185_REPORT.md)                                                              | Computed CSS qualified; baseline nontext contrast concerns remain documented.                                                    |
 | AC19 | [Theme browsers](../tests/browser/catalog-themes.spec.ts), [CSP](../tests/browser/menu-csp.spec.ts), [S199](evidence/S199_REPORT.md)                                                                                  | Portal/live theme and bounded CSP qualification; no zero-inline guarantee.                                                       |
 | AC20 | [Strict assessment](evidence/S196_STRICT_ASSESSMENT.md), [compatibility](evidence/COMPATIBILITY.md), [verification policy](VERIFICATION.md) [Current cumulative lane](evidence/FINAL_VERIFICATION.md)                 | OPEN for separate acceptance: complete current cumulative lane and raw strict checker pass with zero errors/warnings; no waiver. |
-| AC21 | [Live ledger](COMMIT_SEQUENCE.md), [operations](OPERATIONS_RUNBOOK.md), [command map](evidence/COMMANDS.md), [S199](evidence/S199_REPORT.md)                                                                          | S001–S193 accepted; S194–S202 committed candidates and S203 delivery remain subject to separate final acceptance.                |
+| AC21 | [Live ledger](COMMIT_SEQUENCE.md), [operations](OPERATIONS_RUNBOOK.md), [command map](evidence/COMMANDS.md), [S199](evidence/S199_REPORT.md)                                                                          | S001–S193 accepted; S194–S203 committed candidates remain subject to separate final acceptance.                                  |
 | AC22 | [Extension gate](EXTENSION_GATE.md), [open questions](OPEN_QUESTIONS.md)                                                                                                                                              | S202 gate records actual infrastructure, missing finite contracts and future acceptance inputs; no unspecified APIs implemented. |
 
 The [original S201 blocker](evidence/S201_BLOCKER.md) preserves the actual failed

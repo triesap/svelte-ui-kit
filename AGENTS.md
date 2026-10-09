@@ -22,9 +22,9 @@ references.
   work, with a separate reviewer at mandatory independent acceptance gates.
 - Complete one checkpoint at a time in documented order. Current dispatch is
   `pfc all`: continue the original sequence through its independent gates.
-  S001–S193 are independently accepted; S194–S202 are committed candidates.
+  S001–S193 are independently accepted; S194–S203 are committed candidates.
   S201 full cumulative qualification passes at the repaired native candidate;
-  S202 records the exact extension specification boundary. S203 freezes delivery
+  S202 records the exact extension specification boundary. S203 commits delivery
   and requires separate acceptance of the entire final sequence and repairs.
   The ledger is live authority.
   Earlier Q3-only/two-or-three-commit/Q4-later management limits are superseded.

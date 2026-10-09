@@ -1,10 +1,11 @@
 # S203 implementation report — original MVP delivery evidence
 
 Author: Codex. Candidate; separate final RCLD-11 acceptance remains mandatory.
+Implementation commit: `96fee1012e61fa57ad02faa7025de89e85937d0d`.
 Dependency: verified S202 commit `01ec4d1e02bdc7361f1e74025c54e4351ca4db53`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S203","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S203","kind":"report","commit":"96fee1012e61fa57ad02faa7025de89e85937d0d","disposition":"candidate"}
 -->
 
 [Delivery](DELIVERY.md) records the exact original implementation commits,
