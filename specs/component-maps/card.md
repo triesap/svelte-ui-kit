@@ -1,10 +1,12 @@
 # Card native section and content contract
 
-Current qualification status: original family gates through S193 are independently
-accepted. Checkpoint-era pending/gated statements below retain historical
-provenance. The selected native baseline and final release remain candidates
-under [current qualification](../../implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
-and the sole governing ledger; separate S203 acceptance remains required.
+Current qualification status: original family gates, the selected native
+baseline and local MVP are independently accepted through S203.
+[Final qualification](../../implementation/evidence/RCLD-11_QUALIFICATION.md)
+is anchored at `f756d227b6a1dce1396183dec4db138a256e16bf`. Checkpoint-era pending/gated statements below
+retain historical provenance and do not reopen completed gates.
+[Native/source boundaries](../../implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
+and documented platform limits remain explicit.
 
 Original S161–S163, R03, R20, R22, R25, R26, R32, R33, R34.
 

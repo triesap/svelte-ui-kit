@@ -1,10 +1,17 @@
+Coordinator acceptance record: the separate final decision is anchored at
+`f756d227b6a1dce1396183dec4db138a256e16bf` in [RCLD-11 qualification](RCLD-11_QUALIFICATION.md).
+The original implementation/review narrative retains its pre-transition states;
+current qualification supersedes historical strict debt and pending-review notes.
+This bookkeeping records the separate decision, not implementation self-acceptance.
+
 # S198 implementation report — safe recovery procedures
 
-Author: Codex. Candidate; separate final S203 acceptance remains required.
+Author: Codex. Implemented and independently accepted. The narrative below
+preserves original candidate-stage provenance and failed attempts.
 Implementation commit: `918b503d3c18ecac64fc1943b2d632bf865aaa75`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S198","kind":"report","commit":"918b503d3c18ecac64fc1943b2d632bf865aaa75","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S198","kind":"report","commit":"f756d227b6a1dce1396183dec4db138a256e16bf","disposition":"implemented"}
 -->
 
 The runbook and README now require a verified external application backup,

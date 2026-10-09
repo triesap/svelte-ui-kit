@@ -20,17 +20,16 @@ references.
   independent acceptance. Historical Pi dispatches/reports remain provenance.
   The owner activated `pfc all` on 2026-10-07 for all remaining original S064–S203
   work, with a separate reviewer at mandatory independent acceptance gates.
-- Complete one checkpoint at a time in documented order. Current dispatch is
-  `pfc all`: continue the original sequence through its independent gates.
-  S001–S193 are independently accepted; S194–S203 are committed candidates.
-  S201 full cumulative qualification passes at the repaired native candidate;
-  S202 records the exact extension specification boundary. S203 commits delivery
-  and requires separate acceptance of the entire final sequence and repairs.
-  The ledger is live authority.
-  Earlier Q3-only/two-or-three-commit/Q4-later management limits are superseded.
-  Continue after green slices and successful independent gates. Preserve accepted
-  checkpoints and original criteria/statuses. Target-only coherent green commits
-  are authorized within this scope; no parent/remote or reference-source changes.
+- Complete one checkpoint at a time in documented order for any future
+  authorized work. The owner `pfc all` original MVP range is complete:
+  S001–S203 and RCLD-01–RCLD-11 are independently accepted. The final separate
+  reviewer accepted S194–S203 and R11-F01–R11-F06 on
+  `b174b5ae8ffd4eead61df5e846ea4d39ac14ec74`, with evidence at
+  `f756d227b6a1dce1396183dec4db138a256e16bf`. The ledger remains sole live authority;
+  original implementation commits and previous gates retain their provenance.
+  Extension implementation requires its own approved contracts and sequence.
+  Target-only coherent green commits were authorized for this completed range;
+  no parent/remote or reference-source changes are authorized.
 - The separate reviewer accepted original S064–S077 on code `ce54d7d`, with
   committed review evidence at `fd1d0938d9ad188c5646c153b76fa2989438c727`.
   The separate reviewer accepted S078–S091 on `dbd5490`, with evidence at
@@ -40,12 +39,13 @@ references.
   evidence at `f9dc56f1921024c426b8df59c0c08abb28e2af7c`. S129–S148/RCLD-08 is accepted on `aec5711b9d3368b1cc1f0416bca7f2f0ce5aa0a5`, with independent
   evidence at `bd2613c050c37cd883d4e2155a6eb264ce66c484`. S149–S181/RCLD-09 is accepted on `a79db79f78818797e2b3d541731797b5b19b60ce`, with independent
   evidence at `871c1945daf660d9f0f724fb949057b4fa3a1da6`. S182–S193/RCLD-10 is accepted on `abeccabbdfda5aedb7be4f72e3b51a4675d3a609`, with independent
-  evidence at `8ab760dc4d674853b172126b2a3ec3a0434c678f`. S194–S203/RCLD-11 is current
-  under `pfc all`; final separate S203 acceptance remains mandatory.
+  evidence at `8ab760dc4d674853b172126b2a3ec3a0434c678f`. S194–S203/RCLD-11 is complete at the final evidence anchor above.
+  No additional original implementation checkpoint remains.
   Earlier RCLD-04 finding paragraphs below are historical and resolved by
   `implementation/evidence/RCLD-04_QUALIFICATION.md`. No new owner dispatch is
   required. Current local full platform/package/strict qualification passes;
-  final MVP/AC20 acceptance remains with the separate reviewer.
+  final MVP/AC20 acceptance is recorded in
+  `implementation/evidence/RCLD-11_QUALIFICATION.md`.
 - Preserve authenticated immutable export/cohort authority, actual import/render
   AST parsing, lexical child-render proof and equivalent-customization controls.
   Planned output must not certify itself. Earlier RCLD-04 return findings are
@@ -53,7 +53,8 @@ references.
   Test inventories and author completion claims do not grant acceptance.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
-- Final release AC20 and separate acceptance remain open. R11-F02 adopts the
+- Final local MVP/AC20 and separate acceptance are complete within the recorded
+  source/platform boundaries. R11-F02 adopts the
   authenticated local Bits 2.19.5-svelte-ui-kit.2 producer baseline; the
   maintained fixture requires raw strict zero errors/warnings. Historical
   upstream TS2590 failures and the former qualified exception remain evidence,

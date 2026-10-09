@@ -1,10 +1,17 @@
+Coordinator acceptance record: the separate final decision is anchored at
+`f756d227b6a1dce1396183dec4db138a256e16bf` in [RCLD-11 qualification](RCLD-11_QUALIFICATION.md).
+The original implementation/review narrative retains its pre-transition states;
+current qualification supersedes historical strict debt and pending-review notes.
+This bookkeeping records the separate decision, not implementation self-acceptance.
+
 # S199 implementation report — app-owned composition examples
 
-Author: Codex. Candidate; separate final S203 acceptance remains required.
+Author: Codex. Implemented and independently accepted. The narrative below
+preserves original candidate-stage provenance and failed attempts.
 Implementation commit: `a097624bf8ddba93fa824b9543054e49588f6bb1`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S199","kind":"report","commit":"a097624bf8ddba93fa824b9543054e49588f6bb1","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S199","kind":"report","commit":"f756d227b6a1dce1396183dec4db138a256e16bf","disposition":"implemented"}
 -->
 
 The documented application page composes existing Collapsible, Alert/Status,

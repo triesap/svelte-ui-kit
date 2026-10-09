@@ -23,12 +23,15 @@ Representative synthetic registries qualify source/CSS updates, retirement,
 conflicts and default/custom layouts in executable and generated-consumer tests.
 The complete catalog and cross-component qualification passed
 [independent S193 review](implementation/evidence/RCLD-10_QUALIFICATION.md).
-The repaired candidate passes the complete current installed-package, strict
+The independently accepted implementation passes the complete installed-package, strict
 compatibility and cumulative release lanes, recorded in
 [final verification](implementation/evidence/FINAL_VERIFICATION.md).
-[Delivery](implementation/evidence/DELIVERY.md) distinguishes verified
-implementation from the mandatory separate final acceptance still in progress
-under [the governing sequence](implementation/COMMIT_SEQUENCE.md).
+[Final independent review](implementation/evidence/RCLD-11_QUALIFICATION.md)
+accepts S194–S203 and the approved repairs. All 203 original checkpoints and
+all eleven sequences are complete under
+[the governing sequence](implementation/COMMIT_SEQUENCE.md).
+[Delivery](implementation/evidence/DELIVERY.md) records actual implementation,
+acceptance, artifacts and qualified limits.
 Select/Combobox/Popover/date and higher-level extensions remain behind their
 [specification gate](implementation/EXTENSION_GATE.md).
 
@@ -140,11 +143,10 @@ SSR/hydration, retained child state and measured CSP/motion limits. Original
 S149–S181 catalog passed
 [independent complete catalog review](implementation/evidence/RCLD-09_QUALIFICATION.md),
 including native links, image fallback, presentation and request-local identity.
-S182–S193 passed the separate cross-component/platform gate. S194–S200 are
-verified implementation candidates; the final S203 gate remains open. The
-package remains unpublished. The qualified local native build resolves the
-strict declaration errors; cumulative AC20 and independent final acceptance
-remain open. See [compatibility evidence](implementation/evidence/COMPATIBILITY.md).
+S182–S193 passed the separate cross-component/platform gate. S194–S203 and
+all approved repairs passed the separate final gate. The package remains
+unpublished. The qualified local native build resolves the strict declaration
+errors; cumulative AC20 passes within the recorded local qualification. See [compatibility evidence](implementation/evidence/COMPATIBILITY.md).
 
 ## Use the local built CLI
 
@@ -509,7 +511,8 @@ suite drives deterministic startup-failure, stderr, post-ready exit, stalled
 header/body and cleanup faults. The maintained baseline is separate from lifecycle suites, which run generated
 default/custom consumers through actual add/update/retirement check, production
 build and SSR stages. Packed executable inventory is qualified separately; final
-catalog/browser/platform/release acceptance remains open.
+catalog, browser and platform acceptance is recorded in the separate final qualification within its
+explicit local scope.
 
 `pnpm run test:browser` builds the fixture and runs the Playwright 1.63.0
 full configured suite under `tests/browser/` with bundled headless Chromium over
@@ -543,7 +546,7 @@ The installable eight-part Menu family supplies Root, Trigger, Portal, Content,
 Item, RadioGroup, RadioItem and ItemIndicator with flat `Menu*` exports. It is
 qualified and independently accepted through the original family gate in
 generated default/custom applications. Final qualification of the changed
-native baseline remains pending S203. Bind Root open and RadioGroup value explicitly;
+native baseline passed the separate S203 gate. Bind Root open and RadioGroup value explicitly;
 compose ItemIndicator from RadioItem's native checked snippet. Give Content an
 accessible name. Selected Bits 2.19.5-svelte-ui-kit.2 typeahead searches visible
 DOM text; its public textValue prop is forwarded but does not change search

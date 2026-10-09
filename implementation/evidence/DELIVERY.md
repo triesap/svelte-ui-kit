@@ -1,19 +1,23 @@
-# Original MVP delivery candidate
+# Original MVP delivery
 
-Author: Codex. Updated 2026-10-09. Verified implementation candidate; separate
-RCLD-11 acceptance remains required. The sole execution/status authority is the
+Author: Codex. Updated 2026-10-09. Original implementation and separate RCLD-11
+acceptance are complete within the documented local scope. The sole execution/status authority is the
 [governing ledger](../COMMIT_SEQUENCE.md). No publication, push or deployment
 is performed or required for this local delivery.
 
 ## Implementation and acceptance
 
 S001–S193 and RCLD-01–RCLD-10 remain independently accepted at their recorded
-anchors. S194–S203 are verified committed candidates; all 203 original checkpoints
-are implemented, with 193 independently accepted and ten awaiting final review.
+anchors. S194–S203 and all approved repairs passed [separate final review](RCLD-11_QUALIFICATION.md)
+on `b174b5ae8ffd4eead61df5e846ea4d39ac14ec74`, anchored at
+`f756d227b6a1dce1396183dec4db138a256e16bf`. All 203 original checkpoints are implemented and independently
+accepted; all eleven sequences are complete. The original implementation hashes
+below remain provenance; conventional completion records use the review anchor.
 S203 delivery is committed at `96fee1012e61fa57ad02faa7025de89e85937d0d`.
 The complete repaired cumulative lane passes on source
 `7756b5cbb53d5be7f6c25622e57da78edb283f51`. Subsequent changes concern execution
-evidence, extension scope, linked fixtures and current documentation, with
+evidence, extension scope, linked fixture inputs, the independently accepted
+contract-fixture lifecycle correction and current documentation, with
 affected checks rerun rather than old runs relabeled fresh.
 
 | Original checkpoint | Verified implementation commit             | Conventional report |
@@ -33,8 +37,9 @@ affected checks rerun rather than old runs relabeled fresh.
 genuine producer and portable `.2` adoption, application-owned local delivery,
 no-change recovery refusal, complete isolated CI coverage, current guidance and
 cumulative qualification, including failures and their actual corrected runs.
-These repairs remain subject to separate review of all original S194–S203
-criteria and the completion amendment. No self-review grants acceptance.
+The separate reviewer accepted these repairs against all original S194–S203
+criteria and the completion amendment. No implementation self-review supplied
+acceptance.
 
 ## Delivered product and qualified checks
 
@@ -64,10 +69,9 @@ source hashes and clean reference identities remain exact.
 R01–R34 and AC01–AC22 retain their [complete evidence map](../TRACEABILITY.md).
 AC01–AC13 have actual installed/ownership/protocol/recovery controls; AC14–AC19
 have complete catalog, raw native type, generated-browser, SSR and computed CSS/
-portal/CSP evidence within recorded boundaries. AC20's author lane passes
-without the former strict exception. AC21 requires the separate final review
-and reachable report/review anchors, still open. AC22 is satisfied as an
-implementation candidate by [the S202 extension gate](../EXTENSION_GATE.md),
+portal/CSP evidence within recorded boundaries. AC20's full lane passes without the former strict exception and is separately
+accepted. AC21 has the separate final review and real reachable report/review
+anchors. AC22 is separately accepted through [the S202 extension gate](../EXTENSION_GATE.md),
 not unspecified extension components.
 
 ## Artifact reproduction and compatibility
@@ -106,24 +110,23 @@ Kit 2.70.3 and Vite 8.3.1; Chromium on macOS and supported trusted-local
 macOS/Linux filesystem operations. Native reset cancellation, force-mounted
 locking, callback completion, SSR relation registration, floating IDs, CSP and
 nested clipping observations remain explicit. Radio/Switch nontext contrast
-concerns retain source provenance and require independent required-issue
-disposition. Windows/hostile races, remote filesystems/power loss, Firefox/WebKit,
+concerns retain source provenance and have the explicit independent AC18
+required-issue disposition in the final qualification; they are not certified
+as 3:1 or universal WCAG compliance. Windows/hostile races, remote filesystems/power loss, Firefox/WebKit,
 Linux browser rendering, arbitrary themes and screen-reader speech remain
 unsupported or unqualified. Configured CI jobs have complete source-owned
 coverage and measured local lanes; hosted runs are not claimed.
 
-## Exact next action and remaining scope
+## Completed original scope and extension boundary
 
-The green S203 commit now permits freezing the actual candidate and submitting S194–S203 plus
-all repairs to the existing separate reviewer. Repair any demonstrated relevant
-finding and obtain independent affected reruns. Only actual final acceptance
-permits atomic ledger/projection/status completion and task closure. Preserve
-all existing acceptance/history and no-push/publication/deployment boundaries.
+All original checkpoints and repairs passed separate acceptance. The final
+ledger/projection/conventional records use the real review-evidence anchor;
+final changed-document closure is recorded separately below. No push,
+publication, deployment or reference mutation is included.
 
-The complete unfinished original RCLD set is **RCLD-11 only**, pending separate
-final acceptance. Gated Select/Combobox/Popover/date/
-higher-level work requires its own finite approved product contracts and future
-sequence; it is intentionally outside this original MVP delivery.
+The complete unfinished original RCLD set is **none**. Select/Combobox/Popover/
+date/higher-level implementation requires its own finite approved product
+contracts and future sequence. It is outside this completed original MVP.
 
 ## Final changed-scope execution
 
@@ -136,3 +139,51 @@ document inputs: 159/159, zero skips/failures/cancellations/TODOs, 634982 ms.
 statuses and raw log digests; `logs/s203-source-freeze.json` confirms all 1207
 tracked inputs remain exact through both runs. Final result/status annotations
 are checked afterward without relabeling the unchanged full product runs.
+
+## Final accepted-state closure
+
+Actual final accepted-state verification passed full formatting/lint, all six
+root TypeScript configurations, CI coverage, live contracts, linked guidance 1/1,
+registry traceability 3/3, package inventory/metadata 2/2, local packing/audit,
+source/reference/index preservation and diff checks. Full contract regression
+passed **160/160** in **662034 ms**, with zero failures, skips,
+cancellations or TODOs. All **1218** tracked inputs remained byte-exact through
+these fourteen lanes; `logs/r11-final-repaired-qualified-freeze.json` authenticates
+the source inventory, actual command statuses and every raw log digest before
+status/result annotations. Execution used Node 24.21.0 and pnpm 11.22.0 in the
+accepted-state working tree over `f756d227b6a1dce1396183dec4db138a256e16bf`.
+
+The actual final archive is `logs/r11-final-repaired-packed/svelte-ui-kit-0.1.0.tgz`,
+SHA-256 `e22152dee9856cba50e6846cb14539f6e668a672438583695a84b4f0a0332dd7`. It contains **241** permitted regular files.
+Comparison with the full product-qualified artifact changes only README; the
+other **240** files and all modes, executable and native archive identities remain
+exact. `logs/r11-final-repaired-artifact-inventory.json` and
+`logs/r11-final-repaired-artifact-delta.json` retain that proof. Owned audit staging
+was removed; prior artifacts/logs remain retained. README and every package input
+remain unchanged by subsequent status/result annotations.
+
+Full product executions remain attributed to `7756b5cbb53d5be7f6c25622e57da78edb283f51`,
+and the separate reviewer execution to `b174b5ae8ffd4eead61df5e846ea4d39ac14ec74`. Final
+component-map header annotations reconcile the same actual separate acceptance;
+technical contracts and historical bodies are preserved. These status/result
+annotations require focused formatting, live-contract, linked-guidance and
+preservation checks before the final commit; they do not relabel earlier runs.
+
+The first accepted-state full regression failed 157/159 (two failures, zero
+skips) in 704989 ms. Both historical no-batch tests depended on an inherited
+authoring batch marker. Fixture construction now strips all copied authority and
+generates only scenario-owned authorization; both tests explicitly create their
+owned record before preserving the strict removal assertion. A new causal case
+covers eight absent/foreign/malformed/duplicate combinations across no-batch and
+pending scenarios, with real CLI and complete-tree read-only assertions. Root
+focused checks passed 3/3; the separate reviewer independently accepted the
+correction after 8/8 checks. The
+failed raw run remains at `logs/r11-final-contract-regression.log` and
+`logs/r11-final-outcome.json`; the corrected full 160-case run above
+supplies final closure. Product/native code and required criteria are unchanged.
+
+The private bookkeeping preparation initially refused a duplicated current
+traceability phrase before writing any public file. Its observed exit-1 outcome
+is retained in `logs/r11-finalize-first-outcome.json`; the corrected
+preparation succeeded without changing product code, tests or requirements.
+The complete unfinished original RCLD set is **none**.

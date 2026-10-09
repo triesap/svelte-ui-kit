@@ -1,10 +1,17 @@
+Coordinator acceptance record: the separate final decision is anchored at
+`f756d227b6a1dce1396183dec4db138a256e16bf` in [RCLD-11 qualification](RCLD-11_QUALIFICATION.md).
+The original implementation/review narrative retains its pre-transition states;
+current qualification supersedes historical strict debt and pending-review notes.
+This bookkeeping records the separate decision, not implementation self-acceptance.
+
 # S196 implementation report — bounded release metadata
 
-Author: Codex. Candidate; separate final S203 acceptance remains required.
+Author: Codex. Implemented and independently accepted. The narrative below
+preserves original candidate-stage provenance and failed attempts.
 Implementation commit: `d9f3d733cadbc11bb3e9110a8f0e72a7ebb158c6`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S196","kind":"report","commit":"d9f3d733cadbc11bb3e9110a8f0e72a7ebb158c6","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S196","kind":"report","commit":"f756d227b6a1dce1396183dec4db138a256e16bf","disposition":"implemented"}
 -->
 
 The package engine now bounds Node to `>=24.21.0 <25`, matching the executed

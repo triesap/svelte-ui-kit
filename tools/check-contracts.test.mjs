@@ -50,6 +50,7 @@ import {
   writeEvidence,
   writeEvidencePair,
   writeBatchAuthorization,
+  BATCH_RCLD01,
   BATCH_RCLD05,
   BATCH_RCLD06,
   BATCH_RCLD07,
@@ -2778,9 +2779,52 @@ function removePendingSummary(root) {
 
 const BATCH_IDS = ["S007", "S008", "S009", "S010", "S011", "S012"];
 
+test("fixture batch authority is scenario-owned across active and completed source states", () => {
+  const record = (payload) =>
+    "<!-- checkpoint-batch\n" + JSON.stringify(payload) + "\n-->\n";
+  const copiedRecords = [
+    "",
+    record(BATCH_RCLD11),
+    record({ schemaVersion: 99 }),
+    record(BATCH_RCLD11).repeat(2),
+  ];
+  for (const scenario of ["two", "pendingBatch"]) {
+    for (const copied of copiedRecords) {
+      withFixture(
+        (root) => {
+          const issues = [];
+          const batch = readBatchAuthorization(root, issues);
+          assert.deepEqual(issues, []);
+          if (scenario === "two") assert.equal(batch, null);
+          else {
+            assert.equal(batch.sequence, BATCH_RCLD01.sequence);
+            assert.equal(batch.first, BATCH_RCLD01.first);
+            assert.equal(batch.last, BATCH_RCLD01.last);
+            assert.deepEqual([...batch.ids], BATCH_IDS);
+          }
+          const before = snapshotTree(root);
+          const result = runCli(root);
+          assert.equal(result.status, 0, result.output);
+          assert.equal(snapshotTree(root), before);
+        },
+        {
+          scenario,
+          failAfterCopy(root) {
+            if (copied) {
+              append(root, PLAN_REL, copied);
+              assert.ok(read(root, PLAN_REL).includes(copied));
+            }
+          },
+        },
+      );
+    }
+  }
+});
+
 test("a historical plan without batch authorization or pending state needs no pending summary", () => {
   withFixture(
     (root) => {
+      writeBatchAuthorization(root, BATCH_RCLD01);
       removeBatchAuthorization(root);
       removePendingSummary(root);
       regenerate(root, 0);
@@ -2794,6 +2838,7 @@ test("a historical plan without batch authorization or pending state needs no pe
 test("a present pending summary must stay accurate even without a batch", () => {
   withFixture(
     (root) => {
+      writeBatchAuthorization(root, BATCH_RCLD01);
       removeBatchAuthorization(root);
       write(
         root,

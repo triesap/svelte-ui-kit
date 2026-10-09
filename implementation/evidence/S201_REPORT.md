@@ -1,10 +1,17 @@
+Coordinator acceptance record: the separate final decision is anchored at
+`f756d227b6a1dce1396183dec4db138a256e16bf` in [RCLD-11 qualification](RCLD-11_QUALIFICATION.md).
+The original implementation/review narrative retains its pre-transition states;
+current qualification supersedes historical strict debt and pending-review notes.
+This bookkeeping records the separate decision, not implementation self-acceptance.
+
 # S201 implementation report — cumulative release qualification
 
-Author: Codex. Verified candidate; separate final acceptance remains required.
+Author: Codex. Implemented and independently accepted. The narrative below
+preserves original candidate-stage provenance and failed attempts.
 Implementation commit: `5ee6a2d89057396e0041695b7d0a18dd306285bc`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S201","kind":"report","commit":"5ee6a2d89057396e0041695b7d0a18dd306285bc","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S201","kind":"report","commit":"f756d227b6a1dce1396183dec4db138a256e16bf","disposition":"implemented"}
 -->
 
 R11-F01–F05 are committed verified repair candidates. The complete current

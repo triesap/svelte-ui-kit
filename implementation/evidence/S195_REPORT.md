@@ -1,10 +1,17 @@
+Coordinator acceptance record: the separate final decision is anchored at
+`f756d227b6a1dce1396183dec4db138a256e16bf` in [RCLD-11 qualification](RCLD-11_QUALIFICATION.md).
+The original implementation/review narrative retains its pre-transition states;
+current qualification supersedes historical strict debt and pending-review notes.
+This bookkeeping records the separate decision, not implementation self-acceptance.
+
 # S195 implementation report — packed complete-catalog consumer
 
-Author: Codex. Candidate; separate final S203 acceptance remains required.
+Author: Codex. Implemented and independently accepted. The narrative below
+preserves original candidate-stage provenance and failed attempts.
 Implementation commit: `2aeec283befbb9380a53898e2ad2b8874218f71b`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S195","kind":"report","commit":"2aeec283befbb9380a53898e2ad2b8874218f71b","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S195","kind":"report","commit":"f756d227b6a1dce1396183dec4db138a256e16bf","disposition":"implemented"}
 -->
 
 `tests/helpers/packaged-consumer.ts` uses the actual isolated build, pack and

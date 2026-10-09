@@ -11,7 +11,9 @@ no-change inspection files on the selected authenticated Bits
 2.19.5-svelte-ui-kit.2 baseline. Each lane passed 172/172, zero skips or
 cancellations. [Current cumulative qualification](FINAL_VERIFICATION.md) freshly
 replays the same 17 owning files on macOS and unprivileged Linux successfully.
-These are author qualification results; separate S203 acceptance remains open.
+These author results were assessed at [separate S203 qualification](RCLD-11_QUALIFICATION.md),
+which additionally replayed all 172 unprivileged Linux cases. macOS selected
+safety/recovery controls were independently replayed within its 71-case lane.
 
 | Lane                                                    | Actual execution                                                           | Filesystem observation                                  | Result                                                             |
 | ------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------ |
@@ -124,5 +126,6 @@ Observed ancestry/preimage checks do not eliminate hostile directory replacement
 between syscalls. The accepted trusted-local race boundary remains unchanged.
 
 No Rust workspace is present or affected; conditional Cargo checks are N/A.
-Final AC20, package/runtime/browser compatibility and S203 acceptance remain
-open. This matrix adds evidence and configured checks without waiving them.
+Final AC20 and S203 are independently accepted within the recorded local
+package/runtime/browser/filesystem scope. This matrix retains its narrower
+platform observations; hosted and unsupported lanes are not claimed as passed.

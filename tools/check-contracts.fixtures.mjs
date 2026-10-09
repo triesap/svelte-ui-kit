@@ -83,6 +83,22 @@ export const FIXTURE_FILES = [
   "implementation/evidence/RCLD-11_REPAIR_REPORT.md",
   "implementation/evidence/FINAL_VERIFICATION.md",
   "implementation/evidence/DELIVERY.md",
+  "implementation/evidence/RCLD-11_QUALIFICATION.md",
+  "implementation/evidence/S194_REVIEW.md",
+  "implementation/evidence/S195_REVIEW.md",
+  "implementation/evidence/S196_REVIEW.md",
+  "implementation/evidence/S197_REVIEW.md",
+  "implementation/evidence/S198_REPORT.md",
+  "implementation/evidence/S198_REVIEW.md",
+  "implementation/evidence/S199_REVIEW.md",
+  "implementation/evidence/S200_REPORT.md",
+  "implementation/evidence/S200_REVIEW.md",
+  "implementation/evidence/S201_REPORT.md",
+  "implementation/evidence/S201_REVIEW.md",
+  "implementation/evidence/S202_REPORT.md",
+  "implementation/evidence/S202_REVIEW.md",
+  "implementation/evidence/S203_REPORT.md",
+  "implementation/evidence/S203_REVIEW.md",
   "CONTRIBUTING.md",
   "tools/native-dependency/README.md",
   "tools/native-dependency/recipe.json",
@@ -795,6 +811,17 @@ export function buildFixture({
   try {
     copyFixtureInputs(sourceRoot, dir);
     if (typeof failAfterCopy === "function") failAfterCopy(dir);
+    // Batch authority belongs to the fixture scenario just like checkpoint
+    // evidence. Neither an active nor completed authoring checkout may supply
+    // authorization to a synthetic lifecycle state.
+    const fixturePlan = path.join(dir, PLAN_REL);
+    writeFileSync(
+      fixturePlan,
+      readFileSync(fixturePlan, "utf8").replace(
+        /<!--\s*checkpoint-batch\b[\s\S]*?-->\n?/g,
+        "",
+      ),
+    );
     const statuses = new Map(
       EXPECTED_STEP_IDS.map((id) => [id, "not_started"]),
     );

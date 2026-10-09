@@ -30,7 +30,8 @@ this procedure; generation never performs installation or package-file edits.
 
 The [completion repair report](RCLD-11_REPAIR_REPORT.md) records current lane
 outcomes and failed attempts. [Current cumulative S201](FINAL_VERIFICATION.md)
-passes on the repaired candidate. Separate S203 acceptance remains open.
+passes on the repaired candidate. [Separate S203 acceptance](RCLD-11_QUALIFICATION.md)
+is anchored at `f756d227b6a1dce1396183dec4db138a256e16bf`.
 The sections below retain their historical
 pins, observations and qualification boundaries; they cannot certify this new
 candidate or be relabeled fresh executions. Hosted CI remains unexecuted.
@@ -44,7 +45,8 @@ qualify it. R11-F04 subsequently added dev-only YAML `2.9.1`, resolving Vite's
 optional YAML peer. Its strict check and production/SSR replay passed; R11-F06
 freshly passes every cumulative application lane on that final graph, including
 the full 733-case Chromium suite. None of these
-author runs grants independent final acceptance.
+author runs alone grants independent final acceptance; the separate final
+review records its own fresh checks and authenticated reused evidence.
 
 | Boundary                           | Current disposition and actual owning controls                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -68,7 +70,8 @@ compatibility declares the exact tested application pins rather than a new
 major-version support range. S194/S195 installed real local
 tarballs; both complete-catalog application layouts passed ordinary check,
 production build, SSR, ownership transitions and Chromium qualification.
-These are implementation results pending the separate final S203 gate.
+These author results were independently assessed and accepted at the separate
+final S203 gate; actual reviewer replays remain distinct in its qualification.
 
 Package `engines.node` is now `>=24.21.0 <25`, replacing the earlier open-ended
 `>=24` declaration. Only Node `24.21.0` has executed the qualification. The engine

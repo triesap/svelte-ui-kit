@@ -1,5 +1,13 @@
 # Portable tokens and customization mapping
 
+Current qualification status: original family gates, the selected native
+baseline and local MVP are independently accepted through S203.
+[Final qualification](../../implementation/evidence/RCLD-11_QUALIFICATION.md)
+is anchored at `f756d227b6a1dce1396183dec4db138a256e16bf`. Checkpoint-era pending/gated statements below
+retain historical provenance and do not reopen completed gates.
+[Native/source boundaries](../../implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
+and documented platform limits remain explicit.
+
 The semantic and component-customization contracts are independently versioned
 v1 documents using the adopted target schemas. This is a design vocabulary
 mapping. Actual CSS installation and generated integration metadata are

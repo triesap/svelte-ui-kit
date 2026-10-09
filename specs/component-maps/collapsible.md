@@ -1,10 +1,12 @@
 # Collapsible source, composition and native presence contract
 
-Current qualification status: original family gates through S193 are independently
-accepted. Checkpoint-era pending/gated statements below retain historical
-provenance. The selected native baseline and final release remain candidates
-under [current qualification](../../implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
-and the sole governing ledger; separate S203 acceptance remains required.
+Current qualification status: original family gates, the selected native
+baseline and local MVP are independently accepted through S203.
+[Final qualification](../../implementation/evidence/RCLD-11_QUALIFICATION.md)
+is anchored at `f756d227b6a1dce1396183dec4db138a256e16bf`. Checkpoint-era pending/gated statements below
+retain historical provenance and do not reopen completed gates.
+[Native/source boundaries](../../implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
+and documented platform limits remain explicit.
 
 Source: [family](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/collapsible/mod.rs),
 [Root](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/collapsible/root.rs),

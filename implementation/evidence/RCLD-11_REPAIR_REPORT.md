@@ -1,6 +1,9 @@
 # RCLD-11 completion amendment and planning qualification repair
 
-Author: Codex. Date: 2026-10-08. Repair candidates; no independent acceptance.
+Author: Codex. Begun 2026-10-08; completed 2026-10-09. All approved repairs
+passed [separate final acceptance](RCLD-11_QUALIFICATION.md), anchored at
+`f756d227b6a1dce1396183dec4db138a256e16bf`. Earlier sections preserve candidate-stage and failed-run
+provenance; the completion record below supersedes historical pending debt.
 
 The owner approved the full completion-review recommendations. The governing
 COMMIT_SEQUENCE.md now specifies R11-F01–R11-F06 inside the existing RCLD-11,
@@ -676,24 +679,18 @@ and repository/index boundaries are preserved. Counts certify author execution,
 not independent acceptance. Original S201 is now a green implementation
 candidate; only its actual commit unlocks S202, and S203 acceptance remains open.
 
-## Remaining implementation and acceptance
+## Completed implementation and independent acceptance
 
-Planning input maintenance, R11-F01 diagnosis and the R11-F02 producer and
-authenticated-transport slices are verified candidates. The producer emits
-corrected native declarations and real local delivery is qualified on the
-initial baseline. The portable `.2` adoption candidate passes its required
-strict, delivery and runtime lanes. Independent acceptance
-remains open.
-Original progress is 203 committed implemented candidates and 193 independently
-accepted checkpoints; separate final acceptance is active. R11-F03 no-change refusal and R11-F04 complete CI coverage
-are verified candidates. R11-F05 guidance/boundary reconciliation is also a
-verified candidate. R11-F06/S201 full cumulative release checks pass and its
-verified implementation commit is `5ee6a2d89057396e0041695b7d0a18dd306285bc`.
-S202 extension reconciliation is committed at
-`01ec4d1e02bdc7361f1e74025c54e4351ca4db53`. S203 delivery is committed at
-`96fee1012e61fa57ad02faa7025de89e85937d0d`. Separate final acceptance of
-S194–S203 and all repairs remains required. The
-corrected candidate passes raw strict checking; the original failed attempt
-remains provenance. No independent acceptance is manufactured by this report.
-Continue to record actual repair outcomes here;
-the governing plan and existing tracker retain execution authority.
+All R11-F01–R11-F06 and original S194–S203 passed the separate final gate on
+`b174b5ae8ffd4eead61df5e846ea4d39ac14ec74`. Evidence is committed at
+`f756d227b6a1dce1396183dec4db138a256e16bf`. The qualification distinguishes fresh native 5, integration 71,
+unprivileged Linux 172, package 10, strict controls 18, browser 222, CI 20,
+traceability 3 and guidance 1 from authenticated full author runs.
+
+All 203 original checkpoints and eleven sequences are independently accepted.
+The actual source-level native correction, unchanged-command refusal, complete
+CI coverage, durable guidance and cumulative S201 qualification satisfy the
+approved amendment without weakening original criteria. Source contrast,
+native behavior, platform and hosted-CI limits remain explicit. All historical
+failed attempts remain provenance. Final accepted-state closure is recorded in
+[delivery](DELIVERY.md). The complete unfinished original RCLD set is **none**.

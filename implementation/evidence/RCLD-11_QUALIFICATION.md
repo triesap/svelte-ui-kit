@@ -310,3 +310,71 @@ record any accepted-document artifact identity from an actual repack. Extension
 work requires the separately approved contracts and sequence; it is not the next
 automatic implementation action. This document grants no future acceptance and
 contains no invented evidence hash.
+
+## Coordinator anchoring — 2026-10-09
+
+The independent decision above is committed at `f756d227b6a1dce1396183dec4db138a256e16bf`.
+The original review text preserves its pre-transition ledger/next-action state.
+The governing ledger now records S001–S203 and all eleven original sequences
+complete, with conventional reports/reviews anchored at that actual commit.
+Final changed-document closure results and any new archive identity are recorded
+in [delivery](DELIVERY.md); they do not relabel the reviewer or full author runs.
+
+## Independent post-acceptance fixture-closure review — 2026-10-09
+
+Separate reviewer: the original independent Codex acceptance reviewer. This
+section independently accepts only the bounded contract-fixture lifecycle repair;
+the original final MVP verdict and its historical command attribution above are
+preserved. Reviewed working-tree base is
+`f756d227b6a1dce1396183dec4db138a256e16bf`, with actual uncommitted fixture/test
+inputs identified below. No future repair/evidence commit is invented.
+
+The real accepted-state full contract regression initially exited 1 with **157/159**
+passing, two failures and zero skips. Retained evidence is
+`implementation/evidence/logs/r11-final-outcome.json`,
+`r11-final-contract-regression.log` and `r11-final-driver.log`; driver duration is
+704,989 ms (raw test duration 704,684.616041 ms). Both failures were the historical
+no-batch tests' strict removal assertions: they assumed copied authoring state
+always contained a live batch marker. The real completed plan properly contains
+none. These failed executions remain failed; this section does not relabel them
+as full regression success.
+
+The reviewer inspected the exact correction. Fixture construction now removes
+all copied closed `checkpoint-batch` records before lifecycle normalization, then
+creates only the scenario-owned authority where required. Both historical tests
+explicitly create `BATCH_RCLD01` before their existing strict removal assertion.
+The new causal fixture case exercises absent, foreign live, invalid-schema and
+duplicate copied records in both no-batch and pending-batch scenarios. It requires
+absent or exact scenario-owned authority, real validator CLI success and complete
+tree nonmutation. Production validator rules and original acceptance criteria are
+unchanged; copied authority is test input, not permission to the synthetic state.
+
+Exact reviewed SHA-256 identities:
+
+- `tools/check-contracts.fixtures.mjs`:
+  `6aa82c037412616574d32af18a2842e86c1f76b77297fc6ad18cd0e7751d3930`.
+- `tools/check-contracts.test.mjs`:
+  `994f87acaf2bbc20af0ba6fa02284f77916cdad4c7eb0fd6860e2b23aad742fe`.
+
+After green `cargo extbuild doctor`, the reviewer independently ran through
+`cargo extbuild run --`, with explicit Node 24.21.0 and pnpm 11.22.0:
+
+```sh
+node --test --test-name-pattern="fixture batch authority|a historical plan|a present pending summary|every authorized batch checkpoint|a pending-review status without|a fenced batch authorization|malformed or non-approved batch authorizations|a duplicate batch authorization" tools/check-contracts.test.mjs
+```
+
+Result: **8/8**, exit 0, 26,987.037584 ms; zero failures, cancellations, skips and
+TODOs. Raw evidence is
+`implementation/evidence/logs/r11-independent-fixture-closure.log`. This includes
+the new eight-variant causal case, both originally failing historical cases and
+the existing strict pending/missing/fenced/malformed/duplicate authority controls.
+Their rejection assertions remain intact. Fixture/test hashes were rechecked
+after execution and match the identities above. No product, native dependency,
+CLI, runtime, browser or specification repair was made by this correction or the
+reviewer. Unrelated changes and repository boundaries remain preserved.
+
+Disposition: accept the narrowly reviewed fixture correction, with no blocking
+finding in it. A new full **160**-test final closure regression remains the
+coordinator's next verification and is not claimed passed by this focused review.
+That run must use the stable current document/fixture inputs and preserve the
+initial 157/159 failure and this independent result as distinct evidence.

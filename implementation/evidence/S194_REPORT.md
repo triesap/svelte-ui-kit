@@ -1,10 +1,17 @@
+Coordinator acceptance record: the separate final decision is anchored at
+`f756d227b6a1dce1396183dec4db138a256e16bf` in [RCLD-11 qualification](RCLD-11_QUALIFICATION.md).
+The original implementation/review narrative retains its pre-transition states;
+current qualification supersedes historical strict debt and pending-review notes.
+This bookkeeping records the separate decision, not implementation self-acceptance.
+
 # S194 implementation report — installed runtime source independence
 
-Author: Codex. Candidate; separate final S203 acceptance remains required.
+Author: Codex. Implemented and independently accepted. The narrative below
+preserves original candidate-stage provenance and failed attempts.
 Implementation commit: `69dfeca0cd6788ebc5d739f171c5b56bb9f19cf2`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S194","kind":"report","commit":"69dfeca0cd6788ebc5d739f171c5b56bb9f19cf2","disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S194","kind":"report","commit":"f756d227b6a1dce1396183dec4db138a256e16bf","disposition":"implemented"}
 -->
 
 The new `tests/helpers/packaged-cli.ts` builds an owned authoring copy using the

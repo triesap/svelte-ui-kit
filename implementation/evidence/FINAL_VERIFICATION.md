@@ -1,7 +1,7 @@
 # Final cumulative verification — S201 / R11-F06
 
-Author: Codex. Verified implementation candidate; separate RCLD-11 acceptance
-remains mandatory. Execution date: 2026-10-09. The unchanged source candidate
+Author: Codex. Implemented and independently accepted in
+[RCLD-11 qualification](RCLD-11_QUALIFICATION.md), anchored at `f756d227b6a1dce1396183dec4db138a256e16bf`. Execution date: 2026-10-09. The unchanged source candidate
 is `7756b5cbb53d5be7f6c25622e57da78edb283f51`; all 1202 tracked source files were inventoried
 before the lanes and verified unchanged after them. Subsequent documentation
 and status commits do not relabel these executions as fresh runs.
@@ -108,7 +108,8 @@ preserved; no unrelated source, generated build output or secrets are staged.
 retain reset cancellation, force-mount pointer locking, first-open callback,
 SSR relation registration, semantic versus floating IDs, CSP and nested clipping
 observations. Radio/Switch nontext contrast concerns remain documented under
-AC18; the separate reviewer must assess required-issue dispositions. Chromium
+AC18; the separate reviewer independently disposed those baseline concerns
+under the original requirement without certifying 3:1/WCAG compliance. Chromium
 on macOS, supported macOS/Linux trusted-local filesystem operations and the
 recorded Node/toolchain are qualified. Windows, hostile races, remote/NFS or
 power-loss guarantees, Firefox/WebKit, screen-reader speech, arbitrary themes
@@ -150,3 +151,32 @@ Inventory, comparison and raw commands are retained in
 `logs/s203-{final,contract}-outcome.json`. Subsequent final status/result notes
 receive live contract/guidance checks; the complete product executions above
 retain their actual 7756b5c provenance rather than becoming new runs.
+
+## Accepted-state closure — 2026-10-09
+
+Actual final accepted-state verification passed full formatting/lint, all six
+root TypeScript configurations, CI coverage, live contracts, linked guidance 1/1,
+registry traceability 3/3, package inventory/metadata 2/2, local packing/audit,
+source/reference/index preservation and diff checks. Full contract regression
+passed **160/160** in **662034 ms**, with zero failures, skips,
+cancellations or TODOs. All **1218** tracked inputs remained byte-exact through
+these fourteen lanes; `logs/r11-final-repaired-qualified-freeze.json` authenticates
+the source inventory, actual command statuses and every raw log digest before
+status/result annotations. Execution used Node 24.21.0 and pnpm 11.22.0 in the
+accepted-state working tree over `f756d227b6a1dce1396183dec4db138a256e16bf`.
+
+The actual final archive is `logs/r11-final-repaired-packed/svelte-ui-kit-0.1.0.tgz`,
+SHA-256 `e22152dee9856cba50e6846cb14539f6e668a672438583695a84b4f0a0332dd7`. It contains **241** permitted regular files.
+Comparison with the full product-qualified artifact changes only README; the
+other **240** files and all modes, executable and native archive identities remain
+exact. `logs/r11-final-repaired-artifact-inventory.json` and
+`logs/r11-final-repaired-artifact-delta.json` retain that proof. Owned audit staging
+was removed; prior artifacts/logs remain retained. README and every package input
+remain unchanged by subsequent status/result annotations.
+
+Full product executions remain attributed to `7756b5cbb53d5be7f6c25622e57da78edb283f51`,
+and the separate reviewer execution to `b174b5ae8ffd4eead61df5e846ea4d39ac14ec74`. Final
+component-map header annotations reconcile the same actual separate acceptance;
+technical contracts and historical bodies are preserved. These status/result
+annotations require focused formatting, live-contract, linked-guidance and
+preservation checks before the final commit; they do not relabel earlier runs.
