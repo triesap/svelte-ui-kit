@@ -1,10 +1,11 @@
 # S202 implementation report — gated extension scope
 
 Author: Codex. Candidate; separate final S203 acceptance remains required.
+Implementation commit: `01ec4d1e02bdc7361f1e74025c54e4351ca4db53`.
 Dependency: verified S201 commit `5ee6a2d89057396e0041695b7d0a18dd306285bc`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S202","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S202","kind":"report","commit":"01ec4d1e02bdc7361f1e74025c54e4351ca4db53","disposition":"candidate"}
 -->
 
 [The extension gate](../EXTENSION_GATE.md) now separates verified reusable

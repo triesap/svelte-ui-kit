@@ -4,8 +4,9 @@ Original S188 evidence was independently accepted through S193/RCLD-10.
 R11-F02's selected local Bits 2.19.5-svelte-ui-kit.2 full Chromium run reconfirmed
 the contrast, semantic, keyboard, RTL and reduced-motion controls. Its 733 cases
 are recorded in [the repair report](RCLD-11_REPAIR_REPORT.md); they are author
-qualification, with cumulative final qualification and separate S203/AC20
-acceptance still open. This records the pinned Chromium/native primitive
+qualification. [Fresh cumulative qualification](FINAL_VERIFICATION.md) also
+passes the full 733-case suite; separate S203/AC20 acceptance remains open.
+This records the pinned Chromium/native primitive
 boundary; it is not screen-reader interoperability or whole-application WCAG
 certification.
 

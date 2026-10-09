@@ -79,21 +79,22 @@ then executes its complete lane. Writers remain serial within each independent
 workspace. No build artifacts cross jobs, and no publication, deployment or
 secret-backed operation is configured.
 
-| Job         | Complete lane                                                                      | Timeout | Local duration evidence informing headroom                                                                                  |
-| ----------- | ---------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- |
-| foundation  | Format, lint, six typechecks, unit, harness, CLI smoke and CI policy controls      | 30 min  | Unit 34.00 s; additional static/harness/smoke and cold bootstrap headroom.                                                  |
-| integration | Full integration suite                                                             | 120 min | Prior full run 2486.05 s; its failures remain historical, not a current pass.                                               |
-| components  | Complete component strict audit and registry suites                                | 60 min  | Components 566.79 s and registry 115.10 s.                                                                                  |
-| package     | Complete real tarball/installed/runtime/consumer/metadata suite                    | 45 min  | Full package 551.22 s before the added unchanged-command controls.                                                          |
-| consumer    | CLI build, raw strict consumer check and production build/SSR lifecycle suites     | 60 min  | Current raw strict and production/SSR lanes executed locally; conservative cold-run budget pending cumulative measurements. |
-| browser     | CLI build, bundled Chromium install and full configured suite                      | 120 min | Full current native baseline 2390.73 s, 733 tests, zero skips/retries.                                                      |
-| contracts   | Live contract validation and full contract regressions                             | 45 min  | Complete 159-test regression 1062.32 s.                                                                                     |
-| native      | Actual reproducible producer and authenticated preparation/delivery controls       | 45 min  | Producer 127.55 s and preparation/delivery 60.42 s.                                                                         |
-| filesystem  | Linux/macOS matrix with all 17 owning recovery/process/durability/filesystem files | 60 min  | Fresh unprivileged Linux preparation/install/build plus 172 tests took 298.853 s.                                           |
+| Job         | Complete lane                                                                      | Timeout | Local duration evidence informing headroom                                                                                                                                                               |
+| ----------- | ---------------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| foundation  | Format, lint, six typechecks, unit, harness, CLI smoke and CI policy controls      | 30 min  | Current F06 foundation commands total 142713 ms; local cached preparation/install, static/unit/harness/CLI/policy controls all pass. Cold producer/bootstrap overhead remains within the bounded budget. |
+| integration | Full integration suite                                                             | 120 min | Current complete 895/895 run 2412336 ms. Prior red runs remain retained and are not reused as passes.                                                                                                    |
+| components  | Complete component strict audit and registry suites                                | 60 min  | Current components 441/441 in 415911 ms and registry 66/66 in 74972 ms.                                                                                                                                  |
+| package     | Complete real tarball/installed/runtime/consumer/metadata suite                    | 45 min  | Current full 10/10 package run 433157 ms, including actual unchanged-command installed controls.                                                                                                         |
+| consumer    | CLI build, raw strict consumer check and production build/SSR lifecycle suites     | 60 min  | Current strict 3385 ms, production 3817 ms and all 27 SSR cases 56429 ms, plus CLI build.                                                                                                                |
+| browser     | CLI build, bundled Chromium install and full configured suite                      | 120 min | Current full 733/733 isolated source-copy lane 2347813 ms, zero skips/retries; actual preparation/frozen install/build additionally recorded.                                                            |
+| contracts   | Live contract validation and full contract regressions                             | 45 min  | Current complete 159/159 regression 840267 ms, plus live contract validation.                                                                                                                            |
+| native      | Actual reproducible producer and authenticated preparation/delivery controls       | 45 min  | Current combined actual producer/preparation/delivery 5/5 run 128600 ms.                                                                                                                                 |
+| filesystem  | Linux/macOS matrix with all 17 owning recovery/process/durability/filesystem files | 60 min  | Current unprivileged Linux preparation/install/build plus 172 cases 307209 ms. Same 17 macOS files pass in the full current integration lane.                                                            |
 
 These are measured **local** observations and conservative bounded headroom,
-not hosted-runner timings. They do not certify a past red integration run or
-replace the remaining current S201 cumulative qualification. Hosted jobs,
+not hosted-runner timings. They do not certify a past red integration run.
+The successful complete current S201 lane is recorded in
+[final verification](FINAL_VERIFICATION.md). Hosted jobs,
 Ubuntu system-dependency installation and their actual durations remain
 unexecuted. Local Linux runtime evidence covers its explicitly recorded lanes.
 

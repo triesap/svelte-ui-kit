@@ -22,9 +22,11 @@ references.
   work, with a separate reviewer at mandatory independent acceptance gates.
 - Complete one checkpoint at a time in documented order. Current dispatch is
   `pfc all`: continue the original sequence through its independent gates.
-  S001–S193 are independently accepted; S194–S200 are committed candidates,
-  S201 awaits the completion amendment and cumulative qualification; S202/S203
-  remain dependent. The ledger is live authority.
+  S001–S193 are independently accepted; S194–S202 are committed candidates.
+  S201 full cumulative qualification passes at the repaired native candidate;
+  S202 records the exact extension specification boundary. S203 freezes delivery
+  and requires separate acceptance of the entire final sequence and repairs.
+  The ledger is live authority.
   Earlier Q3-only/two-or-three-commit/Q4-later management limits are superseded.
   Continue after green slices and successful independent gates. Preserve accepted
   checkpoints and original criteria/statuses. Target-only coherent green commits
@@ -42,7 +44,8 @@ references.
   under `pfc all`; final separate S203 acceptance remains mandatory.
   Earlier RCLD-04 finding paragraphs below are historical and resolved by
   `implementation/evidence/RCLD-04_QUALIFICATION.md`. No new owner dispatch is
-  required. Full MVP and later platform/package/AC20 acceptance remain open.
+  required. Current local full platform/package/strict qualification passes;
+  final MVP/AC20 acceptance remains with the separate reviewer.
 - Preserve authenticated immutable export/cohort authority, actual import/render
   AST parsing, lexical child-render proof and equivalent-customization controls.
   Planned output must not certify itself. Earlier RCLD-04 return findings are

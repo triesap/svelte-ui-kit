@@ -29,8 +29,9 @@ authoring sources and the CLI host disappear. CLI dependency instructions report
 this procedure; generation never performs installation or package-file edits.
 
 The [completion repair report](RCLD-11_REPAIR_REPORT.md) records current lane
-outcomes and failed attempts. Cumulative S201, remaining amendment repairs and
-separate S203 acceptance remain open. The sections below retain their historical
+outcomes and failed attempts. [Current cumulative S201](FINAL_VERIFICATION.md)
+passes on the repaired candidate. Separate S203 acceptance remains open.
+The sections below retain their historical
 pins, observations and qualification boundaries; they cannot certify this new
 candidate or be relabeled fresh executions. Hosted CI remains unexecuted.
 
@@ -41,7 +42,8 @@ Bits `2.19.5-svelte-ui-kit.2` archive. The direct native/generated comparisons
 below passed on that candidate; earlier 2.19.3 observations alone do not
 qualify it. R11-F04 subsequently added dev-only YAML `2.9.1`, resolving Vite's
 optional YAML peer. Its strict check and production/SSR replay passed; R11-F06
-must run the cumulative application lanes on that final graph. None of these
+freshly passes every cumulative application lane on that final graph, including
+the full 733-case Chromium suite. None of these
 author runs grants independent final acceptance.
 
 | Boundary                           | Current disposition and actual owning controls                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |

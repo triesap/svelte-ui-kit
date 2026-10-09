@@ -23,8 +23,9 @@ S201 can complete. It creates no additional RCLD sequence or original checkpoint
 and does not replace the immutable S001–S203 definitions, dependencies, accepted
 history or sole batch authorization. S194–S200 remain implementation candidates;
 S201 cumulative qualification passes and is committed at
-`5ee6a2d89057396e0041695b7d0a18dd306285bc`; S202/S203 and separate final
-acceptance remain outstanding.
+`5ee6a2d89057396e0041695b7d0a18dd306285bc`. S202 extension reconciliation is
+committed at `01ec4d1e02bdc7361f1e74025c54e4351ca4db53`; S203 delivery and
+separate final acceptance remain outstanding.
 Approval of repair scope is not approval of a particular dependency artifact,
 proof of a fix, or acceptance of implemented repairs.
 
@@ -429,13 +430,13 @@ and never mutate package-store contents. No source-layout fallback, publication
 or new product/API scope is authorized by this qualification.
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
-- Active implementation checkpoint: **S202 — Record the gated extension scope without inventing APIs**. Separate S193 acceptance on `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` is anchored at `8ab760dc4d674853b172126b2a3ec3a0434c678f`; final S203 acceptance remains mandatory.
-- S201 cumulative qualification passes on `7756b5cbb53d5be7f6c25622e57da78edb283f51`, with current commands, source/artifact inventories and limits in `implementation/evidence/FINAL_VERIFICATION.md` and `implementation/evidence/S201_REPORT.md`. Its implementation commit is `5ee6a2d89057396e0041695b7d0a18dd306285bc`. The native candidate passes raw `skipLibCheck: false` with zero errors/warnings; `implementation/evidence/S201_BLOCKER.md` preserves the initial upstream failure. S202 is eligible under the approved batch; S203 and separate final acceptance remain dependent.
+- Active implementation checkpoint: **S203 — Freeze final implementation evidence and delivery status**. Separate S193 acceptance on `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` is anchored at `8ab760dc4d674853b172126b2a3ec3a0434c678f`; final S203 acceptance remains mandatory.
+- S201 cumulative qualification passes on `7756b5cbb53d5be7f6c25622e57da78edb283f51`, with current commands, source/artifact inventories and limits in `implementation/evidence/FINAL_VERIFICATION.md` and `implementation/evidence/S201_REPORT.md`. Its implementation commit is `5ee6a2d89057396e0041695b7d0a18dd306285bc`; S202 is committed at `01ec4d1e02bdc7361f1e74025c54e4351ca4db53`. The native candidate passes raw strict checking with zero errors/warnings. S203 delivery is eligible; separate final acceptance remains mandatory.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **193 / 203**. Remaining: **10 / 203**.
-- Committed pending review: **8 / 203**. Authored batch range: **S194–S201**. Total implemented candidates: **201 / 203**; independently accepted: **193 / 203**.
+- Committed pending review: **9 / 203**. Authored batch range: **S194–S202**. Total implemented candidates: **202 / 203**; independently accepted: **193 / 203**.
 - Completed RCLD sequences: **10 / 11**. Remaining: **1 / 11**.
-- Last safe target commit: `5ee6a2d89057396e0041695b7d0a18dd306285bc`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `01ec4d1e02bdc7361f1e74025c54e4351ca4db53`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.
@@ -6676,8 +6677,8 @@ The original IDs, requirement anchors, scope, files, tests, expected results and
 | S199 | RCLD-11  | S198       | committed_pending_review | `a097624bf8ddba93fa824b9543054e49588f6bb1` |
 | S200 | RCLD-11  | S199       | committed_pending_review | `c1a2b3321c64b8e39006e00e0abcc307222fcbf8` |
 | S201 | RCLD-11  | S200       | committed_pending_review | `5ee6a2d89057396e0041695b7d0a18dd306285bc` |
-| S202 | RCLD-11  | S201       | in_progress              | —                                          |
-| S203 | RCLD-11  | S202       | not_started              | —                                          |
+| S202 | RCLD-11  | S201       | committed_pending_review | `01ec4d1e02bdc7361f1e74025c54e4351ca4db53` |
+| S203 | RCLD-11  | S202       | in_progress              | —                                          |
 
 ## Complete checkpoint definitions
 

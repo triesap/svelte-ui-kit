@@ -9,8 +9,9 @@ browser/runtime compatibility or release acceptance.
 R11-F03 replayed all 17 owning filesystem, durability, process, recovery and
 no-change inspection files on the selected authenticated Bits
 2.19.5-svelte-ui-kit.2 baseline. Each lane passed 172/172, zero skips or
-cancellations. These are author qualification results, with final cumulative
-qualification and separate S203 acceptance still required.
+cancellations. [Current cumulative qualification](FINAL_VERIFICATION.md) freshly
+replays the same 17 owning files on macOS and unprivileged Linux successfully.
+These are author qualification results; separate S203 acceptance remains open.
 
 | Lane                                                    | Actual execution                                                           | Filesystem observation                                  | Result                                                             |
 | ------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------ |

@@ -23,8 +23,14 @@ Representative synthetic registries qualify source/CSS updates, retirement,
 conflicts and default/custom layouts in executable and generated-consumer tests.
 The complete catalog and cross-component qualification passed
 [independent S193 review](implementation/evidence/RCLD-10_QUALIFICATION.md).
-Final installed-package, compatibility and release acceptance remain in progress
+The repaired candidate passes the complete current installed-package, strict
+compatibility and cumulative release lanes, recorded in
+[final verification](implementation/evidence/FINAL_VERIFICATION.md).
+[Delivery](implementation/evidence/DELIVERY.md) distinguishes verified
+implementation from the mandatory separate final acceptance still in progress
 under [the governing sequence](implementation/COMMIT_SEQUENCE.md).
+Select/Combobox/Popover/date and higher-level extensions remain behind their
+[specification gate](implementation/EXTENSION_GATE.md).
 
 ## Native links and the optional RouterLink recipe
 
