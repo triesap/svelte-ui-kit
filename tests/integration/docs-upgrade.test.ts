@@ -15,12 +15,14 @@ import { snapshotTree } from "../helpers/tree-snapshot.js";
 import { runFixtureScript } from "../helpers/fixture.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 
-const readme = readFileSync("README.md", "utf8");
+import { documentedExample } from "../helpers/documented-example.js";
+const readme = readFileSync("docs/getting-started.md", "utf8");
 function commands(marker: string, count: number) {
-  const parts = readme.split(`<!-- ${marker}:start -->`);
-  assert.equal(parts.length, 2);
-  const lines = parts[1]!
-    .split(`<!-- ${marker}:end -->`)[0]!
+  const file =
+    marker === "documented-upgrade-workflow"
+      ? "docs/guides/upgrading.md"
+      : "docs/getting-started.md";
+  const lines = documentedExample(file, marker, "sh")
     .split("\n")
     .filter((line) => line.startsWith("node "));
   assert.equal(lines.length, count);

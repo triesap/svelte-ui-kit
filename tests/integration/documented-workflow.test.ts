@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import { cliPackage, write } from "../helpers/cli-package.js";
@@ -9,10 +8,12 @@ import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
 } from "../../src/project/config.js";
-const readme = readFileSync("README.md", "utf8");
-const block = readme
-  .split("<!-- documented-cli-workflow:start -->")[1]!
-  .split("<!-- documented-cli-workflow:end -->")[0]!;
+import { documentedExample } from "../helpers/documented-example.js";
+const block = documentedExample(
+  "docs/getting-started.md",
+  "documented-cli-workflow",
+  "sh",
+);
 const commands = block
   .split("\n")
   .filter((line) => line.startsWith('node "$CLI"'));
@@ -21,12 +22,12 @@ for (const custom of [false, true])
   test(`documented local workflow executes with real bundled assets in ${custom ? "custom" : "default"} layout`, () => {
     const fixture = cliPackage();
     try {
-      const customBlock = readme
-        .split("<!-- documented-custom-mapping:start -->")[1]!
-        .split("<!-- documented-custom-mapping:end -->")[0]!;
-      const config = custom
-        ? JSON.parse(customBlock.split("```json")[1]!.split("```")[0]!)
-        : DEFAULT_KIT_CONFIG;
+      const customBlock = documentedExample(
+        "docs/reference/configuration.md",
+        "documented-custom-mapping",
+        "json",
+      );
+      const config = custom ? JSON.parse(customBlock) : DEFAULT_KIT_CONFIG;
       if (custom)
         write(
           fixture.root,

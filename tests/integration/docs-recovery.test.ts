@@ -28,10 +28,12 @@ import {
   writerLockDir,
 } from "../../src/codegen/transaction-types.js";
 
-const runbook = readFileSync("implementation/OPERATIONS_RUNBOOK.md", "utf8");
-const diagnosis = runbook
-  .split("<!-- documented-recovery-diagnosis:start -->")[1]!
-  .split("<!-- documented-recovery-diagnosis:end -->")[0]!
+import { documentedExample } from "../helpers/documented-example.js";
+const diagnosis = documentedExample(
+  "docs/guides/recovery.md",
+  "documented-recovery-diagnosis",
+  "sh",
+)
   .split("\n")
   .filter((line) => line.startsWith("node "))
   .map((line) => {
