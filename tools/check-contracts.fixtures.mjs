@@ -80,6 +80,7 @@ export const FIXTURE_FILES = [
   "schema/v1/kit.schema.json",
   "schema/v1/native-provenance.schema.json",
   "implementation/evidence/RCLD-11_REPAIR_REPORT.md",
+  "implementation/evidence/FINAL_VERIFICATION.md",
   "tools/native-dependency/README.md",
   "tools/native-dependency/recipe.json",
   "tools/native-dependency/binding-signature.patch",

@@ -644,6 +644,38 @@ in F06. Full 159-case contract regression is a required F06 lane after these
 fixture-input changes. No original checkpoint definition or immutable design
 source is changed, and original progress remains 200 candidates/193 accepted.
 
+## R11-F06 — Current original S201 cumulative qualification
+
+The complete release lane passes on the unchanged tracked source candidate
+`7756b5cbb53d5be7f6c25622e57da78edb283f51`. All 1202 tracked source files were
+inventoried before the runs and verified exact afterward. Full unit 298,
+integration 895, registry 66, components 441, package 10, Chromium 733, consumer
+SSR 27, harness 39, CLI 44, CI controls 20, contract regressions 159 and native
+producer/delivery 5 cases pass with zero skips, failures, cancellations or TODOs.
+Raw strict consumer checking has zero errors and warnings. Full format/lint,
+six root TypeScript configs, frozen strict installation, production builds,
+semantic CI coverage, live contracts and actual local packing pass.
+
+Fresh unprivileged Linux qualification passes all 172 cases across the owning
+17 files as uid/gid 65534 with real permission-denial controls. Those same files
+pass in the current complete macOS integration lane. The browser lane runs the
+entire configured suite in an owned exact source copy with a fresh frozen
+dependency graph, one worker, zero retries and strict console/page/hydration/
+teardown collection. Its output and logs are retained before owned staging
+cleanup. The initial copied-dependency setup refusal remains recorded; it failed
+before browser execution and was repaired by authentic fresh installation,
+without a product/type/assertion/SSR change.
+
+[Final verification](FINAL_VERIFICATION.md) records every exact command, duration,
+source/artifact identity, failed attempt, scope limit and cleanup. Actual local
+packing yields 241 permitted regular files, authentic native `.2` bytes and an
+executable standalone CLI. Inspection confirms no unrelated product refactor
+or obsolete step-scoped scaffolding to remove; conditional Rust guards are N/A.
+All 203 original definition slices, 95 source hashes, clean reference revisions
+and repository/index boundaries are preserved. Counts certify author execution,
+not independent acceptance. Original S201 is now a green implementation
+candidate; only its actual commit unlocks S202, and S203 acceptance remains open.
+
 ## Remaining implementation and acceptance
 
 Planning input maintenance, R11-F01 diagnosis and the R11-F02 producer and
@@ -655,10 +687,10 @@ remains open.
 Original progress remains 200 implemented candidates and 193 independently
 accepted checkpoints. R11-F03 no-change refusal and R11-F04 complete CI coverage
 are verified candidates. R11-F05 guidance/boundary reconciliation is also a
-verified candidate. R11-F06/S201 full cumulative release checks,
-S202 extension reconciliation, S203 delivery and separate final acceptance of
-S194–S203 remain required. The corrected candidate passes raw strict checking;
-the remaining amendment and cumulative obligations still block S201 completion.
-No S201 implementation commit or independent acceptance is
-manufactured by this report. Continue to record actual repair outcomes here;
+verified candidate. R11-F06/S201 full cumulative release checks pass and its
+verified implementation commit is being recorded. S202 extension reconciliation,
+S203 delivery and separate final acceptance of S194–S203 remain required. The
+corrected candidate passes raw strict checking; the original failed attempt
+remains provenance. No independent acceptance is manufactured by this report.
+Continue to record actual repair outcomes here;
 the governing plan and existing tracker retain execution authority.
