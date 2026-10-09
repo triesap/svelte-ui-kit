@@ -1,9 +1,10 @@
 # S201 implementation report — cumulative release qualification
 
 Author: Codex. Verified candidate; separate final acceptance remains required.
+Implementation commit: `5ee6a2d89057396e0041695b7d0a18dd306285bc`.
 
 <!-- checkpoint-evidence
-{"schemaVersion":1,"checkpoint":"S201","kind":"report","commit":null,"disposition":"candidate"}
+{"schemaVersion":1,"checkpoint":"S201","kind":"report","commit":"5ee6a2d89057396e0041695b7d0a18dd306285bc","disposition":"candidate"}
 -->
 
 R11-F01–F05 are committed verified repair candidates. The complete current

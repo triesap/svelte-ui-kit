@@ -65,6 +65,17 @@ These policy choices are resolved; technical discovery remains Codex-owned.
 
 #### Technical choices vs product changes
 
+Original S202 [extension reconciliation](../implementation/EXTENSION_GATE.md)
+retains Select, Combobox, Popover, date-related controls and higher-level
+patterns as approved directions, with exact missing product/type/behavior/
+styling/qualification inputs. Existing NativeSelectField belongs to the original
+native catalog and does not deliver the Bits Select/Combobox extension. Actual
+upstream exports and type availability are observations, not approved wrapper
+inventory or search/date/locale/timezone/business policy. Missing contracts
+block a release expanded to include those families; the original MVP requires
+the documented gate rather than unspecified implementation. No extra RCLD,
+dependency or component API is introduced by this reconciliation.
+
 Agents may resolve exact type names already defined by a pinned primitive, choose an existing repository script, or select an appropriate parser after inspecting evidence. They must record the result at the scheduled contract step. They may not add a runtime component package, remote registries, broad polymorphism, automatic merging, dependency mutation, or extra components under that authority.
 
 A repository-proven obsolete/unsafe plan step needs a deviation record before execution changes. A new product requirement needs a durable spec amendment; planning notes cannot approve it. Do not repeatedly request already supplied choices, and do not treat genuine technical uncertainty as permission to invent APIs. Ordinary technical discovery inside the dispatched checkpoint is the implementing agent's responsibility; consequential scope, contract/API and dependency-selection decisions return to Codex.
