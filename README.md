@@ -1,567 +1,117 @@
 # svelte-ui-kit
 
-Source-first UI kit for Svelte with installable component source and a CLI.
+Editable Svelte components and plain CSS for SvelteKit applications.
 
-## Status
+svelte-ui-kit is a source-first CLI: it installs component source, styles and
+ownership metadata into your application. You can inspect and change that source.
+Complex behavior uses Bits UI; simple presentation uses native Svelte/HTML.
+Your application imports local components and owns its runtime dependencies.
 
-The generator implements `info`, `init`, `view`, `add`, `sync` and `doctor`, with
-read-only planning and guarded recoverable application. The package is private
-and unpublished. The shipped registry includes the CSS-only `tokens` foundation,
-native and primitive-backed families covering the original catalog: 21 generated
-source items, with stable identity supplied by pinned Svelte/Bits facilities,
-plus the approved distinct Alert Dialog. See the
-[complete catalog disposition](specs/COMPONENT_CATALOG.md#complete-original-catalog-disposition).
-The core and subsequent forms/overlay families have passed separate independent
-review; the complete original catalog passed separate S181 acceptance.
-The separately installable nine-part `alert-dialog` family is implemented and
-qualified and independently accepted in installed consumers. It uses the distinct pinned primitive rather than
-a Dialog role switch. Native Action leaves closure to the application; Cancel
-owns native close.
-Tokens installs independent token, component-customization and theme-integration
-metadata under the configured UI state directory, with normal lock baselines.
-Representative synthetic registries qualify source/CSS updates, retirement,
-conflicts and default/custom layouts in executable and generated-consumer tests.
-The complete catalog and cross-component qualification passed
-[independent S193 review](implementation/evidence/RCLD-10_QUALIFICATION.md).
-The independently accepted implementation passes the complete installed-package, strict
-compatibility and cumulative release lanes, recorded in
-[final verification](implementation/evidence/FINAL_VERIFICATION.md).
-[Final independent review](implementation/evidence/RCLD-11_QUALIFICATION.md)
-accepts S194–S203 and the approved repairs. All 203 original checkpoints and
-all eleven sequences are complete under
-[the governing sequence](implementation/COMMIT_SEQUENCE.md).
-[Delivery](implementation/evidence/DELIVERY.md) records actual implementation,
-acceptance, artifacts and qualified limits.
-Select/Combobox/Popover/date and higher-level extensions remain behind their
-[specification gate](implementation/EXTENSION_GATE.md).
+The package is currently **private and unpublished**. The supported adoption
+procedure builds and packs a local distribution, installs it in a separate CLI
+host and explicitly prepares the application's dependencies. No public npm
+release or one-command remote installation is assumed.
 
-## Native links and the optional RouterLink recipe
+## Start here
 
-Install `anchor` for a styled native link, or request the optional `router-link`
-recipe to install RouterLink and its Anchor dependency together:
+Follow [getting started](docs/getting-started.md) from a source checkout. It covers:
 
-```sh
-node "$CLI" --cwd "$APP" view router-link --source
-node "$CLI" --cwd "$APP" add router-link --dry-run
-node "$CLI" --cwd "$APP" add router-link
-```
+1. The tested Node/pnpm toolchain and authentic native preparation before install.
+2. Building and packing the real local CLI archive.
+3. Installing a separate CLI host and selecting an existing application package.
+4. Explicitly installing application-owned Svelte/Bits/date dependencies.
+5. Initialization, dry plans, strict diagnosis and a first component.
 
-Set `CLI` and `APP` as described below. RouterLink composes Anchor directly and
-uses its styles; it adds no router runtime or stylesheet. Import from your
-configured UI directory (the default is `$lib/components/ui`):
+Native preparation and initial package installation can need network access.
+The installed CLI uses bundled assets and does not fetch a registry. The
+application must keep its own dependency declarations, lockfile and authentic
+native archive; it must work after the CLI host and source checkout are gone.
+
+## Use local source
+
+After adding `button` with the documented CLI workflow, use the default local UI
+barrel in an application route:
 
 ```svelte
 <script lang="ts">
-  import { resolve, asset } from "$app/paths";
-  import { RouterLink, Anchor } from "$lib/components/ui";
+  import { Button } from "$lib/components/ui";
 </script>
 
-<RouterLink href={resolve("/settings")} data-sveltekit-preload-data="hover">
-  Settings
-</RouterLink>
-<Anchor href="https://example.com" target="_blank">External site</Anchor>
-<Anchor href={asset("/report.pdf")} download>Download report</Anchor>
+<form method="POST">
+  <Button type="submit">Save</Button>
+</form>
 ```
 
-The application resolves its own internal routes, including route parameters,
-query strings and fragments. SvelteKit's `resolve`/`asset` account for configured
-base paths; RouterLink forwards the resulting URL unchanged. Supply external
-URLs directly. SvelteKit owns native `data-sveltekit-*` navigation options,
-including focus/scroll retention, history replacement, reload and preloading.
-Their types come from the application's actual SvelteKit augmentation. Set
-`aria-current="page"` or a class yourself for current-page presentation.
-
-Both components render one native anchor, support native events/cancellation,
-children snippets and `bind:ref`, and preserve native target/download behavior.
-An omitted `rel` on `target="_blank"` defaults to `noopener noreferrer`; an
-explicit value, including an empty string, is preserved. For an action, install
-`button` separately and compose a native Button beside the link, for example
-`<Button onclick={save}>Save</Button>` with an application-owned `save` function.
-Navigation uses an anchor; actions use a button. Do not nest these interactive
-elements or expect Button to accept a navigation `href`.
-
-## Dialog portal themes
-
-The same inherited vocabulary styles the complete catalog: keep generated
-blocks in the single `kit.css` aggregate and put application theme selectors in
-`themes.css`, followed by overrides in `app.css`. Sync preserves both
-application-owned stylesheets and existing layout imports. Document and nested
-theme changes update installed controls and surfaces, including already-open
-Dialog, Alert Dialog and Menu content under its actual portal ancestor.
-Theme choice and persistence belong to the application; for example, an
-application can restore its own stored document attribute after hydration.
-The kit adds no theme store or persistence policy.
-
-Compose DialogRoot, Trigger, Portal, Overlay, Content, Title, optional Description
-and Close explicitly. Give Content an accessible name through Title or the
-native naming attributes. Put global theme selectors on a document ancestor
-when Portal uses its default body target: tokens scoped only around Trigger do
-not follow the portaled Content. For nested themes, use Portal's native `to`
-with a suitable host inside that theme. Token changes inherit immediately while
-open; the kit does not copy computed themes into inline styles.
-
-A custom host changes the clipping and stacking environment. A transformed
-ancestor can contain fixed-position Content, while `overflow: hidden` clips it
-and an isolated stacking context constrains its z-index. Use an unclipped host
-with a suitable stacking context; the kit does not move it elsewhere to conceal
-these consequences. Global and nested hosts, live changes and an intentionally
-unsuitable transformed clipping host are tested against actual CLI-installed
-applications in default and custom source layouts.
-
-Server rendering follows the pinned primitive: body/custom portal Content is
-mounted in the browser; disabled (inline) Portal can render initially open
-Content on the server. Child Title/Description relationships are registered
-during hydration, which completes native naming attributes. Application
-state remains local to each request/instance. Field/native identity
-uses Svelte request-local IDs; native floating wrappers also use the pinned
-primitive's process counter. Semantic relationships are qualified across
-repeated/concurrent SSR and hydration; counter values are not promised to reset
-for each request. The native first opening
-of newly portaled Content omits its animation-completion callback in the selected
-Bits 2.19.5-svelte-ui-kit.2 build;
-completed closing emits it. The kit forwards the native callback unchanged.
-Closed force-mounted default nondelegated Dialog/Alert Dialog Content also
-retains native body pointer locking. Delegated rendering and preventScroll=false
-have separate measured behavior. Use the native open snippet and deliberate
-caller visibility/teardown; retained closed content is not a promise of an
-interactive background. The [current native boundary record](implementation/evidence/COMPATIBILITY.md#current-native-and-source-boundaries)
-links direct native comparisons and their qualification scope.
-
-The core qualification installs tokens, Spinner, Button, Switch and Dialog
-together through the built executable and a real locally installed tarball.
-Default/custom source layouts are compiled, built, server-rendered and exercised
-in Chromium. Owned synthetic package revisions qualify safe upgrades and atomic
-cohort-conflict refusal while preserving application customization. These checks
-passed [independent core review](implementation/evidence/RCLD-06_QUALIFICATION.md).
-Distinct Alert Dialog and Menu also passed
-[independent family review](implementation/evidence/RCLD-07_QUALIFICATION.md),
-including actual selection, floating placement, live themes and measured CSP
-limits. Checkbox, Radio, Tabs, Collapsible and Field passed
-[independent forms and disclosures review](implementation/evidence/RCLD-08_QUALIFICATION.md),
-including real form submission/reset, keyboard behavior, dynamic associations,
-SSR/hydration, retained child state and measured CSP/motion limits. Original
-S149–S181 catalog passed
-[independent complete catalog review](implementation/evidence/RCLD-09_QUALIFICATION.md),
-including native links, image fallback, presentation and request-local identity.
-S182–S193 passed the separate cross-component/platform gate. S194–S203 and
-all approved repairs passed the separate final gate. The package remains
-unpublished. The qualified local native build resolves the strict declaration
-errors; cumulative AC20 passes within the recorded local qualification. See [compatibility evidence](implementation/evidence/COMPATIBILITY.md).
-
-## Use the local built CLI
-
-For an isolated installation, build and pack this repository, then explicitly
-install the local archive in an empty CLI host project. Set `ARCHIVES` to a
-directory for local artifacts, `CLI_HOST` to that project and `APP` to your
-existing SvelteKit application. Create those directories and initialize the
-empty standalone host with a `package.json` containing `{ "private": true }`.
-This does not assume an npm release:
-
-```sh
-pnpm run build
-pnpm pack --json --pack-destination "$ARCHIVES"
-# Set ARCHIVE to the actual .tgz path returned by pack.
-pnpm --dir "$CLI_HOST" add --ignore-scripts "$ARCHIVE"
-CLI="$CLI_HOST/node_modules/svelte-ui-kit/dist/cli/main.js"
-```
-
-### Application-owned native dependency
-
-Use Node `24.21.0` and pnpm `11.22.0` for the qualified baseline. In the
-application, explicitly install the reported runtime dependencies. For the
-complete current catalog the tested runtime pins are:
-
-```sh
-pnpm --dir "$APP" add svelte@5.57.1 @internationalized/date@3.12.4
-# From APP, extract the native dependency from the actual packed CLI archive.
-cd "$APP"
-test ! -L vendor && mkdir -p vendor && test -d vendor
-NATIVE_ARCHIVE=bits-ui-2.19.5-svelte-ui-kit.2.tgz
-test ! -e "vendor/$NATIVE_ARCHIVE" && test ! -L "vendor/$NATIVE_ARCHIVE" && \
-  tar -xOf "$ARCHIVE" "package/dist/native/$NATIVE_ARCHIVE" > "vendor/$NATIVE_ARCHIVE"
-shasum -a 256 "vendor/$NATIVE_ARCHIVE"
-# Proceed only if the digest matches the exact value below.
-pnpm add "./vendor/$NATIVE_ARCHIVE"
-```
-
-The native archive must have SHA-256
-`1384075b9d764f80b92a94e378f233c2382dd6125fb3c301ae46be6d7746e603`.
-Its distinct local Bits version is built from the pinned upstream source with
-the narrow declaration-emitter correction in the portable producer recipe.
-Keep the regular archive inside the application and retain its explicit file
-declaration and dependency lockfile in the application's delivery system.
-The application must continue checking and building after its CLI host and
-authoring clone disappear. Unknown, changed, escaping or linked native archives
-and changed installed distributions are refused; recopy and reinstall explicitly.
-
-The app supplies its SvelteKit/check/build tooling separately; the
-[consumer manifest](tests/fixtures/consumer/package.json) records the tested
-tooling pins. The CLI never installs packages or changes the app manifest.
-When redistributing copied source, retain the distribution's `NOTICE.md`,
-`LICENSE-MIT` and `LICENSE-APACHE` in your application's source notices.
-Installing the kit in `CLI_HOST` does not add a kit runtime dependency to `APP`.
-
-For a fresh clone, prepare the authenticated native artifact and maintained
-consumer copy before installing the frozen development dependencies:
-
-```sh
-node tools/prepare-native-dependency.mjs --fixture
-pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
-```
-
-Preparation is developer tooling. It does not run inside the installed CLI or
-change application package files. Builds authenticate its cache and bundle the
-native archive into compiler staging before local packing.
-
-Build from this clone after installing its frozen development dependencies.
-`CLI` below is the built executable's absolute path; set `APP` to an existing
-SvelteKit application package, not a monorepo workspace root. The CLI never
-executes the application's configuration, package manager or install scripts.
-
-```sh
-pnpm run build
-CLI="$(pwd)/dist/cli/main.js"
-# Set APP to the SvelteKit application package you want to inspect.
-```
-
-The application must declare SvelteKit and have its compatible Svelte dependency
-installed. Inspect `info` and perform any reported dependency setup manually
-before expecting strict diagnosis to pass.
-
-<!-- documented-cli-workflow:start -->
-
-```sh
-node "$CLI" --cwd "$APP" info
-node "$CLI" --cwd "$APP" init --dry-run
-node "$CLI" --cwd "$APP" init
-node "$CLI" --cwd "$APP" doctor --strict
-node "$CLI" --cwd "$APP" sync --dry-run
-node "$CLI" --cwd "$APP" sync
-node "$CLI" --cwd "$APP" init
-```
-
-<!-- documented-cli-workflow:end -->
-
-Install the dependencies reported by `info` or a plan yourself, then rerun the
-checks. Source installation and actual installed dependency readiness are
-separate. `doctor --strict` exits with code 3 for broken/unsafe installation evidence; valid
-source/CSS customization is reported without rewriting files or falsely failing
-strict checks. Doctor's structural/syntax diagnosis does not replace the app's
-own typecheck, production build, SSR and browser tests.
-
-Inspect `view tokens --source` and install the foundation with `add tokens
---dry-run`, then `add tokens`. It contributes plain CSS without a component
-source file or runtime dependency. Component items follow their qualification
-gates.
-
-Once a qualified component item is included in the bundled registry, inspect and request
-its exact kebab-case id with `view <item> --source`, `add <item> --dry-run`, then
-`add <item>`. These placeholders do not claim a currently shipped item. `add`
-records only the explicit request; registry dependencies remain transitive.
-`sync` reconciles the configured requests, including intentional retirement.
-There is no network registry, automatic package installation, merge or force flag.
-
-These current requests use actual bundled items:
-
-<!-- documented-item-install:start -->
-
-```sh
-node "$CLI" --cwd "$APP" view button --source
-node "$CLI" --cwd "$APP" add button --dry-run
-node "$CLI" --cwd "$APP" add button
-node "$CLI" --cwd "$APP" add dialog
-node "$CLI" --cwd "$APP" add menu
-node "$CLI" --cwd "$APP" add field
-```
-
-<!-- documented-item-install:end -->
-
-Add `--json` to receive exactly one deterministic result envelope on stdout,
-including failures. Human failures use stderr; use the documented frozen exits
-in [API contracts](specs/API_CONTRACTS.md) for automation.
-
-Defaults are `src/lib/components/ui`, its `_kit` state, `src/styles`, and the
-statically detected SvelteKit root layout. A valid explicit `kit.json` under the
-chosen UI root's `_kit` selects `uiDir`, `stylesDir` and `layoutFile`; see
-[the configuration model](specs/DATA_MODEL.md). Only one installation may be
-present. Explicit mapping can resolve dynamic routes without evaluating project
-code; unsafe, malformed, ambiguous or unsupported project identity still refuses.
-
-For example, create `app/ui/_kit/kit.json` in the selected application before
-initializing this custom mapping:
-
-<!-- documented-custom-mapping:start -->
-
-```json
-{
-  "schemaVersion": 1,
-  "registry": "builtin",
-  "uiDir": "app/ui",
-  "stylesDir": "assets/styles",
-  "layoutFile": "src/routes/+layout.svelte",
-  "requested": []
-}
-```
-
-<!-- documented-custom-mapping:end -->
-
-Generated Svelte/TypeScript/plain CSS is application-owned source, with no kit
-runtime dependency. Preserve local edits: unchanged upstream keeps their original
-base, changed incompatible source/CSS/export cohorts refuse the entire batch,
-and customized retired targets remain application-owned. Inspect the incoming
-source and dry plan, reconcile the reported conflict yourself, then rerun app
-verification. Never edit base hashes to declare local edits accepted. No dry-run,
-read-only or conflict path creates hidden transaction files or changes manifests.
-Interrupted transaction evidence is retained and diagnosed; follow
-[the recovery contract](specs/SECURITY_AND_TRANSACTIONS.md) rather than deleting
-owner evidence or using PID/age takeover.
-
-For interrupted writes, follow the [qualified recovery procedures](implementation/OPERATIONS_RUNBOOK.md#interrupted-writes):
-stop writers, preserve an external backup including hidden transaction evidence,
-and diagnose without mutation. A verified dead owner's coordination directory
-can be quarantined only after the documented prerequisites; journals are never
-blindly cleared. Uncommitted post-crash edits cause refusal and remain intact;
-committed cleanup preserves subsequent edits. Corrupt or ambiguous evidence
-requires stopping for review.
-
-For a reviewed incoming local archive, install it in a separate CLI host and
-set `INCOMING_CLI` to that installed executable. Inspect and apply the upgrade:
-
-<!-- documented-upgrade-workflow:start -->
-
-```sh
-node "$INCOMING_CLI" --cwd "$APP" view button --source
-node "$INCOMING_CLI" --cwd "$APP" sync --dry-run
-node "$INCOMING_CLI" --cwd "$APP" sync
-node "$INCOMING_CLI" --cwd "$APP" doctor --strict
-```
-
-<!-- documented-upgrade-workflow:end -->
-
-Keep theme overrides in the app-owned stylesheet, such as
-`:root { --kit-color-primary: rgb(12, 34, 56); }`. Valid source customization is
-reported separately from missing/broken source. A genuine local/incoming
-conflict exits 10 and stops the entire batch. Back up and review both versions;
-deliberately reconcile the app source, then rerun dry sync, sync, strict doctor
-and the app's check/build/browser scripts. The CLI supplies neither a merge base
-nor an automatic merge. Do not alter baseline hashes to conceal edits.
-
-To retire requests, edit only the desired `requested` list in `_kit/kit.json`
-and review `sync --dry-run`. Dependencies still needed by surviving requests
-remain. A clean retired target is removed; a customized target is retained and
-detached with diagnostics. `RETIRED_IMPORTS_REVIEW_REQUIRED` means application
-imports may need manual repair even when sync exits 0. Inspect every retired
-import and rerun application verification; a successful CLI transaction is not
-a promise that arbitrary application imports were rewritten.
-
-`pnpm run test:package` creates and inspects a local tarball without publication;
-its extracted executable uses bundled assets without an authoring-tree fallback.
-
-### App-owned composition examples
-
-The [example page](tests/fixtures/qualification/composition-examples/+page.svelte)
-composes existing local flat exports into independent disclosure questions,
-a native form with application-owned Alert/Status feedback, native Anchor and
-RouterLink navigation, and a Dialog portaled into a themed application host.
-The application owns disclosure state, validation, submitted data, message
-content, URL destinations and theme properties. There is no notification queue,
-accordion coordinator, data grid or additional registry API.
-
-Request `field`, `checkbox`, `button`, `anchor`, `router-link`, `alert`, `status`,
-`collapsible` and `dialog` with the existing `add` workflow. Dependencies remain
-transitive. Copy the example into an application route and replace both
-`__UI_MODULE__` placeholders with the relative local UI barrel import for that
-route and configured mapping. Keep the portal host inside the desired theme
-scope. The fixture builder performs those substitutions against actual
-CLI-installed sources in both default and custom layouts; it retains the page,
-generated sources and production output hashes. Run the example qualification:
-
-```sh
-pnpm run build
-pnpm exec playwright test --config playwright.config.ts tests/browser/composition-examples.spec.ts
-```
-
-The maintained consumer contains no installed registry catalog, so the
-app-owned example template lives beside the other isolated qualification pages.
-The owning lane checks and builds each generated consumer before testing its
-real production handler, keyboard interactions, semantic feedback and live theme.
-
-## Goals
-
-- Provide a consistent component and theming foundation.
-- Install components as project-owned source files.
-- Use a CLI to add, inspect, and update components.
-- Keep primitives, styling, and accessibility behavior predictable.
-
-## Development
-
-Requires Node.js `24.21.0` (see `.node-version`) and pnpm `11.22.0` (see
-`packageManager` in `package.json`).
-
-```sh
-pnpm install --frozen-lockfile
-pnpm run typecheck
-pnpm run build
-pnpm run test:cli-bootstrap
-pnpm run test:unit -- tests/unit/cli-bootstrap.test.ts
-pnpm run test:integration -- tests/integration/harness.test.ts
-pnpm run test:components -- tests/components/compatibility.test.ts
-pnpm run test:harness
-pnpm run test:package
-pnpm run fixture:check
-pnpm run fixture:build
-pnpm run test:fixture
-pnpm run check:contracts
-pnpm run test:contracts
-pnpm run lint
-pnpm run format:check
-```
-
-The suite runner is dependency-free: for every discovered `*.test.ts` entry
-(including dot-prefixed and `..`-prefixed names) it writes an ephemeral
-compiler configuration inside the ignored `.unit-test-build/<suite>/` tree,
-extends the tracked `tsconfig.<suite>.json`, and compiles with the pinned `tsc`
-into that suite's isolated output before executing the selected tests with
-Node's built-in `node:test` runner. `--suite unit` (the default) runs
-`tests/unit`; `--suite integration` runs `tests/integration` with the typed
-helpers under `tests/helpers/`, which create owned temporary projects, capture
-complete tree snapshots and invoke the real built CLI. Operands are
-repository-relative `*.test.ts` files; absolute operands, parent-directory
-components and symlinked test roots or ancestors are rejected, discovery is
-deterministic, and every selected file must actually execute a passing test.
-Any `test:fail` event — including a TODO-marked one — fails the run wherever the
-test was defined, and one suite's run never removes another suite's output.
-`pnpm run test:harness` runs the runner's own regression suite.
-
-`implementation/evidence/COMMANDS.md` records the complete local command map and
-the baseline `.github/workflows/ci.yml` lanes (Ubuntu 24.04, Node 24.21.0, pnpm
-11.22.0, immutable action revisions). The workflow is validated locally but has
-not been run remotely.
-
-The fixture also carries a fixture-only Bits compatibility component
-(`tests/fixtures/consumer/src/lib/compatibility/SwitchFixture.svelte`, served
-at `/compatibility`) that exercises `bits-ui 2.19.5-svelte-ui-kit.2`
-`Switch.Root`/`Switch.Thumb` with `bind:checked`, `bind:ref` and a real `child`
-snippet forwarding a delegated native button. `pnpm run test:components` runs
-the typed component suite: it type-checks the maintained component and proves
-incompatible `checked`/`ref`/`child` examples fail `svelte-check` for their
-intended diagnostics in disposable copies. The fixture pins `csstype 3.1.3`
-(an undeclared transitive type dependency of the upstream declarations).
-The maintained fixture uses `strict` and `skipLibCheck: false`. Its audit requires
-raw checker exit zero with zero errors/warnings and authenticates the native
-source and distribution. Authored and dependency defects, tool failures and
-malformed machine records remain refusal controls.
-
-The CLI entrypoint is `src/cli/main.ts`, compiled with the pinned `tsc` to
-`dist/cli/main.js` (build output is ignored and never committed). Argument
-classification and result handling live in the pure `src/cli/args.ts` and
-`src/cli/run.ts` modules, which perform no I/O; `main.ts` is the adapter that
-reads the bundled package metadata next to the built module and applies the
-real stdout/stderr/exit effects. Minimal readonly `ProjectInput`,
-`RegistrySnapshot` and `PlanningOutcome` interfaces under `src/project`,
-`src/registry` and `src/codegen` express the already-approved responsibilities
-with immutable captured planning, validated registry provenance and guarded application. `tests/unit/boundaries.test.ts` proves the pure
-modules import and execute without filesystem writes, that the injected result
-handling matches the built adapter, that the boundary types reject invalid
-values at compile time, and that consumer fixture sources never import
-CLI/Node/registry internals.
-
-`pnpm run lint` runs the flat `eslint.config.mjs` configuration (JavaScript,
-TypeScript and Svelte recommended presets plus the Prettier conflict presets)
-over the maintained authoring tree with `--max-warnings 0`; it parses
-TypeScript inside Svelte `<script>` blocks and surfaces Svelte compiler and
-accessibility diagnostics. `pnpm run format:check` checks the same authoring
-inputs with Prettier and the Svelte formatter plugin and never rewrites files;
-`pnpm run format` is the explicit authoring-only write command. Both tools skip
-reserved dependency/output trees (`node_modules`, `.pnpm-store`, `dist`,
-`build`, `.svelte-kit`, `coverage`, `.unit-test-build`) at every depth plus the
-explicitly rooted `tests/fixtures/generated/` boundary and ignored evidence-log
-trees, and neither ever traverses an unrelated external application.
-`pnpm run typecheck` remains a separate compiler check; lint, format and
-typecheck establish authoring hygiene only, not consumer typecheck/build,
-SSR/browser qualification or release readiness.
-
-The maintained consumer fixture is the private ESM workspace package
-`svelte-ui-kit-consumer-fixture` at `tests/fixtures/consumer/`. It is the
-second explicit member of `pnpm-workspace.yaml` and shares the single root
-lockfile; its runtime dependencies are `svelte 5.57.1`, the explicit local
-`bits-ui 2.19.5-svelte-ui-kit.2` archive and `@internationalized/date 3.12.4`, with exact
-development pins for `@sveltejs/kit`, `@sveltejs/vite-plugin-svelte`,
-`@sveltejs/adapter-node`, `svelte-check`, `vite`, `typescript` and
-`@types/node`. It is a hand-authored Svelte 5/SvelteKit application with SSR
-and CSR enabled and a request-local `+page.server.ts` load rendered visibly
-into the route markup.
-
-`pnpm run fixture:check` runs the fixture's real `svelte-kit sync` followed by
-`svelte-check --tsconfig ./tsconfig.json --fail-on-warnings`; `pnpm run
-fixture:build` runs the real Vite production build through the Node adapter;
-`pnpm run test:fixture` builds the fixture and then runs the focused
-`node:test` suites at `tests/smoke/consumer-fixture.test.mjs`,
-`tests/smoke/owned-server.test.mjs`, `tests/smoke/lifecycle-consumer.test.mjs`
-and `tests/smoke/q2-resulting-consumer.test.mjs`. The SSR suite hosts the adapter's
-production handler in an owned child process on an OS-assigned loopback port
-and asserts the actual server-rendered HTTP HTML before client JavaScript runs,
-distinct repeated/concurrent request values, HTML escaping, and the real
-failure controls for a Svelte/TypeScript mismatch and for disabling SSR. HTTP
-status and content type are asserted independently, so an HTTP 500 or a wrong
-content type fails the suite instead of satisfying the missing-markup control.
-The owned-server boundary records stderr and the exit event through teardown,
-bounds startup, request headers/body and stop deadlines, and the lifecycle
-suite drives deterministic startup-failure, stderr, post-ready exit, stalled
-header/body and cleanup faults. The maintained baseline is separate from lifecycle suites, which run generated
-default/custom consumers through actual add/update/retirement check, production
-build and SSR stages. Packed executable inventory is qualified separately; final
-catalog, browser and platform acceptance is recorded in the separate final qualification within its
-explicit local scope.
-
-`pnpm run test:browser` builds the fixture and runs the Playwright 1.63.0
-full configured suite under `tests/browser/` with bundled headless Chromium over
-`playwright.config.ts`. Install the pinned browser once with
-`pnpm exec playwright install chromium`. The suite uses one worker, zero retries
-and owned production servers. The original harness starts the built
-production handler through the same owned-server boundary and asserts the
-accessible heading/labels, Tab/Shift+Tab focus order, native checkbox keyboard
-activation, form navigation with a request-time query update, and a fixture-only
-client-state interaction that only works after hydration. Unexpected server
-stderr/exits, page exceptions, console errors and hydration warnings fail the
-lane. The initially qualified platform is bundled Chromium on macOS with Node
-24.21.0; no Firefox/WebKit/Windows or CI-execution claim is made.
-
-The [filesystem platform matrix](implementation/evidence/PLATFORMS.md) records
-separate local macOS and isolated Linux transaction/recovery evidence. It does
-not establish Linux browser support. Windows remains unqualified, and configured
-remote CI lanes remain unexecuted evidence.
-
-## Contributing
-
-See `CONTRIBUTING.md`.
+The application supplies its form action. Button defaults to `type="button"`;
+explicit submit/reset remains native. A custom UI mapping changes the local import
+path. The kit is an installation tool, not an application scaffold or styled runtime.
+
+## What belongs to the application
+
+Generated `.svelte`, `.ts`, CSS and semantic metadata are app-owned source. Commit
+them with your application. Customize components directly, or load app-owned
+theme/override CSS after the managed stylesheet. Themes, persistence, color-scheme
+and portal host selection are explicit application choices.
+
+The default UI path is `src/lib/components/ui`, with `_kit` metadata and styles
+under `src/styles`. Compound families have flat public exports; internal component
+imports use siblings. Inspect the [actual component catalog](docs/reference/components/README.md)
+and authored contracts before using APIs from the wider upstream library.
+
+## Inspect, reconcile and diagnose
+
+The CLI provides `info`, `init`, `view`, `add`, `sync` and `doctor`. Use `--cwd`
+to select one actual application package, dry-run write plans before applying,
+and `--json` for deterministic structured results. Add accepts one item ID.
+The CLI reports dependency requirements and never runs your package manager or
+edits dependency manifests/lockfiles for you.
+
+Synchronization compares base, local and incoming content, retains valid
+customization and refuses conflicting batches. Coupled source/style/export changes
+must stay compatible. Removing a desired request preserves needed dependencies
+and customized retired assets; review application imports explicitly afterward.
+There is no remove, force overwrite or automatic merge command.
+
+Strict doctor distinguishes customization from broken/unsafe evidence. Read-only
+commands and dry runs leave the entire application untouched, including hidden
+state. Retained coordination/recovery state can refuse even an unchanged plan;
+an exit-0 replay does not establish that recovery happened. Use the recovery
+guide rather than deleting transaction state.
+
+## Documentation
+
+- [Documentation index](docs/README.md).
+- [CLI and structured exits](docs/reference/cli.md).
+- [Configuration and custom mappings](docs/reference/configuration.md).
+- [Components and public types](docs/reference/components/README.md).
+- [Styling and portal themes](docs/guides/styling.md).
+- [Upgrades, conflicts and retirement](docs/guides/upgrading.md).
+- [Interrupted-write recovery](docs/guides/recovery.md).
+- [Compatibility and measured limits](docs/reference/compatibility.md).
+- [Unreleased changelog](docs/CHANGELOG.md).
+
+The tested native graph, form-reset/callback/SSR identities, portal/CSP behavior,
+baseline contrast concerns and browser/filesystem scope are explicit in compatibility.
+Plain CSS does not promise zero runtime inline styles. Chromium observations do
+not certify every browser, arbitrary theme, assistive technology or all WCAG criteria.
+Typechecking, production build, SSR, browser and accessibility review still belong
+to your actual resulting application.
+
+## Contribute and maintain
+
+Maintenance guidance is available in the
+[development repository](https://github.com/triesap/svelte-ui-kit): read
+`docs/CONTRIBUTING.md` for setup/review and `AGENTS.md` → `docs/agents/README.md`
+for task-specific maintenance context. Those files are intentionally excluded
+from local distribution archives. Public usage/recovery/reference above ships
+with the package and shares the same API context with humans and agents.
+
+Keep changes focused, preserve app-owned work and real native contracts, and
+verify the owning behavior. New component families or broader extension APIs
+require approved scope/contracts. Local build/pack does not authorize publication,
+push, deployment or reference-source changes.
 
 ## License
 
-MIT OR Apache-2.0. See `LICENSE-MIT` and `LICENSE-APACHE`.
-
-## Menu floating composition
-
-The installable eight-part Menu family supplies Root, Trigger, Portal, Content,
-Item, RadioGroup, RadioItem and ItemIndicator with flat `Menu*` exports. It is
-qualified and independently accepted through the original family gate in
-generated default/custom applications. Final qualification of the changed
-native baseline passed the separate S203 gate. Bind Root open and RadioGroup value explicitly;
-compose ItemIndicator from RadioItem's native checked snippet. Give Content an
-accessible name. Selected Bits 2.19.5-svelte-ui-kit.2 typeahead searches visible
-DOM text; its public textValue prop is forwarded but does not change search
-behavior in the measured direct native comparison.
-
-Keep delegated Content's outer wrapperProps separate from inner props; native
-floating geometry belongs to the outer element and kit styles to the inner.
-Use document themes for body portals or an explicit native host within a nested
-theme. Hosts with transforms or overflow clipping retain their actual stacking
-and clipping limitations. Force-mounted delegated Content leaves closed
-visibility to the application, using the native open snippet.
-
-Plain CSS does not guarantee no runtime inline styles. The measured production
-CSP fixture preserves geometry with self-hosted stylesheets, nonce-based script
-policy and style-src-attr 'unsafe-inline'. With style-src-attr 'none', server
-floating style attributes are refused before hydration. Do not strip those
-styles or infer strict-CSP parity from a later hydrated position. See the
-[Menu mapping and measured limits](specs/component-maps/menu.md).
+Licensed under [MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE).
+Retain [source and dependency notices](NOTICE.md) when copying generated assets.

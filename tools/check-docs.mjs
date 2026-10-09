@@ -20,6 +20,7 @@ import {
 export const REQUIRED_DOCS = Object.freeze([
   "README.md",
   "AGENTS.md",
+  ".github/pull_request_template.md",
   "docs/README.md",
   "docs/CONTRIBUTING.md",
   "docs/CHANGELOG.md",

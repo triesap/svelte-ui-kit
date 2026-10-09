@@ -19,8 +19,8 @@ pnpm run format:check
 pnpm run lint
 pnpm run check:ci
 pnpm run test:ci
-node tools/check-docs.mjs
-node --test tools/check-docs.test.mjs
+pnpm run check:docs
+pnpm run test:docs
 ```
 
 Preparation comes before installation because frozen dependencies refer to the

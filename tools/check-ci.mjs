@@ -77,7 +77,7 @@ export const CI_LANES = Object.freeze({
   },
   contracts: {
     minutes: 45,
-    commands: ["pnpm run check:contracts", "pnpm run test:contracts"],
+    commands: ["pnpm run check:docs", "pnpm run test:docs"],
   },
   native: {
     minutes: 45,
@@ -127,8 +127,8 @@ const scripts = Object.freeze({
     "pnpm run fixture:build && node --test --test-concurrency=1 tests/smoke/consumer-fixture.test.mjs tests/smoke/owned-server.test.mjs tests/smoke/lifecycle-consumer.test.mjs tests/smoke/q2-resulting-consumer.test.mjs",
   "test:browser":
     "pnpm run fixture:build && playwright test --config playwright.config.ts",
-  "check:contracts": "node tools/check-contracts.mjs",
-  "test:contracts": "node --test tools/check-contracts.test.mjs",
+  "check:docs": "node tools/check-docs.mjs",
+  "test:docs": "node --test tools/check-docs.test.mjs",
   "check:ci": "node tools/check-ci.mjs",
   "test:ci": "node --test tools/check-ci.test.mjs",
 });

@@ -208,10 +208,10 @@ jobs:
         run: node tools/prepare-native-dependency.mjs --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
-      - name: pnpm run check:contracts
-        run: pnpm run check:contracts
-      - name: pnpm run test:contracts
-        run: pnpm run test:contracts
+      - name: pnpm run check:docs
+        run: pnpm run check:docs
+      - name: pnpm run test:docs
+        run: pnpm run test:docs
   native:
     name: native
     runs-on: ubuntu-24.04

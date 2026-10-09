@@ -22,8 +22,8 @@ pnpm run lint
 pnpm run format:check
 pnpm run check:ci
 pnpm run test:ci
-node tools/check-docs.mjs
-node --test tools/check-docs.test.mjs
+pnpm run check:docs
+pnpm run test:docs
 ```
 
 Preparation and initial dependency setup may require network access. Do not

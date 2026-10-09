@@ -102,7 +102,7 @@ test("changing a package/component/integration script to a subset or masking fai
     "test:package",
     "test:components",
     "test:integration",
-    "test:contracts",
+    "test:docs",
     "typecheck",
     "test:fixture",
   ]) {
