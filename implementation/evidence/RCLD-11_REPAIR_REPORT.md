@@ -277,18 +277,197 @@ active for actual build integration, baseline adoption, strict-audit conversion
 and affected full component/registry/packed runtime/SSR/hydration/browser lanes.
 No repair or original checkpoint is independently accepted by these author runs.
 
+The supplementary full integration execution subsequently completed 844/844,
+zero failures/cancellations/skips, exit 0. It used the previous selected Bits
+baseline and started before final guard tightening; it does not qualify the
+new baseline or final cumulative S201.
+
+## R11-F02 — Initial .1 adoption candidate, replaced before commit
+
+The initial candidate's root and maintained-consumer manifests explicitly installed the authenticated
+`2.19.5-svelte-ui-kit.1` archive from their own ignored preparation directories.
+The frozen workspace lock records the actual native artifact and exact runtime
+pins. Every registry compatibility record uses the new native identity, item
+patch versions advance from their own prior values, and the registry advances
+to `0.1.1` with recomputed content hash
+`866ecd92bc35a94ae0411b7326c589b94ba59985e63ce0f234e3fd08d7a2ea2a`.
+Generated source/style bytes and immutable design-source hashes are preserved.
+
+The build authenticates preparation, compiles the real CLI and bundles the
+qualified native archive. A fresh source copy without dependency/preparation
+caches completed direct preparation, frozen strict engine/peer installation,
+CLI build and raw strict fixture checking without manifest/lock changes.
+The maintained fixture now has `skipLibCheck: false`. The strict classifier
+requires raw exit 0 with zero errors/warnings; it preserves machine-parser,
+tool, workspace, six actual-version and authored/additional-dependency controls.
+Same-version changed native provenance or app archive cannot certify a
+synthetic zero-diagnostic result. The temporary exception is removed rather
+than enlarged or silently reclassified.
+
+Actual packed tests caught a production omission: `info` and `doctor` dropped
+the captured native-file observation. Both now carry that observation into
+dependency inspection. Manual dependency guidance excludes the unpublished
+native operand from ordinary registry-install advice, including unknown-manager
+paths. Package metadata tests authenticate the actual bundled member and
+compiled identity instead of treating the intentional file operand as SemVer.
+Packed consumer setup extracts from the actual CLI tarball, verifies its digest,
+copies to the app's vendor directory and explicitly installs that retained file.
+It never substitutes an authoring cache for consumer delivery.
+
+Initial full component and unit executions exposed obsolete identity literals
+and the empty-registry fixture's old compatibility hash. Those exact
+expectations were corrected without weakening native contracts or authority.
+The first full package run failed seven cases, including the real info/doctor
+omission and the obsolete metadata SemVer assertion. Failures remain in their
+original logs. Focused strict controls pass 18/18, identity controls 6/6,
+empty-registry/version controls 19/19, installed package readiness 7/7 and the
+final full unit suite 298/298; all have zero skips. Full registry passes 66/66.
+Maintained strict checking reports zero errors/warnings and production build
+passes. Its full component execution subsequently passed 441/441 and its full
+package execution passed 10/10, zero failures/cancellations/skips (572.47 and
+513.97 seconds respectively). The unchanged owned `.1` copy's full Chromium run
+subsequently passed 733/733 (2791.63 s); its full integration run failed as
+recorded below. These outcomes do not certify replacement `.2` identity.
+
+The candidate was developed in an owned isolated copy, then 70 exact tracked
+files were promoted after checking clean source HEAD and each baseline digest.
+Generated caches/archives were excluded. Live producer preparation and frozen
+strict install passed, followed by actual CLI compilation/bundling and live
+contract validation with zero errors/warnings. Two contract script attempts
+started before preparation finished and failed package-manager automatic
+dependency verification; their failures are retained. Direct repository
+contract validation passed; the portable candidate's complete contract outcome
+and fixture-input correction are recorded below.
+
+Current logs use the `r11-f02-adoption-` prefix. Fresh-source bootstrap uses
+`r11-f02-fresh-adoption.log/json`; failed first runs retain their names.
+Current guidance distinguishes this native candidate from historical upstream
+failures, final cumulative qualification and mandatory independent acceptance.
+Native boundary dispositions affected by the selected pins remain an F05
+obligation. The portability discovery below prevented committing this candidate.
+
+## R11-F02 — Portable .2 packaging correction and requalification
+
+A fresh owned Linux producer refused the frozen emitter archive integrity. The
+actual macOS and Linux emitter archives have equal length (161842 bytes) and
+differ at precisely offset 9: gzip's OS marker is 19 on macOS and 3 on Linux.
+The diagnostic only retained genuine archives from isolated builds before the
+integrity refusal; it changed no declarations, source correction or package
+store and did not waive the failed frozen install.
+
+The producer now canonicalizes that packaging marker to 255 (unspecified) on
+the genuine emitter/native archives, with zero timestamp, verified header and
+unchanged decompressed content/CRC. The recipe records this policy. Distinct
+build versions `0.7.34-svelte-ui-kit.2` and `2.19.5-svelte-ui-kit.2` avoid
+reassigning the historical `.1` artifact. The emitter/native frozen inputs
+were deliberately refreshed through the actual owned producer; ordinary
+preparation remains frozen and authenticated. A regression compares Linux/macOS
+header controls, proves equal normalized bytes/content and rejects corrupt
+headers, timestamps and CRC without overwriting the invalid input.
+
+The new native archive SHA-256 is
+`1384075b9d764f80b92a94e378f233c2382dd6125fb3c301ae46be6d7746e603`;
+its inner provenance SHA-256 is
+`8f8bb9d4b0cf603a82780778f4c3bbdfc5d9ff69060fd8b3df6c3338e1b1b4f2`.
+The two fixed distributions contain the same 981 inventoried files, with 980
+byte-identical and only the package manifest's build version changed. Component
+declarations, runtime, notices and the minimal source patch remain identical.
+Provenance separately records changed version, recipe, lock and archive
+identities. Current root/fixture/registry metadata and guidance use `.2`;
+registry content hash is
+`749afb9073343521213c7dc11d6f5c61a16e8edaa01a92b5634d2a5a6867964f`.
+Generated `.1` cache/evidence is retained; only its authenticated superseded
+member was removed from owned compiler bundle staging before the `.2` build.
+
+Current guidance introduced three real links absent from the isolated contract
+fixture allowlist. The full regression failed 137/159 (22 passing, zero skips).
+The allowlist now includes the actual repair report and portable producer
+README/recipe/patch, and the existing missing-target/full-tree control covers
+these inputs. Its owning regression passes 1/1, zero skips; the complete rerun
+passes 159/159, zero skips/cancellations (1062268.64325 ms). No placeholder or
+disabled link/authority check is used.
+
+Fresh Linux harness setup failures (missing executable alias, then a readonly
+nonexecutable tool link) are retained separately from the genuine integrity
+failure. The first portable run completed fresh production, frozen install,
+CLI bundling and raw strict zero diagnostics, then failed its obsolete `.1`
+digest locator. The corrected harness derives locators from actual metadata.
+Logs use `r11-f02-native-linux*` and `r11-f02-gzip-diagnostic*`.
+
+Current `.2` producer regression passes 3/3, zero skips (127554.184458 ms):
+two fresh frozen native builds have identical archive bytes, the authentic
+unpatched control still fails with two TS2590 errors, and actual positive/
+negative public types, Svelte bindings and production consumers preserve their
+contracts. Current preparation/tarball delivery passes 2/2, zero skips
+(60421.067209 ms), including actual compiled pack extraction and raw strict
+install/reinstall after author/CLI removal. Root `.2` frozen strict install
+and authentic CLI bundling pass. Fresh Linux arm64 preparation from owned source,
+frozen strict installation, CLI build/bundling, exact native archive digest and
+raw strict checking all exit zero. Node 24.21.0 / pnpm 11.22.0 run in image
+`sha256:3d27e5c11e5786e309ec3e03f93ae536eb36e6e5eb3714d5eb3300a36157add0`;
+the source transfer archive SHA-256 is
+`2b475229ab8c385dc21acb3c437dfe9b09ce9f22b13e64b93102d2a6bff64a79`.
+The container is removed after execution. This is local Linux producer/strict
+evidence, not a hosted workflow or Linux browser result.
+
+Current `.2` macOS unit, registry, component and package suites pass respectively
+298/298 (34.00 s), 66/66 (115.10 s), 441/441 (566.79 s) and 10/10 (551.22 s),
+with zero skips/cancellations. The eight affected native-installation/dependency
+instruction integration files pass 41/41 (247.09 s), also zero skips.
+All six root typechecks, lint, format check, live contract validation and the
+maintained production build pass. Raw transcripts use `r11-f02-portable-*`.
+The current full Chromium qualification passes 733/733 (2390.73 s), zero skips
+and zero retries, with one worker. It covers actual default/custom installed and
+packed consumers, production SSR/hydration, native comparisons, interactions,
+themes, forms, cleanup and causal controls. Remaining cumulative release lanes
+belong to R11-F06/S201.
+
+The obsolete isolated `.1` full integration run completed with 812 passes and
+33 failures out of 845, zero skips/cancellations (2486.05 s). Eight files failed:
+copied physical consumers omitted their declared authenticated native archive,
+Info retained old registry/version-only readiness expectations, Menu retained
+the old runtime pin, and five planned-consumer controls invoked obsolete shared
+tool paths after the live `.2` frozen installation. That result is retained as
+`r11-f02-adoption-integration-final.log`; it does not qualify `.2` or waive a
+failure. Current copied physical fixtures now retain the real application-owned
+native source, and Info's positive native readiness uses the genuine installed
+distribution rather than a fabricated package manifest. Current owning reruns
+cover every failed file without weakening transaction checks or strict checking:
+all eight files pass 41/41, zero skips/cancellations (146.23 s), including real
+SIGKILL recovery, complete-tree lifecycle/disposition checks and actual planned
+consumer check/build/SSR. Six root typechecks and lint pass after those fixture
+repairs. No product guard is relaxed. Checksum-verified actionlint 1.7.12 exits
+zero over the actual native-bootstrap workflow; its owned tool directory is
+removed. The remaining full-CI repair remains R11-F04, not this bootstrap change.
+
+Read-only preservation checks confirm all 203 original checkpoint definitions
+are byte-identical to `a176387`, all 95 immutable design-source hashes match,
+both reference repositories retain their exact clean revisions, and the parent
+index is unchanged. The derived checkpoint projection remains unchanged after
+explicit regeneration. Six hundred detailed obsolete `.1` evidence files were
+retained with authenticated hashes and explicit historical attribution.
+
+R11-F02 portable adoption is a verified implementation candidate. The exact
+native correction, archives, preserved type/runtime boundaries and actual local
+delivery are qualified by these owning lanes. The full amendment and final
+cumulative release gate remain outstanding; this slice grants no independent
+acceptance or S201 completion.
+
 ## Remaining implementation and acceptance
 
 Planning input maintenance, R11-F01 diagnosis and the R11-F02 producer and
 authenticated-transport slices are verified candidates. The producer emits
-corrected native declarations and real local delivery is qualified; product
-adoption and independent acceptance remain open.
+corrected native declarations and real local delivery is qualified on the
+initial baseline. The portable `.2` adoption candidate passes its required
+strict, delivery and runtime lanes. Independent acceptance
+remains open.
 Original progress remains 200 implemented candidates and 193 independently
-accepted checkpoints. R11-F02 strict resolution, R11-F03 no-change refusal,
+accepted checkpoints. R11-F03 no-change refusal,
 R11-F04 CI, R11-F05 final
 guidance/boundary qualification, R11-F06/S201 full cumulative release checks,
 S202 extension reconciliation, S203 delivery and separate final acceptance of
-S194–S203 remain required. The two native TS2590 errors are still the actual
-strict blocker. No S201 implementation commit or independent acceptance is
+S194–S203 remain required. The corrected candidate passes raw strict checking;
+the remaining amendment and cumulative obligations still block S201 completion.
+No S201 implementation commit or independent acceptance is
 manufactured by this report. Continue to record actual repair outcomes here;
 the governing plan and existing tracker retain execution authority.

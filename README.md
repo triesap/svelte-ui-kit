@@ -129,8 +129,9 @@ S149–S181 catalog passed
 including native links, image fallback, presentation and request-local identity.
 S182–S193 passed the separate cross-component/platform gate. S194–S200 are
 verified implementation candidates; the final S203 gate remains open. The
-package remains unpublished, and two upstream strict-declaration diagnostics
-still block final AC20. See [compatibility evidence](implementation/evidence/COMPATIBILITY.md).
+package remains unpublished. The qualified local native build resolves the
+strict declaration errors; cumulative AC20 and independent final acceptance
+remain open. See [compatibility evidence](implementation/evidence/COMPATIBILITY.md).
 
 ## Use the local built CLI
 
@@ -154,8 +155,27 @@ application, explicitly install the reported runtime dependencies. For the
 complete current catalog the tested runtime pins are:
 
 ```sh
-pnpm --dir "$APP" add svelte@5.57.1 bits-ui@2.19.3 @internationalized/date@3.12.4
+pnpm --dir "$APP" add svelte@5.57.1 @internationalized/date@3.12.4
+# From APP, extract the native dependency from the actual packed CLI archive.
+cd "$APP"
+test ! -L vendor && mkdir -p vendor && test -d vendor
+NATIVE_ARCHIVE=bits-ui-2.19.5-svelte-ui-kit.2.tgz
+test ! -e "vendor/$NATIVE_ARCHIVE" && test ! -L "vendor/$NATIVE_ARCHIVE" && \
+  tar -xOf "$ARCHIVE" "package/dist/native/$NATIVE_ARCHIVE" > "vendor/$NATIVE_ARCHIVE"
+shasum -a 256 "vendor/$NATIVE_ARCHIVE"
+# Proceed only if the digest matches the exact value below.
+pnpm add "./vendor/$NATIVE_ARCHIVE"
 ```
+
+The native archive must have SHA-256
+`1384075b9d764f80b92a94e378f233c2382dd6125fb3c301ae46be6d7746e603`.
+Its distinct local Bits version is built from the pinned upstream source with
+the narrow declaration-emitter correction in the portable producer recipe.
+Keep the regular archive inside the application and retain its explicit file
+declaration and dependency lockfile in the application's delivery system.
+The application must continue checking and building after its CLI host and
+authoring clone disappear. Unknown, changed, escaping or linked native archives
+and changed installed distributions are refused; recopy and reinstall explicitly.
 
 The app supplies its SvelteKit/check/build tooling separately; the
 [consumer manifest](tests/fixtures/consumer/package.json) records the tested
@@ -163,6 +183,18 @@ tooling pins. The CLI never installs packages or changes the app manifest.
 When redistributing copied source, retain the distribution's `NOTICE.md`,
 `LICENSE-MIT` and `LICENSE-APACHE` in your application's source notices.
 Installing the kit in `CLI_HOST` does not add a kit runtime dependency to `APP`.
+
+For a fresh clone, prepare the authenticated native artifact and maintained
+consumer copy before installing the frozen development dependencies:
+
+```sh
+node tools/prepare-native-dependency.mjs --fixture
+pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
+```
+
+Preparation is developer tooling. It does not run inside the installed CLI or
+change application package files. Builds authenticate its cache and bundle the
+native archive into compiler staging before local packing.
 
 Build from this clone after installing its frozen development dependencies.
 `CLI` below is the built executable's absolute path; set `APP` to an existing
@@ -391,15 +423,17 @@ not been run remotely.
 
 The fixture also carries a fixture-only Bits compatibility component
 (`tests/fixtures/consumer/src/lib/compatibility/SwitchFixture.svelte`, served
-at `/compatibility`) that exercises the pinned `bits-ui 2.19.3`
+at `/compatibility`) that exercises `bits-ui 2.19.5-svelte-ui-kit.2`
 `Switch.Root`/`Switch.Thumb` with `bind:checked`, `bind:ref` and a real `child`
 snippet forwarding a delegated native button. `pnpm run test:components` runs
 the typed component suite: it type-checks the maintained component and proves
 incompatible `checked`/`ref`/`child` examples fail `svelte-check` for their
 intended diagnostics in disposable copies. The fixture pins `csstype 3.1.3`
-(an undeclared transitive type dependency of the upstream declarations) and sets
-`skipLibCheck` to tolerate an upstream TypeScript union-complexity limit in the
-Bits barrel; authored fixture source remains under `strict` checking.
+(an undeclared transitive type dependency of the upstream declarations).
+The maintained fixture uses `strict` and `skipLibCheck: false`. Its audit requires
+raw checker exit zero with zero errors/warnings and authenticates the native
+source and distribution. Authored and dependency defects, tool failures and
+malformed machine records remain refusal controls.
 
 The CLI entrypoint is `src/cli/main.ts`, compiled with the pinned `tsc` to
 `dist/cli/main.js` (build output is ignored and never committed). Argument

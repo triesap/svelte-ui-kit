@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "alert-dialog",
   "kind": "component",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Distinct complete pinned Alert Dialog family with native decisions and explicit state, refs, snippets and portal composition.",
   "compatibility": {
     "svelte": "5.57.1",
-    "bits": "2.19.3",
+    "bits": "2.19.5-svelte-ui-kit.2",
     "date": "^3.8.1"
   },
   "files": [
@@ -181,7 +181,7 @@
   "npmDependencies": [
     {
       "name": "bits-ui",
-      "range": "2.19.3",
+      "range": "2.19.5-svelte-ui-kit.2",
       "role": "runtime"
     }
   ],

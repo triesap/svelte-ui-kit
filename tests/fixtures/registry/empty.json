@@ -3,9 +3,9 @@
   "registryVersion": "0.1.0",
   "compatibility": {
     "svelte": "5.57.1",
-    "bits": "2.19.3",
+    "bits": "2.19.5-svelte-ui-kit.2",
     "date": "^3.8.1"
   },
   "items": [],
-  "contentHash": "11d7567d9765056d40939b37c11be17e5b6dd511ec67ccdd81c2a444d74576aa"
+  "contentHash": "8f8ea5c08f70896a3c15e7a82ab01860b1938d8edbacdc782ed8b90568388e60"
 }

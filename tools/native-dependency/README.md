@@ -1,10 +1,11 @@
-# Native declaration producer candidate
+# Native declaration producer
 
 This directory contains portable producer inputs for the approved R11-F02
-fallback. It does not change the selected kit dependency or grant release
-acceptance. The [governing plan](../../implementation/COMMIT_SEQUENCE.md#r11-f02--resolve-qualify-and-adopt-a-strict-green-native-baseline)
-also requires packaged delivery and actual component/consumer/runtime qualification
-before adoption.
+fallback and the selected local Bits `2.19.5-svelte-ui-kit.2` baseline.
+Producer qualification does not grant release or independent acceptance.
+The [governing plan](../../implementation/COMMIT_SEQUENCE.md#r11-f02--resolve-qualify-and-adopt-a-strict-green-native-baseline)
+requires authentic packaged delivery and actual component/consumer/runtime
+qualification as well.
 
 ## Source and correction
 
@@ -13,6 +14,15 @@ the producer toolchain and distinct build versions. The language-tools release
 tag is `svelte2tsx-0.7.34`; its source manifest still says `0.7.25`. Provenance
 records both facts instead of claiming the source manifest was already stamped
 with the release version.
+
+Both emitter and native archives use canonical gzip metadata: the operating
+system marker is 255 (unspecified), the timestamp remains zero and authentic
+tar content and CRC are preserved. The initial build `.1` differed between
+macOS and Linux at the gzip OS byte and failed the frozen emitter integrity
+check on Linux. Build `.2` records this packaging policy in the recipe and
+uses newly qualified archive/provenance and frozen lock digests. Native runtime
+source and the declaration correction are unchanged; historical `.1` evidence
+does not certify this replacement.
 
 [binding-signature.patch](binding-signature.patch) changes the real emitter's
 source shim. The normal Svelte `Component` instantiation eagerly checks a
@@ -34,7 +44,7 @@ and package stores are never patched.
 Use Node 24.21.0, pnpm 11.22.0, Git and tar from the repository root:
 
 ```sh
-node tools/build-native-dependency.mjs --output .native-candidate
+node tools/build-native-dependency.mjs --output .native-build/reproduction
 node --test tools/build-native-dependency.test.mjs
 ```
 

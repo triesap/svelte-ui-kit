@@ -45,7 +45,7 @@ test("complete shipped Radio has exactly two flat parts/types and a single sourc
   const item = loaded.value.items.find((item) => item.id === "radio")!;
   assert.deepEqual(item.manifest.registryDependencies, ["tokens"]);
   assert.deepEqual(item.manifest.npmDependencies, [
-    { name: "bits-ui", range: "2.19.3", role: "runtime" },
+    { name: "bits-ui", range: "2.19.5-svelte-ui-kit.2", role: "runtime" },
   ]);
   assert.deepEqual(
     item.manifest.exports.map((entry) => entry.name),

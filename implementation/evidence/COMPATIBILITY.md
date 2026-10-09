@@ -1,8 +1,42 @@
 # Dependency compatibility evidence
 
+## R11-F02 selected local native candidate
+
+The current authoring and maintained-consumer Bits dependency is the explicit
+local archive for `2.19.5-svelte-ui-kit.2`. Node `24.21.0`, pnpm `11.22.0`,
+Svelte `5.57.1`, date `3.12.4`, TypeScript `6.0.3`, checker `4.7.6`,
+Kit `2.70.3`, Vite `8.3.1` and csstype `3.1.3` remain selected. The
+[portable producer](../../tools/native-dependency/README.md) pins actual source,
+emitter correction, frozen build inputs and notices. The authentic archive
+SHA-256 is `1384075b9d764f80b92a94e378f233c2382dd6125fb3c301ae46be6d7746e603`.
+It is generated output, never a committed artifact or assumed registry release.
+
+The maintained fixture uses `skipLibCheck: false`; raw public-root checking
+reports zero errors/warnings. Strict qualification authenticates the archive,
+installed provenance and complete distribution inventory, along with actual
+tool versions and fail-closed machine output. The unpatched authentic producer
+control still reproduces the two TS2590 failures. Representative mutual type
+comparisons, positive Svelte bindings and actual invalid authored controls
+complement runtime qualification; no exhaustive type-equivalence claim is made.
+
+The developer bootstrap prepares both root and fixture archives before frozen
+strict installation. An actual fresh source copy without preparation caches
+completed preparation, frozen strict installation, CLI build/bundling and raw
+strict consumer checking without changing its manifest or lockfile. Actual
+packed CLI consumers explicitly extract the authenticated member into an
+application-owned archive before installation. The application retains it after
+authoring sources and the CLI host disappear. CLI dependency instructions report
+this procedure; generation never performs installation or package-file edits.
+
+The [completion repair report](RCLD-11_REPAIR_REPORT.md) records current lane
+outcomes and failed attempts. Cumulative S201, remaining amendment repairs and
+separate S203 acceptance remain open. The sections below retain their historical
+pins, observations and qualification boundaries; they cannot certify this new
+candidate or be relabeled fresh executions. Hosted CI remains unexecuted.
+
 ## S196 selected release metadata candidate
 
-The installed-package baseline is Node `24.21.0`, pnpm `11.22.0`, Svelte
+The historical S196 installed-package baseline was Node `24.21.0`, pnpm `11.22.0`, Svelte
 `5.57.1`, Bits UI `2.19.3`, date `3.12.4`, TypeScript `6.0.3`, svelte-check
 `4.7.6`, SvelteKit `2.70.3`, Vite `8.3.1` and csstype `3.1.3`. Registry
 compatibility declares the exact tested application pins rather than a new

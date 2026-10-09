@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -15,6 +16,7 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { runFixtureScript } from "../helpers/fixture.js";
+import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
 import {
   classifyStrictCheck,
   parseMachineVerbose,
@@ -26,17 +28,10 @@ import {
 } from "../helpers/strict-audit.js";
 
 /**
- * S011 strict declaration audit controls.
- *
- * The fixture's `skipLibCheck: true` is accepted only because exactly two
- * pinned upstream Bits 2.19.3 declarations fail under `skipLibCheck: false`.
- * The baseline proves the qualified exception. Pure parser controls prove the
- * `--output machine-verbose` parser fails closed on unknown, truncated,
- * duplicate and inconsistent output. Synthetic classifier controls prove tool
- * failures, changed pins and misleading path suffixes are rejected. Real
- * checker controls prove separately authored `.svelte`, `.ts`, referenced
- * `.d.ts` and additional-dependency errors are rejected and that removing them
- * restores the baseline. No shared installed package is modified.
+ * Strict declaration acceptance requires raw exit zero and no diagnostics.
+ * Parser/protocol, tooling, workspace, installed-pin and native authenticity
+ * controls remain fail-closed. Real authored and dependency errors must fail;
+ * removing them restores raw strict success without changing shared packages.
  */
 
 const OK_SYNC: BinOutcome = {
@@ -54,7 +49,7 @@ function syntheticRun(
   return {
     sync: OK_SYNC,
     check: {
-      exitCode: 1,
+      exitCode: 0,
       signal: null,
       timedOut: false,
       stdout: machine,
@@ -96,12 +91,6 @@ function machine(lines: readonly string[]): string {
 const UPSTREAM_UNION_MESSAGE =
   "Expression produces a union type that is too complex to represent.";
 
-/** The real installed Bits declaration file inside an owned fixture copy. */
-function installedBitsFile(copyRoot: string, rel: string): string {
-  const bitsRoot = realpathSync(path.join(copyRoot, "node_modules", "bits-ui"));
-  return path.join(bitsRoot, rel);
-}
-
 /** A machine-verbose record for one pinned union-complexity diagnostic. */
 function upstreamDiagnostic(
   filename: string,
@@ -118,28 +107,9 @@ function upstreamDiagnostic(
   })}`;
 }
 
-/** A complete synthetic run that names the real installed Bits declarations. */
-function workspaceMachine(workspace: string, copyRoot: string): string {
-  return machine([
-    startRecord(workspace),
-    upstreamDiagnostic(
-      installedBitsFile(
-        copyRoot,
-        "dist/bits/button/components/button.svelte.d.ts",
-      ),
-      { line: 1, character: 22 },
-      { line: 1, character: 76 },
-    ),
-    upstreamDiagnostic(
-      installedBitsFile(
-        copyRoot,
-        "dist/bits/calendar/components/calendar.svelte.d.ts",
-      ),
-      { line: 1, character: 24 },
-      { line: 1, character: 106 },
-    ),
-    completedRecord(2, 0, 2, 1234),
-  ]);
+/** A complete synthetic zero-diagnostic run; installed state is checked separately. */
+function workspaceMachine(workspace: string): string {
+  return machine([startRecord(workspace), completedRecord(0, 0, 0, 1234)]);
 }
 
 const ACCEPTED_MACHINE = machine([
@@ -361,7 +331,7 @@ test("the classifier rejects tool failures, signals, timeouts and unexpected std
       syntheticRun(base, { exitCode: 2 }),
       process.cwd(),
     ).reasons.join("\n"),
-    /expected the strict checker to exit 1/,
+    /expected the strict checker to exit 0/,
   );
   assert.match(
     classifyStrictCheck(
@@ -446,10 +416,7 @@ test("the classifier rejects a misleading Bits-like path outside the installed p
     copy.root,
   );
   assert.equal(result.kind, "rejected");
-  assert.match(
-    result.reasons.join("\n"),
-    /missing the expected upstream diagnostic/,
-  );
+  assert.match(result.reasons.join("\n"), /expected zero error diagnostics/);
 });
 
 test("the classifier requires START's workspace to resolve to the audited fixture", (t) => {
@@ -465,12 +432,12 @@ test("the classifier requires START's workspace to resolve to the audited fixtur
   // the same real directory and must qualify.
   for (const workspace of [copy.root, realpathSync(copy.root), alias]) {
     const result = classifyStrictCheck(
-      syntheticRun(workspaceMachine(workspace, copy.root)),
+      syntheticRun(workspaceMachine(workspace)),
       copy.root,
     );
     assert.equal(
       result.kind,
-      "qualified-upstream-exception",
+      "strict-pass",
       `${workspace}: ${result.reasons.join("\n")}`,
     );
   }
@@ -478,7 +445,7 @@ test("the classifier requires START's workspace to resolve to the audited fixtur
   // A different existing directory must fail even though the relative
   // diagnostic paths would resolve to the same installed package.
   const different = classifyStrictCheck(
-    syntheticRun(workspaceMachine(other, copy.root)),
+    syntheticRun(workspaceMachine(other)),
     copy.root,
   );
   assert.equal(different.kind, "rejected");
@@ -489,7 +456,7 @@ test("the classifier requires START's workspace to resolve to the audited fixtur
 
   // An absent workspace root must fail rather than silently resolve.
   const absent = classifyStrictCheck(
-    syntheticRun(workspaceMachine(path.join(other, "missing-root"), copy.root)),
+    syntheticRun(workspaceMachine(path.join(other, "missing-root"))),
     copy.root,
   );
   assert.equal(absent.kind, "rejected");
@@ -527,51 +494,83 @@ test("the version guard rejects every changed or unreadable pin", (t) => {
   }
   const reasons = validateStrictAuditVersions(fakeRoot);
   assert.equal(reasons.length, 6);
-  assert.match(reasons.join("\n"), /bits-ui pin changed: expected 2\.19\.3/);
+  assert.match(
+    reasons.join("\n"),
+    /bits-ui pin changed: expected 2\.19\.5-svelte-ui-kit\.2/,
+  );
+});
+
+test("zero-diagnostic output cannot certify a same-version changed native install or local source", (t) => {
+  const copy = prepareStrictFixture();
+  t.after(() => copy.cleanup());
+  const resultFor = () =>
+    classifyStrictCheck(syntheticRun(workspaceMachine(copy.root)), copy.root);
+  assert.equal(resultFor().kind, "strict-pass");
+  assert.equal(
+    classifyStrictCheck(
+      syntheticRun(workspaceMachine(copy.root), { exitCode: 1 }),
+      copy.root,
+    ).kind,
+    "rejected",
+  );
+  const native = path.join(copy.root, "node_modules/bits-ui");
+  const original = realpathSync(native);
+  rmSync(native);
+  cpSync(original, native, { recursive: true });
+  const provenance = path.join(native, "NATIVE_PROVENANCE.json");
+  const before = readFileSync(provenance);
+  writeFileSync(provenance, "{}");
+  const invalidInstall = resultFor();
+  assert.equal(invalidInstall.kind, "rejected");
+  assert.match(
+    invalidInstall.reasons.join("\n"),
+    /Installed Bits does not match/,
+  );
+  writeFileSync(provenance, before);
+  assert.equal(resultFor().kind, "strict-pass");
+  const archive = path.join(
+    copy.root,
+    ".native-build",
+    NATIVE_BASELINE.version,
+    NATIVE_BASELINE.archive,
+  );
+  const archiveBefore = readFileSync(archive);
+  writeFileSync(archive, "unqualified local bytes");
+  const invalidSource = resultFor();
+  assert.equal(invalidSource.kind, "rejected");
+  assert.match(
+    invalidSource.reasons.join("\n"),
+    /authenticated application-owned native archive/,
+  );
+  writeFileSync(archive, archiveBefore);
+  assert.equal(resultFor().kind, "strict-pass");
 });
 
 // ---------------------------------------------------------------------------
 // Real checker controls
 // ---------------------------------------------------------------------------
 
-test("the strict audit qualifies exactly the two pinned upstream diagnostics", (t) => {
+test("the maintained native baseline passes raw strict checking with zero errors and warnings", (t) => {
   const copy = prepareStrictFixture();
   t.after(() => copy.cleanup());
-
+  const maintained = JSON.parse(
+    readFileSync("tests/fixtures/consumer/tsconfig.json", "utf8"),
+  );
+  assert.equal(maintained.compilerOptions.skipLibCheck, false);
   const run = runStrictCheck(copy.root);
   const result = classifyStrictCheck(run, copy.root);
   assert.equal(
     result.kind,
-    "qualified-upstream-exception",
-    `strict audit must qualify the pinned upstream exception\n${result.reasons.join("\n")}\n${result.raw}`,
+    "strict-pass",
+    `${result.reasons.join("\n")}\n${result.raw}`,
   );
-  assert.equal(run.check.exitCode, 1, "the raw strict checker still exits 1");
-  assert.equal(result.diagnostics.length, 2);
-  assert.ok(
-    result.diagnostics.every((diagnostic) => diagnostic.type === "ERROR"),
-  );
-  assert.ok(
-    result.diagnostics.some(
-      (diagnostic) =>
-        diagnostic.filename.endsWith(
-          "bits/button/components/button.svelte.d.ts",
-        ) &&
-        diagnostic.code === 2590 &&
-        diagnostic.start.character === 22,
-    ),
-    "the button union-complexity diagnostic must be present",
-  );
-  assert.ok(
-    result.diagnostics.some(
-      (diagnostic) =>
-        diagnostic.filename.endsWith(
-          "bits/calendar/components/calendar.svelte.d.ts",
-        ) &&
-        diagnostic.code === 2590 &&
-        diagnostic.start.character === 24,
-    ),
-    "the calendar union-complexity diagnostic must be present",
-  );
+  assert.equal(run.check.exitCode, 0);
+  assert.deepEqual(result.diagnostics, []);
+  const parsed = parseMachineVerbose(run.check.stdout);
+  assert.ok(parsed.ok);
+  assert.equal(parsed.run?.completed.errors, 0);
+  assert.equal(parsed.run?.completed.warnings, 0);
+  assert.equal(parsed.run?.completed.filesWithProblems, 0);
 });
 
 interface AuthoredProbe {
@@ -704,7 +703,7 @@ for (const probe of AUTHORED_PROBES) {
   });
 }
 
-test("removing every authored probe restores and requalifies the strict baseline", (t) => {
+test("removing every authored probe restores raw strict success", (t) => {
   const copy = prepareStrictFixture();
   t.after(() => copy.cleanup());
   for (const probe of AUTHORED_PROBES) applyProbe(copy.root, probe);
@@ -723,24 +722,28 @@ test("removing every authored probe restores and requalifies the strict baseline
   const restored = classify(copy);
   assert.equal(
     restored.kind,
-    "qualified-upstream-exception",
+    "strict-pass",
     `restoration must return to the known baseline\n${restored.reasons.join("\n")}\n${restored.raw}`,
   );
 });
 
-test("the normal fixture check hides the referenced declaration defect that the strict audit rejects", (t) => {
+test("normal and strict checking detect referenced declarations while an owned skip mutant cannot pass the strict audit", (t) => {
   const copy = prepareStrictFixture();
   t.after(() => copy.cleanup());
   const probe = AUTHORED_PROBES[2];
   applyProbe(copy.root, probe);
 
-  // The fixture's skipLibCheck:true hides the authored declaration defect.
   const normal = runFixtureScript(copy.root, "check");
-  assert.equal(
-    normal.status,
-    0,
-    `the normal fixture check must pass while the declaration defect is hidden\n${normal.stdout}\n${normal.stderr}`,
-  );
+  assert.equal(normal.status, 1, `${normal.stdout}\n${normal.stderr}`);
+  assert.match(normal.stdout, /error/);
+  // Reproduce the old exception only in this owned causal mutant. The strict
+  // checker still explicitly checks declarations and refuses its authored fault.
+  const configPath = path.join(copy.root, "tsconfig.json");
+  const config = JSON.parse(readFileSync(configPath, "utf8"));
+  config.compilerOptions.skipLibCheck = true;
+  writeFileSync(configPath, JSON.stringify(config));
+  const hidden = runFixtureScript(copy.root, "check");
+  assert.equal(hidden.status, 0, `${hidden.stdout}\n${hidden.stderr}`);
 
   // The strict audit is the qualifier that refuses to admit it.
   const strict = classify(copy);
@@ -749,7 +752,7 @@ test("the normal fixture check hides the referenced declaration defect that the 
 
   removeProbe(copy.root, probe);
   const restored = classify(copy);
-  assert.equal(restored.kind, "qualified-upstream-exception");
+  assert.equal(restored.kind, "strict-pass");
 });
 
 // ---------------------------------------------------------------------------

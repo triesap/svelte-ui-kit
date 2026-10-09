@@ -61,6 +61,16 @@ for (const custom of [false, true])
         : DEFAULT_KIT_CONFIG;
       const paths = deriveKitPaths(config);
       write(root, "unrelated/keep.txt", "preserve application work\n");
+      // This physical consumer uses the genuine installed native distribution,
+      // so retain its explicit application-owned source before capture/apply.
+      for (const file of ["package.json", ".native-build"])
+        cpSync(
+          path.join("tests/fixtures/consumer", file),
+          path.join(root, file),
+          {
+            recursive: true,
+          },
+        );
       mkdirSync(path.join(root, "node_modules"));
       for (const dependency of [
         "svelte",

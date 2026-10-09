@@ -22,6 +22,7 @@
  * user-provided configuration.
  */
 import { createRequire } from "node:module";
+import { NATIVE_BASELINE } from "../project/native-dependency.js";
 
 import { fail, issue, ok, ModelError, type ModelResult } from "./errors.js";
 
@@ -62,7 +63,7 @@ export const INITIAL_ITEM_VERSION: SemVer = "0.1.0";
 
 /**
  * Bits UI's own non-optional peer requirements, recorded separately from the
- * tested-support claim below. Bits 2.19.3 accepts Svelte `^5.33.0` and
+ * tested-support claim below. The qualified Bits source retains Svelte `^5.33.0` and
  * `@internationalized/date` `^3.8.1`; these are the primitive's real peers,
  * not the kit's advertised/qualified baseline.
  */
@@ -73,14 +74,14 @@ export const BITS_UI_PEER_REQUIREMENTS = {
 
 /**
  * Initial advertised frame compatibility: the exact qualified baseline Svelte
- * `5.57.1` and Bits UI `2.19.3` (not unqualified caret ranges). The `date`
+ * `5.57.1` and the authenticated local Bits build (exact versions). The `date`
  * range is Bits UI's real peer requirement for `@internationalized/date`. This
  * support claim is deliberately narrower than Bits UI's own `^5.33.0` Svelte
  * peer recorded above.
  */
 export const INITIAL_COMPATIBILITY: CompatibilityPolicy = {
   svelte: "5.57.1",
-  bits: "2.19.3",
+  bits: NATIVE_BASELINE.version,
   date: BITS_UI_PEER_REQUIREMENTS.date,
 };
 

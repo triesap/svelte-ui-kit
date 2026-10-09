@@ -8,7 +8,7 @@ Source: [family](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f
 [manifest](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/tabs.json)
 and [CSS](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/styles/tabs.css).
 Preserve MIT attribution. Source Root/List/Trigger/Panel map to actual pinned
-Bits Tabs2.19.3 Root/List/Trigger/Content; public TabsContent keeps source
+Bits Tabs2.19.5-svelte-ui-kit.2 Root/List/Trigger/Content; public TabsContent keeps source
 kit-tabs-panel styling. No extra TabsPanel alias or compatibility enums are added.
 
 ## Exact native API and inventory
@@ -38,7 +38,7 @@ Root kit-tabs, List kit-tabs-list, Trigger kit-tabs-trigger, Content kit-tabs-pa
 are merged with caller classes. Six sources (root.svelte, list.svelte,
 trigger.svelte, content.svelte, types.ts, index.ts) and one styles/tabs.css asset
 form one complete cohort. Exactly eight flat exports; only tokens as registry
-dependency and pinned Bits2.19.3 as runtime dependency. Native Svelte/Bits identity
+dependency and pinned Bits2.19.5-svelte-ui-kit.2 as runtime dependency. Native Svelte/Bits identity
 replaces source registry identity context; no generated identity dependency or
 global ID counter is justified. Candidate parts remain unadvertised through
 S138; original S139 registers the complete family.

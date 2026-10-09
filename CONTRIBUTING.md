@@ -31,10 +31,11 @@ the CLI's retirement warning does not promise application-source rewriting.
 Run the app's check/build/browser checks after deliberate reconciliation.
 
 1. Fork and clone the repository, then create a branch for your change.
-2. Install the frozen dependency set:
+2. Prepare the reproducible local native dependency, then install the frozen set:
 
 ```sh
-pnpm install --frozen-lockfile
+node tools/prepare-native-dependency.mjs --fixture
+pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
 ```
 
 3. Type-check and build the CLI boundary:
@@ -80,9 +81,12 @@ Bits `Switch.Root`/`Switch.Thumb` compatibility component, proving the positive
 `bind:checked`/`bind:ref`/`child`-snippet cases type-check and that incompatible
 examples fail with their intended diagnostics in disposable copies. The fixture
 pins `csstype 3.1.3` (an undeclared transitive type dependency of the pinned
-upstream declarations) and sets `skipLibCheck` for an upstream union-complexity
-limit in the Bits barrel; authored fixture source is still checked under
-`strict`. No public kit wrapper is created.
+upstream declarations). The authenticated local Bits artifact comes from the
+portable source/emitter recipe. The maintained fixture uses `strict` with
+`skipLibCheck: false`; its audit requires raw zero errors/warnings and verifies
+the actual native source and distribution. Malformed output, tool failures and
+authored or additional dependency defects remain causal refusal controls.
+No public kit wrapper is created by the compatibility fixture.
 
 Both `typecheck` and `test:unit` are required: standalone `typecheck` uses the
 tracked compiler includes, while the unit runner also compiles every discovered

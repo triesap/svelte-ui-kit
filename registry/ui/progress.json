@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "progress",
   "kind": "component",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Native numeric progress bounds and indeterminate state with source progress styles.",
   "compatibility": {
     "svelte": "5.57.1",
-    "bits": "2.19.3",
+    "bits": "2.19.5-svelte-ui-kit.2",
     "date": "^3.8.1"
   },
   "files": [

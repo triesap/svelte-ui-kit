@@ -41,7 +41,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0",
-    "build": "tsc -p tsconfig.json",
+    "build": "node tools/prepare-native-dependency.mjs && tsc -p tsconfig.json && node tools/prepare-native-dependency.mjs --bundle",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.unit.json --noEmit && tsc -p tsconfig.integration.json --noEmit && tsc -p tsconfig.components.json --noEmit && tsc -p tsconfig.registry.json --noEmit && tsc -p tsconfig.package.json --noEmit",
     "test:cli-bootstrap": "node --test tests/smoke/cli-bootstrap.test.mjs",
     "test:unit": "pnpm run build && node tools/run-unit-tests.mjs",
@@ -57,7 +57,8 @@
     "test:browser": "pnpm run fixture:build && playwright test --config playwright.config.ts",
     "check:contracts": "node tools/check-contracts.mjs",
     "test:contracts": "node --test tools/check-contracts.test.mjs",
-    "test:package": "pnpm run build && node tools/run-unit-tests.mjs --suite package"
+    "test:package": "pnpm run build && node tools/run-unit-tests.mjs --suite package",
+    "native:prepare": "node tools/prepare-native-dependency.mjs --fixture"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -67,7 +68,7 @@
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@types/node": "24.19.0",
     "@types/semver": "7.8.0",
-    "bits-ui": "2.19.3",
+    "bits-ui": "file:./.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz",
     "eslint": "10.11.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-svelte": "3.23.0",

@@ -9,7 +9,7 @@ actual Svelte/Bits contracts rather than exposing compatibility aliases.
 
 The exact flat exports are Checkbox and CheckboxProps. The source is a simple
 single control, not a group or a public indicator family. CheckboxProps aliases
-Omit<BitsCheckbox.RootProps, "child" | "children"> from pinned Bits UI2.19.3.
+Omit<BitsCheckbox.RootProps, "child" | "children"> from pinned Bits UI2.19.5-svelte-ui-kit.2.
 The separate exported type file lets generated consumers import the same exact
 contract and type fixtures audit it before the Svelte implementation exists.
 Root owns one decorative SVG; child/children are excluded, never accepted and
@@ -77,7 +77,7 @@ The one existing --kit-checkbox-radius source customization entry remains
 unchanged: component then var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-sm))) fallbacks. Semantic token
 values and original customization records stay intact. Managed plain CSS lives
 in one checkbox component block with tokens as the only registry dependency;
-Bits UI2.19.3 is the explicit npm dependency. S130 advertises only the complete
+Bits UI2.19.5-svelte-ui-kit.2 is the explicit npm dependency. S130 advertises only the complete
 source/type/style/export cohort and generates default/custom real consumers.
 S131 qualifies forms, labels, refs/callbacks, state, fixed indicator geometry,
 caller classes/events, theme/RTL/focus, SSR/hydration and teardown against actual

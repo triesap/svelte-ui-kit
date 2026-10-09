@@ -15,3 +15,6 @@ tools/native-dependency/emitter.pnpm-lock.yaml
 tools/native-dependency/native.pnpm-lock.yaml
 LICENSE-MIT
 LICENSE-APACHE
+
+# Qualified native producer output
+.native-build/

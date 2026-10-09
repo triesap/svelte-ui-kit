@@ -1,12 +1,15 @@
 {
   "schemaVersion": 1,
+  "archiveFormat": {
+    "gzipOperatingSystem": 255
+  },
   "native": {
     "repository": "https://github.com/huntabyte/bits-ui.git",
     "revision": "fd10616a873a8e6e3652e31dcc88c5c2f155a9e2",
     "packagePath": "packages/bits-ui",
     "sourceVersion": "2.19.5",
-    "buildVersion": "2.19.5-svelte-ui-kit.1",
-    "archive": "bits-ui-2.19.5-svelte-ui-kit.1.tgz"
+    "buildVersion": "2.19.5-svelte-ui-kit.2",
+    "archive": "bits-ui-2.19.5-svelte-ui-kit.2.tgz"
   },
   "emitter": {
     "repository": "https://github.com/sveltejs/language-tools.git",
@@ -14,8 +17,8 @@
     "packagePath": "packages/svelte2tsx",
     "sourceVersion": "0.7.25",
     "sourceTag": "svelte2tsx-0.7.34",
-    "buildVersion": "0.7.34-svelte-ui-kit.1",
-    "archive": "svelte2tsx-0.7.34-svelte-ui-kit.1.tgz",
+    "buildVersion": "0.7.34-svelte-ui-kit.2",
+    "archive": "svelte2tsx-0.7.34-svelte-ui-kit.2.tgz",
     "patch": "binding-signature.patch",
     "devDependencies": {
       "typescript": "5.9.3",

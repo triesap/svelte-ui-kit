@@ -23,6 +23,7 @@ import {
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
+import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
 import { parseManagedCss } from "../../src/codegen/css-parse.js";
 
 const parts = [
@@ -54,7 +55,7 @@ test("complete shipped Menu has exactly eight flat parts/types and a single sour
   const item = loaded.value.items.find((item) => item.id === "menu")!;
   assert.deepEqual(item.manifest.registryDependencies, ["tokens"]);
   assert.deepEqual(item.manifest.npmDependencies, [
-    { name: "bits-ui", range: "2.19.3", role: "runtime" },
+    { name: "bits-ui", range: NATIVE_BASELINE.version, role: "runtime" },
   ]);
   assert.deepEqual(
     item.manifest.exports.map((entry) => entry.name),

@@ -43,8 +43,8 @@ importers:
         specifier: 7.8.0
         version: 7.8.0
       bits-ui:
-        specifier: 2.19.3
-        version: 2.19.3(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))
+        specifier: file:./.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz
+        version: file:.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))
       eslint:
         specifier: 10.11.0
         version: 10.11.0
@@ -76,8 +76,8 @@ importers:
         specifier: 3.12.4
         version: 3.12.4
       bits-ui:
-        specifier: 2.19.3
-        version: 2.19.3(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))
+        specifier: file:./.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz
+        version: file:tests/fixtures/consumer/.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))
       svelte:
         specifier: 5.57.1
         version: 5.57.1(@typescript-eslint/types@8.71.0)
@@ -154,11 +154,14 @@ packages:
     resolution: {integrity: sha512-IkO+/KEUvwbVpiURZg+P7zF74z5Jxe0UgJxVni+RtoHQ6IZieXaO02kmadomap/q+l6bc/jdPGGqTjhuZnuz1Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
+  '@floating-ui/core@1.7.1':
+    resolution: {integrity: sha512-azI0DrjMMfIug/ExbBaeDVJXcY0a7EPvPjb2xAJPa4HeimBX+Z18HK8QQR3jb6356SnDDdxx+hinMLcJEDdOjw==}
+
   '@floating-ui/core@1.8.0':
     resolution: {integrity: sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ==}
 
-  '@floating-ui/dom@1.8.0':
-    resolution: {integrity: sha512-yXSrzeHZBTZadLOlfyhCkJHNeLJnHRnRInwdZ40L7ZiaAtrBwoYlsDrX3v5zB1Utk7CLfzcOVnVVWoXEky7Ceg==}
+  '@floating-ui/dom@1.7.1':
+    resolution: {integrity: sha512-cwsmW/zyw5ltYTUeeYJ60CnQuPqmGwuGVhG9w0PRaRKkAyi38BT5CKrpIbb+jtahSwUl04cWzSx9ZOIxeS6RsQ==}
 
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
@@ -659,8 +662,17 @@ packages:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
     engines: {node: 18 || 20 || >=22}
 
-  bits-ui@2.19.3:
-    resolution: {integrity: sha512-04COIqqht1h0YRnVTJVHy3+F8NhzS5x0eSM8eqvavaWmK/GLDTgYJW2h1CA//8hh9vSk4rG7rOvJ3QAIpCuYIw==}
+  bits-ui@file:.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz:
+    resolution: {integrity: sha512-MPvtvAyVjti3uRabb02cKuUZ+penILI8jTJBga9TKqwytFvt5ThHbLqmPhbbinIhIc2BzQq3zczC6ZY4V1Q5KA==, tarball: file:.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz}
+    version: 2.19.5-svelte-ui-kit.2
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@internationalized/date': ^3.8.1
+      svelte: ^5.33.0
+
+  bits-ui@file:tests/fixtures/consumer/.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz:
+    resolution: {integrity: sha512-MPvtvAyVjti3uRabb02cKuUZ+penILI8jTJBga9TKqwytFvt5ThHbLqmPhbbinIhIc2BzQq3zczC6ZY4V1Q5KA==, tarball: file:tests/fixtures/consumer/.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz}
+    version: 2.19.5-svelte-ui-kit.2
     engines: {node: '>=20'}
     peerDependencies:
       '@internationalized/date': ^3.8.1
@@ -1251,8 +1263,8 @@ packages:
     resolution: {integrity: sha512-Uqj49lWKB+iSSnneuwiYYJ7MZgkB+eXr0LXBhv4uDuAkXqnWmq65Sxflfvp0Lc6MdKjMUxGaeOKWJqz5SNiVIA==}
     engines: {node: '>=18'}
 
-  tabbable@6.5.0:
-    resolution: {integrity: sha512-wieBHXygIm7OyQOu5hQlkk62/WyCFYGlWg7L6/ZCUZwx0o398Zkn4pVmMyfYhfMG8kGrj/Krt8eIk6UKC6VzwA==}
+  tabbable@6.2.0:
+    resolution: {integrity: sha512-Cat63mxsVJlzYvN51JmVXIgNoUokrIaT2zLclCXjRd8boZ0004U4KCs/sToJ75C6sdlByWxpYnb5Boif1VSFew==}
 
   tinyglobby@0.2.17:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
@@ -1415,11 +1427,15 @@ snapshots:
       '@eslint/core': 1.2.1
       levn: 0.4.1
 
+  '@floating-ui/core@1.7.1':
+    dependencies:
+      '@floating-ui/utils': 0.2.12
+
   '@floating-ui/core@1.8.0':
     dependencies:
       '@floating-ui/utils': 0.2.12
 
-  '@floating-ui/dom@1.8.0':
+  '@floating-ui/dom@1.7.1':
     dependencies:
       '@floating-ui/core': 1.8.0
       '@floating-ui/utils': 0.2.12
@@ -1825,16 +1841,29 @@ snapshots:
 
   balanced-match@4.0.4: {}
 
-  bits-ui@2.19.3(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0)):
+  bits-ui@file:.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0)):
     dependencies:
-      '@floating-ui/core': 1.8.0
-      '@floating-ui/dom': 1.8.0
+      '@floating-ui/core': 1.7.1
+      '@floating-ui/dom': 1.7.1
       '@internationalized/date': 3.12.4
       esm-env: 1.2.2
       runed: 0.35.1(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))
       svelte: 5.57.1(@typescript-eslint/types@8.71.0)
       svelte-toolbelt: 0.10.6(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))
-      tabbable: 6.5.0
+      tabbable: 6.2.0
+    transitivePeerDependencies:
+      - '@sveltejs/kit'
+
+  bits-ui@file:tests/fixtures/consumer/.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0)):
+    dependencies:
+      '@floating-ui/core': 1.7.1
+      '@floating-ui/dom': 1.7.1
+      '@internationalized/date': 3.12.4
+      esm-env: 1.2.2
+      runed: 0.35.1(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))
+      svelte: 5.57.1(@typescript-eslint/types@8.71.0)
+      svelte-toolbelt: 0.10.6(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.0))
+      tabbable: 6.2.0
     transitivePeerDependencies:
       - '@sveltejs/kit'
 
@@ -2406,7 +2435,7 @@ snapshots:
     transitivePeerDependencies:
       - '@typescript-eslint/types'
 
-  tabbable@6.5.0: {}
+  tabbable@6.2.0: {}
 
   tinyglobby@0.2.17:
     dependencies:

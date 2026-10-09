@@ -137,12 +137,15 @@ function seedConsumer(page: string): string {
   const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-lifecycle-app-"));
   for (const file of [
     "package.json",
+    ".native-build",
     "vite.config.ts",
     "svelte.config.js",
     "tsconfig.json",
     "src/app.html",
   ]) {
-    cpSync(path.join(FIXTURE, file), path.join(consumer, file));
+    cpSync(path.join(FIXTURE, file), path.join(consumer, file), {
+      recursive: true,
+    });
   }
   symlinkSync(
     path.join(FIXTURE, "node_modules"),

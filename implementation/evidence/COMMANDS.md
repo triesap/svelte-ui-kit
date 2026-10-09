@@ -22,6 +22,7 @@ private tooling.
 
 | Purpose             | Local command                                                               | Notes                                                                                                                                                             |
 | ------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native bootstrap    | `node tools/prepare-native-dependency.mjs --fixture`                        | Before the first install, build or authenticate the frozen native archive and copy it to the maintained fixture.                                                  |
 | Frozen install      | `pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict` | Strict peers and engine enforcement; one root lockfile.                                                                                                           |
 | Format check        | `pnpm run format:check`                                                     | Nonmutating Prettier over the maintained authoring tree.                                                                                                          |
 | Lint                | `pnpm run lint`                                                             | `eslint . --max-warnings 0`.                                                                                                                                      |
@@ -42,13 +43,19 @@ private tooling.
 | Chromium install    | `pnpm exec playwright install [--with-deps] chromium`                       | Local (no `--with-deps`); CI adds system dependencies.                                                                                                            |
 | Diff health         | `git diff --check`                                                          | No whitespace diagnostics.                                                                                                                                        |
 
-The component qualification lane (`pnpm run test:components`) is established at
-S011; the workflow runs it after the integration lane. It also runs the
-mandatory strict declaration audit that pairs with the fixture's temporary
-`skipLibCheck: true` exception: the real `skipLibCheck: false` checker runs in
-an owned copy and exactly the two pinned Bits 2.19.3 union-complexity
-diagnostics are qualified, with authored and additional-dependency errors
-rejected. Resolving that upstream exception remains an open release obligation.
+The component qualification lane (`pnpm run test:components`) includes the
+mandatory raw strict declaration audit. The maintained fixture and owned audit
+use `skipLibCheck: false` with the authenticated local Bits
+`2.19.5-svelte-ui-kit.2` dependency. The raw checker must exit zero with no
+errors or warnings; malformed output, wrong versions or artifact bytes, tool
+failures and authored/additional-dependency defects are refused. The former
+two-error exception is historical and cannot satisfy the current audit.
+
+`pnpm run build` authenticates the prepared native dependency, compiles the
+CLI and bundles that exact archive under `dist/native`. Generated archives and
+preparation caches are uncommitted outputs. Fresh bootstrap runs the direct
+Node preparation command before package-manager scripts, which may otherwise
+attempt dependency verification before the required local archive exists.
 
 For focused typed execution, build the CLI when applicable and use
 `node tools/run-unit-tests.mjs --suite integration tests/integration/docs-recovery.test.ts`
@@ -81,10 +88,10 @@ isolated jobs and defensible bounded timeouts. That workflow repair has not yet
 been implemented. Until it is, this section describes actual current CI rather
 than the approved future configuration. See
 [the governing RCLD](../COMMIT_SEQUENCE.md) and
-[current verification requirements](../VERIFICATION.md). Native source-fix
-delivery, if selected after strict qualification, additionally requires explicit
-application-owned archive installation and reproducible dependency instructions;
-no such artifact is currently selected or claimed available.
+[current verification requirements](../VERIFICATION.md). The selected native
+source-fix artifact is built reproducibly and bundled in the locally packed CLI.
+Application setup explicitly extracts, authenticates and installs its own archive;
+the CLI reports those instructions without performing installation.
 
 Actions are pinned to immutable revisions:
 

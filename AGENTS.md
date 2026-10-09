@@ -23,7 +23,8 @@ references.
 - Complete one checkpoint at a time in documented order. Current dispatch is
   `pfc all`: continue the original sequence through its independent gates.
   S001–S193 are independently accepted; S194–S200 are committed candidates,
-  S201 is blocked by raw strict declaration errors; S202/S203 remain dependent. The ledger is live authority.
+  S201 awaits the completion amendment and cumulative qualification; S202/S203
+  remain dependent. The ledger is live authority.
   Earlier Q3-only/two-or-three-commit/Q4-later management limits are superseded.
   Continue after green slices and successful independent gates. Preserve accepted
   checkpoints and original criteria/statuses. Target-only coherent green commits
@@ -49,10 +50,11 @@ references.
   Test inventories and author completion claims do not grant acceptance.
 - Report new consequential decisions to Codex with evidence and bounded
   alternatives. Do not silently broaden, weaken, omit or defer requirements.
-- Final release AC20 remains blocked by two raw upstream Bits TS2590 errors.
-  The seven recorded alternatives and separate technical assessment establish
-  no supported green resolution. The qualified strict-audit exception is not a
-  raw strict pass or final acceptance. The owner-approved 2026-10-08 completion
+- Final release AC20 and separate acceptance remain open. R11-F02 adopts the
+  authenticated local Bits 2.19.5-svelte-ui-kit.2 producer baseline; the
+  maintained fixture requires raw strict zero errors/warnings. Historical
+  upstream TS2590 failures and the former qualified exception remain evidence,
+  not current qualification. The owner-approved 2026-10-08 completion
   amendment in `implementation/COMMIT_SEQUENCE.md` governs R11-F01–R11-F06
   before S201 completes. It permits a narrowly qualified source-level native
   fix in an isolated copy if supported releases cannot pass, with authentic

@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@internationalized/date": "3.12.4",
-    "bits-ui": "2.19.3",
+    "bits-ui": "file:./.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz",
     "svelte": "5.57.1"
   },
   "devDependencies": {

@@ -5,16 +5,16 @@ and [stylesheet](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f
 Retain package MIT attribution. Target layout follows GENERATED_LAYOUT.md;
 there is one flat naming surface, no parallel Dialog.Root kit namespace.
 
-| Public value      | Public type            | Pinned Bits UI 2.19.3 type | Owned design class       |
-| ----------------- | ---------------------- | -------------------------- | ------------------------ |
-| DialogRoot        | DialogRootProps        | Dialog.RootProps           | none: no DOM node        |
-| DialogTrigger     | DialogTriggerProps     | Dialog.TriggerProps        | kit-dialog-trigger       |
-| DialogPortal      | DialogPortalProps      | Dialog.PortalProps         | none: portal composition |
-| DialogOverlay     | DialogOverlayProps     | Dialog.OverlayProps        | kit-dialog-overlay       |
-| DialogContent     | DialogContentProps     | Dialog.ContentProps        | kit-dialog-content       |
-| DialogTitle       | DialogTitleProps       | Dialog.TitleProps          | kit-dialog-title         |
-| DialogDescription | DialogDescriptionProps | Dialog.DescriptionProps    | kit-dialog-description   |
-| DialogClose       | DialogCloseProps       | Dialog.CloseProps          | kit-dialog-close         |
+| Public value      | Public type            | Pinned Bits UI 2.19.5-svelte-ui-kit.2 type | Owned design class       |
+| ----------------- | ---------------------- | ------------------------------------------ | ------------------------ |
+| DialogRoot        | DialogRootProps        | Dialog.RootProps                           | none: no DOM node        |
+| DialogTrigger     | DialogTriggerProps     | Dialog.TriggerProps                        | kit-dialog-trigger       |
+| DialogPortal      | DialogPortalProps      | Dialog.PortalProps                         | none: portal composition |
+| DialogOverlay     | DialogOverlayProps     | Dialog.OverlayProps                        | kit-dialog-overlay       |
+| DialogContent     | DialogContentProps     | Dialog.ContentProps                        | kit-dialog-content       |
+| DialogTitle       | DialogTitleProps       | Dialog.TitleProps                          | kit-dialog-title         |
+| DialogDescription | DialogDescriptionProps | Dialog.DescriptionProps                    | kit-dialog-description   |
+| DialogClose       | DialogCloseProps       | Dialog.CloseProps                          | kit-dialog-close         |
 
 Every type aliases the public pinned primitive type directly. Root open is
 explicitly bindable, with false default and actual boolean onOpenChange and

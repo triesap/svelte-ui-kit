@@ -2,9 +2,13 @@
   "schemaVersion": 1,
   "id": "anchor",
   "kind": "component",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Native typed link presentation with source target and rel safety defaults.",
-  "compatibility": { "svelte": "5.57.1", "bits": "2.19.3", "date": "^3.8.1" },
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.5-svelte-ui-kit.2",
+    "date": "^3.8.1"
+  },
   "files": [
     {
       "source": "ui/anchor.svelte",
@@ -20,9 +24,21 @@
     }
   ],
   "exports": [
-    { "name": "Anchor", "target": "anchor.svelte", "kind": "value" },
-    { "name": "AnchorProps", "target": "anchor.types.ts", "kind": "type" },
-    { "name": "AnchorTarget", "target": "anchor.types.ts", "kind": "type" }
+    {
+      "name": "Anchor",
+      "target": "anchor.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "AnchorProps",
+      "target": "anchor.types.ts",
+      "kind": "type"
+    },
+    {
+      "name": "AnchorTarget",
+      "target": "anchor.types.ts",
+      "kind": "type"
+    }
   ],
   "styles": [
     {

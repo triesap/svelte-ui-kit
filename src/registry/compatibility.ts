@@ -2,7 +2,7 @@
  * Joint framework compatibility validation (S016–S018/S027–S032).
  *
  * The registry root advertises the *qualified* support range for each axis
- * (initially the exact Svelte `5.57.1` / Bits UI `2.19.3` baseline). Each
+ * (the exact Svelte version and authenticated local Bits build). Each
  * advertised item separately declares the range it was tested against. Health
  * must prove the root's qualified support remains usable by the complete
  * selected closure: one single joint intersection per axis is built from the

@@ -2,9 +2,13 @@
   "schemaVersion": 1,
   "id": "router-link",
   "kind": "component",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Optional native SvelteKit link recipe reusing Anchor source and design.",
-  "compatibility": { "svelte": "5.57.1", "bits": "2.19.3", "date": "^3.8.1" },
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.5-svelte-ui-kit.2",
+    "date": "^3.8.1"
+  },
   "files": [
     {
       "source": "ui/router-link.svelte",
@@ -20,7 +24,11 @@
     }
   ],
   "exports": [
-    { "name": "RouterLink", "target": "router-link.svelte", "kind": "value" },
+    {
+      "name": "RouterLink",
+      "target": "router-link.svelte",
+      "kind": "value"
+    },
     {
       "name": "RouterLinkProps",
       "target": "router-link.types.ts",

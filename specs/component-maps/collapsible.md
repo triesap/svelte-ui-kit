@@ -7,13 +7,13 @@ Source: [family](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f
 [manifest](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/ui/collapsible.json)
 and [CSS](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/styles/collapsible.css).
 Preserve MIT attribution. Source Root/Trigger/Content map to actual pinned
-Bits Collapsible2.19.3 with native disclosure context and stable identity.
+Bits Collapsible2.19.5-svelte-ui-kit.2 with native disclosure context and stable identity.
 
 Exactly CollapsibleRoot/CollapsibleRootProps, CollapsibleTrigger/
 CollapsibleTriggerProps and CollapsibleContent/CollapsibleContentProps are the
 six flat exports. Five sibling sources (root.svelte, trigger.svelte,
 content.svelte, types.ts, index.ts) plus one styles/collapsible.css asset form one
-complete cohort. Tokens is the only registry dependency; Bits2.19.3 is the runtime
+complete cohort. Tokens is the only registry dependency; Bits2.19.5-svelte-ui-kit.2 is the runtime
 dependency. Native identity replaces source identity dependency without a global
 counter, source ABI, alternate context or generalized accordion state engine.
 

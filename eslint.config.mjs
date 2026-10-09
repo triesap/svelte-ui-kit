@@ -22,6 +22,7 @@ export default tseslint.config(
       // output under future consumer fixtures would otherwise be linted.
       "**/node_modules/",
       "**/.pnpm-store/",
+      "**/.native-build/",
       "**/dist/",
       "**/build/",
       "**/.svelte-kit/",

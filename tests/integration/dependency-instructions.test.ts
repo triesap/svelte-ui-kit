@@ -79,6 +79,15 @@ test("qualified native requirements report complete explicit local setup while o
     ),
   );
   assert.ok(!unsupported.value.manual?.includes("tar -xOf"));
+  project.writeFile("package.json", JSON.stringify({}));
+  const unknown = render(project, [`bits-ui@${NATIVE_BASELINE.version}`], []);
+  assert.ok(unknown.ok);
+  assert.ok(unknown.value.manual?.includes("bundled at package/dist/native/"));
+  assert.ok(
+    !unknown.value.manual?.includes(
+      `manually: bits-ui@${NATIVE_BASELINE.version}`,
+    ),
+  );
 });
 
 test("the packageManager field selects the instruction manager", (t) => {

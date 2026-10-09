@@ -459,6 +459,7 @@ export function diagnose(
     const environment = snapshot.environment;
     const evidence = {
       manifest: environment.manifest,
+      nativeFile: environment.nativeFile,
       observe: (name: string) =>
         environment.installed.get(name) ??
         (environment.enumerationComplete ? { kind: "absent" as const } : null),

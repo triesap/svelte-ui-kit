@@ -424,6 +424,10 @@ test("linked operating guidance is real fixture input without importing live che
       "implementation/TRACEABILITY.md",
       "schema/v1/kit.schema.json",
       "schema/v1/native-provenance.schema.json",
+      "implementation/evidence/RCLD-11_REPAIR_REPORT.md",
+      "tools/native-dependency/README.md",
+      "tools/native-dependency/recipe.json",
+      "tools/native-dependency/binding-signature.patch",
       "tests/fixtures/consumer/package.json",
       "tests/browser/menu-csp.spec.ts",
     ])
@@ -461,6 +465,8 @@ test("linked operating guidance is real fixture input without importing live che
       "implementation/TRACEABILITY.md",
       "schema/v1/kit.schema.json",
       "schema/v1/native-provenance.schema.json",
+      "implementation/evidence/RCLD-11_REPAIR_REPORT.md",
+      "tools/native-dependency/README.md",
       "tests/fixtures/consumer/package.json",
       "tests/browser/menu-csp.spec.ts",
     ])
@@ -477,6 +483,8 @@ test("linked operating guidance is real fixture input without importing live che
     );
     assert.match(invalid.output, /BROKEN_LINK.*consumer\/package\.json/);
     assert.match(invalid.output, /BROKEN_LINK.*menu-csp\.spec\.ts/);
+    assert.match(invalid.output, /BROKEN_LINK.*RCLD-11_REPAIR_REPORT\.md/);
+    assert.match(invalid.output, /BROKEN_LINK.*native-dependency\/README\.md/);
     assert.equal(snapshotTree(root), missing);
   });
 });

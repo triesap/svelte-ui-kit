@@ -38,7 +38,7 @@ test("original identity has an explicit non generated disposition without regist
   );
   const map = read("specs/component-maps/identity.md");
   assert.match(map, /Disposition: deliberately non-generated/);
-  assert.match(map, /Svelte5\.57\.1 and Bits2\.19\.3/);
+  assert.match(map, /Svelte5\.57\.1 and Bits2\.19\.5-svelte-ui-kit\.2/);
   assert.match(map, /idPrefix/);
   assert.match(map, /FieldLabel/);
 });
@@ -150,7 +150,7 @@ test("pinned Svelte SSR identity allocation is per renderer and client hydration
 test("actual Bits identity formatter and affected parts derive IDs from native component runes", () => {
   assert.equal(
     JSON.parse(read("node_modules/bits-ui/package.json")).version,
-    "2.19.3",
+    "2.19.5-svelte-ui-kit.2",
   );
   const formatter = read("node_modules/bits-ui/dist/internal/create-id.js");
   assert.match(formatter, /export function createId\(prefixOrUid, uid\)/);

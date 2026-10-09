@@ -5,7 +5,7 @@ Source: [component](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f46
 [CSS](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f5755e05a7147414e4e5fc98/crates/leptos_ui_kit_registry/registry/styles/radio.css).
 Preserve MIT attribution. The source's named native radio, controlled checked,
 string value/change callback, disabled refusal and circular selected design map
-to actual pinned Bits RadioGroup2.19.3, with stable string values rather than a
+to actual pinned Bits RadioGroup2.19.5-svelte-ui-kit.2, with stable string values rather than a
 second selection engine. Consume a fieldset/legend or a visible group label and
 label each item; source on_change is expressed through native onValueChange.
 
@@ -86,7 +86,7 @@ No additional token/palette/radius metadata or design variant is needed.
 The complete family is five assets: four sources (group.svelte, item.svelte,
 types.ts and index.ts under radio), plus one managed styles/radio.css asset.
 The generated value/type export cohort has tokens as its only registry dependency
-and Bits UI2.19.3 as its explicit npm runtime dependency. Candidate wrappers
+and Bits UI2.19.5-svelte-ui-kit.2 as its explicit npm runtime dependency. Candidate wrappers
 remain unadvertised through S133; S134 installs only the complete family; S135
 qualifies actual generated keyboard/forms/geometry. Required separate original
 S148 acceptance gates S149; this freeze is implementation evidence only.

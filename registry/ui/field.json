@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "field",
   "kind": "component",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Native form controls, labels, owned dynamic messages and complete source convenience recipes.",
   "compatibility": {
     "svelte": "5.57.1",
-    "bits": "2.19.3",
+    "bits": "2.19.5-svelte-ui-kit.2",
     "date": "^3.8.1"
   },
   "files": [

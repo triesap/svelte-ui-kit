@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "radio",
   "kind": "component",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pinned Radio group and item with controlled string selection, fixed radial mark and native one-field forms.",
   "compatibility": {
     "svelte": "5.57.1",
-    "bits": "2.19.3",
+    "bits": "2.19.5-svelte-ui-kit.2",
     "date": "^3.8.1"
   },
   "files": [
@@ -69,7 +69,7 @@
   "npmDependencies": [
     {
       "name": "bits-ui",
-      "range": "2.19.3",
+      "range": "2.19.5-svelte-ui-kit.2",
       "role": "runtime"
     }
   ],

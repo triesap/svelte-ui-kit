@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -78,6 +85,23 @@ for (const kind of [
             version,
             peerDependencies: peers,
           });
+      if (kind === "ready") {
+        // Readiness must authenticate a real native distribution and retained
+        // local source; a fabricated version-only manifest cannot prove it.
+        for (const file of ["package.json", ".native-build"])
+          cpSync(
+            path.join("tests/fixtures/consumer", file),
+            path.join(root, file),
+            {
+              recursive: true,
+            },
+          );
+        rmSync(path.join(root, "node_modules/bits-ui"), { recursive: true });
+        symlinkSync(
+          path.resolve("node_modules/bits-ui"),
+          path.join(root, "node_modules/bits-ui"),
+        );
+      }
       const initial = snapshotTree(root);
       const result = run(root);
       assert.equal(result.stderr, "");
@@ -109,7 +133,7 @@ for (const kind of [
           kind === "ready",
           "readiness reflects the captured installed versions",
         );
-        assert.equal(envelope.data.registry.version, "0.1.0");
+        assert.equal(envelope.data.registry.version, "0.1.1");
         assert.equal(
           envelope.data.paths.uiDir,
           kind === "custom" ? "app/ui" : DEFAULT_KIT_CONFIG.uiDir,

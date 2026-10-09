@@ -4,6 +4,11 @@ import path from "node:path";
 import { test } from "node:test";
 import semver from "semver";
 import { installIndependentCli } from "../helpers/packaged-cli.js";
+import {
+  NATIVE_BASELINE,
+  observeNativeFile,
+} from "../../src/project/native-dependency.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 
 test("actual installed metadata bounds runtime support and retains source notices without claiming publication", (t) => {
   const cli = installIndependentCli();
@@ -33,8 +38,24 @@ test("actual installed metadata bounds runtime support and retains source notice
   );
   for (const role of ["dependencies", "devDependencies", "peerDependencies"])
     assert.equal(fixture[role]?.[pkg.name], undefined);
-  for (const name of ["svelte", "bits-ui", "@internationalized/date"])
+  for (const name of ["svelte", "@internationalized/date"])
     assert.ok(semver.valid(fixture.dependencies[name]), name);
+  assert.equal(
+    observeNativeFile(path.resolve("tests/fixtures/consumer"), fixture).kind,
+    "value",
+  );
+  assert.equal(
+    sha256Hex(
+      readFileSync(
+        path.join(cli.packageRoot, "dist/native", NATIVE_BASELINE.archive),
+      ),
+    ),
+    NATIVE_BASELINE.archiveSha256,
+  );
+  assert.deepEqual(
+    JSON.parse(read("dist/project/native-dependency-baseline.json")),
+    NATIVE_BASELINE,
+  );
   for (const name of ["typescript", "svelte-check", "@sveltejs/kit"])
     assert.ok(semver.valid(fixture.devDependencies[name]), name);
   for (const file of ["LICENSE-MIT", "LICENSE-APACHE", "NOTICE.md"])

@@ -50,7 +50,7 @@ test("complete shipped Dialog has exactly eight flat parts/types and a single so
   const item = loaded.value.items.find((item) => item.id === "dialog")!;
   assert.deepEqual(item.manifest.registryDependencies, ["tokens"]);
   assert.deepEqual(item.manifest.npmDependencies, [
-    { name: "bits-ui", range: "2.19.3", role: "runtime" },
+    { name: "bits-ui", range: "2.19.5-svelte-ui-kit.2", role: "runtime" },
   ]);
   assert.deepEqual(
     item.manifest.exports.map((entry) => entry.name),

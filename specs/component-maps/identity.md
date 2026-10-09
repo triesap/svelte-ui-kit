@@ -5,14 +5,14 @@ Original S179–S180, R03, R21, R22, R26, R28, R29, R32, R33, R34.
 Disposition: deliberately non-generated. Immutable source KitIdProvider and
 use_kit_id provide scoped ordinal identities for Rust components. Do not port
 that provider/counter API or publish a fake identity item/alias. Existing pinned
-Svelte5.57.1 and Bits2.19.3 already supply the required per-instance identity,
+Svelte5.57.1 and Bits2.19.5-svelte-ui-kit.2 already supply the required per-instance identity,
 native label/control associations and title/description relationships. No
 app-owned helper improves those facilities; no new source/export/style/dependency
 or registry target is justified. The original identity catalog entry remains an
 explicit documented adaptation, not an omitted or installable item.
 
 Full-catalog S189 qualification additionally measures the pinned Menu floating
-positioning wrapper. Bits 2.19.3 gives that nonsemantic wrapper a `useId()`
+positioning wrapper. Bits 2.19.5-svelte-ui-kit.2 gives that nonsemantic wrapper a `useId()`
 process-counter default, distinct from its component part `$props.id()` IDs.
 The direct native Menu control and installed catalog both show varying
 `data-bits-floating-content-wrapper` IDs across repeated server requests.

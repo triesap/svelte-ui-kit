@@ -5,7 +5,7 @@ and [stylesheet](https://github.com/triesap/leptos_ui_kit/blob/a10fbf06334f4648f
 Retain package MIT attribution. Source design selectors and callback intent
 are adapted to native Svelte/Bits behavior, not Rust identities or shims.
 
-Public Switch and SwitchProps wrap Bits UI 2.19.3 Switch.Root with one
+Public Switch and SwitchProps wrap Bits UI 2.19.5-svelte-ui-kit.2 Switch.Root with one
 Switch.Thumb. SwitchProps is exactly Omit<BitsSwitch.RootProps, "child" |
 "children"> from the public bits-ui namespace. No replacement native interface,
 generic dictionary or invented callback alias substitutes for the actual type.
@@ -41,7 +41,8 @@ controls create no form input. The field is offscreen via kit-switch-input CSS,
 not display:none; there is no native binding/state-machine clone or new API.
 Actual form values and resets are tested rather than inferred from role markup.
 Preserve upstream value typing rather than introducing an authored any
-workaround. Upstream declaration exceptions remain exact recorded AC20 debt.
+workaround. Raw strict checking is required with the authenticated native build; final AC20
+remains dependent on cumulative qualification and independent acceptance.
 
 CSS adapts the full source Root/Thumb selectors into a managed switch block in
 the components layer. Checked track/Thumb data-state styling, focus-visible,

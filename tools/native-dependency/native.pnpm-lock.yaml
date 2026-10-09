@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  svelte2tsx: file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.1.tgz
+  svelte2tsx: file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.2.tgz
 
 importers:
 
@@ -64,8 +64,8 @@ importers:
         specifier: 4.3.1
         version: 4.3.1(picomatch@4.0.7)(svelte@5.46.4)(typescript@5.9.3)
       svelte2tsx:
-        specifier: file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.1.tgz
-        version: file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.1.tgz(svelte@5.46.4)(typescript@5.9.3)
+        specifier: file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.2.tgz
+        version: file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.2.tgz(svelte@5.46.4)(typescript@5.9.3)
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -1001,9 +1001,9 @@ packages:
     peerDependencies:
       svelte: ^5.30.2
 
-  svelte2tsx@file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.1.tgz:
-    resolution: {integrity: sha512-UcYPoUzxKxfwEt5wU6wNtmiGPfHRrdlZIDNug7RaAQrChM1cSf1IS8LXc9nwDH3Y7s6e1Anu0JQ5pTwj3c1esw==, tarball: file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.1.tgz}
-    version: 0.7.34-svelte-ui-kit.1
+  svelte2tsx@file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.2.tgz:
+    resolution: {integrity: sha512-S4rIAExMrXGDcHUA7qmMvxiRg+1mDgUsqkWYf5j8i8D3MAyGdEYr1rcAEOQWdkfFxnfrZEUDFTmzVnLg5Izv2w==, tarball: file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.2.tgz}
+    version: 0.7.34-svelte-ui-kit.2
     peerDependencies:
       svelte: ^3.55 || ^4.0.0-next.0 || ^4.0 || ^5.0.0-next.0
       typescript: ^4.9.4 || ^5.0.0
@@ -1458,7 +1458,7 @@ snapshots:
       sade: 1.8.1
       semver: 7.8.5
       svelte: 5.46.4
-      svelte2tsx: file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.1.tgz(svelte@5.46.4)(typescript@5.9.3)
+      svelte2tsx: file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.2.tgz(svelte@5.46.4)(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
@@ -2026,7 +2026,7 @@ snapshots:
     transitivePeerDependencies:
       - '@sveltejs/kit'
 
-  svelte2tsx@file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.1.tgz(svelte@5.46.4)(typescript@5.9.3):
+  svelte2tsx@file:../tool-archives/svelte2tsx-0.7.34-svelte-ui-kit.2.tgz(svelte@5.46.4)(typescript@5.9.3):
     dependencies:
       dedent-js: 1.0.1
       pascal-case: 3.1.2

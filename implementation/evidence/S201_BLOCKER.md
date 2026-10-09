@@ -1,7 +1,12 @@
-# S201 blocked qualification — raw upstream declaration checking
+# Historical S201 prerequisite failure — raw upstream declaration checking
 
-Status: BLOCKED qualification. No S201 implementation commit,
-checkpoint acceptance, final release or AC20 waiver is claimed.
+Status: initial blocked qualification preserved as historical evidence. The
+subsequent R11-F02 native candidate passes raw strict checking with zero
+errors/warnings; see [current repair outcomes](RCLD-11_REPAIR_REPORT.md).
+Remaining amendment repairs and cumulative S201 qualification are still open.
+No S201 implementation commit, checkpoint acceptance, final release or AC20
+waiver is claimed. The account below retains its original candidate and failed
+observations; it is not the current native candidate's outcome.
 
 The owner approved the 2026-10-08 completion-review repair scope in
 [the governing RCLD](../COMMIT_SEQUENCE.md). R11-F01–R11-F06 now specify strict

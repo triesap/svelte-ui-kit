@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { gunzipSync } from "node:zlib";
 import {
   cpSync,
   existsSync,
@@ -30,6 +31,31 @@ export function nativeDigest(bytes) {
 }
 function writeJson(file, value) {
   writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+/** Canonical gzip metadata; genuine packed content and its CRC stay unchanged. */
+export function normalizePackedArchive(file) {
+  const bytes = readFileSync(file);
+  assert.ok(bytes.length >= 18, "complete gzip archive");
+  assert.deepEqual(
+    [...bytes.subarray(0, 4)],
+    [31, 139, 8, 0],
+    "ordinary gzip header",
+  );
+  assert.deepEqual(
+    [...bytes.subarray(4, 8)],
+    [0, 0, 0, 0],
+    "reproducible gzip timestamp",
+  );
+  assert.equal(NATIVE_RECIPE.archiveFormat.gzipOperatingSystem, 255);
+  const content = gunzipSync(bytes);
+  bytes[9] = NATIVE_RECIPE.archiveFormat.gzipOperatingSystem;
+  assert.deepEqual(
+    gunzipSync(bytes),
+    content,
+    "packaging metadata preserves genuine content",
+  );
+  writeFileSync(file, bytes);
 }
 
 /**
@@ -203,6 +229,7 @@ export function buildNativeDependency({
     run("pnpm", ["pack", "--pack-destination", toolArchives], emitter.root);
     const toolArchive = path.join(toolArchives, NATIVE_RECIPE.emitter.archive);
     assert.ok(existsSync(toolArchive), "actual emitter archive");
+    normalizePackedArchive(toolArchive);
 
     // The same relative transport is retained across every fresh producer tree.
     const nativeRoot = path.join(work, "native");
@@ -352,6 +379,7 @@ export function buildNativeDependency({
     const archives = path.join(work, "native-archives");
     mkdirSync(archives);
     run("pnpm", ["pack", "--pack-destination", archives], stage);
+    normalizePackedArchive(path.join(archives, NATIVE_RECIPE.native.archive));
     const selected = path.join(work, "selected-native-distribution");
     mkdirSync(selected);
     run(
@@ -367,6 +395,7 @@ export function buildNativeDependency({
     provenance.distributionFiles = inventory(path.join(selected, "package"));
     writeJson(path.join(stage, "NATIVE_PROVENANCE.json"), provenance);
     run("pnpm", ["pack", "--pack-destination", archives], stage);
+    normalizePackedArchive(path.join(archives, NATIVE_RECIPE.native.archive));
     const bytes = readFileSync(
       path.join(archives, NATIVE_RECIPE.native.archive),
     );

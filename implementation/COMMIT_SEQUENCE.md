@@ -1,6 +1,6 @@
 # svelte-ui-kit v1 — governing RCLD sequence
 
-Status: `pfc all` is active with Codex implementing all remaining original requirements. S001–S193 are independently accepted; original S194–S203/RCLD-11 is current. Updated 2026-10-08.
+Status: `pfc all` is active with Codex implementing all remaining original requirements. S001–S193 are independently accepted; original S194–S203/RCLD-11 is current. Updated 2026-10-09.
 
 This document is the single governing rolling commit loop document for all eleven RCLD sequences below. It carries the complete ordered S001–S203 execution plan and the approved contract snapshots needed to implement it in this repository. Creating this document is planning setup, not completion of S001, S002, or any product checkpoint.
 
@@ -428,12 +428,12 @@ or new product/API scope is authorized by this qualification.
 
 - Governing document: `implementation/COMMIT_SEQUENCE.md` (this file); derived projection `implementation/COMMIT_SEQUENCE.json` (regenerate with `node tools/check-contracts.mjs --generate`).
 - Active implementation checkpoint: **S201 — Run the final code-health and cumulative regression lane**. Separate S193 acceptance on `abeccabbdfda5aedb7be4f72e3b51a4675d3a609` is anchored at `8ab760dc4d674853b172126b2a3ec3a0434c678f`; final S203 acceptance remains mandatory.
-- S201 is blocked: the fresh raw `skipLibCheck: false` prerequisite exits 1 with exactly two upstream Bits TS2590 errors and zero warnings. See `implementation/evidence/S201_BLOCKER.md`. No final cumulative pass or S201 commit is claimed; S202/S203 remain dependent.
+- S201 remains blocked on completion of the approved amendment and current cumulative qualification. The R11-F02 native candidate passes raw `skipLibCheck: false` with zero errors/warnings; `implementation/evidence/S201_BLOCKER.md` preserves the initial upstream failure. Current repair outcomes are recorded in `implementation/evidence/RCLD-11_REPAIR_REPORT.md`. No final cumulative pass or S201 commit is claimed; S202/S203 remain dependent.
 - Execution responsibility: the owner transferred implementation and corrections from Pi to Codex on 2026-10-07. Codex owns planning and delivery; required independent review remains distinct from implementation self-review. Historical Pi reports and dispatches remain provenance.
 - Completed implementation checkpoints: **193 / 203**. Remaining: **10 / 203**.
 - Committed pending review: **7 / 203**. Authored batch range: **S194–S200**.
 - Completed RCLD sequences: **10 / 11**. Remaining: **1 / 11**.
-- Last safe target commit: `c1a2b3321c64b8e39006e00e0abcc307222fcbf8`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
+- Last safe target commit: `55604af60a29ed56e8a2cb427b3da25707019563`, branch `master`; accepted guarded-core code `ce54d7d6a93f3f7dd2d1e25038390f6d95deb033` and earlier implementation anchors remain provenance.
 - S001 evidence: `implementation/evidence/BASELINE.md`, `implementation/evidence/S001_REPORT.md` and independent `implementation/evidence/S001_REVIEW.md`.
 - S002 evidence: `implementation/evidence/S002_REPORT.md`, independent `implementation/evidence/S002_REVIEW.md`, adopted contracts and `tools/check-contracts.mjs`.
 - S003 evidence: `implementation/evidence/COMPATIBILITY.md`, `implementation/evidence/S003_REPORT.md` and independent `implementation/evidence/S003_REVIEW.md`.

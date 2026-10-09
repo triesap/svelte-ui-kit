@@ -17,13 +17,54 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { gzipSync, gunzipSync } from "node:zlib";
 import {
   buildNativeDependency,
   nativeDigest,
   NATIVE_RECIPE,
+  normalizePackedArchive,
 } from "./build-native-dependency.mjs";
 
 const repository = fileURLToPath(new URL("../", import.meta.url));
+test("canonical packing removes OS entropy while preserving genuine content and refusing corrupt input", (t) => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-gzip-control-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const content = Buffer.from("actual owned package content\n");
+  const outputs = [];
+  for (const osByte of [3, 19]) {
+    const file = path.join(root, `os-${osByte}.tgz`);
+    const bytes = gzipSync(content);
+    bytes[9] = osByte;
+    writeFileSync(file, bytes);
+    normalizePackedArchive(file);
+    const normalized = readFileSync(file);
+    assert.equal(normalized[9], 255);
+    assert.deepEqual(gunzipSync(normalized), content);
+    outputs.push(normalized);
+  }
+  assert.deepEqual(outputs[0], outputs[1]);
+  for (const mutation of [
+    (bytes) => {
+      bytes[0] = 0;
+    },
+    (bytes) => {
+      bytes[3] = 2;
+    },
+    (bytes) => {
+      bytes[4] = 1;
+    },
+    (bytes) => {
+      bytes[bytes.length - 8] ^= 1;
+    },
+  ]) {
+    const file = path.join(root, "invalid.tgz");
+    const bytes = gzipSync(content);
+    mutation(bytes);
+    writeFileSync(file, bytes);
+    assert.throws(() => normalizePackedArchive(file));
+    assert.deepEqual(readFileSync(file), bytes);
+  }
+});
 const env = { ...process.env, npm_config_verify_deps_before_run: "false" };
 for (const name of ["NODE_TEST_CONTEXT", "NODE_OPTIONS", "NODE_V8_COVERAGE"])
   delete env[name];

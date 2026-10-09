@@ -27,3 +27,6 @@ Thumbs.db
 *.swp
 *.swo
 *.tmp
+
+# Qualified native producer output
+.native-build/

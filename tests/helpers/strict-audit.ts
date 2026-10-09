@@ -5,34 +5,19 @@ import path from "node:path";
 import { copyConsumerFixture, type FixtureCopy } from "./fixture.js";
 
 /**
- * Strict declaration audit for the fixture's `skipLibCheck: true` exception.
- *
- * The normal fixture check keeps `skipLibCheck: true` only because the pinned
- * upstream Bits declarations emit two union-complexity diagnostics under
- * `skipLibCheck: false`. This helper runs the *real* strict checker in an owned
- * copy and qualifies exactly those two pinned upstream diagnostics.
- *
- * The audit consumes the pinned `svelte-check --output machine-verbose`
- * protocol documented in its installed README rather than a human-output
- * regex. It parses the START record, the timestamped newline-delimited JSON
- * diagnostics, the COMPLETED summary and any FAILURE record, then fails closed
- * on malformed, truncated, unknown, duplicate or internally inconsistent
- * output. Qualification additionally requires the expected checker exit, no
- * signal/timeout/tool failure, empty checker stderr, the exact pinned
- * compatibility versions, exactly two pinned error diagnostics in exactly two
- * problem files, and diagnostics that resolve to real files inside the
- * installed Bits package rather than merely matching a path suffix.
- *
- * It never modifies shared installed packages; fault injection uses disposable
- * owned copies.
+ * Strict native/consumer qualification. The raw checker must exit zero with
+ * no errors or warnings; no upstream diagnostic is excepted. Machine records,
+ * tools, actual installed pins, native source and distribution are verified.
+ * Fault injection only modifies owned copies.
  */
+import {
+  authenticateNativeInstall,
+  NATIVE_BASELINE,
+  observeNativeFile,
+} from "../../src/project/native-dependency.js";
 
-/**
- * The pinned package versions that the audit executed against. Any change here
- * invalidates the fixture-only exception and requires a new decision.
- */
 export const STRICT_AUDIT_PINS = {
-  "bits-ui": "2.19.3",
+  "bits-ui": NATIVE_BASELINE.version,
   typescript: "6.0.3",
   svelte: "5.57.1",
   "svelte-check": "4.7.6",
@@ -48,51 +33,6 @@ const STRICT_TSCONFIG = `${JSON.stringify(
   null,
   2,
 )}\n`;
-
-const UNION_MESSAGE =
-  "Expression produces a union type that is too complex to represent.";
-
-interface ExpectedDiagnostic {
-  readonly label: string;
-  /** Path components relative to the installed `bits-ui` package root. */
-  readonly packagePath: readonly string[];
-  readonly start: { readonly line: number; readonly character: number };
-  readonly end: { readonly line: number; readonly character: number };
-  readonly code: number;
-  readonly message: string;
-  readonly source: string | null;
-}
-
-/**
- * The two pinned `bits-ui 2.19.3` union-complexity diagnostics, expressed in
- * the machine-verbose coordinate system (zero-based line/character).
- */
-const EXPECTED_UPSTREAM_DIAGNOSTICS: readonly ExpectedDiagnostic[] = [
-  {
-    label: "bits-ui button union complexity",
-    packagePath: ["dist", "bits", "button", "components", "button.svelte.d.ts"],
-    start: { line: 1, character: 22 },
-    end: { line: 1, character: 76 },
-    code: 2590,
-    message: UNION_MESSAGE,
-    source: null,
-  },
-  {
-    label: "bits-ui calendar union complexity",
-    packagePath: [
-      "dist",
-      "bits",
-      "calendar",
-      "components",
-      "calendar.svelte.d.ts",
-    ],
-    start: { line: 1, character: 24 },
-    end: { line: 1, character: 106 },
-    code: 2590,
-    message: UNION_MESSAGE,
-    source: null,
-  },
-];
 
 /** A single parsed machine-verbose diagnostic record. */
 export interface MachineDiagnostic {
@@ -144,7 +84,7 @@ export interface StrictCheckRun {
 
 export type StrictAuditClassification =
   | {
-      readonly kind: "qualified-upstream-exception";
+      readonly kind: "strict-pass";
       readonly exitCode: number | null;
       readonly diagnostics: readonly MachineDiagnostic[];
       readonly reasons: readonly string[];
@@ -525,6 +465,24 @@ export function validateStrictAuditVersions(
       );
     }
   }
+  if (versions["bits-ui"] === NATIVE_BASELINE.version) {
+    reasons.push(
+      ...authenticateNativeInstall(
+        path.join(fixtureRoot, "node_modules/bits-ui"),
+      ).map((issue) => issue.message),
+    );
+    try {
+      const manifest = JSON.parse(
+        readFileSync(path.join(fixtureRoot, "package.json"), "utf8"),
+      ) as Record<string, unknown>;
+      if (observeNativeFile(fixtureRoot, manifest).kind !== "value")
+        reasons.push(
+          "the strict fixture requires its authenticated application-owned native archive",
+        );
+    } catch {
+      reasons.push("the strict fixture native declaration is unreadable");
+    }
+  }
   return reasons;
 }
 
@@ -543,47 +501,7 @@ function resolveDiagnosticFile(
   return realpathOrNull(path.resolve(workspace, filename));
 }
 
-function matchesExpected(
-  diagnostic: MachineDiagnostic,
-  expected: ExpectedDiagnostic,
-  workspace: string,
-  bitsRoot: string | null,
-): boolean {
-  if (diagnostic.type !== "ERROR") return false;
-  if (diagnostic.code !== expected.code) return false;
-  if (diagnostic.message !== expected.message) return false;
-  if (diagnostic.source !== expected.source) return false;
-  if (
-    diagnostic.start.line !== expected.start.line ||
-    diagnostic.start.character !== expected.start.character
-  ) {
-    return false;
-  }
-  if (
-    diagnostic.end.line !== expected.end.line ||
-    diagnostic.end.character !== expected.end.character
-  ) {
-    return false;
-  }
-  if (bitsRoot === null) return false;
-  const resolved = resolveDiagnosticFile(workspace, diagnostic.filename);
-  if (resolved === null) return false;
-  const expectedPath = realpathOrNull(
-    path.join(bitsRoot, ...expected.packagePath),
-  );
-  if (expectedPath === null) return false;
-  return resolved === expectedPath;
-}
-
-/**
- * Qualify a strict-check run against the pinned upstream exception.
- *
- * A `qualified-upstream-exception` result is not a raw strict-check pass: the
- * checker still exited 1 with the two pinned upstream diagnostics. Any other
- * diagnostic (authored or dependency), a warning, changed pin, malformed or
- * inconsistent output, unexpected stderr, timeout or tool failure produces a
- * `rejected` result with reasons.
- */
+/** Accept only raw strict success with authenticated actual dependencies. */
 export function classifyStrictCheck(
   run: StrictCheckRun,
   fixtureRoot: string,
@@ -603,7 +521,7 @@ export function classifyStrictCheck(
       };
     }
     return {
-      kind: "qualified-upstream-exception",
+      kind: "strict-pass",
       exitCode: run.check.exitCode,
       diagnostics,
       reasons: [],
@@ -650,11 +568,10 @@ export function classifyStrictCheck(
   }
   const machineRun = parsed.run;
 
-  if (run.check.exitCode !== 1) {
+  if (run.check.exitCode !== 0) {
     reasons.push(
-      `expected the strict checker to exit 1 with the pinned diagnostics, found exit ${String(run.check.exitCode)}`,
+      `expected the strict checker to exit 0 with zero diagnostics, found exit ${String(run.check.exitCode)}`,
     );
-    return finish(machineRun.diagnostics);
   }
   if (run.check.stderr.trim() !== "") {
     reasons.push(
@@ -669,20 +586,15 @@ export function classifyStrictCheck(
   const warnings = machineRun.diagnostics.filter(
     (diagnostic) => diagnostic.type === "WARNING",
   );
-  if (errors.length !== EXPECTED_UPSTREAM_DIAGNOSTICS.length) {
-    reasons.push(
-      `expected exactly ${EXPECTED_UPSTREAM_DIAGNOSTICS.length} error diagnostics, found ${errors.length}`,
-    );
+  if (errors.length !== 0) {
+    reasons.push(`expected zero error diagnostics, found ${errors.length}`);
   }
   if (warnings.length !== 0) {
     reasons.push(`expected zero warnings, found ${warnings.length}`);
   }
-  if (
-    machineRun.completed.filesWithProblems !==
-    EXPECTED_UPSTREAM_DIAGNOSTICS.length
-  ) {
+  if (machineRun.completed.filesWithProblems !== 0) {
     reasons.push(
-      `expected exactly ${EXPECTED_UPSTREAM_DIAGNOSTICS.length} problem files, found ${machineRun.completed.filesWithProblems}`,
+      `expected zero problem files, found ${machineRun.completed.filesWithProblems}`,
     );
   }
 
@@ -709,22 +621,7 @@ export function classifyStrictCheck(
     );
   }
 
-  const bitsRoot = realpathOrNull(
-    path.join(fixtureRoot, "node_modules", "bits-ui"),
-  );
   const unmatched = [...machineRun.diagnostics];
-  for (const expected of EXPECTED_UPSTREAM_DIAGNOSTICS) {
-    const index = unmatched.findIndex((diagnostic) =>
-      matchesExpected(diagnostic, expected, machineRun.workspace, bitsRoot),
-    );
-    if (index === -1) {
-      reasons.push(
-        `missing the expected upstream diagnostic ${expected.label} in the installed Bits package`,
-      );
-    } else {
-      unmatched.splice(index, 1);
-    }
-  }
   for (const extra of unmatched) {
     const resolved = resolveDiagnosticFile(
       machineRun.workspace,

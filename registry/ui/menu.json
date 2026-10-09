@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "menu",
   "kind": "component",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Complete ordinary and controlled radio Menu family preserving native floating placement, snippets, refs and selection.",
   "compatibility": {
     "svelte": "5.57.1",
-    "bits": "2.19.3",
+    "bits": "2.19.5-svelte-ui-kit.2",
     "date": "^3.8.1"
   },
   "files": [
@@ -165,7 +165,7 @@
   "npmDependencies": [
     {
       "name": "bits-ui",
-      "range": "2.19.3",
+      "range": "2.19.5-svelte-ui-kit.2",
       "role": "runtime"
     }
   ],

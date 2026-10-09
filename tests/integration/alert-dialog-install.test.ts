@@ -51,7 +51,7 @@ test("complete shipped AlertDialog has exactly nine flat parts/types and a singl
   const item = loaded.value.items.find((item) => item.id === "alert-dialog")!;
   assert.deepEqual(item.manifest.registryDependencies, ["tokens"]);
   assert.deepEqual(item.manifest.npmDependencies, [
-    { name: "bits-ui", range: "2.19.3", role: "runtime" },
+    { name: "bits-ui", range: "2.19.5-svelte-ui-kit.2", role: "runtime" },
   ]);
   assert.deepEqual(
     item.manifest.exports.map((entry) => entry.name),

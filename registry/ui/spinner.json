@@ -2,9 +2,13 @@
   "schemaVersion": 1,
   "id": "spinner",
   "kind": "component",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Native decorative and status loading presentation.",
-  "compatibility": { "svelte": "5.57.1", "bits": "2.19.3", "date": "^3.8.1" },
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.5-svelte-ui-kit.2",
+    "date": "^3.8.1"
+  },
   "files": [
     {
       "source": "ui/spinner.svelte",
@@ -20,9 +24,21 @@
     }
   ],
   "exports": [
-    { "name": "Spinner", "target": "spinner.svelte", "kind": "value" },
-    { "name": "SpinnerMode", "target": "spinner.types.ts", "kind": "type" },
-    { "name": "SpinnerProps", "target": "spinner.types.ts", "kind": "type" }
+    {
+      "name": "Spinner",
+      "target": "spinner.svelte",
+      "kind": "value"
+    },
+    {
+      "name": "SpinnerMode",
+      "target": "spinner.types.ts",
+      "kind": "type"
+    },
+    {
+      "name": "SpinnerProps",
+      "target": "spinner.types.ts",
+      "kind": "type"
+    }
   ],
   "styles": [
     {

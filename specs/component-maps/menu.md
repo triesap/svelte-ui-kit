@@ -8,7 +8,7 @@ The source exports Root, Trigger, Content, Item, RadioItem and ItemIndicator,
 including controlled checked index, loop/direction, typeahead, selection,
 disabled refusal, focus return, placement and dynamic cleanup. Selection is
 required original scope. Pinned target behavior belongs to Bits DropdownMenu
-2.19.3; no Rust index/keyboard/selection/placement engine is reproduced.
+2.19.5-svelte-ui-kit.2; no Rust index/keyboard/selection/placement engine is reproduced.
 
 | Public value      | Public type            | Native counterpart                             | Owned design class                |
 | ----------------- | ---------------------- | ---------------------------------------------- | --------------------------------- |
@@ -148,7 +148,7 @@ radius entries remain byte-identical; no token defaults change.
 
 ## Pinned typeahead observation
 
-Bits2.19.3 exposes textValue in Item/RadioItem public types but its actual
+Bits2.19.5-svelte-ui-kit.2 exposes textValue in Item/RadioItem public types but its actual
 DOMTypeahead reads trimmed textContent; the primitive forwards textValue as a
 DOM attribute rather than using it for search. Installed candidate and direct
 native controls qualify identical behavior. DOM-text typeahead remains required

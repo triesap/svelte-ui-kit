@@ -1,30 +1,100 @@
 {
   "schemaVersion": 1,
-  "registryVersion": "0.1.0",
-  "compatibility": { "svelte": "5.57.1", "bits": "2.19.3", "date": "^3.8.1" },
+  "registryVersion": "0.1.1",
+  "compatibility": {
+    "svelte": "5.57.1",
+    "bits": "2.19.5-svelte-ui-kit.2",
+    "date": "^3.8.1"
+  },
   "items": [
-    { "id": "alert", "manifest": "ui/alert.json" },
-    { "id": "alert-dialog", "manifest": "ui/alert-dialog.json" },
-    { "id": "anchor", "manifest": "ui/anchor.json" },
-    { "id": "avatar", "manifest": "ui/avatar.json" },
-    { "id": "badge", "manifest": "ui/badge.json" },
-    { "id": "button", "manifest": "ui/button.json" },
-    { "id": "card", "manifest": "ui/card.json" },
-    { "id": "checkbox", "manifest": "ui/checkbox.json" },
-    { "id": "collapsible", "manifest": "ui/collapsible.json" },
-    { "id": "dialog", "manifest": "ui/dialog.json" },
-    { "id": "field", "manifest": "ui/field.json" },
-    { "id": "menu", "manifest": "ui/menu.json" },
-    { "id": "progress", "manifest": "ui/progress.json" },
-    { "id": "radio", "manifest": "ui/radio.json" },
-    { "id": "router-link", "manifest": "ui/router-link.json" },
-    { "id": "separator", "manifest": "ui/separator.json" },
-    { "id": "skeleton", "manifest": "ui/skeleton.json" },
-    { "id": "spinner", "manifest": "ui/spinner.json" },
-    { "id": "status", "manifest": "ui/status.json" },
-    { "id": "switch", "manifest": "ui/switch.json" },
-    { "id": "tabs", "manifest": "ui/tabs.json" },
-    { "id": "tokens", "manifest": "foundation/tokens.json" }
+    {
+      "id": "alert",
+      "manifest": "ui/alert.json"
+    },
+    {
+      "id": "alert-dialog",
+      "manifest": "ui/alert-dialog.json"
+    },
+    {
+      "id": "anchor",
+      "manifest": "ui/anchor.json"
+    },
+    {
+      "id": "avatar",
+      "manifest": "ui/avatar.json"
+    },
+    {
+      "id": "badge",
+      "manifest": "ui/badge.json"
+    },
+    {
+      "id": "button",
+      "manifest": "ui/button.json"
+    },
+    {
+      "id": "card",
+      "manifest": "ui/card.json"
+    },
+    {
+      "id": "checkbox",
+      "manifest": "ui/checkbox.json"
+    },
+    {
+      "id": "collapsible",
+      "manifest": "ui/collapsible.json"
+    },
+    {
+      "id": "dialog",
+      "manifest": "ui/dialog.json"
+    },
+    {
+      "id": "field",
+      "manifest": "ui/field.json"
+    },
+    {
+      "id": "menu",
+      "manifest": "ui/menu.json"
+    },
+    {
+      "id": "progress",
+      "manifest": "ui/progress.json"
+    },
+    {
+      "id": "radio",
+      "manifest": "ui/radio.json"
+    },
+    {
+      "id": "router-link",
+      "manifest": "ui/router-link.json"
+    },
+    {
+      "id": "separator",
+      "manifest": "ui/separator.json"
+    },
+    {
+      "id": "skeleton",
+      "manifest": "ui/skeleton.json"
+    },
+    {
+      "id": "spinner",
+      "manifest": "ui/spinner.json"
+    },
+    {
+      "id": "status",
+      "manifest": "ui/status.json"
+    },
+    {
+      "id": "switch",
+      "manifest": "ui/switch.json"
+    },
+    {
+      "id": "tabs",
+      "manifest": "ui/tabs.json"
+    },
+    {
+      "id": "tokens",
+      "manifest": "foundation/tokens.json"
+    }
   ],
-  "contentHash": "e11afda11e062b6fb79e7f2914fdbf733193624cacd23f68bfc330cad0c28623"
+  "contentHash": "749afb9073343521213c7dc11d6f5c61a16e8edaa01a92b5634d2a5a6867964f"
 }
