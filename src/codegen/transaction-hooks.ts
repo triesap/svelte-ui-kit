@@ -10,6 +10,9 @@
  */
 export type TransactionBoundary =
   | "transaction:create"
+  | "writer:create"
+  | "writer:owner"
+  | "durability:writer-acquire"
   | "journal:write"
   | "journal:fsync"
   | "stage:write"

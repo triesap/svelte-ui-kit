@@ -62,6 +62,17 @@ recheck bytes, modes, kinds and identities before each individual removal. A
 failed cleanup or parent flush stops removal and remains a secondary diagnostic;
 an earlier staging or preparation error is still reported.
 
+Writer acquisition records exclusive directory and owner-file creation before
+later hooks, writes or durability checks can fail. Acquisition failures clean
+only positively created entries and report secondary ancestry/cleanup failures.
+Release requires the actual held acquisition handle and unchanged physical
+directory/owner identities, modes and exact owner bytes. A copied handle,
+byte-equivalent replaced record, link or foreign entry cannot authorize release.
+Release restoration uses exclusive creation only inside the original unchanged
+empty directory; foreign or replaced state remains untouched. New generated
+ancestry receipts include permission modes; legacy journals keep their existing
+optional-field interpretation.
+
 ## Recovery and unchanged refusal
 
 Inject failures before/after staging, each replacement, lock publication and

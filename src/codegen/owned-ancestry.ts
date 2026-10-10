@@ -133,6 +133,7 @@ export function createOwnedAncestors(
       path: ancestor.path,
       device: stats.dev,
       inode: stats.ino,
+      mode: stats.mode & 0o7777,
     });
     // A freshly created directory must be durably recorded in its parent before
     // the journal names it, so a crash cannot lose the owned ancestry entry. A
@@ -170,7 +171,41 @@ export function removeOwnedAncestors(
   const ordered = [...created].sort(
     (left, right) => depth(right.path) - depth(left.path),
   );
+  const preflight = (): ModelIssue[] => {
+    for (const entry of created) {
+      try {
+        const stats = lstatSync(absOf(root, entry.path));
+        if (
+          stats.isSymbolicLink() ||
+          !stats.isDirectory() ||
+          stats.dev !== entry.device ||
+          stats.ino !== entry.inode ||
+          (entry.mode !== undefined && (stats.mode & 0o7777) !== entry.mode)
+        ) {
+          return [
+            issue(
+              "RECOVERY_ANCESTRY_CHANGED",
+              `owned ancestor ${entry.path} changed physical identity, kind or mode; preserving the inventory`,
+              entry.path,
+            ),
+          ];
+        }
+      } catch (error) {
+        if (codeOf(error) !== "ENOENT")
+          return [
+            issue(
+              "RECOVERY_ANCESTRY_UNREADABLE",
+              `owned ancestor ${entry.path} is unreadable (${codeOf(error)}); preserving the inventory`,
+              entry.path,
+            ),
+          ];
+      }
+    }
+    return [];
+  };
   for (const entry of ordered) {
+    const proof = preflight();
+    if (proof.length > 0) return [...issues, ...proof];
     const abs = absOf(root, entry.path);
     let stats;
     try {
@@ -190,7 +225,8 @@ export function removeOwnedAncestors(
       stats.isSymbolicLink() ||
       !stats.isDirectory() ||
       stats.dev !== entry.device ||
-      stats.ino !== entry.inode
+      stats.ino !== entry.inode ||
+      (entry.mode !== undefined && (stats.mode & 0o7777) !== entry.mode)
     ) {
       issues.push(
         issue(
@@ -230,6 +266,7 @@ export function removeOwnedAncestors(
           entry.path,
         ),
       );
+      return issues;
     }
   }
   return issues;

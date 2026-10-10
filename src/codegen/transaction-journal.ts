@@ -81,6 +81,8 @@ export interface JournalCreatedDir {
   readonly path: string;
   readonly device: number;
   readonly inode: number;
+  /** Recorded for new receipts; legacy records omit this field. */
+  readonly mode?: number;
 }
 
 export interface TransactionJournal {
@@ -353,7 +355,14 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
           problems.push(`${label} must be an object`);
           continue;
         }
-        exactlyKeys(raw, CREATED_DIR_KEYS, problems, label);
+        exactlyKeys(raw, CREATED_DIR_KEYS, problems, label, ["mode"]);
+        if (
+          raw["mode"] !== undefined &&
+          (!Number.isInteger(raw["mode"]) ||
+            Number(raw["mode"]) < 0 ||
+            Number(raw["mode"]) > 0o7777)
+        )
+          problems.push(`${label} mode must be permission bits`);
         if (!isSafeLogicalRelativePath(raw["path"])) {
           problems.push(`${label} path is not a safe logical relative path`);
         } else {
@@ -373,6 +382,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
           path: String(raw["path"]),
           device: Number(raw["device"]),
           inode: Number(raw["inode"]),
+          ...(raw["mode"] === undefined ? {} : { mode: Number(raw["mode"]) }),
         });
       }
     }

@@ -386,7 +386,8 @@ function createdDirIssues(
       stats.isSymbolicLink() ||
       !stats.isDirectory() ||
       stats.dev !== created.device ||
-      stats.ino !== created.inode
+      stats.ino !== created.inode ||
+      (created.mode !== undefined && (stats.mode & 0o7777) !== created.mode)
     ) {
       issues.push(
         issue(

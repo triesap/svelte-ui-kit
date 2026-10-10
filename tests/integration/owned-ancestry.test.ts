@@ -2,6 +2,8 @@ import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
 import {
   existsSync,
+  chmodSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -15,6 +17,10 @@ import { test } from "node:test";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import type { ApplyPlanInput } from "../../src/codegen/apply.js";
 import { recoverTransactions } from "../../src/codegen/recovery.js";
+import {
+  createOwnedAncestors,
+  removeOwnedAncestors,
+} from "../../src/codegen/owned-ancestry.js";
 import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
@@ -61,6 +67,30 @@ test("a refused fresh install removes only the empty ancestry it created", () =>
         `${logical} should have been removed`,
       );
     }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("one changed ancestry mode preserves every created sibling before removal", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "suik-ancestry-modes-"));
+  try {
+    const created = createOwnedAncestors(root, [
+      { path: "one", kind: "absent", device: null, inode: null },
+      { path: "two", kind: "absent", device: null, inode: null },
+    ]);
+    assert.deepEqual(created.issues, []);
+    const changed = abs(root, "one");
+    chmodSync(
+      changed,
+      (lstatSync(changed).mode & 0o7777) === 0o700 ? 0o755 : 0o700,
+    );
+    const before = snapshotTree(root);
+    const issues = removeOwnedAncestors(root, created.created);
+    assert.ok(
+      issues.some((entry) => entry.code === "RECOVERY_ANCESTRY_CHANGED"),
+    );
+    assert.deepEqual(snapshotTree(root), before);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

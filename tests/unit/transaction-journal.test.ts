@@ -277,3 +277,34 @@ test("owned created-directory records round-trip and reject malformed entries", 
   );
   assert.equal(duplicate.ok, false);
 });
+
+test("new ancestry modes preserve legacy omission and reject unprovable mode claims", () => {
+  const baseline = validJournal();
+  const legacy = parseJournal(
+    serializeJournal({
+      ...baseline,
+      createdDirs: [{ path: "src/styles", device: 42, inode: 7 }],
+    }),
+  );
+  assert.equal(legacy.ok, true);
+  if (legacy.ok) assert.equal(legacy.value.createdDirs?.[0]?.mode, undefined);
+  const current = parseJournal(
+    serializeJournal({
+      ...baseline,
+      createdDirs: [{ path: "src/styles", device: 42, inode: 7, mode: 0o755 }],
+    }),
+  );
+  assert.equal(current.ok, true);
+  if (current.ok) assert.equal(current.value.createdDirs?.[0]?.mode, 0o755);
+  for (const mode of [-1, 0o10000, "0755", null, 1.5]) {
+    assert.equal(
+      parseJournal(
+        JSON.stringify({
+          ...baseline,
+          createdDirs: [{ path: "src/styles", device: 42, inode: 7, mode }],
+        }),
+      ).ok,
+      false,
+    );
+  }
+});
