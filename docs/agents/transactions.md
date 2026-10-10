@@ -44,6 +44,15 @@ planned ignore entry preserves existing app ignore rules. Clean only proven
 owned temporary entries; unsafe cleanup retains actionable recovery evidence.
 These transients are distinct from app-owned desired/semantic metadata.
 
+Staging uses exclusive directory and file creation. Held in-process receipts
+record physical identity before subsequent writes, mode changes, flushes or
+verification can fail, including an empty or partially written file. Staging
+cleanup first proves the complete receipt inventory and checks it again before
+each individual unlink or empty-directory removal. Unknown entries, changed
+bytes/modes/kinds, links and replacement identities retain the whole uncertain
+inventory and report the cleanup cause alongside the staging failure. A path
+or transaction-shaped name alone cannot authorize staging cleanup.
+
 ## Recovery and unchanged refusal
 
 Inject failures before/after staging, each replacement, lock publication and

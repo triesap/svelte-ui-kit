@@ -13,6 +13,7 @@ export type TransactionBoundary =
   | "journal:write"
   | "journal:fsync"
   | "stage:write"
+  | "stage:create"
   | "stage:verify"
   | "durability:stage"
   | "backup:move"

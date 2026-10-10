@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import {
   existsSync,
+  chmodSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
+  renameSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import os from "node:os";
@@ -20,6 +23,7 @@ import {
 } from "../../src/codegen/stage.js";
 import { faultAt } from "../../src/codegen/transaction-hooks.js";
 import { stagedDir } from "../../src/codegen/transaction-types.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 const ID = "3333333333333333";
@@ -109,15 +113,127 @@ test("cleanup removes only the owned staged directory", () => {
     const unrelated = path.join(transient, "unrelated.tmp");
     mkdirSync(transient, { recursive: true });
     writeFileSync(unrelated, "keep me");
-    const stagedAbs = abs(root, stagedDir(STATE_DIR, ID));
-    mkdirSync(stagedAbs, { recursive: true });
-    writeFileSync(path.join(stagedAbs, "stage-0"), "staged");
+    const staged = stageOperations(root, STATE_DIR, ID, [
+      {
+        path: "new.css",
+        operation: "create",
+        bytes: Buffer.from("staged"),
+        mode: 0o600,
+      },
+    ]);
+    assert.equal(staged.ok, true);
+    if (!staged.ok) return;
+    const stagedAbs = abs(root, staged.value.stagedDirectory);
 
-    cleanupStaged(stagedAbs);
+    assert.deepEqual(cleanupStaged(stagedAbs, staged.value.ownership), []);
     assert.equal(existsSync(stagedAbs), false);
     assert.equal(existsSync(unrelated), true);
   });
 });
+
+test("a namespace name cannot authorize staging cleanup or adopt existing staging", () => {
+  withRoot((root) => {
+    const stagedAbs = abs(root, stagedDir(STATE_DIR, ID));
+    mkdirSync(stagedAbs, { recursive: true });
+    writeFileSync(path.join(stagedAbs, "stage-0"), "operator bytes");
+    const before = snapshotTree(root);
+    assert.equal(cleanupStaged(stagedAbs)[0]?.code, "OWNED_CLEANUP_REFUSED");
+    const result = stageOperations(root, STATE_DIR, ID, [
+      {
+        path: "new.css",
+        operation: "create",
+        bytes: Buffer.from("replacement"),
+        mode: 0o600,
+      },
+    ]);
+    assert.equal(result.ok, false);
+    assert.deepEqual(snapshotTree(root), before);
+  });
+});
+
+test("exclusive empty-file creation is accounted for before a write failure", () => {
+  withRoot((root) => {
+    const before = snapshotTree(root);
+    const result = stageOperations(
+      root,
+      STATE_DIR,
+      ID,
+      [
+        {
+          path: "new.css",
+          operation: "create",
+          bytes: Buffer.from("replacement"),
+          mode: 0o600,
+        },
+      ],
+      faultAt("stage:create"),
+    );
+    assert.equal(result.ok, false);
+    if (result.ok) return;
+    assert.equal(result.issues[0]?.code, "STAGE_FAILED");
+    assert.ok(result.ownership.some((entry) => entry.kind === "file"));
+    assert.deepEqual(snapshotTree(root), before);
+  });
+});
+
+for (const mutation of [
+  "unknown",
+  "bytes",
+  "mode",
+  "identity",
+  "link",
+  "directory",
+] as const) {
+  test(`staging retains the whole uncertain inventory after ${mutation} mutation`, () => {
+    withRoot((root) => {
+      let expected: ReturnType<typeof snapshotTree> | undefined;
+      const stagedAbs = abs(root, stagedDir(STATE_DIR, ID));
+      const target = path.join(stagedAbs, "stage-0");
+      const result = stageOperations(
+        root,
+        STATE_DIR,
+        ID,
+        [
+          {
+            path: "new.css",
+            operation: "create",
+            bytes: Buffer.from("replacement"),
+            mode: 0o600,
+          },
+        ],
+        {
+          after: (boundary) => {
+            if (boundary !== "stage:write") return;
+            if (mutation === "unknown")
+              writeFileSync(path.join(stagedAbs, ".operator"), "keep");
+            if (mutation === "bytes") writeFileSync(target, "operator bytes");
+            if (mutation === "mode") chmodSync(target, 0o644);
+            if (mutation === "identity") {
+              const replacement = path.join(root, "replacement.tmp");
+              writeFileSync(replacement, "replacement", { mode: 0o600 });
+              renameSync(replacement, target);
+            }
+            if (mutation === "link" || mutation === "directory") {
+              rmSync(target);
+              if (mutation === "link")
+                symlinkSync("/unavailable-operator-target", target);
+              else mkdirSync(target);
+            }
+            expected = snapshotTree(root);
+            throw new Error("causal stage failure after operator mutation");
+          },
+        },
+      );
+      assert.equal(result.ok, false);
+      if (result.ok) return;
+      assert.equal(result.issues[0]?.code, "STAGE_FAILED");
+      assert.ok(
+        result.issues.some((entry) => entry.code === "OWNED_CLEANUP_REFUSED"),
+      );
+      assert.deepEqual(snapshotTree(root), expected);
+    });
+  });
+}
 
 test("staging does not create live target directories", () => {
   withRoot((root) => {

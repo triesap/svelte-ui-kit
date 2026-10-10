@@ -11,12 +11,26 @@
  * entries — including unrecorded numeric names and directories that merely look
  * like owned ids — are retained and reported, never recursively deleted.
  */
-import { readdirSync } from "node:fs";
+import {
+  closeSync,
+  fchmodSync,
+  fstatSync,
+  lstatSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  readdirSync,
+  rmdirSync,
+  unlinkSync,
+  writeSync,
+} from "node:fs";
 import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
 import { observeEntry } from "../project/io.js";
 import type { TransactionJournal } from "./transaction-journal.js";
+import { sha256Hex } from "./digest.js";
+import { flushDirectory } from "./durability.js";
 import {
   backupsDir,
   journalTempName,
@@ -32,6 +46,191 @@ export interface OwnedInventory {
   readonly staged: ReadonlySet<string>;
   readonly backups: ReadonlySet<string>;
   readonly progress: ReadonlySet<string>;
+}
+
+/** In-process receipt of an exclusive creation, never inferred from a name. */
+export interface OwnedCreation {
+  readonly path: string;
+  readonly kind: "file" | "directory";
+  readonly device: number;
+  readonly inode: number;
+  readonly mode: number;
+  readonly digest: string | null;
+}
+
+const CREATIONS = new WeakSet<OwnedCreation>();
+
+function recordCreation(entry: OwnedCreation): OwnedCreation {
+  Object.freeze(entry);
+  CREATIONS.add(entry);
+  return entry;
+}
+
+/** Record the new directory before any caller hook or flush can fail. */
+export function createOwnedDirectory(
+  target: string,
+  receipts: OwnedCreation[],
+  mode = 0o700,
+): void {
+  mkdirSync(target, { recursive: false, mode });
+  const stats = lstatSync(target);
+  if (!stats.isDirectory() || stats.isSymbolicLink()) {
+    throw new Error("exclusive directory creation changed kind");
+  }
+  receipts.push(
+    recordCreation({
+      path: target,
+      kind: "directory",
+      device: stats.dev,
+      inode: stats.ino,
+      mode: stats.mode & 0o7777,
+      digest: null,
+    }),
+  );
+}
+
+/**
+ * Record the open exclusive file before writing. Each completed partial write
+ * updates only its known prefix; a later failure cannot bless foreign bytes.
+ * The descriptor, rather than a reopened path, owns chmod and identity reads.
+ */
+export function writeOwnedFile(
+  target: string,
+  bytes: Uint8Array,
+  mode: number,
+  receipts: OwnedCreation[],
+  onCreated?: () => void,
+): void {
+  const fd = openSync(target, "wx", 0o600);
+  let primary: unknown;
+  try {
+    const stats = fstatSync(fd);
+    const index = receipts.length;
+    let entry = recordCreation({
+      path: target,
+      kind: "file",
+      device: stats.dev,
+      inode: stats.ino,
+      mode: stats.mode & 0o7777,
+      digest: sha256Hex(new Uint8Array()),
+    });
+    receipts.push(entry);
+    onCreated?.();
+    const proof = verifyOwnedCreations(receipts);
+    if (proof.length > 0)
+      throw new Error(proof.map((entry) => entry.message).join("; "));
+    let offset = 0;
+    while (offset < bytes.byteLength) {
+      const written = writeSync(fd, bytes, offset, bytes.byteLength - offset);
+      if (written === 0)
+        throw new Error("exclusive staged write made no progress");
+      offset += written;
+      entry = recordCreation({
+        ...entry,
+        digest: sha256Hex(bytes.subarray(0, offset)),
+      });
+      receipts[index] = entry;
+    }
+    fchmodSync(fd, mode);
+    receipts[index] = recordCreation({
+      ...entry,
+      mode: fstatSync(fd).mode & 0o7777,
+    });
+  } catch (error) {
+    primary = error;
+  }
+  try {
+    closeSync(fd);
+  } catch (error) {
+    if (primary !== undefined) {
+      throw new AggregateError(
+        [primary, error],
+        "exclusive write and descriptor close failed",
+        { cause: error },
+      );
+    }
+    throw error;
+  }
+  if (primary !== undefined) throw primary;
+}
+
+/** Prove the complete receipt inventory without following links. */
+export function verifyOwnedCreations(
+  receipts: readonly OwnedCreation[],
+): ModelIssue[] {
+  const expected = new Map(receipts.map((entry) => [entry.path, entry]));
+  try {
+    for (const entry of receipts) {
+      if (!CREATIONS.has(entry))
+        throw new Error("creation receipt is not held by this process");
+      let stats;
+      try {
+        stats = lstatSync(entry.path);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
+        throw error;
+      }
+      if (
+        stats.isSymbolicLink() ||
+        (entry.kind === "file" ? !stats.isFile() : !stats.isDirectory()) ||
+        stats.dev !== entry.device ||
+        stats.ino !== entry.inode ||
+        (stats.mode & 0o7777) !== entry.mode
+      ) {
+        throw new Error(
+          "created entry changed physical identity, kind or mode",
+        );
+      }
+      if (entry.kind === "file") {
+        if (sha256Hex(readFileSync(entry.path)) !== entry.digest) {
+          throw new Error("created file changed bytes");
+        }
+      } else {
+        for (const name of readdirSync(entry.path)) {
+          if (!expected.has(path.join(entry.path, name))) {
+            throw new Error("created directory contains unrecorded content");
+          }
+        }
+      }
+    }
+  } catch (error) {
+    return [
+      {
+        code: "OWNED_CLEANUP_REFUSED",
+        message: `owned creation inventory is uncertain; preserving it: ${error instanceof Error ? error.message : String(error)}`,
+      },
+    ];
+  }
+  return [];
+}
+
+/** Empty-only directory and individual-file removal after whole-inventory proof. */
+export function cleanupOwnedCreations(
+  receipts: readonly OwnedCreation[],
+): ModelIssue[] {
+  const preflight = verifyOwnedCreations(receipts);
+  if (preflight.length > 0) return preflight;
+  const ordered = [...receipts].sort(
+    (a, b) => b.path.split(path.sep).length - a.path.split(path.sep).length,
+  );
+  for (const entry of ordered) {
+    const recheck = verifyOwnedCreations(receipts);
+    if (recheck.length > 0) return recheck;
+    try {
+      if (entry.kind === "file") unlinkSync(entry.path);
+      else rmdirSync(entry.path);
+      flushDirectory(path.dirname(entry.path));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
+      return [
+        {
+          code: "OWNED_CLEANUP_FAILED",
+          message: `owned creation cleanup did not finish: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ];
+    }
+  }
+  return [];
 }
 
 const TOP_LEVEL_FILES = new Set(["journal.json", "publication.json"]);

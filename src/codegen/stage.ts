@@ -10,21 +10,28 @@
  * injected write failure leaves every live target untouched. Cleanup removes
  * only the staged directory it created and never an unrelated temporary file.
  */
-import {
-  chmodSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { lstatSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
+import {
+  fail,
+  issue,
+  ok,
+  type ModelIssue,
+  type ModelResult,
+} from "../registry/errors.js";
 import { sha256Hex } from "./digest.js";
 import { flushDirectory, flushFile } from "./durability.js";
 import type { ChangeOperation } from "./plan.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import { stagedDir } from "./transaction-types.js";
+import {
+  cleanupOwnedCreations,
+  createOwnedDirectory,
+  verifyOwnedCreations,
+  writeOwnedFile,
+  type OwnedCreation,
+} from "./transaction-inventory.js";
 
 export interface StageOperation {
   readonly path: string;
@@ -46,7 +53,16 @@ export interface StagedRecord {
 export interface StagedBatch {
   readonly stagedDirectory: string;
   readonly records: readonly StagedRecord[];
+  readonly ownership: readonly OwnedCreation[];
 }
+
+export type StageResult =
+  | { readonly ok: true; readonly value: StagedBatch }
+  | {
+      readonly ok: false;
+      readonly issues: readonly ModelIssue[];
+      readonly ownership: readonly OwnedCreation[];
+    };
 
 function codeOf(error: unknown): string {
   const code = (error as NodeJS.ErrnoException | null)?.code;
@@ -55,8 +71,9 @@ function codeOf(error: unknown): string {
 
 /**
  * Stage every create/update operation. Retire operations carry no staged bytes
- * and are omitted. Failure removes only the staged directory this call created
- * (best effort) and reports the I/O cause; live files are never touched.
+ * and are omitted. Failure removes only entries with held creation receipts,
+ * or retains the whole uncertain inventory and reports both causes. Live files
+ * are never touched.
  */
 export function stageOperations(
   root: string,
@@ -64,18 +81,47 @@ export function stageOperations(
   transactionId: string,
   operations: readonly StageOperation[],
   hooks?: TransactionHooks,
-): ModelResult<StagedBatch> {
+): StageResult {
   const stagedLogical = stagedDir(stateDir, transactionId);
   const stagedAbs = path.join(root, ...stagedLogical.split("/"));
+  const ownership: OwnedCreation[] = [];
   try {
-    mkdirSync(stagedAbs, { recursive: true, mode: 0o700 });
+    let current = path.resolve(root);
+    for (const segment of stagedLogical.split("/")) {
+      current = path.join(current, segment);
+      let stats;
+      try {
+        stats = lstatSync(current);
+      } catch (error) {
+        if (codeOf(error) !== "ENOENT") throw error;
+      }
+      if (stats !== undefined) {
+        if (
+          current === stagedAbs ||
+          stats.isSymbolicLink() ||
+          !stats.isDirectory()
+        ) {
+          throw new Error(
+            "staging ancestry is not an available real directory",
+          );
+        }
+      } else {
+        createOwnedDirectory(current, ownership);
+        flushDirectory(path.dirname(current));
+      }
+    }
   } catch (error) {
-    return fail([
-      issue(
-        "STAGE_UNAVAILABLE",
-        `could not create the owned staging directory: ${codeOf(error)}`,
-      ),
-    ]);
+    return {
+      ok: false,
+      ownership: Object.freeze([...ownership]),
+      issues: [
+        issue(
+          "STAGE_UNAVAILABLE",
+          `could not create the owned staging directory: ${codeOf(error)}`,
+        ),
+        ...cleanupOwnedCreations(ownership),
+      ],
+    };
   }
 
   const records: StagedRecord[] = [];
@@ -85,8 +131,18 @@ export function stageOperations(
       const stagedId = `stage-${index}`;
       const stagedPath = path.join(stagedAbs, stagedId);
       fireHooks(hooks, "before", "stage:write", operation.path);
-      writeFileSync(stagedPath, operation.bytes, { mode: 0o600 });
-      chmodSync(stagedPath, operation.mode);
+      const inventory = verifyOwnedCreations(ownership);
+      if (inventory.length > 0)
+        throw new Error(inventory.map((entry) => entry.message).join("; "));
+      writeOwnedFile(
+        stagedPath,
+        operation.bytes,
+        operation.mode,
+        ownership,
+        () => {
+          fireHooks(hooks, "before", "stage:create", operation.path);
+        },
+      );
       fireHooks(hooks, "after", "stage:write", operation.path);
 
       fireHooks(hooks, "before", "durability:stage", operation.path);
@@ -114,16 +170,35 @@ export function stageOperations(
     flushDirectory(stagedAbs);
     fireHooks(hooks, "after", "durability:stage", stagedLogical);
   } catch (error) {
-    cleanupStaged(stagedAbs);
-    return fail([
-      issue(
-        "STAGE_FAILED",
-        `staging did not complete: ${error instanceof Error ? error.message : String(error)}`,
-      ),
-    ]);
+    return {
+      ok: false,
+      ownership: Object.freeze([...ownership]),
+      issues: [
+        issue(
+          "STAGE_FAILED",
+          `staging did not complete: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+        ...cleanupOwnedCreations(ownership),
+      ],
+    };
   }
 
-  return ok({ stagedDirectory: stagedLogical, records });
+  const inventory = verifyOwnedCreations(ownership);
+  if (inventory.length > 0) {
+    return {
+      ok: false,
+      ownership: Object.freeze([...ownership]),
+      issues: inventory,
+    };
+  }
+  return {
+    ok: true,
+    value: {
+      stagedDirectory: stagedLogical,
+      records,
+      ownership: Object.freeze([...ownership]),
+    },
+  };
 }
 
 /**
@@ -164,10 +239,22 @@ export function verifyStaged(
 }
 
 /** Remove only the owned staged directory. */
-export function cleanupStaged(stagedAbs: string): void {
-  try {
-    rmSync(stagedAbs, { recursive: true, force: true });
-  } catch {
-    // Best-effort owned cleanup; recovery retains the evidence if it fails.
+export function cleanupStaged(
+  stagedAbs: string,
+  ownership?: readonly OwnedCreation[],
+): ModelIssue[] {
+  if (
+    ownership === undefined ||
+    !ownership.some(
+      (entry) => entry.path === stagedAbs && entry.kind === "directory",
+    )
+  ) {
+    return [
+      issue(
+        "OWNED_CLEANUP_REFUSED",
+        "staging cleanup requires held exclusive creation receipts",
+      ),
+    ];
   }
+  return cleanupOwnedCreations(ownership);
 }
