@@ -100,7 +100,8 @@ Transactions require real interruption at each durable phase, concurrent writers
 preimage changes, publication witnesses, corrupt/foreign journals, post-crash edits
 and safe cleanup/refusal. No finally-only recovery proof or byte-equal lock shortcut.
 Keep authentic native/archive/distribution mismatch and malformed checker-output
-controls. Valid inventories/commit counts and author declarations are not independent
+controls. Strict qualification requires a matching workspace and nonempty analyzed
+inputs; valid empty machine output cannot qualify the consumer. Valid inventories/commit counts and author declarations are not independent
 acceptance. Use a separate reviewer whenever the authorized task requires that gate.
 Report exact revision, commands/exits, failed attempts, changes, risks and unrun
 limits; do not relabel historical tests as freshly executed.

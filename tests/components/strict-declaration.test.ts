@@ -310,6 +310,25 @@ test("the machine parser rejects unsafe and inconsistent COMPLETED totals", () =
 // Synthetic classifier controls
 // ---------------------------------------------------------------------------
 
+test("valid empty machine output cannot qualify an authenticated consumer", (t) => {
+  const copy = prepareStrictFixture();
+  t.after(() => copy.cleanup());
+  const output = machine([startRecord(copy.root), completedRecord(0, 0, 0, 0)]);
+  const parsed = parseMachineVerbose(output);
+  assert.equal(parsed.ok, true, parsed.reasons.join("\n"));
+  assert.equal(parsed.run?.completed.files, 0);
+  const result = classifyStrictCheck(syntheticRun(output), copy.root);
+  assert.equal(result.kind, "rejected");
+  assert.deepEqual(result.reasons, [
+    "strict qualification requires nonempty analyzed inputs",
+  ]);
+  assert.equal(
+    classifyStrictCheck(syntheticRun(workspaceMachine(copy.root)), copy.root)
+      .kind,
+    "strict-pass",
+  );
+});
+
 test("the classifier rejects tool failures, signals, timeouts and unexpected stderr", () => {
   const base = ACCEPTED_MACHINE;
   assert.match(
@@ -568,6 +587,7 @@ test("the maintained native baseline passes raw strict checking with zero errors
   assert.deepEqual(result.diagnostics, []);
   const parsed = parseMachineVerbose(run.check.stdout);
   assert.ok(parsed.ok);
+  assert.ok((parsed.run?.completed.files ?? 0) > 0);
   assert.equal(parsed.run?.completed.errors, 0);
   assert.equal(parsed.run?.completed.warnings, 0);
   assert.equal(parsed.run?.completed.filesWithProblems, 0);

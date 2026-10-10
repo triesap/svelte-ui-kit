@@ -568,6 +568,13 @@ export function classifyStrictCheck(
   }
   const machineRun = parsed.run;
 
+  // An empty run can be valid machine output, but cannot qualify the maintained
+  // consumer and its native declarations. Keep this requirement in qualification
+  // rather than changing the general machine parser's representation.
+  if (machineRun.completed.files === 0) {
+    reasons.push("strict qualification requires nonempty analyzed inputs");
+  }
+
   if (run.check.exitCode !== 0) {
     reasons.push(
       `expected the strict checker to exit 0 with zero diagnostics, found exit ${String(run.check.exitCode)}`,
