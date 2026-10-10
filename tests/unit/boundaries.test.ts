@@ -122,7 +122,16 @@ test("injected result handling matches the real built adapter", () => {
     });
     const built = spawnSync(process.execPath, [CLI_ENTRYPOINT, ...argv], {
       encoding: "utf8",
+      timeout: 30_000,
+      killSignal: "SIGKILL",
     });
+    assert.equal(
+      built.error,
+      undefined,
+      `${String(built.error)}; signal=${String(built.signal)}`,
+    );
+    assert.equal(built.signal, null, `CLI terminated by ${built.signal}`);
+    assert.notEqual(built.status, null, "CLI did not complete");
     assert.equal(built.status, pureCode, `exit code for ${argv.join(" ")}`);
     assert.equal(pureCode, exitCode);
     if (stream === "stdout") {

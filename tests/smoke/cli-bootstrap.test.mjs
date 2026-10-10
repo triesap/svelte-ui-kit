@@ -65,13 +65,25 @@ assert.ok(
 const expectedVersion = `${manifest.name} ${manifest.version}\n`;
 
 /** Run a built entrypoint with the active Node and capture real streams. */
-function runEntry(entry, args, cwd, env) {
+function runEntry(entry, args, cwd, env, timeoutMs = 30_000) {
   const result = spawnSync(process.execPath, [entry, ...args], {
     cwd,
     encoding: "utf8",
     env,
+    timeout: timeoutMs,
+    killSignal: "SIGKILL",
   });
-  assert.equal(result.error, undefined, `spawn failed: ${result.error}`);
+  assert.equal(
+    result.error,
+    undefined,
+    `spawn failed: ${result.error}; signal=${String(result.signal)}`,
+  );
+  assert.equal(result.signal, null, `CLI terminated by ${result.signal}`);
+  assert.notEqual(
+    result.status,
+    null,
+    "CLI did not complete with an exit code",
+  );
   return {
     status: result.status,
     stdout: result.stdout,
@@ -167,6 +179,36 @@ test("built entrypoint exists (missing build output fails, not skips)", () => {
     existsSync(entrypoint),
     `missing built entrypoint ${binValue}; run "pnpm run build" first`,
   );
+});
+
+test("bootstrap qualification rejects actual stalled and signalled children", (t) => {
+  const { dir, entry } = makeDisposableCopy(
+    t,
+    jsonText(moduleManifest("svelte-ui-kit", "0.1.0")),
+    "svelte-ui-kit bounded ",
+  );
+  // A valid-looking response followed by a stall must still fail. SIGKILL
+  // makes the bound enforceable even when the child ignores SIGTERM.
+  writeFileSync(
+    entry,
+    'process.on("SIGTERM", () => {}); process.stdout.write("svelte-ui-kit 0.1.0\\n"); setInterval(() => {}, 1000);\n',
+  );
+  const before = snapshot(dir);
+  assert.throws(
+    () => runEntry(entry, ["--version"], dir, undefined, 200),
+    /ETIMEDOUT; signal=SIGKILL/,
+  );
+  assert.deepEqual(snapshot(dir), before, "timeout must preserve the fixture");
+  writeFileSync(
+    entry,
+    'process.stdout.write("svelte-ui-kit 0.1.0\\n"); process.kill(process.pid, "SIGTERM");\n',
+  );
+  const beforeSignal = snapshot(dir);
+  assert.throws(
+    () => runEntry(entry, ["--version"], dir),
+    /CLI terminated by SIGTERM/,
+  );
+  assert.deepEqual(snapshot(dir), beforeSignal);
 });
 
 test("no arguments prints help to stdout and exits 0", () => {
@@ -745,15 +787,29 @@ function runMutantSuite(t, { version, mutate }) {
   const probeEnv = { ...process.env, [MUTATION_PROBE_ENV]: "1" };
   delete probeEnv.NODE_TEST_CONTEXT;
 
-  return spawnSync(
+  const result = spawnSync(
     process.execPath,
     ["--test", "--test-reporter=tap", "tests/smoke/cli-bootstrap.test.mjs"],
     {
       cwd: dir,
       encoding: "utf8",
       env: probeEnv,
+      timeout: 300_000,
+      killSignal: "SIGKILL",
     },
   );
+  assert.equal(
+    result.error,
+    undefined,
+    `mutant runner failed: ${result.error}`,
+  );
+  assert.equal(
+    result.signal,
+    null,
+    `mutant runner terminated by ${result.signal}`,
+  );
+  assert.notEqual(result.status, null, "mutant runner did not complete");
+  return result;
 }
 
 test(

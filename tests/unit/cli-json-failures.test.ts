@@ -32,8 +32,16 @@ function runCli(
   const result = spawnSync(process.execPath, [entrypoint, ...args], {
     cwd,
     encoding: "utf8",
+    timeout: 30_000,
+    killSignal: "SIGKILL",
   });
-  assert.equal(result.error, undefined, String(result.error));
+  assert.equal(
+    result.error,
+    undefined,
+    `${String(result.error)}; signal=${String(result.signal)}`,
+  );
+  assert.equal(result.signal, null, `CLI terminated by ${result.signal}`);
+  assert.notEqual(result.status, null, "CLI did not complete");
   return {
     status: result.status,
     stdout: result.stdout ?? "",

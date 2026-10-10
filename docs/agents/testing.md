@@ -25,7 +25,10 @@ pnpm run test:docs
 
 Preparation comes before installation because frozen dependencies refer to the
 authentic local archive. Source fetching/bootstrap can need network access. Do
-not suppress strict diagnostics, patch installed packages, loosen peer/engine
+not accept timeout or signal termination as a completed bootstrap test. Owned
+bootstrap CLI children have a 30-second SIGKILL deadline; nested mutation suites
+have a five-minute deadline and must finish normally before their assertions count.
+Do not suppress strict diagnostics, patch installed packages, loosen peer/engine
 checks or change pins to pass. Keep generated output/logs out of contributions.
 This product is TypeScript-only; Cargo is inapplicable unless a separately
 authorized change affects an actual Rust workspace.
