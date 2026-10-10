@@ -34,6 +34,15 @@ It then runs Bits' real `package` script. Native component sources and runtime
 implementation remain unchanged. Installed declarations, reference checkouts
 and package stores are never patched.
 
+Readiness and guarded application require the exact raw qualified version,
+positive installed provenance and full inventory authentication, and the selected
+application's own authenticated archive declaration. Semver-equivalent v-prefixed
+or build-metadata versions are refused. Captured proof cannot substitute for live
+revalidation after a declaration, archive, runtime or provenance change. Hoisted
+and pnpm installs remain supported; a parent application's archive cannot stand
+in for the selected application's source. Installed-package tests exercise actual
+CLI refusals with authoring-source, network and subprocess access blocked.
+
 ## Reproduce
 
 Use Node 24.21.0, pnpm 11.22.0, Git and tar from the repository root:

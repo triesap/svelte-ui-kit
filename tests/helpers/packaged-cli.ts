@@ -90,6 +90,7 @@ export function installIndependentCli() {
       env,
       encoding: "utf8",
       timeout: 240000,
+      killSignal: "SIGKILL",
     });
     transcript.push({
       label,
@@ -101,6 +102,7 @@ export function installIndependentCli() {
       stderr: result.stderr,
     });
     writeEvidence();
+    assert.equal(result.error, undefined);
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.equal(result.signal, null);
     return result;
@@ -253,6 +255,7 @@ export function installIndependentCli() {
         env,
         encoding: "utf8",
         timeout: 30000,
+        killSignal: "SIGKILL",
       });
       const guardEvents = readFileSync(audit, "utf8")
         .trim()
@@ -269,6 +272,7 @@ export function installIndependentCli() {
         guardEvents,
       });
       writeEvidence();
+      assert.equal(result.error, undefined);
       assert.equal(result.signal, null);
       return { ...result, guardEvents };
     };
@@ -284,10 +288,17 @@ export function installIndependentCli() {
         cwd,
         "source-independent-cli",
       );
-    const prepareConsumer = (custom: boolean) => {
+    const prepareConsumer = (
+      custom: boolean,
+      purpose: "adoption" | "native-authentication" = "adoption",
+    ) => {
       const consumer = path.join(
         root,
-        custom ? "custom-consumer" : "default-consumer",
+        purpose === "native-authentication"
+          ? "native-authentication-consumer"
+          : custom
+            ? "custom-consumer"
+            : "default-consumer",
       );
       mkdirSync(consumer);
       const manifest = JSON.parse(

@@ -1,10 +1,15 @@
 import assert from "node:assert/strict";
 import {
   existsSync,
+  chmodSync,
+  cpSync,
+  lstatSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
+  symlinkSync,
 } from "node:fs";
 import path from "node:path";
 import { before, after, test } from "node:test";
@@ -12,6 +17,7 @@ import type { KitLock } from "../../src/codegen/lock.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { installIndependentCli } from "../helpers/packaged-cli.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
+import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
 import {
   transientRoot,
   writerLockDir,
@@ -245,4 +251,112 @@ test("copied packed CLI cannot substitute unavailable author assets or hide a mi
     ),
   );
   assert.deepEqual(snapshotTree(consumer), before);
+});
+
+test("separate installed CLI authenticates selected app native identity and preserves every refusal", () => {
+  const consumer = installed.prepareConsumer(false, "native-authentication");
+  // Copy before fault injection: never mutate shared dependency-store inodes.
+  const link = path.join(consumer.root, "node_modules/bits-ui");
+  const native = path.join(consumer.root, ".owned-native-distribution");
+  cpSync(realpathSync(link), native, { recursive: true });
+  rmSync(link);
+  symlinkSync(native, link);
+  const run = (args: string[]) => {
+    const result = installed.run(args, consumer.root);
+    assert.equal(result.stderr, "");
+    assert.deepEqual(
+      result.guardEvents,
+      [],
+      "no source, network or subprocess fallback",
+    );
+    return { status: result.status, envelope: JSON.parse(result.stdout) };
+  };
+  for (const args of [
+    ["init"],
+    ["add", "switch"],
+    ["info"],
+    ["doctor", "--strict"],
+  ]) {
+    const result = run(args);
+    assert.equal(result.status, 0, JSON.stringify(result.envelope));
+  }
+  const original = snapshotTree(consumer.root);
+  for (const fault of [
+    "v-prefix",
+    "build-metadata",
+    "provenance",
+    "runtime",
+    "declaration",
+    "archive",
+  ]) {
+    const file =
+      fault === "declaration"
+        ? path.join(consumer.root, "package.json")
+        : fault === "archive"
+          ? path.join(consumer.root, "vendor", NATIVE_BASELINE.archive)
+          : path.join(
+              native,
+              fault === "provenance"
+                ? "NATIVE_PROVENANCE.json"
+                : fault === "runtime"
+                  ? "dist/index.js"
+                  : "package.json",
+            );
+    const bytes = readFileSync(file),
+      mode = lstatSync(file).mode & 0o777;
+    chmodSync(file, 0o600);
+    if (
+      fault === "v-prefix" ||
+      fault === "build-metadata" ||
+      fault === "declaration"
+    ) {
+      const data = JSON.parse(bytes.toString());
+      if (fault === "declaration") delete data.dependencies["bits-ui"];
+      else
+        data.version =
+          fault === "v-prefix"
+            ? `v${NATIVE_BASELINE.version}`
+            : `${NATIVE_BASELINE.version}+unqualified`;
+      writeFileSync(file, JSON.stringify(data));
+    } else writeFileSync(file, "tampered native evidence");
+    const damaged = snapshotTree(consumer.root);
+    for (const args of [
+      ["info"],
+      ["add", "dialog"],
+      ["sync"],
+      ["doctor"],
+      ["doctor", "--strict"],
+    ]) {
+      const result = run(args);
+      const expected =
+        fault === "v-prefix" || fault === "build-metadata"
+          ? "NATIVE_INSTALL_VERSION"
+          : fault === "declaration"
+            ? "NATIVE_ARCHIVE_REQUIRED"
+            : fault === "archive"
+              ? "NATIVE_ARCHIVE_INVALID"
+              : "NATIVE_INSTALL_INVALID";
+      assert.ok(
+        result.envelope.diagnostics.some(
+          (i: { code: string }) => i.code === expected,
+        ),
+        JSON.stringify(result.envelope),
+      );
+      if (args[0] === "info" || (args[0] === "doctor" && args.length === 1)) {
+        assert.equal(result.status, 0);
+        assert.equal(result.envelope.data.ready, false);
+        assert.equal(result.envelope.status, "warning");
+      } else assert.notEqual(result.status, 0);
+      assert.deepEqual(
+        snapshotTree(consumer.root),
+        damaged,
+        `${fault}: ${args}`,
+      );
+    }
+    writeFileSync(file, bytes);
+    chmodSync(file, mode);
+    assert.deepEqual(snapshotTree(consumer.root), original);
+  }
+  assert.equal(run(["doctor", "--strict"]).status, 0);
+  assert.deepEqual(snapshotTree(consumer.root), original);
 });
