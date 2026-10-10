@@ -68,6 +68,9 @@ only positively created entries and report secondary ancestry/cleanup failures.
 Release requires the actual held acquisition handle and unchanged physical
 directory/owner identities, modes and exact owner bytes. A copied handle,
 byte-equivalent replaced record, link or foreign entry cannot authorize release.
+Foreign content blocking an otherwise authentic held owner reports
+WRITER_LOCK_RELEASE_FAILED; replaced or ambiguous ownership reports
+WRITER_LOCK_UNOWNED. Both retain the evidence and drop the held claim.
 Release restoration uses exclusive creation only inside the original unchanged
 empty directory; foreign or replaced state remains untouched. New generated
 ancestry receipts include permission modes; legacy journals keep their existing

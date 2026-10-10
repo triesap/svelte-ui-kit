@@ -88,6 +88,7 @@ for (const mutation of [
   "directory-mode",
   "owner-bytes",
   "foreign",
+  "foreign-owner-identity",
 ] as const) {
   test(`held writer authority and release preserve ${mutation} substitution`, () => {
     withRoot((root) => {
@@ -96,7 +97,10 @@ for (const mutation of [
       if (!acquired.ok) return;
       const directory = acquired.value.lockDir;
       const owner = path.join(directory, "owner.json");
-      if (mutation === "owner-identity") {
+      if (
+        mutation === "owner-identity" ||
+        mutation === "foreign-owner-identity"
+      ) {
         const substitute = path.join(root, "copied-owner.json");
         writeFileSync(substitute, readFileSync(owner), { mode: 0o600 });
         renameSync(substitute, owner);
@@ -123,7 +127,7 @@ for (const mutation of [
       if (mutation === "directory-mode") chmodSync(directory, 0o755);
       if (mutation === "owner-bytes")
         writeFileSync(owner, `${readFileSync(owner, "utf8")} `);
-      if (mutation === "foreign")
+      if (mutation === "foreign" || mutation === "foreign-owner-identity")
         writeFileSync(path.join(directory, ".operator"), "preserve");
       const before = snapshotTree(root);
       assert.ok(
@@ -133,6 +137,13 @@ for (const mutation of [
       );
       const released = releaseWriterLock(acquired.value);
       assert.equal(released.ok, false);
+      if (!released.ok)
+        assert.equal(
+          released.issues[0]?.code,
+          mutation === "foreign"
+            ? "WRITER_LOCK_RELEASE_FAILED"
+            : "WRITER_LOCK_UNOWNED",
+        );
       assert.equal(holdsWriterLock(root, STATE_DIR), false);
       assert.deepEqual(snapshotTree(root), before);
     });

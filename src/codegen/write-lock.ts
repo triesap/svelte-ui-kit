@@ -415,6 +415,40 @@ export function acquireWriterLock(
     return acquisitionFailure(error);
   }
 }
+
+/** Classify a blocked release without granting any cleanup authority. */
+function heldWriterHasForeignContent(held: HeldClaim): boolean {
+  const directory = held.ownership.find(
+    (entry) => entry.path === held.handle.lockDir && entry.kind === "directory",
+  );
+  const owner = held.ownership.find(
+    (entry) =>
+      entry.path === ownerFileAbs(held.handle.lockDir) && entry.kind === "file",
+  );
+  if (directory === undefined || owner === undefined) return false;
+  try {
+    const stats = lstatSync(directory.path);
+    if (
+      stats.isSymbolicLink() ||
+      !stats.isDirectory() ||
+      stats.dev !== directory.device ||
+      stats.ino !== directory.inode ||
+      (stats.mode & 0o7777) !== directory.mode
+    )
+      return false;
+    const identity = observeOwnerIdentity(directory.path);
+    if (
+      !identity.ok ||
+      identity.value.device !== owner.device ||
+      identity.value.inode !== owner.inode ||
+      verifyOwnedCreations([owner]).length > 0
+    )
+      return false;
+    return readdirSync(directory.path).some((name) => name !== OWNER_FILE);
+  } catch {
+    return false;
+  }
+}
 /**
  * Release the lock only when it is still owned by this transaction. A missing
  * or corrupt owner record is an ambiguous stale lock and is never deleted.
@@ -440,10 +474,14 @@ export function releaseWriterLock(
   }
   const proof = verifyHeldWriterLock(handle.root, handle.stateDir);
   if (proof.length > 0) {
+    // An authentic held owner blocked by unrelated contents is the established
+    // release failure. Replaced or ambiguous ownership remains unowned. Neither
+    // classification permits deletion; the complete inventory proof still fails.
+    const code = heldWriterHasForeignContent(held)
+      ? "WRITER_LOCK_RELEASE_FAILED"
+      : "WRITER_LOCK_UNOWNED";
     HELD_LOCKS.delete(key);
-    return fail(
-      proof.map((entry) => ({ ...entry, code: "WRITER_LOCK_UNOWNED" })),
-    );
+    return fail(proof.map((entry) => ({ ...entry, code })));
   }
   const read = readOwner(handle.lockDir);
   if (!read.ok) {
