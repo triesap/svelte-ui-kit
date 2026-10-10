@@ -253,13 +253,13 @@ test("an installed runtime dependency with an absent required peer is a typed co
     JSON.stringify({
       name: "consumer",
       devDependencies: { "@sveltejs/kit": "2.70.3" },
-      dependencies: { "bits-ui": "^2.19.3" },
+      dependencies: { "upstream-fixture": "^2.19.3" },
     }),
   );
   project.writeFile(
-    "node_modules/bits-ui/package.json",
+    "node_modules/upstream-fixture/package.json",
     JSON.stringify({
-      name: "bits-ui",
+      name: "upstream-fixture",
       version: "2.19.3",
       peerDependencies: { svelte: "^5.0.0" },
     }),
@@ -267,7 +267,7 @@ test("an installed runtime dependency with an absent required peer is a typed co
   const reg = registryOf([
     componentItem("button", {
       exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
-      npm: [{ name: "bits-ui", range: "^2.19.3", role: "runtime" }],
+      npm: [{ name: "upstream-fixture", range: "^2.19.3", role: "runtime" }],
     }),
   ]);
   const result = planAdd({
@@ -294,7 +294,7 @@ test("malformed installed metadata and a missing install are distinct typed conf
   const reg = registryOf([
     componentItem("button", {
       exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
-      npm: [{ name: "bits-ui", range: "^2.19.3", role: "runtime" }],
+      npm: [{ name: "upstream-fixture", range: "^2.19.3", role: "runtime" }],
     }),
   ]);
   const malformedProject = createSupportedProject();
@@ -304,10 +304,13 @@ test("malformed installed metadata and a missing install are distinct typed conf
     JSON.stringify({
       name: "consumer",
       devDependencies: { "@sveltejs/kit": "2.70.3" },
-      dependencies: { "bits-ui": "^2.19.3" },
+      dependencies: { "upstream-fixture": "^2.19.3" },
     }),
   );
-  malformedProject.writeFile("node_modules/bits-ui/package.json", "{ not json");
+  malformedProject.writeFile(
+    "node_modules/upstream-fixture/package.json",
+    "{ not json",
+  );
   const malformed = planAdd({
     registry: reg,
     config: CONFIG,
@@ -334,7 +337,7 @@ test("malformed installed metadata and a missing install are distinct typed conf
     JSON.stringify({
       name: "consumer",
       devDependencies: { "@sveltejs/kit": "2.70.3" },
-      dependencies: { "bits-ui": "^2.19.3" },
+      dependencies: { "upstream-fixture": "^2.19.3" },
     }),
   );
   const missing = planAdd({

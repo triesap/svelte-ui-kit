@@ -40,7 +40,7 @@ function dependencyRegistry() {
   return registryOf([
     componentItem("button", {
       exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
-      npm: [{ name: "bits-ui", range: "^2.19.3", role: "runtime" }],
+      npm: [{ name: "upstream-fixture", range: "^2.19.3", role: "runtime" }],
     }),
   ]);
 }
@@ -52,12 +52,12 @@ function withDependency(project: ReturnType<typeof createSupportedProject>) {
       name: "consumer",
       private: true,
       devDependencies: { "@sveltejs/kit": "2.70.3" },
-      dependencies: { "bits-ui": "^2.19.3" },
+      dependencies: { "upstream-fixture": "^2.19.3" },
     }),
   );
   project.writeFile(
-    "node_modules/bits-ui/package.json",
-    JSON.stringify({ name: "bits-ui", version: "2.19.3" }),
+    "node_modules/upstream-fixture/package.json",
+    JSON.stringify({ name: "upstream-fixture", version: "2.19.3" }),
   );
   return project;
 }
@@ -91,7 +91,7 @@ test("captured environment values, lookups and iterators are deeply immutable", 
     typeof (installed as unknown as { set?: unknown }).set,
     "undefined",
   );
-  const observation = installed.get("bits-ui");
+  const observation = installed.get("upstream-fixture");
   assert.ok(observation);
   assert.equal(Object.isFrozen(observation), true);
   if (observation.kind === "value") {
@@ -136,10 +136,10 @@ test("attempted mutation and later disk edits cannot change an executable snapsh
       unknown
     >;
     assert.throws(() => {
-      dependencies["bits-ui"] = { invalid: true };
+      dependencies["upstream-fixture"] = { invalid: true };
     }, TypeError);
   }
-  const observation = snapshot.environment.installed.get("bits-ui");
+  const observation = snapshot.environment.installed.get("upstream-fixture");
   assert.ok(observation);
   assert.throws(() => {
     (observation as { kind: string }).kind = "malformed";

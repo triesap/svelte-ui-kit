@@ -495,13 +495,13 @@ test("a captured snapshot does not mix later live dependency metadata", (t) => {
       name: "consumer",
       packageManager: "pnpm@11.22.0",
       devDependencies: { "@sveltejs/kit": "2.70.3" },
-      dependencies: { "bits-ui": "^2.19.3", svelte: "5.57.1" },
+      dependencies: { "upstream-fixture": "^2.19.3", svelte: "5.57.1" },
     }),
   );
   project.writeFile(
-    "node_modules/bits-ui/package.json",
+    "node_modules/upstream-fixture/package.json",
     JSON.stringify({
-      name: "bits-ui",
+      name: "upstream-fixture",
       version: "2.19.3",
       peerDependencies: { svelte: "^5.0.0" },
     }),
@@ -511,7 +511,7 @@ test("a captured snapshot does not mix later live dependency metadata", (t) => {
     JSON.stringify({ name: "svelte", version: "5.57.1" }),
   );
   const registry = buttonRegistry({
-    npm: [{ name: "bits-ui", range: "^2.19.3", role: "runtime" }],
+    npm: [{ name: "upstream-fixture", range: "^2.19.3", role: "runtime" }],
   });
   const frozen = snapshotOf(project);
   const before = add(project, registry, { snapshot: frozen });

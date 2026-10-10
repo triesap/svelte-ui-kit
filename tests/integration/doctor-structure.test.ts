@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, rmSync } from "node:fs";
+import { cpSync, readFileSync, rmSync, symlinkSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import {
@@ -87,29 +87,20 @@ for (const scenario of [
           "{bad",
         );
       if (scenario === "upstream-peer") {
-        const manifest = JSON.parse(
-          readFileSync(path.join(fixture.root, "package.json"), "utf8"),
+        for (const file of ["package.json", ".native-build"])
+          cpSync(
+            path.join("tests/fixtures/consumer", file),
+            path.join(fixture.root, file),
+            { recursive: true },
+          );
+        symlinkSync(
+          path.resolve("node_modules/bits-ui"),
+          path.join(fixture.root, "node_modules/bits-ui"),
         );
         write(
           fixture.root,
-          "package.json",
-          JSON.stringify({
-            ...manifest,
-            dependencies: {
-              ...manifest.dependencies,
-              "bits-ui": "2.19.3",
-              "@internationalized/date": "3.12.4",
-            },
-          }),
-        );
-        write(
-          fixture.root,
-          "node_modules/bits-ui/package.json",
-          JSON.stringify({
-            name: "bits-ui",
-            version: "2.19.3",
-            peerDependencies: { svelte: "^6.0.0" },
-          }),
+          "node_modules/svelte/package.json",
+          JSON.stringify({ name: "svelte", version: "4.0.0" }),
         );
         write(
           fixture.root,

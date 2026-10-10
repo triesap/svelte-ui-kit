@@ -9,6 +9,14 @@ import { issue } from "../registry/errors.js";
 import { validateWithSchema } from "../registry/schema.js";
 
 export const NATIVE_BASELINE = Object.freeze(baseline);
+/** Positive installed evidence is distinct from an absent list of problems. */
+export type NativeInstallAuthentication =
+  | {
+      readonly kind: "authenticated";
+      readonly version: string;
+      readonly provenanceSha256: string;
+    }
+  | { readonly kind: "invalid"; readonly issues: readonly ModelIssue[] };
 export type NativeFileObservation =
   | { readonly kind: "absent" }
   | { readonly kind: "invalid"; readonly issues: readonly ModelIssue[] }
@@ -20,6 +28,85 @@ export type NativeFileObservation =
       readonly digest: string;
       readonly mode: number;
     };
+
+/** Require the canonical raw identity and explicit positive captured proof. */
+export function nativeInstallIssues(
+  version: unknown,
+  authentication: NativeInstallAuthentication | undefined,
+  manifestVersion: unknown = version,
+): readonly ModelIssue[] {
+  if (
+    version !== NATIVE_BASELINE.version ||
+    manifestVersion !== NATIVE_BASELINE.version
+  ) {
+    return [
+      issue(
+        "NATIVE_INSTALL_VERSION",
+        `Installed Bits must use the exact qualified version ${NATIVE_BASELINE.version}; equivalent v-prefixed or build-metadata spellings are not qualified. Reinstall the authenticated application-owned archive explicitly.`,
+        "package.json",
+      ),
+    ];
+  }
+  if (authentication?.kind === "invalid" && authentication.issues.length > 0)
+    return authentication.issues;
+  if (
+    authentication?.kind !== "authenticated" ||
+    authentication.version !== NATIVE_BASELINE.version ||
+    authentication.provenanceSha256 !== NATIVE_BASELINE.provenanceSha256
+  ) {
+    return [
+      issue(
+        "NATIVE_INSTALL_UNAUTHENTICATED",
+        "Installed Bits has no positive qualified distribution proof. Capture and authenticate the actual installation before planning.",
+        "package.json",
+      ),
+    ];
+  }
+  return [];
+}
+
+/** Require positive selected-application source evidence, never an inferred range. */
+export function nativeArchiveIssues(
+  declaration: string | null,
+  source: NativeFileObservation | undefined,
+): readonly ModelIssue[] {
+  if (source?.kind === "invalid" && source.issues.length > 0)
+    return source.issues;
+  if (
+    declaration === null ||
+    !declaration.startsWith("file:") ||
+    source?.kind !== "value" ||
+    source.declaration !== declaration ||
+    source.version !== NATIVE_BASELINE.version ||
+    source.digest !== NATIVE_BASELINE.archiveSha256
+  ) {
+    return [
+      issue(
+        "NATIVE_ARCHIVE_REQUIRED",
+        "The qualified local Bits build requires an explicit authenticated application-owned file declaration. Copy and verify the bundled archive, then install it explicitly.",
+        "package.json",
+      ),
+    ];
+  }
+  return [];
+}
+
+/** Capture installed proof only after raw version and complete inventory verification. */
+export function observeNativeInstall(
+  packageRoot: string,
+  version: unknown,
+): NativeInstallAuthentication {
+  if (version !== NATIVE_BASELINE.version)
+    return { kind: "invalid", issues: nativeInstallIssues(version, undefined) };
+  const issues = authenticateNativeInstall(packageRoot);
+  return issues.length > 0
+    ? { kind: "invalid", issues }
+    : {
+        kind: "authenticated",
+        version: NATIVE_BASELINE.version,
+        provenanceSha256: NATIVE_BASELINE.provenanceSha256,
+      };
+}
 
 /** Same declaration-field precedence as ordinary dependency inspection. */
 export function nativeDeclaration(

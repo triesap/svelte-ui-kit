@@ -149,7 +149,12 @@ test("peerRequirementsFromPlan keeps peer roles only and de-duplicates", () => {
   const mixed = plan([
     { name: "svelte", range: "^5.33.0", roles: ["peer"], requiredBy: ["a"] },
     { name: "svelte", range: "^5.33.0", roles: ["runtime"], requiredBy: ["b"] },
-    { name: "bits-ui", range: "2.19.3", roles: ["runtime"], requiredBy: ["c"] },
+    {
+      name: "upstream-fixture",
+      range: "2.19.3",
+      roles: ["runtime"],
+      requiredBy: ["c"],
+    },
     {
       name: "@internationalized/date",
       range: "^3.8.1",
@@ -181,9 +186,9 @@ test("actual installed upstream peers are assessed even when absent from the pla
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { "bits-ui": "2.19.3" } }),
+    JSON.stringify({ dependencies: { "upstream-fixture": "2.19.3" } }),
   );
-  installWith(project, "bits-ui", "2.19.3", {
+  installWith(project, "upstream-fixture", "2.19.3", {
     peerDependencies: {
       "@internationalized/date": "^3.8.1",
       svelte: "^5.33.0",
@@ -192,7 +197,7 @@ test("actual installed upstream peers are assessed even when absent from the pla
 
   const runtimePlan = plan([
     {
-      name: "bits-ui",
+      name: "upstream-fixture",
       range: "2.19.3",
       roles: ["runtime"],
       requiredBy: ["button"],
@@ -225,13 +230,13 @@ test("satisfied actual upstream peers pass", (t) => {
     "package.json",
     JSON.stringify({
       dependencies: {
-        "bits-ui": "2.19.3",
+        "upstream-fixture": "2.19.3",
         "@internationalized/date": "^3.8.1",
         svelte: "^5.33.0",
       },
     }),
   );
-  installWith(project, "bits-ui", "2.19.3", {
+  installWith(project, "upstream-fixture", "2.19.3", {
     peerDependencies: {
       "@internationalized/date": "^3.8.1",
       svelte: "^5.33.0",
@@ -242,7 +247,7 @@ test("satisfied actual upstream peers pass", (t) => {
 
   const runtimePlan = plan([
     {
-      name: "bits-ui",
+      name: "upstream-fixture",
       range: "2.19.3",
       roles: ["runtime"],
       requiredBy: ["button"],
@@ -257,12 +262,12 @@ test("a missing upstream installation never fabricates a peer audit", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { "bits-ui": "2.19.3" } }),
+    JSON.stringify({ dependencies: { "upstream-fixture": "2.19.3" } }),
   );
 
   const runtimePlan = plan([
     {
-      name: "bits-ui",
+      name: "upstream-fixture",
       range: "2.19.3",
       roles: ["runtime"],
       requiredBy: ["button"],
@@ -278,16 +283,16 @@ test("an optional upstream peer is skipped when not independently required", (t)
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { "bits-ui": "2.19.3" } }),
+    JSON.stringify({ dependencies: { "upstream-fixture": "2.19.3" } }),
   );
-  installWith(project, "bits-ui", "2.19.3", {
+  installWith(project, "upstream-fixture", "2.19.3", {
     peerDependencies: { "@internationalized/date": "^3.8.1" },
     peerDependenciesMeta: { "@internationalized/date": { optional: true } },
   });
 
   const runtimePlan = plan([
     {
-      name: "bits-ui",
+      name: "upstream-fixture",
       range: "2.19.3",
       roles: ["runtime"],
       requiredBy: ["button"],

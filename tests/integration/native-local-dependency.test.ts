@@ -18,6 +18,7 @@ import {
   inspectDependencyState,
   inspectDependencyStateFromEvidence,
   resolveInstalledManifestPath,
+  validatePeerDependenciesFromEvidence,
 } from "../../src/project/dependencies.js";
 import { captureEnvironment } from "../../src/project/environment.js";
 import {
@@ -55,6 +56,7 @@ function run(command: string, args: string[], cwd: string) {
     env,
     encoding: "utf8",
     timeout: 240_000,
+    killSignal: "SIGKILL",
     maxBuffer: 64 * 1024 * 1024,
   });
   transcript.push({
@@ -91,6 +93,7 @@ before(() => {
     JSON.stringify({
       private: true,
       packageManager: "pnpm@11.22.0",
+      devDependencies: { "@sveltejs/kit": "2.70.3" },
       dependencies: {
         "bits-ui": `file:./${archivePath}`,
         svelte: "5.57.1",
@@ -140,6 +143,136 @@ function installedReads(root: string) {
         : null,
   }));
 }
+
+function cli(root: string, args: string[]) {
+  const result = spawnSync(
+    process.execPath,
+    [path.resolve("dist/cli/main.js"), ...args, "--cwd", root, "--json"],
+    {
+      cwd: root,
+      env,
+      encoding: "utf8",
+      timeout: 30_000,
+      killSignal: "SIGKILL",
+    },
+  );
+  assert.equal(result.error, undefined);
+  assert.equal(result.signal, null);
+  assert.equal(result.stderr, "");
+  return { status: result.status, envelope: JSON.parse(result.stdout) };
+}
+
+test("captured native readiness and peers require explicit positive installed and archive proof", (t) => {
+  const root = copy(t);
+  const captured = captureEnvironment(root);
+  const native = captured.installed.get(NATIVE_BASELINE.name);
+  assert.ok(native?.kind === "value");
+  assert.equal(native.nativeAuthentication?.kind, "authenticated");
+  assert.ok(Object.isFrozen(native.nativeAuthentication));
+  const plan = {
+    entries: [
+      {
+        ...requirements[0]!,
+        roles: ["runtime" as const],
+        requiredBy: ["switch"],
+      },
+    ],
+  };
+  const evidence = {
+    manifest: captured.manifest,
+    nativeFile: captured.nativeFile,
+    observe: (name: string) => captured.installed.get(name) ?? null,
+  };
+  assert.ok(validatePeerDependenciesFromEvidence(evidence, plan).ok);
+  for (const authentication of [
+    undefined,
+    { kind: "invalid" as const, issues: [] },
+  ]) {
+    const incomplete = {
+      ...evidence,
+      observe: (name: string) =>
+        name === NATIVE_BASELINE.name
+          ? { ...native, nativeAuthentication: authentication }
+          : evidence.observe(name),
+    };
+    for (const result of [
+      inspectDependencyStateFromEvidence(incomplete, requirements),
+      validatePeerDependenciesFromEvidence(incomplete, plan),
+    ]) {
+      assert.ok(!result.ok);
+      assert.ok(
+        result.issues.some((i) => i.code === "NATIVE_INSTALL_UNAUTHENTICATED"),
+      );
+    }
+  }
+  const noArchive = { ...evidence, nativeFile: { kind: "absent" as const } };
+  for (const result of [
+    inspectDependencyStateFromEvidence(noArchive, requirements),
+    validatePeerDependenciesFromEvidence(noArchive, plan),
+  ])
+    assert.ok(!result.ok);
+});
+
+test("actual info/add/sync/doctor refuse noncanonical and missing/tampered native evidence without writes", (t) => {
+  for (const fault of [
+    "v-prefix",
+    "build-metadata",
+    "missing-provenance",
+    "runtime",
+    "archive",
+  ]) {
+    const root = copy(t);
+    const initialized = cli(root, ["init"]);
+    assert.equal(initialized.status, 0, JSON.stringify(initialized.envelope));
+    const added = cli(root, ["add", "switch"]);
+    assert.equal(added.status, 0, JSON.stringify(added.envelope));
+    const native = packageRoot(root);
+    if (fault === "v-prefix" || fault === "build-metadata") {
+      const file = path.join(native, "package.json");
+      const manifest = JSON.parse(readFileSync(file, "utf8"));
+      manifest.version =
+        fault === "v-prefix"
+          ? `v${NATIVE_BASELINE.version}`
+          : `${NATIVE_BASELINE.version}+unqualified`;
+      chmodSync(file, 0o600);
+      writeFileSync(file, JSON.stringify(manifest));
+    } else if (fault === "missing-provenance")
+      rmSync(path.join(native, "NATIVE_PROVENANCE.json"));
+    else if (fault === "runtime") {
+      const file = path.join(native, "dist/index.js");
+      chmodSync(file, 0o600);
+      writeFileSync(file, "export {};\n");
+    } else writeFileSync(path.join(root, archivePath), "tampered");
+    const before = snapshotTree(root);
+    for (const args of [
+      ["info"],
+      ["add", "dialog"],
+      ["sync"],
+      ["doctor"],
+      ["doctor", "--strict"],
+    ]) {
+      const result = cli(root, args);
+      if (args[0] === "info" || (args[0] === "doctor" && args.length === 1)) {
+        assert.equal(result.status, 0);
+        assert.equal(result.envelope.status, "warning");
+        assert.equal(result.envelope.data.ready, false);
+      } else assert.notEqual(result.status, 0, `${fault}: ${args}`);
+      const expected =
+        fault === "v-prefix" || fault === "build-metadata"
+          ? "NATIVE_INSTALL_VERSION"
+          : fault === "archive"
+            ? "NATIVE_ARCHIVE_INVALID"
+            : "NATIVE_INSTALL_INVALID";
+      assert.ok(
+        result.envelope.diagnostics.some(
+          (i: { code: string }) => i.code === expected,
+        ),
+        JSON.stringify(result.envelope),
+      );
+      assert.deepEqual(snapshotTree(root), before, `${fault}: ${args}`);
+    }
+  }
+});
 
 test("actual file install remains ready with complete identity and read-only capture", (t) => {
   const root = copy(t);

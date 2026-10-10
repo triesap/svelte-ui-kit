@@ -85,7 +85,7 @@ for (const kind of [
             version,
             peerDependencies: peers,
           });
-      if (kind === "ready") {
+      if (kind === "ready" || kind === "peer-incompatible") {
         // Readiness must authenticate a real native distribution and retained
         // local source; a fabricated version-only manifest cannot prove it.
         for (const file of ["package.json", ".native-build"])

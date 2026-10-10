@@ -79,7 +79,10 @@ Plans describe direct runtime/tooling requirements, peers, declarations, install
 versions and appropriate detected-manager commands. Installation is a separate
 application operation. Only the authentic application-owned Bits archive can
 normalize its explicit local-file declaration into the qualified internal version;
-installed distribution provenance and full inventory must also match. Unknown,
+installed distribution provenance and full inventory must also match. The raw
+installed version must exactly equal the qualified baseline; v-prefixed and
+build-metadata equivalents are refused. Captured readiness and peer checks require
+positive authentication evidence, rather than an absent list of problems. Unknown,
 linked/escaping/changed archives, same-version fabricated packages and semver-only
 declarations cannot certify readiness. Follow the complete native extraction,
 digest check and explicit local install in [getting started](../getting-started.md).

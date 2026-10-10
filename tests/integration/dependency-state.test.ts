@@ -60,16 +60,16 @@ test("a missing install differs from a missing declaration", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { "bits-ui": "^2.0.0" } }),
+    JSON.stringify({ dependencies: { "upstream-fixture": "^2.0.0" } }),
   );
 
   const result = inspectDependencyState(project.root, [
-    { name: "bits-ui", range: "^2.0.0" },
+    { name: "upstream-fixture", range: "^2.0.0" },
     { name: "@internationalized/date", range: "^3.0.0" },
   ]);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
-  const bits = result.value.find((entry) => entry.name === "bits-ui");
+  const bits = result.value.find((entry) => entry.name === "upstream-fixture");
   const date = result.value.find(
     (entry) => entry.name === "@internationalized/date",
   );
@@ -82,11 +82,11 @@ test("an installed but undeclared dependency is not ready", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());
   project.writeFile("package.json", JSON.stringify({ name: "hoisted" }));
-  install(project, "bits-ui", "2.19.3");
+  install(project, "upstream-fixture", "2.19.3");
 
-  assert.equal(installedVersion(project.root, "bits-ui"), "2.19.3");
+  assert.equal(installedVersion(project.root, "upstream-fixture"), "2.19.3");
   const result = inspectDependencyState(project.root, [
-    { name: "bits-ui", range: "^2.0.0" },
+    { name: "upstream-fixture", range: "^2.0.0" },
   ]);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;

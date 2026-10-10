@@ -125,7 +125,7 @@ test("add reports missing/incompatible dependency instructions without installin
       readFileSync(path.join(fixture.pkg, manifestPath), "utf8"),
     );
     manifest.npmDependencies = [
-      { name: "bits-ui", range: "^2.19.3", role: "runtime" },
+      { name: "upstream-fixture", range: "^2.19.3", role: "runtime" },
     ];
     const text = JSON.stringify(manifest);
     write(fixture.pkg, manifestPath, text);
@@ -155,14 +155,14 @@ test("add reports missing/incompatible dependency instructions without installin
             dependencies: {
               svelte: "5.57.1",
               "@sveltejs/kit": "2.70.3",
-              "bits-ui": "1.0.0",
+              "upstream-fixture": "1.0.0",
             },
           }),
         );
         write(
           fixture.root,
-          "node_modules/bits-ui/package.json",
-          JSON.stringify({ name: "bits-ui", version }),
+          "node_modules/upstream-fixture/package.json",
+          JSON.stringify({ name: "upstream-fixture", version }),
         );
       }
       const before = snapshotTree(fixture.root);
@@ -176,13 +176,13 @@ test("add reports missing/incompatible dependency instructions without installin
       assert.equal(envelope.status, version === null ? "conflict" : "planned");
       assert.ok(
         envelope.data.instructions.runtimePackages.some((entry: string) =>
-          entry.startsWith("bits-ui@"),
+          entry.startsWith("upstream-fixture@"),
         ),
       );
       assert.ok(
         envelope.data.dependencies.some(
           (entry: { name: string; status: string }) =>
-            entry.name === "bits-ui" && entry.status !== "ready",
+            entry.name === "upstream-fixture" && entry.status !== "ready",
         ),
       );
       assert.ok(envelope.diagnostics.length > 0);
@@ -193,7 +193,7 @@ test("add reports missing/incompatible dependency instructions without installin
       "utf8",
     );
     const installedBefore = readFileSync(
-      path.join(fixture.root, "node_modules/bits-ui/package.json"),
+      path.join(fixture.root, "node_modules/upstream-fixture/package.json"),
       "utf8",
     );
     const applied = fixture.run(["add", "button"]);
@@ -205,7 +205,7 @@ test("add reports missing/incompatible dependency instructions without installin
     );
     assert.equal(
       readFileSync(
-        path.join(fixture.root, "node_modules/bits-ui/package.json"),
+        path.join(fixture.root, "node_modules/upstream-fixture/package.json"),
         "utf8",
       ),
       installedBefore,
