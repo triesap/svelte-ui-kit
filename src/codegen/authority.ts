@@ -37,10 +37,12 @@ import { resolveInstalledManifestCandidate } from "../project/dependencies.js";
 import { sha256Hex } from "./digest.js";
 import { TRANSIENT_NAMESPACE } from "./transaction-types.js";
 import {
-  authenticateNativeInstall,
+  nativeArchiveIssues,
   nativeDeclaration,
+  nativeInstallIssues,
   NATIVE_BASELINE,
   observeNativeFile,
+  observeNativeInstall,
 } from "../project/native-dependency.js";
 import { readJsonObject } from "../project/io.js";
 
@@ -1095,35 +1097,27 @@ export function verifyInstalledReads(
         );
         continue;
       }
-      if (
-        manifest.version === NATIVE_BASELINE.version &&
-        authenticateNativeInstall(path.dirname(resolved)).length > 0
-      ) {
+      const app = readJsonObject(path.join(root, "package.json"));
+      const selected = app.kind === "value" ? app.value : null;
+      const nativeIssues = [
+        ...nativeInstallIssues(
+          manifest.version,
+          observeNativeInstall(path.dirname(resolved), manifest.version),
+        ),
+        ...nativeArchiveIssues(
+          nativeDeclaration(selected),
+          observeNativeFile(root, selected),
+        ),
+      ];
+      if (nativeIssues.length > 0) {
         issues.push(
           issue(
             "AUTHORITY_INSTALLED_CHANGED",
-            "The qualified native distribution changed since planning; recopy and reinstall the authenticated archive explicitly.",
+            "The native installation or selected application source no longer positively authenticates. Recopy and reinstall the qualified application-owned archive explicitly.",
             entry.name,
           ),
         );
         continue;
-      }
-      if (manifest.version === NATIVE_BASELINE.version) {
-        const app = readJsonObject(path.join(root, "package.json"));
-        if (
-          app.kind === "value" &&
-          nativeDeclaration(app.value) !== null &&
-          observeNativeFile(root, app.value).kind !== "value"
-        ) {
-          issues.push(
-            issue(
-              "AUTHORITY_INSTALLED_CHANGED",
-              "The declared native archive is no longer an authenticated application-owned source. Recopy and reinstall the qualified local archive explicitly.",
-              entry.name,
-            ),
-          );
-          continue;
-        }
       }
     }
     if (entry.mode !== null && (stats.mode & 0o777) !== entry.mode) {

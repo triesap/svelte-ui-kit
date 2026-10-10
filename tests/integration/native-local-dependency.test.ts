@@ -536,3 +536,90 @@ test("guarded installed revalidation detects changed native content with unchang
     "the unchanged archive cannot certify changed installed code",
   );
 });
+
+test("live native authority refuses missing declarations and noncanonical identity even with a fresh manifest read set", (t) => {
+  for (const fault of [
+    "missing-declaration",
+    "malformed-app",
+    "provenance",
+    "v-prefix",
+    "build-metadata",
+  ]) {
+    const root = copy(t);
+    const captured = captureEnvironment(root);
+    const reads = installedReads(root);
+    assert.deepEqual(verifyInstalledReads(root, reads), []);
+    if (fault === "missing-declaration" || fault === "malformed-app") {
+      const file = path.join(root, "package.json");
+      const manifest = JSON.parse(readFileSync(file, "utf8"));
+      delete manifest.dependencies["bits-ui"];
+      writeFileSync(
+        file,
+        fault === "malformed-app" ? "not json" : JSON.stringify(manifest),
+      );
+    } else if (fault === "provenance") {
+      const file = path.join(packageRoot(root), "NATIVE_PROVENANCE.json");
+      chmodSync(file, 0o600);
+      writeFileSync(file, "{}");
+    } else {
+      const file = path.join(packageRoot(root), "package.json");
+      const manifest = JSON.parse(readFileSync(file, "utf8"));
+      manifest.version =
+        fault === "v-prefix"
+          ? `v${NATIVE_BASELINE.version}`
+          : `${NATIVE_BASELINE.version}+unqualified`;
+      chmodSync(file, 0o600);
+      writeFileSync(file, JSON.stringify(manifest));
+    }
+    const before = snapshotTree(root);
+    const stale = inspectDependencyStateFromEvidence(
+      {
+        manifest: captured.manifest,
+        nativeFile: captured.nativeFile,
+        observe: (name) => captured.installed.get(name) ?? null,
+      },
+      requirements,
+    );
+    assert.ok(stale.ok);
+    assert.equal(stale.value[0]?.status, "ready");
+    for (const evidence of [reads, installedReads(root)]) {
+      assert.ok(
+        verifyInstalledReads(root, evidence).some(
+          (i) =>
+            i.code === "AUTHORITY_INSTALLED_CHANGED" &&
+            i.locator === NATIVE_BASELINE.name,
+        ),
+        fault,
+      );
+      assert.deepEqual(snapshotTree(root), before);
+    }
+  }
+});
+
+test("hoisted authentic native install still requires the selected application's own archive and declaration", (t) => {
+  const root = copy(t);
+  const app = path.join(root, "packages/app");
+  mkdirSync(app, { recursive: true });
+  for (const file of ["package.json", "vendor"])
+    cpSync(path.join(root, file), path.join(app, file), { recursive: true });
+  const initial = snapshotTree(root);
+  const ready = inspectDependencyState(app, requirements);
+  assert.ok(ready.ok);
+  assert.equal(ready.value[0]?.status, "ready");
+  const reads = installedReads(app);
+  assert.deepEqual(verifyInstalledReads(app, reads), []);
+  assert.deepEqual(snapshotTree(root), initial);
+  rmSync(path.join(app, archivePath));
+  const missing = snapshotTree(root);
+  assert.deepEqual(codes(app), ["NATIVE_ARCHIVE_INVALID"]);
+  assert.ok(
+    verifyInstalledReads(app, reads).some(
+      (i) => i.code === "AUTHORITY_INSTALLED_CHANGED",
+    ),
+  );
+  assert.deepEqual(
+    snapshotTree(root),
+    missing,
+    "parent archive cannot substitute for the selected app source",
+  );
+});

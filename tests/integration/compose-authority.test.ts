@@ -96,7 +96,7 @@ test("a post-planning layout edit is refused rather than blessed as a preimage",
         dependencies: {
           svelte: "5.57.1",
           "@sveltejs/kit": "2.70.3",
-          "bits-ui": "2.19.3",
+          "upstream-fixture": "2.19.3",
           "@internationalized/date": "3.12.4",
         },
       }),
@@ -144,7 +144,7 @@ test("a post-planning manifest dependency change is refused from captured enviro
       dependencies: {
         svelte: "5.57.1",
         "@sveltejs/kit": "2.70.3",
-        "bits-ui": "2.19.3",
+        "upstream-fixture": "2.19.3",
         "@internationalized/date": "3.12.4",
       },
     };
@@ -224,7 +224,7 @@ const INSTALLED_MANIFEST = {
   dependencies: {
     svelte: "5.57.1",
     "@sveltejs/kit": "2.70.3",
-    "bits-ui": "2.19.3",
+    "upstream-fixture": "2.19.3",
     "@internationalized/date": "3.12.4",
   },
 };
@@ -355,7 +355,7 @@ function seedAuthorityConsumer(root: string): void {
       dependencies: {
         svelte: "5.57.1",
         "@sveltejs/kit": "2.70.3",
-        "bits-ui": "2.19.3",
+        "upstream-fixture": "2.19.3",
         "@internationalized/date": "3.12.4",
       },
     }),
@@ -650,7 +650,7 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
           dependencies: {
             svelte: "5.57.1",
             "@sveltejs/kit": "2.70.3",
-            "bits-ui": "2.19.3",
+            "upstream-fixture": "2.19.3",
             "@internationalized/date": "3.12.4",
             "suik-resolution-probe": "1.0.0",
           },
