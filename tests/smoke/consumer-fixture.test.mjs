@@ -35,6 +35,8 @@ import {
   DEFAULT_LAUNCHER,
   fetchRoute,
   startOwnedServer,
+  stopOwnedServer,
+  withOwnedServer,
 } from "./owned-server.mjs";
 import {
   assertHtmlTransport,
@@ -93,10 +95,12 @@ function linkFixtureNodeModules(fixtureNodeModules, targetNodeModules) {
 function createDisposableCopy(
   t,
   label,
-  { source = FIXTURE_ROOT, parent = os.tmpdir() } = {},
+  { source = FIXTURE_ROOT, parent = os.tmpdir(), canRemove = () => true } = {},
 ) {
   const base = mkdtempSync(path.join(parent, `suik-consumer-${label}-`));
-  const cleanup = () => rmSync(base, { recursive: true, force: true });
+  const cleanup = () => {
+    if (canRemove()) rmSync(base, { recursive: true, force: true });
+  };
   t.after(cleanup);
   try {
     const root = path.join(base, "consumer");
@@ -185,9 +189,7 @@ after(async () => {
   if (server === undefined) return;
   // Sample health after teardown drains stdio, so shutdown-time stderr and a
   // post-ready exit are both observed rather than missed.
-  await server.stop();
-  const healthError = server.failure();
-  if (healthError) throw healthError;
+  await stopOwnedServer(server);
 });
 
 test("the built app serves the qualification route as server-rendered HTML", async () => {
@@ -313,7 +315,10 @@ test("a real Svelte/TypeScript mismatch fails fixture:check and restored input p
 });
 
 test("disabling SSR fails only the missing-markup assertion (disposable copy)", async (t) => {
-  const copy = createDisposableCopy(t, "ssr-disabled");
+  let disabledServer;
+  const copy = createDisposableCopy(t, "ssr-disabled", {
+    canRemove: () => !disabledServer || disabledServer.isClosed(),
+  });
   writeFileSync(
     path.join(copy, "src", "routes", "+page.ts"),
     "export const ssr = false;\n",
@@ -333,10 +338,10 @@ test("disabling SSR fails only the missing-markup assertion (disposable copy)", 
     "the disposed copy build must emit handler.js",
   );
 
-  const disabledServer = startOwnedServer({
+  disabledServer = startOwnedServer({
     args: [DEFAULT_LAUNCHER, copyHandler],
   });
-  try {
+  await withOwnedServer(disabledServer, async () => {
     const disabledPort = await disabledServer.ready;
     const response = await fetchRoute(`http://127.0.0.1:${disabledPort}/`);
     // Transport success is asserted independently: an HTTP 500 or a wrong
@@ -348,9 +353,7 @@ test("disabling SSR fails only the missing-markup assertion (disposable copy)", 
       "a real SSR-disabled page must be missing visible server markup",
     );
     assert.match(error.message, /missing visible SSR markup/);
-  } finally {
-    await disabledServer.stop();
-  }
+  });
 });
 
 test("a failed disposable-copy setup removes its owned directory synchronously", (t) => {

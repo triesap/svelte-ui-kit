@@ -33,6 +33,7 @@ import {
   DEFAULT_LAUNCHER,
   fetchRoute,
   startOwnedServer,
+  stopOwnedServer,
 } from "./owned-server.mjs";
 import { assertServerRendered } from "./ssr-assertions.mjs";
 
@@ -112,8 +113,14 @@ test("a generated default consumer checks, builds and server-renders", async (t)
   const root = path.join(base, "consumer");
   let server;
   t.after(async () => {
-    if (server) await server.stop();
-    rmSync(base, { recursive: true, force: true });
+    try {
+      if (server) await stopOwnedServer(server);
+    } finally {
+      // Retain the fixture when teardown cannot prove the child is closed.
+      if (!server || server.isClosed()) {
+        rmSync(base, { recursive: true, force: true });
+      }
+    }
   });
   cpSync(FIXTURE_ROOT, root, {
     recursive: true,

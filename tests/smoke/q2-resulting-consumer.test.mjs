@@ -47,6 +47,7 @@ import {
   DEFAULT_LAUNCHER,
   fetchRoute,
   startOwnedServer,
+  stopOwnedServer,
 } from "./owned-server.mjs";
 import {
   assertGeneratedComponentMarkup,
@@ -493,7 +494,7 @@ const STAGE_MARKERS = {
   },
 };
 
-async function runStage({ label, consumer, config, registry, stage }) {
+async function runStage({ label, consumer, config, registry, stage, servers }) {
   const derived = deriveKitPaths(config);
   const stageLog = {
     label,
@@ -635,12 +636,14 @@ async function runStage({ label, consumer, config, registry, stage }) {
       `${label}/${stage} missing handler`,
     );
     let server;
+    const renderErrors = [];
     try {
       server = startOwnedServer({
         command: process.execPath,
         args: [DEFAULT_LAUNCHER, handler],
         cwd: consumer,
       });
+      servers.add(server);
       stageLog.server = {
         command: process.execPath,
         args: [DEFAULT_LAUNCHER, handler],
@@ -667,8 +670,21 @@ async function runStage({ label, consumer, config, registry, stage }) {
         STAGE_MARKERS[stage],
         `${label}/${stage}`,
       );
+    } catch (error) {
+      renderErrors.push(error);
+      throw error;
     } finally {
-      if (server) await server.stop();
+      if (server) {
+        try {
+          await stopOwnedServer(server, renderErrors);
+        } finally {
+          // Capture drained shutdown output even when rendering or stop failed.
+          stageLog.server.stdout = server.stdout();
+          stageLog.server.stderr = server.stderr();
+          stageLog.server.closed = server.isClosed();
+          stageLog.server.failure = server.failure()?.message ?? null;
+        }
+      }
     }
 
     // Retain the input identity, source/build identity and the actually served
@@ -709,6 +725,7 @@ async function runStage({ label, consumer, config, registry, stage }) {
 
 async function runMapping(label, config) {
   const { base, root } = seedConsumer();
+  const servers = new Set();
   const registryRoots = [
     mkdtempSync(path.join(os.tmpdir(), "suik-q2-add-")),
     mkdtempSync(path.join(os.tmpdir(), "suik-q2-upd-")),
@@ -741,6 +758,7 @@ async function runMapping(label, config) {
         config,
         registry: addRegistry.value,
         stage: "add",
+        servers,
       }),
     );
     identities.push(
@@ -750,6 +768,7 @@ async function runMapping(label, config) {
         config,
         registry: updateRegistry.value,
         stage: "update",
+        servers,
       }),
     );
     identities.push(
@@ -759,11 +778,14 @@ async function runMapping(label, config) {
         config,
         registry: retirementRegistry.value,
         stage: "retirement",
+        servers,
       }),
     );
     return identities;
   } finally {
-    rmSync(base, { recursive: true, force: true });
+    if ([...servers].every((server) => server.isClosed())) {
+      rmSync(base, { recursive: true, force: true });
+    }
     for (const registryRoot of registryRoots) {
       rmSync(registryRoot, { recursive: true, force: true });
     }

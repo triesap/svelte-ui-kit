@@ -20,6 +20,8 @@ import {
   DEFAULT_LAUNCHER,
   fetchRoute,
   startOwnedServer,
+  stopOwnedServer,
+  withOwnedServer,
 } from "./owned-server.mjs";
 import { assertHtmlTransport } from "./ssr-assertions.mjs";
 
@@ -35,6 +37,91 @@ function startFault(fault) {
     stopTimeoutMs: FAULT_STOP_TIMEOUT_MS,
   });
 }
+
+test("qualified work rejects shutdown stderr and retains its primary assertion", async () => {
+  const server = startFault("stderr-on-term");
+  const primary = new Error("primary render assertion");
+  await assert.rejects(
+    withOwnedServer(server, async () => {
+      const port = await server.ready;
+      await fetchRoute(`http://127.0.0.1:${port}/`);
+      throw primary;
+    }),
+    (error) => {
+      assert.ok(error instanceof AggregateError);
+      assert.ok(error.errors.includes(primary));
+      assert.match(error.message, /primary render assertion/);
+      assert.match(error.message, /stderr during shutdown/);
+      return true;
+    },
+  );
+  assert.equal(server.isClosed(), true);
+});
+
+test("qualification samples health before and after stop even when stop rejects", async () => {
+  const primary = new Error("work failed");
+  const before = new Error("unexpected exit before stop");
+  const after = new Error("shutdown stderr after stop");
+  const stopError = new Error("stop rejected");
+  const events = [];
+  const server = {
+    failure: () => {
+      events.push("sample");
+      return events.includes("stop") ? after : before;
+    },
+    stop: async () => {
+      events.push("stop");
+      throw stopError;
+    },
+    isClosed: () => true,
+  };
+  await assert.rejects(stopOwnedServer(server, [primary]), (error) => {
+    assert.ok(error instanceof AggregateError);
+    assert.deepEqual(error.errors, [primary, before, stopError, after]);
+    return true;
+  });
+  assert.deepEqual(events, ["sample", "stop", "sample"]);
+});
+
+test("qualification rejects an unsuccessful exit during intentional shutdown", async () => {
+  const server = startFault("error-exit-on-term");
+  await server.ready;
+  await assert.rejects(stopOwnedServer(server), /code=17/);
+  assert.equal(server.isClosed(), true);
+});
+
+test("later shutdown output is retained after an earlier health failure", async () => {
+  const server = startFault("stderr-and-shutdown");
+  const port = await server.ready;
+  await fetchRoute(`http://127.0.0.1:${port}/`);
+  assert.match(server.failure().message, /injected stderr/);
+  await assert.rejects(stopOwnedServer(server), (error) => {
+    assert.match(error.message, /injected stderr/);
+    assert.match(error.message, /stderr during shutdown/);
+    return true;
+  });
+  assert.match(server.stderr(), /stderr during shutdown/);
+});
+
+test("qualified work refuses a post-ready exit and accepts a clean control", async () => {
+  const broken = startFault("exit-after-ready");
+  await assert.rejects(
+    withOwnedServer(broken, async () => {
+      const port = await broken.ready;
+      await fetchRoute(`http://127.0.0.1:${port}/`);
+      await broken.exited;
+    }),
+    /code=17/,
+  );
+  const control = startFault("ok");
+  const result = await withOwnedServer(control, async () => {
+    const port = await control.ready;
+    await fetchRoute(`http://127.0.0.1:${port}/`);
+    return "rendered";
+  });
+  assert.equal(result, "rendered");
+  assert.equal(control.isClosed(), true);
+});
 
 test("the launcher resolves its corrected default handler path", async () => {
   assert.ok(

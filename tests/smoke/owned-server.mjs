@@ -144,7 +144,15 @@ export function startOwnedServer(options = {}) {
   };
 
   const currentExitFailure = () => {
-    if (exitInfo === null || intentionalStop) return null;
+    if (exitInfo === null) return null;
+    if (
+      intentionalStop &&
+      !exitInfo.error &&
+      (exitInfo.code === 0 ||
+        exitInfo.signal === "SIGTERM" ||
+        exitInfo.signal === "SIGKILL")
+    )
+      return null;
     return new Error(
       `owned server exited unexpectedly (${describeExit(exitInfo)})\nstderr:\n${stderr}`,
     );
@@ -157,7 +165,24 @@ export function startOwnedServer(options = {}) {
 
   /** The first unexpected failure observed so far, or null while healthy. */
   const failure = () => {
-    if (firstFailure !== null) return firstFailure;
+    if (firstFailure !== null) {
+      // An earlier observation must not hide later shutdown stderr. Keep the
+      // original cause and expose the complete drained stream on later samples.
+      const extra = [];
+      const exitFailure = currentExitFailure();
+      if (exitFailure && !firstFailure.message.includes(exitFailure.message)) {
+        extra.push(exitFailure.message);
+      }
+      if (stderr.trim() !== "" && !firstFailure.message.includes(stderr)) {
+        extra.push(`complete stderr:\n${stderr}`);
+      }
+      if (extra.length > 0) {
+        return new Error(`${firstFailure.message}\n${extra.join("\n")}`, {
+          cause: firstFailure,
+        });
+      }
+      return firstFailure;
+    }
     const exitFailure = currentExitFailure();
     if (exitFailure !== null) {
       recordFailure(exitFailure);
@@ -320,6 +345,48 @@ export function startOwnedServer(options = {}) {
     assertAlive,
     isClosed: () => closed,
   };
+}
+
+/**
+ * Qualify teardown before a caller removes the server's fixture. Sample both
+ * sides of awaited stop, and preserve primary work errors alongside shutdown
+ * failures rather than allowing a finally block to replace the original cause.
+ */
+export async function stopOwnedServer(server, priorErrors = []) {
+  const errors = [...priorErrors];
+  const collect = (error) => {
+    if (error !== null && !errors.includes(error)) errors.push(error);
+  };
+  collect(server.failure());
+  try {
+    await server.stop();
+  } catch (error) {
+    errors.push(error);
+  }
+  collect(server.failure());
+  if (!server.isClosed()) {
+    errors.push(new Error("owned server teardown did not close the child"));
+  }
+  if (errors.length === 1) throw errors[0];
+  if (errors.length > 1) {
+    throw new AggregateError(
+      errors,
+      errors.map((error) => String(error?.message ?? error)).join("\n"),
+    );
+  }
+}
+
+/** Run owned server work and qualify its shutdown, including failed work. */
+export async function withOwnedServer(server, work) {
+  const errors = [];
+  let result;
+  try {
+    result = await work(server);
+  } catch (error) {
+    errors.push(error);
+  }
+  await stopOwnedServer(server, errors);
+  return result;
 }
 
 /**

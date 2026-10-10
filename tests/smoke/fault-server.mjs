@@ -12,6 +12,8 @@
  *   startup-failure write stderr and exit 1 before reporting a port
  *   stderr          write stderr once, then serve normally
  *   stderr-on-term  write stderr while handling SIGTERM, then exit 0
+ *   stderr-and-shutdown write stderr during a request and during shutdown
+ *   error-exit-on-term exit 17 while handling SIGTERM
  *   ignore-term     ignore SIGTERM; the harness must force SIGKILL
  *   exit-after-ready serve one request, then exit 17
  *   stall-headers   accept the request and never send headers
@@ -37,6 +39,7 @@ function handler(_request, response) {
       response.write("<html><body>partial");
       return; // never end the response
     case "stderr":
+    case "stderr-and-shutdown":
       process.stderr.write("fault-server: injected stderr\n");
       break;
     case "exit-after-ready":
@@ -73,6 +76,15 @@ for (const signal of ["SIGTERM", "SIGINT"]) {
   process.on(signal, () => {
     // A fault that proves shutdown-time stderr is captured and reported.
     if (fault === "stderr-on-term") {
+      process.stderr.write("fault-server: stderr during shutdown\n");
+      server.close(() => process.exit(0));
+      return;
+    }
+    if (fault === "error-exit-on-term") {
+      server.close(() => process.exit(17));
+      return;
+    }
+    if (fault === "stderr-and-shutdown") {
       process.stderr.write("fault-server: stderr during shutdown\n");
       server.close(() => process.exit(0));
       return;

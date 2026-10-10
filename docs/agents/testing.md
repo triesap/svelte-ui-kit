@@ -83,7 +83,10 @@ links only inside the extracted real archive, never through authoring fallback.
 Never overlap shared fixture/compiler/native/package writers. Browser tests own
 production servers and enforce stop-before-delete lifecycle; an owned cleanup
 mutation must reproduce faults. Match selected tests to the change and broaden
-when a failure or unresolved boundary requires it. Final release qualification
+when a failure or unresolved boundary requires it. SSR callers sample health
+before and after awaited shutdown, preserve work and teardown causes together,
+and retain complete drained server output. A fixture remains when its owned
+server cannot be proved closed. Final release qualification
 requires cumulative lanes and actual clean-checkout/installed-package adoption;
 report unsupported/unavailable platform or tool gates explicitly.
 
