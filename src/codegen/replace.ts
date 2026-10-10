@@ -39,6 +39,12 @@ import {
   type TransactionPhase,
 } from "./transaction-types.js";
 import type { StagedBatch, StagedRecord } from "./stage.js";
+import {
+  backupOwnedPreimage,
+  createOwnedDirectory,
+  forgetRenamedCreation,
+  type OwnedCreation,
+} from "./transaction-inventory.js";
 
 export interface ReplacementResult {
   readonly ok: boolean;
@@ -141,6 +147,7 @@ export function applyReplacements(
   journal: TransactionJournal,
   staged: StagedBatch,
   hooks?: TransactionHooks,
+  ownership?: OwnedCreation[],
 ): ReplacementResult {
   const backupsLogical = backupsDir(stateDir, journal.transactionId);
   const backupsAbs = absOf(root, backupsLogical);
@@ -149,7 +156,8 @@ export function applyReplacements(
   let current = journal;
 
   try {
-    mkdirSync(backupsAbs, { recursive: true, mode: 0o700 });
+    if (ownership !== undefined) createOwnedDirectory(backupsAbs, ownership);
+    else mkdirSync(backupsAbs, { recursive: true, mode: 0o700 });
   } catch (error) {
     return {
       ok: false,
@@ -186,7 +194,15 @@ export function applyReplacements(
           );
         }
         mkdirSync(path.dirname(targetAbs), { recursive: true });
-        renameSync(targetAbs, path.join(backupsAbs, operation.backupId));
+        if (ownership !== undefined)
+          backupOwnedPreimage(
+            targetAbs,
+            path.join(backupsAbs, operation.backupId),
+            operation.preimage.digest!,
+            operation.preimage.mode!,
+            ownership,
+          );
+        else renameSync(targetAbs, path.join(backupsAbs, operation.backupId));
         fireHooks(hooks, "before", "durability:backup", operation.path);
         // A cross-directory rename affects both parents: the backup directory
         // gained an entry and the target's directory lost one. Flush both so a
@@ -218,6 +234,8 @@ export function applyReplacements(
         }
         mkdirSync(path.dirname(targetAbs), { recursive: true });
         renameSync(absOf(root, record.stagedPath), targetAbs);
+        if (ownership !== undefined)
+          forgetRenamedCreation(absOf(root, record.stagedPath), ownership);
         fireHooks(hooks, "before", "durability:replace", operation.path);
         // The staged image left its directory and entered the target's
         // directory; flush both parents of the cross-directory rename.
@@ -236,7 +254,7 @@ export function applyReplacements(
         ),
       };
       fireHooks(hooks, "before", "progress:persist", operation.path);
-      persistJournal(root, journalLogical, current, hooks);
+      persistJournal(root, journalLogical, current, hooks, ownership);
       fireHooks(hooks, "after", "progress:persist", operation.path);
     } catch (error) {
       if (error instanceof ReplaceRefusal) {
@@ -269,7 +287,7 @@ export function applyReplacements(
   const applied: TransactionPhase = "applied";
   current = { ...current, phase: applied };
   try {
-    persistJournal(root, journalLogical, current, hooks);
+    persistJournal(root, journalLogical, current, hooks, ownership);
   } catch (error) {
     return {
       ok: false,

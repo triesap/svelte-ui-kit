@@ -52,6 +52,9 @@ import {
   hasRollbackEvidence,
   ownedInventoryFor,
   verifyOwnedInventory,
+  captureCleanupInventory,
+  removeCleanupEntries,
+  type OwnedInventory,
 } from "./transaction-inventory.js";
 import {
   classifyPublication,
@@ -926,8 +929,17 @@ function removeOwnedEntries(
   stateDir: string,
   transactionId: string,
   hooks?: TransactionHooks,
+  inventory: OwnedInventory = emptyOwnedInventory(),
 ): ModelIssue[] {
   const dir = absOf(root, transactionDir(stateDir, transactionId));
+  const held = captureCleanupInventory(
+    root,
+    stateDir,
+    transactionId,
+    inventory,
+  );
+  if (!held.ok) return [...held.issues];
+  fireHooks(hooks, "before", "recovery:cleanup", transactionId);
   let names: string[];
   try {
     names = readdirSync(dir);
@@ -953,23 +965,14 @@ function removeOwnedEntries(
   const tempEntries = names.filter((name) => ownedTempNames.has(name));
   const proofEntries = names.filter((name) => OWNED_PROOF_ENTRIES.has(name));
 
-  const removeGroup = (
-    group: readonly string[],
-    recursive: boolean,
-  ): ModelIssue[] => {
+  const removeGroup = (group: readonly string[]): ModelIssue[] => {
     for (const name of group) {
-      try {
-        rmSync(path.join(dir, name), { recursive, force: true });
-      } catch (error) {
-        if (codeOf(error) === "ENOENT") continue;
-        return [
-          issue(
-            "RECOVERY_CLEANUP_FAILED",
-            `owned transaction entry ${name} could not be removed (${codeOf(error)})`,
-            name,
-          ),
-        ];
-      }
+      const removed = removeCleanupEntries(held.value, path.join(dir, name));
+      if (removed.length > 0)
+        return removed.map((entry) => ({
+          ...entry,
+          code: "RECOVERY_CLEANUP_FAILED",
+        }));
     }
     return [];
   };
@@ -992,21 +995,26 @@ function removeOwnedEntries(
   // before touching the authoritative journal/witness. A failed prerequisite
   // stops destructive progress with the proof retained for a coordinated
   // retry, rather than deleting the evidence while reporting a refusal.
-  const ephemeralIssues = removeGroup(ephemeralOwned, true);
+  const ephemeralIssues = removeGroup(ephemeralOwned);
   if (ephemeralIssues.length > 0) return ephemeralIssues;
-  const tempIssues = removeGroup(tempEntries, false);
+  const tempIssues = removeGroup(tempEntries);
   if (tempIssues.length > 0) return tempIssues;
   const ephemeralFlush = flushDir("directory removals");
   if (ephemeralFlush.length > 0) return ephemeralFlush;
 
-  const proofIssues = removeGroup(proofEntries, false);
+  const proofIssues = removeGroup(proofEntries);
   if (proofIssues.length > 0) return proofIssues;
   const proofFlush = flushDir("journal/witness removals");
   if (proofFlush.length > 0) return proofFlush;
 
   try {
     fireHooks(hooks, "before", "recovery:cleanup-dir", transactionId);
-    rmdirSync(dir);
+    const removed = removeCleanupEntries(held.value, dir);
+    if (removed.length > 0)
+      return removed.map((entry) => ({
+        ...entry,
+        code: "RECOVERY_CLEANUP_FAILED",
+      }));
   } catch (error) {
     if (codeOf(error) !== "ENOENT") {
       return [
@@ -1031,6 +1039,7 @@ function removeOwnedEntries(
       ];
     }
   }
+  fireHooks(hooks, "after", "recovery:cleanup", transactionId);
   return [];
 }
 
@@ -1308,10 +1317,14 @@ function recoverTransactionUnderLock(
       hooks,
     );
     if (ancestry.length > 0) return refuse(transactionId, ancestry);
-    fireHooks(hooks, "before", "recovery:cleanup", transactionId);
-    const cleanup = removeOwnedEntries(root, stateDir, transactionId, hooks);
+    const cleanup = removeOwnedEntries(
+      root,
+      stateDir,
+      transactionId,
+      hooks,
+      ownedInventoryFor(journal),
+    );
     if (cleanup.length > 0) return refuse(transactionId, cleanup);
-    fireHooks(hooks, "after", "recovery:cleanup", transactionId);
     return completedRollback(journal, "rolled_back");
   }
 
@@ -1330,7 +1343,13 @@ function recoverTransactionUnderLock(
     if (ancestryIssues.length > 0) {
       return refuse(transactionId, ancestryIssues);
     }
-    const cleanup = removeOwnedEntries(root, stateDir, transactionId, hooks);
+    const cleanup = removeOwnedEntries(
+      root,
+      stateDir,
+      transactionId,
+      hooks,
+      ownedInventoryFor(journal),
+    );
     if (cleanup.length > 0) return refuse(transactionId, cleanup);
     return completedRollback(journal, "cleaned");
   }
@@ -1464,7 +1483,6 @@ function recoverTransactionUnderLock(
     hooks,
   );
   if (ancestryIssues.length > 0) return refuse(transactionId, ancestryIssues);
-  fireHooks(hooks, "before", "recovery:cleanup", transactionId);
   const cleanupIssues = inventoryIssues(root, stateDir, transactionId, journal);
   if (cleanupIssues.length > 0) return refuse(transactionId, cleanupIssues);
   const removalIssues = removeOwnedEntries(
@@ -1472,11 +1490,11 @@ function recoverTransactionUnderLock(
     stateDir,
     transactionId,
     hooks,
+    ownedInventoryFor(journal),
   );
   if (removalIssues.length > 0) {
     return refuse(transactionId, [...ancestryIssues, ...removalIssues]);
   }
-  fireHooks(hooks, "after", "recovery:cleanup", transactionId);
   return completedRollback(journal, "rolled_back", ancestryIssues);
 }
 
@@ -1531,7 +1549,6 @@ function recoverPublished(
   if (publishedIssues.length > 0) {
     return refuse(transactionId, publishedIssues);
   }
-  fireHooks(hooks, "before", "recovery:cleanup", transactionId);
   const publishedInventory = verifyOwnedInventory(
     root,
     stateDir,
@@ -1546,9 +1563,9 @@ function recoverPublished(
     stateDir,
     transactionId,
     hooks,
+    ownedInventoryFor(journal),
   );
   if (removalIssues.length > 0) return refuse(transactionId, removalIssues);
-  fireHooks(hooks, "after", "recovery:cleanup", transactionId);
   return { status: "committed", transactionId, issues: [] };
 }
 

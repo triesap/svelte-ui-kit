@@ -20,17 +20,24 @@ import {
   openSync,
   readFileSync,
   readdirSync,
+  renameSync,
   rmdirSync,
   unlinkSync,
   writeSync,
 } from "node:fs";
 import path from "node:path";
 
-import type { ModelIssue } from "../registry/errors.js";
+import {
+  fail,
+  ok,
+  type ModelIssue,
+  type ModelResult,
+} from "../registry/errors.js";
 import { observeEntry } from "../project/io.js";
 import type { TransactionJournal } from "./transaction-journal.js";
 import { sha256Hex } from "./digest.js";
 import { flushDirectory } from "./durability.js";
+import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
   backupsDir,
   journalTempName,
@@ -158,11 +165,23 @@ export function writeOwnedFile(
 export function verifyOwnedCreations(
   receipts: readonly OwnedCreation[],
 ): ModelIssue[] {
+  if (receipts.some((entry) => !CREATIONS.has(entry))) {
+    return [
+      {
+        code: "OWNED_CLEANUP_REFUSED",
+        message: "creation receipt is not held by this process",
+      },
+    ];
+  }
+  return verifyPhysicalInventory(receipts);
+}
+
+function verifyPhysicalInventory(
+  receipts: readonly OwnedCreation[],
+): ModelIssue[] {
   const expected = new Map(receipts.map((entry) => [entry.path, entry]));
   try {
     for (const entry of receipts) {
-      if (!CREATIONS.has(entry))
-        throw new Error("creation receipt is not held by this process");
       let stats;
       try {
         stats = lstatSync(entry.path);
@@ -204,9 +223,124 @@ export function verifyOwnedCreations(
   return [];
 }
 
+/** Frozen physical proof after the caller's journal/inventory validation. */
+export interface HeldCleanupInventory {
+  readonly entries: readonly OwnedCreation[];
+}
+const CLEANUP_INVENTORIES = new WeakSet<HeldCleanupInventory>();
+
+export function captureCleanupInventory(
+  root: string,
+  stateDir: string,
+  transactionId: string,
+  inventory: OwnedInventory,
+): ModelResult<HeldCleanupInventory> {
+  const issues = verifyOwnedInventory(root, stateDir, transactionId, inventory);
+  if (issues.length > 0) return fail(issues);
+  const entries: OwnedCreation[] = [];
+  const walk = (target: string): void => {
+    let stats;
+    try {
+      stats = lstatSync(target);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw error;
+    }
+    if (stats.isSymbolicLink() || (!stats.isDirectory() && !stats.isFile()))
+      throw new Error("cleanup inventory changed kind");
+    entries.push(
+      Object.freeze({
+        path: target,
+        kind: stats.isDirectory() ? "directory" : "file",
+        device: stats.dev,
+        inode: stats.ino,
+        mode: stats.mode & 0o7777,
+        digest: stats.isFile() ? sha256Hex(readFileSync(target)) : null,
+      }),
+    );
+    if (stats.isDirectory())
+      for (const name of readdirSync(target)) walk(path.join(target, name));
+  };
+  try {
+    walk(
+      path.join(root, ...transactionDir(stateDir, transactionId).split("/")),
+    );
+  } catch (error) {
+    return fail([
+      {
+        code: "OWNED_CLEANUP_REFUSED",
+        message: `could not freeze cleanup inventory: ${error instanceof Error ? error.message : String(error)}`,
+      },
+    ]);
+  }
+  const proof = Object.freeze({ entries: Object.freeze(entries) });
+  CLEANUP_INVENTORIES.add(proof);
+  const inventoryRecheck = verifyOwnedInventory(
+    root,
+    stateDir,
+    transactionId,
+    inventory,
+  );
+  if (inventoryRecheck.length > 0) return fail(inventoryRecheck);
+  const verified = verifyPhysicalInventory(proof.entries);
+  return verified.length > 0 ? fail(verified) : ok(proof);
+}
+
+export function verifyCleanupInventory(
+  proof: HeldCleanupInventory,
+): ModelIssue[] {
+  if (!CLEANUP_INVENTORIES.has(proof))
+    return [
+      {
+        code: "OWNED_CLEANUP_REFUSED",
+        message: "cleanup inventory is not held by this process",
+      },
+    ];
+  return verifyPhysicalInventory(proof.entries);
+}
+
+/** Remove only frozen entries beneath this target, individually and durably. */
+export function removeCleanupEntries(
+  proof: HeldCleanupInventory,
+  target: string,
+): ModelIssue[] {
+  const preflight = verifyCleanupInventory(proof);
+  if (preflight.length > 0) return preflight;
+  const entries = proof.entries
+    .filter(
+      (entry) =>
+        entry.path === target || entry.path.startsWith(`${target}${path.sep}`),
+    )
+    .sort(
+      (a, b) => b.path.split(path.sep).length - a.path.split(path.sep).length,
+    );
+  for (const entry of entries) {
+    const recheck = verifyCleanupInventory(proof);
+    if (recheck.length > 0) return recheck;
+    let removed = false;
+    try {
+      if (entry.kind === "file") unlinkSync(entry.path);
+      else rmdirSync(entry.path);
+      removed = true;
+      flushDirectory(path.dirname(entry.path));
+    } catch (error) {
+      if (!removed && (error as NodeJS.ErrnoException).code === "ENOENT")
+        continue;
+      return [
+        {
+          code: "OWNED_CLEANUP_FAILED",
+          message: `frozen inventory removal did not finish: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ];
+    }
+  }
+  return [];
+}
+
 /** Empty-only directory and individual-file removal after whole-inventory proof. */
 export function cleanupOwnedCreations(
   receipts: readonly OwnedCreation[],
+  hooks?: TransactionHooks,
 ): ModelIssue[] {
   const preflight = verifyOwnedCreations(receipts);
   if (preflight.length > 0) return preflight;
@@ -216,12 +350,17 @@ export function cleanupOwnedCreations(
   for (const entry of ordered) {
     const recheck = verifyOwnedCreations(receipts);
     if (recheck.length > 0) return recheck;
+    let removed = false;
     try {
       if (entry.kind === "file") unlinkSync(entry.path);
       else rmdirSync(entry.path);
+      removed = true;
+      fireHooks(hooks, "before", "durability:cleanup", entry.path);
       flushDirectory(path.dirname(entry.path));
+      fireHooks(hooks, "after", "durability:cleanup", entry.path);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
+      if (!removed && (error as NodeJS.ErrnoException).code === "ENOENT")
+        continue;
       return [
         {
           code: "OWNED_CLEANUP_FAILED",
@@ -231,6 +370,81 @@ export function cleanupOwnedCreations(
     }
   }
   return [];
+}
+
+/** Transfer a held file receipt through an owned rename to an absent path. */
+export function renameOwnedCreation(
+  source: string,
+  destination: string,
+  receipts: OwnedCreation[],
+): void {
+  const proof = verifyOwnedCreations(receipts);
+  if (proof.length > 0)
+    throw new Error(proof.map((entry) => entry.message).join("; "));
+  const index = receipts.findIndex(
+    (entry) => entry.path === source && entry.kind === "file",
+  );
+  if (index < 0) throw new Error("rename requires a held creation receipt");
+  const existingIndex = receipts.findIndex(
+    (entry) => entry.path === destination,
+  );
+  try {
+    lstatSync(destination);
+    if (existingIndex < 0) throw new Error("owned rename destination appeared");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+  renameSync(source, destination);
+  const moved = recordCreation({ ...receipts[index]!, path: destination });
+  if (existingIndex >= 0) receipts.splice(existingIndex, 1);
+  receipts[receipts.findIndex((entry) => entry.path === source)] = moved;
+}
+
+/** Transfer an authenticated live preimage into a newly owned backup entry. */
+export function backupOwnedPreimage(
+  source: string,
+  destination: string,
+  digest: string,
+  mode: number,
+  receipts: OwnedCreation[],
+): void {
+  const proof = verifyOwnedCreations(receipts);
+  if (proof.length > 0)
+    throw new Error(proof.map((entry) => entry.message).join("; "));
+  const stats = lstatSync(source);
+  if (
+    !stats.isFile() ||
+    stats.isSymbolicLink() ||
+    (stats.mode & 0o7777) !== mode ||
+    sha256Hex(readFileSync(source)) !== digest
+  )
+    throw new Error("backup preimage is not authentic");
+  try {
+    lstatSync(destination);
+    throw new Error("backup destination appeared");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+  renameSync(source, destination);
+  receipts.push(
+    recordCreation({
+      path: destination,
+      kind: "file",
+      device: stats.dev,
+      inode: stats.ino,
+      mode,
+      digest,
+    }),
+  );
+}
+
+/** A staged image renamed into semantic source is no longer transient cleanup. */
+export function forgetRenamedCreation(
+  source: string,
+  receipts: OwnedCreation[],
+): void {
+  const index = receipts.findIndex((entry) => entry.path === source);
+  if (index >= 0) receipts.splice(index, 1);
 }
 
 const TOP_LEVEL_FILES = new Set(["journal.json", "publication.json"]);

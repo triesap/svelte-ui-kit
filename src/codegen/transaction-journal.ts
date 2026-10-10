@@ -23,6 +23,12 @@ import {
 import path from "node:path";
 
 import { sha256Hex } from "./digest.js";
+import { flushFile } from "./durability.js";
+import {
+  renameOwnedCreation,
+  writeOwnedFile,
+  type OwnedCreation,
+} from "./transaction-inventory.js";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { isSafeLogicalRelativePath, pathsOverlap } from "../project/paths.js";
 import { canonicalJson } from "./serialize.js";
@@ -518,22 +524,30 @@ export function persistJournal(
   logicalJournalPath: string,
   journal: TransactionJournal,
   hooks?: TransactionHooks,
+  ownership?: OwnedCreation[],
 ): void {
   const destination = path.join(root, ...logicalJournalPath.split("/"));
   const dir = path.dirname(destination);
-  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  if (ownership === undefined) mkdirSync(dir, { recursive: true, mode: 0o700 });
   const temporary = `${destination}.tmp-${journal.transactionId}`;
   const bytes = Buffer.from(serializeJournal(journal), "utf8");
   fireHooks(hooks, "before", "journal:write", logicalJournalPath);
-  const fd = openSync(temporary, "wx", 0o600);
-  try {
-    writeSync(fd, bytes);
-    fsyncSync(fd);
-  } finally {
-    closeSync(fd);
+  if (ownership !== undefined) {
+    writeOwnedFile(temporary, bytes, 0o600, ownership);
+    flushFile(temporary);
+  } else {
+    const fd = openSync(temporary, "wx", 0o600);
+    try {
+      writeSync(fd, bytes);
+      fsyncSync(fd);
+    } finally {
+      closeSync(fd);
+    }
   }
   fireHooks(hooks, "after", "journal:write", logicalJournalPath);
-  renameSync(temporary, destination);
+  if (ownership !== undefined)
+    renameOwnedCreation(temporary, destination, ownership);
+  else renameSync(temporary, destination);
   fireHooks(hooks, "before", "journal:fsync", logicalJournalPath);
   const dirFd = openSync(dir, "r");
   try {

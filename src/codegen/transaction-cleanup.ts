@@ -13,23 +13,23 @@
  * appended to the application `.gitignore` while every existing rule is
  * preserved byte-for-byte.
  */
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  rmdirSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
 import { flushDirectory } from "./durability.js";
-import type { TransactionJournal } from "./transaction-journal.js";
+import {
+  parseJournal,
+  serializeJournal,
+  type TransactionJournal,
+} from "./transaction-journal.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
   ownedInventoryFor,
-  verifyOwnedInventory,
+  captureCleanupInventory,
+  removeCleanupEntries,
+  verifyOwnedCreations,
+  type OwnedCreation,
 } from "./transaction-inventory.js";
 import {
   backupsDir,
@@ -50,10 +50,6 @@ function absOf(root: string, logical: string): string {
   return path.join(root, ...logical.split("/"));
 }
 
-function removeIfPresent(target: string): void {
-  if (existsSync(target)) rmSync(target, { recursive: true, force: true });
-}
-
 /**
  * Clean a published transaction. `published`/`cleaned` are the only phases for
  * which ephemeral state is safe to remove; a planned/prepared/applied journal
@@ -64,6 +60,7 @@ export function cleanupTransaction(
   stateDir: string,
   journal: TransactionJournal,
   hooks?: TransactionHooks,
+  ownership?: readonly OwnedCreation[],
 ): CleanupResult {
   if (journal.phase !== "published" && journal.phase !== "cleaned") {
     return {
@@ -79,26 +76,106 @@ export function cleanupTransaction(
   }
 
   const ownedDir = absOf(root, transactionDir(stateDir, journal.transactionId));
+  if (ownership !== undefined) {
+    const proof = verifyOwnedCreations(ownership);
+    if (proof.length > 0)
+      return {
+        ok: false,
+        needsCleanup: true,
+        issues: proof.map((entry) => ({
+          ...entry,
+          code: "COMMITTED_NEEDS_CLEANUP",
+        })),
+      };
+  }
 
   // Cleanup removes only the exact inventory recorded by the validated
   // journal, checked recursively. An unexpected or wrong-kind entry at any
   // depth blocks cleanup and is retained rather than recursed.
-  const inventory = verifyOwnedInventory(
+  const inventory = captureCleanupInventory(
     root,
     stateDir,
     journal.transactionId,
     ownedInventoryFor(journal),
   );
-  if (inventory.length > 0) {
+  if (!inventory.ok) {
     return {
       ok: false,
       needsCleanup: true,
       issues: [
         {
           code: "COMMITTED_NEEDS_CLEANUP",
-          message: `the transaction committed but its owned directory contains unexpected state (${inventory
+          message: `the transaction committed but its owned directory contains unexpected state (${inventory.issues
             .map((entry) => entry.message)
             .join("; ")})`,
+        },
+      ],
+    };
+  }
+
+  // A recorded filename is insufficient: prove actual journal content and the
+  // exact images/modes it claims before freezing them as removal authority.
+  try {
+    for (const entry of inventory.value.entries) {
+      if (entry.kind === "directory") {
+        if (entry.mode !== 0o700)
+          throw new Error("owned transaction directory mode changed");
+        continue;
+      }
+      const name = path.basename(entry.path);
+      if (name === "journal.json") {
+        const parsed = parseJournal(readFileSync(entry.path, "utf8"));
+        if (
+          !parsed.ok ||
+          serializeJournal(parsed.value) !== serializeJournal(journal) ||
+          entry.mode !== 0o600
+        )
+          throw new Error(
+            "journal content or mode does not authenticate cleanup",
+          );
+      } else if (
+        path.dirname(entry.path) ===
+        absOf(root, stagedDir(stateDir, journal.transactionId))
+      ) {
+        const operation = journal.operations.find(
+          (record) => record.stagedId === name,
+        );
+        if (
+          operation === undefined ||
+          entry.digest !== operation.resultDigest ||
+          entry.mode !== operation.resultMode
+        )
+          throw new Error("staged cleanup image or mode changed");
+      } else if (
+        path.dirname(entry.path) ===
+        absOf(root, backupsDir(stateDir, journal.transactionId))
+      ) {
+        const operation = journal.operations.find(
+          (record) => record.backupId === name,
+        );
+        if (
+          operation === undefined ||
+          entry.digest !== operation.preimage.digest ||
+          entry.mode !== operation.preimage.mode
+        )
+          throw new Error("backup cleanup image or mode changed");
+      } else if (name !== "publication.json" || entry.mode !== 0o600) {
+        throw new Error("unproven temporary cleanup content");
+      }
+    }
+    const journalEntry = inventory.value.entries.find(
+      (entry) => entry.path === path.join(ownedDir, "journal.json"),
+    );
+    if (inventory.value.entries.length > 0 && journalEntry === undefined)
+      throw new Error("cleanup requires its authentic journal");
+  } catch (error) {
+    return {
+      ok: false,
+      needsCleanup: true,
+      issues: [
+        {
+          code: "COMMITTED_NEEDS_CLEANUP",
+          message: `owned cleanup proof failed: ${error instanceof Error ? error.message : String(error)}`,
         },
       ],
     };
@@ -141,12 +218,7 @@ export function cleanupTransaction(
       // Re-prove the complete owned inventory immediately before each removal,
       // so an entry introduced at a cleanup boundary is retained and reported
       // rather than recursively deleted.
-      const recheck = verifyOwnedInventory(
-        root,
-        stateDir,
-        journal.transactionId,
-        ownedInventoryFor(journal),
-      );
+      const recheck = removeCleanupEntries(inventory.value, target);
       if (recheck.length > 0) {
         return {
           ok: false,
@@ -161,7 +233,6 @@ export function cleanupTransaction(
           ],
         };
       }
-      removeIfPresent(target);
       // The removal must be durable in the containing directory so a crash
       // cannot resurrect state recovery already proved safe to remove.
       fireHooks(hooks, "before", "durability:cleanup", target);
@@ -171,11 +242,22 @@ export function cleanupTransaction(
     }
     // Remove the now-empty owned transaction directory itself, then flush the
     // parent transaction namespace so the completed cleanup is durable.
-    if (existsSync(ownedDir)) {
-      rmdirSync(ownedDir);
-      fireHooks(hooks, "before", "durability:cleanup", ownedDir);
-      flushDirectory(path.dirname(ownedDir));
-      fireHooks(hooks, "after", "durability:cleanup", ownedDir);
+    {
+      const removed = removeCleanupEntries(inventory.value, ownedDir);
+      if (removed.length > 0)
+        return {
+          ok: false,
+          needsCleanup: true,
+          issues: removed.map((entry) => ({
+            ...entry,
+            code: "COMMITTED_NEEDS_CLEANUP",
+          })),
+        };
+      if (inventory.value.entries.some((entry) => entry.path === ownedDir)) {
+        fireHooks(hooks, "before", "durability:cleanup", ownedDir);
+        flushDirectory(path.dirname(ownedDir));
+        fireHooks(hooks, "after", "durability:cleanup", ownedDir);
+      }
     }
   } catch (error) {
     return {

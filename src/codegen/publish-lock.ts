@@ -27,6 +27,11 @@ import {
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
+import {
+  forgetRenamedCreation,
+  writeOwnedFile,
+  type OwnedCreation,
+} from "./transaction-inventory.js";
 
 import type { ModelIssue } from "../registry/errors.js";
 import { sha256Hex } from "./digest.js";
@@ -137,6 +142,7 @@ export function publishLock(
   mode = 0o644,
   context: LockValidationContext = {},
   hooks?: TransactionHooks,
+  ownership?: OwnedCreation[],
 ): LockPublicationResult {
   const validation = validateLockForPublication(
     journal,
@@ -175,6 +181,7 @@ export function publishLock(
       journalPath(stateDir, journal.transactionId),
       intent,
       hooks,
+      ownership,
     );
   } catch (error) {
     return {
@@ -197,8 +204,12 @@ export function publishLock(
   try {
     mkdirSync(path.dirname(stagedLock), { recursive: true, mode: 0o700 });
     fireHooks(hooks, "before", "lock:stage", lockPath(stateDir));
-    writeFileSync(stagedLock, lockBytes, { mode: effectiveMode });
-    chmodSync(stagedLock, effectiveMode);
+    if (ownership !== undefined)
+      writeOwnedFile(stagedLock, lockBytes, effectiveMode, ownership);
+    else {
+      writeFileSync(stagedLock, lockBytes, { mode: effectiveMode, flag: "wx" });
+      chmodSync(stagedLock, effectiveMode);
+    }
     fireHooks(hooks, "before", "durability:lock-stage", lockPath(stateDir));
     flushFile(stagedLock);
     // The staged lock's directory entry must be durable before the publication
@@ -225,6 +236,7 @@ export function publishLock(
           preimage: observeFileIdentity(destination),
           staged: observeFileIdentity(stagedLock),
         },
+        ownership,
       );
     } catch (error) {
       return {
@@ -243,6 +255,7 @@ export function publishLock(
     fireHooks(hooks, "before", "lock:publish", lockPath(stateDir));
     mkdirSync(path.dirname(destination), { recursive: true });
     renameSync(stagedLock, destination);
+    if (ownership !== undefined) forgetRenamedCreation(stagedLock, ownership);
     chmodSync(destination, effectiveMode);
     fireHooks(hooks, "before", "durability:lock-publish", lockPath(stateDir));
     // The canonical rename is cross-directory: flush the destination directory
@@ -281,6 +294,7 @@ export function publishLock(
       journalPath(stateDir, journal.transactionId),
       published,
       hooks,
+      ownership,
     );
   } catch (error) {
     // The lock is already published; the durable publication record is what

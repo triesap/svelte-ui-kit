@@ -26,13 +26,7 @@
  *    before the rename so a crash in the publication window is recoverable as a
  *    commit rather than an unsafe rollback.
  */
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  rmdirSync,
-} from "node:fs";
+import { existsSync, lstatSync, readFileSync, rmdirSync } from "node:fs";
 import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
@@ -80,6 +74,11 @@ import { applyReplacements } from "./replace.js";
 import { publishLock } from "./publish-lock.js";
 import { cleanupTransaction } from "./transaction-cleanup.js";
 import { stageOperations } from "./stage.js";
+import {
+  cleanupOwnedCreations,
+  createOwnedDirectory,
+  type OwnedCreation,
+} from "./transaction-inventory.js";
 import { acquireWriterLock, releaseWriterLock } from "./write-lock.js";
 import {
   APPROVED_IGNORE_FILES,
@@ -1580,14 +1579,29 @@ function applyUnderLock(
   };
 
   // 5. Setup: a failure here is typed and cleans only the owned directory.
+  const ownership: OwnedCreation[] = [];
   try {
-    mkdirSync(absOf(plan.root, transactionDir(plan.stateDir, transactionId)), {
-      recursive: true,
-      mode: 0o700,
-    });
+    const namespace = absOf(plan.root, transactionsDir(plan.stateDir));
+    let existing;
+    try {
+      existing = lstatSync(namespace);
+    } catch (error) {
+      if (errorCode(error) !== "ENOENT") throw error;
+    }
+    if (existing !== undefined) {
+      if (existing.isSymbolicLink() || !existing.isDirectory())
+        throw new Error("transaction namespace is not a real directory");
+    } else {
+      createOwnedDirectory(namespace, ownership);
+      flushDirectory(path.dirname(namespace));
+    }
+    createOwnedDirectory(
+      absOf(plan.root, transactionDir(plan.stateDir, transactionId)),
+      ownership,
+    );
     fireHooks(hooks, "before", "transaction:create", transactionId);
+    flushDirectory(namespace);
   } catch (error) {
-    removeTransaction(plan, transactionId);
     return {
       kind: "refused",
       transactionId,
@@ -1596,6 +1610,7 @@ function applyUnderLock(
           "APPLY_SETUP_FAILED",
           `could not create the owned transaction directory: ${error instanceof Error ? error.message : String(error)}`,
         ),
+        ...cleanupOwnedCreations(ownership, hooks),
       ],
     };
   }
@@ -1611,10 +1626,15 @@ function applyUnderLock(
       mode: target.mode,
     })),
     hooks,
+    ownership,
   );
+  ownership.push(...(staged.ok ? staged.value.ownership : staged.ownership));
   if (!staged.ok) {
-    removeTransaction(plan, transactionId);
-    return { kind: "refused", transactionId, issues: staged.issues };
+    return {
+      kind: "refused",
+      transactionId,
+      issues: staged.issues,
+    };
   }
 
   const prepared = prepareJournal(journal, staged.value.records);
@@ -1630,12 +1650,14 @@ function applyUnderLock(
     ),
     hooks,
   );
-  if (created.issues.length > 0) {
-    removeOwnedAncestors(plan.root, created.created, hooks);
-    removeTransaction(plan, transactionId);
-    return { kind: "refused", transactionId, issues: [...created.issues] };
-  }
   ownedCreated.push(...created.created);
+  if (created.issues.length > 0) {
+    return {
+      kind: "refused",
+      transactionId,
+      issues: [...created.issues, ...cleanupOwnedCreations(ownership, hooks)],
+    };
+  }
   const preparedWithAncestry: TransactionJournal = {
     ...prepared,
     // Persist both target and coordination ancestry so a fresh recovery can
@@ -1648,10 +1670,9 @@ function applyUnderLock(
       journalPath(plan.stateDir, transactionId),
       preparedWithAncestry,
       hooks,
+      ownership,
     );
   } catch (error) {
-    removeOwnedAncestors(plan.root, ownedCreated, hooks);
-    removeTransaction(plan, transactionId);
     return {
       kind: "refused",
       transactionId,
@@ -1660,6 +1681,7 @@ function applyUnderLock(
           "APPLY_PREPARATION_FAILED",
           `could not persist the prepared journal: ${error instanceof Error ? error.message : String(error)}`,
         ),
+        ...cleanupOwnedCreations(ownership, hooks),
       ],
     };
   }
@@ -1678,8 +1700,11 @@ function applyUnderLock(
     },
   );
   if (!rechecked.ok) {
-    removeTransaction(plan, transactionId);
-    return { kind: "refused", transactionId, issues: rechecked.issues };
+    return {
+      kind: "refused",
+      transactionId,
+      issues: [...rechecked.issues, ...cleanupOwnedCreations(ownership, hooks)],
+    };
   }
 
   const replaced = applyReplacements(
@@ -1688,6 +1713,7 @@ function applyUnderLock(
     preparedWithAncestry,
     staged.value,
     hooks,
+    ownership,
   );
   if (!replaced.ok) {
     const recovered = recoverTransactionsUnderLock(plan, transactionId, hooks);
@@ -1711,6 +1737,7 @@ function applyUnderLock(
       layoutFile: plan.layoutFile,
     },
     hooks,
+    ownership,
   );
   if (!published.ok) {
     if (published.journal.phase === "published") {
@@ -1755,6 +1782,7 @@ function applyUnderLock(
     plan.stateDir,
     published.journal,
     hooks,
+    ownership,
   );
   if (!cleanup.ok) {
     return {
@@ -1820,21 +1848,6 @@ function recoverTransactionsUnderLock(
     hooks,
   );
   return recovered.flatMap((entry) => entry.issues);
-}
-
-function removeTransaction(
-  plan: ValidatedApplyPlan,
-  transactionId: string,
-): void {
-  const dir = absOf(plan.root, transactionDir(plan.stateDir, transactionId));
-  rmSync(dir, { recursive: true, force: true });
-  // The removal must be durable in the transaction namespace so a crash cannot
-  // resurrect an owned transaction directory this attempt abandoned.
-  try {
-    flushDirectory(path.dirname(dir));
-  } catch {
-    // The namespace may already be gone; removal is still best effort here.
-  }
 }
 
 /**

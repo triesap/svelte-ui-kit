@@ -81,6 +81,7 @@ export function stageOperations(
   transactionId: string,
   operations: readonly StageOperation[],
   hooks?: TransactionHooks,
+  parentOwnership: readonly OwnedCreation[] = [],
 ): StageResult {
   const stagedLogical = stagedDir(stateDir, transactionId);
   const stagedAbs = path.join(root, ...stagedLogical.split("/"));
@@ -119,7 +120,7 @@ export function stageOperations(
           "STAGE_UNAVAILABLE",
           `could not create the owned staging directory: ${codeOf(error)}`,
         ),
-        ...cleanupOwnedCreations(ownership),
+        ...cleanupOwnedCreations([...parentOwnership, ...ownership], hooks),
       ],
     };
   }
@@ -131,7 +132,10 @@ export function stageOperations(
       const stagedId = `stage-${index}`;
       const stagedPath = path.join(stagedAbs, stagedId);
       fireHooks(hooks, "before", "stage:write", operation.path);
-      const inventory = verifyOwnedCreations(ownership);
+      const inventory = verifyOwnedCreations([
+        ...parentOwnership,
+        ...ownership,
+      ]);
       if (inventory.length > 0)
         throw new Error(inventory.map((entry) => entry.message).join("; "));
       writeOwnedFile(
@@ -178,12 +182,12 @@ export function stageOperations(
           "STAGE_FAILED",
           `staging did not complete: ${error instanceof Error ? error.message : String(error)}`,
         ),
-        ...cleanupOwnedCreations(ownership),
+        ...cleanupOwnedCreations([...parentOwnership, ...ownership], hooks),
       ],
     };
   }
 
-  const inventory = verifyOwnedCreations(ownership);
+  const inventory = verifyOwnedCreations([...parentOwnership, ...ownership]);
   if (inventory.length > 0) {
     return {
       ok: false,

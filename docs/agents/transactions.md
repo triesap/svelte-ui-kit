@@ -53,6 +53,15 @@ bytes/modes/kinds, links and replacement identities retain the whole uncertain
 inventory and report the cleanup cause alongside the staging failure. A path
 or transaction-shaped name alone cannot authorize staging cleanup.
 
+Early apply failures use the enclosing transaction's creation receipts, so
+foreign state anywhere in that inventory prevents deletion of its staged files.
+Journal writes carry empty/partial-file receipts through their rename, and
+backup and publication creation keep physical ownership until cleanup. Published
+and recovery cleanup freeze the validated inventory before cleanup hooks, then
+recheck bytes, modes, kinds and identities before each individual removal. A
+failed cleanup or parent flush stops removal and remains a secondary diagnostic;
+an earlier staging or preparation error is still reported.
+
 ## Recovery and unchanged refusal
 
 Inject failures before/after staging, each replacement, lock publication and

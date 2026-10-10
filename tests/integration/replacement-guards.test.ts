@@ -50,8 +50,8 @@ test("a corrupted staged image is refused at replacement, not installed", () => 
   withRoot((root) => {
     const plan = sealed(makeGuardedPlan(root));
     const outcome = applyPlan(plan, {
-      after: (boundary) => {
-        if (boundary !== "stage:verify") return;
+      before: (boundary) => {
+        if (boundary !== "replace:apply") return;
         const ids = readdirSync(abs(root, transactionsDir(GUARDED_STATE)));
         const staged = abs(root, stagedDir(GUARDED_STATE, ids[0] as string));
         for (const name of readdirSync(staged)) {

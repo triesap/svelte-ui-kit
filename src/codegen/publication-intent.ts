@@ -24,6 +24,12 @@ import {
   renameSync,
 } from "node:fs";
 import path from "node:path";
+import { flushFile } from "./durability.js";
+import {
+  renameOwnedCreation,
+  writeOwnedFile,
+  type OwnedCreation,
+} from "./transaction-inventory.js";
 
 import type { ModelIssue } from "../registry/errors.js";
 import { isTransactionId } from "./transaction-types.js";
@@ -100,19 +106,27 @@ export function writePublicationIntent(
   root: string,
   logicalPath: string,
   intent: PublicationIntent,
+  ownership?: OwnedCreation[],
 ): void {
   const destination = path.join(root, ...logicalPath.split("/"));
   const dir = path.dirname(destination);
   const temporary = `${destination}.tmp-${intent.transactionId}`;
   const bytes = Buffer.from(`${JSON.stringify(intent)}\n`, "utf8");
-  const fd = openSync(temporary, "wx", 0o600);
-  try {
-    writeSync(fd, bytes);
-    fsyncSync(fd);
-  } finally {
-    closeSync(fd);
+  if (ownership !== undefined) {
+    writeOwnedFile(temporary, bytes, 0o600, ownership);
+    flushFile(temporary);
+  } else {
+    const fd = openSync(temporary, "wx", 0o600);
+    try {
+      writeSync(fd, bytes);
+      fsyncSync(fd);
+    } finally {
+      closeSync(fd);
+    }
   }
-  renameSync(temporary, destination);
+  if (ownership !== undefined)
+    renameOwnedCreation(temporary, destination, ownership);
+  else renameSync(temporary, destination);
   const dirFd = openSync(dir, "r");
   try {
     fsyncSync(dirFd);
