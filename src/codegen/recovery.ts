@@ -16,13 +16,12 @@
  */
 import { randomUUID } from "node:crypto";
 import {
-  chmodSync,
   existsSync,
   lstatSync,
   readFileSync,
   readdirSync,
   renameSync,
-  rmSync,
+  unlinkSync,
   rmdirSync,
 } from "node:fs";
 import path from "node:path";
@@ -38,6 +37,12 @@ import {
   observeRootIdentity,
 } from "./authority.js";
 import { removeOwnedAncestors } from "./owned-ancestry.js";
+import {
+  holdMutationAuthority,
+  verifyMutationAuthority,
+  type MutationAuthority,
+} from "./mutation-authority.js";
+import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
 import {
   parseJournal,
   persistJournal,
@@ -656,7 +661,7 @@ function currentImage(root: string, logicalPath: string): CurrentImage {
     return {
       kind: "file",
       digest: sha256Hex(readFileSync(abs)),
-      mode: entry.stats.mode & 0o777,
+      mode: entry.stats.mode & 0o7777,
     };
   } catch (error) {
     return { kind: "unsafe", reason: `unreadable (${codeOf(error)})` };
@@ -818,7 +823,7 @@ function preflightRollback(
   }
   if (
     operation.preimage.mode !== null &&
-    (entry.stats.mode & 0o777) !== operation.preimage.mode
+    (entry.stats.mode & 0o7777) !== operation.preimage.mode
   ) {
     return [
       issue(
@@ -831,37 +836,153 @@ function preflightRollback(
   return [];
 }
 
-/** Restore one operation after a successful preflight. */
+interface RecoveryMutationAuthority {
+  readonly physical: MutationAuthority;
+  readonly expected: Map<string, TargetPreimage>;
+  readonly paths: readonly string[];
+}
+
+/** Snapshot approved current recovery evidence once, before mutation hooks. */
+function holdRecoveryAuthority(
+  root: string,
+  stateDir: string,
+  journal: TransactionJournal,
+): RecoveryMutationAuthority {
+  const inventory = captureCleanupInventory(
+    root,
+    stateDir,
+    journal.transactionId,
+    ownedInventoryFor(journal),
+  );
+  if (!inventory.ok) throw new RecoveryMutationRefusal(inventory.issues);
+  const images = new Set<string>([
+    lockPath(stateDir),
+    publicationIntentPath(stateDir, journal.transactionId),
+    ...journal.operations.map((entry) => entry.path),
+  ]);
+  const directories: string[] = [];
+  for (const entry of inventory.value.entries) {
+    const logical = path.relative(root, entry.path).split(path.sep).join("/");
+    if (entry.kind === "directory")
+      directories.push(`${logical}/.held-directory-proof`);
+    else images.add(logical);
+  }
+  for (const entry of journal.operations) {
+    if (entry.backupId !== null)
+      images.add(
+        `${backupsDir(stateDir, journal.transactionId)}/${entry.backupId}`,
+      );
+    if (entry.stagedId !== null)
+      images.add(
+        `${stagedDir(stateDir, journal.transactionId)}/${entry.stagedId}`,
+      );
+  }
+  const paths = Object.freeze([...images, ...directories]);
+  const physical = holdMutationAuthority(root, paths);
+  // Directory sentinel paths prove ancestry only; they never grant file effects.
+  const expected = new Map(
+    [...physical.preimages].filter(([logical]) => images.has(logical)),
+  );
+  return { physical, expected, paths };
+}
+
+class RecoveryMutationRefusal extends Error {
+  constructor(readonly issues: readonly ModelIssue[]) {
+    super(issues.map((entry) => entry.message).join("; "));
+  }
+}
+
+function proveRecoveryMutation(
+  root: string,
+  stateDir: string,
+  journal: TransactionJournal,
+  authority: RecoveryMutationAuthority,
+): void {
+  const issues = [
+    ...verifyMutationAuthority(
+      authority.physical,
+      root,
+      stateDir,
+      [],
+      authority.paths,
+    ),
+    ...verifyOwnedInventory(
+      root,
+      stateDir,
+      journal.transactionId,
+      ownedInventoryFor(journal),
+    ),
+  ];
+  const images = revalidatePreimages(root, [...authority.expected.values()], {
+    ancestors: [],
+  });
+  if (!images.ok) issues.push(...images.issues);
+  if (issues.length > 0) throw new RecoveryMutationRefusal(issues);
+}
+
+interface RollbackMutationResult {
+  readonly completed: boolean;
+  readonly issues: readonly ModelIssue[];
+}
+
+/** Restore one operation after a successful preflight and final hook proof. */
 function rollbackOperation(
   root: string,
   stateDir: string,
   journal: TransactionJournal,
   operation: JournalOperationRecord,
+  authority: RecoveryMutationAuthority,
   hooks?: TransactionHooks,
-): ModelIssue[] {
+): RollbackMutationResult {
+  let completed = false;
+  const failure = (error: unknown): RollbackMutationResult => ({
+    completed,
+    issues:
+      error instanceof RecoveryMutationRefusal
+        ? error.issues
+        : [
+            issue(
+              "RECOVERY_RESTORE_FAILED",
+              `rollback of ${operation.path} ${completed ? "completed its filesystem mutation but a later hook or durability step failed" : "could not complete"} (${codeOf(error)})`,
+              operation.path,
+            ),
+          ],
+  });
   const current = currentImage(root, operation.path);
   if (operation.operation === "create") {
-    if (current.kind === "file" && current.digest === operation.resultDigest) {
+    if (current.kind === "file") {
       try {
-        rmSync(absOf(root, operation.path), { force: true });
+        fireHooks(hooks, "before", "recovery:remove", operation.path);
+        proveRecoveryMutation(root, stateDir, journal, authority);
+        unlinkSync(absOf(root, operation.path));
+        completed = true;
+        authority.expected.set(operation.path, {
+          path: operation.path,
+          kind: "absent",
+          digest: null,
+          mode: null,
+        });
+        fireHooks(hooks, "after", "recovery:remove", operation.path);
+        fireHooks(hooks, "before", "durability:recovery", operation.path);
+        proveRecoveryMutation(root, stateDir, journal, authority);
+        flushDirectory(path.dirname(absOf(root, operation.path)));
+        fireHooks(hooks, "after", "durability:recovery", operation.path);
+        proveRecoveryMutation(root, stateDir, journal, authority);
       } catch (error) {
-        return [
-          issue(
-            "RECOVERY_RESTORE_FAILED",
-            `could not roll back created ${operation.path} (${codeOf(error)})`,
-            operation.path,
-          ),
-        ];
+        return failure(error);
       }
     }
-    return [];
+    return { completed, issues: [] };
   }
   const atPreimage =
     operation.preimage.digest !== null &&
     current.kind === "file" &&
-    current.digest === operation.preimage.digest;
-  if (atPreimage) return [];
-  if (operation.backupId === null) return [];
+    current.digest === operation.preimage.digest &&
+    (operation.preimage.mode === null ||
+      current.mode === operation.preimage.mode);
+  if (atPreimage) return { completed, issues: [] };
+  if (operation.backupId === null) return { completed, issues: [] };
+  const backupLogical = `${backupsDir(stateDir, journal.transactionId)}/${operation.backupId}`;
   const backup = backupPathAbs(
     root,
     stateDir,
@@ -870,44 +991,41 @@ function rollbackOperation(
   );
   try {
     fireHooks(hooks, "before", "recovery:restore", operation.path);
+    proveRecoveryMutation(root, stateDir, journal, authority);
     renameSync(backup, absOf(root, operation.path));
+    completed = true;
+    // Advance only facts proven by this exact syscall. Never recapture an edit
+    // made by a later hook as if it were the approved recovery image.
+    authority.expected.set(operation.path, {
+      ...authority.expected.get(backupLogical)!,
+      path: operation.path,
+    });
+    authority.expected.set(backupLogical, {
+      path: backupLogical,
+      kind: "absent",
+      digest: null,
+      mode: null,
+    });
+    fireHooks(hooks, "after", "recovery:restore", operation.path);
   } catch (error) {
     // An actual rename failure is a typed truthful partial outcome, never a
     // raw exception escaping exported recovery. The journal remains for a
     // later coordinated retry.
-    return [
-      issue(
-        "RECOVERY_RESTORE_FAILED",
-        `could not restore ${operation.path} (${codeOf(error)})`,
-        operation.path,
-      ),
-    ];
-  }
-  if (operation.preimage.mode !== null) {
-    try {
-      chmodSync(absOf(root, operation.path), operation.preimage.mode);
-    } catch {
-      // The restored bytes are in place; a mode failure is reported by the
-      // caller's inventory/cleanup step rather than silently ignored.
-    }
+    return failure(error);
   }
   try {
     fireHooks(hooks, "before", "durability:recovery", operation.path);
+    proveRecoveryMutation(root, stateDir, journal, authority);
     // The restore rename moves the owned backup into the live target directory;
     // flush the target directory and the backup directory it left.
     flushDirectory(path.dirname(absOf(root, operation.path)));
     flushDirectory(path.dirname(backup));
     fireHooks(hooks, "after", "durability:recovery", operation.path);
+    proveRecoveryMutation(root, stateDir, journal, authority);
   } catch (error) {
-    return [
-      issue(
-        "RECOVERY_RESTORE_FAILED",
-        `restore of ${operation.path} could not be flushed durably (${codeOf(error)})`,
-        operation.path,
-      ),
-    ];
+    return failure(error);
   }
-  return [];
+  return { completed, issues: [] };
 }
 
 const OWNED_ENTRIES = new Set([
@@ -931,6 +1049,8 @@ function removeOwnedEntries(
   transactionId: string,
   hooks?: TransactionHooks,
   inventory: OwnedInventory = emptyOwnedInventory(),
+  semantic: readonly TargetPreimage[] = [],
+  original?: MutationAuthority,
 ): ModelIssue[] {
   const dir = absOf(root, transactionDir(stateDir, transactionId));
   const held = captureCleanupInventory(
@@ -940,7 +1060,61 @@ function removeOwnedEntries(
     inventory,
   );
   if (!held.ok) return [...held.issues];
+  const guardPaths = [
+    `${transactionDir(stateDir, transactionId)}/.held-directory-proof`,
+    lockPath(stateDir),
+  ];
+  const relevant = new Set<string>();
+  for (const logical of guardPaths) {
+    const segments = logical.split("/");
+    for (let index = 1; index < segments.length; index++)
+      relevant.add(segments.slice(0, index).join("/"));
+  }
+  let physical: MutationAuthority;
+  try {
+    physical = holdMutationAuthority(
+      root,
+      guardPaths,
+      original === undefined
+        ? undefined
+        : {
+            readset: {
+              ...original.readset,
+              ancestors: original.readset.ancestors.filter((entry) =>
+                relevant.has(entry.path),
+              ),
+            },
+            preimages: [...original.preimages.values()],
+            created: [],
+          },
+    );
+  } catch (error) {
+    return [
+      issue(
+        "RECOVERY_CLEANUP_FAILED",
+        `could not hold cleanup mutation authority (${codeOf(error)})`,
+      ),
+    ];
+  }
+  const semanticImages =
+    semantic.length > 0
+      ? semantic
+      : [physical.preimages.get(lockPath(stateDir))!];
+  const finalGuard = (): ModelIssue[] => {
+    const issues = verifyMutationAuthority(
+      physical,
+      root,
+      stateDir,
+      [],
+      guardPaths,
+    );
+    const images = revalidatePreimages(root, semanticImages, { ancestors: [] });
+    if (!images.ok) issues.push(...images.issues);
+    return issues;
+  };
   fireHooks(hooks, "before", "recovery:cleanup", transactionId);
+  const returningIssues = finalGuard();
+  if (returningIssues.length > 0) return returningIssues;
   let names: string[];
   try {
     names = readdirSync(dir);
@@ -968,6 +1142,8 @@ function removeOwnedEntries(
 
   const removeGroup = (group: readonly string[]): ModelIssue[] => {
     for (const name of group) {
+      const guardIssues = finalGuard();
+      if (guardIssues.length > 0) return guardIssues;
       const removed = removeCleanupEntries(held.value, path.join(dir, name));
       if (removed.length > 0)
         return removed.map((entry) => ({
@@ -1010,6 +1186,8 @@ function removeOwnedEntries(
 
   try {
     fireHooks(hooks, "before", "recovery:cleanup-dir", transactionId);
+    const guardIssues = finalGuard();
+    if (guardIssues.length > 0) return guardIssues;
     const removed = removeCleanupEntries(held.value, dir);
     if (removed.length > 0)
       return removed.map((entry) => ({
@@ -1211,20 +1389,10 @@ function recoverTransactionUnderLock(
     ]);
   }
   if (dirEntries.length === 0) {
-    try {
-      rmdirSync(dirAbs);
-      flushDirectory(path.dirname(dirAbs));
-    } catch (error) {
-      if (codeOf(error) !== "ENOENT") {
-        return refuse(transactionId, [
-          issue(
-            "RECOVERY_CLEANUP_FAILED",
-            `empty transaction ${transactionId} directory could not be durably removed (${codeOf(error)})`,
-          ),
-        ]);
-      }
-    }
-    return { status: "cleaned", transactionId, issues: [] };
+    const issues = removeOwnedEntries(root, stateDir, transactionId, hooks);
+    return issues.length > 0
+      ? refuse(transactionId, issues)
+      : { status: "cleaned", transactionId, issues: [] };
   }
 
   const read = readJournal(root, stateDir, transactionId);
@@ -1446,17 +1614,53 @@ function recoverTransactionUnderLock(
   if (issues.length > 0) return refuse(transactionId, issues);
   const binding = rootBindingIssues(root, journal);
   if (binding.length > 0) return refuse(transactionId, binding);
-  const restoreIssues: ModelIssue[] = [];
-  for (const operation of [...journal.operations].reverse()) {
-    restoreIssues.push(
-      ...rollbackOperation(root, stateDir, journal, operation, hooks),
+  let recoveryAuthority: RecoveryMutationAuthority;
+  try {
+    recoveryAuthority = holdRecoveryAuthority(root, stateDir, journal);
+    proveRecoveryMutation(root, stateDir, journal, recoveryAuthority);
+  } catch (error) {
+    return refuse(
+      transactionId,
+      error instanceof RecoveryMutationRefusal
+        ? error.issues
+        : [
+            issue(
+              "RECOVERY_RESTORE_FAILED",
+              `could not hold recovery mutation authority (${codeOf(error)})`,
+            ),
+          ],
     );
+  }
+  const restoreIssues: ModelIssue[] = [];
+  const restored: string[] = [];
+  for (const operation of [...journal.operations].reverse()) {
+    const result = rollbackOperation(
+      root,
+      stateDir,
+      journal,
+      operation,
+      recoveryAuthority,
+      hooks,
+    );
+    if (result.completed) restored.push(operation.path);
+    restoreIssues.push(...result.issues);
+    if (result.issues.length > 0) break;
   }
   if (restoreIssues.length > 0) {
     // A restore/durability failure is a truthful partial outcome: the journal
     // and any un-restored owned evidence are retained for a later coordinated
     // retry rather than being deleted as if the rollback completed.
-    return refuse(transactionId, restoreIssues);
+    return refuse(transactionId, [
+      ...restoreIssues,
+      ...(restored.length === 0
+        ? []
+        : [
+            issue(
+              "RECOVERY_PARTIAL_ROLLBACK",
+              `completed filesystem rollback for ${restored.join(", ")}; remaining work and evidence are retained`,
+            ),
+          ]),
+    ]);
   }
   // Record completion durably BEFORE removing any created ancestor. A later
   // cleanup retry may observe those owned directories absent but can never
@@ -1492,6 +1696,11 @@ function recoverTransactionUnderLock(
     transactionId,
     hooks,
     ownedInventoryFor(journal),
+    [...recoveryAuthority.expected.values()].filter(
+      (entry) =>
+        !entry.path.startsWith(`${transactionDir(stateDir, transactionId)}/`),
+    ),
+    recoveryAuthority.physical,
   );
   if (removalIssues.length > 0) {
     return refuse(transactionId, [...ancestryIssues, ...removalIssues]);

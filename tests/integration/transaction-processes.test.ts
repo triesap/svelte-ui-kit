@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -10,11 +16,113 @@ import { runWorker, spawnWorker } from "../helpers/fault-process.js";
 import {
   RECOVERY_ROOTS,
   clearOrphanedWriterLock,
+  liveRootIdentity,
 } from "../helpers/transactions.js";
-import { writerLockDir } from "../../src/codegen/transaction-types.js";
+import {
+  backupsDir,
+  journalPath,
+  writerLockDir,
+} from "../../src/codegen/transaction-types.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
+import { write } from "../helpers/guarded-plan.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
+
+for (const operation of ["create", "update", "retire"] as const) {
+  test(`a SIGKILL around ${operation} recovery retains restartable physical evidence`, () => {
+    for (const event of ["before", "after"] as const) {
+      withRoot((root) => {
+        const id = "0404040404040404";
+        const target = "src/styles/boundary.css";
+        write(root, "src/styles/.operator-note", "preserve hidden source");
+        if (operation !== "retire") write(root, target, "result bytes");
+        if (operation !== "create")
+          write(
+            root,
+            `${backupsDir(STATE_DIR, id)}/backup-0`,
+            "original bytes",
+          );
+        write(
+          root,
+          journalPath(STATE_DIR, id),
+          JSON.stringify({
+            schemaVersion: 1,
+            transactionId: id,
+            rootIdentity: liveRootIdentity(root),
+            planDigest: "b".repeat(64),
+            phase: "applied",
+            lock: null,
+            operations: [
+              {
+                path: target,
+                operation,
+                preimage:
+                  operation === "create"
+                    ? { kind: "absent", digest: null, mode: null }
+                    : {
+                        kind: "file",
+                        digest: sha256Hex("original bytes"),
+                        mode: 0o644,
+                      },
+                resultDigest: sha256Hex(
+                  operation === "retire" ? "" : "result bytes",
+                ),
+                resultMode: 0o644,
+                backupId: operation === "create" ? null : "backup-0",
+                stagedId: operation === "retire" ? null : "stage-0",
+                applied: true,
+              },
+            ],
+          }),
+        );
+        const killed = runWorker({
+          mode: "recover-kill",
+          root,
+          stateDir: STATE_DIR,
+          transactionId: id,
+          boundary:
+            operation === "create" ? "recovery:remove" : "recovery:restore",
+          event,
+        });
+        assert.equal(
+          killed.error,
+          undefined,
+          `${event}: ${String(killed.error)}`,
+        );
+        assert.equal(
+          killed.signal,
+          "SIGKILL",
+          `${event}: ${killed.stdout} ${killed.stderr}`,
+        );
+        const before = snapshotTree(root);
+        const blocked = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
+        assert.equal(blocked.status, "refused");
+        assert.ok(blocked.issues.some((entry) => entry.code === "WRITER_BUSY"));
+        assert.deepEqual(snapshotTree(root), before);
+        const owner = JSON.parse(
+          readFileSync(
+            abs(root, `${writerLockDir(STATE_DIR)}/owner.json`),
+            "utf8",
+          ),
+        );
+        assert.equal(owner.pid, killed.pid);
+        // Resolve only this matching owner after the exact child is confirmed
+        // terminated. Production never infers takeover from PID or age.
+        clearOrphanedWriterLock(root, STATE_DIR);
+        const result = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
+        assert.equal(result.status, "rolled_back", JSON.stringify(result));
+        if (operation === "create")
+          assert.equal(existsSync(abs(root, target)), false);
+        else
+          assert.equal(
+            readFileSync(abs(root, target), "utf8"),
+            "original bytes",
+          );
+      });
+    }
+  });
+}
 
 function withRoot(body: (root: string) => void): void {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-process-"));
@@ -113,6 +221,7 @@ test("a SIGKILLed process leaves recoverable state", () => {
         transactionId: "1414141414141414",
         boundary,
       });
+      assert.equal(killed.error, undefined, String(killed.error));
       assert.equal(killed.signal, "SIGKILL", `${label}: ${killed.stderr}`);
 
       const before = snapshotTree(root);

@@ -565,6 +565,7 @@ test("guarded apply refuses a dead writer and restarts after operator resolution
       transactionId: "1616161616161616",
       boundary: "replace:apply",
     });
+    assert.equal(killed.error, undefined, String(killed.error));
     assert.equal(killed.signal, "SIGKILL", killed.stderr);
     // A dead coordinator left its writer lock behind.
     mkdirSync(abs(root, writerLockDir(STATE)), { recursive: true });

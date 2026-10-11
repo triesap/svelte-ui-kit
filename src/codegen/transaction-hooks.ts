@@ -37,6 +37,7 @@ export type TransactionBoundary =
   | "durability:owned-create"
   | "durability:owned-remove"
   | "recovery:restore"
+  | "recovery:remove"
   | "durability:recovery"
   | "recovery:cleanup-dir"
   | "recovery:cleanup";

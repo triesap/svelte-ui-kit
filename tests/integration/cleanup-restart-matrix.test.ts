@@ -51,6 +51,7 @@ import {
   parseRecoveryWorkerOutput,
 } from "../helpers/guarded-process.js";
 import { runWorker } from "../helpers/fault-process.js";
+import { clearOrphanedWriterLock } from "../helpers/transactions.js";
 import {
   GUARDED_LAYOUT,
   GUARDED_STATE,
@@ -678,7 +679,36 @@ test("a synthetic interrupted transaction is rolled back by a fresh single-recov
       transactionId: "1616161616161616",
       boundary: "replace:apply",
     });
+    assert.equal(killed.error, undefined, String(killed.error));
     assert.equal(killed.signal, "SIGKILL", killed.stderr);
+    const before = snapshotTree(root);
+    const blocked = recoverInFreshProcess({
+      root,
+      stateDir: GUARDED_STATE,
+      uiDir: GUARDED_UI,
+      stylesDir: GUARDED_STYLES,
+      layoutFile: GUARDED_LAYOUT,
+      mode: "single",
+      transactionId: "1616161616161616",
+    });
+    assert.ok(
+      blocked.some((entry) =>
+        entry.issues.some((problem) => problem.code === "WRITER_BUSY"),
+      ),
+      JSON.stringify(blocked),
+    );
+    assert.deepEqual(snapshotTree(root), before);
+    const owner = JSON.parse(
+      readFileSync(
+        abs(root, `${writerLockDir(GUARDED_STATE)}/owner.json`),
+        "utf8",
+      ),
+    );
+    assert.equal(owner.pid, killed.pid);
+    assert.equal(owner.transactionId, "1616161616161616");
+    // This exact child terminated. Resolve only its matching coordination
+    // before the fresh recovery child acquires a new physical writer.
+    clearOrphanedWriterLock(root, GUARDED_STATE);
     const results = recoverInFreshProcess({
       root,
       stateDir: GUARDED_STATE,

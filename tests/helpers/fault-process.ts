@@ -20,11 +20,12 @@ export function codegenBaseUrl(): string {
 }
 
 export interface WorkerOptions {
-  readonly mode: "lock" | "apply" | "kill";
+  readonly mode: "lock" | "apply" | "kill" | "recover-kill";
   readonly root: string;
   readonly stateDir: string;
   readonly transactionId: string;
   readonly boundary?: string;
+  readonly event?: "before" | "after";
   readonly holdMs?: number;
 }
 
@@ -50,6 +51,17 @@ if (mode === "lock") {
     releaseWriterLock(acquired.value);
   }
   process.exit(acquired.ok ? 0 : 3);
+}
+
+if (mode === "recover-kill") {
+  const { recoverTransaction } = await load("recovery.js");
+  const event = process.env.SUIK_EVENT || "before";
+  const stop = (candidate) => { if (candidate === boundary) process.kill(process.pid, "SIGKILL"); };
+  const result = recoverTransaction(root, stateDir, id, {
+    uiDir: "src/lib/components/ui", stylesDir: "src/styles", layoutFile: "src/routes/+layout.svelte",
+  }, {[event]: stop});
+  console.log(JSON.stringify(result));
+  process.exit(9);
 }
 
 const { sha256Hex } = await load("digest.js");
@@ -117,6 +129,8 @@ export function runWorker(options: WorkerOptions): SpawnSyncReturns<string> {
   return spawnSync(process.execPath, ["--input-type=module", "-e", WORKER], {
     encoding: "utf8",
     env: workerEnv(options),
+    timeout: 30_000,
+    killSignal: "SIGKILL",
   });
 }
 
@@ -139,6 +153,7 @@ function workerEnv(options: WorkerOptions): NodeJS.ProcessEnv {
     SUIK_TXN_ID: options.transactionId,
     SUIK_MODE: options.mode,
     SUIK_BOUNDARY: options.boundary ?? "",
+    SUIK_EVENT: options.event ?? "before",
     SUIK_HOLD_MS: String(options.holdMs ?? 0),
   };
 }

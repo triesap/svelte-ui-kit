@@ -45,6 +45,19 @@ the canonical rename. Intended lock bytes are copied before hooks run. Once the
 rename completes, a later hook or flush failure reports a committed transaction
 that needs cleanup, even when the durable journal still records publication intent.
 
+Recovery freezes the approved current targets, backups, journal, witness and
+physical ancestry after whole-journal preflight. It rechecks that held evidence
+and the actual writer after returning restore or removal hooks. Late edits
+survive; neither equal bytes at a new inode nor edited special permission bits
+authorize restoration or deletion. Each completed recovery syscall advances only
+its proven expected image. Recovery stops at the first failure, identifies any
+filesystem rollback already completed, and retains pending work and journal
+evidence. Created-file rollback flushes its parent directory as well.
+Cleanup rechecks canonical and restored-source images after returning cleanup
+hooks and requires the unchanged physical writer and directory ancestry. An empty
+cleanup tail uses frozen directory identity rather than deleting a replacement
+directory at the same name.
+
 ## Ordered application and publication
 
 Plans, diagnosis and dry runs write nothing, including hidden state. Genuine

@@ -402,6 +402,64 @@ test("a completed publication rename remains committed if its next hook throws",
   });
 });
 
+for (const mutation of ["bytes", "mode", "identity", "writer"] as const) {
+  test(`published recovery preserves a returning canonical ${mutation} edit before cleanup`, () => {
+    withRoot((root) => {
+      const plan = sealed(makeGuardedPlan(root));
+      const outcome = applyPlan(plan, {
+        before: (boundary) => {
+          if (boundary === "cleanup:staged")
+            throw new Error("retain committed evidence");
+        },
+      });
+      assert.equal(
+        outcome.kind,
+        "committed_needs_cleanup",
+        JSON.stringify(outcome),
+      );
+      const writer = acquireWriterLock(root, GUARDED_STATE, "0404040404040404");
+      assert.equal(writer.ok, true, JSON.stringify(writer));
+      if (!writer.ok) throw new Error("writer unavailable");
+      let edited: ReturnType<typeof snapshotTree> | undefined;
+      try {
+        const result = recoverTransactions(
+          root,
+          GUARDED_STATE,
+          RECOVERY_ROOTS,
+          {
+            before: (boundary) => {
+              if (boundary !== "recovery:cleanup") return;
+              const canonical = abs(root, lockPath(GUARDED_STATE));
+              if (mutation === "bytes")
+                writeFileSync(canonical, "late published edit");
+              else if (mutation === "mode") chmodSync(canonical, 0o2644);
+              else if (mutation === "identity") {
+                const bytes = readFileSync(canonical);
+                renameSync(canonical, `${canonical}.operator-original`);
+                writeFileSync(canonical, bytes, { mode: 0o644 });
+              } else {
+                const owner = abs(
+                  root,
+                  `${writerLockDir(GUARDED_STATE)}/owner.json`,
+                );
+                const bytes = readFileSync(owner);
+                renameSync(owner, `${owner}.operator-original`);
+                writeFileSync(owner, bytes, { mode: 0o600 });
+              }
+              edited = snapshotTree(root);
+            },
+          },
+        );
+        assert.equal(result[0]?.status, "refused", JSON.stringify(result));
+        assert.ok(edited, JSON.stringify(result));
+        assert.deepEqual(snapshotTree(root), edited);
+      } finally {
+        assert.equal(releaseWriterLock(writer.value).ok, mutation !== "writer");
+      }
+    });
+  });
+}
+
 test("a same-byte interruption before the rename is not a false commit", () => {
   withRoot((root) => {
     // Seed the canonical lock with exactly the planned publication bytes, so a
