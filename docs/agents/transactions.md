@@ -171,10 +171,20 @@ witness refuses without discarding the recoverable inventory. `cleaned` remains 
 supported terminal record; normal cleanup removes the published journal rather
 than claiming a separate durable cleaned-record write.
 
+An installation rename consumes its staged source. A live planned-result copy
+beside a surviving staged source is contradictory evidence, not proof that
+installation occurred, and read-only inspection and recovery preserve it. A
+retirement has no installed-file result: its successful physical result is
+absence, so a new live empty file is an operator edit even though the journal
+uses the empty-byte digest to describe retirement. Original restored images and
+absent targets with verified backups remain valid rollback-lag states.
+
 Actual SIGKILL controls cover the in-memory planned setup, durable prepared and
 applied records, canonical-rename publication lag, durable published records and
 terminal rollback persistence. Create/update/retire controls independently kill
 between the completed rename and durable progress, and after progress persists.
+Additional pre-installation kills retain the original stage and prove both safe
+rollback before installation and preservation of matching operator copies.
 Each retained owner is matched to that exact terminated child before test-only
 operator resolution; a fresh coordinating child first proves refusal with the
 complete tree unchanged. These controls supplement interrupted-cleanup restart

@@ -915,6 +915,7 @@ function preflightRollback(
   }
 
   const appliedResult =
+    operation.operation !== "retire" &&
     current.kind === "file" &&
     current.digest === operation.resultDigest &&
     current.mode === operation.resultMode;
@@ -927,6 +928,27 @@ function preflightRollback(
     atPreimageBytes &&
     (operation.preimage.mode === null ||
       current.mode === operation.preimage.mode);
+
+  // Installation consumes the staged file. A matching live copy beside that
+  // surviving source cannot be attributed to the interrupted rename. An
+  // already restored original image remains a valid rollback-lag state.
+  if (
+    appliedResult &&
+    !atPreimage &&
+    operation.stagedId !== null &&
+    currentImage(
+      root,
+      `${stagedDir(stateDir, transactionId)}/${operation.stagedId}`,
+    ).kind !== "absent"
+  ) {
+    return [
+      issue(
+        "RECOVERY_PHASE_CONTRADICTION",
+        `refusing to change ${operation.path}: its matching live result contradicts a surviving staged source`,
+        operation.path,
+      ),
+    ];
+  }
 
   if (operation.operation === "create") {
     if (current.kind === "absent") return [];

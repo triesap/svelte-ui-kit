@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import {
   chmodSync,
+  copyFileSync,
   existsSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import os from "node:os";
@@ -18,10 +20,15 @@ import {
   journalPath,
   lockPath,
   publicationIntentPath,
+  stagedDir,
   transactionsDir,
   writerLockDir,
 } from "../../src/codegen/transaction-types.js";
 import { readWriterLock } from "../../src/codegen/write-lock.js";
+import {
+  inspectTransactions,
+  inspectUnchangedState,
+} from "../../src/codegen/recovery.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
@@ -172,6 +179,90 @@ for (const operation of ["create", "update", "retire"] as const) {
           readFileSync(path.join(root, ".operator-note"), "utf8"),
           "preserve hidden unrelated bytes",
         );
+      });
+    });
+  }
+}
+
+for (const operation of ["create", "update", "retire"] as const) {
+  for (const operatorCopy of operation === "retire" ? [true] : [false, true]) {
+    test(`${operation}: a real pre-installation kill ${operatorCopy ? "preserves an operator copy" : "recovers with the stage still present"}`, () => {
+      withRoot((root) => {
+        const id = "0505050505050505";
+        const child = runWorker({
+          root,
+          stateDir,
+          transactionId: id,
+          operation,
+          mode: "kill",
+          boundary:
+            operation === "retire" ? "durability:backup" : "replace:apply",
+          event: "before",
+        });
+        resolveConfirmedChild(root, child, id);
+        const parsed = parseJournal(
+          readFileSync(abs(root, journalPath(stateDir, id)), "utf8"),
+        );
+        assert.equal(parsed.ok, true, JSON.stringify(parsed));
+        if (!parsed.ok) return;
+        assert.equal(parsed.value.phase, "prepared");
+        const recorded = parsed.value.operations[0]!;
+        assert.equal(recorded.applied, false);
+        const target = abs(root, recorded.path);
+        assert.equal(existsSync(target), false);
+        if (operation === "retire") {
+          assert.equal(recorded.stagedId, null);
+          writeFileSync(target, "", { mode: 0o644 });
+        } else {
+          assert.notEqual(recorded.stagedId, null);
+          const stage = abs(
+            root,
+            `${stagedDir(stateDir, id)}/${recorded.stagedId}`,
+          );
+          assert.equal(readFileSync(stage, "utf8"), "new css");
+          if (operatorCopy) {
+            copyFileSync(stage, target);
+            assert.notEqual(statSync(stage).ino, statSync(target).ino);
+            assert.equal(readFileSync(target, "utf8"), "new css");
+          }
+        }
+        const before = snapshotTree(root);
+        const inspection = inspectTransactions(
+          root,
+          stateDir,
+          RECOVERY_ROOTS,
+        )[0]!;
+        assert.equal(inspection.ok, !operatorCopy, JSON.stringify(inspection));
+        const unchanged = inspectUnchangedState(root, stateDir, RECOVERY_ROOTS);
+        const expected = !operatorCopy
+          ? "RECOVERY_PENDING"
+          : operation === "retire"
+            ? "RECOVERY_USER_EDIT"
+            : "RECOVERY_PHASE_CONTRADICTION";
+        assert.ok(
+          unchanged.some((issue) => issue.code === expected),
+          JSON.stringify(unchanged),
+        );
+        assert.deepEqual(snapshotTree(root), before);
+        const result = freshRecovery(root, id);
+        assert.equal(
+          result.status,
+          operatorCopy ? "refused" : "rolled_back",
+          JSON.stringify(result),
+        );
+        if (operatorCopy) {
+          assert.ok(
+            result.issues.some((issue) => issue.code === expected),
+            JSON.stringify(result),
+          );
+          assert.deepEqual(snapshotTree(root), before);
+        } else {
+          assert.equal(existsSync(target), operation !== "create");
+          if (operation !== "create")
+            assert.equal(readFileSync(target, "utf8"), "old css");
+          assert.equal(existsSync(abs(root, journalPath(stateDir, id))), false);
+          assert.equal(existsSync(abs(root, writerLockDir(stateDir))), false);
+        }
       });
     });
   }

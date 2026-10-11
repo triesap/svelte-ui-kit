@@ -112,7 +112,9 @@ for (const kind of [
               issue.code ===
               (kind === "edited restored target"
                 ? "RECOVERY_USER_EDIT"
-                : "RECOVERY_AMBIGUOUS_PUBLICATION"),
+                : kind === "published terminal claim"
+                  ? "JOURNAL_INVALID"
+                  : "RECOVERY_AMBIGUOUS_PUBLICATION"),
           ),
           JSON.stringify(recovered),
         );
