@@ -166,8 +166,10 @@ export function removeOwnedAncestors(
   root: string,
   created: readonly JournalCreatedDir[],
   hooks?: TransactionHooks,
+  guard?: (removed: ReadonlySet<string>) => readonly ModelIssue[],
 ): ModelIssue[] {
   const issues: ModelIssue[] = [];
+  const removed = new Set<string>();
   const ordered = [...created].sort(
     (left, right) => depth(right.path) - depth(left.path),
   );
@@ -204,6 +206,8 @@ export function removeOwnedAncestors(
     return [];
   };
   for (const entry of ordered) {
+    const coordinated = guard?.(removed) ?? [];
+    if (coordinated.length > 0) return [...issues, ...coordinated];
     const proof = preflight();
     if (proof.length > 0) return [...issues, ...proof];
     const abs = absOf(root, entry.path);
@@ -239,6 +243,7 @@ export function removeOwnedAncestors(
     }
     try {
       rmdirSync(abs);
+      removed.add(entry.path);
     } catch (error) {
       if (codeOf(error) === "ENOENT") continue;
       issues.push(
@@ -256,8 +261,12 @@ export function removeOwnedAncestors(
     // not an unrelated nonempty directory.
     try {
       fireHooks(hooks, "before", "durability:owned-remove", entry.path);
+      const beforeFlush = guard?.(removed) ?? [];
+      if (beforeFlush.length > 0) return [...issues, ...beforeFlush];
       flushDirectory(path.dirname(abs));
       fireHooks(hooks, "after", "durability:owned-remove", entry.path);
+      const afterFlush = guard?.(removed) ?? [];
+      if (afterFlush.length > 0) return [...issues, ...afterFlush];
     } catch (error) {
       issues.push(
         issue(

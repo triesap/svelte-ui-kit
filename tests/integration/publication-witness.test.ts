@@ -402,6 +402,56 @@ test("a completed publication rename remains committed if its next hook throws",
   });
 });
 
+for (const boundary of ["durability:lock-publish", "lock:publish"] as const) {
+  for (const mutation of ["bytes", "mode", "identity"] as const) {
+    test(`published rename retains evidence after returning ${boundary} canonical ${mutation} edit`, () => {
+      withRoot((root) => {
+        const plan = sealed(makeGuardedPlan(root));
+        let edited: Buffer | undefined;
+        const outcome = applyPlan(plan, {
+          after(candidate) {
+            if (candidate !== boundary || edited !== undefined) return;
+            const canonical = abs(root, lockPath(GUARDED_STATE));
+            if (mutation === "bytes")
+              writeFileSync(canonical, "late canonical edit");
+            else if (mutation === "mode") chmodSync(canonical, 0o2644);
+            else {
+              const bytes = readFileSync(canonical);
+              renameSync(canonical, `${canonical}.operator-original`);
+              writeFileSync(canonical, bytes, { mode: 0o644 });
+            }
+            edited = readFileSync(canonical);
+          },
+        });
+        assert.ok(edited, "returning post-rename hook must execute");
+        assert.equal(
+          outcome.kind,
+          "committed_needs_cleanup",
+          JSON.stringify(outcome),
+        );
+        assert.deepEqual(
+          readFileSync(abs(root, lockPath(GUARDED_STATE))),
+          edited,
+        );
+        assert.ok(outcome.transactionId);
+        assert.ok(
+          readFileSync(
+            abs(root, journalPath(GUARDED_STATE, outcome.transactionId)),
+          ),
+        );
+        assert.ok(
+          readFileSync(
+            abs(
+              root,
+              publicationIntentPath(GUARDED_STATE, outcome.transactionId),
+            ),
+          ),
+        );
+      });
+    });
+  }
+}
+
 for (const mutation of ["bytes", "mode", "identity", "writer"] as const) {
   test(`published recovery preserves a returning canonical ${mutation} edit before cleanup`, () => {
     withRoot((root) => {

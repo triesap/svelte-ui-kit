@@ -40,6 +40,7 @@ import {
   type MutationAuthority,
 } from "./mutation-authority.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
 import {
   journalPath,
   lockPath,
@@ -47,11 +48,18 @@ import {
   stagedDir,
 } from "./transaction-types.js";
 
-export interface LockPublicationResult {
-  readonly ok: boolean;
-  readonly journal: TransactionJournal;
-  readonly issues: readonly ModelIssue[];
-}
+export type LockPublicationResult =
+  | {
+      readonly ok: true;
+      readonly canonical: TargetPreimage;
+      readonly journal: TransactionJournal;
+      readonly issues: readonly ModelIssue[];
+    }
+  | {
+      readonly ok: false;
+      readonly journal: TransactionJournal;
+      readonly issues: readonly ModelIssue[];
+    };
 
 function absOf(root: string, logical: string): string {
   return path.join(root, ...logical.split("/"));
@@ -196,6 +204,19 @@ export function publishLock(
     },
   };
   let current = journal;
+  let canonical: TargetPreimage | undefined;
+  const publishedProof = () => {
+    requireProof(
+      verifyMutationAuthority(authority, root, stateDir, receipts, [
+        lockPath(stateDir),
+        stagedLogical,
+      ]),
+    );
+    if (canonical === undefined)
+      throw new Error("missing canonical rename proof");
+    const proof = revalidatePreimages(root, [canonical], { ancestors: [] });
+    if (!proof.ok) requireProof(proof.issues);
+  };
 
   // Durable publication intent. The physical witness below supplies the unique
   // rename proof; this digest alone never grants publication or rollback.
@@ -311,20 +332,26 @@ export function publishLock(
     stageProof();
     renameSync(stagedLock, destination);
     current = published;
+    canonical = Object.freeze({
+      path: lockPath(stateDir),
+      kind: "file",
+      digest: intendedDigest,
+      mode: effectiveMode,
+      identity: Object.freeze({
+        device: stagedReceipt.device,
+        inode: stagedReceipt.inode,
+      }),
+    });
     forgetRenamedCreation(stagedLock, receipts);
     fireHooks(hooks, "before", "durability:lock-publish", lockPath(stateDir));
-    requireProof(
-      verifyMutationAuthority(authority, root, stateDir, receipts, [
-        lockPath(stateDir),
-        stagedLogical,
-      ]),
-    );
+    publishedProof();
     // The canonical rename is cross-directory: flush the destination directory
     // that gained the lock and the staged directory that lost it.
     flushDirectory(path.dirname(destination));
     flushDirectory(path.dirname(stagedLock));
     fireHooks(hooks, "after", "durability:lock-publish", lockPath(stateDir));
     fireHooks(hooks, "after", "lock:publish", lockPath(stateDir));
+    publishedProof();
   } catch (error) {
     return {
       ok: false,
@@ -343,12 +370,7 @@ export function publishLock(
   }
 
   try {
-    requireProof(
-      verifyMutationAuthority(authority, root, stateDir, receipts, [
-        lockPath(stateDir),
-        stagedLogical,
-      ]),
-    );
+    publishedProof();
     persistJournal(
       root,
       journalPath(stateDir, journal.transactionId),
@@ -356,6 +378,7 @@ export function publishLock(
       hooks,
       ownership,
     );
+    publishedProof();
   } catch (error) {
     // The lock is already published; the durable publication record is what
     // failed. Report a committed-but-needs-cleanup outcome rather than
@@ -375,5 +398,5 @@ export function publishLock(
             ],
     };
   }
-  return { ok: true, journal: published, issues: [] };
+  return { ok: true, journal: published, canonical: canonical!, issues: [] };
 }

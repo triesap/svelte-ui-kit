@@ -39,6 +39,7 @@ import {
 import { removeOwnedAncestors } from "./owned-ancestry.js";
 import {
   holdMutationAuthority,
+  scopeMutationAuthority,
   verifyMutationAuthority,
   type MutationAuthority,
 } from "./mutation-authority.js";
@@ -842,6 +843,80 @@ interface RecoveryMutationAuthority {
   readonly paths: readonly string[];
 }
 
+/** Coordinated empty-directory rollback keeps the original proof across hooks. */
+function removeCoordinatedAncestors(
+  root: string,
+  stateDir: string,
+  journal: TransactionJournal,
+  hooks: TransactionHooks | undefined,
+  original?: RecoveryMutationAuthority,
+): ModelIssue[] {
+  const created = nonCoordinationDirectories(journal, stateDir);
+  const directoryPaths = created.map(
+    (entry) => `${entry.path}/.held-directory-proof`,
+  );
+  const fixedPaths = [
+    lockPath(stateDir),
+    transactionDir(stateDir, journal.transactionId),
+  ];
+  try {
+    const physical =
+      original?.physical ??
+      holdMutationAuthority(root, [...fixedPaths, ...directoryPaths]);
+    const images =
+      original === undefined
+        ? [physical.preimages.get(lockPath(stateDir))!]
+        : [...original.expected.values()].filter(
+            (entry) =>
+              !entry.path.startsWith(
+                `${transactionDir(stateDir, journal.transactionId)}/`,
+              ),
+          );
+    return removeOwnedAncestors(root, created, hooks, (removed) => {
+      const paths = [
+        ...fixedPaths,
+        ...created
+          .map((entry) => entry.path)
+          .filter((logical) => {
+            const segments = logical.split("/");
+            return !segments
+              .slice(0, -1)
+              .some((_, index) =>
+                removed.has(segments.slice(0, index + 1).join("/")),
+              );
+          }),
+        ...created
+          .filter((entry) => !removed.has(entry.path))
+          .map((entry) => `${entry.path}/.held-directory-proof`),
+      ];
+      const scoped = scopeMutationAuthority(physical, paths, images, removed);
+      const issues = verifyMutationAuthority(scoped, root, stateDir, [], paths);
+      const semantic = revalidatePreimages(
+        root,
+        [
+          ...images,
+          ...[...removed].map((logical): TargetPreimage => ({
+            path: logical,
+            kind: "absent",
+            digest: null,
+            mode: null,
+          })),
+        ],
+        { ancestors: [] },
+      );
+      if (!semantic.ok) issues.push(...semantic.issues);
+      return issues;
+    });
+  } catch (error) {
+    return [
+      issue(
+        "RECOVERY_ANCESTRY_CHANGED",
+        `could not prove coordinated ancestry removal (${codeOf(error)})`,
+      ),
+    ];
+  }
+}
+
 /** Snapshot approved current recovery evidence once, before mutation hooks. */
 function holdRecoveryAuthority(
   root: string,
@@ -1480,11 +1555,7 @@ function recoverTransactionUnderLock(
   if (createdDirs.length > 0) return refuse(transactionId, createdDirs);
 
   if (journal.phase === "rolled_back") {
-    const ancestry = removeOwnedAncestors(
-      root,
-      nonCoordinationDirectories(journal, stateDir),
-      hooks,
-    );
+    const ancestry = removeCoordinatedAncestors(root, stateDir, journal, hooks);
     if (ancestry.length > 0) return refuse(transactionId, ancestry);
     const cleanup = removeOwnedEntries(
       root,
@@ -1504,9 +1575,10 @@ function recoverTransactionUnderLock(
     // removed only when every identity/removal/flush issue is proven. A
     // contradiction or durability fault is refused with the journal preserved
     // rather than discarding proof while reporting clean.
-    const ancestryIssues = removeOwnedAncestors(
+    const ancestryIssues = removeCoordinatedAncestors(
       root,
-      nonCoordinationDirectories(journal, stateDir),
+      stateDir,
+      journal,
       hooks,
     );
     if (ancestryIssues.length > 0) {
@@ -1682,10 +1754,12 @@ function recoverTransactionUnderLock(
   }
   // Remove only the recorded owned empty ancestry directories this attempt
   // created; a directory that is no longer empty is preserved and reported.
-  const ancestryIssues = removeOwnedAncestors(
+  const ancestryIssues = removeCoordinatedAncestors(
     root,
-    nonCoordinationDirectories(journal, stateDir),
+    stateDir,
+    journal,
     hooks,
+    recoveryAuthority,
   );
   if (ancestryIssues.length > 0) return refuse(transactionId, ancestryIssues);
   const cleanupIssues = inventoryIssues(root, stateDir, transactionId, journal);

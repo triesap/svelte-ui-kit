@@ -35,6 +35,55 @@ export interface MutationAuthority {
 
 const HELD_AUTHORITIES = new WeakSet<MutationAuthority>();
 
+/** Narrow an authentic held proof without approving newly observed facts. */
+export function scopeMutationAuthority(
+  authority: MutationAuthority,
+  paths: readonly string[],
+  preimages: readonly TargetPreimage[],
+  removed: ReadonlySet<string> = new Set(),
+): MutationAuthority {
+  if (!HELD_AUTHORITIES.has(authority))
+    throw new Error("the original held mutation authority is required");
+  const needed = new Set<string>();
+  for (const logical of paths) {
+    const segments = logical.split("/");
+    for (let index = 1; index < segments.length; index++)
+      needed.add(segments.slice(0, index).join("/"));
+  }
+  const scoped: MutationAuthority = Object.freeze({
+    root: authority.root,
+    readset: Object.freeze({
+      root: authority.readset.root,
+      ancestors: Object.freeze(
+        authority.readset.ancestors.filter(
+          (entry) => needed.has(entry.path) && !removed.has(entry.path),
+        ),
+      ),
+      files: Object.freeze([]),
+      installed: Object.freeze([]),
+    }),
+    preimages: new FrozenMap(
+      preimages.map((entry) => [
+        entry.path,
+        Object.freeze({
+          ...entry,
+          identity:
+            entry.identity == null
+              ? null
+              : Object.freeze({ ...entry.identity }),
+        }),
+      ]),
+    ),
+    created: Object.freeze(
+      authority.created.filter(
+        (entry) => needed.has(entry.path) && !removed.has(entry.path),
+      ),
+    ),
+  });
+  HELD_AUTHORITIES.add(scoped);
+  return scoped;
+}
+
 /**
  * Production supplies the sealed original readset/preimages. Additional
  * transient ancestry is captured once before mutation hooks; original planned

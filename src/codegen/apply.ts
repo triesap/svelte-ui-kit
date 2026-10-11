@@ -71,7 +71,10 @@ import {
 } from "./recovery.js";
 import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
 import { applyReplacements } from "./replace.js";
-import { holdMutationAuthority } from "./mutation-authority.js";
+import {
+  holdMutationAuthority,
+  scopeMutationAuthority,
+} from "./mutation-authority.js";
 import { publishLock } from "./publish-lock.js";
 import { cleanupTransaction } from "./transaction-cleanup.js";
 import { stageOperations } from "./stage.js";
@@ -1866,6 +1869,11 @@ function applyUnderLock(
     published.journal,
     hooks,
     ownership,
+    scopeMutationAuthority(
+      mutationAuthority,
+      [lockPath(plan.stateDir), transactionDir(plan.stateDir, transactionId)],
+      [published.canonical],
+    ),
   );
   if (!cleanup.ok) {
     return {

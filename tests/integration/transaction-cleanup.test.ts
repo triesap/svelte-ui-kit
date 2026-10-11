@@ -17,7 +17,7 @@ import { test } from "node:test";
 
 import {
   ensureIgnoreEntry,
-  cleanupTransaction,
+  cleanupTransaction as cleanPublished,
 } from "../../src/codegen/transaction-cleanup.js";
 import {
   serializeJournal,
@@ -28,6 +28,13 @@ import { faultAt } from "../../src/codegen/transaction-hooks.js";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
+import { holdMutationAuthority } from "../../src/codegen/mutation-authority.js";
+import {
+  acquireWriterLock,
+  releaseWriterLock,
+  type WriterLockHandle,
+} from "../../src/codegen/write-lock.js";
+import type { TransactionHooks } from "../../src/codegen/transaction-hooks.js";
 import {
   backupsDir,
   journalPath,
@@ -35,17 +42,102 @@ import {
   transactionDir,
   transientRoot,
   transactionsDir,
+  lockPath,
+  writerLockDir,
+  publicationIntentPath,
 } from "../../src/codegen/transaction-types.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 const ID = "7777777777777777";
 const OTHER_ID = "8888888888888888";
+const fixtureWriters = new Map<string, WriterLockHandle>();
+
+for (const boundary of ["cleanup:staged", "durability:cleanup"] as const) {
+  for (const mutation of ["writer", "canonical", "root", "parent"] as const) {
+    test(`normal apply preserves evidence after returning ${boundary} ${mutation} edit`, () => {
+      withRoot((root) => {
+        const plan = validateApplyPlan(capturedFixtureInit(root));
+        assert.equal(plan.ok, true);
+        if (!plan.ok) throw new Error("invalid plan");
+        let evidence: ReturnType<typeof snapshotTree> | undefined;
+        let tx: string | undefined;
+        const result = applyPlan(plan.value, {
+          before(candidate) {
+            if (candidate !== boundary || evidence !== undefined) return;
+            tx = readdirSync(abs(root, transactionsDir(STATE_DIR)))[0];
+            if (mutation === "writer") {
+              const owner = abs(root, `${writerLockDir(STATE_DIR)}/owner.json`);
+              const replacement = path.join(root, "owner-replacement");
+              writeFileSync(replacement, readFileSync(owner), { mode: 0o600 });
+              renameSync(replacement, owner);
+            } else if (mutation === "canonical") {
+              writeFileSync(
+                abs(root, lockPath(STATE_DIR)),
+                "operator canonical edit",
+              );
+            } else if (mutation === "root") {
+              chmodSync(root, 0o750);
+            } else {
+              chmodSync(abs(root, STATE_DIR), 0o750);
+            }
+            evidence = snapshotTree(abs(root, transactionDir(STATE_DIR, tx)));
+          },
+        });
+        assert.ok(evidence, "returning mutation hook must execute");
+        assert.equal(
+          result.kind,
+          "committed_needs_cleanup",
+          JSON.stringify(result),
+        );
+        assert.deepEqual(
+          snapshotTree(abs(root, transactionDir(STATE_DIR, tx!))),
+          evidence,
+        );
+        assert.ok(existsSync(abs(root, journalPath(STATE_DIR, tx!))));
+        assert.ok(existsSync(abs(root, publicationIntentPath(STATE_DIR, tx!))));
+        if (mutation === "canonical")
+          assert.equal(
+            readFileSync(abs(root, lockPath(STATE_DIR)), "utf8"),
+            "operator canonical edit",
+          );
+      });
+    });
+  }
+}
+
+function cleanupTransaction(
+  root: string,
+  stateDir: string,
+  journal: TransactionJournal,
+  hooks?: TransactionHooks,
+) {
+  const writer = acquireWriterLock(root, stateDir, journal.transactionId);
+  assert.equal(writer.ok, true);
+  if (!writer.ok) throw new Error("writer unavailable");
+  fixtureWriters.set(root, writer.value);
+  return cleanPublished(
+    root,
+    stateDir,
+    journal,
+    hooks,
+    undefined,
+    holdMutationAuthority(root, [
+      lockPath(stateDir),
+      transactionDir(stateDir, journal.transactionId),
+    ]),
+  );
+}
 
 function withRoot(body: (root: string) => void): void {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-cleanup-"));
   try {
     body(root);
   } finally {
+    const writer = fixtureWriters.get(root);
+    if (writer !== undefined) {
+      releaseWriterLock(writer);
+      fixtureWriters.delete(root);
+    }
     rmSync(root, { recursive: true, force: true });
   }
 }

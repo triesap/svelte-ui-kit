@@ -58,6 +58,15 @@ hooks and requires the unchanged physical writer and directory ancestry. An empt
 cleanup tail uses frozen directory identity rather than deleting a replacement
 directory at the same name.
 
+Normal apply cleanup carries the published canonical image directly from the
+staged rename receipt; it does not approve a later canonical recapture. Each
+returning cleanup hook is followed by proof of that image, the original root
+and enclosing ancestry, and the actual held writer before further removal or
+flush. Coordinated recovery also proves this authority before each empty
+generated-directory removal and after its returning durability hooks. Only a
+completed owned removal advances the expected directory state. Cleanup after
+writer release and failed acquisition retains its separate receipt-only rules.
+
 ## Ordered application and publication
 
 Plans, diagnosis and dry runs write nothing, including hidden state. Genuine

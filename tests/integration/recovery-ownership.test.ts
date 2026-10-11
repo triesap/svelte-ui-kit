@@ -55,6 +55,116 @@ const ROOTS = {
   layoutFile: "src/routes/+layout.svelte",
 } as const;
 
+for (const phase of ["planned", "rolled_back", "applied"] as const) {
+  for (const mutation of [
+    "none",
+    "writer",
+    "root",
+    "parent",
+    "canonical",
+    "replacement",
+  ] as const) {
+    test(`${phase} ancestry stops after returning owned-removal ${mutation} hook`, () => {
+      withRoot((root) => {
+        const directories = [
+          "src/styles",
+          "src/styles/owned",
+          "src/styles/owned/deep",
+        ];
+        mkdirSync(abs(root, directories[2]), { recursive: true });
+        const target = `${directories[2]}/boundary.css`;
+        if (phase === "applied") write(root, target, "result bytes");
+        write(
+          root,
+          journalPath(GUARDED_STATE, ID),
+          JSON.stringify({
+            schemaVersion: 1,
+            transactionId: ID,
+            rootIdentity: liveRootIdentity(root),
+            planDigest: "b".repeat(64),
+            phase,
+            lock: null,
+            createdDirs: directories.map((logical) => {
+              const stats = statSync(abs(root, logical));
+              return {
+                path: logical,
+                device: stats.dev,
+                inode: stats.ino,
+                mode: stats.mode & 0o7777,
+              };
+            }),
+            operations: [
+              {
+                path: target,
+                operation: "create",
+                preimage: { kind: "absent", digest: null, mode: null },
+                resultDigest: sha256Hex("result bytes"),
+                resultMode: 0o644,
+                backupId: null,
+                stagedId: "stage-0",
+                applied: phase !== "planned",
+              },
+            ],
+          }),
+        );
+        const writer = acquireWriterLock(
+          root,
+          GUARDED_STATE,
+          "0404040404040404",
+        );
+        assert.equal(writer.ok, true);
+        if (!writer.ok) throw new Error("writer unavailable");
+        let expected: ReturnType<typeof snapshotTree> | undefined;
+        const result = recoverTransaction(root, GUARDED_STATE, ID, ROOTS, {
+          before(boundary) {
+            if (
+              boundary !== "durability:owned-remove" ||
+              expected !== undefined
+            )
+              return;
+            if (mutation === "writer") {
+              const owner = abs(
+                root,
+                `${writerLockDir(GUARDED_STATE)}/owner.json`,
+              );
+              const replacement = path.join(root, "owner-replacement");
+              writeFileSync(replacement, readFileSync(owner), {
+                mode: 0o600,
+              });
+              renameSync(replacement, owner);
+            } else if (mutation === "root") chmodSync(root, 0o750);
+            else if (mutation === "parent") chmodSync(abs(root, "src"), 0o750);
+            else if (mutation === "canonical")
+              write(root, lockPath(GUARDED_STATE), "operator canonical");
+            else if (mutation === "replacement")
+              mkdirSync(abs(root, directories[2]));
+            expected = snapshotTree(root);
+          },
+        });
+        assert.ok(
+          expected,
+          `real coordinated directory removal must reach hook: ${JSON.stringify(result)}`,
+        );
+        if (mutation === "none") {
+          assert.equal(
+            result.status,
+            phase === "planned" ? "cleaned" : "rolled_back",
+            JSON.stringify(result),
+          );
+          for (const directory of directories)
+            assert.equal(existsSync(abs(root, directory)), false);
+        } else {
+          assert.equal(result.status, "refused", JSON.stringify(result));
+          assert.deepEqual(snapshotTree(root), expected);
+          assert.ok(existsSync(abs(root, journalPath(GUARDED_STATE, ID))));
+          assert.ok(existsSync(abs(root, "src/styles/owned")));
+        }
+        assert.equal(releaseWriterLock(writer.value).ok, mutation !== "writer");
+      });
+    });
+  }
+}
+
 function withRoot(body: (root: string) => void): void {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-recovery-ownership-"));
   try {

@@ -19,6 +19,11 @@ import path from "node:path";
 import type { ModelIssue } from "../registry/errors.js";
 import { flushDirectory } from "./durability.js";
 import {
+  verifyMutationAuthority,
+  verifyMutationTarget,
+  type MutationAuthority,
+} from "./mutation-authority.js";
+import {
   parseJournal,
   serializeJournal,
   type TransactionJournal,
@@ -36,6 +41,7 @@ import {
   ignoreEntryFor,
   progressDir,
   publicationIntentPath,
+  lockPath,
   stagedDir,
   transactionDir,
 } from "./transaction-types.js";
@@ -59,8 +65,9 @@ export function cleanupTransaction(
   root: string,
   stateDir: string,
   journal: TransactionJournal,
-  hooks?: TransactionHooks,
-  ownership?: readonly OwnedCreation[],
+  hooks: TransactionHooks | undefined,
+  ownership: readonly OwnedCreation[] | undefined,
+  authority: MutationAuthority,
 ): CleanupResult {
   if (journal.phase !== "published" && journal.phase !== "cleaned") {
     return {
@@ -213,8 +220,24 @@ export function cleanupTransaction(
   ];
 
   try {
+    const prove = () => {
+      const issues = [
+        ...verifyMutationAuthority(
+          authority,
+          root,
+          stateDir,
+          [],
+          [lockPath(stateDir), transactionDir(stateDir, journal.transactionId)],
+        ),
+        ...verifyMutationTarget(authority, lockPath(stateDir)),
+      ];
+      if (issues.length > 0)
+        throw new Error(issues.map((entry) => entry.message).join("; "));
+    };
+    prove();
     for (const [target, boundary] of targets) {
       fireHooks(hooks, "before", boundary, target);
+      prove();
       // Re-prove the complete owned inventory immediately before each removal,
       // so an entry introduced at a cleanup boundary is retained and reported
       // rather than recursively deleted.
@@ -236,13 +259,16 @@ export function cleanupTransaction(
       // The removal must be durable in the containing directory so a crash
       // cannot resurrect state recovery already proved safe to remove.
       fireHooks(hooks, "before", "durability:cleanup", target);
+      prove();
       flushDirectory(path.dirname(target));
       fireHooks(hooks, "after", "durability:cleanup", target);
       fireHooks(hooks, "after", boundary, target);
+      prove();
     }
     // Remove the now-empty owned transaction directory itself, then flush the
     // parent transaction namespace so the completed cleanup is durable.
     {
+      prove();
       const removed = removeCleanupEntries(inventory.value, ownedDir);
       if (removed.length > 0)
         return {
@@ -255,8 +281,10 @@ export function cleanupTransaction(
         };
       if (inventory.value.entries.some((entry) => entry.path === ownedDir)) {
         fireHooks(hooks, "before", "durability:cleanup", ownedDir);
+        prove();
         flushDirectory(path.dirname(ownedDir));
         fireHooks(hooks, "after", "durability:cleanup", ownedDir);
+        prove();
       }
     }
   } catch (error) {
