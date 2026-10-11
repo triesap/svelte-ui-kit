@@ -696,12 +696,12 @@ export function validateApplyPlan(
       );
       continue;
     }
-    // Strict nested shape: exactly {path, kind, digest, mode}, no unknown or
-    // missing keys, and a kind-consistent digest/mode. A malformed nested
+    // Strict nested shape: path/kind/digest/mode plus the original physical
+    // identity for a file, no unknown keys, and kind-consistent evidence. A malformed nested
     // preimage is a typed refusal before digest/sealing/coordination, never an
     // `undefined` value that later throws during canonical serialization.
     for (const key of Object.keys(target.preimage)) {
-      if (!["path", "kind", "digest", "mode"].includes(key)) {
+      if (!["path", "kind", "digest", "mode", "identity"].includes(key)) {
         problems.push(
           issue(
             "PLAN_PREIMAGE_MISMATCH",
@@ -731,6 +731,7 @@ export function validateApplyPlan(
         ),
       );
     }
+    problems.push(...preimageIdentityIssues(target.preimage, target.path));
     if (target.operation === "retire" && target.bytes.byteLength !== 0) {
       problems.push(
         issue(
@@ -803,7 +804,7 @@ export function validateApplyPlan(
         operation: target.operation,
         bytes: new Uint8Array(target.bytes),
         mode: target.mode,
-        preimage: Object.freeze({ ...target.preimage }),
+        preimage: sealPreimage(target.preimage),
         resultDigest: sha256Hex(target.bytes),
       }),
     );
@@ -819,7 +820,7 @@ export function validateApplyPlan(
     );
   } else {
     for (const key of Object.keys(lockPreimage)) {
-      if (!["path", "kind", "digest", "mode"].includes(key)) {
+      if (!["path", "kind", "digest", "mode", "identity"].includes(key)) {
         problems.push(
           issue(
             "PLAN_PREIMAGE_MISMATCH",
@@ -850,6 +851,7 @@ export function validateApplyPlan(
       );
     }
     const lockKind = lockPreimage["kind"];
+    problems.push(...preimageIdentityIssues(lockPreimage, "lock"));
     if (lockKind !== "file" && lockKind !== "absent") {
       problems.push(
         issue(
@@ -1043,7 +1045,7 @@ export function validateApplyPlan(
     lock: Object.freeze({
       bytes: new Uint8Array(lockView.bytes),
       digest: sha256Hex(lockView.bytes),
-      preimage: Object.freeze({ ...lockView.preimage }),
+      preimage: sealPreimage(lockView.preimage),
     }),
     ignoreFiles: Object.freeze([...(plan.ignoreFiles ?? [])]),
   };
@@ -1058,10 +1060,58 @@ export function validateApplyPlan(
   return ok(sealedPlan);
 }
 
+function preimageIdentityIssues(input: unknown, locator: string): ModelIssue[] {
+  if (!isPlainObject(input)) return [];
+  const identity = input["identity"];
+  if (input["kind"] === "absent") {
+    return identity === undefined || identity === null
+      ? []
+      : [
+          issue(
+            "PLAN_PREIMAGE_MISMATCH",
+            "an absent preimage cannot carry physical identity",
+            locator,
+          ),
+        ];
+  }
+  if (input["kind"] !== "file") return [];
+  if (
+    !isPlainObject(identity) ||
+    Object.keys(identity).some((key) => key !== "device" && key !== "inode") ||
+    !Number.isInteger(identity["device"]) ||
+    (identity["device"] as number) < 0 ||
+    !Number.isInteger(identity["inode"]) ||
+    (identity["inode"] as number) < 0
+  ) {
+    return [
+      issue(
+        "PLAN_PREIMAGE_MISMATCH",
+        "a file preimage requires its original physical device/inode identity",
+        locator,
+      ),
+    ];
+  }
+  return [];
+}
+
+function sealPreimage(preimage: TargetPreimage): TargetPreimage {
+  return Object.freeze({
+    ...preimage,
+    ...(preimage.identity === undefined
+      ? {}
+      : {
+          identity:
+            preimage.identity === null
+              ? null
+              : Object.freeze({ ...preimage.identity }),
+        }),
+  });
+}
+
 /**
  * Derive the canonical digest of the complete sealed plan: exact result bytes,
- * modes and operations, the physical read evidence including absence, and the
- * exact final lock content. A caller supplied digest is never authority.
+ * modes and operations, original physical preimages and read evidence including
+ * absence, and final lock content. A caller supplied digest is never authority.
  */
 export function derivePlanDigest(input: {
   readonly root: string;
@@ -1111,6 +1161,7 @@ export function derivePlanDigest(input: {
         kind: target.preimage.kind,
         digest: target.preimage.digest,
         mode: target.preimage.mode,
+        identity: target.preimage.identity ?? null,
       },
     })),
     lock: {
@@ -1119,18 +1170,21 @@ export function derivePlanDigest(input: {
         kind: input.lock.preimage.kind,
         digest: input.lock.preimage.digest,
         mode: input.lock.preimage.mode,
+        identity: input.lock.preimage.identity ?? null,
       },
     },
     readset: {
       root: {
         device: input.readset.root.device,
         inode: input.readset.root.inode,
+        mode: input.readset.root.mode ?? null,
       },
       ancestors: input.readset.ancestors.map((ancestor) => ({
         path: ancestor.path,
         kind: ancestor.kind,
         device: ancestor.device,
         inode: ancestor.inode,
+        mode: ancestor.mode ?? null,
       })),
       files: input.readset.files.map((file) => ({
         path: file.path,

@@ -31,11 +31,17 @@ export interface TargetPreimage {
   readonly kind: "absent" | "file";
   readonly digest: string | null;
   readonly mode: number | null;
+  readonly identity?: PhysicalIdentity | null;
 }
 
 export type CurrentObservation =
   | { readonly kind: "absent" }
-  | { readonly kind: "file"; readonly digest: string; readonly mode: number }
+  | {
+      readonly kind: "file";
+      readonly digest: string;
+      readonly mode: number;
+      readonly identity: PhysicalIdentity;
+    }
   | { readonly kind: "unsafe"; readonly reason: string };
 
 function codeOf(error: unknown): string {
@@ -66,7 +72,11 @@ export function observeTarget(
   return {
     kind: "file",
     digest: sha256Hex(bytes),
-    mode: entry.stats.mode & 0o777,
+    mode: entry.stats.mode & 0o7777,
+    identity: Object.freeze({
+      device: entry.stats.dev,
+      inode: entry.stats.ino,
+    }),
   };
 }
 
@@ -82,6 +92,7 @@ export function capturePreimage(
       kind: "file",
       digest: observed.digest,
       mode: observed.mode,
+      identity: observed.identity,
     };
   }
   if (observed.kind === "absent") {
@@ -211,6 +222,20 @@ export function revalidatePreimages(
         issue(
           "STALE_PLAN",
           `target ${target.path} mode changed since planning`,
+          target.path,
+        ),
+      );
+    }
+    if (
+      target.identity !== undefined &&
+      target.identity !== null &&
+      (current.identity.device !== target.identity.device ||
+        current.identity.inode !== target.identity.inode)
+    ) {
+      issues.push(
+        issue(
+          "STALE_PLAN",
+          `target ${target.path} physical identity changed since planning`,
           target.path,
         ),
       );

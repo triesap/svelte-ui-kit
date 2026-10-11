@@ -50,6 +50,7 @@ import { readJsonObject } from "../project/io.js";
 export interface PhysicalIdentity {
   readonly device: number;
   readonly inode: number;
+  readonly mode?: number;
 }
 
 /** Observation of one non-final path component. */
@@ -58,6 +59,7 @@ export interface PlanAncestor {
   readonly kind: "directory" | "absent";
   readonly device: number | null;
   readonly inode: number | null;
+  readonly mode?: number | null;
 }
 
 /**
@@ -163,7 +165,7 @@ export function observeRootIdentity(
       ),
     ]);
   }
-  return ok({ device: real.dev, inode: real.ino });
+  return ok({ device: real.dev, inode: real.ino, mode: real.mode & 0o7777 });
 }
 
 /**
@@ -225,6 +227,7 @@ export function captureAncestors(
       kind: "directory",
       device: stats.dev,
       inode: stats.ino,
+      mode: stats.mode & 0o7777,
     });
   }
   return ok(ancestors);
@@ -369,8 +372,21 @@ export function validateReadset(readset: unknown): ModelIssue[] {
       ),
     );
   } else {
+    const rootMode = (value.root as PhysicalIdentity).mode;
+    if (
+      rootMode !== undefined &&
+      (!Number.isInteger(rootMode) || rootMode < 0 || rootMode > 0o7777)
+    ) {
+      problems.push(
+        issue(
+          "PLAN_READSET_INVALID",
+          "plan.readset.root mode is invalid",
+          "readset.root",
+        ),
+      );
+    }
     for (const key of Object.keys(value.root)) {
-      if (!["device", "inode"].includes(key)) {
+      if (!["device", "inode", "mode"].includes(key)) {
         problems.push(
           issue(
             "PLAN_READSET_INVALID",
@@ -408,8 +424,25 @@ export function validateReadset(readset: unknown): ModelIssue[] {
         continue;
       }
       const record = ancestor as PlanAncestor;
+      if (
+        record.mode !== undefined &&
+        (record.kind === "absent"
+          ? record.mode !== null
+          : record.mode === null ||
+            !Number.isInteger(record.mode) ||
+            record.mode < 0 ||
+            record.mode > 0o7777)
+      ) {
+        problems.push(
+          issue(
+            "PLAN_READSET_INVALID",
+            `${label} mode is inconsistent with its kind`,
+            label,
+          ),
+        );
+      }
       for (const key of Object.keys(record)) {
-        if (!["path", "kind", "device", "inode"].includes(key)) {
+        if (!["path", "kind", "device", "inode", "mode"].includes(key)) {
           problems.push(
             issue(
               "PLAN_READSET_INVALID",
@@ -793,7 +826,8 @@ export function verifyRootIdentity(
   if (!observed.ok) return [...observed.issues];
   if (
     observed.value.device !== expected.device ||
-    observed.value.inode !== expected.inode
+    observed.value.inode !== expected.inode ||
+    (expected.mode !== undefined && observed.value.mode !== expected.mode)
   ) {
     return [
       issue(
@@ -860,7 +894,13 @@ export function verifyAncestors(
       // still refused.
       continue;
     }
-    if (stats.dev !== ancestor.device || stats.ino !== ancestor.inode) {
+    if (
+      stats.dev !== ancestor.device ||
+      stats.ino !== ancestor.inode ||
+      (ancestor.mode !== undefined &&
+        ancestor.mode !== null &&
+        (stats.mode & 0o7777) !== ancestor.mode)
+    ) {
       issues.push(
         issue(
           "AUTHORITY_ANCESTOR_REPLACED",

@@ -50,6 +50,7 @@ export type ObservedKind =
 export interface TargetObservation {
   readonly path: string;
   readonly kind: ObservedKind;
+  readonly identity: RootIdentity | null;
   /** Exact bytes for a regular file, or `null`. Never shared with the caller. */
   readonly bytes: Uint8Array | null;
   readonly mode: number | null;
@@ -83,6 +84,7 @@ export interface ProjectSnapshot {
 export interface RootIdentity {
   readonly device: number;
   readonly inode: number;
+  readonly mode?: number;
 }
 
 /**
@@ -96,6 +98,7 @@ export interface AncestorObservation {
   readonly kind: "directory" | "absent" | "symlink" | "other" | "unreadable";
   readonly device: number | null;
   readonly inode: number | null;
+  readonly mode?: number | null;
   readonly errorCode: string | null;
 }
 
@@ -121,6 +124,7 @@ function absentObservation(logicalPath: string): TargetObservation {
     {
       path: logicalPath,
       kind: "absent",
+      identity: null,
       mode: null,
       size: null,
       linkTarget: null,
@@ -139,6 +143,7 @@ function unsafeObservation(
     {
       path: logicalPath,
       kind: "unsafe",
+      identity: null,
       mode: null,
       size: null,
       linkTarget: null,
@@ -157,6 +162,7 @@ function unreadableObservation(
     {
       path: logicalPath,
       kind: "unreadable",
+      identity: null,
       mode: null,
       size: null,
       linkTarget: null,
@@ -173,8 +179,9 @@ function ancestorObservation(
   device: number | null,
   inode: number | null,
   errorCode: string | null,
+  mode: number | null = null,
 ): AncestorObservation {
-  return Object.freeze({ path, kind, device, inode, errorCode });
+  return Object.freeze({ path, kind, device, inode, errorCode, mode });
 }
 
 interface AncestryWalk {
@@ -237,7 +244,14 @@ function observeAncestors(root: string, logicalPath: string): AncestryWalk {
       return { status: "unsafe", code: "UNSAFE_ANCESTRY", observations };
     }
     observations.push(
-      ancestorObservation(logical, "directory", stats.dev, stats.ino, null),
+      ancestorObservation(
+        logical,
+        "directory",
+        stats.dev,
+        stats.ino,
+        null,
+        stats.mode & 0o7777,
+      ),
     );
   }
   return { status: "ok", code: null, observations };
@@ -268,6 +282,7 @@ function observeOne(
   }
   const base = {
     path: logicalPath,
+    identity: Object.freeze({ device: stats.dev, inode: stats.ino }),
     mode: stats.mode & 0o7777,
     size: stats.size,
     linkTarget: null as string | null,
@@ -352,7 +367,11 @@ function canonicalRoot(
   }
   return ok({
     path: canonicalPath,
-    identity: Object.freeze({ device: stats.dev, inode: stats.ino }),
+    identity: Object.freeze({
+      device: stats.dev,
+      inode: stats.ino,
+      mode: stats.mode & 0o7777,
+    }),
   });
 }
 

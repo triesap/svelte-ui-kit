@@ -21,6 +21,12 @@ segment-aware containment and safe logical diagnostics, not raw path leakage.
 Revalidate ancestry, modes/identities, native dependencies and expected preimages
 under coordination before any mutation. Planned output cannot authenticate itself.
 
+The original snapshot carries regular-file preimage device/inode identities and root and
+ancestor permission modes through composition and immutable plan sealing. Equal
+bytes and modes at a replacement inode do not revalidate that original preimage.
+File observations compare all permission bits, including intervening special-bit
+edits. New physical evidence must come from a fresh plan, not a live recapture.
+
 ## Ordered application and publication
 
 Plans, diagnosis and dry runs write nothing, including hidden state. Genuine

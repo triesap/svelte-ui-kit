@@ -115,17 +115,23 @@ function preimageFor(observation: TargetObservation):
       readonly kind: "file";
       readonly digest: string;
       readonly mode: number;
+      readonly identity: { readonly device: number; readonly inode: number };
     }
   | null {
   if (observation.kind === "absent") {
     return { path: observation.path, kind: "absent", digest: null, mode: null };
   }
-  if (observation.kind === "file" && observation.hash !== null) {
+  if (
+    observation.kind === "file" &&
+    observation.hash !== null &&
+    observation.identity !== null
+  ) {
     return {
       path: observation.path,
       kind: "file",
       digest: observation.hash,
       mode: observation.mode ?? 0o644,
+      identity: Object.freeze({ ...observation.identity }),
     };
   }
   return null;
@@ -136,6 +142,7 @@ function ancestorFor(observation: AncestorObservation): {
   readonly kind: "directory" | "absent";
   readonly device: number | null;
   readonly inode: number | null;
+  readonly mode?: number | null;
 } | null {
   if (observation.kind === "directory") {
     return {
@@ -143,6 +150,7 @@ function ancestorFor(observation: AncestorObservation): {
       kind: "directory",
       device: observation.device,
       inode: observation.inode,
+      mode: observation.mode,
     };
   }
   if (observation.kind === "absent") {
@@ -397,6 +405,7 @@ export function composeApplyPlan(
     kind: "directory" | "absent";
     device: number | null;
     inode: number | null;
+    mode?: number | null;
   }[] = [];
   for (const observation of snapshot.ancestors.values()) {
     const ancestor = ancestorFor(observation);
@@ -735,6 +744,7 @@ export function composeApplyPlan(
         kind: target.preimage.kind,
         digest: target.preimage.digest,
         mode: target.preimage.mode,
+        identity: target.preimage.identity ?? null,
       },
     })),
     lock: {
@@ -743,18 +753,21 @@ export function composeApplyPlan(
         kind: lockPreimage.kind,
         digest: lockPreimage.digest,
         mode: lockPreimage.mode,
+        identity: lockPreimage.kind === "file" ? lockPreimage.identity : null,
       },
     },
     readset: {
       root: {
         device: snapshot.rootIdentity.device,
         inode: snapshot.rootIdentity.inode,
+        mode: snapshot.rootIdentity.mode ?? null,
       },
       ancestors: ancestors.map((ancestor) => ({
         path: ancestor.path,
         kind: ancestor.kind,
         device: ancestor.device,
         inode: ancestor.inode,
+        mode: ancestor.mode ?? null,
       })),
       files: evidenceFiles.map((file) => ({
         path: file.path,
@@ -787,6 +800,7 @@ export function composeApplyPlan(
       root: {
         device: snapshot.rootIdentity.device,
         inode: snapshot.rootIdentity.inode,
+        mode: snapshot.rootIdentity.mode,
       },
       ancestors,
       files: evidenceFiles,

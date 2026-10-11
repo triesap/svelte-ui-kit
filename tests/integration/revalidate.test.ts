@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import {
+  chmodSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
+  renameSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -15,6 +18,7 @@ import {
   revalidatePreimages,
   type TargetPreimage,
 } from "../../src/codegen/revalidate.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 function withRoot(body: (root: string) => void): void {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-revalidate-"));
@@ -95,5 +99,35 @@ test("unchanged preimages pass repeatedly", () => {
     const expected = [capturePreimage(root, "src/routes/+layout.svelte")];
     assert.equal(revalidatePreimages(root, expected).ok, true);
     assert.equal(revalidatePreimages(root, expected).ok, true);
+  });
+});
+
+test("equal bytes and mode at a new inode do not validate the captured preimage", () => {
+  withRoot((root) => {
+    const logical = "src/styles/kit.css";
+    write(root, logical, "unchanged bytes");
+    const expected = [capturePreimage(root, logical)];
+    const target = path.join(root, logical);
+    const bytes = readFileSync(target);
+    renameSync(target, `${target}.original`);
+    writeFileSync(target, bytes, { mode: expected[0].mode! });
+    const before = snapshotTree(root);
+    assert.match(
+      issues(revalidatePreimages(root, expected)),
+      /physical identity changed/,
+    );
+    assert.deepEqual(snapshotTree(root), before);
+  });
+});
+
+test("added special permission bits invalidate the captured file mode", () => {
+  withRoot((root) => {
+    const logical = "src/styles/kit.css";
+    write(root, logical, "unchanged bytes");
+    const expected = [capturePreimage(root, logical)];
+    chmodSync(path.join(root, logical), 0o2644);
+    const before = snapshotTree(root);
+    assert.match(issues(revalidatePreimages(root, expected)), /mode changed/);
+    assert.deepEqual(snapshotTree(root), before);
   });
 });
