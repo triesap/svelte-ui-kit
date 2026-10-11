@@ -67,8 +67,11 @@ function identityRecord(
   if (value === null) return null;
   if (
     isPlainObject(value) &&
-    Number.isInteger(value["device"]) &&
-    Number.isInteger(value["inode"])
+    Object.keys(value).length === 2 &&
+    Number.isSafeInteger(value["device"]) &&
+    Number.isSafeInteger(value["inode"]) &&
+    Number(value["device"]) >= 0 &&
+    Number(value["inode"]) >= 0
   ) {
     return {
       device: value["device"] as number,
@@ -191,11 +194,25 @@ export function readPublicationIntent(
       },
     ];
   }
-  if (!isPlainObject(parsed)) {
+  if (
+    !isPlainObject(parsed) ||
+    Object.keys(parsed).length !== 8 ||
+    ![
+      "schemaVersion",
+      "transactionId",
+      "rootIdentity",
+      "planDigest",
+      "digest",
+      "mode",
+      "preimage",
+      "staged",
+    ].every((key) => Object.hasOwn(parsed, key))
+  ) {
     return [
       {
         code: "PUBLICATION_INTENT_INVALID",
-        message: "the publication intent is not an object",
+        message:
+          "the publication intent does not have the exact schema-version-1 fields",
         locator: logicalPath,
       },
     ];
@@ -263,7 +280,12 @@ export function readPublicationIntent(
   }
   const preimage = identityRecord(parsed["preimage"]);
   const staged = identityRecord(parsed["staged"]);
-  if (preimage === undefined || staged === undefined) {
+  if (
+    preimage === undefined ||
+    staged === undefined ||
+    staged === null ||
+    sameIdentity(preimage, staged)
+  ) {
     return [
       {
         code: "PUBLICATION_INTENT_INVALID",

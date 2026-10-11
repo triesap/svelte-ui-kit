@@ -141,6 +141,14 @@ have no staged result, and `kit.lock.json` is reserved for publication staging.
 Both read-only inspection and recovery reject these contradictions before any
 transaction cleanup or restoration.
 
+Publication witnesses also require the exact schema-version-1 fields, safe
+integer physical identities and a non-null staged identity distinct from any
+canonical preimage. Unknown extensions and incomplete historical witnesses stay
+retained; recovery never rewrites them to upgrade the format. A journal-less
+cleanup tail proves the canonical digest, all permission bits and exact staged
+rename identity before discarding its surviving witness. Byte or mode edits
+remain preserved even when the canonical inode still matches that witness.
+
 Recovery uses the following logical and physical consistency matrix. Read-only
 doctor and unchanged-command inspection use the same phase proof. The current
 producer first persists `prepared`; `planned` is an in-memory phase and a

@@ -818,6 +818,40 @@ function phasePhysicalIssues(
   );
 }
 
+/** A journal-less cleanup tail still needs complete canonical image proof. */
+function journalLessPublicationIssues(
+  root: string,
+  stateDir: string,
+  id: string,
+  witness: PublicationIntent,
+): ModelIssue[] {
+  const binding = intentBindingIssues(root, stateDir, id, witness);
+  if (binding.length > 0) return binding;
+  const image = currentImage(root, lockPath(stateDir));
+  const state = classifyPublication({
+    intent: witness,
+    canonical: observeFileIdentity(absOf(root, lockPath(stateDir))),
+    stagedIdentity: observeFileIdentity(
+      absOf(root, `${stagedDir(stateDir, id)}/kit.lock.json`),
+    ),
+    expectedDigest: witness.digest,
+    canonicalDigest: readFileSafe(root, lockPath(stateDir)),
+  });
+  return witness.transactionId === id &&
+    state === "published" &&
+    image.kind === "file" &&
+    image.digest === witness.digest &&
+    image.mode === witness.mode
+    ? []
+    : [
+        issue(
+          "RECOVERY_AMBIGUOUS_PUBLICATION",
+          "the interrupted cleanup cannot prove its exact published canonical image; preserving evidence",
+          lockPath(stateDir),
+        ),
+      ];
+}
+
 function currentImage(root: string, logicalPath: string): CurrentImage {
   const abs = absOf(root, logicalPath);
   const entry = observeEntry(abs);
@@ -1676,31 +1710,13 @@ function recoverTransactionUnderLock(
       );
       if (Array.isArray(intentRead)) return refuse(transactionId, intentRead);
       if (intentRead !== null) {
-        const binding = intentBindingIssues(
+        const proof = journalLessPublicationIssues(
           root,
           stateDir,
           transactionId,
           intentRead,
         );
-        if (binding.length > 0) return refuse(transactionId, binding);
-        const state = classifyPublication({
-          intent: intentRead,
-          canonical: observeFileIdentity(absOf(root, lockPath(stateDir))),
-          stagedIdentity: observeFileIdentity(
-            absOf(root, `${stagedDir(stateDir, transactionId)}/kit.lock.json`),
-          ),
-          expectedDigest: intentRead.digest,
-          canonicalDigest: readFileSafe(root, lockPath(stateDir)),
-        });
-        if (state !== "published") {
-          return refuse(transactionId, [
-            issue(
-              "RECOVERY_AMBIGUOUS_PUBLICATION",
-              "the interrupted cleanup cannot prove a completed publication; refusing to discard evidence",
-              lockPath(stateDir),
-            ),
-          ]);
-        }
+        if (proof.length > 0) return refuse(transactionId, proof);
       }
       const cleanup = removeOwnedEntries(root, stateDir, transactionId, hooks);
       if (cleanup.length > 0) return refuse(transactionId, cleanup);
@@ -2427,26 +2443,10 @@ export function inspectUnchangedState(
         continue;
       }
       if (intent !== null) {
-        retain(intentBindingIssues(root, stateDir, id, intent), locator);
-        if (
-          intent.transactionId !== id ||
-          classifyPublication({
-            intent,
-            canonical: observeFileIdentity(absOf(root, lockPath(stateDir))),
-            stagedIdentity: observeFileIdentity(
-              absOf(root, `${stagedDir(stateDir, id)}/kit.lock.json`),
-            ),
-            expectedDigest: intent.digest,
-            canonicalDigest: readFileSafe(root, lockPath(stateDir)),
-          }) !== "published"
-        )
-          problems.push(
-            issue(
-              "RECOVERY_AMBIGUOUS_PUBLICATION",
-              "The retained witness cannot prove publication; preserve it.",
-              locator,
-            ),
-          );
+        retain(
+          journalLessPublicationIssues(root, stateDir, id, intent),
+          locator,
+        );
       }
       continue;
     }

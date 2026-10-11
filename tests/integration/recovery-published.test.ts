@@ -23,7 +23,10 @@ import {
   type TransactionJournal,
 } from "../../src/codegen/transaction-journal.js";
 import { publishPreparedLock as publishLock } from "../helpers/publication.js";
-import { recoverTransaction } from "../../src/codegen/recovery.js";
+import {
+  recoverTransaction,
+  inspectUnchangedState,
+} from "../../src/codegen/recovery.js";
 import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 import { stageOperations } from "../../src/codegen/stage.js";
 import {
@@ -241,6 +244,71 @@ test("a journal-less publication witness binds to the live project root", () => 
     assert.equal(existsSync(abs(root, transactionDir(STATE_DIR, ID))), false);
   });
 });
+
+for (const edit of ["bytes", "mode"] as const) {
+  test(`a journal-less published witness preserves a canonical ${edit} edit`, () => {
+    withRoot((root) => {
+      seedJournalLessWitness(root, liveRootIdentity(root));
+      if (edit === "bytes")
+        writeFileSync(
+          abs(root, lockPath(STATE_DIR)),
+          "operator canonical edit",
+        );
+      else chmodSync(abs(root, lockPath(STATE_DIR)), 0o1644);
+      const before = snapshotTree(root);
+      const unchanged = inspectUnchangedState(root, STATE_DIR, RECOVERY_ROOTS);
+      assert.ok(
+        unchanged.some(
+          (entry) => entry.code === "RECOVERY_AMBIGUOUS_PUBLICATION",
+        ),
+        JSON.stringify(unchanged),
+      );
+      assert.deepEqual(snapshotTree(root), before);
+      const recovered = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
+      assert.equal(recovered.status, "refused", JSON.stringify(recovered));
+      assert.deepEqual(snapshotTree(root), before);
+    });
+  });
+}
+
+for (const corruption of [
+  "extra",
+  "missing-staged",
+  "same-identities",
+  "nested-extra",
+  "unsafe-inode",
+] as const) {
+  test(`incomplete historical publication witness ${corruption} is retained without reinterpretation`, () => {
+    withRoot((root) => {
+      seedJournalLessWitness(root, liveRootIdentity(root));
+      const file = abs(root, publicationIntentPath(STATE_DIR, ID));
+      const witness = JSON.parse(readFileSync(file, "utf8")) as Record<
+        string,
+        unknown
+      >;
+      if (corruption === "extra") witness["futureField"] = true;
+      if (corruption === "missing-staged") witness["staged"] = null;
+      if (corruption === "same-identities")
+        witness["preimage"] = witness["staged"];
+      if (corruption === "nested-extra")
+        witness["staged"] = {
+          ...(witness["staged"] as Record<string, unknown>),
+          futureField: true,
+        };
+      if (corruption === "unsafe-inode")
+        witness["staged"] = {
+          ...(witness["staged"] as Record<string, unknown>),
+          inode: Number.MAX_SAFE_INTEGER + 1,
+        };
+      writeFileSync(file, JSON.stringify(witness));
+      const before = snapshotTree(root);
+      const recovered = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
+      assert.equal(recovered.status, "refused", JSON.stringify(recovered));
+      assert.equal(recovered.issues[0]?.code, "PUBLICATION_INTENT_INVALID");
+      assert.deepEqual(snapshotTree(root), before);
+    });
+  });
+}
 
 test("a journal-less witness recorded against a different root is refused", () => {
   withRoot((root) => {

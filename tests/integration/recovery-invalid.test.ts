@@ -15,6 +15,10 @@ import { test } from "node:test";
 import { recoveryDiagnostic } from "../../src/cli/protocol.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import {
+  observeFileIdentity,
+  writePublicationIntent,
+} from "../../src/codegen/publication-intent.js";
+import {
   prepareJournal,
   persistJournal,
   serializeJournal,
@@ -31,6 +35,7 @@ import {
   journalPath,
   backupsDir,
   stagedDir,
+  publicationIntentPath,
   transactionDir,
 } from "../../src/codegen/transaction-types.js";
 import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
@@ -371,6 +376,44 @@ test("applied progress cannot discard a surviving staged operation image", () =>
     assert.equal(result.status, "refused", JSON.stringify(result));
     assert.equal(result.issues[0]?.code, "RECOVERY_PHASE_CONTRADICTION");
     assert.deepEqual(snapshotTree(root), before);
+  });
+});
+
+test("a historical planned lock intent with positive prepublication witness remains recoverable", () => {
+  withRoot((root) => {
+    const id = "aeaeaeaeaeaeaeae";
+    const journal: TransactionJournal = {
+      ...baseJournal(id),
+      rootIdentity: liveRootIdentity(root),
+      lock: {
+        path: `${STATE_DIR}/kit.lock.json`,
+        digest: sha256Hex("lock"),
+        published: false,
+        unchanged: false,
+      },
+    };
+    writeJournal(root, id, serializeJournal(journal));
+    const staged = abs(root, `${stagedDir(STATE_DIR, id)}/kit.lock.json`);
+    mkdirSync(path.dirname(staged), { recursive: true });
+    writeFileSync(staged, "lock", { mode: 0o644 });
+    writePublicationIntent(root, publicationIntentPath(STATE_DIR, id), {
+      schemaVersion: 1,
+      transactionId: id,
+      rootIdentity: journal.rootIdentity,
+      planDigest: journal.planDigest,
+      digest: journal.lock!.digest,
+      mode: 0o644,
+      preimage: null,
+      staged: observeFileIdentity(staged),
+    });
+    assert.equal(
+      inspectTransactions(root, STATE_DIR, RECOVERY_ROOTS)[0]?.ok,
+      true,
+    );
+    const result = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
+    assert.equal(result.status, "cleaned", JSON.stringify(result));
+    assert.equal(existsSync(abs(root, transactionDir(STATE_DIR, id))), false);
+    assert.equal(existsSync(abs(root, `${STATE_DIR}/kit.lock.json`)), false);
   });
 });
 
