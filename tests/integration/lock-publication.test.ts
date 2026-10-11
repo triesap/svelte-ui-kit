@@ -17,7 +17,7 @@ import {
   type TransactionJournal,
 } from "../../src/codegen/transaction-journal.js";
 import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
-import { publishLock } from "../../src/codegen/publish-lock.js";
+import { publishPreparedLock as publishLock } from "../helpers/publication.js";
 import { stageOperations } from "../../src/codegen/stage.js";
 import { journalPath, lockPath } from "../../src/codegen/transaction-types.js";
 

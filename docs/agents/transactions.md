@@ -37,6 +37,14 @@ The in-memory result records a completed rename before later hooks or flushes,
 even when durable journal progress still lags that actual syscall. Refusal retains
 the evidence needed to prove any safe rollback; it cannot grant blanket rollback.
 
+Publication uses the same original canonical preimage. Returning staging or
+publication hooks cannot bless changed canonical bytes, mode or identity by
+recapturing them for the witness. The witness binds the original canonical
+identity and the authentic staged creation receipt; both are rechecked before
+the canonical rename. Intended lock bytes are copied before hooks run. Once the
+rename completes, a later hook or flush failure reports a committed transaction
+that needs cleanup, even when the durable journal still records publication intent.
+
 ## Ordered application and publication
 
 Plans, diagnosis and dry runs write nothing, including hidden state. Genuine

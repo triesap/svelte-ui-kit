@@ -8,27 +8,19 @@
  * state.
  *
  * A durable *publication intent* is persisted before the rename. If the process
- * is killed between the intent and the rename, recovery proves from the
- * canonical bytes whether the commit happened: a matching digest is a completed
- * publication (cleanup only), a non-matching digest is an uncommitted batch
- * (safe rollback). This closes the interruption window that previously left the
- * journal at `applied` and the new lock in place.
+ * is killed between the intent and the rename, recovery uses the recorded
+ * physical rename witness to distinguish publication from the original
+ * canonical preimage. Equal bytes alone cannot prove either outcome.
  *
  * A publication whose bytes equal the current lock is still recorded with the
  * unique transaction id and an `unchanged` flag, because byte equality alone is
  * not a commit event. The existing canonical mode is preserved.
  */
-import {
-  mkdirSync,
-  readFileSync,
-  renameSync,
-  chmodSync,
-  statSync,
-  writeFileSync,
-} from "node:fs";
+import { renameSync } from "node:fs";
 import path from "node:path";
 import {
   forgetRenamedCreation,
+  verifyOwnedCreations,
   writeOwnedFile,
   type OwnedCreation,
 } from "./transaction-inventory.js";
@@ -41,10 +33,12 @@ import {
   persistJournal,
   type TransactionJournal,
 } from "./transaction-journal.js";
+import { writePublicationIntent } from "./publication-intent.js";
 import {
-  observeFileIdentity,
-  writePublicationIntent,
-} from "./publication-intent.js";
+  verifyMutationAuthority,
+  verifyMutationTarget,
+  type MutationAuthority,
+} from "./mutation-authority.js";
 import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
   journalPath,
@@ -116,17 +110,14 @@ export function validateLockForPublication(
   return { ok: issues.length === 0, issues };
 }
 
-/** Read the current canonical lock mode, or `fallback` when it is absent. */
-function currentLockMode(
-  root: string,
-  stateDir: string,
-  fallback: number,
-): number {
-  try {
-    return statSync(absOf(root, lockPath(stateDir))).mode & 0o777;
-  } catch {
-    return fallback;
+class PublicationRefusal extends Error {
+  constructor(readonly issues: readonly ModelIssue[]) {
+    super(issues.map((entry) => entry.message).join("; "));
   }
+}
+
+function requireProof(issues: readonly ModelIssue[]): void {
+  if (issues.length > 0) throw new PublicationRefusal(issues);
 }
 
 /**
@@ -139,14 +130,19 @@ export function publishLock(
   stateDir: string,
   journal: TransactionJournal,
   lockBytes: Uint8Array,
-  mode = 0o644,
-  context: LockValidationContext = {},
-  hooks?: TransactionHooks,
-  ownership?: OwnedCreation[],
+  mode: number,
+  context: LockValidationContext,
+  hooks: TransactionHooks | undefined,
+  ownership: OwnedCreation[] | undefined,
+  authority: MutationAuthority,
 ): LockPublicationResult {
+  // Copy before any hook can mutate the caller's Uint8Array. Its digest remains
+  // fixed throughout the intent, staged receipt, witness and published result.
+  const intendedBytes = Uint8Array.from(lockBytes);
+  const intendedDigest = sha256Hex(intendedBytes);
   const validation = validateLockForPublication(
     journal,
-    lockBytes,
+    intendedBytes,
     stateDir,
     context,
   );
@@ -155,27 +151,71 @@ export function publishLock(
   }
 
   const destination = absOf(root, lockPath(stateDir));
-  let unchanged: boolean;
+  const stagedLogical = `${stagedDir(stateDir, journal.transactionId)}/kit.lock.json`;
+  const stagedLock = absOf(root, stagedLogical);
+  const receipts = ownership ?? [];
+  const original = authority.preimages.get(lockPath(stateDir));
+  const finalProof = () => {
+    requireProof(
+      verifyMutationAuthority(authority, root, stateDir, receipts, [
+        lockPath(stateDir),
+        stagedLogical,
+      ]),
+    );
+    requireProof(verifyMutationTarget(authority, lockPath(stateDir)));
+  };
   try {
-    unchanged = sha256Hex(readFileSync(destination)) === sha256Hex(lockBytes);
-  } catch {
-    unchanged = false;
+    finalProof();
+  } catch (error) {
+    return {
+      ok: false,
+      journal,
+      issues:
+        error instanceof PublicationRefusal
+          ? error.issues
+          : [
+              {
+                code: "LOCK_PUBLICATION_FAILED",
+                message: `could not prove publication authority: ${codeOf(error)}`,
+                locator: lockPath(stateDir),
+              },
+            ],
+    };
   }
-  const effectiveMode = currentLockMode(root, stateDir, mode);
+  const unchanged =
+    original?.kind === "file" && original.digest === intendedDigest;
+  const effectiveMode = original?.mode ?? mode;
+  const published: TransactionJournal = {
+    ...journal,
+    phase: "published",
+    lock: {
+      path: lockPath(stateDir),
+      digest: intendedDigest,
+      published: true,
+      unchanged,
+    },
+  };
+  let current = journal;
 
-  // Durable publication intent. Recovery classifies a crash after this point by
-  // comparing the canonical bytes to the recorded digest.
+  // Durable publication intent. The physical witness below supplies the unique
+  // rename proof; this digest alone never grants publication or rollback.
   const intent: TransactionJournal = {
     ...journal,
     phase: "applied",
     lock: {
       path: lockPath(stateDir),
-      digest: sha256Hex(lockBytes),
+      digest: intendedDigest,
       published: false,
       unchanged,
     },
   };
   try {
+    requireProof(
+      verifyMutationAuthority(authority, root, stateDir, receipts, [
+        lockPath(stateDir),
+        stagedLogical,
+      ]),
+    );
     persistJournal(
       root,
       journalPath(stateDir, journal.transactionId),
@@ -187,30 +227,44 @@ export function publishLock(
     return {
       ok: false,
       journal: intent,
-      issues: [
-        {
-          code: "LOCK_INTENT_FAILED",
-          message: `could not persist the publication intent: ${codeOf(error)}`,
-          locator: lockPath(stateDir),
-        },
-      ],
+      issues:
+        error instanceof PublicationRefusal
+          ? error.issues
+          : [
+              {
+                code: "LOCK_INTENT_FAILED",
+                message: `could not persist the publication intent: ${codeOf(error)}`,
+                locator: lockPath(stateDir),
+              },
+            ],
     };
   }
 
-  const stagedLock = absOf(
-    root,
-    `${stagedDir(stateDir, journal.transactionId)}/kit.lock.json`,
-  );
   try {
-    mkdirSync(path.dirname(stagedLock), { recursive: true, mode: 0o700 });
+    current = intent;
     fireHooks(hooks, "before", "lock:stage", lockPath(stateDir));
-    if (ownership !== undefined)
-      writeOwnedFile(stagedLock, lockBytes, effectiveMode, ownership);
-    else {
-      writeFileSync(stagedLock, lockBytes, { mode: effectiveMode, flag: "wx" });
-      chmodSync(stagedLock, effectiveMode);
-    }
+    finalProof();
+    writeOwnedFile(stagedLock, intendedBytes, effectiveMode, receipts);
+    const stagedReceipt = receipts.find(
+      (entry) => entry.path === stagedLock && entry.kind === "file",
+    )!;
+    const stageProof = () => {
+      finalProof();
+      requireProof(verifyOwnedCreations([stagedReceipt]));
+      if (
+        stagedReceipt.digest !== intendedDigest ||
+        stagedReceipt.mode !== effectiveMode
+      )
+        throw new PublicationRefusal([
+          {
+            code: "LOCK_STAGE_CORRUPT",
+            message: "the staged lock contradicts the intended bytes or mode",
+            locator: stagedLogical,
+          },
+        ]);
+    };
     fireHooks(hooks, "before", "durability:lock-stage", lockPath(stateDir));
+    stageProof();
     flushFile(stagedLock);
     // The staged lock's directory entry must be durable before the publication
     // intent records its physical identity; otherwise a crash could preserve an
@@ -218,6 +272,7 @@ export function publishLock(
     flushDirectory(path.dirname(stagedLock));
     fireHooks(hooks, "after", "durability:lock-stage", lockPath(stateDir));
     fireHooks(hooks, "after", "lock:stage", lockPath(stateDir));
+    stageProof();
 
     // Record the physical rename witness before the canonical rename: the
     // exact canonical preimage identity and the uniquely identified staged
@@ -231,10 +286,10 @@ export function publishLock(
           transactionId: journal.transactionId,
           rootIdentity: journal.rootIdentity,
           planDigest: journal.planDigest,
-          digest: sha256Hex(lockBytes),
+          digest: intendedDigest,
           mode: effectiveMode,
-          preimage: observeFileIdentity(destination),
-          staged: observeFileIdentity(stagedLock),
+          preimage: original?.identity ?? null,
+          staged: { device: stagedReceipt.device, inode: stagedReceipt.inode },
         },
         ownership,
       );
@@ -253,11 +308,17 @@ export function publishLock(
     }
 
     fireHooks(hooks, "before", "lock:publish", lockPath(stateDir));
-    mkdirSync(path.dirname(destination), { recursive: true });
+    stageProof();
     renameSync(stagedLock, destination);
-    if (ownership !== undefined) forgetRenamedCreation(stagedLock, ownership);
-    chmodSync(destination, effectiveMode);
+    current = published;
+    forgetRenamedCreation(stagedLock, receipts);
     fireHooks(hooks, "before", "durability:lock-publish", lockPath(stateDir));
+    requireProof(
+      verifyMutationAuthority(authority, root, stateDir, receipts, [
+        lockPath(stateDir),
+        stagedLogical,
+      ]),
+    );
     // The canonical rename is cross-directory: flush the destination directory
     // that gained the lock and the staged directory that lost it.
     flushDirectory(path.dirname(destination));
@@ -267,28 +328,27 @@ export function publishLock(
   } catch (error) {
     return {
       ok: false,
-      journal: intent,
-      issues: [
-        {
-          code: "LOCK_PUBLICATION_FAILED",
-          message: `could not publish the install lock: ${codeOf(error)}`,
-          locator: lockPath(stateDir),
-        },
-      ],
+      journal: current,
+      issues:
+        error instanceof PublicationRefusal
+          ? error.issues
+          : [
+              {
+                code: "LOCK_PUBLICATION_FAILED",
+                message: `could not publish the install lock: ${codeOf(error)}`,
+                locator: lockPath(stateDir),
+              },
+            ],
     };
   }
 
-  const published: TransactionJournal = {
-    ...journal,
-    phase: "published",
-    lock: {
-      path: lockPath(stateDir),
-      digest: sha256Hex(lockBytes),
-      published: true,
-      unchanged,
-    },
-  };
   try {
+    requireProof(
+      verifyMutationAuthority(authority, root, stateDir, receipts, [
+        lockPath(stateDir),
+        stagedLogical,
+      ]),
+    );
     persistJournal(
       root,
       journalPath(stateDir, journal.transactionId),
@@ -303,13 +363,16 @@ export function publishLock(
     return {
       ok: false,
       journal: published,
-      issues: [
-        {
-          code: "LOCK_RECORD_FAILED",
-          message: `the lock was published but its journal record could not be persisted: ${codeOf(error)}`,
-          locator: lockPath(stateDir),
-        },
-      ],
+      issues:
+        error instanceof PublicationRefusal
+          ? error.issues
+          : [
+              {
+                code: "LOCK_RECORD_FAILED",
+                message: `the lock was published but its journal record could not be persisted: ${codeOf(error)}`,
+                locator: lockPath(stateDir),
+              },
+            ],
     };
   }
   return { ok: true, journal: published, issues: [] };

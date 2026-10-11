@@ -21,7 +21,7 @@ import {
   persistJournal,
   type TransactionJournal,
 } from "../../src/codegen/transaction-journal.js";
-import { publishLock } from "../../src/codegen/publish-lock.js";
+import { publishPreparedLock as publishLock } from "../helpers/publication.js";
 import { recoverTransaction } from "../../src/codegen/recovery.js";
 import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 import { stageOperations } from "../../src/codegen/stage.js";

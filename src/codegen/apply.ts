@@ -1797,6 +1797,15 @@ function applyUnderLock(
     };
   }
 
+  const publicationSealIssues = verifySealedTargets(plan);
+  if (publicationSealIssues.length > 0) {
+    const recovered = recoverTransactionsUnderLock(plan, transactionId, hooks);
+    return {
+      kind: "refused",
+      transactionId,
+      issues: [...publicationSealIssues, ...recovered],
+    };
+  }
   const published = publishLock(
     plan.root,
     plan.stateDir,
@@ -1811,6 +1820,7 @@ function applyUnderLock(
     },
     hooks,
     ownership,
+    mutationAuthority,
   );
   if (!published.ok) {
     if (published.journal.phase === "published") {
