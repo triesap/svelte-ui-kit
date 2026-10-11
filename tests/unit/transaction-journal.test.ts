@@ -88,6 +88,87 @@ test("a valid journal round-trips deterministically", () => {
   assert.equal(serializeJournal(parsed.value), first);
 });
 
+test("journal preimages require positive old-image or absence proof", () => {
+  const journal = validJournal();
+  for (const preimage of [
+    { kind: "file", digest: null, mode: 0o644 },
+    { kind: "file", digest: sha256Hex("old css"), mode: null },
+    { kind: "file", digest: [sha256Hex("old css")], mode: 0o644 },
+  ]) {
+    assert.equal(
+      parseJournal(
+        JSON.stringify({
+          ...journal,
+          operations: [{ ...journal.operations[0], preimage }],
+        }),
+      ).ok,
+      false,
+    );
+  }
+  for (const preimage of [
+    { kind: "absent", digest: sha256Hex("old css"), mode: null },
+    { kind: "absent", digest: null, mode: 0o644 },
+  ]) {
+    assert.equal(
+      parseJournal(
+        JSON.stringify({
+          ...journal,
+          operations: [{ ...journal.operations[1], preimage }],
+        }),
+      ).ok,
+      false,
+    );
+  }
+});
+
+test("owned identifiers are typed, unique within their role and publication-safe", () => {
+  const journal = validJournal();
+  for (const patch of [
+    { stagedId: 0 },
+    { stagedId: ["stage-0"] },
+    { backupId: ["backup-0"] },
+    { stagedId: "kit.lock.json" },
+  ]) {
+    assert.equal(
+      parseJournal(
+        JSON.stringify({
+          ...journal,
+          operations: [{ ...journal.operations[0], ...patch }],
+        }),
+      ).ok,
+      false,
+    );
+  }
+  for (const [index, patch] of [
+    [1, { stagedId: "stage-0" }],
+    [2, { backupId: "backup-0" }],
+    [1, { backupId: "backup-create" }],
+    [2, { stagedId: "stage-retire" }],
+  ] as const) {
+    assert.equal(
+      parseJournal(
+        JSON.stringify({
+          ...journal,
+          operations: journal.operations.map((operation, i) =>
+            i === index ? { ...operation, ...patch } : operation,
+          ),
+        }),
+      ).ok,
+      false,
+    );
+  }
+  // Separate directories allow the same identifier across different roles.
+  assert.equal(
+    parseJournal(
+      JSON.stringify({
+        ...journal,
+        operations: [{ ...journal.operations[0], stagedId: "backup-0" }],
+      }),
+    ).ok,
+    true,
+  );
+});
+
 test("forged paths and duplicate targets are refused", () => {
   const journal = validJournal();
   const escaped = parseJournal(

@@ -132,6 +132,15 @@ must preserve post-crash edits. Corrupt/foreign/ambiguous journals, owner mismat
 missing backups and ambiguous publication are causal errors. Journal contents
 cannot certify their own mapping or authorize operations outside it.
 
+Schema-version-1 preimages require either an absent image with null digest/mode
+or a regular file with its exact digest and permission mode. Incomplete historical
+records are retained and refused, never upgraded by guessing the missing image.
+Owned staged and backup identifiers must be strings, unique within their separate
+directories and consistent with the operation: creates have no backup, retirements
+have no staged result, and `kit.lock.json` is reserved for publication staging.
+Both read-only inspection and recovery reject these contradictions before any
+transaction cleanup or restoration.
+
 Before unchanged init/add/sync, including dry-run, inspect physical safety first,
 then writer evidence and retained journal state without acquiring coordination,
 reclaiming a lock or cleaning transactions. Only absent writer/transaction state

@@ -214,6 +214,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
   }
 
   const seenPaths = new Set<string>();
+  const seenIds = { backupId: new Set<string>(), stagedId: new Set<string>() };
   const operations: JournalOperationRecord[] = [];
   if (Array.isArray(parsed["operations"])) {
     for (const [index, raw] of parsed["operations"].entries()) {
@@ -267,6 +268,22 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
             `${label} ${String(operation)} must record a file preimage`,
           );
         }
+        if (
+          preimage["kind"] === "absent" &&
+          (preimage["digest"] !== null || preimage["mode"] !== null)
+        ) {
+          problems.push(
+            `${label} absent preimage must have null digest and mode`,
+          );
+        }
+        if (
+          preimage["kind"] === "file" &&
+          (typeof preimage["digest"] !== "string" || preimage["mode"] === null)
+        ) {
+          problems.push(
+            `${label} file preimage requires exact digest and mode`,
+          );
+        }
       }
       if (!HEX64.test(String(raw["resultDigest"]))) {
         problems.push(
@@ -287,10 +304,24 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
       }
       for (const idKey of ["backupId", "stagedId"] as const) {
         const value = raw[idKey];
-        if (value !== null && !SAFE_ID.test(String(value))) {
+        if (
+          value !== null &&
+          (typeof value !== "string" || !SAFE_ID.test(value))
+        ) {
           problems.push(`${label} ${idKey} must be null or a safe id`);
         }
+        if (typeof value === "string") {
+          if (seenIds[idKey].has(value))
+            problems.push(`${label} duplicates ${idKey} ${value}`);
+          seenIds[idKey].add(value);
+          if (idKey === "stagedId" && value === "kit.lock.json")
+            problems.push(`${label} stagedId is reserved for publication`);
+        }
       }
+      if (operation === "create" && raw["backupId"] !== null)
+        problems.push(`${label} create cannot claim a backup identifier`);
+      if (operation === "retire" && raw["stagedId"] !== null)
+        problems.push(`${label} retire cannot claim a staged identifier`);
       if (typeof raw["applied"] !== "boolean") {
         problems.push(`${label} applied must be a boolean`);
       }

@@ -30,7 +30,8 @@ import {
   journalPath,
   transactionDir,
 } from "../../src/codegen/transaction-types.js";
-import { RECOVERY_ROOTS } from "../helpers/transactions.js";
+import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 
@@ -81,6 +82,56 @@ test("a corrupt journal does not mutate and is retained", () => {
     assert.equal(inspections.length, 1);
     assert.equal(inspections[0].ok, false);
   });
+});
+
+test("incomplete preimages and forged ownership identifiers retain the entire tree", () => {
+  for (const patch of [
+    { preimage: { kind: "file", digest: null, mode: 0o644 } },
+    { preimage: { kind: "file", digest: sha256Hex("old css"), mode: null } },
+    { stagedId: ["stage-0"] },
+    { stagedId: "kit.lock.json" },
+  ]) {
+    withRoot((root) => {
+      const id = "bbbbbbbbcccccccc";
+      const live = abs(root, "src/styles/kit.css");
+      mkdirSync(path.dirname(live), { recursive: true });
+      writeFileSync(live, "old css");
+      writeJournal(
+        root,
+        id,
+        JSON.stringify({
+          ...baseJournal(id),
+          rootIdentity: liveRootIdentity(root),
+          operations: [
+            {
+              path: "src/styles/kit.css",
+              operation: "update",
+              preimage: {
+                kind: "file",
+                digest: sha256Hex("old css"),
+                mode: 0o644,
+              },
+              resultDigest: sha256Hex("new css"),
+              resultMode: 0o644,
+              backupId: "backup-0",
+              stagedId: "stage-0",
+              applied: false,
+              ...patch,
+            },
+          ],
+        }),
+      );
+      const before = snapshotTree(root);
+      const inspections = inspectTransactions(root, STATE_DIR, RECOVERY_ROOTS);
+      assert.equal(inspections[0]?.ok, false);
+      assert.equal(inspections[0]?.issues[0]?.code, "JOURNAL_INVALID");
+      assert.deepEqual(snapshotTree(root), before);
+      const recovered = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
+      assert.equal(recovered.status, "refused");
+      assert.equal(recovered.issues[0]?.code, "JOURNAL_INVALID");
+      assert.deepEqual(snapshotTree(root), before);
+    });
+  }
 });
 
 test("a forged or unknown journal state is refused", () => {
