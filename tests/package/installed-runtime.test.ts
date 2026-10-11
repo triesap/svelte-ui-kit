@@ -29,6 +29,37 @@ before(() => {
 });
 after(() => installed?.cleanup());
 
+test("an installed runtime timeout fails after executing the owned child", () => {
+  const marker = path.join(installed.root, "deadline-control-entered");
+  assert.throws(
+    () =>
+      installed.runNode(
+        [
+          "--eval",
+          `require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'entered'); setInterval(() => {}, 1000);`,
+        ],
+        installed.root,
+        "runtime-timeout-control",
+        1000,
+      ),
+    (error: unknown) => {
+      assert.ok(error instanceof assert.AssertionError);
+      assert.equal((error.actual as NodeJS.ErrnoException).code, "ETIMEDOUT");
+      return true;
+    },
+  );
+  assert.equal(readFileSync(marker, "utf8"), "entered");
+  const completed = installed.runNode(
+    ["--eval", "console.log('completed')"],
+    installed.root,
+    "runtime-normal-completion-control",
+    5000,
+  );
+  assert.equal(completed.status, 0, completed.stderr);
+  assert.equal(completed.stdout.trim(), "completed");
+  assert.deepEqual(completed.guardEvents, []);
+});
+
 test("runtime guards reject real authoring source/build/fixtures modules network and subprocesses", () => {
   assert.equal(existsSync(installed.author), false);
   for (const file of [

@@ -248,13 +248,23 @@ export function installIndependentCli() {
     // Node's permission mode disables fsync even with all filesystem grants.
     // Keep real transaction durability; guard source/module reads instead.
     const nodeArgs = ["--require", guard];
-    const runNode = (args: string[], cwd: string, label: string) => {
+    const runNode = (
+      args: string[],
+      cwd: string,
+      label: string,
+      timeoutMs = 30_000,
+    ) => {
+      assert.ok(
+        Number.isSafeInteger(timeoutMs) &&
+          timeoutMs > 0 &&
+          timeoutMs <= 300_000,
+      );
       writeFileSync(audit, "");
       const result = spawnSync(process.execPath, [...nodeArgs, ...args], {
         cwd,
         env,
         encoding: "utf8",
-        timeout: 30000,
+        timeout: timeoutMs,
         killSignal: "SIGKILL",
       });
       const guardEvents = readFileSync(audit, "utf8")
@@ -267,6 +277,9 @@ export function installIndependentCli() {
         args,
         status: result.status,
         signal: result.signal,
+        errorCode:
+          (result.error as NodeJS.ErrnoException | undefined)?.code ?? null,
+        timeoutMs,
         stdout: result.stdout,
         stderr: result.stderr,
         guardEvents,
@@ -287,6 +300,7 @@ export function installIndependentCli() {
         ],
         cwd,
         "source-independent-cli",
+        ["init", "add", "sync"].includes(args[0] ?? "") ? 300_000 : 30_000,
       );
     const prepareConsumer = (
       custom: boolean,

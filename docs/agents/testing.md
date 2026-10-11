@@ -28,6 +28,10 @@ authentic local archive. Source fetching/bootstrap can need network access. Do
 not accept timeout or signal termination as a completed bootstrap test. Owned
 bootstrap CLI children have a 30-second SIGKILL deadline; nested mutation suites
 have a five-minute deadline and must finish normally before their assertions count.
+The installed packed-runtime harness uses the same five-minute bound for
+`init`/`add`/`sync`, including dry plans; bootstrap and read commands retain the
+30-second bound. A killed or timed-out child fails even if earlier assertions
+passed. Runtime transcripts record the deadline, signal and spawn error code.
 Do not suppress strict diagnostics, patch installed packages, loosen peer/engine
 checks or change pins to pass. Keep generated output/logs out of contributions.
 This product is TypeScript-only; Cargo is inapplicable unless a separately
