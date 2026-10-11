@@ -141,6 +141,28 @@ have no staged result, and `kit.lock.json` is reserved for publication staging.
 Both read-only inspection and recovery reject these contradictions before any
 transaction cleanup or restoration.
 
+Recovery uses the following logical and physical consistency matrix. Read-only
+doctor and unchanged-command inspection use the same phase proof. The current
+producer first persists `prepared`; `planned` is an in-memory phase and a
+conservatively supported historical record, not a claimed durable production edge.
+
+| Durable phase           | Logical progress                                                                             | Required physical disposition                                                                                                                                                                                 |
+| ----------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `planned`               | No applied flags; reserved identifiers and unpublished lock intent are allowed.              | Every live target is its original image or original absence; no moved backup exists. Staged results match their intended images. Publication evidence must positively prove no canonical publication.         |
+| `prepared`              | Applied flags form an ordered prefix, including an empty or complete prefix.                 | Old images, moved backups and installed results determine rollback; a rename may precede its durable applied flag. Publication staging or witnesses contradict this phase.                                    |
+| `applied`               | Every operation is marked applied.                                                           | Without publication intent, prove rollback images. With intent, the physical witness decides prepublication rollback versus committed cleanup; ambiguity retains evidence.                                    |
+| `published` / `cleaned` | Every operation is applied and the lock record claims publication.                           | Prove exact canonical digest, mode and rename witness; clean owned evidence only. Source edits never authorize rollback after publication.                                                                    |
+| `rolled_back`           | Retain the original ordered forward progress, which may be partial. No published lock claim. | Every original target image is restored; any retained staged/backup bytes and modes match their records. A retained lock intent requires a matching prepublication witness. No restoration authority remains. |
+
+The prepared record may lag a backup move, installation or retirement; its
+complete progress prefix may also precede the durable `applied` phase. Canonical
+rename may precede durable `published`, and completed restoration may precede
+durable `rolled_back`. Physical evidence decides these windows. An unknown phase,
+non-prefix progress, incomplete image, phase relabeling contradiction or foreign
+witness refuses without discarding the recoverable inventory. `cleaned` remains a
+supported terminal record; normal cleanup removes the published journal rather
+than claiming a separate durable cleaned-record write.
+
 Before unchanged init/add/sync, including dry-run, inspect physical safety first,
 then writer evidence and retained journal state without acquiring coordination,
 reclaiming a lock or cleaning transactions. Only absent writer/transaction state

@@ -121,6 +121,64 @@ test("journal preimages require positive old-image or absence proof", () => {
   }
 });
 
+test("logical phase matrix preserves crash lag and refuses contradictory progress", () => {
+  const baseline = validJournal();
+  const forward = baseline.operations.map((operation) => ({
+    ...operation,
+    applied: true,
+  }));
+  const committed = { ...baseline.lock!, published: true };
+  for (const journal of [
+    baseline,
+    { ...baseline, phase: "prepared" },
+    { ...baseline, phase: "prepared", operations: forward },
+    {
+      ...baseline,
+      phase: "prepared",
+      operations: baseline.operations.map((operation, index) => ({
+        ...operation,
+        applied: index === 0,
+      })),
+    },
+    { ...baseline, phase: "applied", operations: forward },
+    { ...baseline, phase: "published", operations: forward, lock: committed },
+    { ...baseline, phase: "cleaned", operations: forward, lock: committed },
+    { ...baseline, phase: "rolled_back", operations: forward },
+    { ...baseline, phase: "rolled_back" },
+  ])
+    assert.equal(
+      parseJournal(JSON.stringify(journal)).ok,
+      true,
+      JSON.stringify(journal),
+    );
+  for (const journal of [
+    { ...baseline, operations: forward },
+    { ...baseline, phase: "applied" },
+    {
+      ...baseline,
+      phase: "prepared",
+      operations: baseline.operations.map((operation, index) => ({
+        ...operation,
+        applied: index === 1,
+      })),
+    },
+    { ...baseline, phase: "published", operations: forward },
+    { ...baseline, phase: "cleaned", operations: forward, lock: null },
+    { ...baseline, phase: "prepared", lock: committed },
+    { ...baseline, phase: "rolled_back", lock: committed },
+    {
+      ...baseline,
+      phase: "prepared",
+      operations: [{ ...baseline.operations[0], stagedId: null }],
+    },
+  ])
+    assert.equal(
+      parseJournal(JSON.stringify(journal)).ok,
+      false,
+      JSON.stringify(journal),
+    );
+});
+
 test("owned identifiers are typed, unique within their role and publication-safe", () => {
   const journal = validJournal();
   for (const patch of [
@@ -213,6 +271,21 @@ test("forged paths and duplicate targets are refused", () => {
 
 test("bad digests, unknown states and unknown operations are refused", () => {
   const journal = validJournal();
+  for (const altered of [
+    { ...journal, rootIdentity: [journal.rootIdentity] },
+    { ...journal, planDigest: [journal.planDigest] },
+    { ...journal, lock: { ...journal.lock!, digest: [journal.lock!.digest] } },
+    {
+      ...journal,
+      operations: [
+        {
+          ...journal.operations[0],
+          resultDigest: [journal.operations[0].resultDigest],
+        },
+      ],
+    },
+  ])
+    assert.equal(parseJournal(JSON.stringify(altered)).ok, false);
   const badDigest = parseJournal(
     JSON.stringify({
       ...journal,

@@ -46,6 +46,10 @@ const HEX64 = /^[0-9a-f]{64}$/;
 const SAFE_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/;
 const EMPTY_DIGEST = sha256Hex(new Uint8Array(0));
 
+function isDigest(value: unknown): value is string {
+  return typeof value === "string" && HEX64.test(value);
+}
+
 export interface JournalPreimage {
   readonly kind: "absent" | "file";
   readonly digest: string | null;
@@ -200,10 +204,10 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
   if (!isTransactionId(parsed["transactionId"])) {
     problems.push("journal transactionId is not a valid identifier");
   }
-  if (!HEX64.test(String(parsed["rootIdentity"]))) {
+  if (!isDigest(parsed["rootIdentity"])) {
     problems.push("journal rootIdentity must be a lowercase 64-hex digest");
   }
-  if (!HEX64.test(String(parsed["planDigest"]))) {
+  if (!isDigest(parsed["planDigest"])) {
     problems.push("journal planDigest must be a lowercase 64-hex digest");
   }
   if (!TRANSACTION_PHASES.includes(parsed["phase"] as TransactionPhase)) {
@@ -246,10 +250,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
         if (preimage["kind"] !== "absent" && preimage["kind"] !== "file") {
           problems.push(`${label} preimage kind is unknown`);
         }
-        if (
-          preimage["digest"] !== null &&
-          !HEX64.test(String(preimage["digest"]))
-        ) {
+        if (preimage["digest"] !== null && !isDigest(preimage["digest"])) {
           problems.push(`${label} preimage digest must be null or 64-hex`);
         }
         if (
@@ -285,7 +286,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
           );
         }
       }
-      if (!HEX64.test(String(raw["resultDigest"]))) {
+      if (!isDigest(raw["resultDigest"])) {
         problems.push(
           `${label} resultDigest must be a lowercase 64-hex digest`,
         );
@@ -354,7 +355,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
       if (!isSafeLogicalRelativePath(rawLock["path"])) {
         problems.push("journal lock path is not a safe logical path");
       }
-      if (!HEX64.test(String(rawLock["digest"]))) {
+      if (!isDigest(rawLock["digest"])) {
         problems.push("journal lock digest must be a lowercase 64-hex digest");
       }
       if (typeof rawLock["published"] !== "boolean") {
@@ -449,6 +450,41 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
         ignoreFiles.push(raw);
       }
     }
+  }
+
+  let pendingSeen = false;
+  for (const operation of operations) {
+    if (!operation.applied) pendingSeen = true;
+    else if (pendingSeen)
+      problems.push("journal applied progress must be an ordered prefix");
+    if (parsed["phase"] !== "planned") {
+      if (operation.operation !== "retire" && operation.stagedId === null)
+        problems.push(
+          "journal non-planned result requires a staged identifier",
+        );
+      if (operation.operation !== "create" && operation.backupId === null)
+        problems.push(
+          "journal non-planned preimage requires a backup identifier",
+        );
+    }
+  }
+  if (
+    parsed["phase"] === "planned" &&
+    operations.some((entry) => entry.applied)
+  )
+    problems.push("journal planned phase cannot claim applied progress");
+  if (
+    ["applied", "published", "cleaned"].includes(String(parsed["phase"])) &&
+    operations.some((entry) => !entry.applied)
+  )
+    problems.push(
+      "journal completed forward phase requires all applied progress",
+    );
+  if (parsed["phase"] === "published" || parsed["phase"] === "cleaned") {
+    if (lock === null || !lock.published)
+      problems.push("journal committed phase requires a published lock record");
+  } else if (lock?.published === true) {
+    problems.push("journal uncommitted phase cannot claim a published lock");
   }
 
   if (problems.length > 0) {

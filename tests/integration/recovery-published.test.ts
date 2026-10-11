@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -32,6 +33,7 @@ import {
   transactionDir,
 } from "../../src/codegen/transaction-types.js";
 import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 const ID = "aaaaaaaaaaaaaaaa";
@@ -166,6 +168,48 @@ test("postcommit user modifications survive recovery cleanup", () => {
       readFileSync(abs(root, "src/styles/kit.css"), "utf8"),
       "user post-commit edit",
     );
+  });
+});
+
+for (const phase of ["planned", "prepared", "applied", "cleaned"] as const) {
+  test(`a published physical witness controls ${phase} relabeling`, () => {
+    withRoot((root) => {
+      const published = publish(root, "d".repeat(64));
+      const edited: TransactionJournal = {
+        ...published,
+        phase,
+        operations: published.operations.map((operation) => ({
+          ...operation,
+          applied: phase !== "planned",
+        })),
+        lock: { ...published.lock!, published: phase === "cleaned" },
+      };
+      persistJournal(root, journalPath(STATE_DIR, ID), edited);
+      const before = snapshotTree(root);
+      const result = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
+      assert.equal(
+        result.status,
+        phase === "applied" || phase === "cleaned" ? "committed" : "refused",
+        JSON.stringify(result),
+      );
+      if (result.status === "refused")
+        assert.deepEqual(snapshotTree(root), before);
+      assert.equal(
+        readFileSync(abs(root, "src/styles/kit.css"), "utf8"),
+        "new css",
+      );
+    });
+  });
+}
+
+test("published recovery preserves a canonical special-permission edit", () => {
+  withRoot((root) => {
+    publish(root, "d".repeat(64));
+    chmodSync(abs(root, lockPath(STATE_DIR)), 0o1644);
+    const before = snapshotTree(root);
+    const result = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
+    assert.equal(result.status, "refused", JSON.stringify(result));
+    assert.deepEqual(snapshotTree(root), before);
   });
 });
 

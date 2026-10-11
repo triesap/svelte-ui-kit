@@ -487,6 +487,7 @@ function terminalRollbackIssues(
   root: string,
   stateDir: string,
   journal: TransactionJournal,
+  planned = false,
 ): ModelIssue[] {
   const problems = rootBindingIssues(root, journal);
   const removedOwned = new Set(
@@ -519,45 +520,9 @@ function terminalRollbackIssues(
         ),
       );
     }
-    const retained = [
-      ...(operation.stagedId === null
-        ? []
-        : [
-            {
-              path: `${stagedDir(stateDir, journal.transactionId)}/${operation.stagedId}`,
-              digest: operation.resultDigest,
-              mode: operation.resultMode,
-            },
-          ]),
-      ...(operation.backupId === null
-        ? []
-        : [
-            {
-              path: `${backupsDir(stateDir, journal.transactionId)}/${operation.backupId}`,
-              digest: original.digest,
-              mode: original.mode,
-            },
-          ]),
-    ];
-    for (const record of retained) {
-      const image = currentImage(root, record.path);
-      if (
-        image.kind !== "absent" &&
-        !(
-          image.kind === "file" &&
-          image.digest === record.digest &&
-          image.mode === record.mode
-        )
-      ) {
-        problems.push(
-          issue(
-            "RECOVERY_BACKUP_CORRUPT",
-            `terminal rollback evidence ${record.path} was changed; preserving it`,
-            record.path,
-          ),
-        );
-      }
-    }
+    problems.push(
+      ...retainedOperationIssues(root, stateDir, journal, operation, planned),
+    );
   }
   const witness = readPublicationIntent(
     root,
@@ -572,7 +537,7 @@ function terminalRollbackIssues(
       ),
     );
   }
-  if (witness === null && journal.lock !== null) {
+  if (witness === null && journal.lock !== null && !planned) {
     problems.push(
       issue(
         "RECOVERY_AMBIGUOUS_PUBLICATION",
@@ -580,65 +545,170 @@ function terminalRollbackIssues(
       ),
     );
   }
-  if (witness !== null) {
-    if (
-      journal.lock === null ||
-      witness.transactionId !== journal.transactionId ||
-      witness.digest !== journal.lock.digest
-    ) {
+  if (planned && witness === null) {
+    const stagedLock = `${stagedDir(stateDir, journal.transactionId)}/kit.lock.json`;
+    if (currentImage(root, stagedLock).kind !== "absent")
       problems.push(
         issue(
           "RECOVERY_AMBIGUOUS_PUBLICATION",
-          "the terminal publication witness contradicts the journal; preserving evidence",
+          "planned cleanup cannot prove an unwitnessed staged publication image; preserving it",
+          stagedLock,
+        ),
+      );
+  }
+  if (witness !== null) {
+    problems.push(
+      ...terminalPublicationIssues(root, stateDir, journal, witness),
+    );
+  }
+  return problems;
+}
+
+/** Every surviving owned image must still match, even if no restore is needed. */
+function retainedOperationIssues(
+  root: string,
+  stateDir: string,
+  journal: TransactionJournal,
+  operation: JournalOperationRecord,
+  planned = false,
+): ModelIssue[] {
+  const problems: ModelIssue[] = [];
+  const original = operation.preimage;
+  const retained = [
+    ...(operation.stagedId === null
+      ? []
+      : [
+          {
+            path: `${stagedDir(stateDir, journal.transactionId)}/${operation.stagedId}`,
+            digest: operation.resultDigest,
+            mode: operation.resultMode,
+          },
+        ]),
+    ...(operation.backupId === null
+      ? []
+      : [
+          {
+            path: `${backupsDir(stateDir, journal.transactionId)}/${operation.backupId}`,
+            digest: original.digest,
+            mode: original.mode,
+          },
+        ]),
+  ];
+  for (const record of retained) {
+    const image = currentImage(root, record.path);
+    if (
+      operation.applied &&
+      operation.stagedId !== null &&
+      record.path ===
+        `${stagedDir(stateDir, journal.transactionId)}/${operation.stagedId}` &&
+      image.kind !== "absent"
+    )
+      problems.push(
+        issue(
+          "RECOVERY_PHASE_CONTRADICTION",
+          "durable applied progress contradicts a surviving staged operation image; preserving it",
+          record.path,
+        ),
+      );
+    if (
+      planned &&
+      operation.backupId !== null &&
+      record.path ===
+        `${backupsDir(stateDir, journal.transactionId)}/${operation.backupId}` &&
+      image.kind !== "absent"
+    ) {
+      problems.push(
+        issue(
+          "RECOVERY_PHASE_CONTRADICTION",
+          "a planned journal retains a moved preimage; preserving possible mutation evidence",
+          record.path,
         ),
       );
     }
-    const stagedPath = `${stagedDir(stateDir, journal.transactionId)}/kit.lock.json`;
-    const staged = currentImage(root, stagedPath);
-    const stagedIdentity = observeFileIdentity(absOf(root, stagedPath));
     if (
-      staged.kind !== "absent" &&
+      image.kind !== "absent" &&
       !(
-        staged.kind === "file" &&
-        staged.digest === witness.digest &&
-        staged.mode === witness.mode &&
-        stagedIdentity !== null &&
-        witness.staged !== null &&
-        stagedIdentity.device === witness.staged.device &&
-        stagedIdentity.inode === witness.staged.inode
+        image.kind === "file" &&
+        image.digest === record.digest &&
+        image.mode === record.mode
       )
     ) {
       problems.push(
         issue(
-          "RECOVERY_AMBIGUOUS_PUBLICATION",
-          "the retained staged publication image contradicts its physical witness; preserving evidence",
-          stagedPath,
+          "RECOVERY_BACKUP_CORRUPT",
+          `retained operation evidence ${record.path} was changed; preserving it`,
+          record.path,
         ),
       );
     }
+  }
+  return problems;
+}
+
+function terminalPublicationIssues(
+  root: string,
+  stateDir: string,
+  journal: TransactionJournal,
+  witness: PublicationIntent,
+): ModelIssue[] {
+  const problems: ModelIssue[] = [];
+  if (
+    journal.lock === null ||
+    witness.transactionId !== journal.transactionId ||
+    witness.digest !== journal.lock.digest
+  ) {
     problems.push(
-      ...intentBindingIssues(root, stateDir, journal.transactionId, witness),
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "the terminal publication witness contradicts the journal; preserving evidence",
+      ),
     );
-    const canonical = observeEntry(absOf(root, lockPath(stateDir)));
-    const identity = observeFileIdentity(absOf(root, lockPath(stateDir)));
-    if (
-      witness.planDigest !== journal.planDigest ||
-      witness.rootIdentity !== journal.rootIdentity ||
-      (!(witness.preimage === null && canonical.kind === "absent") &&
-        !(
-          witness.preimage !== null &&
-          identity !== null &&
-          witness.preimage.device === identity.device &&
-          witness.preimage.inode === identity.inode
-        ))
-    ) {
-      problems.push(
-        issue(
-          "RECOVERY_AMBIGUOUS_PUBLICATION",
-          "terminal rollback cannot prove the physical prepublication canonical image; preserving evidence",
-        ),
-      );
-    }
+  }
+  const stagedPath = `${stagedDir(stateDir, journal.transactionId)}/kit.lock.json`;
+  const staged = currentImage(root, stagedPath);
+  const stagedIdentity = observeFileIdentity(absOf(root, stagedPath));
+  if (
+    staged.kind !== "absent" &&
+    !(
+      staged.kind === "file" &&
+      staged.digest === witness.digest &&
+      staged.mode === witness.mode &&
+      stagedIdentity !== null &&
+      witness.staged !== null &&
+      stagedIdentity.device === witness.staged.device &&
+      stagedIdentity.inode === witness.staged.inode
+    )
+  ) {
+    problems.push(
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "the retained staged publication image contradicts its physical witness; preserving evidence",
+        stagedPath,
+      ),
+    );
+  }
+  problems.push(
+    ...intentBindingIssues(root, stateDir, journal.transactionId, witness),
+  );
+  const canonical = observeEntry(absOf(root, lockPath(stateDir)));
+  const identity = observeFileIdentity(absOf(root, lockPath(stateDir)));
+  if (
+    witness.planDigest !== journal.planDigest ||
+    witness.rootIdentity !== journal.rootIdentity ||
+    (!(witness.preimage === null && canonical.kind === "absent") &&
+      !(
+        witness.preimage !== null &&
+        identity !== null &&
+        witness.preimage.device === identity.device &&
+        witness.preimage.inode === identity.inode
+      ))
+  ) {
+    problems.push(
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "terminal rollback cannot prove the physical prepublication canonical image; preserving evidence",
+      ),
+    );
   }
   return problems;
 }
@@ -647,6 +717,106 @@ type CurrentImage =
   | { readonly kind: "absent" }
   | { readonly kind: "file"; readonly digest: string; readonly mode: number }
   | { readonly kind: "unsafe"; readonly reason: string };
+
+/** Shared read-only phase proof; durable progress never substitutes for images. */
+function phasePhysicalIssues(
+  root: string,
+  stateDir: string,
+  journal: TransactionJournal,
+): ModelIssue[] {
+  if (journal.phase === "planned" || journal.phase === "rolled_back")
+    return terminalRollbackIssues(
+      root,
+      stateDir,
+      journal,
+      journal.phase === "planned",
+    );
+  const retained = journal.operations.flatMap((operation) =>
+    retainedOperationIssues(root, stateDir, journal, operation),
+  );
+  if (retained.length > 0) return retained;
+  const id = journal.transactionId;
+  const witness = readPublicationIntent(
+    root,
+    publicationIntentPath(stateDir, id),
+  );
+  if (Array.isArray(witness)) return [...witness];
+  if (journal.phase === "prepared" || journal.lock === null) {
+    if (
+      witness !== null ||
+      currentImage(root, `${stagedDir(stateDir, id)}/kit.lock.json`).kind !==
+        "absent"
+    )
+      return [
+        issue(
+          "RECOVERY_PHASE_CONTRADICTION",
+          "publication evidence contradicts the recorded preparation or missing lock intent; preserving it",
+          publicationIntentPath(stateDir, id),
+        ),
+      ];
+  }
+  let published = journal.phase === "published" || journal.phase === "cleaned";
+  if (journal.phase === "applied" && journal.lock !== null) {
+    if (
+      witness === null ||
+      witness.transactionId !== id ||
+      witness.rootIdentity !== journal.rootIdentity ||
+      witness.planDigest !== journal.planDigest ||
+      witness.digest !== journal.lock.digest
+    )
+      return [
+        issue(
+          "RECOVERY_AMBIGUOUS_PUBLICATION",
+          "the publication intent lacks matching physical witness proof; preserving evidence",
+          lockPath(stateDir),
+        ),
+      ];
+    const classification = classifyPublication({
+      intent: witness,
+      canonical: observeFileIdentity(absOf(root, lockPath(stateDir))),
+      stagedIdentity: observeFileIdentity(
+        absOf(root, `${stagedDir(stateDir, id)}/kit.lock.json`),
+      ),
+      expectedDigest: journal.lock.digest,
+      canonicalDigest: readFileSafe(root, lockPath(stateDir)),
+    });
+    if (classification === "ambiguous")
+      return [
+        issue(
+          "RECOVERY_AMBIGUOUS_PUBLICATION",
+          "the publication outcome cannot be proven; preserving evidence",
+          lockPath(stateDir),
+        ),
+      ];
+    published = classification === "published";
+    if (!published) {
+      const prepublication = terminalPublicationIssues(
+        root,
+        stateDir,
+        journal,
+        witness,
+      );
+      if (prepublication.length > 0) return prepublication;
+    }
+  }
+  if (published) {
+    if (
+      journal.lock === null ||
+      readFileSafe(root, lockPath(stateDir)) !== journal.lock.digest
+    )
+      return [
+        issue(
+          "RECOVERY_AMBIGUOUS_PUBLICATION",
+          "the canonical lock contradicts retained publication; preserving it",
+          lockPath(stateDir),
+        ),
+      ];
+    return verifyPublishedEvidence(root, stateDir, id, journal);
+  }
+  return journal.operations.flatMap((operation) =>
+    preflightRollback(root, stateDir, id, operation),
+  );
+}
 
 function currentImage(root: string, logicalPath: string): CurrentImage {
   const abs = absOf(root, logicalPath);
@@ -1553,6 +1723,8 @@ function recoverTransactionUnderLock(
   }
   const createdDirs = createdDirIssues(root, stateDir, journal, roots);
   if (createdDirs.length > 0) return refuse(transactionId, createdDirs);
+  const consistency = phasePhysicalIssues(root, stateDir, journal);
+  if (consistency.length > 0) return refuse(transactionId, consistency);
 
   if (journal.phase === "rolled_back") {
     const ancestry = removeCoordinatedAncestors(root, stateDir, journal, hooks);
@@ -1569,9 +1741,10 @@ function recoverTransactionUnderLock(
   }
 
   if (journal.phase === "planned") {
-    const binding = rootBindingIssues(root, journal);
-    if (binding.length > 0) return refuse(transactionId, binding);
-    // A planned transaction wrote no live bytes; its owned empty ancestry is
+    const proof = terminalRollbackIssues(root, stateDir, journal, true);
+    if (proof.length > 0) return refuse(transactionId, proof);
+    // Positive original-image, absent-backup and publication proof establishes
+    // that this planned transaction wrote no live bytes. Its owned empty ancestry is
     // removed only when every identity/removal/flush issue is proven. A
     // contradiction or durability fault is refused with the journal preserved
     // rather than discarding proof while reporting clean.
@@ -1939,7 +2112,7 @@ function verifyPublishedEvidence(
       ),
     ];
   }
-  if ((entry.stats.mode & 0o777) !== intentRead.mode) {
+  if ((entry.stats.mode & 0o7777) !== intentRead.mode) {
     return [
       issue(
         "RECOVERY_AMBIGUOUS_PUBLICATION",
@@ -2285,8 +2458,17 @@ export function inspectUnchangedState(
     retain(rootBindingIssues(root, read), locator);
     retain(inventoryIssues(root, stateDir, id, read), locator);
     retain(createdDirIssues(root, stateDir, read, roots), locator);
+    const consistency = phasePhysicalIssues(root, stateDir, read);
+    if (consistency.length > 0) {
+      retain(consistency, locator);
+      continue;
+    }
     if (read.phase === "rolled_back") {
       retain(terminalRollbackIssues(root, stateDir, read), locator);
+      continue;
+    }
+    if (read.phase === "planned") {
+      retain(terminalRollbackIssues(root, stateDir, read, true), locator);
       continue;
     }
     const intent = readPublicationIntent(
@@ -2350,7 +2532,7 @@ export function inspectUnchangedState(
           ),
         );
       retain(verifyPublishedEvidence(root, stateDir, id, read), locator);
-    } else if (read.phase !== "planned") {
+    } else {
       for (const operation of read.operations)
         retain(preflightRollback(root, stateDir, id, operation), locator);
     }
@@ -2388,8 +2570,14 @@ export function inspectTransactions(
     }
     const mapping = { ...roots, stateDir };
     const validation = validateJournalTargets(read, mapping);
-    return validation.ok
-      ? { transactionId, ok: true, issues: [] }
-      : { transactionId, ok: false, issues: validation.issues };
+    if (!validation.ok)
+      return { transactionId, ok: false, issues: validation.issues };
+    const issues = [
+      ...inventoryIssues(root, stateDir, transactionId, read),
+      ...createdDirIssues(root, stateDir, read, roots),
+      ...phasePhysicalIssues(root, stateDir, read),
+      ...rootBindingIssues(root, read),
+    ];
+    return { transactionId, ok: issues.length === 0, issues };
   });
 }
