@@ -24,7 +24,7 @@ import {
   inspectTransactions,
   recoverTransaction,
 } from "../../src/codegen/recovery.js";
-import { applyReplacements } from "../../src/codegen/replace.js";
+import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 import { stageOperations } from "../../src/codegen/stage.js";
 import {
   journalPath,

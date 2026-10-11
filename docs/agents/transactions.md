@@ -27,6 +27,16 @@ bytes and modes at a replacement inode do not revalidate that original preimage.
 File observations compare all permission bits, including intervening special-bit
 edits. New physical evidence must come from a fresh plan, not a live recapture.
 
+Replacement retains that original authority across returning hooks. Immediately
+before backup and installation, it rechecks physical ancestry, permission modes,
+read evidence and the actual held writer. A backup requires the original file
+identity and exact preimage; installation requires target absence and the exact
+staged creation receipt. A destination that appears after backup survives. Changed
+or substituted staged bytes, mode, identity or ancestry cannot be installed.
+The in-memory result records a completed rename before later hooks or flushes,
+even when durable journal progress still lags that actual syscall. Refusal retains
+the evidence needed to prove any safe rollback; it cannot grant blanket rollback.
+
 ## Ordered application and publication
 
 Plans, diagnosis and dry runs write nothing, including hidden state. Genuine
@@ -45,7 +55,8 @@ age, PID reuse and finally blocks do not prove a successful commit or takeover.
 
 The reserved transient namespace is `<uiDir>/_kit/.svelte-ui-kit/`: cooperative
 writer.lock and owned per-attempt transactions containing journal, staged,
-backups and progress. Directories are 0700 and journal/staged files 0600. A single
+backups and progress. Directories are 0700; journals and witnesses are 0600;
+staged images carry their exact planned modes. A single
 planned ignore entry preserves existing app ignore rules. Clean only proven
 owned temporary entries; unsafe cleanup retains actionable recovery evidence.
 These transients are distinct from app-owned desired/semantic metadata.

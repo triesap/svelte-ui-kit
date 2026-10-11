@@ -21,7 +21,7 @@ import {
   type TransactionJournal,
 } from "../../src/codegen/transaction-journal.js";
 import { recoverTransaction } from "../../src/codegen/recovery.js";
-import { applyReplacements } from "../../src/codegen/replace.js";
+import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 import {
   stageOperations,
   type StageOperation,

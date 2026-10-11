@@ -56,6 +56,8 @@ const { sha256Hex } = await load("digest.js");
 const { stageOperations } = await load("stage.js");
 const { prepareJournal, persistJournal } = await load("transaction-journal.js");
 const { applyReplacements } = await load("replace.js");
+const { holdMutationAuthority } = await load("mutation-authority.js");
+const { acquireWriterLock, releaseWriterLock } = await load("write-lock.js");
 const { faultAt } = await load("transaction-hooks.js");
 const { journalPath } = await load("transaction-types.js");
 const { observeRootIdentity, identityDigest } = await load("authority.js");
@@ -63,6 +65,8 @@ const { observeRootIdentity, identityDigest } = await load("authority.js");
 const css = path.join(root, ..."src/styles/kit.css".split("/"));
 fs.mkdirSync(path.dirname(css), { recursive: true });
 fs.writeFileSync(css, "old css");
+const acquired = acquireWriterLock(root, stateDir, id);
+if (!acquired.ok) { console.log("writer-failed"); process.exit(7); }
 
 const rootIdentityResult = observeRootIdentity(root);
 if (!rootIdentityResult.ok) { console.log("root-identity-failed"); process.exit(6); }
@@ -100,7 +104,10 @@ persistJournal(root, journalPath(stateDir, id), prepared);
 const hooks = mode === "kill"
   ? { before: (b) => { if (b === boundary) process.kill(process.pid, "SIGKILL"); } }
   : faultAt(boundary);
-const result = applyReplacements(root, stateDir, prepared, staged.value, hooks);
+const authority = holdMutationAuthority(root, ["src/styles/kit.css", ...staged.value.records.map((entry) => entry.stagedPath)]);
+const result = applyReplacements(root, stateDir, prepared, staged.value, hooks, undefined, authority);
+const released = releaseWriterLock(acquired.value);
+if (!released.ok) { console.log("release-failed"); process.exit(8); }
 console.log(result.ok ? "applied" : "failed:" + result.issues[0].code);
 process.exit(result.ok ? 0 : 5);
 `;

@@ -848,6 +848,7 @@ export function verifyRootIdentity(
 export function verifyAncestors(
   root: string,
   ancestors: readonly PlanAncestor[],
+  strictAbsent = false,
 ): ModelIssue[] {
   const issues: ModelIssue[] = [];
   for (const ancestor of ancestors) {
@@ -888,6 +889,15 @@ export function verifyAncestors(
       continue;
     }
     if (ancestor.kind === "absent") {
+      if (strictAbsent) {
+        issues.push(
+          issue(
+            "AUTHORITY_ANCESTOR_APPEARED",
+            `ancestor ${ancestor.path} appeared without held creation authority`,
+            ancestor.path,
+          ),
+        );
+      }
       // A recorded-absent ancestor may legitimately have been created by the
       // guarded batch's own owned coordination/staging (fresh init or custom
       // mapping). A real directory is accepted; a symlink or non-directory is

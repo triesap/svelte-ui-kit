@@ -7,7 +7,12 @@ import type { ChildProcessWithoutNullStreams } from "node:child_process";
 
 import { recoverTransaction } from "../../src/codegen/recovery.js";
 import { runWorker, spawnWorker } from "../helpers/fault-process.js";
-import { RECOVERY_ROOTS } from "../helpers/transactions.js";
+import {
+  RECOVERY_ROOTS,
+  clearOrphanedWriterLock,
+} from "../helpers/transactions.js";
+import { writerLockDir } from "../../src/codegen/transaction-types.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 
@@ -109,6 +114,27 @@ test("a SIGKILLed process leaves recoverable state", () => {
         boundary,
       });
       assert.equal(killed.signal, "SIGKILL", `${label}: ${killed.stderr}`);
+
+      const before = snapshotTree(root);
+      const blocked = recoverTransaction(
+        root,
+        STATE_DIR,
+        "1414141414141414",
+        RECOVERY_ROOTS,
+      );
+      assert.equal(blocked.status, "refused", JSON.stringify(blocked));
+      assert.ok(blocked.issues.some((entry) => entry.code === "WRITER_BUSY"));
+      assert.deepEqual(snapshotTree(root), before);
+      const owner = JSON.parse(
+        readFileSync(
+          abs(root, `${writerLockDir(STATE_DIR)}/owner.json`),
+          "utf8",
+        ),
+      );
+      assert.equal(owner.transactionId, "1414141414141414");
+      // This exact child has terminated by SIGKILL; resolve only its matching
+      // orphaned coordination before acquiring a fresh recovery writer.
+      clearOrphanedWriterLock(root, STATE_DIR);
 
       const recovered = recoverTransaction(
         root,

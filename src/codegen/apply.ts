@@ -71,6 +71,7 @@ import {
 } from "./recovery.js";
 import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
 import { applyReplacements } from "./replace.js";
+import { holdMutationAuthority } from "./mutation-authority.js";
 import { publishLock } from "./publish-lock.js";
 import { cleanupTransaction } from "./transaction-cleanup.js";
 import { stageOperations } from "./stage.js";
@@ -1761,6 +1762,23 @@ function applyUnderLock(
     };
   }
 
+  const mutationAuthority = holdMutationAuthority(
+    plan.root,
+    [
+      ...plan.targets.map((target) => target.path),
+      plan.lock.preimage.path,
+      `${transactionDir(plan.stateDir, transactionId)}/staged/kit.lock.json`,
+      `${transactionDir(plan.stateDir, transactionId)}/backups/entry`,
+    ],
+    {
+      readset: plan.readset,
+      preimages: [
+        ...plan.targets.map((target) => target.preimage),
+        plan.lock.preimage,
+      ],
+      created: ownedCreated,
+    },
+  );
   const replaced = applyReplacements(
     plan.root,
     plan.stateDir,
@@ -1768,6 +1786,7 @@ function applyUnderLock(
     staged.value,
     hooks,
     ownership,
+    mutationAuthority,
   );
   if (!replaced.ok) {
     const recovered = recoverTransactionsUnderLock(plan, transactionId, hooks);

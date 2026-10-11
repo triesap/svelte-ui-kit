@@ -7,10 +7,9 @@
  * Progress is persisted after every operation, so an interruption between
  * replacements is a detectable mixed state that recovery can roll back.
  *
- * Two live-boundary rechecks bracket every operation: immediately before a
- * target is moved to its backup the current bytes/mode are re-proven against
- * the planned preimage, and immediately before the staged image is renamed
- * into place its exact bytes/mode are re-proven against the recorded digest.
+ * Final checks follow returning hooks: backup requires the original physical
+ * preimage; installation requires target absence and the exact staged creation
+ * receipt. Both require held writer ownership and unchanged safe ancestry.
  * An observable intervening edit or a corrupted staged image therefore refuses
  * rather than being overwritten and silently reported as applied.
  *
@@ -18,7 +17,7 @@
  * final semantic publication (S071). No native multi-file atomicity is claimed;
  * each single-file rename is the atomic unit.
  */
-import { mkdirSync, readFileSync, renameSync } from "node:fs";
+import { readFileSync, renameSync } from "node:fs";
 import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
@@ -43,8 +42,14 @@ import {
   backupOwnedPreimage,
   createOwnedDirectory,
   forgetRenamedCreation,
+  verifyOwnedCreations,
   type OwnedCreation,
 } from "./transaction-inventory.js";
+import {
+  verifyMutationAuthority,
+  verifyMutationTarget,
+  type MutationAuthority,
+} from "./mutation-authority.js";
 
 export interface ReplacementResult {
   readonly ok: boolean;
@@ -78,7 +83,18 @@ function stagedFor(
 }
 
 /** Re-prove the exact staged bytes and mode, or describe the drift. */
-function stagedDrift(root: string, record: StagedRecord): string | null {
+function stagedDrift(
+  root: string,
+  record: StagedRecord,
+  staged: StagedBatch,
+  operation: JournalOperationRecord,
+): string | null {
+  if (
+    record.digest !== operation.resultDigest ||
+    record.mode !== operation.resultMode ||
+    record.stagedId !== operation.stagedId
+  )
+    return "its staged record contradicts the approved operation";
   const abs = absOf(root, record.stagedPath);
   const entry = observeEntry(abs);
   if (entry.kind === "absent") return "its staged image disappeared";
@@ -95,10 +111,23 @@ function stagedDrift(root: string, record: StagedRecord): string | null {
     return `its staged image is unreadable (${codeOf(error)})`;
   }
   if (digest !== record.digest) return "its staged bytes changed";
-  if ((entry.stats.mode & 0o777) !== record.mode) {
+  if ((entry.stats.mode & 0o7777) !== record.mode) {
     return "its staged mode changed";
   }
+  const receipt = staged.ownership.find(
+    (candidate) => candidate.kind === "file" && candidate.path === abs,
+  );
+  if (receipt === undefined || verifyOwnedCreations([receipt]).length > 0)
+    return "its held physical creation receipt no longer matches";
   return null;
+}
+
+function refuseProof(issues: readonly ModelIssue[]): void {
+  if (issues.length > 0)
+    throw new ReplaceRefusal(
+      issues[0].code,
+      issues.map((entry) => entry.message).join("; "),
+    );
 }
 
 /**
@@ -146,19 +175,48 @@ export function applyReplacements(
   stateDir: string,
   journal: TransactionJournal,
   staged: StagedBatch,
-  hooks?: TransactionHooks,
-  ownership?: OwnedCreation[],
+  hooks: TransactionHooks | undefined,
+  ownership: OwnedCreation[] | undefined,
+  authority: MutationAuthority,
 ): ReplacementResult {
   const backupsLogical = backupsDir(stateDir, journal.transactionId);
   const backupsAbs = absOf(root, backupsLogical);
   const stagedAbs = absOf(root, stagedDir(stateDir, journal.transactionId));
   const journalLogical = journalPath(stateDir, journal.transactionId);
   let current = journal;
+  const receipts = ownership ?? [];
+  const finalProof = () =>
+    verifyMutationAuthority(authority, root, stateDir, receipts, [
+      ...current.operations.map((entry) => entry.path),
+      ...staged.records.map((entry) => entry.stagedPath),
+      backupsLogical,
+    ]);
+  const markApplied = (index: number): void => {
+    current = {
+      ...current,
+      operations: current.operations.map((entry, candidate) =>
+        candidate === index ? { ...entry, applied: true } : entry,
+      ),
+    };
+  };
 
   try {
-    if (ownership !== undefined) createOwnedDirectory(backupsAbs, ownership);
-    else mkdirSync(backupsAbs, { recursive: true, mode: 0o700 });
+    refuseProof(finalProof());
+    if (
+      current.operations.some((entry) => !authority.preimages.has(entry.path))
+    )
+      throw new ReplaceRefusal(
+        "MUTATION_AUTHORITY_INVALID",
+        "every replacement requires its original held preimage",
+      );
+    createOwnedDirectory(backupsAbs, receipts);
   } catch (error) {
+    if (error instanceof ReplaceRefusal)
+      return {
+        ok: false,
+        journal: current,
+        issues: [{ code: error.code, message: error.message }],
+      };
     return {
       ok: false,
       journal: current,
@@ -193,17 +251,34 @@ export function applyReplacements(
             `refusing to replace ${operation.path}: ${drifted}`,
           );
         }
-        mkdirSync(path.dirname(targetAbs), { recursive: true });
-        if (ownership !== undefined)
-          backupOwnedPreimage(
-            targetAbs,
-            path.join(backupsAbs, operation.backupId),
-            operation.preimage.digest!,
-            operation.preimage.mode!,
-            ownership,
+        refuseProof(finalProof());
+        const original = verifyMutationTarget(authority, operation.path);
+        if (original.length > 0)
+          throw new ReplaceRefusal(
+            "REPLACE_USER_EDIT",
+            original.map((entry) => entry.message).join("; "),
           );
-        else renameSync(targetAbs, path.join(backupsAbs, operation.backupId));
+        const record = stagedFor(staged, operation.path);
+        if (
+          operation.operation === "update" &&
+          (record === undefined ||
+            stagedDrift(root, record, staged, operation) !== null)
+        ) {
+          throw new ReplaceRefusal(
+            "REPLACE_STAGE_CORRUPT",
+            `refusing to back up ${operation.path}: its original staged image changed`,
+          );
+        }
+        backupOwnedPreimage(
+          targetAbs,
+          path.join(backupsAbs, operation.backupId),
+          operation.preimage.digest!,
+          operation.preimage.mode!,
+          receipts,
+        );
+        if (operation.operation === "retire") markApplied(index);
         fireHooks(hooks, "before", "durability:backup", operation.path);
+        refuseProof(finalProof());
         // A cross-directory rename affects both parents: the backup directory
         // gained an entry and the target's directory lost one. Flush both so a
         // crash cannot resurrect the live file or lose the owned backup.
@@ -225,18 +300,26 @@ export function applyReplacements(
           );
         }
         fireHooks(hooks, "before", "replace:apply", operation.path);
-        const corrupt = stagedDrift(root, record);
+        const corrupt = stagedDrift(root, record, staged, operation);
         if (corrupt !== null) {
           throw new ReplaceRefusal(
             "REPLACE_STAGE_CORRUPT",
             `refusing to install ${operation.path}: ${corrupt}`,
           );
         }
-        mkdirSync(path.dirname(targetAbs), { recursive: true });
+        refuseProof(finalProof());
+        const appeared = verifyMutationTarget(authority, operation.path, true);
+        if (appeared.length > 0)
+          throw new ReplaceRefusal(
+            "REPLACE_USER_EDIT",
+            `refusing to install ${operation.path}: the destination appeared after approval or backup`,
+          );
         renameSync(absOf(root, record.stagedPath), targetAbs);
+        markApplied(index);
         if (ownership !== undefined)
           forgetRenamedCreation(absOf(root, record.stagedPath), ownership);
         fireHooks(hooks, "before", "durability:replace", operation.path);
+        refuseProof(finalProof());
         // The staged image left its directory and entered the target's
         // directory; flush both parents of the cross-directory rename.
         flushDirectory(path.dirname(targetAbs));
@@ -245,15 +328,9 @@ export function applyReplacements(
         fireHooks(hooks, "after", "replace:apply", operation.path);
       }
 
-      current = {
-        ...current,
-        operations: current.operations.map((candidate, candidateIndex) =>
-          candidateIndex === index
-            ? { ...candidate, applied: true }
-            : candidate,
-        ),
-      };
+      markApplied(index);
       fireHooks(hooks, "before", "progress:persist", operation.path);
+      refuseProof(finalProof());
       persistJournal(root, journalLogical, current, hooks, ownership);
       fireHooks(hooks, "after", "progress:persist", operation.path);
     } catch (error) {

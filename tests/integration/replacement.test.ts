@@ -18,7 +18,8 @@ import {
   persistJournal,
   type TransactionJournal,
 } from "../../src/codegen/transaction-journal.js";
-import { applyReplacements, backupPath } from "../../src/codegen/replace.js";
+import { backupPath } from "../../src/codegen/replace.js";
+import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 import {
   stageOperations,
   type StageOperation,
