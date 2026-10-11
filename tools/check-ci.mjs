@@ -17,6 +17,7 @@ export const FILESYSTEM_TESTS = Object.freeze(
     "durability-flush-paths",
     "durability-ordering",
     "filesystem-paths",
+    "journal-phase-processes",
     "lock-publication",
     "platform-filesystem",
     "publication-witness",

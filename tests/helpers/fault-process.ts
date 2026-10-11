@@ -26,6 +26,7 @@ export interface WorkerOptions {
   readonly transactionId: string;
   readonly boundary?: string;
   readonly event?: "before" | "after";
+  readonly operation?: "create" | "update" | "retire";
   readonly holdMs?: number;
 }
 
@@ -36,6 +37,7 @@ const stateDir = process.env.SUIK_STATE_DIR;
 const id = process.env.SUIK_TXN_ID;
 const mode = process.env.SUIK_MODE;
 const boundary = process.env.SUIK_BOUNDARY || "";
+const operation = process.env.SUIK_OPERATION || "update";
 const holdMs = Number(process.env.SUIK_HOLD_MS || "0");
 const { pathToFileURL } = await import("node:url");
 const load = (name) => import(base + name);
@@ -56,7 +58,7 @@ if (mode === "lock") {
 if (mode === "recover-kill") {
   const { recoverTransaction } = await load("recovery.js");
   const event = process.env.SUIK_EVENT || "before";
-  const stop = (candidate) => { if (candidate === boundary) process.kill(process.pid, "SIGKILL"); };
+  const stop = (candidate) => { if (candidate === boundary) { console.log("SUIK_KILL_PID " + process.pid); process.kill(process.pid, "SIGKILL"); } };
   const result = recoverTransaction(root, stateDir, id, {
     uiDir: "src/lib/components/ui", stylesDir: "src/styles", layoutFile: "src/routes/+layout.svelte",
   }, {[event]: stop});
@@ -71,12 +73,12 @@ const { applyReplacements } = await load("replace.js");
 const { holdMutationAuthority } = await load("mutation-authority.js");
 const { acquireWriterLock, releaseWriterLock } = await load("write-lock.js");
 const { faultAt } = await load("transaction-hooks.js");
-const { journalPath } = await load("transaction-types.js");
+const { journalPath, stagedDir } = await load("transaction-types.js");
 const { observeRootIdentity, identityDigest } = await load("authority.js");
 
 const css = path.join(root, ..."src/styles/kit.css".split("/"));
 fs.mkdirSync(path.dirname(css), { recursive: true });
-fs.writeFileSync(css, "old css");
+if (operation !== "create") fs.writeFileSync(css, "old css");
 const acquired = acquireWriterLock(root, stateDir, id);
 if (!acquired.ok) { console.log("writer-failed"); process.exit(7); }
 
@@ -92,9 +94,9 @@ const journal = {
   phase: "planned",
   operations: [{
     path: "src/styles/kit.css",
-    operation: "update",
-    preimage: { kind: "file", digest: sha256Hex("old css"), mode: 0o644 },
-    resultDigest: sha256Hex("new css"),
+    operation,
+    preimage: operation === "create" ? {kind: "absent", digest: null, mode: null} : { kind: "file", digest: sha256Hex("old css"), mode: 0o644 },
+    resultDigest: sha256Hex(operation === "retire" ? "" : "new css"),
     resultMode: 0o644,
     backupId: null,
     stagedId: null,
@@ -105,8 +107,8 @@ const journal = {
 
 const staged = stageOperations(root, stateDir, id, [{
   path: "src/styles/kit.css",
-  operation: "update",
-  bytes: new TextEncoder().encode("new css"),
+  operation,
+  bytes: new TextEncoder().encode(operation === "retire" ? "" : "new css"),
   mode: 0o644,
 }]);
 if (!staged.ok) { console.log("stage-failed"); process.exit(4); }
@@ -114,9 +116,9 @@ const prepared = prepareJournal(journal, staged.value.records);
 persistJournal(root, journalPath(stateDir, id), prepared);
 
 const hooks = mode === "kill"
-  ? { before: (b) => { if (b === boundary) process.kill(process.pid, "SIGKILL"); } }
+  ? { [process.env.SUIK_EVENT || "before"]: (b) => { if (b === boundary) { console.log("SUIK_KILL_PID " + process.pid); process.kill(process.pid, "SIGKILL"); } } }
   : faultAt(boundary);
-const authority = holdMutationAuthority(root, ["src/styles/kit.css", ...staged.value.records.map((entry) => entry.stagedPath)]);
+const authority = holdMutationAuthority(root, ["src/styles/kit.css", journalPath(stateDir, id), stagedDir(stateDir, id) + "/.held-stage-proof", ...staged.value.records.map((entry) => entry.stagedPath)]);
 const result = applyReplacements(root, stateDir, prepared, staged.value, hooks, undefined, authority);
 const released = releaseWriterLock(acquired.value);
 if (!released.ok) { console.log("release-failed"); process.exit(8); }
@@ -154,6 +156,7 @@ function workerEnv(options: WorkerOptions): NodeJS.ProcessEnv {
     SUIK_MODE: options.mode,
     SUIK_BOUNDARY: options.boundary ?? "",
     SUIK_EVENT: options.event ?? "before",
+    SUIK_OPERATION: options.operation ?? "update",
     SUIK_HOLD_MS: String(options.holdMs ?? 0),
   };
 }

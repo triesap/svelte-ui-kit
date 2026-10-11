@@ -50,6 +50,9 @@ export interface ProductionWorkerOptions {
   readonly boundary: string;
   readonly mode?: "kill" | "hold";
   readonly holdMs?: number;
+  readonly event?: "before" | "after";
+  readonly occurrence?: number;
+  readonly journalPhase?: string;
 }
 
 const WORKER = String.raw`
@@ -148,13 +151,25 @@ const composed = composeApplyPlan({ root, config, writes: planned.value.writes, 
 if (!composed.ok) throw new Error(JSON.stringify(composed));
 const validated = validateApplyPlan(composed.value);
 if (!validated.ok) throw new Error(JSON.stringify(validated));
+let seen = 0;
+const event = process.env.SUIK_EVENT || "after";
+const occurrence = Number(process.env.SUIK_OCCURRENCE || "1");
+const phase = process.env.SUIK_JOURNAL_PHASE || "";
 applyPlan(validated.value, {
-  after: (b) => {
+  [event]: (b, detail) => {
     if (b !== boundary) return;
+    if (phase) {
+      if (!detail || !detail.endsWith("/journal.json")) return;
+      const journal = JSON.parse(fs.readFileSync(path.join(root, ...detail.split("/")), "utf8"));
+      if (journal.phase !== phase) return;
+    }
+    seen += 1;
+    if (seen !== occurrence) return;
     if (mode === "hold") {
       console.log("held:" + b);
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, holdMs);
     } else {
+      console.log("SUIK_KILL_PID " + process.pid);
       process.kill(process.pid, "SIGKILL");
     }
   },
@@ -179,6 +194,8 @@ export function runGuardedProductionWorker(
     ["--input-type=module", "-e", PRODUCTION_WORKER],
     {
       encoding: "utf8",
+      timeout: 30_000,
+      killSignal: "SIGKILL",
       env: {
         ...process.env,
         SUIK_CODEGEN: codegenBaseUrl(),
@@ -190,6 +207,9 @@ export function runGuardedProductionWorker(
         SUIK_BOUNDARY: options.boundary,
         SUIK_MODE: options.mode ?? "kill",
         SUIK_HOLD_MS: String(options.holdMs ?? 0),
+        SUIK_EVENT: options.event ?? "after",
+        SUIK_OCCURRENCE: String(options.occurrence ?? 1),
+        SUIK_JOURNAL_PHASE: options.journalPhase ?? "",
       },
     },
   );

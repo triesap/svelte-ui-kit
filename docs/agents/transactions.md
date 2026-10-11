@@ -163,6 +163,15 @@ witness refuses without discarding the recoverable inventory. `cleaned` remains 
 supported terminal record; normal cleanup removes the published journal rather
 than claiming a separate durable cleaned-record write.
 
+Actual SIGKILL controls cover the in-memory planned setup, durable prepared and
+applied records, canonical-rename publication lag, durable published records and
+terminal rollback persistence. Create/update/retire controls independently kill
+between the completed rename and durable progress, and after progress persists.
+Each retained owner is matched to that exact terminated child before test-only
+operator resolution; a fresh coordinating child first proves refusal with the
+complete tree unchanged. These controls supplement interrupted-cleanup restart
+qualification rather than treating thrown hooks as process termination.
+
 Before unchanged init/add/sync, including dry-run, inspect physical safety first,
 then writer evidence and retained journal state without acquiring coordination,
 reclaiming a lock or cleaning transactions. Only absent writer/transaction state
