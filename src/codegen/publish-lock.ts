@@ -115,6 +115,19 @@ export function validateLockForPublication(
     issues.push(...validated.issues);
     return { ok: false, issues };
   }
+  if (
+    journal.schemaVersion !== validated.value.schemaVersion ||
+    (journal.schemaVersion === 2
+      ? journal.target !== validated.value.target ||
+        journal.target !== context.target
+      : journal.target !== undefined || validated.value.target !== undefined)
+  )
+    issues.push({
+      code: "LOCK_JOURNAL_TARGET_MISMATCH",
+      message:
+        "Publication requires the same approved journal, config and semantic-lock schema/target",
+      locator: lockPath(stateDir),
+    });
   return { ok: issues.length === 0, issues };
 }
 

@@ -67,6 +67,7 @@ const AJV_OPTIONS: AjvOptions = {
 /** Shipped schema file name → fixed local `$id` identity. */
 export const SHIPPED_SCHEMAS: Readonly<Record<string, string>> = {
   "v2/kit.schema.json": "urn:svelte-ui-kit:schema:v2:kit",
+  "v2/kit-lock.schema.json": "urn:svelte-ui-kit:schema:v2:kit-lock",
   "kit.schema.json": "urn:svelte-ui-kit:schema:v1:kit",
   "kit-lock.schema.json": "urn:svelte-ui-kit:schema:v1:kit-lock",
   "registry.schema.json": "urn:svelte-ui-kit:schema:v1:registry",

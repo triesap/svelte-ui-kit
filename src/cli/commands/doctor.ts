@@ -28,7 +28,8 @@ import {
 import { createExportAuthority } from "../../codegen/exports.js";
 import { parseExportRegion } from "../../codegen/export-parse.js";
 import { parseManagedCss } from "../../codegen/css-parse.js";
-import { parseSvelteLayout } from "../../codegen/svelte-parse.js";
+import { targetIntegrationAdapter } from "../../codegen/target-integration.js";
+import { appTarget, appPlanIdentity } from "../../project/app-config.js";
 import {
   resolveProjectedConfig,
   validateProjectedLock,
@@ -372,9 +373,10 @@ export function diagnose(
       );
     }
     if (integration.kind === "layout") {
-      const parsed = parseSvelteLayout(decoded.text);
+      const adapter = targetIntegrationAdapter(appTarget(config));
+      const parsed = adapter.ok ? adapter.value.inspect(decoded.text) : adapter;
       record(
-        parsed.ok && parsed.value.rendersChildren
+        parsed.ok && parsed.value.rendersContent
           ? []
           : parsed.ok
             ? [
@@ -419,6 +421,7 @@ export function diagnose(
         uiDir: config.uiDir,
         stylesDir: config.stylesDir,
         layoutFile: config.layoutFile,
+        ...appPlanIdentity(config),
         targets: [],
         evidence: [...snapshot.entries.values()]
           .filter((entry) => entry.kind === "file" || entry.kind === "absent")
@@ -547,6 +550,7 @@ export function diagnose(
     uiDir: config.uiDir,
     stylesDir: config.stylesDir,
     layoutFile: config.layoutFile,
+    ...appPlanIdentity(config),
   });
   for (const transaction of transactions)
     record(

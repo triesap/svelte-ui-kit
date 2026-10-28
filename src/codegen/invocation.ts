@@ -18,10 +18,16 @@ import type { ModelResult } from "../registry/errors.js";
 import { fail, ok } from "../registry/errors.js";
 import type { DetectedProject } from "../project/detect.js";
 import type { ProjectSnapshot } from "./snapshot.js";
+import { isAppTargetConfig } from "../project/app-config.js";
+import {
+  inspectTargetEvidence,
+  type TargetEvidence,
+} from "./target-evidence.js";
+import { targetIntegrationAdapter } from "./target-integration.js";
 
 export interface ValidatedInvocation {
   /** The captured static project-selection evidence. */
-  readonly project: DetectedProject;
+  readonly project: DetectedProject | TargetEvidence;
 }
 
 /**
@@ -34,6 +40,20 @@ export function validateInvocation(
 ): ModelResult<ValidatedInvocation> {
   if (snapshot.environment.catalogIssues.length > 0)
     return fail(snapshot.environment.catalogIssues);
+  const installation = snapshot.environment.kitConfig;
+  if (
+    installation.ok &&
+    installation.value.kind === "custom" &&
+    isAppTargetConfig(installation.value.config)
+  ) {
+    if (snapshot.environment.managerIssues.length)
+      return fail(snapshot.environment.managerIssues);
+    const proof = inspectTargetEvidence(snapshot, installation.value.config);
+    if (!proof.ok) return proof;
+    const adapter = targetIntegrationAdapter(installation.value.config.target);
+    if (!adapter.ok) return adapter;
+    return ok({ project: proof.value });
+  }
   const project = snapshot.environment.project;
   if (!project.ok) return fail(project.issues);
   if (snapshot.environment.managerIssues.length > 0) {

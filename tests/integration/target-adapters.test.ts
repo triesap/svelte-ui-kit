@@ -260,7 +260,8 @@ test("target adapters preserve native Svelte structure and explicitly refuse unf
     rendersContent: true,
   });
   assert.ok(targetIntegrationAdapter("sveltekit").ok);
-  for (const target of ["astro", "svelte-library"] as const) {
+  assert.ok(targetIntegrationAdapter("astro").ok);
+  for (const target of ["svelte-library"] as const) {
     const adapter = targetIntegrationAdapter(target);
     assert.equal(adapter.ok, false);
     if (!adapter.ok)
@@ -271,11 +272,11 @@ test("target adapters preserve native Svelte structure and explicitly refuse unf
   assert.equal(integrationFor(parsed.value).kind, "stylesheet-entry");
 });
 
-test("legacy CLI refuses v2 configuration without fallback or any hidden writes", (t) => {
+test("CLI refuses future target configuration without fallback or any hidden writes", (t) => {
   const project = fixture(t, "astro");
   project.writeFile(
     "src/lib/components/ui/_kit/kit.json",
-    JSON.stringify(astro),
+    JSON.stringify({ ...astro, schemaVersion: 3 }),
   );
   const before = snapshotTree(project.root);
   const result = spawnSync(

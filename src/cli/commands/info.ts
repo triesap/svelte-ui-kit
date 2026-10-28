@@ -10,6 +10,11 @@ import { resolveProjectRoot } from "../../project/root.js";
 import { captureSnapshot } from "../../codegen/snapshot.js";
 import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
 import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
+import { discoverKitConfig } from "../../project/detect.js";
+import {
+  isAppTargetConfig,
+  targetInputPaths,
+} from "../../project/app-config.js";
 import {
   inspectDependencyStateFromEvidence,
   validatePeerDependenciesFromEvidence,
@@ -73,7 +78,14 @@ export function inspectInfo(
     );
   const registry = loadRegistrySnapshot(createAssetProvider(registryRoot));
   if (!registry.ok) return failure(registry.issues, "registry_failure");
-  const snapshot = captureSnapshot(selected.value.root, []);
+  const located = discoverKitConfig(selected.value.root);
+  const targetPaths =
+    located.ok &&
+    located.value.kind === "custom" &&
+    isAppTargetConfig(located.value.config)
+      ? [...targetInputPaths(located.value.config), located.value.configPath]
+      : [];
+  const snapshot = captureSnapshot(selected.value.root, targetPaths);
   if (!snapshot.ok) return failure(snapshot.issues, "unsafe_path");
   const environment = snapshot.value.environment;
   const resolved = resolveEffectiveConfig(snapshot.value, DEFAULT_KIT_CONFIG);

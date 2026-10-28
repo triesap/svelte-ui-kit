@@ -1,6 +1,6 @@
 # svelte-ui-kit
 
-Editable Svelte components and plain CSS for SvelteKit applications.
+Editable Svelte components and plain CSS for SvelteKit and Astro applications.
 
 svelte-ui-kit is a source-first CLI: it installs component source, styles and
 ownership metadata into your application. You can inspect and change that source.
@@ -115,3 +115,6 @@ push, deployment or reference-source changes.
 
 Licensed under [MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE).
 Retain [source and dependency notices](NOTICE.md) when copying generated assets.
+
+Astro applications use [explicit v2 target intent](docs/guides/astro.md); existing
+SvelteKit v1 intent remains supported without automatic migration.

@@ -1,3 +1,4 @@
+import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
 /**
  * Root export-surface generation (S053).
  *
@@ -24,7 +25,7 @@ import {
   isValidatedRegistrySnapshot,
   type RegistrySnapshot,
 } from "../registry/load.js";
-import { deriveKitPaths, type KitConfig } from "../project/config.js";
+import { deriveKitPaths } from "../project/config.js";
 import type { KitLock } from "./lock.js";
 
 export interface ExportDeclaration {

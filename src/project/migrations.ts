@@ -38,11 +38,12 @@ export function selectProjectSchema(
     ]);
   const record = value as Record<string, unknown>;
   const version = record["schemaVersion"];
+  if (kind === "lock" && version === 2) return ok(2);
   if (version !== INITIAL_SCHEMA_VERSION)
     return fail([
       issue(
         "SCHEMA_INVALID",
-        `Unsupported ${kind} schemaVersion; only integer ${INITIAL_SCHEMA_VERSION} is supported. Older, future and framework-derived schemas require an explicitly specified migration; none was attempted.`,
+        `Unsupported ${kind} schemaVersion; supported integer versions are ${kind === "lock" ? "1 and 2" : "1"}. Older, future and framework-derived schemas require an explicitly specified migration; none was attempted.`,
         locator,
       ),
     ]);

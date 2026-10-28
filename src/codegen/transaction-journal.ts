@@ -90,7 +90,8 @@ export interface JournalCreatedDir {
 }
 
 export interface TransactionJournal {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 1 | 2;
+  readonly target?: "sveltekit" | "astro";
   readonly transactionId: string;
   readonly rootIdentity: string;
   readonly planDigest: string;
@@ -196,11 +197,19 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
   exactlyKeys(parsed, JOURNAL_KEYS, problems, "journal", [
     "createdDirs",
     "ignoreFiles",
+    "target",
   ]);
 
-  if (parsed["schemaVersion"] !== 1) {
-    problems.push("journal schemaVersion must be 1");
-  }
+  if (parsed.schemaVersion !== 1 && parsed.schemaVersion !== 2)
+    problems.push("journal schemaVersion must be 1 or 2");
+  if (
+    parsed.schemaVersion === 2
+      ? !["astro", "sveltekit"].includes(String(parsed.target))
+      : Object.hasOwn(parsed, "target")
+  )
+    problems.push(
+      "journal target must be explicit only for a supported v2 application journal",
+    );
   if (!isTransactionId(parsed["transactionId"])) {
     problems.push("journal transactionId is not a valid identifier");
   }
@@ -496,7 +505,10 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
   }
 
   return ok({
-    schemaVersion: 1,
+    schemaVersion: parsed.schemaVersion as 1 | 2,
+    ...(parsed.schemaVersion === 2
+      ? { target: parsed.target as "sveltekit" | "astro" }
+      : {}),
     transactionId: parsed["transactionId"] as string,
     rootIdentity: parsed["rootIdentity"] as string,
     planDigest: parsed["planDigest"] as string,
@@ -526,9 +538,27 @@ export function validateJournalTargets(
     readonly stylesDir: string;
     readonly layoutFile: string;
     readonly stateDir: string;
+    readonly configSchema?: 2;
+    readonly target?: "sveltekit" | "astro";
   },
 ): ModelResult<TransactionJournal> {
   const problems = [];
+  if (
+    roots.configSchema === 2
+      ? journal.schemaVersion !== 2 ||
+        journal.target !== roots.target ||
+        !["astro", "sveltekit"].includes(String(roots.target))
+      : journal.schemaVersion !== 1 ||
+        journal.target !== undefined ||
+        roots.target !== undefined
+  )
+    problems.push(
+      issue(
+        "JOURNAL_TARGET_UNAPPROVED",
+        "Journal schema and target do not match the original approved application mapping",
+        "journal.json",
+      ),
+    );
   const transient = `${roots.stateDir}/.svelte-ui-kit`;
   const canonicalLock = lockPath(roots.stateDir);
   const approvedIgnore = new Set(

@@ -1,3 +1,5 @@
+import { appLockContext } from "../project/app-config.js";
+import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
 /**
  * Full synchronization planning (S060–S062).
  *
@@ -26,7 +28,7 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
-import { deriveKitPaths, type KitConfig } from "../project/config.js";
+import { deriveKitPaths } from "../project/config.js";
 import type { DependencyPlan } from "../registry/dependency-plan.js";
 import type { RequestProjection } from "../registry/projection.js";
 import type { DependencyInstruction } from "../project/dependency-instructions.js";
@@ -244,6 +246,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
         uiDir: effectiveConfig.uiDir,
         stylesDir: effectiveConfig.stylesDir,
         layoutFile: effectiveConfig.layoutFile,
+        ...appLockContext(effectiveConfig),
       });
       if (!validated.ok) return fail(validated.issues);
       finalLock = validated.value;

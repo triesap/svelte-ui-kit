@@ -1,0 +1,18 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Island from "../components/Island.svelte";
+const value = Astro.url.searchParams.get("name") ?? "Server visitor";
+---
+
+<Layout title="Generated Astro consumer">
+  <p slot="banner" data-testid="named-slot">
+    Application-owned banner
+  </p>
+  <main>
+    <h1>Generated Astro and Svelte islands</h1>
+    <p data-testid="server-value">{value}</p>
+    <p data-testid="style-order">Ordered kit, theme and application styles</p>
+    <Island label="First" client:load />
+    <Island label="Second" client:load />
+  </main>
+</Layout>

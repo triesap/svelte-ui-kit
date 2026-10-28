@@ -65,7 +65,8 @@
     "check:ci": "node tools/check-ci.mjs",
     "test:ci": "node --test tools/check-ci.test.mjs",
     "check:docs": "node tools/check-docs.mjs",
-    "test:docs": "node --test tools/check-docs.test.mjs"
+    "test:docs": "node --test tools/check-docs.test.mjs",
+    "test:astro": "node tools/run-unit-tests.mjs --suite integration tests/integration/astro-consumer.test.ts tests/integration/astro-generation.test.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

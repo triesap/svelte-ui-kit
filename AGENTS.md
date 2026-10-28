@@ -1,7 +1,7 @@
 # Agent instructions — svelte-ui-kit
 
 This is the standalone public `svelte-ui-kit` repository, a source-first
-TypeScript CLI and authored registry for SvelteKit. All content is repository-
+TypeScript CLI and authored registry for Svelte applications. All content is repository-
 relative and self-contained. Do not add external coordination paths, operator
 secrets, runtime state or private workspace references.
 

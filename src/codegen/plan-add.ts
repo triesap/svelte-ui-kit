@@ -1,3 +1,8 @@
+import { appLockContext } from "../project/app-config.js";
+import {
+  type AppProjectConfig as KitConfig,
+  parseAppConfig as parseKitConfig,
+} from "../project/app-config.js";
 /**
  * Pure add-request planning (S058).
  *
@@ -43,11 +48,7 @@ import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
 import { isCompoundComponent } from "../registry/item.js";
 import { projectThemeMetadata } from "./theme-integration.js";
 import { isTokenMetadataPath } from "../registry/theme.js";
-import {
-  deriveKitPaths,
-  parseKitConfig,
-  type KitConfig,
-} from "../project/config.js";
+import { deriveKitPaths } from "../project/config.js";
 import {
   renderDependencyInstructionsFromEvidence,
   type DependencyInstruction,
@@ -108,9 +109,8 @@ import {
   type ProjectSnapshot,
   type TargetObservation,
 } from "./snapshot.js";
-import { svelteKitIntegration } from "./target-integration.js";
-const { patch: patchLayoutImports, materialize: materializePassthroughLayout } =
-  svelteKitIntegration;
+import { targetIntegrationAdapter } from "./target-integration.js";
+import { appTarget, appLockIdentity } from "../project/app-config.js";
 import { resolveEffectiveConfig } from "./effective-config.js";
 
 export interface AddPlanInput {
@@ -257,6 +257,9 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   const effective = resolveEffectiveConfig(snapshot, input.config);
   if (!effective.ok) return fail(effective.issues);
   const config = effective.value.config;
+  const selectedAdapter = targetIntegrationAdapter(appTarget(config));
+  if (!selectedAdapter.ok) return selectedAdapter;
+  const layoutAdapter = selectedAdapter.value;
   const diagnostics: string[] = [];
   const derived = deriveKitPaths(config);
   let hasConflict = false;
@@ -352,6 +355,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         uiDir: config.uiDir,
         stylesDir: config.stylesDir,
         layoutFile: config.layoutFile,
+        ...appLockContext(config),
       });
       if (!validatedObservedLock.ok) {
         for (const entry of validatedObservedLock.issues) {
@@ -1106,11 +1110,11 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     // rendering. An existing layout keeps its exact rendering/snippet behavior
     // and only receives the missing imports.
     if (layoutState.status === "absent") {
-      const materialized = materializePassthroughLayout(specifiers);
+      const materialized = layoutAdapter.materialize(specifiers);
       plannedLayout = materialized;
       finalLayout = materialized;
     } else {
-      const patched = patchLayoutImports(existing, specifiers);
+      const patched = layoutAdapter.patch(existing, specifiers);
       if (!patched.ok) {
         diagnostics.push(...patched.issues.map((entry) => entry.message));
         hasConflict = true;
@@ -1283,7 +1287,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
           plannedLayout !== null,
           finalLayout,
         ),
-        contract: "layout-v1",
+        contract: layoutAdapter.contract,
       },
       {
         kind: "stylesheet" as const,
@@ -1334,12 +1338,17 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       configHash: hashBytes(utf8(configJson)) as string,
       toolVersion: INITIAL_TOOL_VERSION,
     });
-    const validated = parseKitLock(built.lock, lockPath, {
-      stateDir: joinLogical(config.uiDir, "_kit"),
-      uiDir: config.uiDir,
-      stylesDir: config.stylesDir,
-      layoutFile: config.layoutFile,
-    });
+    const validated = parseKitLock(
+      { ...built.lock, ...appLockIdentity(config) },
+      lockPath,
+      {
+        stateDir: joinLogical(config.uiDir, "_kit"),
+        uiDir: config.uiDir,
+        stylesDir: config.stylesDir,
+        layoutFile: config.layoutFile,
+        ...appLockContext(config),
+      },
+    );
     if (!validated.ok) return fail(validated.issues);
     projectedLock = validated.value;
     const lockJson = `${JSON.stringify(projectedLock, null, 2)}\n`;

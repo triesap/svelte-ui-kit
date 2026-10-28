@@ -1,3 +1,5 @@
+import { verifyReadFiles } from "./authority.js";
+import { appLockContext } from "../project/app-config.js";
 /**
  * The one guarded apply use case (S077, repaired for RCLD04-R1-1/2/3).
  *
@@ -122,6 +124,8 @@ export interface ApplyPlanInput {
   readonly uiDir: string;
   readonly stylesDir: string;
   readonly layoutFile: string;
+  readonly configSchema?: 2;
+  readonly target?: "sveltekit" | "astro";
   readonly rootIdentity: string;
   readonly planDigest: string;
   readonly readset: PlanReadset;
@@ -170,6 +174,8 @@ export interface ValidatedApplyPlan {
   readonly uiDir: string;
   readonly stylesDir: string;
   readonly layoutFile: string;
+  readonly configSchema?: 2;
+  readonly target?: "sveltekit" | "astro";
   readonly rootIdentity: string;
   readonly planDigest: string;
   readonly readset: PlanReadset;
@@ -200,6 +206,8 @@ const PLAN_KEYS: readonly string[] = [
   "uiDir",
   "stylesDir",
   "layoutFile",
+  "configSchema",
+  "target",
   "rootIdentity",
   "planDigest",
   "readset",
@@ -269,6 +277,18 @@ export function validateApplyPlan(
     return fail([issue("PLAN_INCOMPLETE", "plan must be an object", "plan")]);
   }
   unknownKeys(input, PLAN_KEYS, "PLAN_UNKNOWN_FIELD", "plan", problems);
+  if (
+    (Object.hasOwn(input, "configSchema") || Object.hasOwn(input, "target")) &&
+    (input.configSchema !== 2 ||
+      !["astro", "sveltekit"].includes(String(input.target)))
+  )
+    problems.push(
+      issue(
+        "PLAN_TARGET_INVALID",
+        "V2 application authority requires explicit configSchema:2 and its supported target",
+        "target",
+      ),
+    );
   const exportAuthority: ExportAuthority[] = [];
   const requiredStrings: readonly (keyof ApplyPlanInput)[] = [
     "root",
@@ -566,7 +586,7 @@ export function validateApplyPlan(
 
   const plan = input as ApplyPlanInput;
   const canonicalLock = lockPath(plan.stateDir);
-  const roots = [plan.uiDir, plan.stylesDir, plan.layoutFile];
+  const roots = [plan.uiDir, plan.stylesDir];
   const approvedIgnoreFiles = new Set(
     (plan.ignoreFiles ?? []).map((entry) => entry.toLowerCase()),
   );
@@ -932,6 +952,8 @@ export function validateApplyPlan(
       uiDir: plan.uiDir,
       stylesDir: plan.stylesDir,
       layoutFile: plan.layoutFile,
+      configSchema: plan.configSchema,
+      target: plan.target,
       targets: sealedTargets.map((target) => ({
         path: target.path,
         operation: target.operation,
@@ -966,6 +988,7 @@ export function validateApplyPlan(
           uiDir: projected.config.uiDir,
           stylesDir: projected.config.stylesDir,
           layoutFile: projected.config.layoutFile,
+          ...appLockContext(projected.config),
           stylesheetPath: derivedPaths.kitCss,
           exportsPath: derivedPaths.rootExports,
         });
@@ -1015,6 +1038,9 @@ export function validateApplyPlan(
     uiDir: plan.uiDir,
     stylesDir: plan.stylesDir,
     layoutFile: plan.layoutFile,
+    ...(plan.configSchema === 2
+      ? { configSchema: 2 as const, target: plan.target }
+      : {}),
     rootIdentity: derivedRootIdentity,
     planDigest: "",
     readset: Object.freeze({
@@ -1125,6 +1151,8 @@ export function derivePlanDigest(input: {
   readonly uiDir: string;
   readonly stylesDir: string;
   readonly layoutFile: string;
+  readonly configSchema?: 2;
+  readonly target?: "sveltekit" | "astro";
   readonly rootIdentity: string;
   readonly targets: readonly ValidatedApplyTarget[];
   readonly lock: {
@@ -1141,6 +1169,8 @@ export function derivePlanDigest(input: {
     uiDir: input.uiDir,
     stylesDir: input.stylesDir,
     layoutFile: input.layoutFile,
+    configSchema: input.configSchema ?? 1,
+    target: input.target ?? "sveltekit",
     rootIdentity: input.rootIdentity,
     ignoreFiles: [...(input.ignoreFiles ?? [])].map((entry) =>
       entry.toLowerCase(),
@@ -1477,6 +1507,12 @@ export function applyPlan(
   if (catalogIssues.length)
     return { kind: "refused", transactionId: null, issues: catalogIssues };
 
+  // Immutable decision inputs may refuse before coordination. Target/ancestor
+  // preimages wait until owned recovery has reconciled interrupted writes.
+  const initialInputs = verifyReadFiles(plan.root, plan.readset.files);
+  if (initialInputs.length)
+    return { kind: "refused", transactionId: null, issues: initialInputs };
+
   // 0. Guard the transient namespace ancestry before the first write.
   const ancestry = verifyTransientAncestry(plan.root, plan.stateDir);
   if (ancestry.length > 0) {
@@ -1571,6 +1607,8 @@ function applyUnderLock(
       uiDir: plan.uiDir,
       stylesDir: plan.stylesDir,
       layoutFile: plan.layoutFile,
+      configSchema: plan.configSchema,
+      target: plan.target,
     },
     hooks,
   );
@@ -1624,7 +1662,8 @@ function applyUnderLock(
   }
 
   const journal: TransactionJournal = {
-    schemaVersion: 1,
+    schemaVersion: plan.configSchema === 2 ? 2 : 1,
+    ...(plan.configSchema === 2 ? { target: plan.target } : {}),
     transactionId,
     rootIdentity: plan.rootIdentity,
     planDigest: plan.planDigest,
@@ -1832,6 +1871,8 @@ function applyUnderLock(
       uiDir: plan.uiDir,
       stylesDir: plan.stylesDir,
       layoutFile: plan.layoutFile,
+      configSchema: plan.configSchema,
+      target: plan.target,
     },
     hooks,
     ownership,
@@ -1947,6 +1988,8 @@ function recoverTransactionsUnderLock(
       uiDir: plan.uiDir,
       stylesDir: plan.stylesDir,
       layoutFile: plan.layoutFile,
+      configSchema: plan.configSchema,
+      target: plan.target,
     },
     hooks,
   );

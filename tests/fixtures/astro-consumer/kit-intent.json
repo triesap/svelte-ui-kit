@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 2,
+  "target": "astro",
+  "uiDir": "src/generated/ui",
+  "stylesDir": "src/styles",
+  "layoutFile": "src/layouts/Layout.astro",
+  "requested": []
+}

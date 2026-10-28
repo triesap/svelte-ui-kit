@@ -47,6 +47,8 @@ import {
   type DiscoveredKitConfig,
 } from "./detect.js";
 import { observeCatalogs } from "./catalogs.js";
+import { TARGET_CONFIG_FILES } from "./target-config.js";
+import { isAppTargetConfig } from "./app-config.js";
 import { deepFreeze, FrozenMap } from "./immutable.js";
 import { type JsonObservation } from "./io.js";
 import {
@@ -445,7 +447,14 @@ export function captureEnvironment(root: string): CapturedEnvironment {
     catalogIssues: catalogs.issues,
     nativeFile,
     evidence: [
-      ...captureEvidence(root, installedManifestPaths(root, names)),
+      ...captureEvidence(root, [
+        ...installedManifestPaths(root, names),
+        ...(kitConfig.ok &&
+        kitConfig.value.kind === "custom" &&
+        isAppTargetConfig(kitConfig.value.config)
+          ? TARGET_CONFIG_FILES
+          : []),
+      ]),
       ...(nativeFile.kind === "value"
         ? [
             {

@@ -1,0 +1,19 @@
+:root {
+  --fixture-order: app;
+}
+body {
+  margin: 2rem;
+  font-family: sans-serif;
+}
+main {
+  max-width: 64rem;
+  margin: auto;
+}
+section {
+  margin-block: 2rem;
+  padding: 1rem;
+  border: 1px solid #ccc;
+}
+[data-testid="style-order"] {
+  color: rgb(24, 93, 54);
+}

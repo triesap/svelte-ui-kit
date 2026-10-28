@@ -1,7 +1,7 @@
 # Documentation
 
 svelte-ui-kit installs editable Svelte/TypeScript and plain CSS into an existing
-SvelteKit application. The private local distribution has no kit runtime
+SvelteKit or Astro application. The private local distribution has no kit runtime
 dependency; the application owns its source, styles and native dependencies.
 
 ## Adopt and operate
@@ -36,3 +36,5 @@ schemas and native producer inputs. Docs express guarantees and interpretation;
 an implementation disagreement needs investigation, not silent contract weakening.
 No new ledger, full-context dump, documentation site or parallel API database is
 part of this documentation set. Local packing does not authorize publication.
+
+For Astro layout and island generation, use the [Astro guide](guides/astro.md).

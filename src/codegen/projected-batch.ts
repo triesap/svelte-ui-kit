@@ -1,3 +1,7 @@
+import {
+  type AppProjectConfig as KitConfig,
+  parseAppConfig as parseKitConfig,
+} from "../project/app-config.js";
 /**
  * Complete projected-batch coherence (RCLD04-R2-1/R2-2).
  *
@@ -35,11 +39,7 @@
  */
 import path from "node:path";
 
-import {
-  deriveKitPaths,
-  parseKitConfig,
-  type KitConfig,
-} from "../project/config.js";
+import { deriveKitPaths } from "../project/config.js";
 import { issue, type ModelIssue } from "../registry/errors.js";
 import { parseManagedCss } from "./css-parse.js";
 import { FOUNDATION_TOKENS_CONTRACT } from "./css.js";
@@ -58,7 +58,8 @@ import {
   tokenMetadataPaths,
   parseThemeMetadata,
 } from "../registry/theme.js";
-import { svelteKitIntegration } from "./target-integration.js";
+import { targetIntegrationAdapter } from "./target-integration.js";
+import { appTarget, isAppTargetConfig } from "../project/app-config.js";
 
 /** One projected target result: `retire` means the path is absent afterwards. */
 export interface ProjectedTarget {
@@ -97,6 +98,8 @@ export interface ProjectedBatch {
   readonly uiDir: string;
   readonly stylesDir: string;
   readonly layoutFile: string;
+  readonly configSchema?: 2;
+  readonly target?: "sveltekit" | "astro";
   readonly targets: readonly ProjectedTarget[];
   readonly evidence: readonly ProjectedEvidence[];
   /**
@@ -252,6 +255,18 @@ export function resolveProjectedConfig(batch: ProjectedBatch): ProjectedConfig {
     return { config: null, bytes, state, issues: validated.issues };
   }
   const issues: ModelIssue[] = [];
+  if (
+    isAppTargetConfig(validated.value)
+      ? batch.configSchema !== 2 || batch.target !== validated.value.target
+      : batch.configSchema !== undefined || batch.target !== undefined
+  )
+    issues.push(
+      issue(
+        "PROJECTED_TARGET_MISMATCH",
+        "Projected configuration schema/target must match original approved application authority",
+        configPath,
+      ),
+    );
   const mapping: readonly (readonly [string, string, string])[] = [
     ["uiDir", validated.value.uiDir, batch.uiDir],
     ["stylesDir", validated.value.stylesDir, batch.stylesDir],
@@ -390,7 +405,9 @@ function validateLayoutIntegration(
       ),
     ];
   }
-  const parsed = svelteKitIntegration.inspect(text);
+  const adapter = targetIntegrationAdapter(appTarget(config));
+  if (!adapter.ok) return adapter.issues.slice();
+  const parsed = adapter.value.inspect(text);
   if (!parsed.ok) {
     return [
       issue(
@@ -548,6 +565,18 @@ export function validateProjectedLock(
 ): ModelIssue[] {
   const issues: ModelIssue[] = [];
   const config = projected.config;
+  if (
+    config !== null &&
+    (isAppTargetConfig(config)
+      ? lock.schemaVersion !== 2 || lock.target !== config.target
+      : lock.schemaVersion !== 1 || lock.target !== undefined)
+  )
+    issues.push(
+      issue(
+        "PROJECTED_LOCK_TARGET_MISMATCH",
+        "The semantic lock must retain the exact projected configuration target and schema",
+      ),
+    );
   if (config === null || projected.bytes === null) return issues;
   const derived = deriveKitPaths(config);
   if (derived.stateDir !== batch.stateDir) {
@@ -638,7 +667,8 @@ export function validateProjectedLock(
     // content, so a dis-integrated replacement is refused before any effect.
     if (
       integration.kind === "layout" &&
-      integration.contract === LAYOUT_CONTRACT
+      integration.contract ===
+        (appTarget(config) === "astro" ? "astro-layout-v1" : LAYOUT_CONTRACT)
     ) {
       const bytes = requireContent(integration.path, "layout integration");
       if (bytes !== null) {

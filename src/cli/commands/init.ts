@@ -9,6 +9,8 @@ import { issueDiagnostics, applyOutcomeEnvelope } from "../output.js";
 import { resolveProjectRoot } from "../../project/root.js";
 import { captureEnvironment } from "../../project/environment.js";
 import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
+import { targetInputPaths } from "../../project/app-config.js";
+import { appPlanIdentity } from "../../project/app-config.js";
 import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
 import { captureSnapshot, observedText } from "../../codegen/snapshot.js";
 import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
@@ -72,6 +74,7 @@ export function initialize(
         };
   const paths = deriveKitPaths(supplied);
   const snapshot = captureSnapshot(selected.value.root, [
+    ...targetInputPaths(supplied),
     paths.stateDir + "/kit.json",
     paths.stateDir + "/kit.lock.json",
     ...tokenMetadataPaths(paths.stateDir),
@@ -127,7 +130,7 @@ export function initialize(
     const retained = inspectUnchangedState(
       snapshot.value.root,
       paths.stateDir,
-      config,
+      { ...config, ...appPlanIdentity(config) },
     );
     if (retained.length > 0) return failure(retained);
     return {

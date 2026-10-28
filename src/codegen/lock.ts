@@ -35,11 +35,7 @@ import {
   validateWithSchema,
   type SchemaAuthority,
 } from "../registry/schema.js";
-import {
-  INITIAL_SCHEMA_VERSION,
-  isSemVer,
-  validateSemVer,
-} from "../registry/versions.js";
+import { isSemVer, validateSemVer } from "../registry/versions.js";
 import { KIT_CSS_NAME, ROOT_EXPORTS_NAME } from "../project/config.js";
 import { isTokenMetadataPath } from "../registry/theme.js";
 
@@ -83,6 +79,7 @@ export interface LockIntegration {
 
 export interface KitLock {
   readonly schemaVersion: number;
+  readonly target?: "sveltekit" | "astro";
   readonly toolVersion: string;
   readonly registryVersion: string;
   readonly registryHash: string;
@@ -106,6 +103,8 @@ export function isSafeLockPath(value: unknown): value is string {
  * checks.
  */
 export interface LockValidationContext {
+  readonly configSchema?: 1 | 2;
+  readonly target?: "sveltekit" | "astro";
   readonly stateDir?: string;
   readonly uiDir?: string;
   readonly stylesDir?: string;
@@ -301,7 +300,7 @@ export function parseKitLock(
   const selectedSchema = selectProjectSchema(value, "lock", locator);
   if (!selectedSchema.ok) return fail(selectedSchema.issues);
   const schemaResult = validateWithSchema(
-    KIT_LOCK_SCHEMA,
+    selectedSchema.value === 2 ? "v2/kit-lock.schema.json" : KIT_LOCK_SCHEMA,
     value,
     locator,
     authority,
@@ -310,6 +309,73 @@ export function parseKitLock(
 
   const record = value as Record<string, unknown>;
   const issues: ModelIssue[] = [];
+  const mapped = [
+    context.stateDir,
+    context.uiDir,
+    context.stylesDir,
+    context.layoutFile,
+    context.target,
+    context.configSchema,
+  ].some((value) => value !== undefined);
+  if (mapped && selectedSchema.value !== (context.configSchema ?? 1))
+    issues.push(
+      issue(
+        "LOCK_SCHEMA_CONTEXT",
+        "The lock schema must equal the independently approved configuration schema",
+        locator,
+      ),
+    );
+  if (selectedSchema.value === 2) {
+    const target = record.target;
+    if (
+      (context.target !== undefined && context.target !== target) ||
+      (context.target === undefined &&
+        [
+          context.stateDir,
+          context.uiDir,
+          context.stylesDir,
+          context.layoutFile,
+        ].some((value) => value !== undefined))
+    )
+      issues.push(
+        issue(
+          "LOCK_TARGET_CONTEXT",
+          "V2 lock target requires the exact approved application target",
+          locator,
+        ),
+      );
+    const integrations = record.integrations as Record<string, unknown>[];
+    for (const kind of ["layout", "stylesheet", "exports"])
+      if (integrations.filter((entry) => entry.kind === kind).length !== 1)
+        issues.push(
+          issue(
+            "LOCK_INTEGRATION_INVENTORY",
+            "V2 locks require exactly one approved layout, stylesheet and exports integration",
+            locator,
+          ),
+        );
+    const layout = integrations.find((entry) => entry.kind === "layout");
+    if (
+      layout?.contract !==
+        (target === "astro" ? "astro-layout-v1" : "layout-v1") ||
+      typeof layout?.path !== "string" ||
+      !layout.path.endsWith(target === "astro" ? ".astro" : ".svelte")
+    )
+      issues.push(
+        issue(
+          "LOCK_TARGET_INTEGRATION",
+          "Layout contract and file role must match the exact v2 target",
+          locator,
+        ),
+      );
+  } else if (context.target === "astro" || context.configSchema === 2)
+    issues.push(
+      issue(
+        "LOCK_TARGET_CONTEXT",
+        "Legacy locks cannot establish explicit v2 application ownership",
+        locator,
+      ),
+    );
 
   for (const field of ["toolVersion", "registryVersion"] as const) {
     const result = validateSemVer(record[field], field, field);
@@ -687,7 +753,10 @@ export function parseKitLock(
 
   if (issues.length > 0) return fail(issues);
   return ok({
-    schemaVersion: INITIAL_SCHEMA_VERSION,
+    schemaVersion: selectedSchema.value,
+    ...(selectedSchema.value === 2
+      ? { target: record.target as "sveltekit" | "astro" }
+      : {}),
     toolVersion: record["toolVersion"] as string,
     registryVersion: record["registryVersion"] as string,
     registryHash: record["registryHash"] as string,

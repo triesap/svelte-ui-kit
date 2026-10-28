@@ -7,6 +7,7 @@ import { planAdd, type AddPlan } from "../../codegen/plan-add.js";
 import { composeApplyPlan } from "../../codegen/compose.js";
 import { validateApplyPlan, applyPlan } from "../../codegen/apply.js";
 import { inspectUnchangedState } from "../../codegen/recovery.js";
+import { appPlanIdentity } from "../../project/app-config.js";
 import { deriveKitPaths } from "../../project/config.js";
 import { issue, type ModelIssue } from "../../registry/errors.js";
 import type { InfoResult } from "./info.js";
@@ -114,7 +115,7 @@ export function executeItemPlan(
     const retained = inspectUnchangedState(
       context.snapshot.root,
       paths.stateDir,
-      plan.effectiveConfig,
+      { ...plan.effectiveConfig, ...appPlanIdentity(plan.effectiveConfig) },
     );
     if (retained.length > 0) return commandFailure(command, retained);
     return {

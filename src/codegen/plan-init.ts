@@ -1,3 +1,8 @@
+import { appLockContext } from "../project/app-config.js";
+import {
+  type AppProjectConfig as KitConfig,
+  parseAppConfig as parseKitConfig,
+} from "../project/app-config.js";
 /**
  * Pure initialization planning (S057).
  *
@@ -23,11 +28,7 @@
 import path from "node:path";
 
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
-import {
-  deriveKitPaths,
-  parseKitConfig,
-  type KitConfig,
-} from "../project/config.js";
+import { deriveKitPaths } from "../project/config.js";
 import { hashBytes } from "./compare.js";
 import { composeManagedCss, FOUNDATION_TOKENS_CONTRACT } from "./css.js";
 import {
@@ -46,9 +47,8 @@ import {
 } from "./snapshot.js";
 import type { RegistrySnapshot } from "../registry/load.js";
 import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
-import { svelteKitIntegration } from "./target-integration.js";
-const { patch: patchLayoutImports, materialize: materializePassthroughLayout } =
-  svelteKitIntegration;
+import { targetIntegrationAdapter } from "./target-integration.js";
+import { appTarget, appLockIdentity } from "../project/app-config.js";
 import { resolveEffectiveConfig } from "./effective-config.js";
 
 /** The frozen foundation layer declaration. */
@@ -169,6 +169,9 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
     ...effective.value.config,
     requested: [...effective.value.observedRequested],
   };
+  const selectedAdapter = targetIntegrationAdapter(appTarget(config));
+  if (!selectedAdapter.ok) return selectedAdapter;
+  const layoutAdapter = selectedAdapter.value;
   const registryVersion = input.registry.root.registryVersion;
   const registryHash = input.registry.root.contentHash;
 
@@ -252,6 +255,7 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
         uiDir: config.uiDir,
         stylesDir: config.stylesDir,
         layoutFile: config.layoutFile,
+        ...appLockContext(config),
       });
       if (!parsed.ok) return fail(parsed.issues);
       existingLock = parsed.value;
@@ -563,9 +567,9 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   // layout by guess.
   let layoutText: string;
   if (layoutObservation.kind === "absent") {
-    layoutText = materializePassthroughLayout(importSpecifiers);
+    layoutText = layoutAdapter.materialize(importSpecifiers);
   } else {
-    const patchedLayout = patchLayoutImports(layoutSource, importSpecifiers);
+    const patchedLayout = layoutAdapter.patch(layoutSource, importSpecifiers);
     if (!patchedLayout.ok) return patchedLayout;
     layoutText = patchedLayout.value;
   }
@@ -625,7 +629,7 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
         baseline: layoutUnchanged
           ? (priorLayout?.baseline ?? layoutHash)
           : layoutHash,
-        contract: priorLayout?.contract ?? "layout-v1",
+        contract: priorLayout?.contract ?? layoutAdapter.contract,
       },
       {
         kind: "stylesheet",
@@ -650,7 +654,7 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
   });
 
   const lock: KitLock = {
-    schemaVersion: 1,
+    ...appLockIdentity(config),
     toolVersion: INITIAL_TOOL_VERSION,
     registryVersion,
     registryHash,
@@ -669,6 +673,7 @@ export function planInit(input: InitPlanInput): ModelResult<InitPlan> {
     uiDir: config.uiDir,
     stylesDir: config.stylesDir,
     layoutFile: config.layoutFile,
+    ...appLockContext(config),
   });
   if (!validated.ok) return fail(validated.issues);
   const finalLock = validated.value;

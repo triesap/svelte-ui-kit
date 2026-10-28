@@ -7,6 +7,11 @@ import {
   type LayoutImport,
 } from "./svelte.js";
 import { parseSvelteLayout } from "./svelte-parse.js";
+import {
+  inspectAstroLayout,
+  materializeAstroLayout,
+  patchAstroLayout,
+} from "./astro.js";
 
 export interface IntegrationStructure {
   readonly imports: readonly string[];
@@ -41,6 +46,7 @@ export function targetIntegrationAdapter(
   target: TargetKind,
 ): ModelResult<TargetIntegrationAdapter> {
   if (target === "sveltekit") return ok(svelteKitIntegration);
+  if (target === "astro") return ok(astroIntegration);
   return fail([
     issue(
       "TARGET_GENERATION_UNAVAILABLE",
@@ -49,3 +55,19 @@ export function targetIntegrationAdapter(
     ),
   ]);
 }
+
+export const astroIntegration: TargetIntegrationAdapter = Object.freeze({
+  target: "astro",
+  contract: "astro-layout-v1",
+  materialize: materializeAstroLayout,
+  patch: patchAstroLayout,
+  inspect(source: string): ModelResult<IntegrationStructure> {
+    const parsed = inspectAstroLayout(source);
+    return parsed.ok
+      ? ok({
+          imports: parsed.value.imports,
+          rendersContent: parsed.value.rendersContent,
+        })
+      : parsed;
+  },
+});

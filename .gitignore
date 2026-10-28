@@ -4,6 +4,7 @@ node_modules/
 
 # Svelte and build output
 .svelte-kit/
+.astro/
 dist/
 build/
 coverage/

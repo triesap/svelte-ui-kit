@@ -1,3 +1,5 @@
+import { appLockContext } from "../../project/app-config.js";
+import { type AppProjectConfig as KitConfig } from "../../project/app-config.js";
 import { projectRequests } from "../../registry/projection.js";
 import { tokenMetadataPaths } from "../../registry/theme.js";
 /** Capture complete command planning authority; never fill snapshot gaps live. */
@@ -5,11 +7,7 @@ import path from "node:path";
 import type { CommandRequest } from "../args.js";
 import { resolveProjectRoot } from "../../project/root.js";
 import { captureEnvironment } from "../../project/environment.js";
-import {
-  DEFAULT_KIT_CONFIG,
-  deriveKitPaths,
-  type KitConfig,
-} from "../../project/config.js";
+import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
 import { readJsonObject } from "../../project/io.js";
 import {
   captureSnapshot,
@@ -17,6 +15,7 @@ import {
   type ProjectSnapshot,
 } from "../../codegen/snapshot.js";
 import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
+import { targetInputPaths } from "../../project/app-config.js";
 import { parseKitLock, type KitLock } from "../../codegen/lock.js";
 import { createAssetProvider } from "../../registry/assets.js";
 import {
@@ -65,6 +64,7 @@ export function captureCommandContext(
     uiDir: config.uiDir,
     stylesDir: config.stylesDir,
     layoutFile: config.layoutFile,
+    ...appLockContext(config),
   };
   const preliminaryLock = readJsonObject(
     path.join(selected.value.root, lockPath),
@@ -83,6 +83,7 @@ export function captureCommandContext(
       ),
     ]);
   const paths = new Set([
+    ...targetInputPaths(config),
     derived.stateDir + "/kit.json",
     lockPath,
     derived.rootExports,

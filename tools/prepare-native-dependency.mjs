@@ -122,17 +122,31 @@ export function prepareNativeDependency({
     fixture: false,
   };
   if (fixture) {
-    const consumer = safeAncestry(packageRoot, "tests/fixtures/consumer");
-    const destination = safeAncestry(
-      consumer,
-      `.native-build/${expected.version}`,
-      true,
-    );
-    copyAuthenticated(
-      bytes,
-      path.join(destination, expected.archive),
-      expected.archiveSha256,
-    );
+    for (const relative of [
+      "tests/fixtures/consumer",
+      "tests/fixtures/astro-consumer",
+    ]) {
+      // Historical preparation controls contain only the original consumer.
+      // Present unsafe ancestry still refuses; no symlink is followed.
+      if (
+        relative.endsWith("astro-consumer") &&
+        lstatSync(path.join(packageRoot, relative), {
+          throwIfNoEntry: false,
+        }) === undefined
+      )
+        continue;
+      const consumer = safeAncestry(packageRoot, relative);
+      const destination = safeAncestry(
+        consumer,
+        `.native-build/${expected.version}`,
+        true,
+      );
+      copyAuthenticated(
+        bytes,
+        path.join(destination, expected.archive),
+        expected.archiveSha256,
+      );
+    }
     prepared.fixture = true;
   }
   if (bundle) {

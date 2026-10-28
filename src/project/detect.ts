@@ -1,3 +1,7 @@
+import {
+  type AppProjectConfig as KitConfig,
+  parseAppConfig as parseKitConfig,
+} from "./app-config.js";
 /**
  * Default SvelteKit application detection (S035) and `_kit` discovery (S037).
  *
@@ -30,8 +34,6 @@ import {
   DEFAULT_STYLES_DIR,
   DEFAULT_UI_DIR,
   deriveKitPaths,
-  parseKitConfig,
-  type KitConfig,
   type KitDerivedPaths,
 } from "./config.js";
 import { isRegularFile, observeEntry, readJsonObject } from "./io.js";

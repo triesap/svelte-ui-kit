@@ -112,6 +112,7 @@ export function recoveredCreatedDirectories(
 function completedRollback(
   journal: TransactionJournal,
   status: "rolled_back" | "cleaned",
+  stateDir: string,
   issues: readonly ModelIssue[] = [],
 ): RecoveryResult {
   const result: RecoveryResult = {
@@ -119,7 +120,15 @@ function completedRollback(
     transactionId: journal.transactionId,
     issues,
   };
-  RECOVERED_DIRECTORIES.set(result, journal.createdDirs ?? []);
+  // Ordinary generated ancestry was removed by this completed rollback. Only
+  // coordination ancestors remain occupied by the current held writer; never
+  // return stale removed-directory identities as fresh apply ownership.
+  RECOVERED_DIRECTORIES.set(
+    result,
+    (journal.createdDirs ?? []).filter((entry) =>
+      isWithinRoot(stateDir, entry.path),
+    ),
+  );
   return result;
 }
 function nonCoordinationDirectories(
@@ -134,6 +143,8 @@ function nonCoordinationDirectories(
 
 /** The approved mapping required to authorize recovery of a journal. */
 export interface RecoveryRoots {
+  readonly configSchema?: 2;
+  readonly target?: "sveltekit" | "astro";
   readonly uiDir: string;
   readonly stylesDir: string;
   readonly layoutFile: string;
@@ -1775,7 +1786,7 @@ function recoverTransactionUnderLock(
       ownedInventoryFor(journal),
     );
     if (cleanup.length > 0) return refuse(transactionId, cleanup);
-    return completedRollback(journal, "rolled_back");
+    return completedRollback(journal, "rolled_back", stateDir);
   }
 
   if (journal.phase === "planned") {
@@ -1803,7 +1814,7 @@ function recoverTransactionUnderLock(
       ownedInventoryFor(journal),
     );
     if (cleanup.length > 0) return refuse(transactionId, cleanup);
-    return completedRollback(journal, "cleaned");
+    return completedRollback(journal, "cleaned", stateDir);
   }
 
   if (journal.phase === "published" || journal.phase === "cleaned") {
@@ -1990,7 +2001,7 @@ function recoverTransactionUnderLock(
   if (removalIssues.length > 0) {
     return refuse(transactionId, [...ancestryIssues, ...removalIssues]);
   }
-  return completedRollback(journal, "rolled_back", ancestryIssues);
+  return completedRollback(journal, "rolled_back", stateDir, ancestryIssues);
 }
 
 /**

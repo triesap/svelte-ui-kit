@@ -1,6 +1,6 @@
 # Configuration and generated layout
 
-All paths are relative to one selected SvelteKit application package. `--cwd`
+All paths are relative to one selected application package. `--cwd`
 selects that package; the CLI does not scan and mutate every workspace member or
 execute application configuration/scripts to discover it. Configuration is
 validated against the [v1 schema](../../schema/v1/kit.schema.json).
@@ -13,7 +13,7 @@ requests**, rather than replacing requests with dependency closure.
 
 | Field           | Meaning                                                                  |
 | --------------- | ------------------------------------------------------------------------ |
-| `schemaVersion` | Supported configuration schema version, currently 1.                     |
+| `schemaVersion` | Legacy SvelteKit format 1; explicit target format 2 is described below.  |
 | `registry`      | Built-in registry only; currently `builtin`.                             |
 | `uiDir`         | Local source and root export directory; default `src/lib/components/ui`. |
 | `stylesDir`     | Aggregate and application stylesheet directory; default `src/styles`.    |
@@ -51,10 +51,9 @@ nor its workspace is rewritten during discovery or refusal.
 ### Explicit target schema
 
 The independent [v2 target schema](../../schema/v2/kit.schema.json) defines
-read-only target discovery and integration intent. The CLI still generates v1
-SvelteKit installations; it refuses v2 without writes until the corresponding
-generation adapter is enabled. Discovery success is not a generated, built or
-packed consumer qualification. Existing v1 defaults, custom paths and unknown-field
+explicit target discovery and integration intent. The CLI generates v1 SvelteKit
+and v2 SvelteKit/Astro installations. Standalone library generation remains gated.
+Discovery success is separate from generated, built and packed qualification. Existing v1 defaults, custom paths and unknown-field
 refusals remain unchanged; no automatic schema or ownership migration occurs.
 
 V2 requires `schemaVersion: 2` and an explicit `target`. Common `uiDir`,
@@ -81,8 +80,9 @@ integrate kit, theme and application styles in order; the consumer owns package
 build/export metadata. The current discovery API never rewrites `package.json`.
 Target evidence captures package/config bytes, identities, modes and candidate
 absence immutably. Target integration contracts are `layout-v1`,
-`astro-layout-v1` and `library-styles-v1`; only the first currently produces a
-plan. No v2 semantic lock or recovery authority is created by discovery.
+`astro-layout-v1` and `library-styles-v1`. Application contracts produce
+target-bound plans, locks and recovery journals. The library contract remains
+discovery-only. See [Astro applications](../guides/astro.md).
 
 ### Existing SvelteKit mapping
 

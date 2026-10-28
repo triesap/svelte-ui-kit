@@ -141,3 +141,18 @@ export function parseTargetConfig(
     ]);
   return ok(deepFreeze(config));
 }
+
+export const ASTRO_CONFIG_FILES = [
+  "astro.config.ts",
+  "astro.config.mts",
+  "astro.config.js",
+  "astro.config.mjs",
+] as const;
+export const TARGET_CONFIG_FILES = [
+  ...ASTRO_CONFIG_FILES,
+  "astro.config.cjs",
+  "svelte.config.ts",
+  "svelte.config.js",
+  "svelte.config.mjs",
+  "svelte.config.cjs",
+] as const;

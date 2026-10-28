@@ -1,3 +1,4 @@
+import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
 /**
  * Effective mapping resolution (RCLD03-R8-1).
  *
@@ -28,8 +29,11 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
-import { DEFAULT_KIT_CONFIG, type KitConfig } from "../project/config.js";
+import { DEFAULT_KIT_CONFIG } from "../project/config.js";
 import type { ProjectSnapshot } from "./snapshot.js";
+import { isAppTargetConfig, parseAppConfig } from "../project/app-config.js";
+import { inspectTargetEvidence } from "./target-evidence.js";
+import { targetIntegrationAdapter } from "./target-integration.js";
 
 /** Where the resolved mapping came from. */
 export type MappingProvenance = "explicit" | "detected" | "default";
@@ -77,6 +81,28 @@ export function resolveEffectiveConfig(
   }
   if (environment.managerIssues.length > 0) {
     return fail([...environment.managerIssues]);
+  }
+
+  const suppliedConfig = parseAppConfig(supplied);
+  if (!suppliedConfig.ok) return suppliedConfig;
+  const targetInstallation = environment.kitConfig;
+  if (
+    targetInstallation.ok &&
+    targetInstallation.value.kind === "custom" &&
+    isAppTargetConfig(targetInstallation.value.config)
+  ) {
+    const installed = targetInstallation.value.config;
+    const target = inspectTargetEvidence(snapshot, installed);
+    if (!target.ok) return target;
+    const adapter = targetIntegrationAdapter(installed.target);
+    if (!adapter.ok) return adapter;
+    return ok({
+      config: { ...installed, requested: [...supplied.requested] },
+      observedRequested: installed.requested,
+      provenance: "explicit",
+      configPath: targetInstallation.value.configPath,
+      issues: [],
+    });
   }
 
   const project = environment.project;

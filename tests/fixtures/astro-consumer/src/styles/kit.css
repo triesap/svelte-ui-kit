@@ -1,0 +1,4 @@
+/* Application-owned probe survives managed block composition. */
+:root {
+  --fixture-order: kit;
+}

@@ -4,7 +4,6 @@ import { deepFreeze } from "../project/immutable.js";
 import { inspectAstroConfig } from "../project/astro-config.js";
 import { isSafeLogicalRelativePath } from "../project/paths.js";
 import { inspectSvelteConfigSource } from "../project/svelte-config.js";
-import { observeCatalogs } from "../project/catalogs.js";
 import { validRange } from "semver";
 import {
   integrationFor,
@@ -19,20 +18,14 @@ import {
   type ProjectSnapshot,
 } from "./snapshot.js";
 
-export const ASTRO_CONFIG_FILES = [
-  "astro.config.ts",
-  "astro.config.mts",
-  "astro.config.js",
-  "astro.config.mjs",
-] as const;
-export const TARGET_CONFIG_FILES = [
-  ...ASTRO_CONFIG_FILES,
-  "astro.config.cjs",
-  "svelte.config.ts",
-  "svelte.config.js",
-  "svelte.config.mjs",
-  "svelte.config.cjs",
-] as const;
+export {
+  ASTRO_CONFIG_FILES,
+  TARGET_CONFIG_FILES,
+} from "../project/target-config.js";
+import {
+  ASTRO_CONFIG_FILES,
+  TARGET_CONFIG_FILES,
+} from "../project/target-config.js";
 export interface TargetEvidence {
   readonly config: TargetConfig;
   readonly snapshot: ProjectSnapshot;
@@ -82,31 +75,92 @@ export function captureTargetEvidence(
     configPath,
   ]);
   if (!captured.ok) return captured;
-  const snapshot = captured.value;
+  return inspectTargetEvidence(captured.value, input);
+}
+
+/** Inspect only original immutable observations; never recapture inside planners. */
+export function inspectTargetEvidence(
+  snapshot: ProjectSnapshot,
+  input: unknown,
+): ModelResult<TargetEvidence> {
+  const parsed = parseTargetConfig(input);
+  if (!parsed.ok) return parsed;
+  const config = parsed.value;
+  const configPath = `${deriveKitPaths(config).stateDir}/kit.json`;
+  for (const file of ["package.json", ...TARGET_CONFIG_FILES, configPath])
+    if (!snapshot.entries.has(file))
+      return fail([
+        issue(
+          "TARGET_INPUT_INCOMPLETE",
+          "Capture all target package/config candidates before planning",
+          file,
+        ),
+      ]);
   if (snapshot.environment.catalogIssues.length)
     return fail(snapshot.environment.catalogIssues);
   const manifest = objectText(snapshot, "package.json");
   if (!manifest.ok) return manifest;
-  const catalogs = observeCatalogs(root, {
-    kind: "value",
-    value: manifest.value,
-  });
-  if (catalogs.issues.length) return fail(catalogs.issues);
+  const normalized = snapshot.environment.manifest;
+  const physical = snapshot.environment.evidence.find(
+    (entry) => entry.path === "package.json",
+  );
+  const raw = snapshot.entries.get("package.json")!;
   if (
-    catalogs.digest !== snapshot.environment.catalogDigest ||
-    catalogs.manifest.kind !== "value" ||
-    snapshot.environment.manifest.kind !== "value" ||
-    JSON.stringify(catalogs.manifest.value) !==
-      JSON.stringify(snapshot.environment.manifest.value)
+    normalized.kind !== "value" ||
+    physical?.kind !== "file" ||
+    physical.digest !== raw.hash ||
+    physical.mode !== raw.mode
   )
     return fail([
       issue(
         "TARGET_INPUT_CHANGED",
-        "Target declarations or catalog inputs changed during capture; retry",
+        "Target manifest changed during original capture; retry",
         "package.json",
       ),
     ]);
-  const normalizedManifest = catalogs.manifest.value;
+  const projected = { ...manifest.value };
+  for (const field of ["dependencies", "devDependencies", "peerDependencies"]) {
+    const declared = manifest.value[field],
+      resolved = normalized.value[field];
+    if (!record(declared)) continue;
+    if (
+      Object.entries(declared).some(
+        ([name, value]) =>
+          typeof value === "string" &&
+          value.startsWith("catalog:") &&
+          (!snapshot.environment.catalogDigest ||
+            !record(resolved) ||
+            typeof resolved[name] !== "string" ||
+            (resolved[name] as string).startsWith("catalog:")),
+      )
+    )
+      return fail([
+        issue(
+          "TARGET_INPUT_CHANGED",
+          "Catalog declarations require complete authenticated normalized evidence",
+          "package.json",
+        ),
+      ]);
+    projected[field] = Object.fromEntries(
+      Object.entries(declared).map(([name, value]) => [
+        name,
+        typeof value === "string" &&
+        value.startsWith("catalog:") &&
+        record(resolved)
+          ? resolved[name]
+          : value,
+      ]),
+    );
+  }
+  if (JSON.stringify(projected) !== JSON.stringify(normalized.value))
+    return fail([
+      issue(
+        "TARGET_INPUT_CHANGED",
+        "Captured target declarations disagree with captured normalized catalog evidence",
+        "package.json",
+      ),
+    ]);
+  const normalizedManifest = normalized.value;
   const has = (name: string) =>
     ["dependencies", "devDependencies", "peerDependencies"].some((field) => {
       const declarations = manifest.value[field];

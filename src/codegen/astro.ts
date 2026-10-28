@@ -1,5 +1,6 @@
 /** Native Astro syntax and exact source offsets; never evaluate frontmatter. */
-import { parse } from "@astrojs/compiler-rs";
+import { createRequire } from "node:module";
+import type { ParseResult } from "@astrojs/compiler-rs";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { parseScriptImports } from "./svelte-parse.js";
 import {
@@ -11,6 +12,15 @@ interface AstroStructure {
   readonly span: { readonly start: number; readonly end: number } | null;
   readonly imports: readonly string[];
   readonly rendersContent: boolean;
+}
+const requireNative = createRequire(import.meta.url);
+function parse(source: string): ParseResult {
+  // Unrelated Svelte planning must not load a native addon. Node 24 supports
+  // this synchronous ESM entry; the actual compiler is loaded for Astro only.
+  const native = requireNative(
+    "@astrojs/compiler-rs",
+  ) as typeof import("@astrojs/compiler-rs");
+  return native.parse(source);
 }
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

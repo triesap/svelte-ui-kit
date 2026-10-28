@@ -1,3 +1,10 @@
+import { appLockContext } from "../project/app-config.js";
+import {
+  appPlanIdentity,
+  appTarget,
+  targetInputPaths,
+} from "../project/app-config.js";
+import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
 /**
  * Compose a planner's writes into a guarded apply plan (RCLD04-R2-1).
  *
@@ -24,7 +31,7 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
-import { deriveKitPaths, type KitConfig } from "../project/config.js";
+import { deriveKitPaths } from "../project/config.js";
 import { isSafeLogicalRelativePath } from "../project/paths.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";
 import { identityDigest, type PlanReadFile } from "./authority.js";
@@ -416,6 +423,19 @@ export function composeApplyPlan(
   for (const path of snapshot.paths) {
     if (targetPaths.has(path) || path === canonicalLock) continue;
     const observation = snapshot.entries.get(path);
+    if (
+      observation?.kind === "absent" &&
+      targetInputPaths(input.config).includes(path)
+    ) {
+      evidenceSeen.add(path);
+      evidenceFiles.push({
+        path,
+        kind: "absent",
+        digest: null,
+        mode: null,
+        bytes: null,
+      });
+    }
     if (observation?.kind === "file" && observation.hash !== null) {
       evidenceSeen.add(path);
       evidenceFiles.push({
@@ -485,6 +505,7 @@ export function composeApplyPlan(
       : (() => {
           const validated = parseKitLock(parsedLockValue, canonicalLock, {
             stateDir,
+            ...appLockContext(input.config),
           });
           return validated.ok ? validated.value : null;
         })();
@@ -734,6 +755,8 @@ export function composeApplyPlan(
     uiDir: input.config.uiDir,
     stylesDir: input.config.stylesDir,
     layoutFile: input.config.layoutFile,
+    configSchema: appPlanIdentity(input.config).configSchema ?? 1,
+    target: appTarget(input.config),
     rootIdentity,
     targets: targets.map((target) => ({
       path: target.path,
@@ -795,6 +818,7 @@ export function composeApplyPlan(
     uiDir: input.config.uiDir,
     stylesDir: input.config.stylesDir,
     layoutFile: input.config.layoutFile,
+    ...appPlanIdentity(input.config),
     rootIdentity,
     planDigest,
     readset: {

@@ -243,13 +243,26 @@ test("project schema dispatch is independent and refuses every unapproved transi
       ).ok,
       true,
     );
-    for (const schemaVersion of [0, 2, 999, "1", "5.57.1", null, undefined]) {
+    for (const schemaVersion of [
+      0,
+      ...(kind === "config" ? [2] : []),
+      3,
+      999,
+      "1",
+      "5.57.1",
+      null,
+      undefined,
+    ]) {
       const result = selectProjectSchema({ schemaVersion }, kind, "kit.json");
       assert.equal(result.ok, false);
       if (!result.ok)
         assert.match(result.issues[0]!.message, /Unsupported.*schemaVersion/);
     }
   }
+  assert.deepEqual(
+    selectProjectSchema({ schemaVersion: 2 }, "lock", "kit.lock.json"),
+    { ok: true, value: 2 },
+  );
   assert.equal(
     selectProjectSchema({ schemaVersion: 1, aliases: {} }, "config", "kit.json")
       .ok,

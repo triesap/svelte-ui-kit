@@ -372,7 +372,10 @@ function classifyMember(abs: string): MemberClassification {
         "peerDependencies",
       ]) {
         const record = manifest.value[field];
-        if (isRecord(record) && "@sveltejs/kit" in record)
+        if (
+          isRecord(record) &&
+          ("@sveltejs/kit" in record || "astro" in record)
+        )
           return { kind: "app" };
       }
       return { kind: "non-app" };
