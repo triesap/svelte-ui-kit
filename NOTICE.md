@@ -16,7 +16,10 @@ Svelte and Bits UI carry their own MIT licenses;
 `@internationalized/date` carries Apache-2.0. Explicit dependency installation
 retains their package notices. These dependency licenses are not replaced by
 this package's license. The CLI separately uses its declared Ajv, semver, Svelte
-parser and TypeScript dependencies with their respective package licenses.
+parser, TypeScript, YAML and native Astro parser dependencies with their
+respective package licenses. The Astro parser and its platform binding retain
+their upstream MIT notices through normal dependency delivery; their CLI-only
+syntax handling does not become a generated application runtime.
 
 The locally packed CLI contains the qualified unstyled Bits dependency at
 `dist/native/bits-ui-2.19.5-svelte-ui-kit.2.tgz` for explicit application-owned

@@ -42,6 +42,13 @@ them without making a separate manual JSON API authority. Native producer recipe
 patch and frozen locks are executable reproduction inputs under tools. Build
 artifacts, package archives, fixture projections and logs are outputs, not sources.
 
+The native Astro compiler parses layout structure without executing frontmatter.
+Its exact dependency is resolved through the owner workspace catalog; normal
+package delivery retains upstream notices. Ordered stylesheet insertion is
+shared with the Svelte adapter, while each native parser independently proves
+its real content slot. Parser success alone does not qualify a generated Astro
+consumer, island lifecycle, target write authority or recovery.
+
 ## Layout and composition
 
 Registry resolution validates one immutable acyclic graph with stable ordering,

@@ -28,6 +28,7 @@ test("actual installed metadata bounds runtime support and retains source notice
   assert.equal(pkg.dependencies["@internationalized/date"], undefined);
   assert.equal(pkg.peerDependencies, undefined);
   assert.deepEqual(Object.keys(pkg.dependencies).sort(), [
+    "@astrojs/compiler-rs",
     "ajv",
     "semver",
     "svelte",
@@ -65,4 +66,17 @@ test("actual installed metadata bounds runtime support and retains source notice
   assert.match(read("LICENSE-MIT"), /Copyright \(c\) 2026 Tyson Lupul/);
   assert.match(read("LICENSE-APACHE"), /Apache License/);
   assert.equal(cli.run(["view", "button", "--source"], cli.root).status, 0);
+  const parser = cli.runNode(
+    [
+      "--input-type=module",
+      "--eval",
+      `import { patchAstroLayout } from ${JSON.stringify(path.join(cli.packageRoot, "dist/codegen/astro.js"))}; const result=patchAstroLayout("<main><slot /></main>", [{specifier:"./kit.css"},{specifier:"./themes.css"},{specifier:"./app.css"}]); if(!result.ok)throw new Error(JSON.stringify(result)); console.log(result.value);`,
+    ],
+    cli.root,
+    "packed-native-astro-parser",
+  );
+  assert.equal(parser.status, 0, parser.stderr);
+  assert.match(parser.stdout, /import "\.\/kit.css"/);
+  assert.match(parser.stdout, /<main><slot \/><\/main>/);
+  assert.deepEqual(parser.guardEvents, []);
 });

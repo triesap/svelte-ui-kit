@@ -117,6 +117,7 @@ export function installIndependentCli() {
       "schema",
       "tsconfig.json",
       "package.json",
+      "pnpm-workspace.yaml",
       "README.md",
       "docs/README.md",
       "docs/CHANGELOG.md",
