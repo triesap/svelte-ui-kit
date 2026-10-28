@@ -108,7 +108,9 @@ import {
   type ProjectSnapshot,
   type TargetObservation,
 } from "./snapshot.js";
-import { patchLayoutImports, materializePassthroughLayout } from "./svelte.js";
+import { svelteKitIntegration } from "./target-integration.js";
+const { patch: patchLayoutImports, materialize: materializePassthroughLayout } =
+  svelteKitIntegration;
 import { resolveEffectiveConfig } from "./effective-config.js";
 
 export interface AddPlanInput {

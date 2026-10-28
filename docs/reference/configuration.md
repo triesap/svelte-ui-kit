@@ -48,6 +48,44 @@ nor its workspace is rewritten during discovery or refusal.
 
 ## Custom mapping
 
+### Explicit target schema
+
+The independent [v2 target schema](../../schema/v2/kit.schema.json) defines
+read-only target discovery and integration intent. The CLI still generates v1
+SvelteKit installations; it refuses v2 without writes until the corresponding
+generation adapter is enabled. Discovery success is not a generated, built or
+packed consumer qualification. Existing v1 defaults, custom paths and unknown-field
+refusals remain unchanged; no automatic schema or ownership migration occurs.
+
+V2 requires `schemaVersion: 2` and an explicit `target`. Common `uiDir`,
+`stylesDir`, `requested`, `toolVersion` and `registry` fields retain their v1
+meanings. Framework, registry, item, lock and configuration revisions are
+independent. The target mapping is a closed union:
+
+| Target           | Required integration mapping                                   | Package evidence                                                                             |
+| ---------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `sveltekit`      | `layoutFile` ending in `.svelte`                               | Svelte and actual `@sveltejs/kit`; unambiguous static Svelte configuration                   |
+| `astro`          | Explicit `layoutFile` ending in `.astro`                       | Svelte, `astro`, `@astrojs/svelte` and one statically supported Astro configuration          |
+| `svelte-library` | Explicit `styleEntry` ending in `.css`; `layoutFile` forbidden | Svelte peer, typed Svelte-condition package entry and an export of the configured stylesheet |
+
+Astro discovery supports a direct default object or imported
+`defineConfig({ integrations: [svelte()] })` using the direct default import
+from `@astrojs/svelte`. Configuration is parsed with TypeScript and never loaded.
+Computed factories, aliases to mutable configuration, spreads, duplicate keys,
+multiple integrations, dynamic options and a different package root require a
+manual supported form. New configuration examples use `astro.config.ts`.
+
+A library cannot declare an application framework, borrow an application layout
+or supply contradictory/escaping entry declarations. Its stylesheet entry will
+integrate kit, theme and application styles in order; the consumer owns package
+build/export metadata. The current discovery API never rewrites `package.json`.
+Target evidence captures package/config bytes, identities, modes and candidate
+absence immutably. Target integration contracts are `layout-v1`,
+`astro-layout-v1` and `library-styles-v1`; only the first currently produces a
+plan. No v2 semantic lock or recovery authority is created by discovery.
+
+### Existing SvelteKit mapping
+
 Before initialization, create `app/ui/_kit/kit.json` in the selected application:
 
 <!-- documented-custom-mapping:start -->

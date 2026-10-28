@@ -66,6 +66,7 @@ const AJV_OPTIONS: AjvOptions = {
 
 /** Shipped schema file name → fixed local `$id` identity. */
 export const SHIPPED_SCHEMAS: Readonly<Record<string, string>> = {
+  "v2/kit.schema.json": "urn:svelte-ui-kit:schema:v2:kit",
   "kit.schema.json": "urn:svelte-ui-kit:schema:v1:kit",
   "kit-lock.schema.json": "urn:svelte-ui-kit:schema:v1:kit-lock",
   "registry.schema.json": "urn:svelte-ui-kit:schema:v1:registry",
@@ -81,10 +82,13 @@ export const SHIPPED_SCHEMAS: Readonly<Record<string, string>> = {
     "urn:svelte-ui-kit:schema:v1:native-provenance",
 };
 
-/** The `schema/v1/<file>` logical paths of every shipped schema. */
-export const SHIPPED_SCHEMA_PATHS: readonly string[] = Object.keys(
-  SHIPPED_SCHEMAS,
-).map((file) => `schema/v1/${file}`);
+/** Fixed versioned logical paths of every shipped schema. */
+export const SHIPPED_SCHEMA_PATHS: readonly string[] =
+  Object.keys(SHIPPED_SCHEMAS).map(schemaPath);
+
+function schemaPath(file: string): string {
+  return file.startsWith("v2/") ? `schema/${file}` : `schema/v1/${file}`;
+}
 
 function createAjv(): AjvInstance {
   const Ajv = nodeRequire("ajv") as AjvConstructor;
@@ -218,7 +222,7 @@ export function createSchemaAuthority(
   const captured: [string, string][] = [];
 
   for (const [schemaFile, expectedId] of Object.entries(SHIPPED_SCHEMAS)) {
-    const logicalPath = `schema/v1/${schemaFile}`;
+    const logicalPath = schemaPath(schemaFile);
     const text = provider.readText(logicalPath);
     if (!text.ok) {
       issues.push(...text.issues);
@@ -243,8 +247,8 @@ export function createSchemaAuthority(
         issues.push(
           issue(
             "SCHEMA_COMPILE_INVALID",
-            `schema/v1/${schemaFile} could not be compiled: ${error instanceof Error ? error.message : String(error)}`,
-            `schema/v1/${schemaFile}`,
+            `${schemaPath(schemaFile)} could not be compiled: ${error instanceof Error ? error.message : String(error)}`,
+            schemaPath(schemaFile),
           ),
         );
       }

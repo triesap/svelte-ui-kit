@@ -188,7 +188,7 @@ function runFixtureScript(root: string, script: FixtureScript): RunResult {
   delete env["NODE_OPTIONS"];
   delete env["NODE_V8_COVERAGE"];
   delete env["NODE_TEST_CONTEXT"];
-  env["npm_config_verify_deps_before_run"] = "false";
+  env["pnpm_config_verify_deps_before_run"] = "false";
   env["PATH"] = `${path.dirname(process.execPath)}${path.delimiter}${
     env["PATH"] ?? ""
   }`;
@@ -285,6 +285,9 @@ function createFixture(t: TestContext, label: string): Fixture {
         name: "svelte-ui-kit-tooling-fixture",
         private: true,
         type: "module",
+        packageManager: JSON.parse(
+          readFileSync(path.join(PACKAGE_ROOT, "package.json"), "utf8"),
+        ).packageManager,
         scripts: { ...REAL_SCRIPTS },
       },
       null,

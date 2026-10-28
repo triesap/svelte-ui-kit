@@ -46,7 +46,9 @@ import {
 } from "./snapshot.js";
 import type { RegistrySnapshot } from "../registry/load.js";
 import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
-import { patchLayoutImports, materializePassthroughLayout } from "./svelte.js";
+import { svelteKitIntegration } from "./target-integration.js";
+const { patch: patchLayoutImports, materialize: materializePassthroughLayout } =
+  svelteKitIntegration;
 import { resolveEffectiveConfig } from "./effective-config.js";
 
 /** The frozen foundation layer declaration. */

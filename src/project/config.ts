@@ -93,7 +93,9 @@ function joinLogical(...segments: readonly string[]): string {
 }
 
 /** Derive the fixed `_kit`/exports/stylesheet paths from validated roots. */
-export function deriveKitPaths(config: KitConfig): KitDerivedPaths {
+export function deriveKitPaths<
+  T extends Pick<KitConfig, "uiDir" | "stylesDir">,
+>(config: T): KitDerivedPaths {
   const uiDir = config.uiDir.replace(/\/+$/, "");
   const stylesDir = config.stylesDir.replace(/\/+$/, "");
   return {

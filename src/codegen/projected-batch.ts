@@ -58,7 +58,7 @@ import {
   tokenMetadataPaths,
   parseThemeMetadata,
 } from "../registry/theme.js";
-import { parseSvelteLayout } from "./svelte-parse.js";
+import { svelteKitIntegration } from "./target-integration.js";
 
 /** One projected target result: `retire` means the path is absent afterwards. */
 export interface ProjectedTarget {
@@ -390,7 +390,7 @@ function validateLayoutIntegration(
       ),
     ];
   }
-  const parsed = parseSvelteLayout(text);
+  const parsed = svelteKitIntegration.inspect(text);
   if (!parsed.ok) {
     return [
       issue(
@@ -404,7 +404,7 @@ function validateLayoutIntegration(
   const desired = [derived.kitCss, derived.themesCss, derived.appCss].map(
     (target) => relativeSpecifier(config.layoutFile, target),
   );
-  const imports = parsed.value.instanceImports;
+  const imports = parsed.value.imports;
   const indices: number[] = [];
   for (const specifier of desired) {
     const index = imports.indexOf(specifier);
@@ -434,7 +434,7 @@ function validateLayoutIntegration(
       ),
     );
   }
-  if (!parsed.value.rendersChildren) {
+  if (!parsed.value.rendersContent) {
     issues.push(
       issue(
         "PROJECTED_LAYOUT_RENDERING_MISSING",

@@ -13,6 +13,7 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { parseKitConfig } from "../../src/project/config.js";
+import { parseTargetConfig } from "../../src/project/target-config.js";
 import {
   createAssetProvider,
   type AssetProvider,
@@ -75,6 +76,22 @@ test("a missing shipped schema is a typed failure without throwing", (t) => {
   if (!authority.ok) {
     assert.equal(authority.issues[0]?.code, "ASSET_MISSING");
   }
+});
+
+test("v2 target schemas use the same contained provider without a source fallback", (t) => {
+  const root = copySchemas(t);
+  const file = path.join(root, "schema", "v2", "kit.schema.json");
+  writeFileSync(file, rejectAllSchema("urn:svelte-ui-kit:schema:v2:kit"));
+  const authority = createSchemaAuthority(createAssetProvider(root));
+  assert.ok(authority.ok);
+  const result = parseTargetConfig(
+    { schemaVersion: 2, target: "astro", layoutFile: "src/Layout.astro" },
+    "kit.json",
+    authority.value,
+  );
+  assert.equal(result.ok, false);
+  rmSync(file);
+  assert.equal(createSchemaAuthority(createAssetProvider(root)).ok, false);
 });
 
 test("an escaping schema symlink cannot widen validation", (t) => {

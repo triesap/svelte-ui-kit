@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:svelte-ui-kit:schema:v2:kit",
+  "title": "Explicit target configuration (v2)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "target"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "target": { "enum": ["sveltekit", "astro", "svelte-library"] },
+    "toolVersion": { "type": "string", "minLength": 1 },
+    "registry": { "const": "builtin" },
+    "uiDir": { "type": "string", "minLength": 1 },
+    "stylesDir": { "type": "string", "minLength": 1 },
+    "layoutFile": { "type": "string", "minLength": 1 },
+    "styleEntry": { "type": "string", "minLength": 1 },
+    "requested": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "target": { "const": "sveltekit" },
+        "layoutFile": { "pattern": "\\.svelte$" }
+      },
+      "required": ["layoutFile"],
+      "not": { "required": ["styleEntry"] }
+    },
+    {
+      "properties": {
+        "target": { "const": "astro" },
+        "layoutFile": { "pattern": "\\.astro$" }
+      },
+      "required": ["layoutFile"],
+      "not": { "required": ["styleEntry"] }
+    },
+    {
+      "properties": {
+        "target": { "const": "svelte-library" },
+        "styleEntry": { "pattern": "\\.css$" }
+      },
+      "required": ["styleEntry"],
+      "not": { "required": ["layoutFile"] }
+    }
+  ]
+}

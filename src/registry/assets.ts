@@ -29,7 +29,7 @@ import {
   type ModelResult,
 } from "./errors.js";
 
-export const ASSET_ROOTS = ["registry", "schema/v1"] as const;
+export const ASSET_ROOTS = ["registry", "schema/v1", "schema/v2"] as const;
 export const ASSET_EXTENSIONS = [".json", ".css", ".svelte", ".ts"] as const;
 
 export interface AssetProvider {
