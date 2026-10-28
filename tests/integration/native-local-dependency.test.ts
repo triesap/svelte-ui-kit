@@ -144,6 +144,29 @@ function installedReads(root: string) {
   }));
 }
 
+test("selected-owner native catalog authenticates the real archive and installed distribution", (t) => {
+  const root = copy(t);
+  const file = path.join(root, "package.json");
+  const manifest = JSON.parse(readFileSync(file, "utf8"));
+  manifest.dependencies.svelte = "catalog:";
+  manifest.dependencies["bits-ui"] = "catalog:native";
+  writeFileSync(file, JSON.stringify(manifest));
+  writeFileSync(
+    path.join(root, "pnpm-workspace.yaml"),
+    `packages:\n  - .\ncatalog:\n  svelte: 5.57.1\ncatalogs:\n  native:\n    bits-ui: file:./${archivePath}\n`,
+  );
+  const before = snapshotTree(root);
+  const result = inspectDependencyState(root, requirements);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  if (result.ok) assert.equal(result.value[0]?.status, "ready");
+  assert.deepEqual(verifyInstalledReads(root, installedReads(root)), []);
+  assert.deepEqual(snapshotTree(root), before);
+  writeFileSync(path.join(root, archivePath), "foreign native archive");
+  const tampered = snapshotTree(root);
+  assert.equal(inspectDependencyState(root, requirements).ok, false);
+  assert.deepEqual(snapshotTree(root), tampered);
+});
+
 function cli(root: string, args: string[]) {
   const result = spawnSync(
     process.execPath,

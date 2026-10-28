@@ -304,12 +304,12 @@ export function installIndependentCli() {
       );
     const prepareConsumer = (
       custom: boolean,
-      purpose: "adoption" | "native-authentication" = "adoption",
+      purpose: "adoption" | "native-authentication" | "catalog" = "adoption",
     ) => {
       const consumer = path.join(
         root,
-        purpose === "native-authentication"
-          ? "native-authentication-consumer"
+        purpose !== "adoption"
+          ? `${purpose}-consumer`
           : custom
             ? "custom-consumer"
             : "default-consumer",

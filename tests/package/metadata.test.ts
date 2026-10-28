@@ -32,6 +32,7 @@ test("actual installed metadata bounds runtime support and retains source notice
     "semver",
     "svelte",
     "typescript",
+    "yaml",
   ]);
   const fixture = JSON.parse(
     readFileSync("tests/fixtures/consumer/package.json", "utf8"),

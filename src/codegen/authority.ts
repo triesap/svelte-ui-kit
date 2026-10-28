@@ -44,7 +44,7 @@ import {
   observeNativeFile,
   observeNativeInstall,
 } from "../project/native-dependency.js";
-import { readJsonObject } from "../project/io.js";
+import { observeCatalogs } from "../project/catalogs.js";
 
 /** Stable physical identity of a directory or root. */
 export interface PhysicalIdentity {
@@ -97,6 +97,8 @@ export interface PlanReadset {
    * write authority outside the selected root.
    */
   readonly installed?: readonly PlanInstalledRead[];
+  /** Read-only workspace/catalog physical input fingerprint. Never a write scope. */
+  readonly catalogDigest?: string | null;
 }
 
 /**
@@ -347,8 +349,25 @@ export function validateReadset(readset: unknown): ModelIssue[] {
     ];
   }
   const value = readset as Partial<PlanReadset>;
+  if (
+    value.catalogDigest !== undefined &&
+    value.catalogDigest !== null &&
+    (typeof value.catalogDigest !== "string" ||
+      !/^[a-f0-9]{64}$/.test(value.catalogDigest))
+  )
+    problems.push(
+      issue(
+        "PLAN_READSET_INVALID",
+        "invalid catalog fingerprint",
+        "readset.catalogDigest",
+      ),
+    );
   for (const key of Object.keys(value)) {
-    if (!["root", "ancestors", "files", "installed"].includes(key)) {
+    if (
+      !["root", "ancestors", "files", "installed", "catalogDigest"].includes(
+        key,
+      )
+    ) {
       problems.push(
         issue(
           "PLAN_READSET_INVALID",
@@ -1147,9 +1166,11 @@ export function verifyInstalledReads(
         );
         continue;
       }
-      const app = readJsonObject(path.join(root, "package.json"));
+      const catalog = observeCatalogs(root);
+      const app = catalog.manifest;
       const selected = app.kind === "value" ? app.value : null;
       const nativeIssues = [
+        ...catalog.issues,
         ...nativeInstallIssues(
           manifest.version,
           observeNativeInstall(path.dirname(resolved), manifest.version),

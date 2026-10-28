@@ -28,6 +28,7 @@
  * does not independently require that package.
  */
 import path from "node:path";
+import { observeCatalogs } from "./catalogs.js";
 
 import { satisfies, valid, validRange } from "semver";
 
@@ -493,7 +494,9 @@ export function inspectDependencyState(
   root: string,
   requirements: readonly DependencyRequirement[],
 ): ModelResult<readonly DependencyStateEntry[]> {
-  const manifest = readJsonObject(path.join(root, "package.json"));
+  const catalogs = observeCatalogs(root);
+  if (catalogs.issues.length) return fail(catalogs.issues);
+  const manifest = catalogs.manifest;
   return inspectWithEvidence(
     manifest,
     (name) => observeInstalled(root, name),
@@ -750,7 +753,9 @@ export function validatePeerDependencies(
   root: string,
   plan: DependencyPlan,
 ): ModelResult<readonly DependencyStateEntry[]> {
-  const manifest = readJsonObject(path.join(root, "package.json"));
+  const catalogs = observeCatalogs(root);
+  if (catalogs.issues.length) return fail(catalogs.issues);
+  const manifest = catalogs.manifest;
   return validatePeerWithEvidence(
     manifest,
     (name) => observeInstalled(root, name),

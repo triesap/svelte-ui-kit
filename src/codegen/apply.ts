@@ -26,6 +26,7 @@
  *    before the rename so a crash in the publication window is recoverable as a
  *    commit rather than an unsafe rollback.
  */
+import { verifyCatalogDigest } from "../project/catalogs.js";
 import { existsSync, lstatSync, readFileSync, rmdirSync } from "node:fs";
 import path from "node:path";
 
@@ -1017,6 +1018,7 @@ export function validateApplyPlan(
     rootIdentity: derivedRootIdentity,
     planDigest: "",
     readset: Object.freeze({
+      catalogDigest: plan.readset.catalogDigest,
       root: Object.freeze({ ...plan.readset.root }),
       ancestors: Object.freeze(
         plan.readset.ancestors.map((ancestor) =>
@@ -1178,6 +1180,7 @@ export function derivePlanDigest(input: {
       },
     },
     readset: {
+      catalogDigest: input.readset.catalogDigest ?? null,
       root: {
         device: input.readset.root.device,
         inode: input.readset.root.inode,
@@ -1467,6 +1470,13 @@ export function applyPlan(
     return { kind: "refused", transactionId: null, issues: sealedIssues };
   }
 
+  const catalogIssues = verifyCatalogDigest(
+    plan.root,
+    plan.readset.catalogDigest,
+  );
+  if (catalogIssues.length)
+    return { kind: "refused", transactionId: null, issues: catalogIssues };
+
   // 0. Guard the transient namespace ancestry before the first write.
   const ancestry = verifyTransientAncestry(plan.root, plan.stateDir);
   if (ancestry.length > 0) {
@@ -1585,6 +1595,7 @@ function applyUnderLock(
       ancestors: plan.readset.ancestors,
       files: plan.readset.files,
       installed: plan.readset.installed,
+      catalogDigest: plan.readset.catalogDigest,
     },
   );
   if (!revalidated.ok) {
@@ -1755,6 +1766,7 @@ function applyUnderLock(
       ancestors: plan.readset.ancestors,
       files: plan.readset.files,
       installed: plan.readset.installed,
+      catalogDigest: plan.readset.catalogDigest,
     },
   );
   if (!rechecked.ok) {

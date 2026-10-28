@@ -46,8 +46,9 @@ import {
   type DetectedProject,
   type DiscoveredKitConfig,
 } from "./detect.js";
+import { observeCatalogs } from "./catalogs.js";
 import { deepFreeze, FrozenMap } from "./immutable.js";
-import { readJsonObject, type JsonObservation } from "./io.js";
+import { type JsonObservation } from "./io.js";
 import {
   observeNativeFile,
   type NativeFileObservation,
@@ -111,6 +112,8 @@ export type InstalledResolutionEvidence =
 export interface CapturedEnvironment {
   /** Typed observation of the selected package's `package.json`. */
   readonly manifest: JsonObservation;
+  readonly catalogDigest: string | null;
+  readonly catalogIssues: readonly ModelIssue[];
   /** Authenticated app-owned native file declaration; never a live planning read. */
   readonly nativeFile: NativeFileObservation;
   /**
@@ -411,7 +414,8 @@ function captureInstalledResolution(
  * iterator or nested reference.
  */
 export function captureEnvironment(root: string): CapturedEnvironment {
-  const manifest = readJsonObject(path.join(root, "package.json"));
+  const catalogs = observeCatalogs(root);
+  const manifest = catalogs.manifest;
   const nativeFile = observeNativeFile(
     root,
     manifest.kind === "value" ? manifest.value : null,
@@ -437,6 +441,8 @@ export function captureEnvironment(root: string): CapturedEnvironment {
   const kitConfig = deepFreeze(discoverKitConfig(root));
   return deepFreeze({
     manifest,
+    catalogDigest: catalogs.digest,
+    catalogIssues: catalogs.issues,
     nativeFile,
     evidence: [
       ...captureEvidence(root, installedManifestPaths(root, names)),

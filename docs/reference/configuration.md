@@ -24,6 +24,28 @@ Unknown fields, duplicate requests, unsupported versions, unsafe/overlapping pat
 and ambiguous project identity fail visibly. Framework, CLI, registry, item and
 schema versions have independent meanings; a framework bump is not a migration.
 
+## Workspace catalog declarations
+
+Dependency evidence accepts `catalog:` and `catalog:name` in the selected
+package's dependency declarations. The nearest owning `pnpm-workspace.yaml`
+must prove membership; lookup never crosses a nested Git owner or borrows an
+unrelated workspace. Default and named catalogs are parsed as data. Duplicate
+keys, aliases, tags, included catalog files, missing values and recursive catalog
+references produce actionable nonmutating diagnostics.
+
+Resolved declarations retain the ordinary strict installed-version, peer and
+native archive authentication checks. Catalog values do not establish an
+installation. Native `file:` paths are relative to the workspace file under
+[pnpm semantics](https://pnpm.io/catalogs); a descendant package must explicitly
+declare its own authenticated local archive instead of reinterpreting a workspace
+archive as package-local. No package manager, package script or executable
+configuration is evaluated to resolve catalogs.
+
+Planning captures the raw manifest preimage and the catalog/workspace physical
+input fingerprint. Apply revalidates it before coordination and again under the
+held write authority. Changes require a fresh plan; neither the selected package
+nor its workspace is rewritten during discovery or refusal.
+
 ## Custom mapping
 
 Before initialization, create `app/ui/_kit/kit.json` in the selected application:

@@ -460,7 +460,7 @@ function workspaceMembers(
 }
 
 /** True when a workspace at `root` declares `target` as one of its members. */
-function workspaceDeclaresMember(
+export function workspaceDeclaresMember(
   root: string,
   config: WorkspacePatterns,
   target: string,

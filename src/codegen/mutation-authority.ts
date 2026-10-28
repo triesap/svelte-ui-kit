@@ -1,3 +1,4 @@
+import { verifyCatalogDigest } from "../project/catalogs.js";
 /** Final cooperative mutation proof, held before returning fault hooks run. */
 import path from "node:path";
 
@@ -123,6 +124,7 @@ export function holdMutationAuthority(
   const authority: MutationAuthority = Object.freeze({
     root,
     readset: Object.freeze({
+      catalogDigest: original?.readset.catalogDigest,
       root: Object.freeze({
         ...(original?.readset.root ?? observedRoot.value),
         mode: original?.readset.root.mode ?? observedRoot.value.mode,
@@ -195,6 +197,7 @@ export function verifyMutationAuthority(
     ];
   }
   const issues = [
+    ...verifyCatalogDigest(root, authority.readset.catalogDigest),
     ...verifyHeldWriterLock(root, stateDir),
     ...verifyRootIdentity(root, authority.readset.root),
     ...verifyReadFiles(root, authority.readset.files),

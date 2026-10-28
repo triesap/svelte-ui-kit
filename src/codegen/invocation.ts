@@ -32,6 +32,8 @@ export interface ValidatedInvocation {
 export function validateInvocation(
   snapshot: ProjectSnapshot,
 ): ModelResult<ValidatedInvocation> {
+  if (snapshot.environment.catalogIssues.length > 0)
+    return fail(snapshot.environment.catalogIssues);
   const project = snapshot.environment.project;
   if (!project.ok) return fail(project.issues);
   if (snapshot.environment.managerIssues.length > 0) {

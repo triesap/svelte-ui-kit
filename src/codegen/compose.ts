@@ -757,6 +757,7 @@ export function composeApplyPlan(
       },
     },
     readset: {
+      catalogDigest: snapshot.environment.catalogDigest,
       root: {
         device: snapshot.rootIdentity.device,
         inode: snapshot.rootIdentity.inode,
@@ -797,6 +798,7 @@ export function composeApplyPlan(
     rootIdentity,
     planDigest,
     readset: {
+      catalogDigest: snapshot.environment.catalogDigest,
       root: {
         device: snapshot.rootIdentity.device,
         inode: snapshot.rootIdentity.inode,

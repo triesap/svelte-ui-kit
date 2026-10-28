@@ -26,6 +26,8 @@ import {
   type PlanReadFile,
 } from "./authority.js";
 
+import { verifyCatalogDigest } from "../project/catalogs.js";
+
 export interface TargetPreimage {
   readonly path: string;
   readonly kind: "absent" | "file";
@@ -140,6 +142,7 @@ export interface RevalidateOptions {
   readonly files?: readonly PlanReadFile[];
   /** Captured installed resolution evidence (may include ancestor installs). */
   readonly installed?: readonly PlanInstalledRead[];
+  readonly catalogDigest?: string | null;
 }
 
 /**
@@ -153,7 +156,7 @@ export function revalidatePreimages(
   expected: readonly TargetPreimage[],
   options: RevalidateOptions = {},
 ): ModelResult<null> {
-  const issues = [];
+  const issues = [...verifyCatalogDigest(root, options.catalogDigest)];
   if (options.root) issues.push(...verifyRootIdentity(root, options.root));
   if (options.files && options.files.length > 0) {
     issues.push(...verifyReadFiles(root, options.files));

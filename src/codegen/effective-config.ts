@@ -72,6 +72,9 @@ export function resolveEffectiveConfig(
   supplied: KitConfig,
 ): ModelResult<EffectiveConfig> {
   const environment = snapshot.environment;
+  if (environment.catalogIssues.length > 0) {
+    return fail([...environment.catalogIssues]);
+  }
   if (environment.managerIssues.length > 0) {
     return fail([...environment.managerIssues]);
   }
