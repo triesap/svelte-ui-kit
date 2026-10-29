@@ -48,6 +48,14 @@ and pnpm installs remain supported; a parent application's archive cannot stand
 in for the selected application's source. Installed-package tests exercise actual
 CLI refusals with authoring-source, network and subprocess access blocked.
 
+Every installed verification still hashes the complete current distribution.
+One inventory traversal replaces repeated full ancestor walks for each file;
+descriptor reads refuse links, and closing checks bind every visited directory,
+root, enclosing ancestry and selected alias. Retained directory receipts catch
+changes introduced by a later sibling read. No successful authentication is
+cached between mutation boundaries, and the archive/provenance/manifest and late
+physical or byte checks remain live at their existing boundaries.
+
 ## Reproduce
 
 Use Node 24.22.1, pnpm 12.16.1, Git and tar from the repository root:

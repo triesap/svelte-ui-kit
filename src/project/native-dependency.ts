@@ -1,12 +1,13 @@
 /** Qualified native artifact identity; no package code is executed or installed. */
 import { createHash } from "node:crypto";
-import { lstatSync, readFileSync, readdirSync } from "node:fs";
+import { lstatSync, readFileSync } from "node:fs";
 import path from "node:path";
 import baseline from "./native-dependency-baseline.json" with { type: "json" };
 import { isSafeLogicalRelativePath } from "./paths.js";
 import type { ModelIssue } from "../registry/errors.js";
 import { issue } from "../registry/errors.js";
 import { validateWithSchema } from "../registry/schema.js";
+import { verifyNativeInventory } from "./native-inventory.js";
 
 export const NATIVE_BASELINE = Object.freeze(baseline);
 /** Positive installed evidence is distinct from an absent list of problems. */
@@ -236,32 +237,14 @@ export function authenticateNativeInstall(
       data.version !== NATIVE_BASELINE.version
     )
       throw new Error("native identity");
-    const expected = new Set(["NATIVE_PROVENANCE.json"]);
-    const directories = new Set<string>();
+    const expected = new Map([
+      ["NATIVE_PROVENANCE.json", NATIVE_BASELINE.provenanceSha256],
+    ]);
     for (const file of data.distributionFiles) {
       if (expected.has(file.path)) throw new Error("duplicate inventory path");
-      expected.add(file.path);
-      const segments = file.path.split("/");
-      for (let index = 1; index < segments.length; index++)
-        directories.add(segments.slice(0, index).join("/"));
-      if (digest(regularInside(packageRoot, file.path).bytes) !== file.sha256)
-        throw new Error("distribution bytes");
+      expected.set(file.path, file.sha256);
     }
-    const visit = (directory: string, prefix = ""): void => {
-      for (const entry of readdirSync(directory, { withFileTypes: true })) {
-        const logical = `${prefix}${entry.name}`;
-        if (entry.isSymbolicLink()) throw new Error("distribution link");
-        if (entry.isDirectory()) {
-          if (!directories.delete(logical))
-            throw new Error("extra distribution directory");
-          visit(path.join(directory, entry.name), `${logical}/`);
-        } else if (!entry.isFile() || !expected.delete(logical))
-          throw new Error("extra distribution entry");
-      }
-    };
-    visit(packageRoot);
-    if (expected.size !== 0 || directories.size !== 0)
-      throw new Error("missing distribution entry");
+    verifyNativeInventory(packageRoot, expected);
     return [];
   } catch {
     return [

@@ -14,6 +14,7 @@ import {
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { inc } from "semver";
 import { deriveKitPaths, type KitConfig } from "../../src/project/config.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { parseManagedCss } from "../../src/codegen/css-parse.js";
@@ -170,11 +171,15 @@ export function evolveCore(
   );
   const manifestPath = path.join(packageRoot, "registry/ui/button.json");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-  manifest.version = "0.1.1";
+  const buttonRevision = inc(manifest.version, "patch");
+  assert.ok(buttonRevision, "Button fixture requires a valid base version");
+  manifest.version = buttonRevision;
   writeFileSync(manifestPath, JSON.stringify(manifest));
   const registryPath = path.join(packageRoot, "registry/registry.json");
   const registry = JSON.parse(readFileSync(registryPath, "utf8"));
-  registry.registryVersion = "0.1.1";
+  const registryRevision = inc(registry.registryVersion, "patch");
+  assert.ok(registryRevision, "Registry fixture requires a valid base version");
+  registry.registryVersion = registryRevision;
   writeFileSync(registryPath, JSON.stringify(registry));
   refreshRegistryContent(packageRoot);
   const beforeSafe = snapshotTree(root);
@@ -192,7 +197,7 @@ export function evolveCore(
   const safe = lock();
   assert.equal(
     safe.items.find((i: { id: string }) => i.id === "button").version,
-    "0.1.1",
+    buttonRevision,
   );
   const closeBase = safe.files.find(
     (f: { path: string }) => f.path === `${config.uiDir}/dialog/close.svelte`,
@@ -218,7 +223,9 @@ export function evolveCore(
   );
   const dialogPath = path.join(packageRoot, "registry/ui/dialog.json");
   const dialog = JSON.parse(readFileSync(dialogPath, "utf8"));
-  dialog.version = "0.1.1";
+  const dialogRevision = inc(dialog.version, "patch");
+  assert.ok(dialogRevision, "Dialog fixture requires a valid base version");
+  dialog.version = dialogRevision;
   writeFileSync(dialogPath, JSON.stringify(dialog));
   refreshRegistryContent(packageRoot);
   const conflictTree = snapshotTree(root);
