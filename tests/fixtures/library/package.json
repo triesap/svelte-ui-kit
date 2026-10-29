@@ -25,7 +25,8 @@
     "dist",
     "src/lib",
     "src/styles",
-    "src/styles.css"
+    "src/styles.css",
+    "!**/.svelte-ui-kit/**"
   ],
   "scripts": {
     "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",

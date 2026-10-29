@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { writeFixtureWorkspace } from "../helpers/workspace-catalog.js";
 import {
   cpSync,
   chmodSync,
@@ -73,6 +74,7 @@ for (const custom of [false, true])
             recursive: true,
           },
         );
+      writeFixtureWorkspace(root);
       mkdirSync(path.join(root, "node_modules"));
       for (const dependency of [
         "svelte",

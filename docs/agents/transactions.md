@@ -27,6 +27,24 @@ bytes and modes at a replacement inode do not revalidate that original preimage.
 File observations compare all permission bits, including intervening special-bit
 edits. New physical evidence must come from a fresh plan, not a live recapture.
 
+Plan inputs are inert ordinary/null-prototype records, native arrays and genuine
+Uint8Array/Buffer values. Accessors, proxies, executable fields and custom record
+or byte prototypes and shared backing buffers refuse before decision fields are read. Structural/projected
+checks and sealing therefore consume the same data. The fully copied sealed
+content must also authenticate against the original composition receipt before
+it receives process-local write authority; an earlier caller view cannot certify
+a later copy. Malformed data produces a typed refusal, with no coordination.
+
+Byte leaves use genuine native storage. Refuse own conversion/indexing overrides,
+including `valueOf` and `Symbol.toPrimitive`: Node's `Buffer.from` may invoke
+these before copying. Unused byte-container metadata grants no plan authority.
+
+An interruption after lock staging and before the physical rename witness is
+durable retains `RECOVERY_AMBIGUOUS_PUBLICATION`. Neither an absent canonical
+lock nor equal bytes can fill that proof gap. This is a conservative retained
+refusal; the later witnessed pre-rename window can prove rollback, and an actual
+canonical rename proves committed cleanup rather than rollback.
+
 Replacement retains that original authority across returning hooks. Immediately
 before backup and installation, it rechecks physical ancestry, permission modes,
 read evidence and the actual held writer. A backup requires the original file

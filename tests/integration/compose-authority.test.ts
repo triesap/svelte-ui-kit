@@ -708,36 +708,53 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
       // every lookup fail with ENOTDIR deterministically: the enumeration is
       // incomplete and the declared name is unreadable, never a proven absence.
       writeFileSync(path.join(root, "node_modules"), "not a directory\n");
-      const { snapshot, writes } = planAuthorityInit(root, config);
+      const rootBefore = snapshotTree(root);
+      const observed = captureSnapshot(root, authorityInitPaths(config));
+      assert.ok(observed.ok);
+      const snapshot = observed.value;
       const captured = snapshot.environment.installedResolution.find(
         (entry) => entry.name === "svelte",
       );
       assert.equal(captured?.kind, "unreadable");
       assert.equal(snapshot.environment.enumerationComplete, false);
-      const rootBefore = snapshotTree(root);
-      const { composed, outcome } = applyAuthority(
-        root,
+      const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
+      assert.ok(registry.ok);
+      const planned = planInit({
         config,
+        layoutFile: config.layoutFile,
+        layoutSource: "",
         snapshot,
-        writes,
-      );
-      const composedEntry = composed.readset.installed?.find(
-        (entry) => entry.name === "svelte",
-      );
-      assert.equal(composedEntry?.kind, "unreadable");
-      assert.notEqual(composedEntry?.kind, "absent");
-      assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+        registry: registry.value,
+        configHash: "b".repeat(64),
+      });
+      assert.equal(planned.ok, false);
+      assert.ok(!planned.ok);
       assert.ok(
-        outcome.issues.some(
-          (entry) => entry.code === "AUTHORITY_INSTALLED_CHANGED",
+        planned.issues.some(
+          (entry) => entry.code === "PROJECT_SVELTEKIT_VERSION_UNSUPPORTED",
         ),
-        JSON.stringify(outcome.issues),
+        JSON.stringify(planned.issues),
       );
       assert.deepEqual(
         snapshotTree(root),
         rootBefore,
         "an unreadable/incomplete enumeration refusal must preserve the selected root exactly",
       );
+    } finally {
+      rmSync(base, { recursive: true, force: true });
+    }
+  });
+  test(`${label}: a captured absent install becoming unreadable refuses original apply without writes`, () => {
+    const base = mkdtempSync(
+      path.join(os.tmpdir(), "suik-auth-late-unreadable-"),
+    );
+    try {
+      const root = path.join(base, "consumer");
+      mkdirSync(root, { recursive: true });
+      seedAuthorityConsumer(root);
+      const { snapshot, writes } = planAuthorityInit(root, config);
+      writeFileSync(path.join(root, "node_modules"), "not a directory\n");
+      assertAuthorityRefusal(root, config, snapshot, writes);
     } finally {
       rmSync(base, { recursive: true, force: true });
     }

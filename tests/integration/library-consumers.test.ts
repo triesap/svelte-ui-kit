@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import {
   cpSync,
   existsSync,
@@ -12,6 +13,8 @@ import {
   readdirSync,
   realpathSync,
   renameSync,
+  rmSync,
+  rmdirSync,
   symlinkSync,
   unlinkSync,
   writeFileSync,
@@ -258,6 +261,127 @@ function sourceGuard(root: string) {
   return { env, audit };
 }
 
+function packWithTransientControls(
+  library: string,
+  archives: string,
+  logs: Record<string, string>,
+) {
+  const before = snapshotTree(library),
+    created: string[] = [],
+    controls: string[] = [];
+  const marker = `pack-control-${randomUUID()}`;
+  const controlRoots = [
+    "src/lib/_kit/.svelte-ui-kit",
+    "dist/_kit/.svelte-ui-kit",
+  ].map((base) => `${base}/${marker}`);
+  for (const base of controlRoots)
+    for (const suffix of ["journal.json", "staged/image", "backups/image"]) {
+      const relative = `${base}/${suffix}`,
+        destination = path.join(library, relative);
+      let parent = path.dirname(destination);
+      const missing: string[] = [];
+      while (!existsSync(parent)) {
+        missing.push(parent);
+        parent = path.dirname(parent);
+      }
+      for (const dir of missing.reverse()) {
+        mkdirSync(dir);
+        created.push(dir);
+      }
+      writeFileSync(destination, `inert packaging sentinel ${relative}\n`, {
+        flag: "wx",
+      });
+      controls.push(relative);
+    }
+  try {
+    const withSentinels = snapshotTree(library);
+    logs.pack = nativeCommand(library, "pnpm", [
+      "pack",
+      "--json",
+      "--pack-destination",
+      archives,
+    ]);
+    assert.deepEqual(
+      snapshotTree(library),
+      withSentinels,
+      "real pack is read-only",
+    );
+    const names = readdirSync(archives);
+    assert.equal(names.length, 1);
+    const archive = path.join(archives, names[0]);
+    const positive = nativeCommand(library, "tar", ["-tf", archive]);
+    assert.equal(
+      positive.includes("/.svelte-ui-kit/"),
+      false,
+      "no transient namespace may ship",
+    );
+    for (const control of controls)
+      assert.equal(positive.includes(`package/${control}`), false);
+    // A distinct owned copy removes only the explicit packaging exclusion.
+    // The negative archive must expose every inert sentinel under actual pnpm.
+    const negative = path.join(
+      path.dirname(library),
+      "library-without-transient-exclusion",
+    );
+    cpSync(library, negative, {
+      recursive: true,
+      filter: (source) => !source.split(path.sep).includes("node_modules"),
+    });
+    const manifest = JSON.parse(
+      readFileSync(path.join(negative, "package.json"), "utf8"),
+    );
+    manifest.files = manifest.files.filter(
+      (entry: string) => !entry.startsWith("!"),
+    );
+    writeFileSync(
+      path.join(negative, "package.json"),
+      JSON.stringify(manifest, null, 2) + "\n",
+    );
+    const negativeArchives = path.join(
+      path.dirname(library),
+      "negative-library-archives",
+    );
+    mkdirSync(negativeArchives);
+    logs.negativeTransientPack = nativeCommand(negative, "pnpm", [
+      "pack",
+      "--json",
+      "--pack-destination",
+      negativeArchives,
+    ]);
+    const negativeNames = readdirSync(negativeArchives);
+    assert.equal(negativeNames.length, 1);
+    const negativeList = nativeCommand(negative, "tar", [
+      "-tf",
+      path.join(negativeArchives, negativeNames[0]),
+    ]);
+    for (const control of controls)
+      assert.ok(
+        negativeList.includes(`package/${control}`),
+        `negative control must expose ${control}`,
+      );
+    assert.deepEqual(snapshotTree(library), withSentinels);
+    return {
+      archive,
+      transientPackaging: {
+        controls,
+        positiveExcluded: true,
+        negativeDetected: true,
+        sourceTreeUnchanged: true,
+      },
+    };
+  } finally {
+    for (const base of controlRoots)
+      rmSync(path.join(library, base), { recursive: true });
+    for (const dir of [...created].reverse())
+      if (existsSync(dir)) rmdirSync(dir);
+    assert.deepEqual(
+      snapshotTree(library),
+      before,
+      "only owned inert sentinels are removed",
+    );
+  }
+}
+
 test(
   "genuine packed standalone Svelte library qualifies in independent Astro and SvelteKit applications",
   { timeout: 900_000 },
@@ -312,15 +436,11 @@ test(
     logs.build = nativeCommand(library, "pnpm", ["run", "build"]);
     const archives = path.join(cli.root, "library-archives");
     mkdirSync(archives);
-    logs.pack = nativeCommand(library, "pnpm", [
-      "pack",
-      "--json",
-      "--pack-destination",
+    const { archive, transientPackaging } = packWithTransientControls(
+      library,
       archives,
-    ]);
-    const names = readdirSync(archives);
-    assert.equal(names.length, 1);
-    const archive = path.join(archives, names[0]);
+      logs,
+    );
     const inspection = path.join(cli.root, "library-packed-inspection");
     mkdirSync(inspection);
     nativeCommand(library, "tar", ["-xf", archive, "-C", inspection]);
@@ -339,6 +459,7 @@ test(
     );
     for (const file of [
       "src/lib/index.ts",
+      "src/lib/_kit/kit.json",
       "src/lib/_kit/kit.lock.json",
       "src/styles.css",
     ])
@@ -372,6 +493,7 @@ test(
       library: retainedLibrary,
       archive,
       archiveSha256: sha256Hex(readFileSync(archive)),
+      transientPackaging,
       packedLineageSha256: sha256Hex(
         readFileSync(path.join(packed, "src/lib/_kit/kit.lock.json")),
       ),

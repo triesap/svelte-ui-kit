@@ -31,7 +31,11 @@ explicit library intent; ordinary dependency packages remain ordinary packages.
 Use the standard `info`, `init --dry-run`, `init`, `add`, `sync` and `doctor`
 commands. Generated source, export regions, CSS and semantic locks belong to the
 library. Commit semantic lineage, and exclude transient `_kit/.svelte-ui-kit`
-coordination from distribution. Read/no-change commands do not repair retained
+coordination from distribution. A package-owned `files` list overrides the root
+Git ignore rules. Include an explicit negative entry such as
+`"!**/.svelte-ui-kit/**"` so source and built-output copies cannot ship journals,
+staged images or backups. Keep semantic `kit.json` and `kit.lock.json` in the
+distribution for truthful lineage. Read/no-change commands do not repair retained
 journals. Recovery authenticates the exact library target and stylesheet role.
 
 Build declarations with a native Svelte packager, preserve Svelte source in the

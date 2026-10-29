@@ -54,6 +54,7 @@ import {
   type PlanReadset,
 } from "./authority.js";
 import { isOriginalComposition } from "./compose.js";
+import { isPlanData } from "./plan-data.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";
 import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
 import { validateExportReceipt } from "./exports.js";
@@ -301,6 +302,29 @@ export function validateApplyPlan(
   input: Partial<AnyApplyPlanInput>,
 ): ModelResult<AnyValidatedApplyPlan>;
 export function validateApplyPlan(
+  input: Partial<AnyApplyPlanInput>,
+): ModelResult<AnyValidatedApplyPlan> {
+  try {
+    if (!isPlanData(input)) {
+      return fail([
+        issue(
+          "PLAN_DATA_REQUIRED",
+          "plan fields must be inert data; accessors, proxies and custom record or byte prototypes require fresh planning",
+        ),
+      ]);
+    }
+    return validateApplyPlanData(input);
+  } catch {
+    return fail([
+      issue(
+        "PLAN_DATA_INVALID",
+        "plan data could not be validated; retry planning",
+      ),
+    ]);
+  }
+}
+
+function validateApplyPlanData(
   input: Partial<AnyApplyPlanInput>,
 ): ModelResult<AnyValidatedApplyPlan> {
   const problems: ModelIssue[] = [];
@@ -1127,6 +1151,21 @@ export function validateApplyPlan(
     // supplied value is never trusted as authority.
     planDigest: derivePlanDigest(sealed),
   }) as AnyValidatedApplyPlan;
+  // Authenticate the same fully materialized content that passed validation,
+  // rather than granting authority from an earlier caller-owned view.
+  if (
+    !isOriginalComposition({
+      ...sealedPlan,
+      compositionAuthority: plan.compositionAuthority,
+    })
+  ) {
+    return fail([
+      issue(
+        "PLAN_COMPOSITION_UNAUTHENTICATED",
+        "sealed content differs from the original composition; retry planning",
+      ),
+    ]);
+  }
   // Register the exact instance, not a copyable token.
   VALIDATED_PLANS.add(sealedPlan);
   return ok(sealedPlan);

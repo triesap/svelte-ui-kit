@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { writeFixtureWorkspace } from "../helpers/workspace-catalog.js";
 import { spawnSync } from "node:child_process";
 import {
   cpSync,
@@ -113,11 +114,12 @@ function onDiskRegistry(root: string): ReturnType<typeof loadRegistrySnapshot> {
 
 function seedConsumer(page: string): string {
   const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-guarded-app-"));
+  writeFixtureWorkspace(consumer);
   for (const file of [
     "package.json",
     ".native-build",
     "vite.config.ts",
-    "svelte.config.js",
+    "svelte.config.ts",
     "tsconfig.json",
     "src/app.html",
   ]) {

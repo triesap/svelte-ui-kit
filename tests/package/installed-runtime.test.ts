@@ -14,6 +14,7 @@ import {
 import path from "node:path";
 import { before, after, test } from "node:test";
 import type { KitLock } from "../../src/codegen/lock.js";
+import { parse, stringify } from "yaml";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { installIndependentCli } from "../helpers/packaged-cli.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
@@ -33,14 +34,20 @@ test("installed CLI resolves selected-workspace catalogs without source or subpr
   const consumer = installed.prepareConsumer(false, "catalog");
   const file = path.join(consumer.root, "package.json");
   const manifest = JSON.parse(readFileSync(file, "utf8"));
-  const version = manifest.dependencies.svelte;
+  const workspacePath = path.join(consumer.root, "pnpm-workspace.yaml");
+  const workspace = parse(readFileSync(workspacePath, "utf8"));
+  const version =
+    manifest.dependencies.svelte === "catalog:"
+      ? workspace.catalog.svelte
+      : manifest.dependencies.svelte;
   assert.equal(typeof version, "string");
-  manifest.dependencies.svelte = "catalog:";
+  manifest.dependencies.svelte = "catalog:framework";
   writeFileSync(file, JSON.stringify(manifest));
-  writeFileSync(
-    path.join(consumer.root, "pnpm-workspace.yaml"),
-    `packages:\n  - .\ncatalog:\n  svelte: ${version}\n`,
-  );
+  workspace.catalogs = {
+    ...workspace.catalogs,
+    framework: { svelte: version },
+  };
+  writeFileSync(workspacePath, stringify(workspace));
   const before = snapshotTree(consumer.root);
   const result = installed.run(["init", "--dry-run"], consumer.root);
   assert.equal(result.status, 0, result.stdout + result.stderr);
