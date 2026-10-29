@@ -33,6 +33,8 @@
   let externalSubmitted = $state("not submitted");
   let mounted = $state(true);
   let lifecycleChecked = $state(false);
+  const removeAfterNative =
+    routePage.url.searchParams.get("remove-after-native") === "true";
   const options: Pick<CheckboxProps, "name" | "value"> = {
     name: "enabled",
     value: "yes",
@@ -215,7 +217,7 @@
 <p id="lifecycle-state">{String(lifecycleChecked)}</p>
 <section
   onreset={() => {
-    mounted = false;
+    if (!removeAfterNative) mounted = false;
   }}
 >
   <form id="lifecycle-form">
@@ -227,7 +229,12 @@
         aria-label="Lifecycle control"
       />
     {/if}
-    <button type="reset">Reset and remove</button>
+    <button
+      type="reset"
+      onclickcapture={() => {
+        if (removeAfterNative) setTimeout(() => (mounted = false), 0);
+      }}>Reset and remove</button
+    >
   </form>
 </section>
 

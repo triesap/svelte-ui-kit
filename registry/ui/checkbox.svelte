@@ -28,11 +28,16 @@
     const tree = input.getRootNode();
     const pending: number[] = [];
     const reset = (event: Event) => {
-      if (event.target !== input.form) return;
+      // Reset listeners can change ownership before the native default action.
+      const originalOwner = input.form;
       const timer = window.setTimeout(() => {
         pending.splice(pending.indexOf(timer), 1);
         // Native reset restores checked and preserves current indeterminate.
-        if (!event.defaultPrevented) checked = initialChecked;
+        if (
+          !event.defaultPrevented &&
+          (event.target === originalOwner || event.target === input.form)
+        )
+          checked = input.checked;
       }, 0);
       pending.push(timer);
     };

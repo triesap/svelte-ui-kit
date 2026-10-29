@@ -25,10 +25,14 @@
     const tree = input.getRootNode();
     const pending: number[] = [];
     const reset = (event: Event) => {
-      if (event.target !== input.form) return;
+      const originalOwner = input.form;
       const timer = window.setTimeout(() => {
         pending.splice(pending.indexOf(timer), 1);
-        if (!event.defaultPrevented) checked = initialChecked;
+        if (
+          !event.defaultPrevented &&
+          (event.target === originalOwner || event.target === input.form)
+        )
+          checked = input.checked;
       }, 0);
       pending.push(timer);
     };

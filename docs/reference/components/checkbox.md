@@ -25,8 +25,9 @@ Child/children, groups and public Indicator are excluded.
 Associate a visible label with Root ID.
 Exactly one offscreen checkbox preserves actual name/value/form/required/disabled and indeterminate, including native validation and reset when name is omitted or empty.
 Unnamed fields do not contribute successful FormData entries.
-Uncanceled resets restore initial checked but preserve current indeterminate, as native controls do.
-Resolve the current form owner at reset time and clean up listeners/timers.
+Uncanceled resets synchronize checked from the completed native field and preserve current indeterminate.
+Current native defaults, intervening edits and both incoming/outgoing form reassociation remain intact.
+Observe original/current form ownership and clean up listeners/timers on removal.
 The source 1rem geometry, fixed check path and selected/disabled/focus styles remain independent of label text.
 
 ## Exports and installed assets

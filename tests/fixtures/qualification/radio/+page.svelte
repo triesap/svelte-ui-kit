@@ -18,6 +18,8 @@
   let submits = $state(0);
   let mounted = $state(true);
   let lifeValue = $state("a");
+  const removeAfterNative =
+    routePage.url.searchParams.get("remove-after-native") === "true";
   let rawEmptyValue = $state("");
   let callbacks = $state(0);
   let ref = $state<HTMLElement | null>(null);
@@ -194,7 +196,7 @@
 <p id="life-value">{lifeValue}</p>
 <section
   onreset={() => {
-    mounted = false;
+    if (!removeAfterNative) mounted = false;
   }}
 >
   <form id="life-form">
@@ -209,7 +211,12 @@
           aria-label="Life B"
         /></RadioGroup
       >{/if}
-    <button type="reset">Reset and remove radio</button>
+    <button
+      type="reset"
+      onclickcapture={() => {
+        if (removeAfterNative) setTimeout(() => (mounted = false), 0);
+      }}>Reset and remove radio</button
+    >
   </form>
 </section>
 

@@ -89,6 +89,55 @@ for (const custom of [false, true])
     }) => {
       await qualifyUnnamedCheckboxReset(page);
     });
+    test("cleanup preserves bound state after native default and before deferred reset synchronization", async ({
+      page,
+    }) => {
+      const url = new URL("qualification/checkbox", hosted.baseURL);
+      url.searchParams.set("remove-after-native", "true");
+      await page.goto(url.href);
+      await expect(page.locator('[data-ready="true"]')).toBeVisible();
+      await page.locator("#lifecycle").click();
+      await expect(page.locator("#lifecycle-state")).toHaveText("true");
+      const retained = await page
+        .locator('input[name="lifecycle"]')
+        .elementHandle();
+      if (!retained) throw new Error("missing actual lifecycle field");
+      await page
+        .getByRole("button", { name: "Reset and remove", exact: true })
+        .click();
+      await expect(page.locator("#lifecycle")).toHaveCount(0);
+      expect(
+        await retained.evaluate((node) => {
+          if (!(node instanceof HTMLInputElement))
+            throw new Error("native input required");
+          return { connected: node.isConnected, checked: node.checked };
+        }),
+      ).toEqual({ connected: false, checked: false });
+      await expect(page.locator("#lifecycle-state")).toHaveText("true");
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () =>
+              (window as unknown as { __checkboxResetListeners: unknown[] })
+                .__checkboxResetListeners.length,
+          ),
+        )
+        .toBe(4);
+      await page
+        .getByRole("button", { name: "Remount checkbox", exact: true })
+        .click();
+      await expect(page.locator("#lifecycle")).toBeChecked();
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () =>
+              (window as unknown as { __checkboxResetListeners: unknown[] })
+                .__checkboxResetListeners.length,
+          ),
+        )
+        .toBe(5);
+      await expect(page.locator('input[name="lifecycle"]')).toHaveCount(1);
+    });
     test("pointer, keyboard, programmatic state and refs use actual primitive bindings", async ({
       page,
     }) => {
@@ -757,14 +806,27 @@ for (const custom of [false, true])
           return remove.call(this, type, listener, options);
         };
       });
-      await page.goto(new URL("qualification/checkbox", hosted.baseURL).href);
+      const url = new URL("qualification/checkbox", hosted.baseURL);
+      url.searchParams.set("remove-after-native", "true");
+      await page.goto(url.href);
       await expect(page.locator('[data-ready="true"]')).toBeVisible();
       await page.locator("#lifecycle").click();
       await expect(page.locator("#lifecycle-state")).toHaveText("true");
+      const retained = await page
+        .locator('input[name="lifecycle"]')
+        .elementHandle();
+      if (!retained) throw new Error("missing actual lifecycle field");
       await page
         .getByRole("button", { name: "Reset and remove", exact: true })
         .click();
       await expect(page.locator("#lifecycle")).toHaveCount(0);
+      expect(
+        await retained.evaluate((node) => {
+          if (!(node instanceof HTMLInputElement))
+            throw new Error("native input required");
+          return { connected: node.isConnected, checked: node.checked };
+        }),
+      ).toEqual({ connected: false, checked: false });
       await expect(page.locator("#lifecycle-state")).toHaveText("false");
       await expect
         .poll(() =>

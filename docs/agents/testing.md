@@ -34,6 +34,12 @@ The installed packed-runtime harness uses the same five-minute bound for
 passed. Runtime transcripts record the deadline, signal and spawn error code.
 Do not suppress strict diagnostics, patch installed packages, loosen peer/engine
 checks or change pins to pass. Keep generated output/logs out of contributions.
+Generated-consumer CLI children retain their 30-second bound with SIGKILL.
+Abnormal completion records the exact argv, fixture root, PID, deadline,
+signal/exit/spawn-error code and streams under the ignored generated-consumer
+log directory. Failed generation/check/build hosts remain for diagnosis;
+successful callers still stop their owned server before cleanup. A later pass
+does not establish the cause or reliability of an earlier unexplained failure.
 This product is TypeScript-only; Cargo is inapplicable unless a separately
 authorized change affects an actual Rust workspace.
 

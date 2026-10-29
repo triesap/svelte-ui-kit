@@ -146,6 +146,33 @@ for (const custom of [false, true]) {
         await expect(page.locator("#value")).toHaveText(/^a;/);
       }
     });
+    test("cleanup preserves bound state after native default and before deferred reset synchronization", async ({
+      page,
+    }) => {
+      const url = new URL(consumer.route, hosted.baseURL);
+      url.searchParams.set("remove-after-native", "true");
+      await page.goto(url.href);
+      await expect(page.locator('[data-ready="true"]')).toBeVisible();
+      await expect.poll(() => listeners(page)).toBe(3);
+      await page.locator("#life-b").click();
+      const retained = await page.locator('input[name="life"]').elementHandle();
+      if (!retained) throw new Error("missing actual lifecycle field");
+      await button(page, "Reset and remove radio").click();
+      await expect(page.locator("#life-group")).toHaveCount(0);
+      expect(
+        await retained.evaluate((node) => {
+          if (!(node instanceof HTMLInputElement))
+            throw new Error("native input required");
+          return { connected: node.isConnected, value: node.value };
+        }),
+      ).toEqual({ connected: false, value: "a" });
+      await expect(page.locator("#life-value")).toHaveText("b");
+      await expect.poll(() => listeners(page)).toBe(2);
+      await button(page, "Remount radio").click();
+      await expect(page.locator("#life-b")).toBeChecked();
+      await expect.poll(() => listeners(page)).toBe(3);
+      await expect(page.locator('input[name="life"]')).toHaveCount(1);
+    });
     test("vertical arrows Home End skip disabled choices and follow native loop boundaries", async ({
       page,
     }) => {
@@ -467,12 +494,23 @@ for (const custom of [false, true]) {
         contentType: "application/json",
       });
       await instrumentReset(page);
-      await page.goto(new URL(consumer.route, hosted.baseURL).href);
+      const url = new URL(consumer.route, hosted.baseURL);
+      url.searchParams.set("remove-after-native", "true");
+      await page.goto(url.href);
       await expect(page.locator('[data-ready="true"]')).toBeVisible();
       await expect.poll(() => listeners(page)).toBe(3);
       await page.locator("#life-b").click();
+      const retained = await page.locator('input[name="life"]').elementHandle();
+      if (!retained) throw new Error("missing actual lifecycle field");
       await button(page, "Reset and remove radio").click();
       await expect(page.locator("#life-group")).toHaveCount(0);
+      expect(
+        await retained.evaluate((node) => {
+          if (!(node instanceof HTMLInputElement))
+            throw new Error("native input required");
+          return { connected: node.isConnected, value: node.value };
+        }),
+      ).toEqual({ connected: false, value: "a" });
       await expect(page.locator("#life-value")).toHaveText("a");
       await expect.poll(() => listeners(page)).toBe(3);
       await button(page, "Remount radio").click();

@@ -30,7 +30,7 @@ Native orientation, loop, RTL, disabled, readonly and onValueChange own selectio
 Group children has no arguments; Item children receives checked; delegated child receives native props (and checked for Item).
 Supply a fieldset/legend or explicit group name and separate item labels.
 Group has no form prop; Item's button form does not associate the group field.
-Exactly one offscreen text field preserves the native successful-value/required policy and restores the per-instance initial value after uncanceled containing-form resets.
+Exactly one offscreen text field preserves the native successful-value/required policy. Initial value seeds its native default; uncanceled resets synchronize the completed field's value, preserving current defaults, intervening edits and incoming/outgoing DOM form reassociation. Removal cleans up its listener and pending timers.
 Empty-value arrows move focus without selecting; nonempty arrows/Home/End select.
 Dynamic choice removal retains the selected string until caller/native selection changes it.
 There is no numeric index, selection store or RadioIndicator.

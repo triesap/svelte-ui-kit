@@ -20,10 +20,14 @@
     const tree = input.getRootNode();
     const pending: number[] = [];
     const reset = (event: Event) => {
-      if (event.target !== input.form) return;
+      const originalOwner = input.form;
       const timer = window.setTimeout(() => {
         pending.splice(pending.indexOf(timer), 1);
-        if (!event.defaultPrevented) value = initialValue;
+        if (
+          !event.defaultPrevented &&
+          (event.target === originalOwner || event.target === input.form)
+        )
+          value = input.value;
       }, 0);
       pending.push(timer);
     };

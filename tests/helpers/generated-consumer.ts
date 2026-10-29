@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { runGeneratedCommand } from "./generated-command.js";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
@@ -71,13 +71,7 @@ function buildComponentConsumer(
           : [["init"], ["add", item]];
     const executable = path.join(packageRoot, "dist/cli/main.js");
     for (const args of commands) {
-      const result = spawnSync(
-        process.execPath,
-        [executable, ...args, "--json", "--cwd", fixture.root],
-        { cwd: fixture.root, encoding: "utf8", timeout: 30000 },
-      );
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-      assert.equal(result.stderr, "");
+      runGeneratedCommand(fixture.root, executable, args);
     }
     const sources =
       item === "field"
@@ -322,8 +316,12 @@ function buildComponentConsumer(
       },
     };
   } catch (error) {
-    fixture.cleanup();
-    throw error;
+    // Failed generation/check/build inputs stay available for diagnosis. No
+    // production server has started; successful callers still own cleanup.
+    throw new Error(
+      `Generated consumer retained at ${fixture.root}: ${String(error)}`,
+      { cause: error },
+    );
   }
 }
 
@@ -498,6 +496,15 @@ export function buildResetSemanticsConsumer(
   );
 }
 
+export function buildFormResetRacesConsumer(custom: boolean) {
+  return buildInstalledItemsConsumer(custom, "form-reset-races", [
+    "field",
+    "checkbox",
+    "switch",
+    "radio",
+  ]);
+}
+
 export function buildWrapperConsumer(custom: boolean) {
   const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
   return buildInstalledItemsConsumer(
@@ -552,13 +559,7 @@ export function buildCatalogThemesConsumer(custom: boolean) {
         `${folder}/Catalog.svelte`,
       ];
       const before = files.map((file) => readFileSync(path.join(root, file)));
-      const result = spawnSync(
-        process.execPath,
-        [path.resolve("dist/cli/main.js"), "sync", "--json", "--cwd", root],
-        { cwd: root, encoding: "utf8", timeout: 30000 },
-      );
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-      assert.equal(result.stderr, "");
+      runGeneratedCommand(root, path.resolve("dist/cli/main.js"), ["sync"]);
       preservation = Object.fromEntries(
         files.map((file, index) => {
           assert.ok(
@@ -700,20 +701,10 @@ function buildInstalledItemsConsumer(
     process.cwd(),
     (root, config) => {
       for (const item of requested.filter((item) => item !== "field")) {
-        const result = spawnSync(
-          process.execPath,
-          [
-            path.resolve("dist/cli/main.js"),
-            "add",
-            item,
-            "--json",
-            "--cwd",
-            root,
-          ],
-          { cwd: root, encoding: "utf8", timeout: 30000 },
-        );
-        assert.equal(result.status, 0, result.stdout + result.stderr);
-        assert.equal(result.stderr, "");
+        runGeneratedCommand(root, path.resolve("dist/cli/main.js"), [
+          "add",
+          item,
+        ]);
       }
       const lock = JSON.parse(
         readFileSync(
@@ -904,20 +895,10 @@ export function buildFieldFormsConsumer(custom: boolean) {
     process.cwd(),
     (root, config) => {
       for (const item of ["checkbox", "switch", "radio"]) {
-        const result = spawnSync(
-          process.execPath,
-          [
-            path.resolve("dist/cli/main.js"),
-            "add",
-            item,
-            "--json",
-            "--cwd",
-            root,
-          ],
-          { cwd: root, encoding: "utf8", timeout: 30000 },
-        );
-        assert.equal(result.status, 0, result.stdout + result.stderr);
-        assert.equal(result.stderr, "");
+        runGeneratedCommand(root, path.resolve("dist/cli/main.js"), [
+          "add",
+          item,
+        ]);
       }
       const lock = JSON.parse(
         readFileSync(
