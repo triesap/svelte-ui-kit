@@ -63,6 +63,7 @@
     "test:browser": "pnpm run fixture:build && playwright test --config playwright.config.ts",
     "test:package": "pnpm run build && node tools/run-unit-tests.mjs --suite package",
     "native:prepare": "node tools/prepare-native-dependency.mjs --fixture",
+    "native:runtime:check": "tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-svelte-runtime.ts tools/build-svelte-runtime.test.ts tools/native-runtime/archive.ts tools/native-runtime/recipe.ts && node --test tools/build-svelte-runtime.test.ts",
     "check:ci": "node tools/check-ci.mjs",
     "test:ci": "node --test tools/check-ci.test.mjs",
     "check:docs": "node tools/check-docs.mjs",

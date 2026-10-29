@@ -237,6 +237,8 @@ jobs:
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
       - name: node --test --test-concurrency=1 tools/build-native-dependency.test.mjs tools/prepare-native-dependency.test.mjs
         run: node --test --test-concurrency=1 tools/build-native-dependency.test.mjs tools/prepare-native-dependency.test.mjs
+      - name: pnpm run native:runtime:check
+        run: pnpm run native:runtime:check
   filesystem:
     name: filesystem (${{ matrix.os }})
     runs-on: ${{ matrix.os }}

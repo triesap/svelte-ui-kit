@@ -87,3 +87,54 @@ Strict installation, raw checking/compiler exits, actual Svelte bindings and a
 production consumer build are assessed separately. Qualification logs remain in the ignored development artifact boundary. These controls complement the
 required full runtime and delivery acceptance; they do not claim exhaustive
 type equivalence or independent acceptance.
+
+## Svelte reset-runtime producer
+
+[The runtime producer](../../tools/build-svelte-runtime.ts) authenticates the
+official Svelte 5.57.3 npm archive against the immutable SHA-256 and SHA-512 in
+[its typed recipe](../../tools/native-runtime/recipe.ts). The
+[source patch](../../tools/native-runtime/reset-dispatch.patch) applies only in
+an owned extraction. It waits for native reset dispatch to finish before reading
+current DOM values, includes controls replaced during dispatch and moved original
+controls, and makes destroyed binding callbacks inert. Already completed
+programmatic dispatch keeps its microtask timing. It preserves the upstream
+compiler, declarations, runtime dependencies, exports and MIT notice.
+
+pnpm normalizes SemVer build metadata while packing. The manifest therefore
+honestly retains upstream version 5.57.3 and carries a separate
+`svelteUiKitNative.buildId`. Exact archive, provenance and installed-inventory
+authentication must distinguish this variant from an unpatched same-version
+installation; version compatibility alone cannot establish corrected behavior.
+No peer override or installed/store patch is involved.
+
+```sh
+node tools/build-svelte-runtime.ts --output .native-build/svelte-reproduction
+pnpm run native:runtime:check
+pnpm exec playwright test tests/browser/reset-semantics.spec.ts
+```
+
+Output must be absent and have regular ancestry. `--source` optionally reads the
+exact upstream archive locally; `--baseline` builds the unpatched causal control.
+Actual streamed/file bytes are bounded before complete allocation. Real pnpm
+packs select the distribution, followed by canonical gzip metadata, an inventory
+of the actual selected files and a final pack containing its provenance. The
+regression independently reproduces identical archives, checks every unchanged
+source/compiler/type/notice input and exercises corrupt/unsafe source and output
+refusals. Generated archives and reports remain development artifacts.
+
+This is a producer qualification component. The normal CLI dependency graph,
+installed-source authentication and bundled delivery still select their current
+dependencies. The reset browser helper first generates real application-owned
+Fields, then creates a fresh strict/frozen installation of the candidate. It
+qualifies six TextInput types, TextArea and NativeSelect against plain DOM and raw
+Svelte, synchronous cancellation, replacement, movement, intervening edits,
+later mounts, teardown and detach-during-reset. Setting the test-only
+`SUIK_RESET_CAUSAL_CONTROL=unpatched` builds the control through the identical
+installation path; the cancellation assertions must genuinely fail there.
+
+Normal runtime adoption additionally requires authentication/refusal and packed
+consumer qualification plus the remaining native binding-family checks. The
+patch retains upstream raw `bind:group` default-value behavior. Group defaults,
+already-detached/shadow-root reset dispatch and asynchronous cancellation are
+separate native boundaries; the Field qualification does not claim to resolve
+them or qualify an arbitrary Svelte application.

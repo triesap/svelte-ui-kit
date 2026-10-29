@@ -9,6 +9,10 @@ import {
 } from "../../src/project/config.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
+import {
+  installQualificationRuntime,
+  type QualificationRuntime,
+} from "./qualification-runtime.js";
 
 /** Build real CLI-installed applications; never mutate the maintained fixture. */
 function buildComponentConsumer(
@@ -479,6 +483,18 @@ export function buildCatalogConsumer(custom: boolean) {
         `import * as UI from ${JSON.stringify(module)};\nimport type {${types.join(",")}} from ${JSON.stringify(module)};\nexport const catalogValues = [${values.join(",")}];\nexport type CatalogTypes = [${types.join(",")}];\n`,
       );
     },
+  );
+}
+
+export function buildResetSemanticsConsumer(
+  custom: boolean,
+  runtime?: QualificationRuntime,
+) {
+  return buildInstalledItemsConsumer(
+    custom,
+    "reset-semantics",
+    ["field"],
+    runtime ? (root) => installQualificationRuntime(root, runtime) : undefined,
   );
 }
 

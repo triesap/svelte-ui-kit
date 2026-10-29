@@ -84,6 +84,7 @@ export const CI_LANES = Object.freeze({
     minutes: 45,
     commands: [
       "node --test --test-concurrency=1 tools/build-native-dependency.test.mjs tools/prepare-native-dependency.test.mjs",
+      "pnpm run native:runtime:check",
     ],
   },
   filesystem: {
@@ -118,6 +119,8 @@ const scripts = Object.freeze({
   "test:package":
     "pnpm run build && node tools/run-unit-tests.mjs --suite package",
   "test:harness": "node --test tools/run-unit-tests.test.mjs",
+  "native:runtime:check":
+    "tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-svelte-runtime.ts tools/build-svelte-runtime.test.ts tools/native-runtime/archive.ts tools/native-runtime/recipe.ts && node --test tools/build-svelte-runtime.test.ts",
   "test:cli-bootstrap": "node --test tests/smoke/cli-bootstrap.test.mjs",
   "fixture:tokens:check": "node tools/project-token-fixture.mjs --check",
   "fixture:check":

@@ -1,0 +1,63 @@
+diff --git a/src/internal/client/dom/elements/misc.js b/src/internal/client/dom/elements/misc.js
+index ad34ab9..4aafb1a 100644
+--- a/src/internal/client/dom/elements/misc.js
++++ b/src/internal/client/dom/elements/misc.js
+@@ -44,7 +44,9 @@ export function add_form_reset_listener() {
+-				// Needs to happen one tick later or else the dom properties of the form
+-				// elements have not updated to their reset values yet
+-				Promise.resolve().then(() => {
+-					if (!evt.defaultPrevented) {
+-						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
+-							/** @type {any} */ (e)[FORM_RESET_HANDLER]?.();
+-						}
++				const form = /** @type {HTMLFormElement} */ (evt.target);
++				const original_elements = Array.from(form.elements);
++				const complete = () => {
++					if (evt.defaultPrevented) return;
++					// A reset listener may replace controls before the native default
++					// action, or move originals elsewhere. Synchronize current DOM truth
++					// without imposing captured defaults on later edits or mounts.
++					for (const element of new Set([...original_elements, ...form.elements])) {
++						/** @type {any} */ (element)[FORM_RESET_HANDLER]?.();
+@@ -51,0 +54,7 @@ export function add_form_reset_listener() {
++				};
++				Promise.resolve().then(() => {
++					// UA event dispatch can checkpoint microtasks between listeners. A
++					// task waits for cancellation and the native default action. Completed
++					// programmatic dispatch retains its existing await tick() timing.
++					if (evt.eventPhase === Event.NONE) complete();
++					else setTimeout(complete, 0);
+diff --git a/src/internal/client/dom/elements/bindings/shared.js b/src/internal/client/dom/elements/bindings/shared.js
+index 303890a..7a92bf4 100644
+--- a/src/internal/client/dom/elements/bindings/shared.js
++++ b/src/internal/client/dom/elements/bindings/shared.js
+@@ -61 +61,2 @@ export function listen_to_event_and_reset_event(element, event, handler, on_rese
+-	element.addEventListener(event, () => without_reactive_context(handler));
++	const listener = () => without_reactive_context(handler);
++	element.addEventListener(event, listener);
+@@ -63,10 +64,15 @@ export function listen_to_event_and_reset_event(element, event, handler, on_rese
+-	if (prev) {
+-		// special case for checkbox that can have multiple binds (group & checked)
+-		/** @type {any} */ (element)[FORM_RESET_HANDLER] = () => {
+-			prev();
+-			on_reset(true);
+-		};
+-	} else {
+-		/** @type {any} */ (element)[FORM_RESET_HANDLER] = () => on_reset(true);
+-	}
+-
++	let active = true;
++	const reset = () => {
++		prev?.();
++		if (active) on_reset();
++	};
++	// Preserve multiple native bindings on one checkbox. Teardown makes an
++	// old closure inert even if another binding still chains through it.
++	/** @type {any} */ (element)[FORM_RESET_HANDLER] = reset;
++	teardown(() => {
++		active = false;
++		element.removeEventListener(event, listener);
++		if (/** @type {any} */ (element)[FORM_RESET_HANDLER] === reset) {
++			/** @type {any} */ (element)[FORM_RESET_HANDLER] = prev;
++		}
++	});
