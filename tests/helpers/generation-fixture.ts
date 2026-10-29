@@ -2,12 +2,12 @@
 import assert from "node:assert/strict";
 import { chmodSync, copyFileSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { parse } from "yaml";
 import { parseTargetConfig } from "../../src/project/target-config.js";
 import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
 import { createTempProject } from "./project.js";
 import { writeFixtureWorkspace } from "./workspace-catalog.js";
 import { composeGenerationFoundation } from "./generation-project.js";
+import { linkQualifiedFixtureRuntime } from "./qualified-runtime.js";
 
 export function generationFixture(
   t: { after(fn: () => void): void },
@@ -30,9 +30,6 @@ export function generationFixture(
   assert.ok(parsed.ok, JSON.stringify(parsed));
   const config = parsed.value;
   writeFixtureWorkspace(project.root);
-  const catalog = parse(
-    readFileSync(path.join(owner, "pnpm-workspace.yaml"), "utf8"),
-  ).catalog;
   project.writeFile(
     "package.json",
     JSON.stringify({
@@ -72,9 +69,9 @@ export function generationFixture(
       },
     }),
   );
-  project.writeFile(
-    "node_modules/svelte/package.json",
-    JSON.stringify({ name: "svelte", version: catalog.svelte }),
+  linkQualifiedFixtureRuntime(
+    project,
+    target === "astro" ? "dependencies" : "devDependencies",
   );
   project.writeDir("vendor");
   copyFileSync(

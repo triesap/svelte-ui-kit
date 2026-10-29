@@ -5,6 +5,7 @@ import type {
 } from "../project/generation-config.js";
 import {
   generationLockContext,
+  generationTarget,
   integrationMapping,
   parseGenerationConfig as parseKitConfig,
   type GenerationConfig as KitConfig,
@@ -46,10 +47,7 @@ import {
   renderDependencyInstructionsFromEvidence,
   type DependencyInstruction,
 } from "../project/dependency-instructions.js";
-import {
-  generationLockIdentity,
-  generationTarget,
-} from "../project/generation-config.js";
+import { generationLockIdentity } from "../project/generation-config.js";
 import {
   planDependencies,
   type DependencyPlan,
@@ -426,12 +424,19 @@ export function planAdd(
   const peers = dependencyPlan.value.entries
     .filter((entry) => entry.roles.includes("peer"))
     .map((entry) => `${entry.name}@${entry.range}`);
+  const runtimeRequirement = {
+    name: "svelte",
+    range: registry.root.compatibility.svelte,
+  };
+  const runtimePeer = `${runtimeRequirement.name}@${runtimeRequirement.range}`;
+  if (!peers.includes(runtimePeer)) peers.push(runtimePeer);
   // Derive every dependency/manager decision from the evidence captured with
   // the target snapshot; the live filesystem is never re-read.
   const environment = snapshot.environment;
   const dependencyEvidence: DependencyEvidence = {
     manifest: environment.manifest,
     nativeFile: environment.nativeFile,
+    nativeFiles: environment.nativeFiles,
     observe: (name) => {
       const found = environment.installed.get(name);
       if (found !== undefined) return found;
@@ -441,17 +446,20 @@ export function planAdd(
   const instructions = renderDependencyInstructionsFromEvidence(
     environment.manager,
     environment.managerIssues,
-    { runtime, peers },
+    { runtime, peers, target: generationTarget(config) },
   );
   if (!instructions.ok) return fail(instructions.issues);
   // Compose the declared/installed/peer readiness evidence when the selected
   // package provides a manifest; readiness semantics stay owned by S038/S039.
   const dependencyStateResult = inspectDependencyStateFromEvidence(
     dependencyEvidence,
-    dependencyPlan.value.entries.map((entry) => ({
-      name: entry.name,
-      range: entry.range,
-    })),
+    [
+      ...dependencyPlan.value.entries.map((entry) => ({
+        name: entry.name,
+        range: entry.range,
+      })),
+      runtimeRequirement,
+    ],
   );
   const dependencyIssues: ModelIssue[] = [];
   let dependencyState: readonly DependencyStateEntry[] | null = null;

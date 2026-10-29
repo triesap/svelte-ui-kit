@@ -37,13 +37,13 @@ test("declared and installed compatible state is ready", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { svelte: "^5.0.0" } }),
+    JSON.stringify({ dependencies: { "peer-fixture": "^5.0.0" } }),
   );
-  install(project, "svelte", "5.57.3");
+  install(project, "peer-fixture", "5.57.3");
 
   const before = snapshotTree(project.root);
   const result = inspectDependencyState(project.root, [
-    { name: "svelte", range: "^5.0.0" },
+    { name: "peer-fixture", range: "^5.0.0" },
   ]);
   const after = snapshotTree(project.root);
 
@@ -101,12 +101,12 @@ test("a declared range disjoint from the required range is not ready", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { svelte: "^4" } }),
+    JSON.stringify({ dependencies: { "peer-fixture": "^4" } }),
   );
-  install(project, "svelte", "5.57.3");
+  install(project, "peer-fixture", "5.57.3");
 
   const result = inspectDependencyState(project.root, [
-    { name: "svelte", range: "^5" },
+    { name: "peer-fixture", range: "^5" },
   ]);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
@@ -118,12 +118,12 @@ test("a compatible declared range that is not a subset is ready", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { svelte: ">=5 <7" } }),
+    JSON.stringify({ dependencies: { "peer-fixture": ">=5 <7" } }),
   );
-  install(project, "svelte", "6.0.0");
+  install(project, "peer-fixture", "6.0.0");
 
   const result = inspectDependencyState(project.root, [
-    { name: "svelte", range: "^5 || ^6" },
+    { name: "peer-fixture", range: "^5 || ^6" },
   ]);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
@@ -135,12 +135,12 @@ test("a beta install does not satisfy a stable range", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { svelte: "^5" } }),
+    JSON.stringify({ dependencies: { "peer-fixture": "^5" } }),
   );
-  install(project, "svelte", "5.58.0-beta.1");
+  install(project, "peer-fixture", "5.58.0-beta.1");
 
   const result = inspectDependencyState(project.root, [
-    { name: "svelte", range: "^5" },
+    { name: "peer-fixture", range: "^5" },
   ]);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
@@ -152,12 +152,12 @@ test("an installed incompatible version is reported", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ devDependencies: { svelte: "^5.0.0" } }),
+    JSON.stringify({ devDependencies: { "peer-fixture": "^5.0.0" } }),
   );
-  install(project, "svelte", "6.5.0");
+  install(project, "peer-fixture", "6.5.0");
 
   const result = inspectDependencyState(project.root, [
-    { name: "svelte", range: "^5.0.0" },
+    { name: "peer-fixture", range: "^5.0.0" },
   ]);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
@@ -172,12 +172,12 @@ test("a hoisted ancestor install is resolved", (t) => {
   project.writeFile("package.json", JSON.stringify({ workspaces: ["apps/*"] }));
   project.writeFile(
     "apps/app/package.json",
-    JSON.stringify({ dependencies: { svelte: "^5" } }),
+    JSON.stringify({ dependencies: { "peer-fixture": "^5" } }),
   );
-  install(project, "svelte", "5.57.3");
+  install(project, "peer-fixture", "5.57.3");
 
   const result = inspectDependencyState(`${project.root}/apps/app`, [
-    { name: "svelte", range: "^5" },
+    { name: "peer-fixture", range: "^5" },
   ]);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
@@ -190,12 +190,12 @@ test("a malformed installed version is typed invalid, not absent", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { svelte: "^5" } }),
+    JSON.stringify({ dependencies: { "peer-fixture": "^5" } }),
   );
-  install(project, "svelte", "garbage");
+  install(project, "peer-fixture", "garbage");
 
   const result = inspectDependencyState(project.root, [
-    { name: "svelte", range: "^5" },
+    { name: "peer-fixture", range: "^5" },
   ]);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(codes(result), ["DEPENDENCY_INSTALLED_INVALID"]);
@@ -206,16 +206,19 @@ test("a malformed installed manifest is typed invalid, not absent", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { svelte: "^5" } }),
+    JSON.stringify({ dependencies: { "peer-fixture": "^5" } }),
   );
-  project.writeFile("node_modules/svelte/package.json", "{ not json");
+  project.writeFile("node_modules/peer-fixture/package.json", "{ not json");
 
   const result = inspectDependencyState(project.root, [
-    { name: "svelte", range: "^5" },
+    { name: "peer-fixture", range: "^5" },
   ]);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(codes(result), ["DEPENDENCY_INSTALLED_INVALID"]);
-  assert.equal(observeInstalled(project.root, "svelte").kind, "malformed");
+  assert.equal(
+    observeInstalled(project.root, "peer-fixture").kind,
+    "malformed",
+  );
 });
 
 test("a package-identity mismatch is typed invalid", (t) => {
@@ -223,15 +226,15 @@ test("a package-identity mismatch is typed invalid", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { svelte: "^5" } }),
+    JSON.stringify({ dependencies: { "peer-fixture": "^5" } }),
   );
   project.writeFile(
-    "node_modules/svelte/package.json",
-    JSON.stringify({ name: "not-svelte", version: "5.57.3" }),
+    "node_modules/peer-fixture/package.json",
+    JSON.stringify({ name: "not-peer-fixture", version: "5.57.3" }),
   );
 
   const result = inspectDependencyState(project.root, [
-    { name: "svelte", range: "^5" },
+    { name: "peer-fixture", range: "^5" },
   ]);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(codes(result), ["DEPENDENCY_INSTALLED_INVALID"]);
@@ -242,11 +245,11 @@ test("a malformed declared range is typed invalid", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { svelte: "not a range" } }),
+    JSON.stringify({ dependencies: { "peer-fixture": "not a range" } }),
   );
 
   const result = inspectDependencyState(project.root, [
-    { name: "svelte", range: "^5" },
+    { name: "peer-fixture", range: "^5" },
   ]);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(codes(result), ["DEPENDENCY_DECLARED_INVALID"]);
@@ -258,7 +261,7 @@ test("an invalid required range fails with a typed issue", (t) => {
   project.writeFile("package.json", JSON.stringify({ name: "bad-range" }));
 
   const result = inspectDependencyState(project.root, [
-    { name: "svelte", range: "not a range" },
+    { name: "peer-fixture", range: "not a range" },
   ]);
   assert.equal(result.ok, false);
   assert.deepEqual(codes(result), ["DEPENDENCY_RANGE_INVALID"]);
@@ -284,7 +287,7 @@ test("an injected permission error is a typed logical cause", (t) => {
   syncBuiltinESMExports();
   try {
     const result = inspectDependencyState(project.root, [
-      { name: "svelte", range: "^5" },
+      { name: "peer-fixture", range: "^5" },
     ]);
     assert.equal(result.ok, false, JSON.stringify(result));
     assert.deepEqual(codes(result), ["DEPENDENCY_MANIFEST_UNREADABLE"]);

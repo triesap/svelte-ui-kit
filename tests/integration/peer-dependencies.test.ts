@@ -54,7 +54,7 @@ function plan(
 
 const PEER_PLAN = plan([
   {
-    name: "svelte",
+    name: "peer-fixture",
     range: "^5.33.0",
     roles: ["peer"],
     requiredBy: ["button"],
@@ -73,10 +73,13 @@ test("compatible installed peers pass", (t) => {
   project.writeFile(
     "package.json",
     JSON.stringify({
-      dependencies: { svelte: "^5.33.0", "@internationalized/date": "^3.8.1" },
+      dependencies: {
+        "peer-fixture": "^5.33.0",
+        "@internationalized/date": "^3.8.1",
+      },
     }),
   );
-  install(project, "svelte", "5.57.3");
+  install(project, "peer-fixture", "5.57.3");
   install(project, "@internationalized/date", "3.12.4");
 
   const before = snapshotTree(project.root);
@@ -95,9 +98,9 @@ test("peers are assessed against the actual installed metadata", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { svelte: "^5.33.0" } }),
+    JSON.stringify({ dependencies: { "peer-fixture": "^5.33.0" } }),
   );
-  install(project, "svelte", "5.32.0");
+  install(project, "peer-fixture", "5.32.0");
 
   const result = validatePeerDependencies(project.root, PEER_PLAN);
   assert.equal(result.ok, false);
@@ -108,13 +111,13 @@ test("peers are assessed against the actual installed metadata", (t) => {
 test("a peer a particular wrapper does not use is still assessed", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());
-  // Only svelte is installed; the date peer is required by the closure even
+  // Only peer-fixture is installed; the date peer is required by the closure even
   // though the requested button wrapper does not itself consume it.
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { svelte: "^5.33.0" } }),
+    JSON.stringify({ dependencies: { "peer-fixture": "^5.33.0" } }),
   );
-  install(project, "svelte", "5.57.3");
+  install(project, "peer-fixture", "5.57.3");
 
   const result = validatePeerDependencies(project.root, PEER_PLAN);
   assert.equal(result.ok, false);
@@ -135,10 +138,13 @@ test("a declared but uninstalled peer is reported as not installed", (t) => {
   project.writeFile(
     "package.json",
     JSON.stringify({
-      dependencies: { svelte: "^5.33.0", "@internationalized/date": "^3.8.1" },
+      dependencies: {
+        "peer-fixture": "^5.33.0",
+        "@internationalized/date": "^3.8.1",
+      },
     }),
   );
-  install(project, "svelte", "5.57.3");
+  install(project, "peer-fixture", "5.57.3");
 
   const result = validatePeerDependencies(project.root, PEER_PLAN);
   assert.equal(result.ok, false);
@@ -147,8 +153,18 @@ test("a declared but uninstalled peer is reported as not installed", (t) => {
 
 test("peerRequirementsFromPlan keeps peer roles only and de-duplicates", () => {
   const mixed = plan([
-    { name: "svelte", range: "^5.33.0", roles: ["peer"], requiredBy: ["a"] },
-    { name: "svelte", range: "^5.33.0", roles: ["runtime"], requiredBy: ["b"] },
+    {
+      name: "peer-fixture",
+      range: "^5.33.0",
+      roles: ["peer"],
+      requiredBy: ["a"],
+    },
+    {
+      name: "peer-fixture",
+      range: "^5.33.0",
+      roles: ["runtime"],
+      requiredBy: ["b"],
+    },
     {
       name: "upstream-fixture",
       range: "2.19.3",
@@ -164,7 +180,7 @@ test("peerRequirementsFromPlan keeps peer roles only and de-duplicates", () => {
   ]);
   assert.deepEqual(peerRequirementsFromPlan(mixed), [
     { name: "@internationalized/date", range: "^3.8.1" },
-    { name: "svelte", range: "^5.33.0" },
+    { name: "peer-fixture", range: "^5.33.0" },
   ]);
 });
 
@@ -191,7 +207,7 @@ test("actual installed upstream peers are assessed even when absent from the pla
   installWith(project, "upstream-fixture", "2.19.3", {
     peerDependencies: {
       "@internationalized/date": "^3.8.1",
-      svelte: "^5.33.0",
+      "peer-fixture": "^5.33.0",
     },
   });
 
@@ -217,7 +233,7 @@ test("actual installed upstream peers are assessed even when absent from the pla
   assert.ok(
     issues.some(
       (entry) =>
-        entry.code === "PEER_MISSING" && entry.message.includes("svelte"),
+        entry.code === "PEER_MISSING" && entry.message.includes("peer-fixture"),
     ),
     JSON.stringify(result),
   );
@@ -232,18 +248,18 @@ test("satisfied actual upstream peers pass", (t) => {
       dependencies: {
         "upstream-fixture": "2.19.3",
         "@internationalized/date": "^3.8.1",
-        svelte: "^5.33.0",
+        "peer-fixture": "^5.33.0",
       },
     }),
   );
   installWith(project, "upstream-fixture", "2.19.3", {
     peerDependencies: {
       "@internationalized/date": "^3.8.1",
-      svelte: "^5.33.0",
+      "peer-fixture": "^5.33.0",
     },
   });
   install(project, "@internationalized/date", "3.12.4");
-  install(project, "svelte", "5.57.3");
+  install(project, "peer-fixture", "5.57.3");
 
   const runtimePlan = plan([
     {
@@ -302,6 +318,38 @@ test("an optional upstream peer is skipped when not independently required", (t)
   assert.equal(result.ok, true, JSON.stringify(result));
 });
 
+test("a skipped optional upstream peer is not made mandatory by the selected package's optional peer", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({
+      dependencies: { "upstream-fixture": "2.19.3" },
+      peerDependencies: { "@internationalized/date": "^3.8.1" },
+      peerDependenciesMeta: { "@internationalized/date": { optional: true } },
+    }),
+  );
+  installWith(project, "upstream-fixture", "2.19.3", {
+    peerDependencies: { "@internationalized/date": "^3.8.1" },
+    peerDependenciesMeta: { "@internationalized/date": { optional: true } },
+  });
+  const before = snapshotTree(project.root);
+  const result = validatePeerDependencies(
+    project.root,
+    plan([
+      {
+        name: "upstream-fixture",
+        range: "2.19.3",
+        roles: ["runtime"],
+        requiredBy: ["button"],
+      },
+    ]),
+  );
+  assert.ok(result.ok, JSON.stringify(result));
+  assert.deepEqual(result.value, []);
+  assert.deepEqual(snapshotTree(project.root), before);
+});
+
 /**
  * RCLD03-R2-1: a runtime registry requirement makes the package independently
  * required, so an upstream optional peer that conflicts with it is mandatory.
@@ -311,13 +359,13 @@ test("a runtime requirement promotes a conflicting optional upstream peer", (t) 
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ dependencies: { bits: "1.0.0", svelte: "^5" } }),
+    JSON.stringify({ dependencies: { bits: "1.0.0", "peer-fixture": "^5" } }),
   );
   installWith(project, "bits", "1.0.0", {
-    peerDependencies: { svelte: "^4" },
-    peerDependenciesMeta: { svelte: { optional: true } },
+    peerDependencies: { "peer-fixture": "^4" },
+    peerDependenciesMeta: { "peer-fixture": { optional: true } },
   });
-  install(project, "svelte", "5.57.3");
+  install(project, "peer-fixture", "5.57.3");
 
   const runtimePlan = plan([
     {
@@ -326,7 +374,12 @@ test("a runtime requirement promotes a conflicting optional upstream peer", (t) 
       roles: ["runtime"],
       requiredBy: ["button"],
     },
-    { name: "svelte", range: "^5", roles: ["runtime"], requiredBy: ["button"] },
+    {
+      name: "peer-fixture",
+      range: "^5",
+      roles: ["runtime"],
+      requiredBy: ["button"],
+    },
   ]);
   const result = validatePeerDependencies(project.root, runtimePlan);
   assert.equal(result.ok, false, JSON.stringify(result));

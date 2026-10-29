@@ -8,7 +8,10 @@ import { validRange } from "semver";
 import { issue, type ModelIssue } from "../registry/errors.js";
 import { readJsonObject, observeEntry, type JsonObservation } from "./io.js";
 import { workspaceDeclaresMember } from "./root.js";
-import { NATIVE_BASELINE, observeNativeFile } from "./native-dependency.js";
+import {
+  isQualifiedNativeName,
+  observeNativeFile,
+} from "./native-dependency.js";
 
 export interface CatalogObservation {
   /** Derived declaration view; physical manifest evidence always binds raw bytes. */
@@ -194,10 +197,16 @@ export function observeCatalogs(
           "catalog archive belongs to the workspace; declare the authenticated archive in the selected package explicitly",
         );
       if (value.startsWith("file:")) {
-        const native = observeNativeFile(root, {
-          [reference.field]: { [reference.name]: value },
-        });
-        if (reference.name !== NATIVE_BASELINE.name || native.kind !== "value")
+        if (!isQualifiedNativeName(reference.name))
+          throw new Error("catalog file has no qualified native profile");
+        const native = observeNativeFile(
+          root,
+          {
+            [reference.field]: { [reference.name]: value },
+          },
+          reference.name,
+        );
+        if (native.kind !== "value")
           throw new Error(
             "catalog file is not the authenticated selected-package native archive",
           );

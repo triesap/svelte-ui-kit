@@ -17,7 +17,7 @@ import { resolveEffectiveConfig } from "../../src/codegen/effective-config.js";
 import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 
 const yaml =
-  "packages:\n  - apps/*\ncatalog:\n  svelte: 5.57.3\ncatalogs:\n  compatible:\n    upstream-fixture: 2.19.3\n";
+  "packages:\n  - apps/*\ncatalog:\n  runtimefixture: 5.57.3\ncatalogs:\n  compatible:\n    upstream-fixture: 2.19.3\n";
 
 function fixture(t: { after(fn: () => void): void }) {
   const workspace = createTempProject();
@@ -34,7 +34,7 @@ function fixture(t: { after(fn: () => void): void }) {
       type: "module",
       private: true,
       dependencies: {
-        svelte: "catalog:",
+        runtimefixture: "catalog:",
         "upstream-fixture": "catalog:compatible",
       },
       devDependencies: { "@sveltejs/kit": "2.70.3" },
@@ -42,7 +42,7 @@ function fixture(t: { after(fn: () => void): void }) {
     }),
   );
   for (const [name, version] of [
-    ["svelte", "5.57.3"],
+    ["runtimefixture", "5.57.3"],
     ["upstream-fixture", "2.19.3"],
   ])
     workspace.writeFile(
@@ -57,7 +57,7 @@ test("default and named catalogs resolve read-only inside the proven workspace",
   workspace.writeFile(".hidden/keep", "unchanged");
   const before = snapshotTree(workspace.root);
   const result = inspectDependencyState(root, [
-    { name: "svelte", range: "^5" },
+    { name: "runtimefixture", range: "^5" },
     { name: "upstream-fixture", range: "^2" },
   ]);
   assert.equal(result.ok, true, JSON.stringify(result));
@@ -72,21 +72,21 @@ test("default and named catalogs resolve read-only inside the proven workspace",
 test("catalog declarations retain strict installed version and package identity checks", (t) => {
   const { workspace, root } = fixture(t);
   workspace.writeFile(
-    "apps/web/node_modules/svelte/package.json",
-    JSON.stringify({ name: "svelte", version: "4.2.0" }),
+    "apps/web/node_modules/runtimefixture/package.json",
+    JSON.stringify({ name: "runtimefixture", version: "4.2.0" }),
   );
   const incompatible = inspectDependencyState(root, [
-    { name: "svelte", range: "^5" },
+    { name: "runtimefixture", range: "^5" },
   ]);
   assert.equal(incompatible.ok, true);
   if (incompatible.ok)
     assert.equal(incompatible.value[0]?.status, "install_incompatible");
   workspace.writeFile(
-    "apps/web/node_modules/svelte/package.json",
+    "apps/web/node_modules/runtimefixture/package.json",
     JSON.stringify({ name: "foreign", version: "5.57.3" }),
   );
   assert.equal(
-    inspectDependencyState(root, [{ name: "svelte", range: "^5" }]).ok,
+    inspectDependencyState(root, [{ name: "runtimefixture", range: "^5" }]).ok,
     false,
   );
 });
@@ -94,18 +94,27 @@ test("catalog declarations retain strict installed version and package identity 
 test("malformed, duplicate, aliased, missing and foreign catalog declarations refuse without writes", (t) => {
   const { workspace, root } = fixture(t);
   for (const input of [
-    yaml.replace("svelte: 5.57.3", "svelte: 5.57.3\n  svelte: 5.57.2"),
     yaml.replace(
-      "svelte: 5.57.3",
-      "svelte: &version 5.57.3\n  other: *version",
+      "runtimefixture: 5.57.3",
+      "runtimefixture: 5.57.3\n  runtimefixture: 5.57.2",
     ),
-    yaml.replace("svelte: 5.57.3", "svelte: !foreign 5.57.3"),
-    yaml.replace("svelte: 5.57.3", "other: 5.57.3"),
-    yaml.replace("svelte: 5.57.3", "svelte: catalog:compatible"),
-    yaml.replace("svelte: 5.57.3", "svelte: file:./vendor/foreign.tgz"),
+    yaml.replace(
+      "runtimefixture: 5.57.3",
+      "runtimefixture: &version 5.57.3\n  other: *version",
+    ),
+    yaml.replace("runtimefixture: 5.57.3", "runtimefixture: !foreign 5.57.3"),
+    yaml.replace("runtimefixture: 5.57.3", "other: 5.57.3"),
+    yaml.replace(
+      "runtimefixture: 5.57.3",
+      "runtimefixture: catalog:compatible",
+    ),
+    yaml.replace(
+      "runtimefixture: 5.57.3",
+      "runtimefixture: file:./vendor/foreign.tgz",
+    ),
     yaml.replace(
       "  compatible:",
-      "  default:\n    svelte: 5.57.3\n  compatible:",
+      "  default:\n    runtimefixture: 5.57.3\n  compatible:",
     ),
     yaml + "catalogFile: ./other.yaml\n",
   ]) {
@@ -129,7 +138,7 @@ test("catalogs cannot cross a Git boundary, an excluded member or a symlink", (t
   );
   workspace.writeFile(
     "apps/web/pnpm-workspace.yaml",
-    "packages:\n  - .\ncatalog:\n  svelte: 5.57.3\ncatalogs:\n  compatible:\n    upstream-fixture: 2.19.3\n",
+    "packages:\n  - .\ncatalog:\n  runtimefixture: 5.57.3\ncatalogs:\n  compatible:\n    upstream-fixture: 2.19.3\n",
   );
   assert.equal(
     observeCatalogs(root).issues.length,
@@ -211,9 +220,9 @@ test("captured catalog projection is immutable and later workspace edits invalid
       string,
       string
     >;
-    assert.equal(declared.svelte, "5.57.3");
+    assert.equal(declared.runtimefixture, "5.57.3");
     assert.throws(() => {
-      declared.svelte = "4.2.0";
+      declared.runtimefixture = "4.2.0";
     }, TypeError);
   }
   workspace.writeFile("pnpm-workspace.yaml", yaml.replace("5.57.3", "5.57.2"));

@@ -40,7 +40,7 @@ import {
   nativeArchiveIssues,
   nativeDeclaration,
   nativeInstallIssues,
-  NATIVE_BASELINE,
+  isQualifiedNativeName,
   observeNativeFile,
   observeNativeInstall,
 } from "../project/native-dependency.js";
@@ -1150,7 +1150,7 @@ export function verifyInstalledReads(
     // The fixed native identity authenticates every distribution file, so a
     // changed declaration/runtime/provenance cannot hide behind an unchanged
     // package manifest. This adds no write authority or serialized plan field.
-    if (entry.name === NATIVE_BASELINE.name) {
+    if (isQualifiedNativeName(entry.name)) {
       let manifest: { version?: unknown };
       try {
         manifest = JSON.parse(readFileSync(resolved, "utf8")) as {
@@ -1160,7 +1160,7 @@ export function verifyInstalledReads(
         issues.push(
           issue(
             "AUTHORITY_INSTALLED_CHANGED",
-            "Installed Bits identity became invalid since planning.",
+            `Installed ${entry.name} identity became invalid since planning.`,
             entry.name,
           ),
         );
@@ -1173,11 +1173,18 @@ export function verifyInstalledReads(
         ...catalog.issues,
         ...nativeInstallIssues(
           manifest.version,
-          observeNativeInstall(path.dirname(resolved), manifest.version),
+          observeNativeInstall(
+            path.dirname(resolved),
+            manifest.version,
+            entry.name,
+          ),
+          manifest.version,
+          entry.name,
         ),
         ...nativeArchiveIssues(
-          nativeDeclaration(selected),
-          observeNativeFile(root, selected),
+          nativeDeclaration(selected, entry.name),
+          observeNativeFile(root, selected, entry.name),
+          entry.name,
         ),
       ];
       if (nativeIssues.length > 0) {

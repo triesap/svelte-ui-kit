@@ -39,9 +39,13 @@ It then runs native Kit sync, the actual package3 CLI and publint. Native compon
 implementation remain unchanged. Installed declarations, reference checkouts
 and package stores are never patched.
 
-Readiness and guarded application require the exact raw qualified version,
+Readiness requires the exact raw qualified version,
 positive installed provenance and full inventory authentication, and the selected
-application's own authenticated archive declaration. Semver-equivalent v-prefixed
+application's own authenticated archive declaration. Source generation before
+installation remains permitted with explicit unready diagnostics and installation
+instructions; it does not qualify an application runtime. Present native installs
+must authenticate before planning or guarded application, including no-change
+initialization. Semver-equivalent v-prefixed
 or build-metadata versions are refused. Captured proof cannot substitute for live
 revalidation after a declaration, archive, runtime or provenance change. Hoisted
 and pnpm installs remain supported; a parent application's archive cannot stand
@@ -55,6 +59,15 @@ root, enclosing ancestry and selected alias. Retained directory receipts catch
 changes introduced by a later sibling read. No successful authentication is
 cached between mutation boundaries, and the archive/provenance/manifest and late
 physical or byte checks remain live at their existing boundaries.
+
+pnpm 12.16.1 can add `node_modules/.bin/acorn` inside an installed local Svelte
+package. The measured Acorn 8.18.0 and 8.19.0 shim fingerprints are the only
+permitted installer metadata. If that `node_modules` directory exists, the exact
+regular shim and all its real ancestry are required. Its bytes join the same
+fresh descriptor-hashed inventory; missing, altered or linked shims and every
+other extra entry, including shadow dependencies, refuse. Plain archive extraction
+has no such metadata. This does not qualify arbitrary installers or layouts and
+does not add installer files to the unchanged shipped provenance.
 
 ## Reproduce
 
@@ -72,10 +85,10 @@ members in `dist/native`. Matching existing files retain their bytes, identity
 and mode; foreign, linked or mismatched inputs refuse. The Svelte producer's
 `report.json` remains regular diagnostic data in its source cache and is never
 delivery authority or a bundled member. Shared preparation I/O keeps the legacy
-synchronous Bits-only preparer available for focused controls. Copying archives
-into fixture caches does not select them as installed dependencies; normal
-corrected-Svelte capture, enforcement and consumer adoption require their own
-integration qualification. The CLI's compiler dependency and public peer ranges
+synchronous Bits-only preparer available for focused controls. Maintained
+application manifests select both archives explicitly; the library uses local
+development dependencies and retains SemVer peers. Copying archives alone does
+not establish installed qualification. The CLI's compiler dependency and public peer ranges
 remain ordinary upstream SemVer declarations.
 
 Existing fixture and bundle targets and their ancestry are preflighted as one
@@ -188,9 +201,9 @@ regression independently reproduces identical archives, checks every unchanged
 source/compiler/type/notice input and exercises corrupt/unsafe source and output
 refusals. Generated archives and reports remain development artifacts.
 
-This is a producer qualification component. The normal CLI dependency graph,
-installed-source authentication and bundled delivery still select their current
-dependencies. The reset browser helper first generates real application-owned
+The normal application dependency graph, installed-source authentication and
+bundled delivery select this corrected runtime. The CLI's authoring compiler
+remains the unchanged upstream dependency. The reset browser helper first generates real application-owned
 Fields, then creates a fresh strict/frozen installation of the candidate. It
 qualifies six TextInput types, TextArea and NativeSelect against plain DOM and raw
 Svelte, synchronous cancellation, replacement, movement, intervening edits,
@@ -218,9 +231,15 @@ build ID, complete archive and provenance digests. It shares current-file and
 inventory verification with Bits while retaining a distinct closed provenance
 schema. Official upstream, unpatched and dispatch-only distributions cannot
 satisfy the corrected profile despite sharing the upstream version. Explicit
-selected-application archive proof and installed proof remain separate. This
-profile is an authentication mechanism; normal dependency capture, generation,
-bundled delivery and consumer adoption require their own integration checks.
+selected-application archive proof and installed proof remain separate. Normal
+readiness, peer validation and live guarded write boundaries use this profile
+alongside Bits. Both fixed bundled archives must be explicitly installed in each
+selected consumer; no package manager is executed by generation.
+
+Published peers remain independent of development installs. A library's Svelte
+peer must admit the qualified runtime; selected-package peer ranges for the
+generated dependency closure also constrain peer validation. A valid development
+file cannot conceal an incompatible published Bits or date peer.
 
 Invocation capture keeps a deeply immutable package-indexed archive collection.
 The historical `nativeFile` accessor remains the same Bits observation. Each

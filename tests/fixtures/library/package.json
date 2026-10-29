@@ -41,7 +41,7 @@
     "@sveltejs/package": "catalog:",
     "@internationalized/date": "catalog:",
     "bits-ui": "file:./.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz",
-    "svelte": "catalog:",
+    "svelte": "file:./.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz",
     "svelte-check": "catalog:",
     "typescript": "catalog:",
     "@types/node": "catalog:",

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { rmSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { test } from "node:test";
@@ -15,6 +15,7 @@ import {
 } from "../../src/codegen/target-integration.js";
 import { createTempProject } from "../helpers/project.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
+import { linkQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 
 const astro = {
   schemaVersion: 2,
@@ -168,6 +169,22 @@ test("library identity requires explicit typed exports and authorizes no applica
     };
     project.writeFile("package.json", JSON.stringify(manifest));
     assert.equal(captureTargetEvidence(project.root, library).ok, false);
+  }
+});
+
+test("qualified development runtime cannot mask an incompatible published Svelte peer", (t) => {
+  const project = fixture(t, "svelte-library");
+  linkQualifiedFixtureRuntime(project, "devDependencies");
+  assert.ok(captureTargetEvidence(project.root, library).ok);
+  for (const peer of ["^4", "^6", "file:./runtime.tgz", "not-semver"]) {
+    const manifest = JSON.parse(
+      readFileSync(path.join(project.root, "package.json"), "utf8"),
+    );
+    manifest.peerDependencies.svelte = peer;
+    project.writeFile("package.json", JSON.stringify(manifest));
+    const before = snapshotTree(project.root);
+    assert.equal(captureTargetEvidence(project.root, library).ok, false, peer);
+    assert.deepEqual(snapshotTree(project.root), before);
   }
 });
 

@@ -29,7 +29,10 @@ import {
   verifyTargetConsumer,
 } from "../helpers/target-consumer.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
+import {
+  NATIVE_BASELINE,
+  SVELTE_RUNTIME_BASELINE,
+} from "../../src/project/native-dependency.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 const owner = realpathSync(process.cwd());
 const libraryName = "@example/generated-ui-library";
@@ -67,16 +70,19 @@ function nativeArchive(root: string, packageRoot: string) {
   const manifest = JSON.parse(
     readFileSync(path.join(root, "package.json"), "utf8"),
   );
-  const locator =
-    manifest.dependencies?.["bits-ui"] ?? manifest.devDependencies?.["bits-ui"];
-  assert.ok(typeof locator === "string" && locator.startsWith("file:./"));
-  const bytes = readFileSync(
-    path.join(packageRoot, "dist/native", NATIVE_BASELINE.archive),
-  );
-  assert.equal(sha256Hex(bytes), NATIVE_BASELINE.archiveSha256);
-  const destination = path.join(root, locator.slice(7));
-  mkdirSync(path.dirname(destination), { recursive: true });
-  writeFileSync(destination, bytes);
+  for (const profile of [NATIVE_BASELINE, SVELTE_RUNTIME_BASELINE]) {
+    const locator =
+      manifest.dependencies?.[profile.name] ??
+      manifest.devDependencies?.[profile.name];
+    assert.ok(typeof locator === "string" && locator.startsWith("file:./"));
+    const bytes = readFileSync(
+      path.join(packageRoot, "dist/native", profile.archive),
+    );
+    assert.equal(sha256Hex(bytes), profile.archiveSha256);
+    const destination = path.join(root, locator.slice(7));
+    mkdirSync(path.dirname(destination), { recursive: true });
+    writeFileSync(destination, bytes);
+  }
 }
 function setup(root: string, logs: Record<string, string>) {
   logs.install = nativeCommand(root, "pnpm", [

@@ -46,11 +46,12 @@ import {
   nativeArchiveIssues,
   nativeDeclaration,
   nativeInstallIssues,
-  NATIVE_BASELINE,
-  observeNativeFile,
+  isQualifiedNativeName,
+  observeNativeFiles,
   observeNativeInstall,
   type NativeFileObservation,
   type NativeInstallAuthentication,
+  type QualifiedNativeName,
 } from "./native-dependency.js";
 
 export const DECLARATION_FIELDS = [
@@ -137,11 +138,12 @@ export function observeInstalled(
         kind: "value",
         version,
         manifest,
-        ...(name === NATIVE_BASELINE.name
+        ...(isQualifiedNativeName(name)
           ? {
               nativeAuthentication: observeNativeInstall(
                 path.join(current, "node_modules", ...segments),
                 version,
+                name,
               ),
             }
           : {}),
@@ -252,6 +254,19 @@ export interface DependencyEvidence {
   readonly manifest: JsonObservation;
   readonly observe: (name: string) => InstalledObservation | null;
   readonly nativeFile?: NativeFileObservation;
+  readonly nativeFiles?: ReadonlyMap<string, NativeFileObservation>;
+}
+
+function nativeSource(
+  name: QualifiedNativeName,
+  legacy: NativeFileObservation | undefined,
+  sources: ReadonlyMap<string, NativeFileObservation> | undefined,
+): NativeFileObservation | undefined {
+  return sources === undefined
+    ? name === "bits-ui"
+      ? legacy
+      : undefined
+    : sources.get(name);
 }
 
 /**
@@ -270,6 +285,7 @@ export function inspectDependencyStateFromEvidence(
     evidence.observe,
     requirements,
     evidence.nativeFile,
+    evidence.nativeFiles,
   );
 }
 
@@ -278,6 +294,7 @@ function inspectWithEvidence(
   observeInstalled: (name: string) => InstalledObservation | null,
   requirements: readonly DependencyRequirement[],
   nativeFile?: NativeFileObservation,
+  nativeFiles?: ReadonlyMap<string, NativeFileObservation>,
 ): ModelResult<readonly DependencyStateEntry[]> {
   const issues: ModelIssue[] = [];
   if (manifestObservation.kind === "unreadable") {
@@ -353,18 +370,20 @@ function inspectWithEvidence(
     }
     let effectiveRange = declared.range;
     if (
-      requirement.name === NATIVE_BASELINE.name &&
+      isQualifiedNativeName(requirement.name) &&
       declared.range?.startsWith("file:")
     ) {
-      if (nativeFile?.kind === "invalid") {
-        issues.push(...nativeArchiveIssues(declared.range, nativeFile));
+      const source = nativeSource(requirement.name, nativeFile, nativeFiles);
+      const sourceIssues = nativeArchiveIssues(
+        declared.range,
+        source,
+        requirement.name,
+      );
+      if (sourceIssues.length > 0) {
+        issues.push(...sourceIssues);
         continue;
       }
-      if (
-        nativeFile?.kind === "value" &&
-        nativeFile.declaration === declared.range
-      )
-        effectiveRange = nativeFile.version;
+      if (source?.kind === "value") effectiveRange = source.version;
     }
     if (effectiveRange !== null && validRange(effectiveRange) === null) {
       issues.push(
@@ -420,17 +439,24 @@ function inspectWithEvidence(
     }
     const installedVersion =
       installed.kind === "value" ? installed.version : null;
-    if (
-      installed.kind === "value" &&
-      requirement.name === NATIVE_BASELINE.name
-    ) {
+    if (installed.kind === "value" && isQualifiedNativeName(requirement.name)) {
       const nativeIssues = nativeInstallIssues(
         installed.version,
         installed.nativeAuthentication,
         installed.manifest["version"],
+        requirement.name,
       );
       if (nativeIssues.length > 0) {
         issues.push(...nativeIssues);
+        continue;
+      }
+      const sourceIssues = nativeArchiveIssues(
+        declared.range,
+        nativeSource(requirement.name, nativeFile, nativeFiles),
+        requirement.name,
+      );
+      if (sourceIssues.length > 0) {
+        issues.push(...sourceIssues);
         continue;
       }
     }
@@ -464,14 +490,6 @@ function inspectWithEvidence(
       }
     }
 
-    if (status === "ready" && requirement.name === NATIVE_BASELINE.name) {
-      const nativeIssues = nativeArchiveIssues(declared.range, nativeFile);
-      if (nativeIssues.length > 0) {
-        issues.push(...nativeIssues);
-        continue;
-      }
-    }
-
     entries.push({
       name: requirement.name,
       requiredRange: requirement.range,
@@ -501,7 +519,8 @@ export function inspectDependencyState(
     manifest,
     (name) => observeInstalled(root, name),
     requirements,
-    observeNativeFile(root, manifest.kind === "value" ? manifest.value : null),
+    undefined,
+    observeNativeFiles(root, manifest.kind === "value" ? manifest.value : null),
   );
 }
 
@@ -545,6 +564,7 @@ function collectPeerConstraints(
   issues: ModelIssue[],
   manifest: Record<string, unknown> | null,
   nativeFile?: NativeFileObservation,
+  nativeFiles?: ReadonlyMap<string, NativeFileObservation>,
 ): readonly PeerConstraint[] {
   const byName = new Map<
     string,
@@ -640,14 +660,19 @@ function collectPeerConstraints(
       );
       continue;
     }
-    if (entry.name === NATIVE_BASELINE.name) {
+    if (isQualifiedNativeName(entry.name)) {
       const nativeIssues = [
         ...nativeInstallIssues(
           observation.version,
           observation.nativeAuthentication,
           observation.manifest["version"],
+          entry.name,
         ),
-        ...nativeArchiveIssues(nativeDeclaration(manifest), nativeFile),
+        ...nativeArchiveIssues(
+          nativeDeclaration(manifest, entry.name),
+          nativeSource(entry.name, nativeFile, nativeFiles),
+          entry.name,
+        ),
       ];
       if (nativeIssues.length > 0) {
         issues.push(...nativeIssues);
@@ -713,6 +738,36 @@ function collectPeerConstraints(
       constraint.requiredBy.add(entry.name);
     }
   }
+  // The selected package's published peers are independent of its development
+  // installations. A compatible dev file must not mask an incompatible peer
+  // advertised to downstream consumers. Unrelated optional peers stay outside
+  // the generated dependency closure.
+  const selectedPeers = manifest?.["peerDependencies"];
+  if (isRecord(selectedPeers)) {
+    const required = new Set([
+      ...independentlyRequired,
+      ...[...byName]
+        .filter(([, constraint]) => constraint.ranges.length > 0)
+        .map(([name]) => name),
+    ]);
+    for (const name of required) {
+      if (!Object.hasOwn(selectedPeers, name)) continue;
+      const range = selectedPeers[name];
+      if (typeof range !== "string" || validRange(range) === null) {
+        issues.push(
+          issue(
+            "PEER_DECLARATION_INVALID",
+            `The selected package must advertise a SemVer peer range for ${name}.`,
+            "package.json",
+          ),
+        );
+        continue;
+      }
+      const constraint = ensure(name);
+      constraint.ranges.push(range);
+      constraint.requiredBy.add("selected-package");
+    }
+  }
   return [...byName.entries()]
     .filter(([, value]) => value.ranges.length > 0)
     .map(([name, value]) => ({
@@ -742,6 +797,7 @@ export function validatePeerDependenciesFromEvidence(
     evidence.observe,
     plan,
     evidence.nativeFile,
+    evidence.nativeFiles,
   );
 }
 
@@ -760,7 +816,8 @@ export function validatePeerDependencies(
     manifest,
     (name) => observeInstalled(root, name),
     plan,
-    observeNativeFile(root, manifest.kind === "value" ? manifest.value : null),
+    undefined,
+    observeNativeFiles(root, manifest.kind === "value" ? manifest.value : null),
   );
 }
 
@@ -769,6 +826,7 @@ function validatePeerWithEvidence(
   observeInstalled: (name: string) => InstalledObservation | null,
   plan: DependencyPlan,
   nativeFile?: NativeFileObservation,
+  nativeFiles?: ReadonlyMap<string, NativeFileObservation>,
 ): ModelResult<readonly DependencyStateEntry[]> {
   const issues: ModelIssue[] = [];
   if (manifestObservation.kind === "unreadable") {
@@ -804,6 +862,7 @@ function validatePeerWithEvidence(
     issues,
     manifestObservation.kind === "value" ? manifestObservation.value : null,
     nativeFile,
+    nativeFiles,
   );
   if (issues.length > 0) return fail(issues);
   if (constraints.length === 0) return ok([]);
@@ -812,6 +871,7 @@ function validatePeerWithEvidence(
     manifest: manifestObservation,
     observe: observeInstalled,
     nativeFile,
+    nativeFiles,
   };
   const results: DependencyStateEntry[] = [];
   for (const constraint of constraints) {

@@ -24,6 +24,24 @@ patching, hiding imports and diagnostic suppression do not qualify it. Positive
 bindings, causal invalid controls and representative mutual type comparisons
 complement runtime tests without claiming exhaustive type equivalence.
 
+Application runtime qualification additionally requires the corrected Svelte
+`5.57.3-reset-dispatch.2` archive, SHA-256
+`a7c2bfa42a6827ba2ced3e281a6f1ed2e8e1cfd4b1cddf1698796089f411abc4`.
+Its manifest honestly retains upstream version 5.57.3. Separate fixed provenance
+and complete installed inventory distinguish it from upstream and causal controls.
+Readiness requires both the installed proof and an authenticated
+selected-package-owned archive. Guarded writes reauthenticate every present native
+installation and its source; preinstall generation remains explicitly unready
+and reports installation instructions. Ordinary registry SemVer compatibility is not
+corrected-runtime proof. Library development installs use owned files while
+published peer requirements retain SemVer.
+
+Qualified pnpm 12.16.1 layouts include only the exact measured installer-generated
+Acorn 8.18.0/8.19.0 executable shim alongside the fully authenticated distribution.
+Other installation metadata or changed shims refuse. Broader npm/Yarn installation
+layouts require separate native qualification; rendered commands alone are not
+proof of their resulting installations.
+
 Normal workspace dependency versions have one authored catalog in
 `pnpm-workspace.yaml`; package-owned native archive locators remain explicit.
 The following compatible stable exceptions are owned by this kit's maintainers:
@@ -51,6 +69,11 @@ kit runtime dependency. The application still needs its Svelte/Bits/date and
 framework/check/build tooling. The original license texts and attribution remain.
 
 ## Native behavior and browser boundaries
+
+The table preserves historical upstream behavior. The selected corrected Svelte
+runtime repairs the trusted text-reset cancellation defect through its separately
+qualified dispatch and binding corrections. That correction does not close the
+remaining browser, detached/shadow dispatch or arbitrary application boundaries.
 
 | Boundary                | Supported interpretation                                                                                                                                                                                                                                                                                                                                             |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

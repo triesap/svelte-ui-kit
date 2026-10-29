@@ -4,8 +4,13 @@ Select a real ESM package with `--cwd`. Declare Svelte as a peer, a root export
 with `types` and `svelte` conditions, and an export for the actual CSS entry.
 The package owns its build scripts, declarations, exports and native peers;
 the generator never rewrites `package.json` or invents an application framework.
-Use the selected workspace's catalogs for shared versions. The native Bits
-archive remains an explicitly authenticated package-owned dependency.
+Use the selected workspace's catalogs for shared versions. Install the qualified
+Bits and Svelte archives from the locally packed CLI as explicit package-owned
+development dependencies. Follow the archive extraction and digest checks in
+[getting started](../getting-started.md), using `pnpm add -D` for those local
+files. Preserve published peer requirements as SemVer; a local archive path is
+not a portable published peer requirement. Each consuming application must own
+and explicitly install its qualified native archives as well.
 
 Write v2 intent to `<uiDir>/_kit/kit.json`, for example:
 

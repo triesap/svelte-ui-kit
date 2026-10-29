@@ -5,7 +5,8 @@ import { deepFreeze } from "../project/immutable.js";
 import { inspectAstroConfig } from "../project/astro-config.js";
 import { isSafeLogicalRelativePath } from "../project/paths.js";
 import { inspectSvelteConfigSource } from "../project/svelte-config.js";
-import { validRange } from "semver";
+import { satisfies, validRange } from "semver";
+import { SVELTE_RUNTIME_BASELINE } from "../project/native-dependency.js";
 import {
   integrationFor,
   parseTargetConfig,
@@ -250,6 +251,7 @@ export function inspectTargetEvidence(
       typeof peers.svelte !== "string" ||
       peers.svelte.trim().length === 0 ||
       validRange(peers.svelte) === null ||
+      !satisfies(SVELTE_RUNTIME_BASELINE.version, peers.svelte) ||
       !record(main) ||
       typeof main.svelte !== "string" ||
       typeof main.types !== "string"

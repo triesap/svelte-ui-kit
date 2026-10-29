@@ -7,6 +7,7 @@ import semver from "semver";
 import { installIndependentCli } from "../helpers/packaged-cli.js";
 import {
   NATIVE_BASELINE,
+  SVELTE_RUNTIME_BASELINE,
   observeNativeFile,
 } from "../../src/project/native-dependency.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
@@ -48,7 +49,7 @@ test("actual installed metadata bounds runtime support and retains source notice
   >;
   for (const role of ["dependencies", "devDependencies", "peerDependencies"])
     assert.equal(fixture[role]?.[pkg.name], undefined);
-  for (const name of ["svelte", "@internationalized/date"])
+  for (const name of ["@internationalized/date"])
     assert.ok(semver.valid(fixture.dependencies[name]), name);
   assert.equal(
     observeNativeFile(path.resolve("tests/fixtures/consumer"), fixture).kind,
@@ -65,6 +66,26 @@ test("actual installed metadata bounds runtime support and retains source notice
   assert.deepEqual(
     JSON.parse(read("dist/project/native-dependency-baseline.json")),
     NATIVE_BASELINE,
+  );
+  assert.equal(
+    observeNativeFile(
+      path.resolve("tests/fixtures/consumer"),
+      fixture,
+      "svelte",
+    ).kind,
+    "value",
+  );
+  assert.equal(
+    sha256Hex(
+      readFileSync(
+        path.join(
+          cli.packageRoot,
+          "dist/native",
+          SVELTE_RUNTIME_BASELINE.archive,
+        ),
+      ),
+    ),
+    SVELTE_RUNTIME_BASELINE.archiveSha256,
   );
   for (const name of ["typescript", "svelte-check", "@sveltejs/kit"])
     assert.ok(semver.valid(fixture.devDependencies[name]), name);

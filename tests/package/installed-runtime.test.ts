@@ -18,7 +18,10 @@ import { parse, stringify } from "yaml";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { installIndependentCli } from "../helpers/packaged-cli.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
+import {
+  NATIVE_BASELINE,
+  SVELTE_RUNTIME_BASELINE,
+} from "../../src/project/native-dependency.js";
 import {
   transientRoot,
   writerLockDir,
@@ -311,14 +314,19 @@ test("copied packed CLI cannot substitute unavailable author assets or hide a mi
   assert.deepEqual(snapshotTree(consumer), before);
 });
 
-test("separate installed CLI authenticates selected app native identity and preserves every refusal", () => {
+test("separate installed CLI authenticates both native identities and preserves every refusal", () => {
   const consumer = installed.prepareConsumer(false, "native-authentication");
-  // Copy before fault injection: never mutate shared dependency-store inodes.
-  const link = path.join(consumer.root, "node_modules/bits-ui");
-  const native = path.join(consumer.root, ".owned-native-distribution");
-  cpSync(realpathSync(link), native, { recursive: true });
-  rmSync(link);
-  symlinkSync(native, link);
+  const profiles = [NATIVE_BASELINE, SVELTE_RUNTIME_BASELINE];
+  const distributions = new Map<string, string>();
+  // Faults affect independent owned copies, never dependency-store inodes.
+  for (const profile of profiles) {
+    const link = path.join(consumer.root, "node_modules", profile.name);
+    const native = path.join(consumer.root, `.owned-native-${profile.name}`);
+    cpSync(realpathSync(link), native, { recursive: true });
+    rmSync(link);
+    symlinkSync(native, link);
+    distributions.set(profile.name, native);
+  }
   const run = (args: string[]) => {
     const result = installed.run(args, consumer.root);
     assert.equal(result.stderr, "");
@@ -339,82 +347,155 @@ test("separate installed CLI authenticates selected app native identity and pres
     assert.equal(result.status, 0, JSON.stringify(result.envelope));
   }
   const original = snapshotTree(consumer.root);
-  for (const fault of [
-    "v-prefix",
-    "build-metadata",
-    "provenance",
-    "runtime",
-    "declaration",
-    "archive",
-  ]) {
-    const file =
-      fault === "declaration"
-        ? path.join(consumer.root, "package.json")
-        : fault === "archive"
-          ? path.join(consumer.root, "vendor", NATIVE_BASELINE.archive)
-          : path.join(
-              native,
-              fault === "provenance"
-                ? "NATIVE_PROVENANCE.json"
-                : fault === "runtime"
-                  ? "dist/index.js"
-                  : "package.json",
-            );
-    const bytes = readFileSync(file),
-      mode = lstatSync(file).mode & 0o777;
-    chmodSync(file, 0o600);
-    if (
-      fault === "v-prefix" ||
-      fault === "build-metadata" ||
-      fault === "declaration"
-    ) {
-      const data = JSON.parse(bytes.toString());
-      if (fault === "declaration") delete data.dependencies["bits-ui"];
-      else
-        data.version =
-          fault === "v-prefix"
-            ? `v${NATIVE_BASELINE.version}`
-            : `${NATIVE_BASELINE.version}+unqualified`;
-      writeFileSync(file, JSON.stringify(data));
-    } else writeFileSync(file, "tampered native evidence");
-    const damaged = snapshotTree(consumer.root);
-    for (const args of [
-      ["info"],
-      ["add", "dialog"],
-      ["sync"],
-      ["doctor"],
-      ["doctor", "--strict"],
+  for (const profile of profiles) {
+    const native = distributions.get(profile.name)!;
+    for (const fault of [
+      "v-prefix",
+      "build-metadata",
+      "provenance",
+      "runtime",
+      "declaration",
+      "archive",
+      ...(profile.name === "svelte" ? ["build-id", "installer-shim"] : []),
     ]) {
-      const result = run(args);
-      const expected =
-        fault === "v-prefix" || fault === "build-metadata"
-          ? "NATIVE_INSTALL_VERSION"
-          : fault === "declaration"
-            ? "NATIVE_ARCHIVE_REQUIRED"
-            : fault === "archive"
-              ? "NATIVE_ARCHIVE_INVALID"
-              : "NATIVE_INSTALL_INVALID";
-      assert.ok(
-        result.envelope.diagnostics.some(
-          (i: { code: string }) => i.code === expected,
-        ),
-        JSON.stringify(result.envelope),
-      );
-      if (args[0] === "info" || (args[0] === "doctor" && args.length === 1)) {
-        assert.equal(result.status, 0);
-        assert.equal(result.envelope.data.ready, false);
-        assert.equal(result.envelope.status, "warning");
-      } else assert.notEqual(result.status, 0);
-      assert.deepEqual(
-        snapshotTree(consumer.root),
-        damaged,
-        `${fault}: ${args}`,
-      );
+      const file =
+        fault === "declaration"
+          ? path.join(consumer.root, "package.json")
+          : fault === "archive"
+            ? path.join(consumer.root, "vendor", profile.archive)
+            : path.join(
+                native,
+                fault === "provenance"
+                  ? "NATIVE_PROVENANCE.json"
+                  : fault === "installer-shim"
+                    ? "node_modules/.bin/acorn"
+                    : fault === "runtime"
+                      ? profile.name === "svelte"
+                        ? "src/internal/client/dom/elements/bindings/input.js"
+                        : "dist/index.js"
+                      : "package.json",
+              );
+      const bytes = readFileSync(file),
+        mode = lstatSync(file).mode & 0o777;
+      chmodSync(file, 0o600);
+      if (
+        ["v-prefix", "build-metadata", "declaration", "build-id"].includes(
+          fault,
+        )
+      ) {
+        const data = JSON.parse(bytes.toString());
+        if (fault === "declaration") delete data.dependencies[profile.name];
+        else if (fault === "build-id")
+          data.svelteUiKitNative.buildId = "unqualified";
+        else
+          data.version =
+            fault === "v-prefix"
+              ? `v${profile.version}`
+              : `${profile.version}+unqualified`;
+        writeFileSync(file, JSON.stringify(data));
+      } else writeFileSync(file, "tampered native evidence");
+      const damaged = snapshotTree(consumer.root);
+      for (const args of [
+        ...(profile.name === "svelte"
+          ? [["init"], ["init", "--dry-run"], ["add", "field"]]
+          : []),
+        ["info"],
+        ["add", "dialog"],
+        ["sync"],
+        ["doctor"],
+        ["doctor", "--strict"],
+      ]) {
+        const result = run(args);
+        const expected =
+          fault === "v-prefix" || fault === "build-metadata"
+            ? "NATIVE_INSTALL_VERSION"
+            : fault === "declaration"
+              ? "NATIVE_ARCHIVE_REQUIRED"
+              : fault === "archive"
+                ? "NATIVE_ARCHIVE_INVALID"
+                : "NATIVE_INSTALL_INVALID";
+        assert.ok(
+          result.envelope.diagnostics.some(
+            (i: { code: string }) => i.code === expected,
+          ),
+          JSON.stringify(result.envelope),
+        );
+        if (args[0] === "info" || (args[0] === "doctor" && args.length === 1)) {
+          assert.equal(result.status, 0);
+          assert.equal(result.envelope.data.ready, false);
+          assert.equal(result.envelope.status, "warning");
+        } else
+          assert.notEqual(
+            result.status,
+            0,
+            `${profile.name}: ${fault}: ${args}`,
+          );
+        assert.deepEqual(
+          snapshotTree(consumer.root),
+          damaged,
+          `${profile.name}: ${fault}: ${args}`,
+        );
+      }
+      writeFileSync(file, bytes);
+      chmodSync(file, mode);
+      assert.deepEqual(snapshotTree(consumer.root), original);
     }
-    writeFileSync(file, bytes);
-    chmodSync(file, mode);
-    assert.deepEqual(snapshotTree(consumer.root), original);
   }
   assert.equal(run(["doctor", "--strict"]).status, 0);
   assert.deepEqual(snapshotTree(consumer.root), original);
+});
+
+test("preinstall source generation reports unready runtime without claiming native qualification", () => {
+  const consumer = installed.prepareConsumer(false, "preinstall");
+  rmSync(path.join(consumer.root, "node_modules/svelte"));
+  const manifestFile = path.join(consumer.root, "package.json");
+  const manifest = JSON.parse(readFileSync(manifestFile, "utf8"));
+  const run = (args: string[]) => {
+    const result = installed.run(args, consumer.root);
+    assert.equal(result.stderr, "");
+    assert.deepEqual(result.guardEvents, []);
+    return { status: result.status, envelope: JSON.parse(result.stdout) };
+  };
+  for (const args of [
+    ["init", "--dry-run"],
+    ["init"],
+    ["add", "field", "--dry-run"],
+    ["add", "field"],
+  ]) {
+    const before = snapshotTree(consumer.root);
+    const result = run(args);
+    assert.equal(result.status, 0, JSON.stringify(result.envelope));
+    assert.ok(
+      result.envelope.diagnostics.some(
+        (i: { code: string; message: string }) =>
+          i.code === "DEPENDENCY_NOT_READY" &&
+          i.message.includes("svelte: missing_install"),
+      ),
+      JSON.stringify(result.envelope),
+    );
+    const instructions =
+      args[0] === "init"
+        ? result.envelope.data.dependencies
+        : result.envelope.data.instructions;
+    assert.ok(
+      instructions.manual.includes(SVELTE_RUNTIME_BASELINE.archiveSha256),
+    );
+    if (args.includes("--dry-run"))
+      assert.deepEqual(snapshotTree(consumer.root), before);
+  }
+  assert.equal(run(["info"]).envelope.data.ready, false);
+  assert.notEqual(run(["doctor", "--strict"]).status, 0);
+  delete manifest.dependencies.svelte;
+  writeFileSync(manifestFile, JSON.stringify(manifest));
+  const before = snapshotTree(consumer.root);
+  const result = run(["init", "--dry-run"]);
+  assert.equal(result.status, 0, JSON.stringify(result.envelope));
+  assert.ok(
+    result.envelope.diagnostics.some(
+      (i: { code: string; message: string }) =>
+        i.code === "DEPENDENCY_NOT_READY" &&
+        i.message.includes("svelte: missing_declaration"),
+    ),
+  );
+  assert.deepEqual(snapshotTree(consumer.root), before);
 });

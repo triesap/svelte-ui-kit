@@ -1,7 +1,10 @@
 import { parse, parseCss } from "svelte/compiler";
 import { sha256Hex } from "../../codegen/digest.js";
 import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
-import { generationFields } from "../../project/generation-config.js";
+import {
+  generationFields,
+  generationTarget,
+} from "../../project/generation-config.js";
 import { projectRequests } from "../../registry/projection.js";
 import {
   isTokenMetadataPath,
@@ -27,7 +30,6 @@ import {
   validatePeerDependenciesFromEvidence,
   type DependencyStateEntry,
 } from "../../project/dependencies.js";
-import { generationTarget } from "../../project/generation-config.js";
 import { observeEntry } from "../../project/io.js";
 import { planDependencies } from "../../registry/dependency-plan.js";
 import { issue, type ModelIssue } from "../../registry/errors.js";
@@ -468,6 +470,7 @@ export function diagnose(
     const evidence = {
       manifest: environment.manifest,
       nativeFile: environment.nativeFile,
+      nativeFiles: environment.nativeFiles,
       observe: (name: string) =>
         environment.installed.get(name) ??
         (environment.enumerationComplete ? { kind: "absent" as const } : null),
@@ -503,6 +506,7 @@ export function diagnose(
         runtime: dependencies.value.entries
           .filter((entry) => entry.roles.includes("runtime"))
           .map((entry) => `${entry.name}@${entry.range}`),
+        target: generationTarget(config),
         peers: requirements
           .filter(
             (entry) =>

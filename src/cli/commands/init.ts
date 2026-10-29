@@ -1,5 +1,6 @@
 import {
   generationFields,
+  generationTarget,
   initializationFields,
   integrationMapping,
 } from "../../project/generation-config.js";
@@ -12,6 +13,7 @@ import { inspectUnchangedState } from "../../codegen/recovery.js";
 import { captureSnapshot, observedText } from "../../codegen/snapshot.js";
 import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
 import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
+import { inspectDependencyStateFromEvidence } from "../../project/dependencies.js";
 import { captureEnvironment } from "../../project/environment.js";
 import { generationInputPaths } from "../../project/generation-config.js";
 import { resolveProjectRoot } from "../../project/root.js";
@@ -122,14 +124,44 @@ export function initialize(
   });
   if (!planned.ok) return failure(planned.issues);
   const environment = snapshot.value.environment;
+  const runtimeRequirement = {
+    name: "svelte",
+    range: registry.value.root.compatibility.svelte,
+  };
+  const readiness = inspectDependencyStateFromEvidence(
+    {
+      manifest: environment.manifest,
+      nativeFiles: environment.nativeFiles,
+      observe: (name) =>
+        environment.installed.get(name) ??
+        (environment.enumerationComplete ? { kind: "absent" } : null),
+    },
+    [runtimeRequirement],
+  );
+  if (!readiness.ok) return failure(readiness.issues);
+  const diagnostics = readiness.value
+    .filter((entry) => entry.status !== "ready")
+    .map((entry) => ({
+      code: "DEPENDENCY_NOT_READY",
+      level: "warn" as const,
+      message: `${entry.name}: ${entry.status}; declaration/install readiness has not been established.`,
+      locator: "package.json",
+      guidance:
+        "Use the reported dependency instructions; generated source alone does not qualify the application runtime.",
+    }));
   const instructions = renderDependencyInstructionsFromEvidence(
     environment.manager,
     environment.managerIssues,
-    { runtime: [], peers: [] },
+    {
+      runtime: [],
+      peers: [`${runtimeRequirement.name}@${runtimeRequirement.range}`],
+      target: generationTarget(config),
+    },
   );
   if (!instructions.ok) return failure(instructions.issues);
   const data = {
     dependencies: instructions.value,
+    dependencyState: readiness.value,
     integration: {
       ...generationFields(config),
       ...deriveKitPaths(config),
@@ -147,7 +179,12 @@ export function initialize(
     );
     if (retained.length > 0) return failure(retained);
     return {
-      envelope: createEnvelope({ command: "init", status: "no_change", data }),
+      envelope: createEnvelope({
+        command: "init",
+        status: "no_change",
+        diagnostics,
+        data,
+      }),
     };
   }
   const composed = composeApplyPlan({
@@ -181,6 +218,7 @@ export function initialize(
       envelope: createEnvelope({
         command: "init",
         status: "planned",
+        diagnostics,
         changes,
         data,
       }),
@@ -189,6 +227,10 @@ export function initialize(
   const envelope = applyOutcomeEnvelope("init", outcome, changes);
   return {
     ...(outcome.kind === "refused" ? failure(outcome.issues) : {}),
-    envelope: createEnvelope({ ...envelope, data }),
+    envelope: createEnvelope({
+      ...envelope,
+      diagnostics: [...envelope.diagnostics, ...diagnostics],
+      data,
+    }),
   };
 }

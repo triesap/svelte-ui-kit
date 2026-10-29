@@ -23,8 +23,8 @@ pnpm run typecheck
 pnpm run build
 ```
 
-Preparation also supplies the maintained consumer's application-owned archive.
-Builds authenticate the cache and bundle the native archive into the CLI. Do not
+Preparation also supplies the maintained consumers' application-owned archives.
+Builds authenticate the caches and bundle both native archives into the CLI. Do not
 replace frozen pins or edit installed declarations to make a check pass.
 
 Set `ARCHIVES` to a fresh absolute directory for local package artifacts, create
@@ -63,30 +63,38 @@ and svelte-check 4.7.7. The
 [tested consumer manifest](https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/tests/fixtures/consumer/package.json)
 is a source reference, not a promise that the CLI creates an application.
 
-For the complete catalog, explicitly install Svelte 5.57.3 and
-`@internationalized/date` 3.12.4, then copy the authentic local Bits archive into
-the application **before** installing it. Run this with `APP` and `ARCHIVE` set:
+For the complete catalog, explicitly install `@internationalized/date` 3.12.4,
+then copy both authentic local archives into the application **before** installing
+them. Svelte retains raw version 5.57.3; its qualified reset-runtime build is
+`5.57.3-reset-dispatch.2`. An ordinary registry installation of that same version
+does not qualify. Run this with `APP` and `ARCHIVE` set:
 
 ```sh
-pnpm --dir "$APP" add svelte@5.57.3 @internationalized/date@3.12.4
+pnpm --dir "$APP" add @internationalized/date@3.12.4
 cd "$APP"
 test ! -L vendor && mkdir -p vendor && test -d vendor
 NATIVE_ARCHIVE=bits-ui-2.20.2-svelte-ui-kit.1.tgz
 test ! -e "vendor/$NATIVE_ARCHIVE" && test ! -L "vendor/$NATIVE_ARCHIVE" && \
   tar -xOf "$ARCHIVE" "package/dist/native/$NATIVE_ARCHIVE" > "vendor/$NATIVE_ARCHIVE"
 shasum -a 256 "vendor/$NATIVE_ARCHIVE"
+SVELTE_ARCHIVE=svelte-5.57.3-reset-dispatch.2.tgz
+test ! -e "vendor/$SVELTE_ARCHIVE" && test ! -L "vendor/$SVELTE_ARCHIVE" && \
+  tar -xOf "$ARCHIVE" "package/dist/native/$SVELTE_ARCHIVE" > "vendor/$SVELTE_ARCHIVE"
+shasum -a 256 "vendor/$SVELTE_ARCHIVE"
 ```
 
-Proceed only if the native archive digest is exactly
-`1e952f7cb1edd822650384e9e30dd75e864b3848d4a20fc73cb8ccd5224d1f27`.
+Proceed only if the Bits archive digest is exactly
+`1e952f7cb1edd822650384e9e30dd75e864b3848d4a20fc73cb8ccd5224d1f27`
+and the Svelte archive digest is exactly
+`a7c2bfa42a6827ba2ced3e281a6f1ed2e8e1cfd4b1cddf1698796089f411abc4`.
 Then, still in `APP`, run:
 
 ```sh
-pnpm add "./vendor/$NATIVE_ARCHIVE"
+pnpm add "./vendor/$NATIVE_ARCHIVE" "./vendor/$SVELTE_ARCHIVE"
 ```
 
-Keep this regular archive, the explicit local-file dependency, and the application
-lockfile in the app's delivery system. Copying the native archive is application
+Keep both regular archives, the explicit local-file dependencies, and the application
+lockfile in the app's delivery system. Copying the native archives is application
 setup, not a generator side effect. The app must continue checking and building
 after the CLI host and source clone are unavailable. Unknown, changed, escaping
 or linked archives and altered installed distributions are refused.
@@ -116,6 +124,12 @@ explicitly and rerun diagnosis. `doctor --strict` exits 3 for broken or unsafe
 installation evidence; valid source/CSS customization alone does not fail it.
 Its structural checks do not replace app typechecking, production build, SSR,
 or browser verification.
+
+Source generation can precede dependency installation. `init` and component plans
+then report `DEPENDENCY_NOT_READY` and explicit archive setup instructions; their
+success does not establish runtime readiness. Every present native installation
+must authenticate, and a changed or unqualified installation refuses. Complete
+the explicit installation and strict diagnosis before application qualification.
 
 ## Install and use components
 

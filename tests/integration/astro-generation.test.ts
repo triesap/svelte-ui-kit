@@ -19,6 +19,7 @@ import {
   validateJournalTargets,
 } from "../../src/codegen/transaction-journal.js";
 import { inspectTargetEvidence } from "../../src/codegen/target-evidence.js";
+import { linkQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 
 function fixture(
   t: { after(fn: () => void): void },
@@ -41,10 +42,7 @@ function fixture(
       },
     }),
   );
-  project.writeFile(
-    "node_modules/svelte/package.json",
-    JSON.stringify({ name: "svelte", version: "5.57.3" }),
-  );
+  linkQualifiedFixtureRuntime(project, "dependencies");
   if (target === "astro")
     project.writeFile(
       "astro.config.ts",

@@ -19,7 +19,10 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
+import {
+  NATIVE_BASELINE,
+  SVELTE_RUNTIME_BASELINE,
+} from "../../src/project/native-dependency.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
@@ -345,7 +348,11 @@ export function installIndependentCli() {
       );
     const prepareConsumer = (
       custom: boolean,
-      purpose: "adoption" | "native-authentication" | "catalog" = "adoption",
+      purpose:
+        | "adoption"
+        | "native-authentication"
+        | "catalog"
+        | "preinstall" = "adoption",
     ) => {
       const consumer = path.join(
         root,
@@ -368,24 +375,26 @@ export function installIndependentCli() {
       // It never uses an authoring cache as the consumer dependency source.
       const extraction = path.join(consumer, ".owned-cli-extraction");
       mkdirSync(extraction);
-      const member = `package/dist/native/${NATIVE_BASELINE.archive}`;
-      runTool(
-        "tar",
-        ["-xf", retainedArchive, "-C", extraction, member],
-        consumer,
-        "explicit-native-extraction",
-      );
-      const nativeBytes = readFileSync(path.join(extraction, member));
-      assert.equal(sha256Hex(nativeBytes), NATIVE_BASELINE.archiveSha256);
       mkdirSync(path.join(consumer, "vendor"));
-      writeFileSync(
-        path.join(consumer, "vendor", NATIVE_BASELINE.archive),
-        nativeBytes,
-        { flag: "wx" },
-      );
+      for (const profile of [NATIVE_BASELINE, SVELTE_RUNTIME_BASELINE]) {
+        const member = `package/dist/native/${profile.archive}`;
+        runTool(
+          "tar",
+          ["-xf", retainedArchive, "-C", extraction, member],
+          consumer,
+          "explicit-native-extraction",
+        );
+        const nativeBytes = readFileSync(path.join(extraction, member));
+        assert.equal(sha256Hex(nativeBytes), profile.archiveSha256);
+        writeFileSync(
+          path.join(consumer, "vendor", profile.archive),
+          nativeBytes,
+          { flag: "wx" },
+        );
+        manifest.dependencies[profile.name] =
+          `file:./vendor/${profile.archive}`;
+      }
       rmSync(extraction, { recursive: true });
-      manifest.dependencies["bits-ui"] =
-        `file:./vendor/${NATIVE_BASELINE.archive}`;
       writeFileSync(
         path.join(consumer, "package.json"),
         JSON.stringify(manifest, null, 2),

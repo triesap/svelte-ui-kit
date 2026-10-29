@@ -24,6 +24,18 @@ import {
   SVELTE_RUNTIME_BASELINE as baseline,
 } from "../../src/project/native-dependency.js";
 import { validateWithSchema } from "../../src/registry/schema.js";
+import {
+  inspectDependencyState,
+  inspectDependencyStateFromEvidence,
+  validatePeerDependenciesFromEvidence,
+  type DependencyEvidence,
+} from "../../src/project/dependencies.js";
+import { captureEnvironment } from "../../src/project/environment.js";
+import { observeCatalogs } from "../../src/project/catalogs.js";
+import {
+  verifyInstalledReads,
+  verifyReadFiles,
+} from "../../src/codegen/authority.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 import { SVELTE_RUNTIME_RECIPE as recipe } from "../../tools/native-runtime/recipe.js";
 
@@ -125,9 +137,226 @@ function consumer(t: { after(callback: () => void): void }, mode = "complete") {
   const packageRoot = path.join(app, "distribution");
   cpSync(source.packageRoot, packageRoot, { recursive: true });
   const manifest = { dependencies: { svelte: "file:./vendor/runtime.tgz" } };
+  mkdirSync(path.join(app, "node_modules"));
+  symlinkSync(packageRoot, path.join(app, "node_modules/svelte"));
+  writeFileSync(path.join(app, "package.json"), JSON.stringify(manifest));
   t.after(() => rmSync(app, { recursive: true, force: true }));
   return { app, packageRoot, manifest };
 }
+
+const runtimeRequirements = [{ name: "svelte", range: "^5.57.3" }];
+const peerPlan = {
+  entries: [
+    {
+      ...runtimeRequirements[0]!,
+      roles: ["peer" as const],
+      requiredBy: ["field"],
+    },
+  ],
+};
+function evidence(app: string): DependencyEvidence {
+  const captured = captureEnvironment(app);
+  return {
+    manifest: captured.manifest,
+    nativeFile: captured.nativeFile,
+    nativeFiles: captured.nativeFiles,
+    observe: (name) => captured.installed.get(name) ?? null,
+  };
+}
+function reads(app: string) {
+  return captureEnvironment(app).installedResolution.map((entry) => ({
+    ...entry,
+    code:
+      entry.kind === "unsafe" || entry.kind === "unreadable"
+        ? entry.code
+        : null,
+  }));
+}
+
+test("actual and captured runtime readiness and peer-only validation require both proofs", (t) => {
+  const { app } = consumer(t);
+  const before = snapshotTree(app);
+  const captured = evidence(app);
+  for (const result of [
+    inspectDependencyState(app, runtimeRequirements),
+    inspectDependencyStateFromEvidence(captured, runtimeRequirements),
+    validatePeerDependenciesFromEvidence(captured, peerPlan),
+  ]) {
+    assert.ok(result.ok, JSON.stringify(result));
+    assert.equal(result.value[0]?.status, "ready");
+  }
+  assert.deepEqual(verifyInstalledReads(app, reads(app)), []);
+  assert.deepEqual(snapshotTree(app), before);
+});
+
+test("runtime readiness never falls back to Bits proof or accepts incomplete package-indexed evidence", (t) => {
+  const { app } = consumer(t);
+  const captured = evidence(app);
+  const installed = captured.observe("svelte");
+  assert.ok(installed?.kind === "value");
+  const sources: DependencyEvidence[] = [
+    { ...captured, nativeFiles: undefined },
+    { ...captured, nativeFiles: new Map() },
+    {
+      ...captured,
+      nativeFiles: new Map([["bits-ui", captured.nativeFiles!.get("svelte")!]]),
+    },
+    {
+      ...captured,
+      nativeFiles: new Map([["svelte", { kind: "invalid", issues: [] }]]),
+    },
+    ...[
+      undefined,
+      { kind: "invalid" as const, issues: [] },
+      {
+        kind: "authenticated" as const,
+        version: baseline.version,
+        provenanceSha256: "0".repeat(64),
+      },
+    ].map((nativeAuthentication) => ({
+      ...captured,
+      observe: () => ({ ...installed, nativeAuthentication }),
+    })),
+  ];
+  for (const source of sources) {
+    for (const result of [
+      inspectDependencyStateFromEvidence(source, runtimeRequirements),
+      validatePeerDependenciesFromEvidence(source, peerPlan),
+    ])
+      assert.ok(!result.ok, "missing or cross-profile evidence must refuse");
+  }
+});
+
+for (const mode of ["upstream", "unpatched", "dispatch-only"])
+  test(`normal readiness rejects an actual same-version ${mode} installation`, (t) => {
+    const { app } = consumer(t, mode);
+    const before = snapshotTree(app);
+    assert.equal(inspectDependencyState(app, runtimeRequirements).ok, false);
+    assert.equal(
+      validatePeerDependenciesFromEvidence(evidence(app), peerPlan).ok,
+      false,
+    );
+    assert.deepEqual(snapshotTree(app), before);
+  });
+
+test("selected-owner default and named runtime catalogs accept only the owned qualified archive", (t) => {
+  for (const named of [false, true]) {
+    const { app } = consumer(t);
+    writeFileSync(
+      path.join(app, "package.json"),
+      JSON.stringify({
+        dependencies: { svelte: named ? "catalog:native" : "catalog:" },
+      }),
+    );
+    writeFileSync(
+      path.join(app, "pnpm-workspace.yaml"),
+      `packages:\n  - .\n${named ? "catalogs:\n  native:\n    " : "catalog:\n  "}svelte: file:./vendor/runtime.tgz\n`,
+    );
+    const before = snapshotTree(app);
+    assert.deepEqual(observeCatalogs(app).issues, []);
+    const result = inspectDependencyState(app, runtimeRequirements);
+    assert.ok(result.ok, JSON.stringify(result));
+    assert.equal(result.value[0]?.status, "ready");
+    assert.deepEqual(verifyInstalledReads(app, reads(app)), []);
+    assert.deepEqual(snapshotTree(app), before);
+    const child = path.join(app, "packages/child");
+    mkdirSync(child, { recursive: true });
+    writeFileSync(
+      path.join(child, "package.json"),
+      readFileSync(path.join(app, "package.json")),
+    );
+    writeFileSync(
+      path.join(app, "pnpm-workspace.yaml"),
+      readFileSync(path.join(app, "pnpm-workspace.yaml"), "utf8").replace(
+        "  - .",
+        "  - .\n  - packages/*",
+      ),
+    );
+    const memberBefore = snapshotTree(app);
+    assert.ok(
+      observeCatalogs(child).issues.some(
+        (i) => i.code === "DEPENDENCY_CATALOG_INVALID",
+      ),
+    );
+    assert.equal(inspectDependencyState(child, runtimeRequirements).ok, false);
+    assert.deepEqual(snapshotTree(app), memberBefore);
+  }
+});
+
+test("live write authority independently reauthenticates runtime and source after immutable capture", (t) => {
+  for (const fault of [
+    "runtime",
+    "provenance",
+    "build-id",
+    "archive",
+    "declaration",
+    "installer-shim",
+  ]) {
+    const { app, packageRoot } = consumer(t);
+    if (fault === "installer-shim") {
+      mkdirSync(path.join(packageRoot, "node_modules/.bin"), {
+        recursive: true,
+      });
+      cpSync(
+        path.resolve(
+          "tests/fixtures/consumer/node_modules/svelte/node_modules/.bin/acorn",
+        ),
+        path.join(packageRoot, "node_modules/.bin/acorn"),
+      );
+    }
+    const captured = evidence(app);
+    const environment = captureEnvironment(app);
+    const installedReads = reads(app);
+    assert.deepEqual(verifyInstalledReads(app, installedReads), []);
+    if (fault === "runtime") {
+      const file = path.join(
+        packageRoot,
+        "src/internal/client/dom/elements/bindings/input.js",
+      );
+      writeFileSync(file, readFileSync(file, "utf8") + "\n/* changed */\n");
+    } else if (fault === "provenance")
+      writeFileSync(path.join(packageRoot, "NATIVE_PROVENANCE.json"), "{}");
+    else if (fault === "build-id") {
+      const file = path.join(packageRoot, "package.json");
+      const manifest = JSON.parse(readFileSync(file, "utf8"));
+      manifest.svelteUiKitNative.buildId = "other";
+      writeFileSync(file, JSON.stringify(manifest));
+    } else if (fault === "archive")
+      writeFileSync(path.join(app, "vendor/runtime.tgz"), "changed");
+    else if (fault === "installer-shim")
+      writeFileSync(
+        path.join(packageRoot, "node_modules/.bin/acorn"),
+        "changed",
+      );
+    else
+      writeFileSync(
+        path.join(app, "package.json"),
+        JSON.stringify({ dependencies: { svelte: baseline.version } }),
+      );
+    const before = snapshotTree(app);
+    const stale = inspectDependencyStateFromEvidence(
+      captured,
+      runtimeRequirements,
+    );
+    assert.ok(stale.ok);
+    assert.equal(stale.value[0]?.status, "ready");
+    for (const readSet of [installedReads, reads(app)])
+      assert.ok(
+        verifyInstalledReads(app, readSet).some(
+          (i) =>
+            i.code === "AUTHORITY_INSTALLED_CHANGED" && i.locator === "svelte",
+        ),
+        fault,
+      );
+    if (fault === "archive")
+      assert.ok(
+        verifyReadFiles(app, environment.evidence).some(
+          (i) => i.code === "AUTHORITY_READ_CHANGED",
+        ),
+      );
+    assert.deepEqual(snapshotTree(app), before);
+  }
+});
 
 test("complete produced Svelte runtime has positive distinct installation and app-owned archive proof", (t) => {
   const { app, packageRoot, manifest } = consumer(t);
@@ -203,6 +432,61 @@ test("Svelte requires exact raw version and explicit positive proof, including n
     ).some((i) => i.code === "NATIVE_ARCHIVE_REQUIRED"),
   );
   assert.throws(() => qualifiedNativeBaseline("unknown" as "svelte"));
+});
+
+test("exact pnpm installer metadata is inventoried while altered, linked, missing and shadowing files refuse", (t) => {
+  const shim = readFileSync(
+    path.resolve(
+      "tests/fixtures/consumer/node_modules/svelte/node_modules/.bin/acorn",
+    ),
+  );
+  for (const fault of [
+    "none",
+    "bytes",
+    "link",
+    "missing",
+    "shadow",
+    "extra",
+    "empty-directory",
+    "parent-link",
+  ]) {
+    const { app, packageRoot } = consumer(t);
+    const directory = path.join(packageRoot, "node_modules/.bin");
+    mkdirSync(directory, { recursive: true });
+    const file = path.join(directory, "acorn");
+    writeFileSync(file, shim);
+    if (fault === "bytes")
+      writeFileSync(file, Buffer.concat([shim, Buffer.from("\n# changed\n")]));
+    if (fault === "link") {
+      const target = path.join(app, "shim");
+      writeFileSync(target, shim);
+      rmSync(file);
+      symlinkSync(target, file);
+    }
+    if (fault === "missing") rmSync(file);
+    if (fault === "shadow") {
+      mkdirSync(path.join(packageRoot, "node_modules/acorn"));
+      writeFileSync(
+        path.join(packageRoot, "node_modules/acorn/index.js"),
+        "export {};",
+      );
+    }
+    if (fault === "extra") writeFileSync(path.join(directory, "other"), shim);
+    if (fault === "empty-directory") mkdirSync(path.join(directory, "other"));
+    if (fault === "parent-link") {
+      const target = path.join(app, "bin");
+      cpSync(directory, target, { recursive: true });
+      rmSync(directory, { recursive: true });
+      symlinkSync(target, directory);
+    }
+    const before = snapshotTree(app);
+    assert.equal(
+      observeNativeInstall(packageRoot, baseline.version, "svelte").kind,
+      fault === "none" ? "authenticated" : "invalid",
+      fault,
+    );
+    assert.deepEqual(snapshotTree(app), before);
+  }
 });
 
 for (const mode of ["upstream", "unpatched", "dispatch-only"])

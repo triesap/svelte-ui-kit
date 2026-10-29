@@ -24,6 +24,7 @@ import { captureEnvironment } from "../../src/project/environment.js";
 import {
   authenticateNativeInstall,
   NATIVE_BASELINE,
+  SVELTE_RUNTIME_BASELINE,
   observeNativeFile,
 } from "../../src/project/native-dependency.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
@@ -88,6 +89,14 @@ before(() => {
     path.join(output, NATIVE_BASELINE.archive),
     path.join(fixture, archivePath),
   );
+  cpSync(
+    path.resolve(
+      ".native-build",
+      SVELTE_RUNTIME_BASELINE.buildId,
+      SVELTE_RUNTIME_BASELINE.archive,
+    ),
+    path.join(fixture, "vendor", SVELTE_RUNTIME_BASELINE.archive),
+  );
   writeFileSync(
     path.join(fixture, "package.json"),
     JSON.stringify({
@@ -96,7 +105,7 @@ before(() => {
       devDependencies: { "@sveltejs/kit": "2.70.3" },
       dependencies: {
         "bits-ui": `file:./${archivePath}`,
-        svelte: "5.57.3",
+        svelte: `file:./vendor/${SVELTE_RUNTIME_BASELINE.archive}`,
         "@internationalized/date": "3.12.4",
       },
     }),
@@ -153,7 +162,7 @@ test("selected-owner native catalog authenticates the real archive and installed
   writeFileSync(file, JSON.stringify(manifest));
   writeFileSync(
     path.join(root, "pnpm-workspace.yaml"),
-    `packages:\n  - .\ncatalog:\n  svelte: 5.57.3\ncatalogs:\n  native:\n    bits-ui: file:./${archivePath}\n`,
+    `packages:\n  - .\ncatalog:\n  svelte: file:./vendor/${SVELTE_RUNTIME_BASELINE.archive}\ncatalogs:\n  native:\n    bits-ui: file:./${archivePath}\n`,
   );
   const before = snapshotTree(root);
   const result = inspectDependencyState(root, requirements);
@@ -204,6 +213,7 @@ test("captured native readiness and peers require explicit positive installed an
   const evidence = {
     manifest: captured.manifest,
     nativeFile: captured.nativeFile,
+    nativeFiles: captured.nativeFiles,
     observe: (name: string) => captured.installed.get(name) ?? null,
   };
   assert.ok(validatePeerDependenciesFromEvidence(evidence, plan).ok);
@@ -228,7 +238,13 @@ test("captured native readiness and peers require explicit positive installed an
       );
     }
   }
-  const noArchive = { ...evidence, nativeFile: { kind: "absent" as const } };
+  const noArchive = {
+    ...evidence,
+    nativeFiles: new Map([
+      ...captured.nativeFiles,
+      [NATIVE_BASELINE.name, { kind: "absent" as const }],
+    ]),
+  };
   for (const result of [
     inspectDependencyStateFromEvidence(noArchive, requirements),
     validatePeerDependenciesFromEvidence(noArchive, plan),
@@ -316,6 +332,68 @@ test("actual file install remains ready with complete identity and read-only cap
     ),
   );
   assert.deepEqual(snapshotTree(root), original);
+});
+
+test("library development installs cannot mask incompatible published Bits or date peers", (t) => {
+  for (const name of ["bits-ui", "@internationalized/date"] as const) {
+    const root = copy(t);
+    const file = path.join(root, "package.json");
+    const original = JSON.parse(readFileSync(file, "utf8"));
+    const manifest = {
+      name: "@example/native-peer-library",
+      version: "0.0.0",
+      type: "module",
+      private: true,
+      packageManager: original.packageManager,
+      devDependencies: original.dependencies,
+      peerDependencies: {
+        svelte: "^5.57.3",
+        "bits-ui": NATIVE_BASELINE.version,
+        "@internationalized/date": "^3.12.4",
+      },
+      svelte: "./dist/index.js",
+      types: "./dist/index.d.ts",
+      exports: {
+        ".": {
+          types: "./dist/index.d.ts",
+          svelte: "./dist/index.js",
+          default: "./dist/index.js",
+        },
+        "./styles.css": "./src/styles.css",
+      },
+    };
+    writeFileSync(file, JSON.stringify(manifest));
+    mkdirSync(path.join(root, "src/lib/_kit"), { recursive: true });
+    writeFileSync(
+      path.join(root, "src/lib/_kit/kit.json"),
+      JSON.stringify({
+        schemaVersion: 2,
+        target: "svelte-library",
+        uiDir: "src/lib",
+        stylesDir: "src/styles",
+        styleEntry: "src/styles.css",
+        requested: [],
+      }),
+    );
+    assert.equal(cli(root, ["init"]).status, 0);
+    assert.equal(cli(root, ["add", "dialog"]).status, 0);
+    manifest.peerDependencies[name] = name === "bits-ui" ? "^3" : "^4";
+    writeFileSync(file, JSON.stringify(manifest));
+    const before = snapshotTree(root);
+    for (const args of [["add", "menu"], ["sync"], ["doctor", "--strict"]]) {
+      const refused = cli(root, args);
+      assert.notEqual(refused.status, 0, `${name}: ${args}`);
+      assert.ok(
+        refused.envelope.diagnostics.some(
+          (i: { code: string }) =>
+            i.code ===
+            (name === "bits-ui" ? "PEER_INCOMPATIBLE" : "PEER_RANGE_CONFLICT"),
+        ),
+        JSON.stringify(refused.envelope),
+      );
+      assert.deepEqual(snapshotTree(root), before);
+    }
+  }
 });
 
 test("native provenance v1 rejects unknown formats/fields and never defaults missing identity", (t) => {
@@ -439,12 +517,12 @@ test("other package file declarations and unsupported native sources remain inva
     "file:./unknown.tgz",
   ]) {
     const manifest = {
-      dependencies: { "bits-ui": spec, svelte: `file:./${archivePath}` },
+      dependencies: { "bits-ui": spec, "other-file": `file:./${archivePath}` },
     };
     writeFileSync(path.join(root, "package.json"), JSON.stringify(manifest));
     const result = inspectDependencyState(root, [
       ...requirements,
-      { name: "svelte", range: "5.57.3" },
+      { name: "other-file", range: "5.57.3" },
     ]);
     assert.ok(!result.ok);
     assert.ok(
@@ -461,6 +539,7 @@ test("captured readiness stays immutable while archive and ancestry changes refu
   const evidence = {
     manifest: captured.manifest,
     nativeFile: captured.nativeFile,
+    nativeFiles: captured.nativeFiles,
     observe: (name: string) => captured.installed.get(name) ?? null,
   };
   const reads = installedReads(root);
@@ -599,6 +678,7 @@ test("live native authority refuses missing declarations and noncanonical identi
       {
         manifest: captured.manifest,
         nativeFile: captured.nativeFile,
+        nativeFiles: captured.nativeFiles,
         observe: (name) => captured.installed.get(name) ?? null,
       },
       requirements,

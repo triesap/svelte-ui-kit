@@ -8,6 +8,7 @@ import { composeGenerationFoundation } from "../helpers/generation-project.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 import { clearOrphanedWriterLock } from "../helpers/transactions.js";
 import { parseTargetConfig } from "../../src/project/target-config.js";
+import { linkQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import { generationLockContext } from "../../src/project/generation-config.js";
 import {
   applyPlan,
@@ -58,11 +59,7 @@ function fixture(t: { after(fn: () => void): void }, formatted = true) {
       },
     }),
   );
-  // Metadata-only planning fixture; actual native compilation is a separate consumer lane.
-  project.writeFile(
-    "node_modules/svelte/package.json",
-    JSON.stringify({ name: "svelte", version: "5.57.3" }),
-  );
+  linkQualifiedFixtureRuntime(project, "devDependencies");
   project.writeFile(
     "src/lib/_kit/kit.json",
     JSON.stringify(config.value, null, formatted ? 2 : undefined) +

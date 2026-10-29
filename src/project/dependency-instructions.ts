@@ -21,7 +21,7 @@
  */
 import path from "node:path";
 
-import { valid, validRange } from "semver";
+import { satisfies, valid, validRange } from "semver";
 
 import {
   fail,
@@ -32,7 +32,11 @@ import {
 } from "../registry/errors.js";
 import { isRegularFile, readJsonObject } from "./io.js";
 import { findOwningWorkspaceRoot } from "./root.js";
-import { NATIVE_BASELINE } from "./native-dependency.js";
+import {
+  QUALIFIED_NATIVE_NAMES,
+  qualifiedNativeBaseline,
+} from "./native-dependency.js";
+import type { TargetKind } from "./target-config.js";
 
 export const PACKAGE_MANAGERS = ["pnpm", "npm", "yarn"] as const;
 export type PackageManager = (typeof PACKAGE_MANAGERS)[number];
@@ -274,6 +278,8 @@ export interface DependencyInstructionRequest {
   readonly runtime: readonly string[];
   /** Consumer peer dependency specs (`name`/`name@range`). */
   readonly peers: readonly string[];
+  /** Library development installs must preserve published peer declarations. */
+  readonly target?: TargetKind;
   /** Established shell; defaults to POSIX on non-Windows hosts. */
   readonly shell?: "posix" | "unsupported";
 }
@@ -342,18 +348,57 @@ function renderWithManagerEvidence(
   const peers = validateAll(request.peers);
   const issues = [...runtime.issues, ...peers.issues];
   if (issues.length > 0) return fail(issues);
+  if (
+    request.target !== undefined &&
+    !["sveltekit", "astro", "svelte-library"].includes(request.target)
+  )
+    return fail([
+      issue(
+        "DEPENDENCY_TARGET_INVALID",
+        "Dependency instructions require a supported generation target.",
+        "package.json",
+      ),
+    ]);
 
   const shell =
     request.shell ?? (process.platform === "win32" ? "unsupported" : "posix");
-  const nativeSpec = `${NATIVE_BASELINE.name}@${NATIVE_BASELINE.version}`;
-  const nativeRequired = runtime.specs.includes(nativeSpec);
-  const registryRuntime = runtime.specs.filter((spec) => spec !== nativeSpec);
-  const localInstall = manager
-    ? `${manager === "npm" ? "npm install" : `${manager} add`} './vendor/${NATIVE_BASELINE.archive}'`
-    : "your supported package manager's explicit local-file install command";
-  const nativeGuidance = nativeRequired
-    ? `Bits ${NATIVE_BASELINE.version} uses the qualified local archive bundled at package/dist/native/${NATIVE_BASELINE.archive} in the locally packed CLI. Copy that member from your verified CLI tarball to a fresh application-owned location such as vendor/${NATIVE_BASELINE.archive}. Verify SHA-256 ${NATIVE_BASELINE.archiveSha256} before explicitly installing the local file. Keep the archive in the application so its builds work after the CLI host and authoring sources are removed. ${shell === "posix" ? `Set cli_archive to your actual CLI tarball, then from the selected application root run: test ! -L vendor && mkdir -p vendor && test -d vendor && test ! -e 'vendor/${NATIVE_BASELINE.archive}' && test ! -L 'vendor/${NATIVE_BASELINE.archive}' && tar -xOf "$cli_archive" 'package/dist/native/${NATIVE_BASELINE.archive}' > 'vendor/${NATIVE_BASELINE.archive}'. Verify the digest, then run ${localInstall}.` : "Extract the named tarball member yourself and use your package manager's explicit local-file install command."} The CLI reports this procedure and never installs or edits package files.`
-    : null;
+  const allSpecs = [...runtime.specs, ...peers.specs];
+  const nativeRequired = QUALIFIED_NATIVE_NAMES.filter((name) =>
+    allSpecs.some((spec) => spec === name || spec.startsWith(`${name}@`)),
+  );
+  const nativeOperand = (spec: string) =>
+    nativeRequired.some((name) => spec === name || spec.startsWith(`${name}@`));
+  const registryRuntime = runtime.specs.filter((spec) => !nativeOperand(spec));
+  const registryPeers = peers.specs.filter((spec) => !nativeOperand(spec));
+  const library = request.target === "svelte-library";
+  for (const name of nativeRequired) {
+    const profile = qualifiedNativeBaseline(name);
+    if (
+      allSpecs.some(
+        (spec) =>
+          spec.startsWith(`${name}@`) &&
+          !satisfies(profile.version, spec.slice(name.length + 1)),
+      )
+    )
+      return fail([
+        issue(
+          "DEPENDENCY_NATIVE_RANGE_UNSUPPORTED",
+          `The required ${name} range excludes its qualified version ${profile.version}; resolve the native requirement before installation.`,
+          "package.json",
+        ),
+      ]);
+  }
+  const nativeGuidance =
+    nativeRequired
+      .map((name) => {
+        const profile = qualifiedNativeBaseline(name);
+        const label = name === "bits-ui" ? "Bits" : "Svelte";
+        const localInstall = manager
+          ? `${manager === "npm" ? "npm install" : `${manager} add`}${library ? " -D" : ""} './vendor/${profile.archive}'`
+          : "your supported package manager's explicit local-file install command";
+        return `${label} ${profile.version} uses the qualified local archive bundled at package/dist/native/${profile.archive} in the locally packed CLI. Copy that member from your verified CLI tarball to a fresh application-owned location such as vendor/${profile.archive}. Verify SHA-256 ${profile.archiveSha256} before explicitly installing the local file. Keep the archive in the application so its builds work after the CLI host and authoring sources are removed. ${shell === "posix" ? `Set cli_archive to your actual CLI tarball, then from the selected application root run: test ! -L vendor && mkdir -p vendor && test -d vendor && test ! -e 'vendor/${profile.archive}' && test ! -L 'vendor/${profile.archive}' && tar -xOf "$cli_archive" 'package/dist/native/${profile.archive}' > 'vendor/${profile.archive}'. Verify the digest, then run ${localInstall}.` : "Extract the named tarball member yourself and use your package manager's explicit local-file install command."}${library ? " Keep published library peer requirements as SemVer; the file is a development installation only." : ""} The CLI reports this procedure and never installs or edits package files.`;
+      })
+      .join(" ") || null;
   const manualFor = (lead: string): string => {
     const runtimeList = registryRuntime.join(" ") || "none";
     const peerList = peers.specs.join(" ") || "none";
@@ -391,7 +436,7 @@ function renderWithManagerEvidence(
   return ok({
     manager,
     runtimeCommand: commandFor(manager, registryRuntime),
-    peerCommand: commandFor(manager, peers.specs),
+    peerCommand: commandFor(manager, registryPeers),
     runtimePackages: runtime.specs,
     peerPackages: peers.specs,
     manual: nativeGuidance,

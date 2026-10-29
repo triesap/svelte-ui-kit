@@ -10,7 +10,10 @@ import {
 import type { ModelResult } from "../../src/registry/errors.js";
 import { createTempProject, type TempProject } from "../helpers/project.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
+import {
+  NATIVE_BASELINE,
+  SVELTE_RUNTIME_BASELINE,
+} from "../../src/project/native-dependency.js";
 
 /**
  * S040 tests (repaired): instructions match the detected manager and
@@ -46,13 +49,21 @@ test("qualified native requirements report complete explicit local setup while o
     result.value.runtimeCommand,
     "pnpm add '@internationalized/date@^3.8.1'",
   );
-  assert.equal(result.value.peerCommand, "pnpm add 'svelte@5.57.3'");
+  assert.equal(result.value.peerCommand, null);
   assert.ok(
     result.value.manual?.includes(
       `package/dist/native/${NATIVE_BASELINE.archive}`,
     ),
   );
   assert.ok(result.value.manual?.includes(NATIVE_BASELINE.archiveSha256));
+  assert.ok(
+    result.value.manual?.includes(SVELTE_RUNTIME_BASELINE.archiveSha256),
+  );
+  assert.ok(
+    result.value.manual?.includes(
+      `package/dist/native/${SVELTE_RUNTIME_BASELINE.archive}`,
+    ),
+  );
   assert.ok(
     result.value.manual?.includes(
       `pnpm add './vendor/${NATIVE_BASELINE.archive}'`,
@@ -90,6 +101,117 @@ test("qualified native requirements report complete explicit local setup while o
   );
 });
 
+test("peer-only native operands use authenticated local development installs for libraries", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  for (const manager of ["pnpm", "npm", "yarn"] as const) {
+    project.writeFile(
+      "package.json",
+      JSON.stringify({ packageManager: `${manager}@12.16.1` }),
+    );
+    const before = snapshotTree(project.root);
+    const result = renderDependencyInstructions(project.root, {
+      runtime: [],
+      peers: [
+        `bits-ui@${NATIVE_BASELINE.version}`,
+        "svelte@^5.57.3",
+        "@internationalized/date@^3",
+      ],
+      target: "svelte-library",
+    });
+    assert.ok(result.ok, JSON.stringify(result));
+    assert.equal(result.value.runtimeCommand, null);
+    assert.ok(!result.value.peerCommand?.includes("bits-ui"));
+    assert.ok(!result.value.peerCommand?.includes("svelte@"));
+    assert.ok(result.value.peerCommand?.includes("@internationalized/date@^3"));
+    for (const profile of [NATIVE_BASELINE, SVELTE_RUNTIME_BASELINE]) {
+      assert.ok(result.value.manual?.includes(profile.archiveSha256));
+      assert.ok(
+        result.value.manual?.includes(
+          `${manager === "npm" ? "npm install" : `${manager} add`} -D './vendor/${profile.archive}'`,
+        ),
+      );
+    }
+    assert.ok(
+      result.value.manual?.includes(
+        "published library peer requirements as SemVer",
+      ),
+    );
+    assert.deepEqual(snapshotTree(project.root), before);
+  }
+});
+
+test("unsupported native ranges and generation targets refuse read-only", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ packageManager: "pnpm@12.16.1" }),
+  );
+  const before = snapshotTree(project.root);
+  for (const spec of [
+    "bits-ui@^2",
+    "bits-ui@2.19.3",
+    "svelte@^4",
+    "svelte@6",
+  ]) {
+    for (const field of ["runtime", "peers"] as const) {
+      const request = { runtime: [] as string[], peers: [] as string[] };
+      request[field] = [spec];
+      assert.deepEqual(
+        codes(renderDependencyInstructions(project.root, request)),
+        ["DEPENDENCY_NATIVE_RANGE_UNSUPPORTED"],
+      );
+    }
+  }
+  assert.deepEqual(
+    codes(
+      renderDependencyInstructions(project.root, {
+        runtime: [],
+        peers: [],
+        target: "other" as "astro",
+      }),
+    ),
+    ["DEPENDENCY_TARGET_INVALID"],
+  );
+  assert.deepEqual(snapshotTree(project.root), before);
+});
+
+test("bare and mixed native operands never produce a registry installation command", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  project.writeFile(
+    "package.json",
+    JSON.stringify({ packageManager: "pnpm@12.16.1" }),
+  );
+  const before = snapshotTree(project.root);
+  for (const profile of [NATIVE_BASELINE, SVELTE_RUNTIME_BASELINE]) {
+    for (const request of [
+      { runtime: [profile.name], peers: [] },
+      { runtime: [], peers: [profile.name] },
+      {
+        runtime: [profile.name],
+        peers: [`${profile.name}@${profile.version}`],
+      },
+    ]) {
+      const result = renderDependencyInstructions(project.root, {
+        ...request,
+        target: "svelte-library",
+      });
+      assert.ok(result.ok, JSON.stringify(result));
+      assert.equal(result.value.runtimeCommand, null);
+      assert.equal(result.value.peerCommand, null);
+      assert.ok(result.value.manual?.includes(profile.archiveSha256));
+      assert.ok(
+        result.value.manual?.includes(
+          `pnpm add -D './vendor/${profile.archive}'`,
+        ),
+      );
+    }
+  }
+  assert.deepEqual(snapshotTree(project.root), before);
+});
+
 test("the packageManager field selects the instruction manager", (t) => {
   const project = createTempProject();
   t.after(() => project.cleanup());
@@ -106,12 +228,19 @@ test("the packageManager field selects the instruction manager", (t) => {
   }
 
   const before = snapshotTree(project.root);
-  const result = render(project, ["bits-ui@2.19.3"], ["svelte@5.57.3"]);
+  const result = render(
+    project,
+    ["upstream-fixture@2.19.3"],
+    ["peer-fixture@5.57.3"],
+  );
   const after = snapshotTree(project.root);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
-  assert.equal(result.value.runtimeCommand, "pnpm add 'bits-ui@2.19.3'");
-  assert.equal(result.value.peerCommand, "pnpm add 'svelte@5.57.3'");
+  assert.equal(
+    result.value.runtimeCommand,
+    "pnpm add 'upstream-fixture@2.19.3'",
+  );
+  assert.equal(result.value.peerCommand, "pnpm add 'peer-fixture@5.57.3'");
   // The CLI's own tooling is never part of the consumer instruction.
   assert.ok(!result.value.runtimeCommand?.includes("typescript"));
   assert.deepEqual(after, before, "reporting must not write");
@@ -128,10 +257,13 @@ test("one unambiguous lockfile family is detected", (t) => {
   if (!evidence.ok) return;
   assert.equal(evidence.value.manager, "npm");
   assert.equal(evidence.value.source, "lockfile");
-  const result = render(project, ["bits-ui@2.19.3"], []);
+  const result = render(project, ["upstream-fixture@2.19.3"], []);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (result.ok)
-    assert.equal(result.value.runtimeCommand, "npm install 'bits-ui@2.19.3'");
+    assert.equal(
+      result.value.runtimeCommand,
+      "npm install 'upstream-fixture@2.19.3'",
+    );
 });
 
 test("yarn lockfile selects yarn", (t) => {
@@ -140,10 +272,13 @@ test("yarn lockfile selects yarn", (t) => {
   project.writeFile("package.json", JSON.stringify({ name: "yarn" }));
   project.writeFile("yarn.lock", "# yarn\n");
 
-  const result = render(project, ["bits-ui@2.19.3"], []);
+  const result = render(project, ["upstream-fixture@2.19.3"], []);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (result.ok)
-    assert.equal(result.value.runtimeCommand, "yarn add 'bits-ui@2.19.3'");
+    assert.equal(
+      result.value.runtimeCommand,
+      "yarn add 'upstream-fixture@2.19.3'",
+    );
 });
 
 test("conflicting lockfiles produce an actionable diagnostic", (t) => {
@@ -153,7 +288,7 @@ test("conflicting lockfiles produce an actionable diagnostic", (t) => {
   project.writeFile("pnpm-lock.yaml", "lockfileVersion: 9\n");
   project.writeFile("yarn.lock", "# yarn\n");
 
-  const result = render(project, ["bits-ui@2.19.3"], []);
+  const result = render(project, ["upstream-fixture@2.19.3"], []);
   assert.equal(result.ok, false);
   assert.deepEqual(codes(result), ["DEPENDENCY_MANAGER_CONFLICTING"]);
 });
@@ -163,15 +298,19 @@ test("no manager evidence yields null manager and manual guidance", (t) => {
   t.after(() => project.cleanup());
   project.writeFile("package.json", JSON.stringify({ name: "none" }));
 
-  const result = render(project, ["bits-ui@2.19.3"], ["svelte@5.57.3"]);
+  const result = render(
+    project,
+    ["upstream-fixture@2.19.3"],
+    ["peer-fixture@5.57.3"],
+  );
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
   assert.equal(result.value.manager, null);
   assert.equal(result.value.runtimeCommand, null);
   assert.equal(result.value.peerCommand, null);
-  assert.deepEqual(result.value.runtimePackages, ["bits-ui@2.19.3"]);
-  assert.match(result.value.manual ?? "", /bits-ui@2\.19\.3/);
-  assert.match(result.value.manual ?? "", /svelte@5\.57\.1/);
+  assert.deepEqual(result.value.runtimePackages, ["upstream-fixture@2.19.3"]);
+  assert.match(result.value.manual ?? "", /upstream-fixture@2\.19\.3/);
+  assert.match(result.value.manual ?? "", /peer-fixture@5\.57\.3/);
 });
 
 test("a malformed explicit packageManager is not accepted", (t) => {
@@ -188,7 +327,7 @@ test("a malformed explicit packageManager is not accepted", (t) => {
   if (!evidence.ok) return;
   assert.equal(evidence.value.manager, null);
   assert.equal(evidence.value.source, "unsupported");
-  const result = render(project, ["bits-ui@2.19.3"], []);
+  const result = render(project, ["upstream-fixture@2.19.3"], []);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (result.ok) assert.equal(result.value.runtimeCommand, null);
 });
@@ -233,9 +372,9 @@ test("shell-operator ranges are single-quoted and delivered as one argv", (t) =>
   );
 
   for (const [spec, expected] of [
-    ["svelte@>=5", "svelte@>=5"],
-    ["svelte@^5||^6", "svelte@^5||^6"],
-    ["svelte@*", "svelte@*"],
+    ["peer-fixture@>=5", "peer-fixture@>=5"],
+    ["peer-fixture@^5||^6", "peer-fixture@^5||^6"],
+    ["peer-fixture@*", "peer-fixture@*"],
   ] as const) {
     const result = render(project, [spec], []);
     assert.equal(result.ok, true, JSON.stringify(result));
@@ -267,20 +406,20 @@ test("specs with spaces are single-quoted and unsafe specs are rejected", (t) =>
     JSON.stringify({ packageManager: "pnpm@12.16.1" }),
   );
 
-  const spaced = render(project, ["svelte@^5.0.0 || ^6.0.0"], []);
+  const spaced = render(project, ["peer-fixture@^5.0.0 || ^6.0.0"], []);
   assert.equal(spaced.ok, true, JSON.stringify(spaced));
   if (spaced.ok) {
     assert.equal(
       spaced.value.runtimeCommand,
-      "pnpm add 'svelte@^5.0.0 || ^6.0.0'",
+      "pnpm add 'peer-fixture@^5.0.0 || ^6.0.0'",
     );
   }
 
   for (const unsafe of [
-    "bits-ui'; rm -rf /",
+    "upstream-fixture'; rm -rf /",
     "--save-dev",
-    "svelte@not a range",
-    "svelte\u0000x",
+    "peer-fixture@not a range",
+    "peer-fixture\u0000x",
   ]) {
     const result = render(project, [unsafe], []);
     assert.equal(result.ok, false, unsafe);
@@ -297,7 +436,7 @@ test("an unestablished shell yields structured operands, not fabricated quoting"
   );
 
   const result = renderDependencyInstructions(project.root, {
-    runtime: ["svelte@>=5"],
+    runtime: ["peer-fixture@>=5"],
     peers: [],
     shell: "unsupported",
   });
@@ -305,8 +444,8 @@ test("an unestablished shell yields structured operands, not fabricated quoting"
   if (!result.ok) return;
   assert.equal(result.value.manager, "pnpm");
   assert.equal(result.value.runtimeCommand, null);
-  assert.deepEqual(result.value.runtimePackages, ["svelte@>=5"]);
-  assert.match(result.value.manual ?? "", /svelte@>=5/);
+  assert.deepEqual(result.value.runtimePackages, ["peer-fixture@>=5"]);
+  assert.match(result.value.manual ?? "", /peer-fixture@>=5/);
 });
 
 test("reporting never executes a manager or changes the tree", (t) => {
@@ -318,8 +457,8 @@ test("reporting never executes a manager or changes the tree", (t) => {
   );
   project.writeDir("node_modules");
   const before = snapshotTree(project.root);
-  render(project, ["bits-ui@2.19.3"], ["svelte@5.57.3"]);
-  render(project, ["bits-ui@2.19.3"], ["svelte@5.57.3"]);
+  render(project, ["upstream-fixture@2.19.3"], ["peer-fixture@5.57.3"]);
+  render(project, ["upstream-fixture@2.19.3"], ["peer-fixture@5.57.3"]);
   assert.deepEqual(snapshotTree(project.root), before);
 });
 
