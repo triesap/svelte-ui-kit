@@ -14,11 +14,11 @@
  * makes those inputs trustworthy. It performs no filesystem access beyond the
  * captured evidence and starts no writer or package manager.
  */
+import type { DetectedProject } from "../project/detect.js";
+import { isExplicitTargetConfig } from "../project/generation-config.js";
 import type { ModelResult } from "../registry/errors.js";
 import { fail, ok } from "../registry/errors.js";
-import type { DetectedProject } from "../project/detect.js";
 import type { ProjectSnapshot } from "./snapshot.js";
-import { isAppTargetConfig } from "../project/app-config.js";
 import {
   inspectTargetEvidence,
   type TargetEvidence,
@@ -44,7 +44,7 @@ export function validateInvocation(
   if (
     installation.ok &&
     installation.value.kind === "custom" &&
-    isAppTargetConfig(installation.value.config)
+    isExplicitTargetConfig(installation.value.config)
   ) {
     if (snapshot.environment.managerIssues.length)
       return fail(snapshot.environment.managerIssues);

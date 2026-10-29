@@ -153,7 +153,7 @@
         "required": ["kind", "path", "baseline", "contract"],
         "properties": {
           "kind": {
-            "enum": ["layout", "stylesheet", "exports"]
+            "enum": ["layout", "stylesheet", "exports", "stylesheet-entry"]
           },
           "path": {
             "type": "string",
@@ -198,12 +198,27 @@
                 "const": "exports-v1"
               }
             }
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "stylesheet-entry"
+              },
+              "contract": {
+                "const": "library-styles-v1"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "\\.css$"
+              }
+            }
           }
         ]
-      }
+      },
+      "maxItems": 3
     },
     "target": {
-      "enum": ["sveltekit", "astro"]
+      "enum": ["sveltekit", "astro", "svelte-library"]
     }
   },
   "allOf": [
@@ -213,7 +228,7 @@
           "contains": {
             "properties": {
               "kind": {
-                "const": "layout"
+                "enum": ["layout", "stylesheet-entry"]
               }
             },
             "required": ["kind"]
@@ -275,18 +290,44 @@
         }
       },
       "else": {
-        "properties": {
-          "integrations": {
-            "contains": {
-              "properties": {
-                "kind": {
-                  "const": "layout"
+        "if": {
+          "properties": {
+            "target": {
+              "const": "svelte-library"
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "integrations": {
+              "contains": {
+                "properties": {
+                  "kind": {
+                    "const": "stylesheet-entry"
+                  },
+                  "contract": {
+                    "const": "library-styles-v1"
+                  }
                 },
-                "contract": {
-                  "const": "layout-v1"
-                }
-              },
-              "required": ["kind", "contract"]
+                "required": ["kind", "contract"]
+              }
+            }
+          }
+        },
+        "else": {
+          "properties": {
+            "integrations": {
+              "contains": {
+                "properties": {
+                  "kind": {
+                    "const": "layout"
+                  },
+                  "contract": {
+                    "const": "layout-v1"
+                  }
+                },
+                "required": ["kind", "contract"]
+              }
             }
           }
         }

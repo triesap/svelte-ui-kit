@@ -1,44 +1,45 @@
 import { parse, parseCss } from "svelte/compiler";
 import { sha256Hex } from "../../codegen/digest.js";
+import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
+import { generationFields } from "../../project/generation-config.js";
+import { projectRequests } from "../../registry/projection.js";
 import {
   isTokenMetadataPath,
   parseTokenMetadataDocument,
 } from "../../registry/theme.js";
-import { projectRequests } from "../../registry/projection.js";
-import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
 /** Structural/dependency diagnosis is strictly read-only, including recovery. */
 import path from "node:path";
-import type { CommandRequest } from "../args.js";
+import { parseManagedCss } from "../../codegen/css-parse.js";
+import { parseExportRegion } from "../../codegen/export-parse.js";
+import { createExportAuthority } from "../../codegen/exports.js";
 import {
-  createEnvelope,
-  isSafeLocator,
-  type EnvelopeDiagnostic,
-} from "../protocol.js";
-import { issueDiagnostics } from "../output.js";
-import { captureCommandContext } from "./context.js";
-import type { InfoResult } from "./info.js";
+  resolveProjectedConfig,
+  validateProjectedLock,
+  type AnyProjectedBatch as ProjectedBatch,
+} from "../../codegen/projected-batch.js";
+import { inspectTransactions } from "../../codegen/recovery.js";
+import { decodeObservedText } from "../../codegen/snapshot.js";
+import { targetIntegrationAdapter } from "../../codegen/target-integration.js";
+import { writerLockDir } from "../../codegen/transaction-types.js";
 import { deriveKitPaths } from "../../project/config.js";
-import { observeEntry } from "../../project/io.js";
-import { planDependencies } from "../../registry/dependency-plan.js";
 import {
   inspectDependencyStateFromEvidence,
   validatePeerDependenciesFromEvidence,
   type DependencyStateEntry,
 } from "../../project/dependencies.js";
-import { createExportAuthority } from "../../codegen/exports.js";
-import { parseExportRegion } from "../../codegen/export-parse.js";
-import { parseManagedCss } from "../../codegen/css-parse.js";
-import { targetIntegrationAdapter } from "../../codegen/target-integration.js";
-import { appTarget, appPlanIdentity } from "../../project/app-config.js";
-import {
-  resolveProjectedConfig,
-  validateProjectedLock,
-  type ProjectedBatch,
-} from "../../codegen/projected-batch.js";
-import { decodeObservedText } from "../../codegen/snapshot.js";
-import { inspectTransactions } from "../../codegen/recovery.js";
-import { writerLockDir } from "../../codegen/transaction-types.js";
+import { generationTarget } from "../../project/generation-config.js";
+import { observeEntry } from "../../project/io.js";
+import { planDependencies } from "../../registry/dependency-plan.js";
 import { issue, type ModelIssue } from "../../registry/errors.js";
+import type { CommandRequest } from "../args.js";
+import { issueDiagnostics } from "../output.js";
+import {
+  createEnvelope,
+  isSafeLocator,
+  type EnvelopeDiagnostic,
+} from "../protocol.js";
+import { captureCommandContext } from "./context.js";
+import type { InfoResult } from "./info.js";
 
 export interface DoctorCheck {
   readonly code: string;
@@ -372,11 +373,16 @@ export function diagnose(
         integration.path,
       );
     }
-    if (integration.kind === "layout") {
-      const adapter = targetIntegrationAdapter(appTarget(config));
+    if (
+      integration.kind === "layout" ||
+      integration.kind === "stylesheet-entry"
+    ) {
+      const adapter = targetIntegrationAdapter(generationTarget(config));
       const parsed = adapter.ok ? adapter.value.inspect(decoded.text) : adapter;
       record(
-        parsed.ok && parsed.value.rendersContent
+        parsed.ok &&
+          (integration.kind === "stylesheet-entry" ||
+            ("rendersContent" in parsed.value && parsed.value.rendersContent))
           ? []
           : parsed.ok
             ? [
@@ -420,8 +426,7 @@ export function diagnose(
         stateDir: derived.stateDir,
         uiDir: config.uiDir,
         stylesDir: config.stylesDir,
-        layoutFile: config.layoutFile,
-        ...appPlanIdentity(config),
+        ...generationFields(config),
         targets: [],
         evidence: [...snapshot.entries.values()]
           .filter((entry) => entry.kind === "file" || entry.kind === "absent")
@@ -549,8 +554,7 @@ export function diagnose(
   const transactions = inspectTransactions(snapshot.root, derived.stateDir, {
     uiDir: config.uiDir,
     stylesDir: config.stylesDir,
-    layoutFile: config.layoutFile,
-    ...appPlanIdentity(config),
+    ...generationFields(config),
   });
   for (const transaction of transactions)
     record(

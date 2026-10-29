@@ -1,7 +1,12 @@
 import {
-  type AppProjectConfig as KitConfig,
-  parseAppConfig as parseKitConfig,
-} from "../project/app-config.js";
+  integrationMapping,
+  parseGenerationConfig as parseKitConfig,
+  type GenerationConfig as KitConfig,
+} from "../project/generation-config.js";
+import {
+  mappedIntegration,
+  type LibraryIntegrationFields,
+} from "../project/integration-fields.js";
 /**
  * Complete projected-batch coherence (RCLD04-R2-1/R2-2).
  *
@@ -40,10 +45,20 @@ import {
 import path from "node:path";
 
 import { deriveKitPaths } from "../project/config.js";
+import {
+  generationTarget,
+  isExplicitTargetConfig,
+} from "../project/generation-config.js";
 import { issue, type ModelIssue } from "../registry/errors.js";
+import {
+  isTokenMetadataPath,
+  parseThemeMetadata,
+  tokenMetadataPaths,
+} from "../registry/theme.js";
 import { parseManagedCss } from "./css-parse.js";
 import { FOUNDATION_TOKENS_CONTRACT } from "./css.js";
 import { sha256Hex } from "./digest.js";
+import { parseExportRegion } from "./export-parse.js";
 import {
   authoritativeExportKey,
   effectiveExportKey,
@@ -51,15 +66,8 @@ import {
   type BarrelExportAuthority,
   type ExportDeclaration,
 } from "./exports.js";
-import { parseExportRegion } from "./export-parse.js";
 import type { KitLock } from "./lock.js";
-import {
-  isTokenMetadataPath,
-  tokenMetadataPaths,
-  parseThemeMetadata,
-} from "../registry/theme.js";
 import { targetIntegrationAdapter } from "./target-integration.js";
-import { appTarget, isAppTargetConfig } from "../project/app-config.js";
 
 /** One projected target result: `retire` means the path is absent afterwards. */
 export interface ProjectedTarget {
@@ -98,6 +106,7 @@ export interface ProjectedBatch {
   readonly uiDir: string;
   readonly stylesDir: string;
   readonly layoutFile: string;
+  readonly styleEntry?: never;
   readonly configSchema?: 2;
   readonly target?: "sveltekit" | "astro";
   readonly targets: readonly ProjectedTarget[];
@@ -119,6 +128,12 @@ export interface ProjectedBatch {
    */
   readonly exportAuthority?: readonly ExportAuthority[];
 }
+export type LibraryProjectedBatch = Omit<
+  ProjectedBatch,
+  "layoutFile" | "styleEntry" | "target" | "configSchema"
+> &
+  LibraryIntegrationFields;
+export type AnyProjectedBatch = ProjectedBatch | LibraryProjectedBatch;
 
 export type ProjectedConfigState =
   "created" | "updated" | "unchanged" | "missing";
@@ -188,7 +203,9 @@ export function managedBlockIds(
  * batch that leaves no configuration at all is incomplete authority: it is a
  * typed refusal, never a fabricated declaration-root fallback.
  */
-export function resolveProjectedConfig(batch: ProjectedBatch): ProjectedConfig {
+export function resolveProjectedConfig(
+  batch: AnyProjectedBatch,
+): ProjectedConfig {
   const configPath = projectedConfigPath(batch.stateDir);
   const target = batch.targets.find((entry) =>
     sameLogical(entry.path, configPath),
@@ -256,7 +273,7 @@ export function resolveProjectedConfig(batch: ProjectedBatch): ProjectedConfig {
   }
   const issues: ModelIssue[] = [];
   if (
-    isAppTargetConfig(validated.value)
+    isExplicitTargetConfig(validated.value)
       ? batch.configSchema !== 2 || batch.target !== validated.value.target
       : batch.configSchema !== undefined || batch.target !== undefined
   )
@@ -270,7 +287,11 @@ export function resolveProjectedConfig(batch: ProjectedBatch): ProjectedConfig {
   const mapping: readonly (readonly [string, string, string])[] = [
     ["uiDir", validated.value.uiDir, batch.uiDir],
     ["stylesDir", validated.value.stylesDir, batch.stylesDir],
-    ["layoutFile", validated.value.layoutFile, batch.layoutFile],
+    [
+      "layoutFile",
+      integrationMapping(validated.value).path,
+      mappedIntegration(batch).path,
+    ],
   ];
   for (const [field, projected, declared] of mapping) {
     if (projected !== declared) {
@@ -303,7 +324,7 @@ interface EffectiveContent {
   readonly issues: readonly ModelIssue[];
 }
 
-function resolveEffectiveContent(batch: ProjectedBatch): EffectiveContent {
+function resolveEffectiveContent(batch: AnyProjectedBatch): EffectiveContent {
   const issues: ModelIssue[] = [];
   const captured = new Map<string, ProjectedContent>();
   for (const entry of batch.content) {
@@ -405,7 +426,7 @@ function validateLayoutIntegration(
       ),
     ];
   }
-  const adapter = targetIntegrationAdapter(appTarget(config));
+  const adapter = targetIntegrationAdapter(generationTarget(config));
   if (!adapter.ok) return adapter.issues.slice();
   const parsed = adapter.value.inspect(text);
   if (!parsed.ok) {
@@ -419,7 +440,7 @@ function validateLayoutIntegration(
   }
   const derived = deriveKitPaths(config);
   const desired = [derived.kitCss, derived.themesCss, derived.appCss].map(
-    (target) => relativeSpecifier(config.layoutFile, target),
+    (target) => relativeSpecifier(integrationMapping(config).path, target),
   );
   const imports = parsed.value.imports;
   const indices: number[] = [];
@@ -451,7 +472,10 @@ function validateLayoutIntegration(
       ),
     );
   }
-  if (!parsed.value.rendersContent) {
+  if (
+    integrationMapping(config).kind === "layout" &&
+    (!("rendersContent" in parsed.value) || !parsed.value.rendersContent)
+  ) {
     issues.push(
       issue(
         "PROJECTED_LAYOUT_RENDERING_MISSING",
@@ -559,7 +583,7 @@ function validateExportsIntegration(
  * schema/roles with `parseKitLock` under the projected mapping.
  */
 export function validateProjectedLock(
-  batch: ProjectedBatch,
+  batch: AnyProjectedBatch,
   lock: KitLock,
   projected: ProjectedConfig,
 ): ModelIssue[] {
@@ -567,7 +591,7 @@ export function validateProjectedLock(
   const config = projected.config;
   if (
     config !== null &&
-    (isAppTargetConfig(config)
+    (isExplicitTargetConfig(config)
       ? lock.schemaVersion !== 2 || lock.target !== config.target
       : lock.schemaVersion !== 1 || lock.target !== undefined)
   )
@@ -666,9 +690,8 @@ export function validateProjectedLock(
     // `tokens` block. Contract proof is read from the effective projected
     // content, so a dis-integrated replacement is refused before any effect.
     if (
-      integration.kind === "layout" &&
-      integration.contract ===
-        (appTarget(config) === "astro" ? "astro-layout-v1" : LAYOUT_CONTRACT)
+      integration.kind === integrationMapping(config).kind &&
+      integration.contract === integrationMapping(config).contract
     ) {
       const bytes = requireContent(integration.path, "layout integration");
       if (bytes !== null) {

@@ -1,27 +1,31 @@
+import {
+  generationFields,
+  initializationFields,
+  integrationMapping,
+} from "../../project/generation-config.js";
 /** S081: orchestration consumes the accepted pure planner and guarded applier. */
+import { applyPlan, validateApplyPlan } from "../../codegen/apply.js";
+import { composeApplyPlan } from "../../codegen/compose.js";
+import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
+import { planInit } from "../../codegen/plan-init.js";
+import { inspectUnchangedState } from "../../codegen/recovery.js";
+import { captureSnapshot, observedText } from "../../codegen/snapshot.js";
+import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
+import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
+import { captureEnvironment } from "../../project/environment.js";
+import { generationInputPaths } from "../../project/generation-config.js";
+import { resolveProjectRoot } from "../../project/root.js";
+import { createAssetProvider } from "../../registry/assets.js";
+import { issue, type ModelIssue } from "../../registry/errors.js";
+import { loadRegistrySnapshot } from "../../registry/load.js";
+import { tokenMetadataPaths } from "../../registry/theme.js";
 import type { CommandRequest } from "../args.js";
+import { applyOutcomeEnvelope, issueDiagnostics } from "../output.js";
 import {
   createEnvelope,
   type EnvelopeChange,
   type FailureClass,
 } from "../protocol.js";
-import { issueDiagnostics, applyOutcomeEnvelope } from "../output.js";
-import { resolveProjectRoot } from "../../project/root.js";
-import { captureEnvironment } from "../../project/environment.js";
-import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
-import { targetInputPaths } from "../../project/app-config.js";
-import { appPlanIdentity } from "../../project/app-config.js";
-import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
-import { captureSnapshot, observedText } from "../../codegen/snapshot.js";
-import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
-import { planInit } from "../../codegen/plan-init.js";
-import { composeApplyPlan } from "../../codegen/compose.js";
-import { applyPlan, validateApplyPlan } from "../../codegen/apply.js";
-import { inspectUnchangedState } from "../../codegen/recovery.js";
-import { createAssetProvider } from "../../registry/assets.js";
-import { loadRegistrySnapshot } from "../../registry/load.js";
-import { tokenMetadataPaths } from "../../registry/theme.js";
-import { issue, type ModelIssue } from "../../registry/errors.js";
 import type { InfoResult } from "./info.js";
 
 export function initialize(
@@ -74,7 +78,7 @@ export function initialize(
         };
   const paths = deriveKitPaths(supplied);
   const snapshot = captureSnapshot(selected.value.root, [
-    ...targetInputPaths(supplied),
+    ...generationInputPaths(supplied),
     paths.stateDir + "/kit.json",
     paths.stateDir + "/kit.lock.json",
     ...tokenMetadataPaths(paths.stateDir),
@@ -82,7 +86,7 @@ export function initialize(
     paths.kitCss,
     paths.themesCss,
     paths.appCss,
-    supplied.layoutFile,
+    integrationMapping(supplied).path,
     ".gitignore",
   ]);
   if (!snapshot.ok) return failure(snapshot.issues, "unsafe_path");
@@ -96,7 +100,7 @@ export function initialize(
   if (
     config.uiDir !== supplied.uiDir ||
     config.stylesDir !== supplied.stylesDir ||
-    config.layoutFile !== supplied.layoutFile
+    integrationMapping(config).path !== integrationMapping(supplied).path
   )
     return failure([
       issue(
@@ -106,10 +110,12 @@ export function initialize(
       ),
     ]);
   const planned = planInit({
-    config,
-    layoutFile: config.layoutFile,
-    layoutSource:
-      observedText(snapshot.value.entries.get(config.layoutFile)!) ?? "",
+    ...initializationFields(
+      config,
+      observedText(
+        snapshot.value.entries.get(integrationMapping(config).path)!,
+      ) ?? "",
+    ),
     snapshot: snapshot.value,
     registry: registry.value,
     configHash: registry.value.root.contentHash,
@@ -124,13 +130,20 @@ export function initialize(
   if (!instructions.ok) return failure(instructions.issues);
   const data = {
     dependencies: instructions.value,
-    integration: { layoutFile: config.layoutFile, ...deriveKitPaths(config) },
+    integration: {
+      ...generationFields(config),
+      ...deriveKitPaths(config),
+    },
   };
   if (planned.value.writes.length === 0) {
     const retained = inspectUnchangedState(
       snapshot.value.root,
       paths.stateDir,
-      { ...config, ...appPlanIdentity(config) },
+      {
+        uiDir: config.uiDir,
+        stylesDir: config.stylesDir,
+        ...generationFields(config),
+      },
     );
     if (retained.length > 0) return failure(retained);
     return {

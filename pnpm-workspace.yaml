@@ -2,6 +2,8 @@ packages:
   - "."
   - "tests/fixtures/consumer"
   - "tests/fixtures/astro-consumer"
+  - "tests/fixtures/library"
+  - "tests/fixtures/library-kit-consumer"
 catalog:
   "@astrojs/compiler-rs": "0.5.2"
   "prettier-plugin-astro": "1.1.2"
@@ -15,6 +17,12 @@ catalog:
   "@types/node": "24.19.0"
   svelte-check: "4.7.6"
   csstype: "3.1.3"
+  "@sveltejs/package": "3.0.1"
+  "@sveltejs/kit": "2.70.3"
+  "@sveltejs/adapter-node": "5.5.7"
+  "@sveltejs/vite-plugin-svelte": "7.3.1"
+  vite: "8.3.1"
+  bits-ui: "2.19.5-svelte-ui-kit.2"
 minimumReleaseAgeExclude:
   - "@astrojs/markdown-satteri@0.4.6"
   - "@astrojs/prism@4.1.2"

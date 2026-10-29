@@ -1,0 +1,29 @@
+{
+  "name": "packed-library-kit-consumer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=24.21.0 <25"
+  },
+  "scripts": {
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@internationalized/date": "catalog:",
+    "bits-ui": "file:./.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz",
+    "svelte": "catalog:"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-node": "catalog:",
+    "@sveltejs/kit": "catalog:",
+    "@sveltejs/vite-plugin-svelte": "catalog:",
+    "@types/node": "catalog:",
+    "csstype": "catalog:",
+    "svelte-check": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

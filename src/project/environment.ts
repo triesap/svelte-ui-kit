@@ -28,11 +28,7 @@ import {
 import path from "node:path";
 
 import type { ModelIssue, ModelResult } from "../registry/errors.js";
-import {
-  detectPackageManager,
-  LOCKFILE_MANAGERS,
-  type ManagerEvidence,
-} from "./dependency-instructions.js";
+import { observeCatalogs } from "./catalogs.js";
 import {
   DECLARATION_FIELDS,
   observeInstalled,
@@ -41,20 +37,24 @@ import {
   type InstalledObservation,
 } from "./dependencies.js";
 import {
+  detectPackageManager,
+  LOCKFILE_MANAGERS,
+  type ManagerEvidence,
+} from "./dependency-instructions.js";
+import {
   detectDefaultProject,
-  discoverKitConfig,
+  discoverGenerationConfig,
   type DetectedProject,
-  type DiscoveredKitConfig,
+  type DiscoveredGenerationConfig,
 } from "./detect.js";
-import { observeCatalogs } from "./catalogs.js";
-import { TARGET_CONFIG_FILES } from "./target-config.js";
-import { isAppTargetConfig } from "./app-config.js";
+import { isExplicitTargetConfig } from "./generation-config.js";
 import { deepFreeze, FrozenMap } from "./immutable.js";
 import { type JsonObservation } from "./io.js";
 import {
   observeNativeFile,
   type NativeFileObservation,
 } from "./native-dependency.js";
+import { TARGET_CONFIG_FILES } from "./target-config.js";
 
 /**
  * Physical evidence of one environment file captured with the snapshot: an
@@ -155,7 +155,7 @@ export interface CapturedEnvironment {
    * custom observed installation is never missed and a later disk edit cannot
    * change the resolved mapping.
    */
-  readonly kitConfig: ModelResult<DiscoveredKitConfig>;
+  readonly kitConfig: ModelResult<DiscoveredGenerationConfig>;
 }
 
 /**
@@ -440,7 +440,7 @@ export function captureEnvironment(root: string): CapturedEnvironment {
   );
   const managerResult = detectPackageManager(root);
   const project = deepFreeze(detectDefaultProject(root));
-  const kitConfig = deepFreeze(discoverKitConfig(root));
+  const kitConfig = deepFreeze(discoverGenerationConfig(root));
   return deepFreeze({
     manifest,
     catalogDigest: catalogs.digest,
@@ -451,7 +451,7 @@ export function captureEnvironment(root: string): CapturedEnvironment {
         ...installedManifestPaths(root, names),
         ...(kitConfig.ok &&
         kitConfig.value.kind === "custom" &&
-        isAppTargetConfig(kitConfig.value.config)
+        isExplicitTargetConfig(kitConfig.value.config)
           ? TARGET_CONFIG_FILES
           : []),
       ]),

@@ -1,3 +1,7 @@
+import {
+  mappedIntegration,
+  type IntegrationFields,
+} from "../project/integration-fields.js";
 /**
  * Strict transient journal and coordination records (S065, S069).
  *
@@ -13,27 +17,27 @@
  * replacement begins.
  */
 import {
+  closeSync,
+  fsyncSync,
   mkdirSync,
   openSync,
-  writeSync,
-  fsyncSync,
-  closeSync,
   renameSync,
+  writeSync,
 } from "node:fs";
 import path from "node:path";
 
+import { isSafeLogicalRelativePath, pathsOverlap } from "../project/paths.js";
+import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { sha256Hex } from "./digest.js";
 import { flushFile } from "./durability.js";
+import type { ChangeOperation } from "./plan.js";
+import { canonicalJson } from "./serialize.js";
+import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
   renameOwnedCreation,
   writeOwnedFile,
   type OwnedCreation,
 } from "./transaction-inventory.js";
-import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
-import { isSafeLogicalRelativePath, pathsOverlap } from "../project/paths.js";
-import { canonicalJson } from "./serialize.js";
-import type { ChangeOperation } from "./plan.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
   APPROVED_IGNORE_FILES,
   isTransactionId,
@@ -91,7 +95,7 @@ export interface JournalCreatedDir {
 
 export interface TransactionJournal {
   readonly schemaVersion: 1 | 2;
-  readonly target?: "sveltekit" | "astro";
+  readonly target?: "sveltekit" | "astro" | "svelte-library";
   readonly transactionId: string;
   readonly rootIdentity: string;
   readonly planDigest: string;
@@ -204,7 +208,9 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
     problems.push("journal schemaVersion must be 1 or 2");
   if (
     parsed.schemaVersion === 2
-      ? !["astro", "sveltekit"].includes(String(parsed.target))
+      ? !["astro", "sveltekit", "svelte-library"].includes(
+          String(parsed.target),
+        )
       : Object.hasOwn(parsed, "target")
   )
     problems.push(
@@ -507,7 +513,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
   return ok({
     schemaVersion: parsed.schemaVersion as 1 | 2,
     ...(parsed.schemaVersion === 2
-      ? { target: parsed.target as "sveltekit" | "astro" }
+      ? { target: parsed.target as "sveltekit" | "astro" | "svelte-library" }
       : {}),
     transactionId: parsed["transactionId"] as string,
     rootIdentity: parsed["rootIdentity"] as string,
@@ -536,18 +542,16 @@ export function validateJournalTargets(
   roots: {
     readonly uiDir: string;
     readonly stylesDir: string;
-    readonly layoutFile: string;
     readonly stateDir: string;
-    readonly configSchema?: 2;
-    readonly target?: "sveltekit" | "astro";
-  },
+    readonly target?: "sveltekit" | "astro" | "svelte-library";
+  } & IntegrationFields,
 ): ModelResult<TransactionJournal> {
   const problems = [];
   if (
     roots.configSchema === 2
       ? journal.schemaVersion !== 2 ||
         journal.target !== roots.target ||
-        !["astro", "sveltekit"].includes(String(roots.target))
+        !["astro", "sveltekit", "svelte-library"].includes(String(roots.target))
       : journal.schemaVersion !== 1 ||
         journal.target !== undefined ||
         roots.target !== undefined
@@ -569,7 +573,7 @@ export function validateJournalTargets(
     const within =
       isWithin(target, roots.uiDir) ||
       isWithin(target, roots.stylesDir) ||
-      target === roots.layoutFile ||
+      target === mappedIntegration(roots).path ||
       approvedIgnore.has(target.toLowerCase());
     if (!within) {
       problems.push(

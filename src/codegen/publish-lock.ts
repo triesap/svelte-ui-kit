@@ -28,19 +28,22 @@ import {
 import type { ModelIssue } from "../registry/errors.js";
 import { sha256Hex } from "./digest.js";
 import { flushDirectory, flushFile } from "./durability.js";
-import { parseKitLock, type LockValidationContext } from "./lock.js";
 import {
-  persistJournal,
-  type TransactionJournal,
-} from "./transaction-journal.js";
-import { writePublicationIntent } from "./publication-intent.js";
+  parseKitLock,
+  type AnyLockValidationContext as LockValidationContext,
+} from "./lock.js";
 import {
   verifyMutationAuthority,
   verifyMutationTarget,
   type MutationAuthority,
 } from "./mutation-authority.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+import { writePublicationIntent } from "./publication-intent.js";
 import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
+import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+import {
+  persistJournal,
+  type TransactionJournal,
+} from "./transaction-journal.js";
 import {
   journalPath,
   lockPath,

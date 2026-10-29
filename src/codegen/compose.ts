@@ -1,10 +1,12 @@
-import { appLockContext } from "../project/app-config.js";
 import {
-  appPlanIdentity,
-  appTarget,
-  targetInputPaths,
-} from "../project/app-config.js";
-import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
+  generationFields,
+  generationInputPaths,
+  generationLockContext,
+  generationPlanIdentity,
+  generationTarget,
+  type GenerationConfig as KitConfig,
+  type LibraryConfig,
+} from "../project/generation-config.js";
 /**
  * Compose a planner's writes into a guarded apply plan (RCLD04-R2-1).
  *
@@ -24,6 +26,8 @@ import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
  * This function performs read-only observation of the snapshot only; it
  * creates no files and starts no writer.
  */
+import { deriveKitPaths } from "../project/config.js";
+import { isSafeLogicalRelativePath } from "../project/paths.js";
 import {
   fail,
   issue,
@@ -31,35 +35,38 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
-import { deriveKitPaths } from "../project/config.js";
-import { isSafeLogicalRelativePath } from "../project/paths.js";
-import { canonicalContentHash, sha256Hex } from "./digest.js";
-import { identityDigest, type PlanReadFile } from "./authority.js";
+import type {
+  AnyApplyPlanInput,
+  ApplyPlanInput,
+  ApplyTarget,
+  LibraryApplyPlanInput,
+} from "./apply.js";
+import { derivePlanDigest } from "./apply.js";
 import type { PlanInstalledRead } from "./authority.js";
+import { identityDigest, type PlanReadFile } from "./authority.js";
+import { canonicalContentHash, sha256Hex } from "./digest.js";
+import { parseExportRegion } from "./export-parse.js";
 import {
   authoritativeExportKey,
-  validateExportReceipt,
   effectiveExportKey,
   parseGeneratedDeclarations,
+  validateExportReceipt,
   type BarrelExportAuthority,
 } from "./exports.js";
-import { parseExportRegion } from "./export-parse.js";
 import { parseKitLock } from "./lock.js";
-import { hasIgnoreEntry, ignoreBlockWithEntry } from "./transaction-cleanup.js";
-import type { ApplyPlanInput, ApplyTarget } from "./apply.js";
-import { derivePlanDigest } from "./apply.js";
-import type { PlanWrite } from "./plan.js";
-import { planningWritesDigest } from "./plan.js";
 import { originalAddPlanning } from "./plan-add.js";
 import { originalInitPlanning } from "./plan-init.js";
 import { originalSyncPlanning } from "./plan-sync.js";
-import { decodeObservedText } from "./snapshot.js";
-import { ignoreEntryFor, lockPath } from "./transaction-types.js";
+import type { PlanWrite } from "./plan.js";
+import { planningWritesDigest } from "./plan.js";
 import type {
   AncestorObservation,
   ProjectSnapshot,
   TargetObservation,
 } from "./snapshot.js";
+import { decodeObservedText } from "./snapshot.js";
+import { hasIgnoreEntry, ignoreBlockWithEntry } from "./transaction-cleanup.js";
+import { ignoreEntryFor, lockPath } from "./transaction-types.js";
 
 export interface ComposeApplyPlanInput {
   readonly root: string;
@@ -88,7 +95,7 @@ export interface ComposeApplyPlanInput {
 const HEX64 = /^[0-9a-f]{64}$/;
 const COMPOSITION_RECEIPTS = new WeakMap<object, string>();
 
-function compositionDigest(plan: ApplyPlanInput): string {
+function compositionDigest(plan: AnyApplyPlanInput): string {
   return derivePlanDigest({
     ...plan,
     targets: plan.targets.map((target) => ({
@@ -99,7 +106,7 @@ function compositionDigest(plan: ApplyPlanInput): string {
 }
 
 /** Exact complete original composition, not a caller-supplied subset/digest. */
-export function isOriginalComposition(plan: ApplyPlanInput): boolean {
+export function isOriginalComposition(plan: AnyApplyPlanInput): boolean {
   const receipt = plan.compositionAuthority;
   if (typeof receipt !== "object" || receipt === null) return false;
   const digest = COMPOSITION_RECEIPTS.get(receipt);
@@ -177,8 +184,19 @@ function ancestorFor(observation: AncestorObservation): {
  * from the ordinary target set.
  */
 export function composeApplyPlan(
+  input: ComposeApplyPlanInput & {
+    config: import("../project/app-config.js").AppProjectConfig;
+  },
+): ModelResult<ApplyPlanInput>;
+export function composeApplyPlan(
+  input: ComposeApplyPlanInput & { config: LibraryConfig },
+): ModelResult<LibraryApplyPlanInput>;
+export function composeApplyPlan(
   input: ComposeApplyPlanInput,
-): ModelResult<ApplyPlanInput> {
+): ModelResult<AnyApplyPlanInput>;
+export function composeApplyPlan(
+  input: ComposeApplyPlanInput,
+): ModelResult<AnyApplyPlanInput> {
   const snapshot = input.snapshot;
   if (!isPlainObject(snapshot as unknown)) {
     return fail([
@@ -425,7 +443,7 @@ export function composeApplyPlan(
     const observation = snapshot.entries.get(path);
     if (
       observation?.kind === "absent" &&
-      targetInputPaths(input.config).includes(path)
+      generationInputPaths(input.config).includes(path)
     ) {
       evidenceSeen.add(path);
       evidenceFiles.push({
@@ -505,7 +523,7 @@ export function composeApplyPlan(
       : (() => {
           const validated = parseKitLock(parsedLockValue, canonicalLock, {
             stateDir,
-            ...appLockContext(input.config),
+            ...generationLockContext(input.config),
           });
           return validated.ok ? validated.value : null;
         })();
@@ -754,9 +772,9 @@ export function composeApplyPlan(
     stateDir,
     uiDir: input.config.uiDir,
     stylesDir: input.config.stylesDir,
-    layoutFile: input.config.layoutFile,
-    configSchema: appPlanIdentity(input.config).configSchema ?? 1,
-    target: appTarget(input.config),
+    ...generationFields(input.config),
+    configSchema: generationPlanIdentity(input.config).configSchema ?? 1,
+    target: generationTarget(input.config),
     rootIdentity,
     targets: targets.map((target) => ({
       path: target.path,
@@ -812,13 +830,12 @@ export function composeApplyPlan(
     },
   });
 
-  const result: ApplyPlanInput = {
+  const result: AnyApplyPlanInput = {
     root,
     stateDir,
     uiDir: input.config.uiDir,
     stylesDir: input.config.stylesDir,
-    layoutFile: input.config.layoutFile,
-    ...appPlanIdentity(input.config),
+    ...generationFields(input.config),
     rootIdentity,
     planDigest,
     readset: {

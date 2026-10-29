@@ -1,33 +1,34 @@
+import { generationFields } from "../../project/generation-config.js";
 /** S079: actual read-only inspection of the selected consumer package. */
-import type { CommandRequest } from "../args.js";
-import {
-  createEnvelope,
-  type CommandEnvelope,
-  type FailureClass,
-} from "../protocol.js";
-import { issueDiagnostics } from "../output.js";
-import { resolveProjectRoot } from "../../project/root.js";
-import { captureSnapshot } from "../../codegen/snapshot.js";
 import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
+import { captureSnapshot } from "../../codegen/snapshot.js";
 import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
-import { discoverKitConfig } from "../../project/detect.js";
-import {
-  isAppTargetConfig,
-  targetInputPaths,
-} from "../../project/app-config.js";
 import {
   inspectDependencyStateFromEvidence,
   validatePeerDependenciesFromEvidence,
   type DependencyRequirement,
 } from "../../project/dependencies.js";
+import { discoverGenerationConfig } from "../../project/detect.js";
+import {
+  generationInputPaths,
+  isExplicitTargetConfig,
+} from "../../project/generation-config.js";
+import { resolveProjectRoot } from "../../project/root.js";
 import { createAssetProvider } from "../../registry/assets.js";
-import { loadRegistrySnapshot } from "../../registry/load.js";
-import { projectRequests } from "../../registry/projection.js";
 import {
   planDependencies,
   type NpmPlanEntry,
 } from "../../registry/dependency-plan.js";
 import type { ModelIssue } from "../../registry/errors.js";
+import { loadRegistrySnapshot } from "../../registry/load.js";
+import { projectRequests } from "../../registry/projection.js";
+import type { CommandRequest } from "../args.js";
+import { issueDiagnostics } from "../output.js";
+import {
+  createEnvelope,
+  type CommandEnvelope,
+  type FailureClass,
+} from "../protocol.js";
 
 export interface InfoResult {
   readonly envelope: CommandEnvelope;
@@ -78,17 +79,24 @@ export function inspectInfo(
     );
   const registry = loadRegistrySnapshot(createAssetProvider(registryRoot));
   if (!registry.ok) return failure(registry.issues, "registry_failure");
-  const located = discoverKitConfig(selected.value.root);
+  const located = discoverGenerationConfig(selected.value.root);
   const targetPaths =
     located.ok &&
     located.value.kind === "custom" &&
-    isAppTargetConfig(located.value.config)
-      ? [...targetInputPaths(located.value.config), located.value.configPath]
+    isExplicitTargetConfig(located.value.config)
+      ? [
+          ...generationInputPaths(located.value.config),
+          located.value.configPath,
+        ]
       : [];
   const snapshot = captureSnapshot(selected.value.root, targetPaths);
   if (!snapshot.ok) return failure(snapshot.issues, "unsafe_path");
   const environment = snapshot.value.environment;
-  const resolved = resolveEffectiveConfig(snapshot.value, DEFAULT_KIT_CONFIG);
+  const intent =
+    environment.kitConfig.ok && environment.kitConfig.value.kind === "custom"
+      ? environment.kitConfig.value.config
+      : DEFAULT_KIT_CONFIG;
+  const resolved = resolveEffectiveConfig(snapshot.value, intent);
   if (!resolved.ok) return failure(resolved.issues);
   if (resolved.value.issues.length > 0) return failure(resolved.value.issues);
   const effective = resolved.value;
@@ -175,7 +183,7 @@ export function inspectInfo(
         paths: {
           uiDir: config.uiDir,
           stylesDir: config.stylesDir,
-          layoutFile: config.layoutFile,
+          ...generationFields(config),
           ...deriveKitPaths(config),
         },
         registry: {

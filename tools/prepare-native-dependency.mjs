@@ -125,11 +125,13 @@ export function prepareNativeDependency({
     for (const relative of [
       "tests/fixtures/consumer",
       "tests/fixtures/astro-consumer",
+      "tests/fixtures/library",
+      "tests/fixtures/library-kit-consumer",
     ]) {
       // Historical preparation controls contain only the original consumer.
       // Present unsafe ancestry still refuses; no symlink is followed.
       if (
-        relative.endsWith("astro-consumer") &&
+        relative !== "tests/fixtures/consumer" &&
         lstatSync(path.join(packageRoot, relative), {
           throwIfNoEntry: false,
         }) === undefined

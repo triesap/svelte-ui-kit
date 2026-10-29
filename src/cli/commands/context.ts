@@ -1,28 +1,31 @@
-import { appLockContext } from "../../project/app-config.js";
-import { type AppProjectConfig as KitConfig } from "../../project/app-config.js";
+import {
+  generationLockContext,
+  integrationMapping,
+  type GenerationConfig as KitConfig,
+} from "../../project/generation-config.js";
 import { projectRequests } from "../../registry/projection.js";
 import { tokenMetadataPaths } from "../../registry/theme.js";
 /** Capture complete command planning authority; never fill snapshot gaps live. */
 import path from "node:path";
-import type { CommandRequest } from "../args.js";
-import { resolveProjectRoot } from "../../project/root.js";
-import { captureEnvironment } from "../../project/environment.js";
-import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
-import { readJsonObject } from "../../project/io.js";
+import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
+import { parseKitLock, type KitLock } from "../../codegen/lock.js";
 import {
   captureSnapshot,
   decodeObservedText,
   type ProjectSnapshot,
 } from "../../codegen/snapshot.js";
-import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
-import { targetInputPaths } from "../../project/app-config.js";
-import { parseKitLock, type KitLock } from "../../codegen/lock.js";
+import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
+import { captureEnvironment } from "../../project/environment.js";
+import { generationInputPaths } from "../../project/generation-config.js";
+import { readJsonObject } from "../../project/io.js";
+import { resolveProjectRoot } from "../../project/root.js";
 import { createAssetProvider } from "../../registry/assets.js";
+import { fail, issue, ok, type ModelResult } from "../../registry/errors.js";
 import {
   loadRegistrySnapshot,
   type RegistrySnapshot,
 } from "../../registry/load.js";
-import { fail, issue, ok, type ModelResult } from "../../registry/errors.js";
+import type { CommandRequest } from "../args.js";
 
 export interface CommandContext {
   readonly registry: RegistrySnapshot;
@@ -63,8 +66,7 @@ export function captureCommandContext(
     stateDir: derived.stateDir,
     uiDir: config.uiDir,
     stylesDir: config.stylesDir,
-    layoutFile: config.layoutFile,
-    ...appLockContext(config),
+    ...generationLockContext(config),
   };
   const preliminaryLock = readJsonObject(
     path.join(selected.value.root, lockPath),
@@ -83,14 +85,14 @@ export function captureCommandContext(
       ),
     ]);
   const paths = new Set([
-    ...targetInputPaths(config),
+    ...generationInputPaths(config),
     derived.stateDir + "/kit.json",
     lockPath,
     derived.rootExports,
     derived.kitCss,
     derived.themesCss,
     derived.appCss,
-    config.layoutFile,
+    integrationMapping(config).path,
     ".gitignore",
   ]);
   const closure = projectRequests(
@@ -128,7 +130,7 @@ export function captureCommandContext(
   if (
     capturedConfig.uiDir !== config.uiDir ||
     capturedConfig.stylesDir !== config.stylesDir ||
-    capturedConfig.layoutFile !== config.layoutFile
+    integrationMapping(capturedConfig).path !== integrationMapping(config).path
   )
     return fail([
       issue(

@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import {
   cpSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -23,34 +24,72 @@ import {
   deriveKitPaths,
 } from "../../src/project/config.js";
 
-function runtimeGuard(checkout: string, audit: string) {
+export function runtimeGuard(
+  checkout: string,
+  audit: string,
+  ownedRuntime: string | null = null,
+  allowNativeSubprocesses = false,
+) {
+  if (ownedRuntime !== null) {
+    const relative = path.relative(checkout, ownedRuntime);
+    assert.ok(
+      relative.startsWith(
+        path.join(".artifacts", "verification", "runtime-projects") + path.sep,
+      ),
+    );
+    assert.equal(realpathSync(ownedRuntime), ownedRuntime);
+    assert.ok(lstatSync(ownedRuntime).isDirectory());
+    assert.equal(lstatSync(ownedRuntime).isSymbolicLink(), false);
+  }
   return `const fs = require('node:fs'), path = require('node:path'), url = require('node:url'), mod = require('node:module');
 const forbidden = ${JSON.stringify(checkout)}, audit = ${JSON.stringify(audit)};
-const append = fs.appendFileSync.bind(fs), physical = fs.realpathSync.bind(fs);
-const deny = (kind, code) => { append(audit, JSON.stringify({kind, code})+'\\n'); const e = new Error('Owned installed-runtime guard: '+kind); e.code = code; throw e; };
-const inside = p => p === forbidden || p.startsWith(forbidden+path.sep);
-const check = input => {
+const ownedRuntime = ${JSON.stringify(ownedRuntime)};
+const append = fs.appendFileSync.bind(fs), physical = fs.realpathSync.bind(fs), metadata = fs.lstatSync.bind(fs);
+const deny = (kind, code, p) => { append(audit, JSON.stringify({kind, code, ...(ownedRuntime && p ? {locator:path.relative(forbidden,p)} : {})})+'\\n'); const e = new Error('Owned installed-runtime guard: '+kind); e.code = code; throw e; };
+const inside = p => (p === forbidden || p.startsWith(forbidden+path.sep)) && !(ownedRuntime && (p === ownedRuntime || p.startsWith(ownedRuntime+path.sep)));
+// Realpath needs directory identities along the canonical owned subtree. This
+// exception grants no directory listing, file content or module access.
+const ancestor = p => { if(!ownedRuntime || !ownedRuntime.startsWith(p+path.sep))return false;try {const s=metadata(p);return s.isDirectory()&&!s.isSymbolicLink();}catch{return false;} };
+const metadataOperation = name => /^(stat|lstat|realpath|readlink|access|exists)(Sync)?$/.test(name);
+const unavailable = (p,operation) => { append(audit,JSON.stringify({kind:'unavailable-metadata',code:'ENOENT',operation,locator:path.relative(forbidden,p)})+'\\n');return false; };
+const missing = (p,operation) => {const e=new Error('Owned unavailable metadata');e.code='ENOENT';e.path=p;e.syscall=operation;return e;};
+const check = (input, meta=false, operation='module') => {
   if (input instanceof URL) { if(input.protocol !== 'file:') return; input = url.fileURLToPath(input); }
   if (Buffer.isBuffer(input)) input = input.toString();
   if (typeof input !== 'string') return;
   const absolute = path.resolve(input);
-  if (inside(absolute)) deny('authoring-access', 'OWNED_AUTHORING_UNAVAILABLE');
+  if (inside(absolute) && !(meta && ancestor(absolute))) {
+    if(ownedRuntime && meta) return unavailable(absolute,operation);
+    deny('authoring-access', 'OWNED_AUTHORING_UNAVAILABLE', absolute);
+  }
   let resolved = absolute; try {resolved = physical(absolute);} catch {}
-  if (inside(absolute) || inside(resolved)) deny('authoring-access', 'OWNED_AUTHORING_UNAVAILABLE');
+  if ((inside(absolute) && !(meta && ancestor(absolute))) || (inside(resolved) && !(meta && ancestor(resolved)))) {
+    if(ownedRuntime && meta) return unavailable(resolved,operation);
+    deny('authoring-access', 'OWNED_AUTHORING_UNAVAILABLE', resolved);
+  }
+};
+const absentResult = (name,p,args) => {
+  if(name==='existsSync')return false;
+  const callback=args.at(-1);
+  if(name==='exists') {if(typeof callback!=='function')throw new TypeError('callback required');queueMicrotask(()=>callback(false));return;}
+  const error=missing(p,name);
+  if(name.endsWith('Sync')) {if(['statSync','lstatSync'].includes(name)&&args[0]?.throwIfNoEntry===false)return;throw error;}
+  if(typeof callback==='function'){queueMicrotask(()=>callback(error));return;}
+  throw error;
 };
 for (const name of ['readFileSync','readFile','openSync','open','statSync','stat','lstatSync','lstat','realpathSync','realpath','readdirSync','readdir','opendirSync','opendir','readlinkSync','readlink','accessSync','access','existsSync','exists']) {
   const original = fs[name]; if(!original) continue;
-  const wrapped = function(p,...args) {check(p); return original.call(this,p,...args);};
-  if(original.native) wrapped.native = function(p,...args) {check(p);return original.native.call(this,p,...args);};
+  const wrapped = function(p,...args) {if(check(p,metadataOperation(name),name)===false)return absentResult(name,p,args); return original.call(this,p,...args);};
+  if(original.native) wrapped.native = function(p,...args) {if(check(p,metadataOperation(name),name)===false)return absentResult(name,p,args);return original.native.call(this,p,...args);};
   fs[name] = wrapped;
 }
 for (const name of ['readFile','open','stat','lstat','realpath','readdir','opendir','readlink','access']) {
-  const original = fs.promises[name]; fs.promises[name] = function(p,...args) {check(p);return original.call(this,p,...args);};
+  const original = fs.promises[name]; fs.promises[name] = function(p,...args) {if(check(p,metadataOperation(name),name)===false)return Promise.reject(missing(p,name));return original.call(this,p,...args);};
 }
-mod.registerHooks({resolve(specifier,context,next) {const r=next(specifier,context);if(r.url.startsWith('file:'))check(new URL(r.url));return r;},load(location,context,next) {if(location.startsWith('file:'))check(new URL(location));return next(location,context);}});
+mod.registerHooks({resolve(specifier,context,next) {if(ownedRuntime){if(specifier.startsWith('file:'))check(new URL(specifier));else if(path.isAbsolute(specifier))check(specifier);else if((specifier.startsWith('./')||specifier.startsWith('../'))&&context.parentURL?.startsWith('file:'))check(new URL(specifier,context.parentURL));}const r=next(specifier,context);if(r.url.startsWith('file:'))check(new URL(r.url));return r;},load(location,context,next) {if(location.startsWith('file:'))check(new URL(location));return next(location,context);}});
 const network = () => deny('network', 'OWNED_NETWORK_DISABLED');
 const child = require('node:child_process');
-for(const name of ['spawn','spawnSync','exec','execSync','execFile','execFileSync','fork']) child[name] = () => deny('subprocess', 'OWNED_SUBPROCESS_DISABLED');
+${allowNativeSubprocesses ? "" : "for(const name of ['spawn','spawnSync','exec','execSync','execFile','execFileSync','fork']) child[name] = () => deny('subprocess', 'OWNED_SUBPROCESS_DISABLED');"}
 globalThis.fetch = network;
 for (const name of ['node:http', 'node:https']) { const m = require(name); m.request = network; m.get = network; }
 const net = require('node:net'); net.connect = network; net.createConnection = network; net.Socket.prototype.connect = network;

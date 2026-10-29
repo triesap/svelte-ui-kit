@@ -82,8 +82,10 @@ No whole-WCAG certification or screen-reader speech claim follows from browser t
 Npm name ownership, publisher identity and release destination remain unverified.
 Do not infer ownership from an earlier registry 404, rename the product to bypass
 a conflict, invent a schema-hosting domain or publish without explicit authority.
-SvelteKit is the qualified application target; additional adapters/libraries need
-their own approved qualification rather than inheriting another framework's matrix.
+Generation supports SvelteKit and Astro applications and standalone Svelte
+libraries. Astro and packed-library consumers have focused strict native,
+SSR and hydrated lifecycle qualification. Each target retains its own complete
+catalog, browser and recovery acceptance obligations.
 
 NativeSelect in Field implements the original native select; a new select/combobox,
 popover/date or higher-level API remains unspecified. Composition with native

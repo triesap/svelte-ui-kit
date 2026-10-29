@@ -1,5 +1,9 @@
-import { appLockContext } from "../project/app-config.js";
-import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
+import type { AppProjectConfig } from "../project/app-config.js";
+import type {
+  GenerationConfig,
+  LibraryConfig,
+} from "../project/generation-config.js";
+import { generationLockContext } from "../project/generation-config.js";
 /**
  * Full synchronization planning (S060–S062).
  *
@@ -22,33 +26,33 @@ import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
  * project target (including `kit.json`) is left unchanged. Planning is pure and
  * read-only.
  */
+import { deriveKitPaths } from "../project/config.js";
+import type { DependencyStateEntry } from "../project/dependencies.js";
+import type { DependencyInstruction } from "../project/dependency-instructions.js";
+import type { DependencyPlan } from "../registry/dependency-plan.js";
 import {
   fail,
   ok,
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
-import { deriveKitPaths } from "../project/config.js";
-import type { DependencyPlan } from "../registry/dependency-plan.js";
 import type { RequestProjection } from "../registry/projection.js";
-import type { DependencyInstruction } from "../project/dependency-instructions.js";
-import type { DependencyStateEntry } from "../project/dependencies.js";
-import { planAdd, revokeAddPlanning, type AddPlanInput } from "./plan-add.js";
-import type { BarrelExportAuthority } from "./exports.js";
 import { hashBytes } from "./compare.js";
-import { composeManagedCss, FOUNDATION_TOKENS_CONTRACT } from "./css.js";
 import { retireManagedCss } from "./css-retire.js";
+import { composeManagedCss, FOUNDATION_TOKENS_CONTRACT } from "./css.js";
+import type { BarrelExportAuthority } from "./exports.js";
 import { parseKitLock, type KitLock } from "./lock.js";
+import { planAdd, revokeAddPlanning, type AddPlanInput } from "./plan-add.js";
 import { TOKENS_BODY, type PlannedWrite } from "./plan-init.js";
+import { describePlanning, type OriginalPlanningReceipt } from "./plan.js";
 import {
   planCssRetirement,
   planSourceRetirement,
   type CssRetirementPlanRecord,
   type RetirementRecord,
 } from "./retire.js";
-import type { SourcePlan } from "./source-plan.js";
 import type { ProjectSnapshot } from "./snapshot.js";
-import { describePlanning, type OriginalPlanningReceipt } from "./plan.js";
+import type { SourcePlan } from "./source-plan.js";
 const ORIGINAL_SYNC_PLANS = new WeakMap<object, OriginalPlanningReceipt>();
 export function originalSyncPlanning(
   authority: object,
@@ -56,9 +60,12 @@ export function originalSyncPlanning(
   return ORIGINAL_SYNC_PLANS.get(authority);
 }
 
-export type SyncPlanInput = Omit<AddPlanInput, "addedRoots">;
+export type SyncPlanInput<C extends GenerationConfig = AppProjectConfig> = Omit<
+  AddPlanInput<C>,
+  "addedRoots"
+>;
 
-export interface SyncPlan {
+export interface SyncPlan<C extends GenerationConfig = AppProjectConfig> {
   readonly executable: boolean;
   readonly projection: RequestProjection;
   readonly dependencies: DependencyPlan;
@@ -67,7 +74,7 @@ export interface SyncPlan {
   readonly dependencyIssues: readonly ModelIssue[];
   readonly sourcePlan: SourcePlan;
   /** The effective mapping resolved from captured evidence. */
-  readonly effectiveConfig: KitConfig;
+  readonly effectiveConfig: C;
   readonly retirement: readonly RetirementRecord[];
   readonly cssRetirement: readonly CssRetirementPlanRecord[];
   readonly writes: readonly PlannedWrite[];
@@ -100,7 +107,18 @@ function observedText(
  * Build the full synchronization plan. Retirement is composed after the shared
  * reconciliation; any source or CSS retirement conflict blocks the whole batch.
  */
-export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
+export function planSync(
+  input: SyncPlanInput<AppProjectConfig>,
+): ModelResult<SyncPlan<AppProjectConfig>>;
+export function planSync(
+  input: SyncPlanInput<LibraryConfig>,
+): ModelResult<SyncPlan<LibraryConfig>>;
+export function planSync(
+  input: SyncPlanInput<GenerationConfig>,
+): ModelResult<SyncPlan<GenerationConfig>>;
+export function planSync(
+  input: SyncPlanInput<GenerationConfig>,
+): ModelResult<SyncPlan<GenerationConfig>> {
   const base = planAdd({ ...input, addedRoots: [] });
   if (!base.ok) return fail(base.issues);
   revokeAddPlanning(base.value.exportAuthority);
@@ -245,8 +263,7 @@ export function planSync(input: SyncPlanInput): ModelResult<SyncPlan> {
         stateDir: derived.stateDir,
         uiDir: effectiveConfig.uiDir,
         stylesDir: effectiveConfig.stylesDir,
-        layoutFile: effectiveConfig.layoutFile,
-        ...appLockContext(effectiveConfig),
+        ...generationLockContext(effectiveConfig),
       });
       if (!validated.ok) return fail(validated.issues);
       finalLock = validated.value;

@@ -1,4 +1,4 @@
-import { composeApplicationFoundation } from "../helpers/astro-project.js";
+import { composeGenerationFoundation } from "../helpers/generation-project.js";
 import { spawnSync } from "node:child_process";
 import { clearOrphanedWriterLock } from "../helpers/transactions.js";
 import { appLockContext } from "../../src/project/app-config.js";
@@ -64,7 +64,7 @@ function fixture(
   project.writeFile(`${paths.stateDir}/kit.json`, JSON.stringify(config.value));
   return {
     project,
-    ...composeApplicationFoundation(project.root, process.cwd(), config.value),
+    ...composeGenerationFoundation(project.root, process.cwd(), config.value),
   };
 }
 
@@ -253,12 +253,13 @@ for (const target of ["astro", "sveltekit"] as const)
     const f = fixture(t, target),
       sealed = validateApplyPlan(f.composed);
     assert.ok(sealed.ok);
-    const helper = new URL("../helpers/astro-project.js", import.meta.url).href;
+    const helper = new URL("../helpers/generation-project.js", import.meta.url)
+      .href;
     const apply = new URL("../../src/codegen/apply.js", import.meta.url).href;
     const childEnvironment = { ...process.env };
     for (const key of ["NODE_TEST_CONTEXT", "NODE_OPTIONS", "NODE_V8_COVERAGE"])
       delete childEnvironment[key];
-    const script = `import {composeApplicationFoundation} from ${JSON.stringify(helper)}; import {validateApplyPlan,applyPlan} from ${JSON.stringify(apply)}; const prepared=composeApplicationFoundation(process.env.OWNED_APP_ROOT,process.env.OWNED_REGISTRY_ROOT,JSON.parse(process.env.OWNED_APP_CONFIG)); const validated=validateApplyPlan(prepared.composed); if(!validated.ok)throw new Error(JSON.stringify(validated)); applyPlan(validated.value,{after:(boundary,detail)=>{if(boundary==='replace:apply' && detail===prepared.config.layoutFile){console.log('owned interrupted pid '+process.pid);process.kill(process.pid,'SIGKILL');}}});process.exit(9);`;
+    const script = `import {composeGenerationFoundation} from ${JSON.stringify(helper)}; import {validateApplyPlan,applyPlan} from ${JSON.stringify(apply)}; const prepared=composeGenerationFoundation(process.env.OWNED_APP_ROOT,process.env.OWNED_REGISTRY_ROOT,JSON.parse(process.env.OWNED_APP_CONFIG)); const validated=validateApplyPlan(prepared.composed); if(!validated.ok)throw new Error(JSON.stringify(validated)); applyPlan(validated.value,{after:(boundary,detail)=>{if(boundary==='replace:apply' && detail===prepared.integration.path){console.log('owned interrupted pid '+process.pid);process.kill(process.pid,'SIGKILL');}}});process.exit(9);`;
     const killed = spawnSync(
       process.execPath,
       ["--input-type=module", "--eval", script],

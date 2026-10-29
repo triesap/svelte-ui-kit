@@ -1,3 +1,4 @@
+import { type LibraryIntegrationFields } from "../project/integration-fields.js";
 import { selectProjectSchema } from "../project/migrations.js";
 /**
  * Source-file ownership lock records (S019).
@@ -18,12 +19,13 @@ import { selectProjectSchema } from "../project/migrations.js";
  * Managed CSS blocks and integration records are S020.
  */
 import { lte as semverLte } from "semver";
-import { compareItemIds, isItemId } from "../project/requests.js";
+import { KIT_CSS_NAME, ROOT_EXPORTS_NAME } from "../project/config.js";
 import {
   asciiFold,
   isSafeLogicalRelativePath,
   isSameOrBelow,
 } from "../project/paths.js";
+import { compareItemIds, isItemId } from "../project/requests.js";
 import {
   fail,
   issue,
@@ -35,9 +37,8 @@ import {
   validateWithSchema,
   type SchemaAuthority,
 } from "../registry/schema.js";
-import { isSemVer, validateSemVer } from "../registry/versions.js";
-import { KIT_CSS_NAME, ROOT_EXPORTS_NAME } from "../project/config.js";
 import { isTokenMetadataPath } from "../registry/theme.js";
+import { isSemVer, validateSemVer } from "../registry/versions.js";
 
 /** Schema document that owns the lock shape. */
 export const KIT_LOCK_SCHEMA = "kit-lock.schema.json";
@@ -68,7 +69,8 @@ export interface LockCssBlock {
   readonly cohort: string;
 }
 
-export type IntegrationKind = "layout" | "stylesheet" | "exports";
+export type IntegrationKind =
+  "layout" | "stylesheet" | "exports" | "stylesheet-entry";
 
 export interface LockIntegration {
   readonly kind: IntegrationKind;
@@ -79,7 +81,7 @@ export interface LockIntegration {
 
 export interface KitLock {
   readonly schemaVersion: number;
-  readonly target?: "sveltekit" | "astro";
+  readonly target?: "sveltekit" | "astro" | "svelte-library";
   readonly toolVersion: string;
   readonly registryVersion: string;
   readonly registryHash: string;
@@ -114,6 +116,7 @@ export interface LockValidationContext {
    * be published outside the configured layout mapping.
    */
   readonly layoutFile?: string;
+  readonly styleEntry?: never;
   /**
    * The approved aggregate stylesheet. When omitted it is derived from
    * `stylesDir`; a stylesheet integration must then name exactly this path.
@@ -125,6 +128,13 @@ export interface LockValidationContext {
    */
   readonly exportsPath?: string;
 }
+export type LibraryLockValidationContext = Omit<
+  LockValidationContext,
+  "layoutFile" | "styleEntry" | "target"
+> &
+  LibraryIntegrationFields;
+export type AnyLockValidationContext =
+  LockValidationContext | LibraryLockValidationContext;
 
 /** The fixed aggregate stylesheet path for one styles root. */
 function derivedStylesheetPath(
@@ -202,7 +212,7 @@ interface RequiredDirectory {
 function checkLockClaims(
   entries: readonly LockClaim[],
   issues: ModelIssue[],
-  context: LockValidationContext,
+  context: AnyLockValidationContext,
 ): void {
   const sorted = [...entries].sort(
     (left, right) =>
@@ -294,7 +304,7 @@ function checkLockClaims(
 export function parseKitLock(
   value: unknown,
   locator = ".kit/kit.lock.json",
-  context: LockValidationContext = {},
+  context: AnyLockValidationContext = {},
   authority?: SchemaAuthority,
 ): ModelResult<KitLock> {
   const selectedSchema = selectProjectSchema(value, "lock", locator);
@@ -314,6 +324,7 @@ export function parseKitLock(
     context.uiDir,
     context.stylesDir,
     context.layoutFile,
+    context.styleEntry,
     context.target,
     context.configSchema,
   ].some((value) => value !== undefined);
@@ -335,6 +346,7 @@ export function parseKitLock(
           context.uiDir,
           context.stylesDir,
           context.layoutFile,
+          context.styleEntry,
         ].some((value) => value !== undefined))
     )
       issues.push(
@@ -344,8 +356,32 @@ export function parseKitLock(
           locator,
         ),
       );
+    if (
+      context.target === "svelte-library"
+        ? Object.hasOwn(context, "layoutFile")
+        : Object.hasOwn(context, "styleEntry")
+    )
+      issues.push(
+        issue(
+          "LOCK_TARGET_CONTEXT",
+          "Layout and standalone stylesheet mapping roles cannot be mixed",
+          locator,
+        ),
+      );
     const integrations = record.integrations as Record<string, unknown>[];
-    for (const kind of ["layout", "stylesheet", "exports"])
+    if (integrations.length !== 3)
+      issues.push(
+        issue(
+          "LOCK_INTEGRATION_INVENTORY",
+          "V2 locks require exactly three target-matched integrations",
+          locator,
+        ),
+      );
+    for (const kind of [
+      target === "svelte-library" ? "stylesheet-entry" : "layout",
+      "stylesheet",
+      "exports",
+    ])
       if (integrations.filter((entry) => entry.kind === kind).length !== 1)
         issues.push(
           issue(
@@ -354,12 +390,26 @@ export function parseKitLock(
             locator,
           ),
         );
-    const layout = integrations.find((entry) => entry.kind === "layout");
+    const layout = integrations.find(
+      (entry) =>
+        entry.kind ===
+        (target === "svelte-library" ? "stylesheet-entry" : "layout"),
+    );
     if (
       layout?.contract !==
-        (target === "astro" ? "astro-layout-v1" : "layout-v1") ||
+        (target === "svelte-library"
+          ? "library-styles-v1"
+          : target === "astro"
+            ? "astro-layout-v1"
+            : "layout-v1") ||
       typeof layout?.path !== "string" ||
-      !layout.path.endsWith(target === "astro" ? ".astro" : ".svelte")
+      !layout.path.endsWith(
+        target === "svelte-library"
+          ? ".css"
+          : target === "astro"
+            ? ".astro"
+            : ".svelte",
+      )
     )
       issues.push(
         issue(
@@ -368,7 +418,11 @@ export function parseKitLock(
           locator,
         ),
       );
-  } else if (context.target === "astro" || context.configSchema === 2)
+  } else if (
+    context.target === "astro" ||
+    context.target === "svelte-library" ||
+    context.configSchema === 2
+  )
     issues.push(
       issue(
         "LOCK_TARGET_CONTEXT",
@@ -658,10 +712,15 @@ export function parseKitLock(
       );
     }
     if (
-      kind === "layout" &&
-      context.layoutFile !== undefined &&
+      (kind === "layout" || kind === "stylesheet-entry") &&
+      (context.layoutFile !== undefined || context.styleEntry !== undefined) &&
       (typeof path !== "string" ||
-        asciiFold(path) !== asciiFold(context.layoutFile))
+        asciiFold(path) !==
+          asciiFold(
+            context.target === "svelte-library"
+              ? context.styleEntry!
+              : context.layoutFile!,
+          ))
     ) {
       issues.push(
         issue(
@@ -734,7 +793,12 @@ export function parseKitLock(
         const path = integration["path"];
         const kind = integration["kind"];
         if (typeof path !== "string" || !isSafeLockPath(path)) return [];
-        if (kind !== "layout" && kind !== "stylesheet" && kind !== "exports") {
+        if (
+          kind !== "layout" &&
+          kind !== "stylesheet-entry" &&
+          kind !== "stylesheet" &&
+          kind !== "exports"
+        ) {
           return [];
         }
         return [
@@ -755,7 +819,7 @@ export function parseKitLock(
   return ok({
     schemaVersion: selectedSchema.value,
     ...(selectedSchema.value === 2
-      ? { target: record.target as "sveltekit" | "astro" }
+      ? { target: record.target as "sveltekit" | "astro" | "svelte-library" }
       : {}),
     toolVersion: record["toolVersion"] as string,
     registryVersion: record["registryVersion"] as string,

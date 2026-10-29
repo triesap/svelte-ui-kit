@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 2,
+  "target": "svelte-library",
+  "uiDir": "src/lib",
+  "stylesDir": "src/styles",
+  "styleEntry": "src/styles.css",
+  "requested": []
+}

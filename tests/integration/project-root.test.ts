@@ -317,3 +317,51 @@ test("malformed workspace declarations are typed", (t) => {
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(codes(result), ["PROJECT_WORKSPACE_UNSUPPORTED"]);
 });
+
+test("ordinary typed Svelte libraries preserve legacy automatic app selection until standalone intent is declared", (t) => {
+  const project = createTempProject();
+  t.after(() => project.cleanup());
+  buildWorkspace(project, ["apps/site"], ["apps/*", "packages/*"]);
+  project.writeFile(
+    "packages/ui/package.json",
+    JSON.stringify({
+      name: "@example/ui",
+      type: "module",
+      peerDependencies: { svelte: "5.57.1" },
+      exports: {
+        ".": { types: "./dist/index.d.ts", svelte: "./dist/index.js" },
+        "./styles.css": "./src/styles.css",
+      },
+    }),
+  );
+  const before = snapshotTree(project.root);
+  const automatic = resolveProjectRoot({
+    cwd: ".",
+    invocationDir: project.root,
+  });
+  assert.ok(automatic.ok, JSON.stringify(automatic));
+  assert.equal(automatic.value.root, path.join(project.root, "apps/site"));
+  assert.deepEqual(snapshotTree(project.root), before);
+  project.writeFile(
+    "packages/ui/src/ui/_kit/kit.json",
+    JSON.stringify({
+      schemaVersion: 2,
+      target: "svelte-library",
+      uiDir: "src/ui",
+      stylesDir: "src/styles",
+      styleEntry: "src/styles.css",
+    }),
+  );
+  const declared = snapshotTree(project.root);
+  assert.equal(
+    resolveProjectRoot({ cwd: ".", invocationDir: project.root }).ok,
+    false,
+  );
+  const selected = resolveProjectRoot({
+    cwd: "packages/ui",
+    invocationDir: project.root,
+  });
+  assert.ok(selected.ok, JSON.stringify(selected));
+  assert.equal(selected.value.root, path.join(project.root, "packages/ui"));
+  assert.deepEqual(snapshotTree(project.root), declared);
+});

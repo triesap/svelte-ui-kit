@@ -1,3 +1,7 @@
+import {
+  mappedIntegration,
+  type LibraryIntegrationFields,
+} from "../project/integration-fields.js";
 /**
  * Transaction recovery (S073–S075, repaired for RCLD04-R1-3/R1-4).
  *
@@ -21,29 +25,45 @@ import {
   readFileSync,
   readdirSync,
   renameSync,
-  unlinkSync,
   rmdirSync,
+  unlinkSync,
 } from "node:fs";
 import path from "node:path";
 
+import { observeEntry } from "../project/io.js";
 import type { ModelIssue } from "../registry/errors.js";
 import { fail, ok, type ModelResult } from "../registry/errors.js";
-import { observeEntry } from "../project/io.js";
-import { sha256Hex } from "./digest.js";
-import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
 import {
   captureAncestors,
   identityDigest,
   observeRootIdentity,
 } from "./authority.js";
-import { removeOwnedAncestors } from "./owned-ancestry.js";
+import { sha256Hex } from "./digest.js";
+import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
 import {
   holdMutationAuthority,
   scopeMutationAuthority,
   verifyMutationAuthority,
   type MutationAuthority,
 } from "./mutation-authority.js";
+import { removeOwnedAncestors } from "./owned-ancestry.js";
+import {
+  classifyPublication,
+  observeFileIdentity,
+  readPublicationIntent,
+  type PublicationIntent,
+} from "./publication-intent.js";
 import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
+import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+import {
+  captureCleanupInventory,
+  emptyOwnedInventory,
+  hasRollbackEvidence,
+  ownedInventoryFor,
+  removeCleanupEntries,
+  verifyOwnedInventory,
+  type OwnedInventory,
+} from "./transaction-inventory.js";
 import {
   parseJournal,
   persistJournal,
@@ -52,26 +72,11 @@ import {
   type JournalOperationRecord,
   type TransactionJournal,
 } from "./transaction-journal.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
-import {
-  emptyOwnedInventory,
-  hasRollbackEvidence,
-  ownedInventoryFor,
-  verifyOwnedInventory,
-  captureCleanupInventory,
-  removeCleanupEntries,
-  type OwnedInventory,
-} from "./transaction-inventory.js";
-import {
-  classifyPublication,
-  observeFileIdentity,
-  readPublicationIntent,
-  type PublicationIntent,
-} from "./publication-intent.js";
 import {
   backupsDir,
-  journalTempName,
+  isTransactionId,
   journalPath,
+  journalTempName,
   lockPath,
   publicationIntentPath,
   publicationIntentTempName,
@@ -79,15 +84,14 @@ import {
   transactionDir,
   transactionsDir,
   transientRoot,
-  isTransactionId,
   writerLockDir,
 } from "./transaction-types.js";
 import {
   acquireWriterLock,
   holdsWriterLock,
+  readWriterLock,
   releaseWriterLock,
   verifyHeldWriterLock,
-  readWriterLock,
 } from "./write-lock.js";
 
 export type RecoveryStatus =
@@ -148,7 +152,14 @@ export interface RecoveryRoots {
   readonly uiDir: string;
   readonly stylesDir: string;
   readonly layoutFile: string;
+  readonly styleEntry?: never;
 }
+export type LibraryRecoveryRoots = Omit<
+  RecoveryRoots,
+  "layoutFile" | "styleEntry" | "target" | "configSchema"
+> &
+  LibraryIntegrationFields;
+export type AnyRecoveryRoots = RecoveryRoots | LibraryRecoveryRoots;
 
 function absOf(root: string, logical: string): string {
   return path.join(root, ...logical.split("/"));
@@ -318,7 +329,7 @@ function createdDirIssues(
   root: string,
   stateDir: string,
   journal: TransactionJournal,
-  roots: RecoveryRoots,
+  roots: AnyRecoveryRoots,
 ): ModelIssue[] {
   const issues: ModelIssue[] = [];
   const targets = [
@@ -336,10 +347,10 @@ function createdDirIssues(
       // either containment direction before the planner-ancestor check below.
       isWithinRoot(roots.uiDir, logical) ||
       isWithinRoot(roots.stylesDir, logical) ||
-      logical === roots.layoutFile ||
+      logical === mappedIntegration(roots).path ||
       // A generated ancestor of the approved layout file is legitimate (for
       // example `src/routes` for `src/routes/+layout.svelte`).
-      isWithinRoot(roots.layoutFile, logical) ||
+      isWithinRoot(mappedIntegration(roots).path, logical) ||
       isWithinRoot(logical, stateDir);
     if (!withinApprovedRoots) {
       issues.push(
@@ -1594,7 +1605,7 @@ export function recoverTransaction(
   root: string,
   stateDir: string,
   transactionId: string,
-  roots: RecoveryRoots,
+  roots: AnyRecoveryRoots,
   hooks?: TransactionHooks,
 ): RecoveryResult {
   if (holdsWriterLock(root, stateDir)) {
@@ -1662,7 +1673,7 @@ function recoverTransactionUnderLock(
   root: string,
   stateDir: string,
   transactionId: string,
-  roots: RecoveryRoots,
+  roots: AnyRecoveryRoots,
   hooks?: TransactionHooks,
 ): RecoveryResult {
   // A directory whose journal and owned state were already removed is the tail
@@ -2193,7 +2204,7 @@ function verifyPublishedEvidence(
 export function recoverTransactions(
   root: string,
   stateDir: string,
-  roots: RecoveryRoots,
+  roots: AnyRecoveryRoots,
   hooks?: TransactionHooks,
 ): readonly RecoveryResult[] {
   if (holdsWriterLock(root, stateDir)) {
@@ -2249,7 +2260,7 @@ export function recoverTransactions(
 function recoverScannedTransactions(
   root: string,
   stateDir: string,
-  roots: RecoveryRoots,
+  roots: AnyRecoveryRoots,
   hooks?: TransactionHooks,
 ): readonly RecoveryResult[] {
   const scan = scanTransactionsChecked(root, stateDir);
@@ -2276,7 +2287,7 @@ export interface JournalInspection {
 export function inspectUnchangedState(
   root: string,
   stateDir: string,
-  roots: RecoveryRoots,
+  roots: AnyRecoveryRoots,
 ): readonly ModelIssue[] {
   const namespace = transientRoot(stateDir);
   const unreadable = (logical: string) =>
@@ -2310,7 +2321,7 @@ export function inspectUnchangedState(
     ...safeTarget(roots.uiDir, "directory"),
     ...safeTarget(roots.stylesDir, "directory"),
     ...safeTarget(stateDir, "directory"),
-    ...safeTarget(roots.layoutFile, "file"),
+    ...safeTarget(mappedIntegration(roots).path, "file"),
     ...safeTarget(lockPath(stateDir), "file"),
   ];
   if (physical.length > 0) return physical;
@@ -2388,7 +2399,7 @@ export function inspectUnchangedState(
       const approved = [
         roots.uiDir,
         roots.stylesDir,
-        roots.layoutFile,
+        mappedIntegration(roots).path,
         stateDir,
       ].some(
         (logical) =>
@@ -2590,7 +2601,7 @@ export function inspectUnchangedState(
 export function inspectTransactions(
   root: string,
   stateDir: string,
-  roots: RecoveryRoots,
+  roots: AnyRecoveryRoots,
 ): readonly JournalInspection[] {
   const scan = scanTransactionsChecked(root, stateDir);
   if (!scan.ok) {

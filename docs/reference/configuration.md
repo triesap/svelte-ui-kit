@@ -1,6 +1,6 @@
 # Configuration and generated layout
 
-All paths are relative to one selected application package. `--cwd`
+All paths are relative to one selected application or library package. `--cwd`
 selects that package; the CLI does not scan and mutate every workspace member or
 execute application configuration/scripts to discover it. Configuration is
 validated against the [v1 schema](../../schema/v1/kit.schema.json).
@@ -52,8 +52,8 @@ nor its workspace is rewritten during discovery or refusal.
 
 The independent [v2 target schema](../../schema/v2/kit.schema.json) defines
 explicit target discovery and integration intent. The CLI generates v1 SvelteKit
-and v2 SvelteKit/Astro installations. Standalone library generation remains gated.
-Discovery success is separate from generated, built and packed qualification. Existing v1 defaults, custom paths and unknown-field
+and v2 SvelteKit, Astro and standalone Svelte-library installations.
+Existing v1 defaults, custom paths and unknown-field
 refusals remain unchanged; no automatic schema or ownership migration occurs.
 
 V2 requires `schemaVersion: 2` and an explicit `target`. Common `uiDir`,
@@ -80,9 +80,11 @@ integrate kit, theme and application styles in order; the consumer owns package
 build/export metadata. The current discovery API never rewrites `package.json`.
 Target evidence captures package/config bytes, identities, modes and candidate
 absence immutably. Target integration contracts are `layout-v1`,
-`astro-layout-v1` and `library-styles-v1`. Application contracts produce
-target-bound plans, locks and recovery journals. The library contract remains
-discovery-only. See [Astro applications](../guides/astro.md).
+`astro-layout-v1` and `library-styles-v1`. All three contracts produce
+target-bound plans, locks and recovery journals. A library records its real
+stylesheet entry and never borrows a layout field. See
+[Astro applications](../guides/astro.md) and
+[Svelte libraries](../guides/svelte-library.md).
 
 ### Existing SvelteKit mapping
 

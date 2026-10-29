@@ -1,4 +1,4 @@
-import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
+import { type GenerationConfig as KitConfig } from "../project/generation-config.js";
 /**
  * Root export-surface generation (S053).
  *
@@ -8,11 +8,16 @@ import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
  * name that collides with an application-owned declaration is a nonmutating
  * conflict.
  */
-import ts from "typescript";
 import path from "node:path";
+import ts from "typescript";
 
+import { deriveKitPaths } from "../project/config.js";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { isCompoundComponent, type RegistryItem } from "../registry/item.js";
+import {
+  isValidatedRegistrySnapshot,
+  type RegistrySnapshot,
+} from "../registry/load.js";
 import {
   EXPORT_END,
   EXPORT_START,
@@ -20,13 +25,8 @@ import {
   parseExportRegion,
   type AppExport,
 } from "./export-parse.js";
-import { parseSvelteLayout } from "./svelte-parse.js";
-import {
-  isValidatedRegistrySnapshot,
-  type RegistrySnapshot,
-} from "../registry/load.js";
-import { deriveKitPaths } from "../project/config.js";
 import type { KitLock } from "./lock.js";
+import { parseSvelteLayout } from "./svelte-parse.js";
 
 export interface ExportDeclaration {
   readonly name: string;

@@ -1,4 +1,7 @@
-import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
+import {
+  integrationMapping,
+  type GenerationConfig as KitConfig,
+} from "../project/generation-config.js";
 /**
  * Effective mapping resolution (RCLD03-R8-1).
  *
@@ -23,15 +26,20 @@ import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
  * hard typed failure; a discovery failure resolves to a typed `issues` list so
  * add/sync can report a non-executable conflict while init refuses outright.
  */
+import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../project/config.js";
+import {
+  generationTarget,
+  isExplicitTargetConfig,
+  parseGenerationConfig,
+} from "../project/generation-config.js";
 import {
   fail,
+  issue,
   ok,
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
-import { DEFAULT_KIT_CONFIG } from "../project/config.js";
 import type { ProjectSnapshot } from "./snapshot.js";
-import { isAppTargetConfig, parseAppConfig } from "../project/app-config.js";
 import { inspectTargetEvidence } from "./target-evidence.js";
 import { targetIntegrationAdapter } from "./target-integration.js";
 
@@ -40,7 +48,7 @@ export type MappingProvenance = "explicit" | "detected" | "default";
 
 export interface EffectiveConfig {
   /** The effective mapping plus the desired `requested` roots. */
-  readonly config: KitConfig;
+  readonly config: import("../project/app-config.js").AppProjectConfig;
   /**
    * The `requested` roots recorded in an observed explicit installation, or the
    * supplied roots when there is none. Initialization writes this back so a
@@ -54,6 +62,9 @@ export interface EffectiveConfig {
   /** Non-empty when the mapping could not be proven; no executable plan. */
   readonly issues: readonly ModelIssue[];
 }
+export type GenerationEffectiveConfig = Omit<EffectiveConfig, "config"> & {
+  readonly config: KitConfig;
+};
 
 /**
  * Detection failure codes that prove identity but leave the SvelteKit routes
@@ -73,8 +84,20 @@ const MAPPING_ONLY_CODES: ReadonlySet<string> = new Set([
  */
 export function resolveEffectiveConfig(
   snapshot: ProjectSnapshot,
+  supplied: import("../project/app-config.js").AppProjectConfig,
+): ModelResult<EffectiveConfig>;
+export function resolveEffectiveConfig(
+  snapshot: ProjectSnapshot,
+  supplied: import("../project/generation-config.js").LibraryConfig,
+): ModelResult<GenerationEffectiveConfig>;
+export function resolveEffectiveConfig(
+  snapshot: ProjectSnapshot,
   supplied: KitConfig,
-): ModelResult<EffectiveConfig> {
+): ModelResult<GenerationEffectiveConfig>;
+export function resolveEffectiveConfig(
+  snapshot: ProjectSnapshot,
+  supplied: KitConfig,
+): ModelResult<GenerationEffectiveConfig> {
   const environment = snapshot.environment;
   if (environment.catalogIssues.length > 0) {
     return fail([...environment.catalogIssues]);
@@ -83,15 +106,31 @@ export function resolveEffectiveConfig(
     return fail([...environment.managerIssues]);
   }
 
-  const suppliedConfig = parseAppConfig(supplied);
+  const suppliedConfig = parseGenerationConfig(supplied);
   if (!suppliedConfig.ok) return suppliedConfig;
   const targetInstallation = environment.kitConfig;
+  const observed =
+    targetInstallation.ok && targetInstallation.value.kind === "custom"
+      ? targetInstallation.value
+      : null;
   if (
-    targetInstallation.ok &&
-    targetInstallation.value.kind === "custom" &&
-    isAppTargetConfig(targetInstallation.value.config)
+    (observed && isExplicitTargetConfig(observed.config)) ||
+    isExplicitTargetConfig(supplied)
   ) {
-    const installed = targetInstallation.value.config;
+    const installed = observed?.config ?? supplied;
+    if (
+      !isExplicitTargetConfig(installed) ||
+      (isExplicitTargetConfig(supplied) &&
+        generationTarget(supplied) !== installed.target) ||
+      integrationMapping(supplied).kind !== integrationMapping(installed).kind
+    )
+      return fail([
+        issue(
+          "PROJECT_TARGET_MISMATCH",
+          "Explicit target roles cannot silently migrate or reinterpret an existing installation",
+          "kit.json",
+        ),
+      ]);
     const target = inspectTargetEvidence(snapshot, installed);
     if (!target.ok) return target;
     const adapter = targetIntegrationAdapter(installed.target);
@@ -100,7 +139,9 @@ export function resolveEffectiveConfig(
       config: { ...installed, requested: [...supplied.requested] },
       observedRequested: installed.requested,
       provenance: "explicit",
-      configPath: targetInstallation.value.configPath,
+      configPath:
+        observed?.configPath ??
+        `${deriveKitPaths(installed).stateDir}/kit.json`,
       issues: [],
     });
   }
@@ -118,7 +159,7 @@ export function resolveEffectiveConfig(
   const detectedLayout = project.ok ? project.value.layoutFile : null;
   const fallback: KitConfig = {
     ...supplied,
-    layoutFile: detectedLayout ?? supplied.layoutFile,
+    layoutFile: detectedLayout ?? integrationMapping(supplied).path,
     requested: [...supplied.requested],
   };
 

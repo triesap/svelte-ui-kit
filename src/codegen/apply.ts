@@ -1,5 +1,11 @@
+import { generationLockContext } from "../project/generation-config.js";
+import {
+  copyIntegrationFields,
+  mappedIntegration,
+  type IntegrationFields,
+  type LibraryIntegrationFields,
+} from "../project/integration-fields.js";
 import { verifyReadFiles } from "./authority.js";
-import { appLockContext } from "../project/app-config.js";
 /**
  * The one guarded apply use case (S077, repaired for RCLD04-R1-1/2/3).
  *
@@ -28,14 +34,15 @@ import { appLockContext } from "../project/app-config.js";
  *    before the rename so a crash in the publication window is recoverable as a
  *    commit rather than an unsafe rollback.
  */
-import { verifyCatalogDigest } from "../project/catalogs.js";
 import { existsSync, lstatSync, readFileSync, rmdirSync } from "node:fs";
 import path from "node:path";
+import { verifyCatalogDigest } from "../project/catalogs.js";
 
-import type { ModelIssue } from "../registry/errors.js";
-import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
+import { deriveKitPaths } from "../project/config.js";
 import { observeEntry } from "../project/io.js";
 import { isSafeLogicalRelativePath, pathsOverlap } from "../project/paths.js";
+import type { ModelIssue } from "../registry/errors.js";
+import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import {
   captureReadset,
   identityDigest,
@@ -46,47 +53,52 @@ import {
   type PlanReadFile,
   type PlanReadset,
 } from "./authority.js";
-import { canonicalContentHash, sha256Hex } from "./digest.js";
-import { validateExportReceipt } from "./exports.js";
 import { isOriginalComposition } from "./compose.js";
+import { canonicalContentHash, sha256Hex } from "./digest.js";
 import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
+import { validateExportReceipt } from "./exports.js";
 import { parseKitLock } from "./lock.js";
+import {
+  holdMutationAuthority,
+  scopeMutationAuthority,
+} from "./mutation-authority.js";
+import {
+  createOwnedAncestors,
+  removeOwnedAncestors,
+} from "./owned-ancestry.js";
+import type { ChangeOperation } from "./plan.js";
 import {
   resolveProjectedConfig,
   validateProjectedLock,
   type ExportAuthority,
 } from "./projected-batch.js";
-import { deriveKitPaths } from "../project/config.js";
-import type { ChangeOperation } from "./plan.js";
 import {
-  prepareJournal,
-  persistJournal,
-  type JournalCreatedDir,
-  type TransactionJournal,
-} from "./transaction-journal.js";
-import {
-  createOwnedAncestors,
-  removeOwnedAncestors,
-} from "./owned-ancestry.js";
+  classifyPublication,
+  observeFileIdentity,
+  readPublicationIntent,
+  type PublicationState,
+} from "./publication-intent.js";
+import { publishLock } from "./publish-lock.js";
 import {
   recoverTransactions,
   recoveredCreatedDirectories,
 } from "./recovery.js";
-import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
 import { applyReplacements } from "./replace.js";
-import {
-  holdMutationAuthority,
-  scopeMutationAuthority,
-} from "./mutation-authority.js";
-import { publishLock } from "./publish-lock.js";
-import { cleanupTransaction } from "./transaction-cleanup.js";
+import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
 import { stageOperations } from "./stage.js";
+import { cleanupTransaction } from "./transaction-cleanup.js";
+import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
   cleanupOwnedCreations,
   createOwnedDirectory,
   type OwnedCreation,
 } from "./transaction-inventory.js";
-import { acquireWriterLock, releaseWriterLock } from "./write-lock.js";
+import {
+  persistJournal,
+  prepareJournal,
+  type JournalCreatedDir,
+  type TransactionJournal,
+} from "./transaction-journal.js";
 import {
   APPROVED_IGNORE_FILES,
   createTransactionIdentity,
@@ -99,13 +111,7 @@ import {
   transientRoot,
   type TransactionOutcomeKind,
 } from "./transaction-types.js";
-import {
-  classifyPublication,
-  observeFileIdentity,
-  readPublicationIntent,
-  type PublicationState,
-} from "./publication-intent.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+import { acquireWriterLock, releaseWriterLock } from "./write-lock.js";
 
 export interface ApplyTarget {
   readonly path: string;
@@ -124,6 +130,7 @@ export interface ApplyPlanInput {
   readonly uiDir: string;
   readonly stylesDir: string;
   readonly layoutFile: string;
+  readonly styleEntry?: never;
   readonly configSchema?: 2;
   readonly target?: "sveltekit" | "astro";
   readonly rootIdentity: string;
@@ -148,6 +155,12 @@ export interface ApplyPlanInput {
    */
   readonly exportAuthority?: readonly ExportAuthority[];
 }
+export type LibraryApplyPlanInput = Omit<
+  ApplyPlanInput,
+  "layoutFile" | "styleEntry" | "target" | "configSchema"
+> &
+  LibraryIntegrationFields;
+export type AnyApplyPlanInput = ApplyPlanInput | LibraryApplyPlanInput;
 
 /** A sealed target: bytes are copied and their result digest is bound. */
 export interface ValidatedApplyTarget {
@@ -174,6 +187,7 @@ export interface ValidatedApplyPlan {
   readonly uiDir: string;
   readonly stylesDir: string;
   readonly layoutFile: string;
+  readonly styleEntry?: never;
   readonly configSchema?: 2;
   readonly target?: "sveltekit" | "astro";
   readonly rootIdentity: string;
@@ -189,6 +203,13 @@ export interface ValidatedApplyPlan {
   /** Registry-declared export cohorts carried from the original plan. */
   readonly exportAuthority: readonly ExportAuthority[];
 }
+export type ValidatedLibraryApplyPlan = Omit<
+  ValidatedApplyPlan,
+  "layoutFile" | "styleEntry" | "target" | "configSchema"
+> &
+  LibraryIntegrationFields;
+export type AnyValidatedApplyPlan =
+  ValidatedApplyPlan | ValidatedLibraryApplyPlan;
 
 const OPERATIONS: readonly ChangeOperation[] = ["create", "update", "retire"];
 const HEX64 = /^[0-9a-f]{64}$/;
@@ -206,6 +227,7 @@ const PLAN_KEYS: readonly string[] = [
   "uiDir",
   "stylesDir",
   "layoutFile",
+  "styleEntry",
   "configSchema",
   "target",
   "rootIdentity",
@@ -271,7 +293,16 @@ function unknownKeys(
  */
 export function validateApplyPlan(
   input: Partial<ApplyPlanInput>,
-): ModelResult<ValidatedApplyPlan> {
+): ModelResult<ValidatedApplyPlan>;
+export function validateApplyPlan(
+  input: Partial<LibraryApplyPlanInput>,
+): ModelResult<ValidatedLibraryApplyPlan>;
+export function validateApplyPlan(
+  input: Partial<AnyApplyPlanInput>,
+): ModelResult<AnyValidatedApplyPlan>;
+export function validateApplyPlan(
+  input: Partial<AnyApplyPlanInput>,
+): ModelResult<AnyValidatedApplyPlan> {
   const problems: ModelIssue[] = [];
   if (!isPlainObject(input)) {
     return fail([issue("PLAN_INCOMPLETE", "plan must be an object", "plan")]);
@@ -280,7 +311,7 @@ export function validateApplyPlan(
   if (
     (Object.hasOwn(input, "configSchema") || Object.hasOwn(input, "target")) &&
     (input.configSchema !== 2 ||
-      !["astro", "sveltekit"].includes(String(input.target)))
+      !["astro", "sveltekit", "svelte-library"].includes(String(input.target)))
   )
     problems.push(
       issue(
@@ -290,12 +321,26 @@ export function validateApplyPlan(
       ),
     );
   const exportAuthority: ExportAuthority[] = [];
-  const requiredStrings: readonly (keyof ApplyPlanInput)[] = [
+  if (
+    input.target === "svelte-library"
+      ? Object.hasOwn(input, "layoutFile")
+      : Object.hasOwn(input, "styleEntry")
+  )
+    problems.push(
+      issue(
+        "PLAN_TARGET_INVALID",
+        "Application layouts and library stylesheet entries are disjoint physical roles",
+        "target",
+      ),
+    );
+  const requiredStrings: readonly (keyof AnyApplyPlanInput)[] = [
     "root",
     "stateDir",
     "uiDir",
     "stylesDir",
-    "layoutFile",
+    ...(input.target === "svelte-library"
+      ? ["styleEntry" as const]
+      : ["layoutFile" as const]),
     "rootIdentity",
     "planDigest",
   ];
@@ -584,7 +629,7 @@ export function validateApplyPlan(
   }
   if (problems.length > 0) return fail(problems);
 
-  const plan = input as ApplyPlanInput;
+  const plan = input as AnyApplyPlanInput;
   const canonicalLock = lockPath(plan.stateDir);
   const roots = [plan.uiDir, plan.stylesDir];
   const approvedIgnoreFiles = new Set(
@@ -684,7 +729,7 @@ export function validateApplyPlan(
       continue;
     }
     const within =
-      target.path === plan.layoutFile ||
+      target.path === mappedIntegration(plan).path ||
       roots.some(
         (root) =>
           target.path === root.replace(/\/+$/, "") ||
@@ -951,9 +996,7 @@ export function validateApplyPlan(
       stateDir: plan.stateDir,
       uiDir: plan.uiDir,
       stylesDir: plan.stylesDir,
-      layoutFile: plan.layoutFile,
-      configSchema: plan.configSchema,
-      target: plan.target,
+      ...copyIntegrationFields(plan),
       targets: sealedTargets.map((target) => ({
         path: target.path,
         operation: target.operation,
@@ -987,8 +1030,7 @@ export function validateApplyPlan(
           stateDir: derivedPaths.stateDir,
           uiDir: projected.config.uiDir,
           stylesDir: projected.config.stylesDir,
-          layoutFile: projected.config.layoutFile,
-          ...appLockContext(projected.config),
+          ...generationLockContext(projected.config),
           stylesheetPath: derivedPaths.kitCss,
           exportsPath: derivedPaths.rootExports,
         });
@@ -1032,15 +1074,13 @@ export function validateApplyPlan(
     ]);
   }
   const lockView = plan.lock as { bytes: Uint8Array; preimage: TargetPreimage };
-  const sealed: ValidatedApplyPlan = {
+  const sealed: AnyValidatedApplyPlan = {
     root: plan.root,
     stateDir: plan.stateDir,
     uiDir: plan.uiDir,
     stylesDir: plan.stylesDir,
-    layoutFile: plan.layoutFile,
-    ...(plan.configSchema === 2
-      ? { configSchema: 2 as const, target: plan.target }
-      : {}),
+    ...copyIntegrationFields(plan),
+
     rootIdentity: derivedRootIdentity,
     planDigest: "",
     readset: Object.freeze({
@@ -1081,12 +1121,12 @@ export function validateApplyPlan(
     }),
     ignoreFiles: Object.freeze([...(plan.ignoreFiles ?? [])]),
   };
-  const sealedPlan: ValidatedApplyPlan = Object.freeze({
+  const sealedPlan: AnyValidatedApplyPlan = Object.freeze({
     ...sealed,
     // The plan digest is derived from the complete sealed content; a caller
     // supplied value is never trusted as authority.
     planDigest: derivePlanDigest(sealed),
-  }) as ValidatedApplyPlan;
+  }) as AnyValidatedApplyPlan;
   // Register the exact instance, not a copyable token.
   VALIDATED_PLANS.add(sealedPlan);
   return ok(sealedPlan);
@@ -1145,30 +1185,29 @@ function sealPreimage(preimage: TargetPreimage): TargetPreimage {
  * modes and operations, original physical preimages and read evidence including
  * absence, and final lock content. A caller supplied digest is never authority.
  */
-export function derivePlanDigest(input: {
-  readonly root: string;
-  readonly stateDir: string;
-  readonly uiDir: string;
-  readonly stylesDir: string;
-  readonly layoutFile: string;
-  readonly configSchema?: 2;
-  readonly target?: "sveltekit" | "astro";
-  readonly rootIdentity: string;
-  readonly targets: readonly ValidatedApplyTarget[];
-  readonly lock: {
-    readonly bytes: Uint8Array;
-    readonly preimage: TargetPreimage;
-  };
-  readonly readset: PlanReadset;
-  readonly ignoreFiles?: readonly string[];
-  readonly exportAuthority?: readonly ExportAuthority[];
-}): string {
+export function derivePlanDigest(
+  input: {
+    readonly root: string;
+    readonly stateDir: string;
+    readonly uiDir: string;
+    readonly stylesDir: string;
+    readonly rootIdentity: string;
+    readonly targets: readonly ValidatedApplyTarget[];
+    readonly lock: {
+      readonly bytes: Uint8Array;
+      readonly preimage: TargetPreimage;
+    };
+    readonly readset: PlanReadset;
+    readonly ignoreFiles?: readonly string[];
+    readonly exportAuthority?: readonly ExportAuthority[];
+  } & IntegrationFields,
+): string {
   return canonicalContentHash({
     root: input.root,
     stateDir: input.stateDir,
     uiDir: input.uiDir,
     stylesDir: input.stylesDir,
-    layoutFile: input.layoutFile,
+    ...copyIntegrationFields(input),
     configSchema: input.configSchema ?? 1,
     target: input.target ?? "sveltekit",
     rootIdentity: input.rootIdentity,
@@ -1278,7 +1317,7 @@ function errorCode(error: unknown): string {
  * bootstrap cover the whole absent chain even though `captureAncestors` stops
  * at the first missing component.
  */
-function ownedAncestorCandidates(plan: ValidatedApplyPlan): PlanAncestor[] {
+function ownedAncestorCandidates(plan: AnyValidatedApplyPlan): PlanAncestor[] {
   const recordedKinds = new Map(
     plan.readset.ancestors.map((ancestor) => [ancestor.path, ancestor.kind]),
   );
@@ -1430,7 +1469,7 @@ function verifySameFilesystem(
 }
 
 /** True when every sealed target's bytes still match their bound digest. */
-function verifySealedTargets(plan: ValidatedApplyPlan): ModelIssue[] {
+function verifySealedTargets(plan: AnyValidatedApplyPlan): ModelIssue[] {
   const issues: ModelIssue[] = [];
   for (const target of plan.targets) {
     if (sha256Hex(target.bytes) !== target.resultDigest) {
@@ -1472,7 +1511,7 @@ function verifySealedTargets(plan: ValidatedApplyPlan): ModelIssue[] {
  * the writer lock is always released.
  */
 export function applyPlan(
-  plan: ValidatedApplyPlan,
+  plan: AnyValidatedApplyPlan,
   hooks?: TransactionHooks,
 ): ApplyOutcome {
   // Only the exact instance produced by `validateApplyPlan` carries write
@@ -1593,7 +1632,7 @@ export function applyPlan(
 
 /** The guarded body, run while this attempt holds the exclusive writer lock. */
 function applyUnderLock(
-  plan: ValidatedApplyPlan,
+  plan: AnyValidatedApplyPlan,
   transactionId: string,
   ownedCreated: JournalCreatedDir[],
   hooks?: TransactionHooks,
@@ -1606,9 +1645,7 @@ function applyUnderLock(
     {
       uiDir: plan.uiDir,
       stylesDir: plan.stylesDir,
-      layoutFile: plan.layoutFile,
-      configSchema: plan.configSchema,
-      target: plan.target,
+      ...copyIntegrationFields(plan),
     },
     hooks,
   );
@@ -1870,9 +1907,7 @@ function applyUnderLock(
       stateDir: plan.stateDir,
       uiDir: plan.uiDir,
       stylesDir: plan.stylesDir,
-      layoutFile: plan.layoutFile,
-      configSchema: plan.configSchema,
-      target: plan.target,
+      ...copyIntegrationFields(plan),
     },
     hooks,
     ownership,
@@ -1945,7 +1980,7 @@ function applyUnderLock(
  * back or discard evidence.
  */
 function classifyApplyPublication(
-  plan: ValidatedApplyPlan,
+  plan: AnyValidatedApplyPlan,
   journal: TransactionJournal,
 ): PublicationState | "none" {
   if (journal.phase !== "applied" || journal.lock === null) return "none";
@@ -1977,7 +2012,7 @@ function classifyApplyPublication(
 }
 
 function recoverTransactionsUnderLock(
-  plan: ValidatedApplyPlan,
+  plan: AnyValidatedApplyPlan,
   transactionId: string,
   hooks?: TransactionHooks,
 ): ModelIssue[] {
@@ -1987,9 +2022,7 @@ function recoverTransactionsUnderLock(
     {
       uiDir: plan.uiDir,
       stylesDir: plan.stylesDir,
-      layoutFile: plan.layoutFile,
-      configSchema: plan.configSchema,
-      target: plan.target,
+      ...copyIntegrationFields(plan),
     },
     hooks,
   );
@@ -2005,7 +2038,7 @@ function recoverTransactionsUnderLock(
  * fails, the removal may not be durable, so destructive progress stops and a
  * typed issue is returned; the surviving namespace is retained as evidence.
  */
-function cleanupEmptyTransient(plan: ValidatedApplyPlan): ModelIssue[] {
+function cleanupEmptyTransient(plan: AnyValidatedApplyPlan): ModelIssue[] {
   const issues: ModelIssue[] = [];
   for (const [logical, parent] of [
     [transactionsDir(plan.stateDir), transientRoot(plan.stateDir)],
@@ -2046,5 +2079,5 @@ function cleanupEmptyTransient(plan: ValidatedApplyPlan): ModelIssue[] {
 }
 
 // Kept for import stability with the sealed-authority readers.
-export type { PlanAncestor, PlanReadFile, PhysicalIdentity };
 export { identityDigest };
+export type { PhysicalIdentity, PlanAncestor, PlanReadFile };

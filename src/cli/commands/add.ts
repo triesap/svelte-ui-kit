@@ -1,17 +1,20 @@
+import {
+  generationFields,
+  integrationMapping,
+} from "../../project/generation-config.js";
 /** One explicit add request through original projection and guarded application. */
-import type { CommandRequest } from "../args.js";
-import { createEnvelope, type EnvelopeChange } from "../protocol.js";
-import { applyOutcomeEnvelope, issueDiagnostics } from "../output.js";
-import { captureCommandContext } from "./context.js";
-import { planAdd, type AddPlan } from "../../codegen/plan-add.js";
+import { applyPlan, validateApplyPlan } from "../../codegen/apply.js";
 import { composeApplyPlan } from "../../codegen/compose.js";
-import { validateApplyPlan, applyPlan } from "../../codegen/apply.js";
+import { planAdd, type AddPlan } from "../../codegen/plan-add.js";
 import { inspectUnchangedState } from "../../codegen/recovery.js";
-import { appPlanIdentity } from "../../project/app-config.js";
 import { deriveKitPaths } from "../../project/config.js";
 import { issue, type ModelIssue } from "../../registry/errors.js";
-import type { InfoResult } from "./info.js";
+import type { CommandRequest } from "../args.js";
+import { applyOutcomeEnvelope, issueDiagnostics } from "../output.js";
+import { createEnvelope, type EnvelopeChange } from "../protocol.js";
 import type { CommandContext } from "./context.js";
+import { captureCommandContext } from "./context.js";
+import type { InfoResult } from "./info.js";
 
 export function commandFailure(
   command: "add" | "sync",
@@ -47,7 +50,7 @@ export function executeItemPlan(
   command: "add" | "sync",
   request: CommandRequest,
   context: CommandContext,
-  plan: AddPlan,
+  plan: AddPlan<import("../../project/generation-config.js").GenerationConfig>,
 ): InfoResult {
   const data = {
     requested: plan.projection.requested,
@@ -80,7 +83,7 @@ export function executeItemPlan(
     ...plan.sourcePlan.conflicts.map((entry) => entry.path),
     paths.rootExports,
     paths.kitCss,
-    plan.effectiveConfig.layoutFile,
+    integrationMapping(plan.effectiveConfig).path,
     paths.stateDir + "/kit.json",
   ]);
   const unsafeIssues = [...candidateUnsafe]
@@ -115,7 +118,11 @@ export function executeItemPlan(
     const retained = inspectUnchangedState(
       context.snapshot.root,
       paths.stateDir,
-      { ...plan.effectiveConfig, ...appPlanIdentity(plan.effectiveConfig) },
+      {
+        uiDir: plan.effectiveConfig.uiDir,
+        stylesDir: plan.effectiveConfig.stylesDir,
+        ...generationFields(plan.effectiveConfig),
+      },
     );
     if (retained.length > 0) return commandFailure(command, retained);
     return {

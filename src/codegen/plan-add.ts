@@ -1,8 +1,14 @@
-import { appLockContext } from "../project/app-config.js";
+import type { AppProjectConfig } from "../project/app-config.js";
+import type {
+  GenerationConfig,
+  LibraryConfig,
+} from "../project/generation-config.js";
 import {
-  type AppProjectConfig as KitConfig,
-  parseAppConfig as parseKitConfig,
-} from "../project/app-config.js";
+  generationLockContext,
+  integrationMapping,
+  parseGenerationConfig as parseKitConfig,
+  type GenerationConfig as KitConfig,
+} from "../project/generation-config.js";
 /**
  * Pure add-request planning (S058).
  *
@@ -29,48 +35,52 @@ import {
  */
 import path from "node:path";
 
-import {
-  fail,
-  ok,
-  type ModelIssue,
-  type ModelResult,
-} from "../registry/errors.js";
-import type { RegistrySnapshot } from "../registry/load.js";
-import {
-  projectRequests,
-  type RequestProjection,
-} from "../registry/projection.js";
-import {
-  planDependencies,
-  type DependencyPlan,
-} from "../registry/dependency-plan.js";
-import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
-import { isCompoundComponent } from "../registry/item.js";
-import { projectThemeMetadata } from "./theme-integration.js";
-import { isTokenMetadataPath } from "../registry/theme.js";
 import { deriveKitPaths } from "../project/config.js";
-import {
-  renderDependencyInstructionsFromEvidence,
-  type DependencyInstruction,
-} from "../project/dependency-instructions.js";
 import {
   inspectDependencyStateFromEvidence,
   validatePeerDependenciesFromEvidence,
   type DependencyEvidence,
   type DependencyStateEntry,
 } from "../project/dependencies.js";
+import {
+  renderDependencyInstructionsFromEvidence,
+  type DependencyInstruction,
+} from "../project/dependency-instructions.js";
+import {
+  generationLockIdentity,
+  generationTarget,
+} from "../project/generation-config.js";
+import {
+  planDependencies,
+  type DependencyPlan,
+} from "../registry/dependency-plan.js";
+import {
+  fail,
+  ok,
+  type ModelIssue,
+  type ModelResult,
+} from "../registry/errors.js";
+import { isCompoundComponent } from "../registry/item.js";
+import type { RegistrySnapshot } from "../registry/load.js";
+import {
+  projectRequests,
+  type RequestProjection,
+} from "../registry/projection.js";
+import { isTokenMetadataPath } from "../registry/theme.js";
+import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
+import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
 import { hashBytes } from "./compare.js";
-import { canonicalJson } from "./serialize.js";
+import { classifyCssBlocks } from "./css-compare.js";
+import { parseManagedCss } from "./css-parse.js";
 import {
   composeManagedCss,
-  registryStyleBody,
   FOUNDATION_TOKENS_CONTRACT,
+  registryStyleBody,
   STYLESHEET_CONTRACT,
   type ManagedBlockInput,
 } from "./css.js";
-import { classifyCssBlocks } from "./css-compare.js";
-import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
-import { parseManagedCss } from "./css-parse.js";
+import { resolveEffectiveConfig } from "./effective-config.js";
+import { parseExportRegion } from "./export-parse.js";
 import {
   createExportAuthority,
   exportDeclarationKey,
@@ -84,7 +94,22 @@ import {
   type BarrelExportAuthority,
   type ExportDeclaration,
 } from "./exports.js";
+import { buildLockProjection } from "./lock-projection.js";
+import type { KitLock, LockIntegration, LockOrigin } from "./lock.js";
+import { parseKitLock } from "./lock.js";
+import type { OwnershipDisposition } from "./ownership-policy.js";
+import { TOKENS_BODY, type PlannedWrite } from "./plan-init.js";
 import { describePlanning, type OriginalPlanningReceipt } from "./plan.js";
+import { canonicalJson } from "./serialize.js";
+import {
+  decodeObservedText,
+  type ProjectSnapshot,
+  type TargetObservation,
+} from "./snapshot.js";
+import { assembleSourcePlan, type SourcePlan } from "./source-plan.js";
+import { planSourceTargets, type IncomingSource } from "./source-targets.js";
+import { targetIntegrationAdapter } from "./target-integration.js";
+import { projectThemeMetadata } from "./theme-integration.js";
 
 const ORIGINAL_ADD_PLANS = new WeakMap<object, OriginalPlanningReceipt>();
 /** Sync's internal Add proposal cannot authorize a final Sync outcome. */
@@ -96,26 +121,10 @@ export function originalAddPlanning(
 ): OriginalPlanningReceipt | undefined {
   return ORIGINAL_ADD_PLANS.get(authority);
 }
-import { parseExportRegion } from "./export-parse.js";
-import type { OwnershipDisposition } from "./ownership-policy.js";
-import type { KitLock, LockIntegration, LockOrigin } from "./lock.js";
-import { parseKitLock } from "./lock.js";
-import { buildLockProjection } from "./lock-projection.js";
-import { TOKENS_BODY, type PlannedWrite } from "./plan-init.js";
-import { assembleSourcePlan, type SourcePlan } from "./source-plan.js";
-import { planSourceTargets, type IncomingSource } from "./source-targets.js";
-import {
-  decodeObservedText,
-  type ProjectSnapshot,
-  type TargetObservation,
-} from "./snapshot.js";
-import { targetIntegrationAdapter } from "./target-integration.js";
-import { appTarget, appLockIdentity } from "../project/app-config.js";
-import { resolveEffectiveConfig } from "./effective-config.js";
 
-export interface AddPlanInput {
+export interface AddPlanInput<C extends GenerationConfig = AppProjectConfig> {
   readonly registry: RegistrySnapshot;
-  readonly config: KitConfig;
+  readonly config: C;
   /** Explicit roots being added by this request. */
   readonly addedRoots: readonly string[];
   readonly snapshot: ProjectSnapshot;
@@ -124,7 +133,7 @@ export interface AddPlanInput {
   readonly registryHash: string;
 }
 
-export interface AddPlan {
+export interface AddPlan<C extends GenerationConfig = AppProjectConfig> {
   /** Whether the proposed batch can be applied; conflicts make it false. */
   readonly executable: boolean;
   readonly projection: RequestProjection;
@@ -136,7 +145,7 @@ export interface AddPlan {
   readonly dependencyIssues: readonly ModelIssue[];
   readonly sourcePlan: SourcePlan;
   /** The effective mapping resolved from captured evidence, used by sync. */
-  readonly effectiveConfig: KitConfig;
+  readonly effectiveConfig: C;
   readonly writes: readonly PlannedWrite[];
   /**
    * Independent export-cohort authority for the managed barrel, resolved from
@@ -247,7 +256,18 @@ function itemVersion(registry: RegistrySnapshot, id: string): string | null {
  * Build the add-request plan. The desired config only changes when the batch is
  * executable, so a conflict leaves `kit.json` untouched.
  */
-export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
+export function planAdd(
+  input: AddPlanInput<AppProjectConfig>,
+): ModelResult<AddPlan<AppProjectConfig>>;
+export function planAdd(
+  input: AddPlanInput<LibraryConfig>,
+): ModelResult<AddPlan<LibraryConfig>>;
+export function planAdd(
+  input: AddPlanInput<GenerationConfig>,
+): ModelResult<AddPlan<GenerationConfig>>;
+export function planAdd(
+  input: AddPlanInput<GenerationConfig>,
+): ModelResult<AddPlan<GenerationConfig>> {
   const { registry, snapshot, lock } = input;
   // One resolved effective mapping shared with init and sync: the captured
   // selected-project evidence and bounded `_kit/kit.json` discovery determine
@@ -257,7 +277,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   const effective = resolveEffectiveConfig(snapshot, input.config);
   if (!effective.ok) return fail(effective.issues);
   const config = effective.value.config;
-  const selectedAdapter = targetIntegrationAdapter(appTarget(config));
+  const selectedAdapter = targetIntegrationAdapter(generationTarget(config));
   if (!selectedAdapter.ok) return selectedAdapter;
   const layoutAdapter = selectedAdapter.value;
   const diagnostics: string[] = [];
@@ -321,7 +341,8 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
           observedConfig.registry !== config.registry ||
           observedConfig.uiDir !== config.uiDir ||
           observedConfig.stylesDir !== config.stylesDir ||
-          observedConfig.layoutFile !== config.layoutFile;
+          integrationMapping(observedConfig).path !==
+            integrationMapping(config).path;
         if (mappingMismatch) {
           diagnostics.push(
             `config conflict: the supplied configuration does not match the observed mapping in ${kitJsonPath}; an unexplained mapping/state mismatch must be reconciled before planning`,
@@ -354,8 +375,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
         stateDir: joinLogical(config.uiDir, "_kit"),
         uiDir: config.uiDir,
         stylesDir: config.stylesDir,
-        layoutFile: config.layoutFile,
-        ...appLockContext(config),
+        ...generationLockContext(config),
       });
       if (!validatedObservedLock.ok) {
         for (const entry of validatedObservedLock.issues) {
@@ -1084,7 +1104,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
   // ---- Layout imports -----------------------------------------------------
   let plannedLayout: string | null = null;
   let finalLayout = "";
-  const layoutState = observeText(snapshot, config.layoutFile);
+  const layoutState = observeText(snapshot, integrationMapping(config).path);
   if (layoutState.status === "conflict") {
     diagnostics.push(`layout conflict: ${layoutState.reason}`);
     hasConflict = true;
@@ -1092,17 +1112,19 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     const existing = layoutState.status === "file" ? layoutState.text : "";
     finalLayout = existing;
     const layoutIntegration = (lock?.integrations ?? []).find(
-      (entry) => entry.kind === "layout" && entry.path === config.layoutFile,
+      (entry) =>
+        entry.kind === integrationMapping(config).kind &&
+        entry.path === integrationMapping(config).path,
     );
     if (layoutIntegration !== undefined && layoutState.status === "absent") {
       diagnostics.push(
-        `layout conflict at ${config.layoutFile}: the lock owns this layout integration but the target is absent; reconcile the missing integration explicitly rather than recreating it`,
+        `layout conflict at ${integrationMapping(config).path}: the lock owns this layout integration but the target is absent; reconcile the missing integration explicitly rather than recreating it`,
       );
       hasConflict = true;
     }
     const specifiers = [derived.kitCss, derived.themesCss, derived.appCss].map(
       (target) => ({
-        specifier: relativeSpecifier(config.layoutFile, target),
+        specifier: relativeSpecifier(integrationMapping(config).path, target),
       }),
     );
     // An absent layout is materialized as a minimal Svelte 5 passthrough so the
@@ -1261,7 +1283,7 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
     if (plannedLayout !== null) {
       writes.push({
         operation: layoutState.status === "absent" ? "create" : "update",
-        path: config.layoutFile,
+        path: integrationMapping(config).path,
         bytes: utf8(plannedLayout),
       });
     }
@@ -1280,10 +1302,13 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       );
     const integrations: LockIntegration[] = [
       {
-        kind: "layout" as const,
-        path: config.layoutFile,
+        kind: integrationMapping(config).kind,
+        path: integrationMapping(config).path,
         baseline: integrationBaseline(
-          priorIntegration("layout", config.layoutFile),
+          priorIntegration(
+            integrationMapping(config).kind,
+            integrationMapping(config).path,
+          ),
           plannedLayout !== null,
           finalLayout,
         ),
@@ -1339,14 +1364,13 @@ export function planAdd(input: AddPlanInput): ModelResult<AddPlan> {
       toolVersion: INITIAL_TOOL_VERSION,
     });
     const validated = parseKitLock(
-      { ...built.lock, ...appLockIdentity(config) },
+      { ...built.lock, ...generationLockIdentity(config) },
       lockPath,
       {
         stateDir: joinLogical(config.uiDir, "_kit"),
         uiDir: config.uiDir,
         stylesDir: config.stylesDir,
-        layoutFile: config.layoutFile,
-        ...appLockContext(config),
+        ...generationLockContext(config),
       },
     );
     if (!validated.ok) return fail(validated.issues);

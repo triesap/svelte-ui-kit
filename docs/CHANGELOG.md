@@ -5,6 +5,9 @@ they do not announce an npm release or broaden tested compatibility.
 
 ## Unreleased
 
+- Explicit Astro and standalone Svelte-library generation, target-bound lock and
+  recovery metadata, native layout/CSS integration, and independently installed
+  generated/packed consumers with strict checking, SSR and hydrated controls.
 - Source-first TypeScript CLI with bundled registry/schema/contracts, explicit
   info/init/view/add/sync/doctor commands, read-only plans and guarded writes.
 - Complete current component catalog, including distinct Alert Dialog; shared

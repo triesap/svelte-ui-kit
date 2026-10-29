@@ -1,11 +1,11 @@
-import { type AppProjectConfig as KitConfig } from "../project/app-config.js";
+import { deriveKitPaths } from "../project/config.js";
+import { type GenerationConfig as KitConfig } from "../project/generation-config.js";
 import type { RegistrySnapshotItem } from "../registry/load.js";
 import {
   KIT_LAYERS,
   THEME_INTEGRATION_ID,
   tokenMetadataPaths,
 } from "../registry/theme.js";
-import { deriveKitPaths } from "../project/config.js";
 import { canonicalJson } from "./serialize.js";
 
 /** Project only contracts authenticated by the installed registry snapshot. */

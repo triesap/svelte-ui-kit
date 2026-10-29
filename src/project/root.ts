@@ -31,6 +31,8 @@
  */
 import { readFileSync, readdirSync, realpathSync } from "node:fs";
 import path from "node:path";
+import { discoverGenerationConfig } from "./detect.js";
+import { isLibraryConfig } from "./generation-config.js";
 
 import {
   fail,
@@ -375,6 +377,32 @@ function classifyMember(abs: string): MemberClassification {
         if (
           isRecord(record) &&
           ("@sveltejs/kit" in record || "astro" in record)
+        )
+          return { kind: "app" };
+      }
+      const peer = manifest.value.peerDependencies,
+        entries = manifest.value.exports;
+      const main = isRecord(entries) ? entries["."] : null;
+      if (
+        manifest.value.type === "module" &&
+        typeof manifest.value.name === "string" &&
+        isRecord(peer) &&
+        typeof peer.svelte === "string" &&
+        isRecord(main) &&
+        typeof main.svelte === "string" &&
+        typeof main.types === "string"
+      ) {
+        // Ordinary component libraries must not change legacy workspace
+        // application selection. A standalone generator target declares intent.
+        const intent = discoverGenerationConfig(abs);
+        if (!intent.ok)
+          return {
+            kind: "invalid",
+            detail: "its standalone generation intent is invalid",
+          };
+        if (
+          intent.value.kind === "custom" &&
+          isLibraryConfig(intent.value.config)
         )
           return { kind: "app" };
       }

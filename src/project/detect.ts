@@ -1,7 +1,8 @@
 import {
-  type AppProjectConfig as KitConfig,
-  parseAppConfig as parseKitConfig,
-} from "./app-config.js";
+  isLibraryConfig,
+  parseGenerationConfig as parseKitConfig,
+  type GenerationConfig as KitConfig,
+} from "./generation-config.js";
 /**
  * Default SvelteKit application detection (S035) and `_kit` discovery (S037).
  *
@@ -343,7 +344,7 @@ export const DISCOVERY_EXCLUDED_DIRS = [
 const EXCLUDED_DIR_SET = new Set<string>(DISCOVERY_EXCLUDED_DIRS);
 
 /** A selected kit configuration and where it was discovered. */
-export interface DiscoveredKitConfig {
+export interface DiscoveredGenerationConfig {
   readonly kind: "default" | "custom";
   /** Package-relative `_kit/kit.json` path. */
   readonly configPath: string;
@@ -500,12 +501,12 @@ function defaultAncestryIssue(root: string): ModelIssue | null {
  * declared `uiDir` disagrees with its location fails visibly. Reading is
  * JSON-only and never executes `svelte.config.*` or a package script.
  */
-export function discoverKitConfig(
+export function discoverGenerationConfig(
   root: string,
-): ModelResult<DiscoveredKitConfig> {
+): ModelResult<DiscoveredGenerationConfig> {
   const scan = scanKitConfigCandidates(root);
   const issues: ModelIssue[] = [...scan.issues];
-  const valid: DiscoveredKitConfig[] = [];
+  const valid: DiscoveredGenerationConfig[] = [];
 
   for (const rel of scan.candidates) {
     const abs = path.join(root, ...rel.split("/"));
@@ -584,7 +585,7 @@ export function discoverKitConfig(
       ),
     ]);
   }
-  if (valid.length === 1) return ok(valid[0] as DiscoveredKitConfig);
+  if (valid.length === 1) return ok(valid[0] as DiscoveredGenerationConfig);
 
   const ancestryIssue = defaultAncestryIssue(root);
   if (ancestryIssue !== null) return fail([ancestryIssue]);
@@ -595,4 +596,28 @@ export function discoverKitConfig(
     config: DEFAULT_KIT_CONFIG,
     derived: deriveKitPaths(DEFAULT_KIT_CONFIG),
   });
+}
+
+/** Legacy application discovery never reinterprets a standalone stylesheet as a layout. */
+export interface DiscoveredKitConfig extends Omit<
+  DiscoveredGenerationConfig,
+  "config"
+> {
+  readonly config: import("./app-config.js").AppProjectConfig;
+}
+export function discoverKitConfig(
+  root: string,
+): ModelResult<DiscoveredKitConfig> {
+  const found = discoverGenerationConfig(root);
+  if (!found.ok) return found;
+  const config = found.value.config;
+  if (isLibraryConfig(config))
+    return fail([
+      issue(
+        "TARGET_GENERATION_UNAVAILABLE",
+        "Use generation discovery for standalone Svelte library intent",
+        found.value.configPath,
+      ),
+    ]);
+  return ok({ ...found.value, config });
 }

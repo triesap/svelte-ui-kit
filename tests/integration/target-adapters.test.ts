@@ -249,7 +249,7 @@ test("captured target bytes, identity and candidate absence cannot change throug
   }, TypeError);
 });
 
-test("target adapters preserve native Svelte structure and explicitly refuse unfinished generation", () => {
+test("target adapters preserve native application and standalone stylesheet structures", () => {
   const generated = svelteKitIntegration.materialize([
     { specifier: "./kit.css" },
   ]);
@@ -261,12 +261,14 @@ test("target adapters preserve native Svelte structure and explicitly refuse unf
   });
   assert.ok(targetIntegrationAdapter("sveltekit").ok);
   assert.ok(targetIntegrationAdapter("astro").ok);
-  for (const target of ["svelte-library"] as const) {
-    const adapter = targetIntegrationAdapter(target);
-    assert.equal(adapter.ok, false);
-    if (!adapter.ok)
-      assert.equal(adapter.issues[0]?.code, "TARGET_GENERATION_UNAVAILABLE");
-  }
+  const standalone = targetIntegrationAdapter("svelte-library");
+  assert.ok(standalone.ok);
+  const css = standalone.value.materialize([{ specifier: "./kit.css" }]);
+  assert.deepEqual(standalone.value.inspect(css), {
+    ok: true,
+    value: { imports: ["./kit.css"] },
+  });
+  assert.equal(targetIntegrationAdapter("unknown" as never).ok, false);
   const parsed = parseTargetConfig(library);
   assert.ok(parsed.ok);
   assert.equal(integrationFor(parsed.value).kind, "stylesheet-entry");

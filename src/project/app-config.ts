@@ -1,9 +1,12 @@
 /** Validated application configurations; the v1 public parser stays independent. */
-import { parseKitConfig, type KitConfig } from "./config.js";
-import { parseTargetConfig, type TargetConfig } from "./target-config.js";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
-import { TARGET_CONFIG_FILES } from "./target-config.js";
 import type { SchemaAuthority } from "../registry/schema.js";
+import { parseKitConfig, type KitConfig } from "./config.js";
+import {
+  parseTargetConfig,
+  TARGET_CONFIG_FILES,
+  type TargetConfig,
+} from "./target-config.js";
 export type AppTargetConfig = Exclude<
   TargetConfig,
   { readonly target: "svelte-library" }
@@ -65,7 +68,7 @@ export function parseAppConfig(
       return fail([
         issue(
           "TARGET_GENERATION_UNAVAILABLE",
-          "Standalone library discovery is available; its generator is not enabled in this version.",
+          "Standalone library intent uses parseGenerationConfig; this application parser requires a real layout.",
           locator,
         ),
       ]);
