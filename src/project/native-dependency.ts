@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { lstatSync, readFileSync } from "node:fs";
 import path from "node:path";
 import baseline from "./native-dependency-baseline.json" with { type: "json" };
+import svelteBaseline from "./svelte-runtime-baseline.json" with { type: "json" };
 import { isSafeLogicalRelativePath } from "./paths.js";
 import type { ModelIssue } from "../registry/errors.js";
 import { issue } from "../registry/errors.js";
@@ -10,6 +11,22 @@ import { validateWithSchema } from "../registry/schema.js";
 import { verifyNativeInventory } from "./native-inventory.js";
 
 export const NATIVE_BASELINE = Object.freeze(baseline);
+export const SVELTE_RUNTIME_BASELINE = Object.freeze(svelteBaseline);
+/** Only independently qualified profiles can select authentication policy. */
+export type QualifiedNativeName = "bits-ui" | "svelte";
+export function isQualifiedNativeName(
+  name: string,
+): name is QualifiedNativeName {
+  return name === "bits-ui" || name === "svelte";
+}
+export function qualifiedNativeBaseline(name: QualifiedNativeName) {
+  if (name === "bits-ui") return NATIVE_BASELINE;
+  if (name === "svelte") return SVELTE_RUNTIME_BASELINE;
+  throw new Error("Unknown qualified native profile");
+}
+function label(name: QualifiedNativeName): string {
+  return name === "bits-ui" ? "Bits" : "Svelte";
+}
 /** Positive installed evidence is distinct from an absent list of problems. */
 export type NativeInstallAuthentication =
   | {
@@ -35,15 +52,14 @@ export function nativeInstallIssues(
   version: unknown,
   authentication: NativeInstallAuthentication | undefined,
   manifestVersion: unknown = version,
+  name: QualifiedNativeName = "bits-ui",
 ): readonly ModelIssue[] {
-  if (
-    version !== NATIVE_BASELINE.version ||
-    manifestVersion !== NATIVE_BASELINE.version
-  ) {
+  const profile = qualifiedNativeBaseline(name);
+  if (version !== profile.version || manifestVersion !== profile.version) {
     return [
       issue(
         "NATIVE_INSTALL_VERSION",
-        `Installed Bits must use the exact qualified version ${NATIVE_BASELINE.version}; equivalent v-prefixed or build-metadata spellings are not qualified. Reinstall the authenticated application-owned archive explicitly.`,
+        `Installed ${label(name)} must use the exact qualified version ${profile.version}; equivalent v-prefixed or build-metadata spellings are not qualified. Reinstall the authenticated application-owned archive explicitly.`,
         "package.json",
       ),
     ];
@@ -52,13 +68,13 @@ export function nativeInstallIssues(
     return authentication.issues;
   if (
     authentication?.kind !== "authenticated" ||
-    authentication.version !== NATIVE_BASELINE.version ||
-    authentication.provenanceSha256 !== NATIVE_BASELINE.provenanceSha256
+    authentication.version !== profile.version ||
+    authentication.provenanceSha256 !== profile.provenanceSha256
   ) {
     return [
       issue(
         "NATIVE_INSTALL_UNAUTHENTICATED",
-        "Installed Bits has no positive qualified distribution proof. Capture and authenticate the actual installation before planning.",
+        `Installed ${label(name)} has no positive qualified distribution proof. Capture and authenticate the actual installation before planning.`,
         "package.json",
       ),
     ];
@@ -70,7 +86,9 @@ export function nativeInstallIssues(
 export function nativeArchiveIssues(
   declaration: string | null,
   source: NativeFileObservation | undefined,
+  name: QualifiedNativeName = "bits-ui",
 ): readonly ModelIssue[] {
+  const profile = qualifiedNativeBaseline(name);
   if (source?.kind === "invalid" && source.issues.length > 0)
     return source.issues;
   if (
@@ -78,13 +96,13 @@ export function nativeArchiveIssues(
     !declaration.startsWith("file:") ||
     source?.kind !== "value" ||
     source.declaration !== declaration ||
-    source.version !== NATIVE_BASELINE.version ||
-    source.digest !== NATIVE_BASELINE.archiveSha256
+    source.version !== profile.version ||
+    source.digest !== profile.archiveSha256
   ) {
     return [
       issue(
         "NATIVE_ARCHIVE_REQUIRED",
-        "The qualified local Bits build requires an explicit authenticated application-owned file declaration. Copy and verify the bundled archive, then install it explicitly.",
+        `The qualified local ${label(name)} build requires an explicit authenticated application-owned file declaration. Copy and verify the bundled archive, then install it explicitly.`,
         "package.json",
       ),
     ];
@@ -96,22 +114,28 @@ export function nativeArchiveIssues(
 export function observeNativeInstall(
   packageRoot: string,
   version: unknown,
+  name: QualifiedNativeName = "bits-ui",
 ): NativeInstallAuthentication {
-  if (version !== NATIVE_BASELINE.version)
-    return { kind: "invalid", issues: nativeInstallIssues(version, undefined) };
-  const issues = authenticateNativeInstall(packageRoot);
+  const profile = qualifiedNativeBaseline(name);
+  if (version !== profile.version)
+    return {
+      kind: "invalid",
+      issues: nativeInstallIssues(version, undefined, version, name),
+    };
+  const issues = authenticateNativeInstall(packageRoot, name);
   return issues.length > 0
     ? { kind: "invalid", issues }
     : {
         kind: "authenticated",
-        version: NATIVE_BASELINE.version,
-        provenanceSha256: NATIVE_BASELINE.provenanceSha256,
+        version: profile.version,
+        provenanceSha256: profile.provenanceSha256,
       };
 }
 
 /** Same declaration-field precedence as ordinary dependency inspection. */
 export function nativeDeclaration(
   manifest: Record<string, unknown> | null,
+  name: QualifiedNativeName = "bits-ui",
 ): string | null {
   for (const field of ["dependencies", "devDependencies", "peerDependencies"]) {
     const record = manifest?.[field];
@@ -119,10 +143,10 @@ export function nativeDeclaration(
       typeof record !== "object" ||
       record === null ||
       Array.isArray(record) ||
-      !Object.hasOwn(record, NATIVE_BASELINE.name)
+      !Object.hasOwn(record, name)
     )
       continue;
-    const value = (record as Record<string, unknown>)[NATIVE_BASELINE.name];
+    const value = (record as Record<string, unknown>)[name];
     return typeof value === "string" ? value : null;
   }
   return null;
@@ -162,33 +186,33 @@ function regularInside(
 export function observeNativeFile(
   root: string,
   manifest: Record<string, unknown> | null,
+  name: QualifiedNativeName = "bits-ui",
 ): NativeFileObservation {
+  const profile = qualifiedNativeBaseline(name);
   for (const field of ["dependencies", "devDependencies", "peerDependencies"]) {
     const record = manifest?.[field];
     if (
       typeof record !== "object" ||
       record === null ||
       Array.isArray(record) ||
-      !Object.hasOwn(record, NATIVE_BASELINE.name)
+      !Object.hasOwn(record, name)
     )
       continue;
-    const declaration = (record as Record<string, unknown>)[
-      NATIVE_BASELINE.name
-    ];
+    const declaration = (record as Record<string, unknown>)[name];
     if (typeof declaration !== "string" || !declaration.startsWith("file:"))
       return { kind: "absent" };
     const logical = declaration.slice(5).replace(/^\.\//, "");
     try {
       if (!logical.endsWith(".tgz")) throw new Error("archive suffix");
       const file = regularInside(root, logical);
-      if (digest(file.bytes) !== NATIVE_BASELINE.archiveSha256)
+      if (digest(file.bytes) !== profile.archiveSha256)
         throw new Error("unqualified archive digest");
       return {
         kind: "value",
         declaration,
         path: logical,
-        version: NATIVE_BASELINE.version,
-        digest: NATIVE_BASELINE.archiveSha256,
+        version: profile.version,
+        digest: profile.archiveSha256,
         mode: file.mode,
       };
     } catch {
@@ -197,7 +221,7 @@ export function observeNativeFile(
         issues: [
           issue(
             "NATIVE_ARCHIVE_INVALID",
-            "The declared Bits file must be the qualified archive in an application-owned regular file with safe ancestry. Copy it from the locally packed CLI, verify its digest, and install it explicitly.",
+            `The declared ${label(name)} file must be the qualified archive in an application-owned regular file with safe ancestry. Copy it from the locally packed CLI, verify its digest, and install it explicitly.`,
             "package.json",
           ),
         ],
@@ -214,31 +238,42 @@ export function observeNativeFile(
  */
 export function authenticateNativeInstall(
   packageRoot: string,
+  name: QualifiedNativeName = "bits-ui",
 ): readonly ModelIssue[] {
+  const profile = qualifiedNativeBaseline(name);
   try {
     const provenance = regularInside(packageRoot, "NATIVE_PROVENANCE.json");
-    if (digest(provenance.bytes) !== NATIVE_BASELINE.provenanceSha256)
+    if (digest(provenance.bytes) !== profile.provenanceSha256)
       throw new Error("provenance digest");
     const data = JSON.parse(provenance.bytes.toString("utf8")) as {
       schemaVersion: number;
       name: string;
       version: string;
+      buildId?: string;
+      corrected?: boolean;
+      mode?: string;
       distributionFiles: { path: string; sha256: string }[];
     };
     const parsed = validateWithSchema(
-      "native-provenance.schema.json",
+      name === "bits-ui"
+        ? "native-provenance.schema.json"
+        : "svelte-runtime-provenance.schema.json",
       data,
       "package.json",
     );
     if (!parsed.ok) return parsed.issues;
     if (
       data.schemaVersion !== 1 ||
-      data.name !== NATIVE_BASELINE.name ||
-      data.version !== NATIVE_BASELINE.version
+      data.name !== name ||
+      data.version !== profile.version ||
+      (name === "svelte" &&
+        (data.buildId !== SVELTE_RUNTIME_BASELINE.buildId ||
+          data.corrected !== true ||
+          data.mode !== "complete"))
     )
       throw new Error("native identity");
     const expected = new Map([
-      ["NATIVE_PROVENANCE.json", NATIVE_BASELINE.provenanceSha256],
+      ["NATIVE_PROVENANCE.json", profile.provenanceSha256],
     ]);
     for (const file of data.distributionFiles) {
       if (expected.has(file.path)) throw new Error("duplicate inventory path");
@@ -250,7 +285,7 @@ export function authenticateNativeInstall(
     return [
       issue(
         "NATIVE_INSTALL_INVALID",
-        "Installed Bits does not match the qualified local distribution. Recopy the authenticated native archive and reinstall it explicitly; the CLI never repairs package stores.",
+        `Installed ${label(name)} does not match the qualified local distribution. Recopy the authenticated native archive and reinstall it explicitly; the CLI never repairs package stores.`,
         "package.json",
       ),
     ];

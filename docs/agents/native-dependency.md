@@ -185,3 +185,12 @@ consumer qualification. Already-detached/shadow-root reset dispatch and
 asynchronous cancellation remain separate native boundaries; producer and Field
 qualification do not qualify an arbitrary Svelte application. Fresh executable
 results, rather than this scope description, establish which gates passed.
+
+The separate Svelte authentication profile fixes the upstream raw version, native
+build ID, complete archive and provenance digests. It shares current-file and
+inventory verification with Bits while retaining a distinct closed provenance
+schema. Official upstream, unpatched and dispatch-only distributions cannot
+satisfy the corrected profile despite sharing the upstream version. Explicit
+selected-application archive proof and installed proof remain separate. This
+profile is an authentication mechanism; normal dependency capture, generation,
+bundled delivery and consumer adoption require their own integration checks.

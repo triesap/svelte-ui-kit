@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:svelte-ui-kit:schema:v1:svelte-runtime-provenance",
+  "title": "Qualified Svelte runtime distribution provenance v1",
+  "description": "Producer data requires separate fixed archive, provenance, build and actual distribution authentication; it never certifies itself.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "name",
+    "version",
+    "buildId",
+    "corrected",
+    "mode",
+    "source",
+    "compiler",
+    "recipeSha256",
+    "producerSha256",
+    "archiveReaderSha256",
+    "patchSha256",
+    "bindingsPatchSha256",
+    "toolchain",
+    "distributionFiles"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "name": { "const": "svelte" },
+    "version": { "type": "string", "minLength": 1 },
+    "buildId": { "type": "string", "minLength": 1 },
+    "corrected": { "const": true },
+    "mode": { "const": "complete" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "version", "integrity", "sha256"],
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "version": { "type": "string", "minLength": 1 },
+        "integrity": {
+          "type": "string",
+          "pattern": "^sha512-[A-Za-z0-9+/]{86}==$"
+        },
+        "sha256": { "$ref": "#/definitions/digest" }
+      }
+    },
+    "compiler": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "sha256", "rebuilt"],
+      "properties": {
+        "version": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/definitions/digest" },
+        "rebuilt": { "const": false }
+      }
+    },
+    "recipeSha256": { "$ref": "#/definitions/digest" },
+    "producerSha256": { "$ref": "#/definitions/digest" },
+    "archiveReaderSha256": { "$ref": "#/definitions/digest" },
+    "patchSha256": { "$ref": "#/definitions/digest" },
+    "bindingsPatchSha256": { "$ref": "#/definitions/digest" },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "pnpm"],
+      "properties": {
+        "node": { "type": "string", "minLength": 1 },
+        "pnpm": { "type": "string", "minLength": 1 }
+      }
+    },
+    "distributionFiles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "$ref": "#/definitions/digest" }
+        }
+      }
+    }
+  },
+  "definitions": { "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
+}
