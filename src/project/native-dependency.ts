@@ -9,15 +9,20 @@ import type { ModelIssue } from "../registry/errors.js";
 import { issue } from "../registry/errors.js";
 import { validateWithSchema } from "../registry/schema.js";
 import { verifyNativeInventory } from "./native-inventory.js";
+import { deepFreeze, FrozenMap } from "./immutable.js";
 
 export const NATIVE_BASELINE = Object.freeze(baseline);
 export const SVELTE_RUNTIME_BASELINE = Object.freeze(svelteBaseline);
 /** Only independently qualified profiles can select authentication policy. */
-export type QualifiedNativeName = "bits-ui" | "svelte";
+export const QUALIFIED_NATIVE_NAMES = Object.freeze([
+  "bits-ui",
+  "svelte",
+] as const);
+export type QualifiedNativeName = (typeof QUALIFIED_NATIVE_NAMES)[number];
 export function isQualifiedNativeName(
   name: string,
 ): name is QualifiedNativeName {
-  return name === "bits-ui" || name === "svelte";
+  return QUALIFIED_NATIVE_NAMES.some((known) => name === known);
 }
 export function qualifiedNativeBaseline(name: QualifiedNativeName) {
   if (name === "bits-ui") return NATIVE_BASELINE;
@@ -229,6 +234,19 @@ export function observeNativeFile(
     }
   }
   return { kind: "absent" };
+}
+
+/** Capture each known source separately, with no mutable lookup or live handle. */
+export function observeNativeFiles(
+  root: string,
+  manifest: Record<string, unknown> | null,
+): ReadonlyMap<string, NativeFileObservation> {
+  return new FrozenMap(
+    QUALIFIED_NATIVE_NAMES.map(
+      (name) =>
+        [name, deepFreeze(observeNativeFile(root, manifest, name))] as const,
+    ),
+  );
 }
 
 /**

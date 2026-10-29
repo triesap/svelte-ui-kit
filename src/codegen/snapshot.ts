@@ -433,10 +433,11 @@ export function captureSnapshot(
         ),
       ]);
   }
-  if (environment.nativeFile.kind === "value") {
+  for (const source of environment.nativeFiles.values()) {
+    if (source.kind !== "value") continue;
     for (const observation of observeAncestors(
       canonical.value.path,
-      environment.nativeFile.path,
+      source.path,
     ).observations) {
       if (!ancestorMap.has(observation.path))
         ancestorMap.set(observation.path, observation);

@@ -54,7 +54,7 @@ import {
 import { deepFreeze, FrozenMap } from "./immutable.js";
 import { type JsonObservation } from "./io.js";
 import {
-  observeNativeFile,
+  observeNativeFiles,
   type NativeFileObservation,
 } from "./native-dependency.js";
 
@@ -118,8 +118,10 @@ export interface CapturedEnvironment {
   readonly manifest: JsonObservation;
   readonly catalogDigest: string | null;
   readonly catalogIssues: readonly ModelIssue[];
-  /** Authenticated app-owned native file declaration; never a live planning read. */
+  /** Bits compatibility accessor for its entry in nativeFiles. */
   readonly nativeFile: NativeFileObservation;
+  /** Immutable package-indexed sources; archive proof is not installed readiness. */
+  readonly nativeFiles: ReadonlyMap<string, NativeFileObservation>;
   /**
    * Exact physical evidence of the manifest and every recognized package-manager
    * lockfile, including absence. Carried into the guarded apply read set so a
@@ -421,10 +423,12 @@ function captureInstalledResolution(
 export function captureEnvironment(root: string): CapturedEnvironment {
   const catalogs = observeCatalogs(root);
   const manifest = catalogs.manifest;
-  const nativeFile = observeNativeFile(
+  const nativeFiles = observeNativeFiles(
     root,
     manifest.kind === "value" ? manifest.value : null,
   );
+  // Both fixed names are constructed by observeNativeFiles on every capture.
+  const nativeFile = nativeFiles.get("bits-ui")!;
   const enumerated = enumerateInstalledNames(root);
   // Decision-relevant names are the union of enumerated installed names and the
   // selected package's declared dependency names. A declared-but-absent name is
@@ -461,6 +465,7 @@ export function captureEnvironment(root: string): CapturedEnvironment {
     catalogDigest: catalogs.digest,
     catalogIssues: catalogs.issues,
     nativeFile,
+    nativeFiles,
     configuration,
     evidence: [
       ...captureEvidence(root, [...installedManifestPaths(root, names)]),
@@ -481,16 +486,18 @@ export function captureEnvironment(root: string): CapturedEnvironment {
                 mode: null,
               },
         ),
-      ...(nativeFile.kind === "value"
-        ? [
-            {
-              path: nativeFile.path,
-              kind: "file" as const,
-              digest: nativeFile.digest,
-              mode: nativeFile.mode,
-            },
-          ]
-        : []),
+      ...[...nativeFiles.values()].flatMap((source) =>
+        source.kind === "value"
+          ? [
+              {
+                path: source.path,
+                kind: "file" as const,
+                digest: source.digest,
+                mode: source.mode,
+              },
+            ]
+          : [],
+      ),
     ],
     installed,
     installedResolution,

@@ -221,3 +221,11 @@ satisfy the corrected profile despite sharing the upstream version. Explicit
 selected-application archive proof and installed proof remain separate. This
 profile is an authentication mechanism; normal dependency capture, generation,
 bundled delivery and consumer adoption require their own integration checks.
+
+Invocation capture keeps a deeply immutable package-indexed archive collection.
+The historical `nativeFile` accessor remains the same Bits observation. Each
+authenticated source contributes its actual hash/mode and complete ancestry to
+snapshot evidence; later byte, mode or physical-path changes cannot hide behind
+an unchanged application manifest. Missing and invalid sources remain distinct
+observations. Archive capture alone never establishes installed readiness or
+selects a runtime variant for an application.
