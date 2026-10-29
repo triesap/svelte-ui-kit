@@ -26,6 +26,9 @@
     animation: kit-spinner-rotate var(--kit-spinner-animation-duration, 900ms)
       linear infinite;
   }
+  .kit-spinner[hidden]:not([hidden="until-found"]) {
+    display: none;
+  }
   .kit-spinner-label {
     position: absolute;
     inline-size: 1px;

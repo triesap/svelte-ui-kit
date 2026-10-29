@@ -7,6 +7,8 @@
   let decorative = $state(false);
   let danger = $state(false);
   let label = $state("Working");
+  let hidden = $state(true);
+  let matches = $state(0);
   let dynamic = $derived<SpinnerProps>(
     decorative ? { mode: "decorative" } : { mode: "status", label },
   );
@@ -17,6 +19,16 @@
 
 <h1>Generated Spinner qualification</h1>
 <p data-ready={ready}>Hydrated: {String(ready)}</p>
+<p id="matches">{matches}</p>
+<button onclick={() => (hidden = !hidden)}>Toggle hidden spinner</button>
+<Spinner id="hidden" {hidden} label="Hidden operation" />
+<Spinner
+  id="until-found"
+  hidden="until-found"
+  label="Findable operation"
+  onbeforematch={() => (matches += 1)}
+/>
+<a href="#until-found">Reveal findable spinner</a>
 <button
   onclick={() => {
     label = "Complete";

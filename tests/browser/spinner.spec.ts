@@ -37,6 +37,32 @@ for (const custom of [false, true]) {
       await page.goto(new URL("qualification/spinner", hosted.baseURL).href);
       await expect(page.locator('[data-ready="true"]')).toBeVisible();
     });
+    test("native hidden and until-found survive authored display and actual fragment reveal", async ({
+      page,
+    }) => {
+      const hidden = page.locator("#hidden");
+      await expect(hidden).toHaveCSS("display", "none");
+      await expect(
+        page.getByRole("status").filter({ hasText: "Hidden operation" }),
+      ).toHaveCount(0);
+      await page
+        .getByRole("button", { name: "Toggle hidden spinner", exact: true })
+        .click();
+      await expect(hidden).toBeVisible();
+      await page
+        .getByRole("button", { name: "Toggle hidden spinner", exact: true })
+        .click();
+      await expect(hidden).toHaveCSS("display", "none");
+      const findable = page.locator("#until-found");
+      await expect(findable).toHaveCSS("content-visibility", "hidden");
+      await expect(findable).not.toHaveCSS("display", "none");
+      await page
+        .getByRole("link", { name: "Reveal findable spinner", exact: true })
+        .click();
+      await expect(findable).not.toHaveAttribute("hidden");
+      await expect(findable).toBeVisible();
+      await expect(page.locator("#matches")).toHaveText("1");
+    });
     test("default geometry resists broad radius overrides and inherits theme", async ({
       page,
     }) => {
@@ -111,7 +137,7 @@ for (const custom of [false, true]) {
     test("status labels and decoration remain distinct through hydration and changes", async ({
       page,
     }) => {
-      await expect(page.getByRole("status")).toHaveCount(4);
+      await expect(page.locator("section").getByRole("status")).toHaveCount(4);
       await expect(page.locator("#default .kit-spinner-label")).toHaveText(
         "Loading",
       );
@@ -130,7 +156,7 @@ for (const custom of [false, true]) {
         "Complete",
       );
       await page.getByRole("button", { name: "Toggle decoration" }).click();
-      await expect(page.getByRole("status")).toHaveCount(3);
+      await expect(page.locator("section").getByRole("status")).toHaveCount(3);
       await expect(page.locator("#dynamic")).toHaveAttribute(
         "aria-hidden",
         "true",

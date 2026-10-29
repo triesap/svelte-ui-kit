@@ -16,6 +16,8 @@ Installation ID: `spinner`. Explicit requests and dependency closure remain sepa
 
 ## Public contract
 
+Native hidden is preserved without overriding until-found or browser fragment reveal.
+
 An empty native span renders the owned `kit-spinner-mark` and `kit-spinner-label`.
 Status mode defaults to role=status and label Loading; decorative mode sets aria-hidden and excludes label.
 There is no bindable ref, children, primitive, ID allocator or size/variant API.

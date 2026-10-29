@@ -79,6 +79,200 @@ for (const custom of [false, true])
       await release();
     });
 
+    test("phrasing content retains actual server markup and hydrates without parser repair", async ({
+      page,
+    }) => {
+      const url = new URL(consumer.route, hosted.baseURL);
+      url.searchParams.set("phrasing", "1");
+      const response = await page.request.get(url.href);
+      expect(response.ok()).toBe(true);
+      const body = await response.text();
+      expect(
+        await page.evaluate((html) => {
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          return doc
+            .querySelector("#phrasing")
+            ?.contains(doc.querySelector("#phrasing-image"));
+        }, body),
+      ).toBe(true);
+      await release();
+      await page.goto(url.href, { waitUntil: "domcontentloaded" });
+      await expect(page.locator('[data-ready="true"]')).toBeVisible();
+      await expect(page.locator("#phrasing #phrasing-image")).toBeVisible();
+      await expect(page.locator("#phrasing")).toHaveText("Before BC after");
+    });
+    test("caller-selected native names persist through error loading and loaded fallback transitions", async ({
+      page,
+    }) => {
+      const names = [
+        ["labelled", "Caller portrait name"],
+        ["referenced", "Caller caption"],
+        ["empty-alt-named", "Explicit empty-alt name"],
+      ] as const;
+      for (const [id, name] of names) {
+        const frame = page.locator(`#${id}`).locator("..");
+        await expect(frame).toHaveAttribute("data-state", "error");
+        await expect(page.getByRole("img", { name, exact: true })).toHaveCount(
+          1,
+        );
+      }
+      await page
+        .getByRole("button", { name: "Load named portraits", exact: true })
+        .click();
+      for (const [id, name] of names) {
+        await expect(page.locator(`#${id}`).locator("..")).toHaveAttribute(
+          "data-state",
+          "loading",
+        );
+        await expect(page.getByRole("img", { name, exact: true })).toHaveCount(
+          1,
+        );
+      }
+      await release();
+      for (const [id, name] of names) {
+        await expect(page.locator(`#${id}`).locator("..")).toHaveAttribute(
+          "data-state",
+          "loaded",
+        );
+        await expect(page.locator(`#${id}`)).toHaveAccessibleName(name);
+        await expect(page.getByRole("img", { name, exact: true })).toHaveCount(
+          1,
+        );
+      }
+    });
+    test("native hidden with fallback covers error loading and actual nested fragment reveal", async ({
+      page,
+    }) => {
+      const image = page.locator("#hidden-fallback");
+      const frame = image.locator("..");
+      await expect(frame).toHaveAttribute("data-state", "error");
+      await expect(frame).toHaveCSS("display", "none");
+      await expect(
+        page.getByRole("img", {
+          name: "Hidden fallback portrait",
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      await page
+        .getByRole("button", { name: "Toggle hidden fallback", exact: true })
+        .click();
+      await expect(frame.locator(".kit-avatar-fallback")).toBeVisible();
+      await page
+        .getByRole("button", { name: "Toggle hidden fallback", exact: true })
+        .click();
+      await page
+        .getByRole("button", { name: "Load hidden fallback", exact: true })
+        .click();
+      await expect(frame).toHaveAttribute("data-state", "loading");
+      await expect(frame).toHaveCSS("display", "none");
+      await release();
+      await expect(frame).toHaveAttribute("data-state", "loaded");
+      await expect(frame).toHaveCSS("display", "none");
+      await page
+        .getByRole("button", { name: "Toggle hidden fallback", exact: true })
+        .click();
+      await expect(image).toBeVisible();
+      const findable = page.locator("#until-found");
+      await expect(findable.locator("..")).toHaveCSS(
+        "content-visibility",
+        "hidden",
+      );
+      await page
+        .getByRole("link", { name: "Reveal findable image", exact: true })
+        .click();
+      await expect(findable).not.toHaveAttribute("hidden");
+      await expect(findable.locator("..")).not.toHaveAttribute("hidden");
+      await expect(findable).toBeVisible();
+      await expect(page.locator("#matches")).toHaveText("IMG:true");
+      const fallbackFrame = page.locator("#until-found-fallback").locator("..");
+      await expect(fallbackFrame).toHaveCSS("content-visibility", "hidden");
+      await page
+        .getByRole("link", { name: "Reveal fallback text", exact: true })
+        .click();
+      await expect(fallbackFrame).not.toHaveAttribute("hidden");
+      await expect(page.locator("#avatar-find-fallback")).toBeVisible();
+    });
+    test("native image flow focus events roles and direct radius survive fallback presentation", async ({
+      page,
+    }, info) => {
+      const flow = (id: string) =>
+        page.locator(id).evaluate((node) => {
+          const image = node.querySelector("img")!;
+          const parent = node.getBoundingClientRect();
+          const bounds = image.getBoundingClientRect();
+          return {
+            x: bounds.x - parent.x,
+            y: bounds.y - parent.y,
+            width: bounds.width,
+            height: bounds.height,
+            parentHeight: parent.height,
+            direct: image.parentElement === node,
+          };
+        });
+      expect(await flow("#flow-kit")).toEqual(await flow("#flow-native"));
+      const image = page.locator("#focus-fallback");
+      const frame = image.locator("..");
+      const native = page.locator("#native-focus");
+      await expect(image).toHaveCSS("opacity", "0");
+      await expect(image).toHaveAccessibleDescription(
+        "Caller image description",
+      );
+      await expect(native).toHaveAccessibleDescription(
+        "Caller image description",
+      );
+      await expect(
+        page.getByRole("img", { name: "Focus portrait", exact: true }),
+      ).toHaveAttribute("id", "focus-fallback");
+      await page.locator("#focus-start").focus();
+      await page.locator("#focus-start").press("Enter");
+      await expect(image).toBeFocused();
+      await expect(frame).toHaveCSS("outline-style", "solid");
+      await expect(frame).toHaveCSS("outline-width", "2px");
+      await image.click();
+      await expect(page.locator("#image-target")).toHaveText("IMG");
+      for (const button of [
+        "Presentational images",
+        "No-role images",
+        "Named images",
+      ]) {
+        await page.getByRole("button", { name: button, exact: true }).click();
+        const roles = await page
+          .getByRole("img")
+          .evaluateAll((nodes) =>
+            nodes
+              .filter((node) =>
+                ["focus-fallback", "native-focus"].includes(node.id),
+              )
+              .map((node) => node.id),
+          );
+        // Both actual images retain the same native role-conflict resolution.
+        expect(roles.includes("focus-fallback")).toBe(
+          roles.includes("native-focus"),
+        );
+        await expect(image).toHaveAccessibleDescription(
+          "Caller image description",
+        );
+      }
+      await page
+        .getByRole("button", { name: "Load named portraits", exact: true })
+        .click();
+      await release();
+      await expect(frame).toHaveAttribute("data-state", "loaded");
+      await expect(image).toHaveCSS("opacity", "1");
+      await expect(image).toHaveCSS("border-radius", "0px");
+      await expect(frame).toHaveCSS("overflow", "visible");
+      await page.locator("#focus-start").focus();
+      await page.locator("#focus-start").press("Enter");
+      await expect(image).toBeFocused();
+      await expect(image).toHaveCSS("outline-width", "3px");
+      await expect(image).toHaveCSS("outline-color", "rgb(0, 0, 0)");
+      const file = info.outputPath("native-image-focus.png");
+      await page.screenshot({ path: file });
+      await info.attach("native-image-focus", {
+        path: file,
+        contentType: "image/png",
+      });
+    });
     test("loading fallback succeeds with one native name and exact event ordering", async ({
       page,
     }) => {
@@ -93,7 +287,7 @@ for (const custom of [false, true])
         await page
           .getByRole("img", { name: "Ada portrait", exact: true })
           .evaluate((node) => node.tagName),
-      ).toBe("DIV");
+      ).toBe("IMG");
       await expect(image).toHaveClass("kit-avatar caller retained");
       await expect(image).toHaveAttribute("data-caller", "preserved");
       await expect(image).toHaveAttribute("data-state", "caller-owned");
@@ -156,17 +350,22 @@ for (const custom of [false, true])
       page,
     }) => {
       await expect(page.locator("#decorative")).toHaveAttribute("alt", "");
-      await expect(page.locator("#decorative").locator("..")).toHaveAttribute(
+      await expect(
+        page.getByRole("img", { name: "BC", exact: true }),
+      ).toHaveCount(0);
+      await expect(page.locator("#decorative")).not.toHaveAttribute(
         "aria-hidden",
-        "true",
       );
       await expect(
         page.locator("#decorative").locator(".."),
       ).not.toHaveAttribute("role", "img");
-      await expect(page.locator("#native").locator("..")).toHaveAttribute(
-        "data-state",
-        "error",
-      );
+      expect(
+        await page
+          .locator("#native")
+          .evaluate((node) =>
+            node.parentElement?.classList.contains("kit-avatar-frame"),
+          ),
+      ).toBe(false);
       await expect(
         page.getByRole("img", {
           name: "Native failure alternate text",
@@ -174,12 +373,15 @@ for (const custom of [false, true])
         }),
       ).toBeVisible();
       await expect(
-        page.locator("#native").locator("..").locator(".kit-avatar-fallback"),
+        page.locator("#native").locator(".kit-avatar-fallback"),
       ).toHaveCount(0);
-      await expect(page.locator("#hidden").locator("..")).toHaveAttribute(
-        "data-state",
-        "loaded",
-      );
+      await expect
+        .poll(() =>
+          page
+            .locator("#hidden")
+            .evaluate((node) => (node as HTMLImageElement).naturalWidth),
+        )
+        .toBe(32);
       await expect(page.locator("#hidden")).toBeHidden();
       await expect(
         page.getByRole("img", { name: "Ignored portrait", exact: true }),
@@ -437,7 +639,7 @@ for (const custom of [false, true])
         }),
       );
       for (const { index, body } of responses) {
-        expect(body.match(/data-state="loading"/g)).toHaveLength(7);
+        expect(body.match(/data-state="loading"/g)).toHaveLength(10);
         expect(body).not.toContain('data-state="loaded"');
         expect(body).not.toContain('data-state="error"');
         expect(body).toContain('id="counts">Loads 0; errors 0');
@@ -446,7 +648,8 @@ for (const custom of [false, true])
             ? 'src="../avatar/success.svg"'
             : 'src="../avatar/slow.svg"',
         );
-        expect(body).toContain('aria-label="Ada portrait"');
+        expect(body).toMatch(/<img[^>]*alt="Ada portrait"/);
+        expect(body).not.toContain('aria-label="Ada portrait"');
       }
       await expect(page.locator("#main").locator("..")).toHaveAttribute(
         "data-state",

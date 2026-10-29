@@ -12,6 +12,7 @@
     ref = $bindable(null),
     children,
     class: className,
+    onclick,
     ...rest
   }: ButtonProps = $props();
 </script>
@@ -28,6 +29,9 @@
     `kit-button--${size}`,
     className,
   ]}
+  onclick={(event) => {
+    if (!disabled && !loading) onclick?.(event);
+  }}
 >
   {#if loading}
     <Spinner mode="decorative" class="kit-button-spinner" />

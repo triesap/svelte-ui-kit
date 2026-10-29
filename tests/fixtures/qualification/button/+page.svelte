@@ -6,6 +6,7 @@
 
   let ready = $state(false);
   let clicks = $state(0);
+  let captures = $state(0);
   let submits = $state(0);
   let resets = $state(0);
   let submitted = $state("");
@@ -16,8 +17,11 @@
   let variant = $state<ButtonVariant>("primary");
   let size = $state<ButtonSize>("md");
   let customized = $state(false);
-  const click = () => {
+  let hidden = $state(true);
+  let matches = $state(0);
+  const click = (event: MouseEvent) => {
     clicks += 1;
+    event.preventDefault();
   };
   onMount(() => {
     ready = true;
@@ -27,8 +31,20 @@
 <h1>Generated Button qualification</h1>
 <p data-ready={ready}>Hydrated: {String(ready)}</p>
 <p id="counts">Clicks {clicks}; submits {submits}; resets {resets}</p>
+<p id="captures">{captures}</p>
 <p id="submitted">{submitted}</p>
 <p id="ref-proof">{ref?.tagName ?? "none"}</p>
+<p id="matches">{matches}</p>
+<button onclick={() => (hidden = !hidden)}>Toggle hidden button</button>
+<Button id="hidden" {hidden}>Hidden action</Button>
+<Button
+  id="until-found"
+  hidden="until-found"
+  onbeforematch={() => (matches += 1)}
+>
+  <span id="button-find-target">Findable action</span>
+</Button>
+<a href="#button-find-target">Reveal findable button</a>
 <button
   onclick={() => {
     loading = !loading;
@@ -71,6 +87,7 @@
 >
 <form
   class:customized
+  onclickcapture={() => (captures += 1)}
   onsubmit={(event) => {
     event.preventDefault();
     submits += 1;

@@ -31,7 +31,6 @@
       : "loading",
   );
   const fallbackActive = $derived(!!fallback && loadingState !== "loaded");
-
   function settle(
     image: HTMLImageElement,
     source: string,
@@ -49,14 +48,7 @@
   });
 </script>
 
-<div
-  class="kit-avatar-frame"
-  data-state={loadingState}
-  data-fallback-active={fallbackActive}
-  role={fallbackActive && alt ? "img" : undefined}
-  aria-label={fallbackActive && alt ? alt : undefined}
-  aria-hidden={alt ? ariaHidden : true}
->
+{#snippet image()}
   {#key request}
     {@const source = request}
     <img
@@ -69,7 +61,7 @@
       {referrerpolicy}
       class={["kit-avatar", className]}
       bind:this={ref}
-      aria-hidden={fallbackActive ? true : ariaHidden}
+      aria-hidden={ariaHidden}
       onload={(event) => {
         const image = event.currentTarget;
         if (
@@ -94,7 +86,16 @@
       }}
     />
   {/key}
-  {#if fallback}
+{/snippet}
+
+{#if fallback}
+  <span
+    class="kit-avatar-frame"
+    hidden={rest.hidden}
+    data-state={loadingState}
+    data-fallback-active={fallbackActive}
+  >
+    {@render image()}
     <span
       class="kit-avatar-fallback"
       aria-hidden="true"
@@ -102,5 +103,7 @@
     >
       {@render fallback()}
     </span>
-  {/if}
-</div>
+  </span>
+{:else}
+  {@render image()}
+{/if}

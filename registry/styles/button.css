@@ -39,6 +39,10 @@
     outline-offset: var(--kit-button-focus-outline-offset, 2px);
   }
 
+  .kit-button[hidden]:not([hidden="until-found"]) {
+    display: none;
+  }
+
   .kit-button:disabled {
     cursor: not-allowed;
     opacity: var(--kit-button-disabled-opacity, var(--kit-disabled-opacity));

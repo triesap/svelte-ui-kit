@@ -19,13 +19,15 @@ Installation ID: `avatar`. Explicit requests and dependency closure remain separ
 A native image requires string src/alt, accepts optional no-argument fallback Snippet and binds the actual HTMLImageElement ref.
 Native srcset/sizes/loading/cross-origin/referrer hints and typed load/error events remain intact; Svelte event currentTarget is Element, narrowed for image properties.
 No children, replacement element, size/variant, delay, loading controller or Bits preloader exists.
-A noninteractive frame owns loading/loaded/error and fallback.
+Without fallback the component renders the original native image directly, preserving its block flow and caller-scoped styling.
+Optional fallback adds a neutral phrasing frame that shrink-wraps the image in block flow and records loading/loaded/error.
 SSR begins loading; src/srcset/sizes key the request, and stale detached-image events cannot settle state or invoke current normal load/error callbacks. Native capture listeners remain caller attributes.
 Current load/error settle state before one caller callback; already-complete hydration adds no synthetic callback.
-Loading/error fallback has one image role/name from meaningful alt; image/fallback descendants are hidden from duplicate naming.
-Empty alt is decorative.
+The actual image remains the sole semantic, focus and event target during loading, error and loaded states. Native role, name and description precedence remains browser-owned, including explicit ARIA names with empty alt.
+Fallback is decorative and ignores pointer events. Opacity conceals the native image paint while preserving its accessibility and geometry; the frame supplies a visible focus indicator during fallback.
 Keep fallback noninteractive.
-Image visibility, not display removal, preserves lazy-request geometry; native hidden remains effective and until-found stays native.
+Native hidden covers the image and optional fallback; until-found retains actual browser fragment reveal and beforematch on the image.
+The fallback frame does not clip loaded image corners or focus outlines. Put shared radius variables on an ancestor to customize both the optional fallback and image; image-scoped overrides retain their native image-only CSS scope.
 Frame shrink-wraps caller image dimensions.
 Source image is 2.5rem square, cover-fit and full radius; two fallback background/color hooks add muted presentation without motion.
 Pinned Svelte SSR emits inline image event recorder attributes before hydration and replays a captured event once; this is not strict-CSP certification.

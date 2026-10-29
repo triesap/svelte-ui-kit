@@ -170,10 +170,10 @@ for (const custom of [false, true])
         /srcset="\/portrait.png 1x, \/portrait-2x.png 2x"/,
       );
       assert.match(image("profile"), /sizes="40px"/);
-      assert.match(image("profile"), /aria-hidden="true"/);
+      assert.doesNotMatch(image("profile"), /aria-hidden=/);
       assert.match(
         response.body,
-        /<div[^>]*class="kit-avatar-frame"[^>]*data-state="loading"[^>]*role="img"[^>]*aria-label="Ada"/,
+        /<span[^>]*class="kit-avatar-frame"[^>]*data-state="loading"[^>]*>/,
       );
       assert.match(
         response.body,

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "spinner",
   "kind": "component",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Native decorative and status loading presentation.",
   "compatibility": {
     "svelte": "5.57.3",

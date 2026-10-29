@@ -64,6 +64,15 @@ for (const [name, body] of [
   ],
   ["as polymorphism", 'const value: ButtonProps = { children, as: "a" };'],
   [
+    "replacement child",
+    "const value: ButtonProps = { children, child: children };",
+  ],
+  [
+    "asChild rendering",
+    "const value: ButtonProps = { children, asChild: true };",
+  ],
+  ["render hook", "const value: ButtonProps = { children, render: children };"],
+  [
     "foreign ref",
     'const value: ButtonProps = { children, ref: document.createElement("a") };',
   ],

@@ -1,6 +1,7 @@
 # Button
 
 Native button with source design variants and loading-safe semantics.
+The current disabled/loading state guards the caller click handler, including dispatched click events. Native hidden is preserved; until-found retains browser fragment reveal.
 
 ## Install and compose
 

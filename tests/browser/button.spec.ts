@@ -37,6 +37,83 @@ for (const custom of [false, true])
       await page.goto(new URL("qualification/button", hosted.baseURL).href);
       await expect(page.locator('[data-ready="true"]')).toBeVisible();
     });
+    test("native hidden and until-found survive authored display and actual fragment reveal", async ({
+      page,
+    }) => {
+      const hidden = page.locator("#hidden");
+      const original = await hidden.elementHandle();
+      await expect(hidden).toHaveCSS("display", "none");
+      await expect(
+        page.getByRole("button", { name: "Hidden action", exact: true }),
+      ).toHaveCount(0);
+      await page
+        .getByRole("button", { name: "Toggle hidden button", exact: true })
+        .click();
+      await expect(hidden).toBeVisible();
+      expect(
+        await original!.evaluate(
+          (node) => node === document.querySelector("#hidden"),
+        ),
+      ).toBe(true);
+      await page
+        .getByRole("button", { name: "Toggle hidden button", exact: true })
+        .click();
+      await expect(hidden).toHaveCSS("display", "none");
+      const findable = page.locator("#until-found");
+      await expect(findable).toHaveCSS("content-visibility", "hidden");
+      await expect(findable).not.toHaveCSS("display", "none");
+      await page
+        .getByRole("link", { name: "Reveal findable button", exact: true })
+        .click();
+      await expect(findable).not.toHaveAttribute("hidden");
+      await expect(page.locator("#button-find-target")).toBeVisible();
+      await expect(page.locator("#matches")).toHaveText("1");
+    });
+    test("current disabled and loading guard synthetic dispatch without changing native propagation", async ({
+      page,
+    }) => {
+      const action = page.locator("#action");
+      const dispatch = () =>
+        action.evaluate((node) =>
+          node.dispatchEvent(
+            new MouseEvent("click", { bubbles: true, cancelable: true }),
+          ),
+        );
+      expect(await dispatch()).toBe(false);
+      await expect(page.locator("#counts")).toHaveText(
+        "Clicks 1; submits 0; resets 0",
+      );
+      await page
+        .getByRole("button", { name: "Toggle disabled", exact: true })
+        .click();
+      expect(await dispatch()).toBe(true);
+      await action
+        .locator(".kit-button-content")
+        .evaluate((node) =>
+          node.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+        );
+      await expect(page.locator("#counts")).toHaveText(
+        "Clicks 1; submits 0; resets 0",
+      );
+      await page
+        .getByRole("button", { name: "Toggle disabled", exact: true })
+        .click();
+      await page
+        .getByRole("button", { name: "Toggle loading", exact: true })
+        .click();
+      expect(await dispatch()).toBe(true);
+      await expect(page.locator("#counts")).toHaveText(
+        "Clicks 1; submits 0; resets 0",
+      );
+      await page
+        .getByRole("button", { name: "Toggle loading", exact: true })
+        .click();
+      expect(await dispatch()).toBe(false);
+      await expect(page.locator("#counts")).toHaveText(
+        "Clicks 2; submits 0; resets 0",
+      );
+      await expect(page.locator("#captures")).toHaveText("5");
+    });
     test("native click, Enter and Space forward once without submitting by default", async ({
       page,
     }) => {
