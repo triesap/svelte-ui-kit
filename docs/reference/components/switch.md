@@ -17,6 +17,9 @@ Installation ID: `switch`. Explicit requests and dependency closure remain separ
 
 ## Public contract
 
+One real checkbox remains present when name is omitted or empty, preserving native validation and reset while contributing no successful unnamed field.
+Native invalid-form focus is redirected to the visible Switch ref.
+
 A pinned Bits Switch Root owns one internal Thumb.
 Bind checked (false default) and the actual HTMLElement ref; native callbacks, disabled/required/readonly, events and cancellation remain primitive-owned.
 Child/children are excluded because the wrapper owns its markup.

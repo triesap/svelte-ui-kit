@@ -100,6 +100,52 @@ for (const custom of [false, true]) {
       await page.goto(new URL(consumer.route, hosted.baseURL).href);
       await expect(page.locator('[data-ready="true"]')).toBeVisible();
     });
+    test("autocomplete reaches the actual successful field in SSR and reactive updates", async ({
+      page,
+      request,
+    }) => {
+      const field = page.locator('#radio-form input[name="choice"]');
+      await expect(field).toHaveAttribute("autocomplete", "off");
+      const response = await request.get(
+        new URL(consumer.route, hosted.baseURL).href,
+      );
+      expect(response.ok()).toBe(true);
+      expect(
+        await page.evaluate(
+          (html) =>
+            new DOMParser()
+              .parseFromString(html, "text/html")
+              .querySelector('#radio-form input[name="choice"]')
+              ?.getAttribute("autocomplete"),
+          await response.text(),
+        ),
+      ).toBe("off");
+      await button(page, "Toggle radio autocomplete").click();
+      await expect(field).toHaveAttribute("autocomplete", "on");
+      await button(page, "Toggle radio autocomplete").click();
+      await expect(field).toHaveAttribute("autocomplete", "off");
+      expect(await formData(page)).toEqual([["choice", "a"]]);
+    });
+    test("unnamed controls retain native reset validation and omitted successful fields", async ({
+      page,
+    }) => {
+      for (const name of ["Remove radio name", "Empty radio name"]) {
+        await button(page, name).click();
+        await button(page, "Set radio B").click();
+        await expect(page.locator("#value")).toHaveText(/^b;/);
+        await button(page, "Reset radio").click();
+        await expect(page.locator("#value")).toHaveText(/^a;/);
+        expect(await formData(page)).toEqual([]);
+        await button(page, "Clear radio value").click();
+        expect(
+          await page
+            .locator("#radio-form")
+            .evaluate((node) => (node as HTMLFormElement).checkValidity()),
+        ).toBe(false);
+        await button(page, "Reset radio").click();
+        await expect(page.locator("#value")).toHaveText(/^a;/);
+      }
+    });
     test("vertical arrows Home End skip disabled choices and follow native loop boundaries", async ({
       page,
     }) => {
@@ -216,7 +262,10 @@ for (const custom of [false, true]) {
       await expect(input).toHaveCount(1);
       await expect(input).toHaveAttribute("type", "text");
       await expect(page.locator("#radio-form input")).toHaveCount(1);
-      await expect(page.locator("#unnamed-group + input")).toHaveCount(0);
+      await expect(page.locator("#unnamed-group + input")).toHaveCount(1);
+      await expect(page.locator("#unnamed-group + input")).not.toHaveAttribute(
+        "name",
+      );
       expect(await formData(page)).toEqual([["choice", "a"]]);
       await page.locator("#radio-b").click();
       await button(page, "Submit radio").click();
@@ -350,16 +399,16 @@ for (const custom of [false, true]) {
     test("destroy during reset removes actual listener and timer then remounts one owner", async ({
       page,
     }) => {
-      await expect.poll(() => listeners(page)).toBe(2);
+      await expect.poll(() => listeners(page)).toBe(3);
       await page.locator("#life-b").click();
       await expect(page.locator("#life-value")).toHaveText("b");
       await button(page, "Reset and remove radio").click();
       await expect(page.locator("#life-group")).toHaveCount(0);
       await expect(page.locator("#life-value")).toHaveText("b");
-      await expect.poll(() => listeners(page)).toBe(1);
+      await expect.poll(() => listeners(page)).toBe(2);
       await button(page, "Remount radio").click();
       await expect(page.locator("#life-b")).toBeChecked();
-      await expect.poll(() => listeners(page)).toBe(2);
+      await expect.poll(() => listeners(page)).toBe(3);
       await expect(page.locator('input[name="life"]')).toHaveCount(1);
     });
   });
@@ -420,15 +469,15 @@ for (const custom of [false, true]) {
       await instrumentReset(page);
       await page.goto(new URL(consumer.route, hosted.baseURL).href);
       await expect(page.locator('[data-ready="true"]')).toBeVisible();
-      await expect.poll(() => listeners(page)).toBe(2);
+      await expect.poll(() => listeners(page)).toBe(3);
       await page.locator("#life-b").click();
       await button(page, "Reset and remove radio").click();
       await expect(page.locator("#life-group")).toHaveCount(0);
       await expect(page.locator("#life-value")).toHaveText("a");
-      await expect.poll(() => listeners(page)).toBe(2);
+      await expect.poll(() => listeners(page)).toBe(3);
       await button(page, "Remount radio").click();
       await expect(page.locator("#life-a")).toBeChecked();
-      await expect.poll(() => listeners(page)).toBe(3);
+      await expect.poll(() => listeners(page)).toBe(4);
     });
   });
 }

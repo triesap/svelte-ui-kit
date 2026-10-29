@@ -52,22 +52,21 @@
   <BitsSwitch.Thumb class="kit-switch-thumb" aria-hidden="true" />
 </BitsSwitch.Root>
 
-{#if name !== undefined}
-  <input
-    class="kit-switch-input"
-    type="checkbox"
-    {name}
-    {value}
-    {disabled}
-    {required}
-    {form}
-    defaultChecked={initialChecked}
-    {checked}
-    onchange={(event) => {
-      checked = event.currentTarget.checked;
-    }}
-    bind:this={inputRef}
-    aria-hidden="true"
-    tabindex="-1"
-  />
-{/if}
+<input
+  class="kit-switch-input"
+  type="checkbox"
+  {name}
+  {value}
+  {disabled}
+  {required}
+  {form}
+  defaultChecked={initialChecked}
+  {checked}
+  onchange={(event) => {
+    checked = event.currentTarget.checked;
+  }}
+  onfocus={() => ref?.focus()}
+  bind:this={inputRef}
+  aria-hidden="true"
+  tabindex="-1"
+/>

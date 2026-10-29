@@ -168,7 +168,23 @@ for (const custom of [false, true])
         response.body,
         /<input(?=[^>]*name="enabled")(?=[^>]*value="yes")(?=[^>]*checked)[^>]*>/,
       );
-      assert.equal((response.body.match(/type="checkbox"/g) ?? []).length, 1);
+      const html: unknown = response.body;
+      assert.ok(typeof html === "string");
+      const nativeFields =
+        html.match(/<input(?=[^>]*type="checkbox")[^>]*>/g) ?? [];
+      assert.equal(nativeFields.length, 2);
+      assert.equal(
+        nativeFields.filter((tag) => /\sname="enabled"/.test(tag)).length,
+        1,
+      );
+      assert.equal(
+        nativeFields.filter((tag) => !/\sname=/.test(tag)).length,
+        1,
+      );
+      for (const field of nativeFields) {
+        assert.match(field, /aria-hidden="true"/);
+        assert.match(field, /tabindex="-1"/);
+      }
       const installed = snapshotTree(fixture.root);
       assert.equal(run(["add", "switch"]).status, "no_change");
       assert.equal(run(["sync"]).status, "no_change");

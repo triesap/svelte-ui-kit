@@ -23,7 +23,8 @@ Mixed activation selects checked and clears indeterminate.
 Native readonly can deliver caller click events while refusing state changes.
 Child/children, groups and public Indicator are excluded.
 Associate a visible label with Root ID.
-Exactly one named offscreen checkbox preserves actual name/value/form/required/disabled and indeterminate.
+Exactly one offscreen checkbox preserves actual name/value/form/required/disabled and indeterminate, including native validation and reset when name is omitted or empty.
+Unnamed fields do not contribute successful FormData entries.
 Uncanceled resets restore initial checked but preserve current indeterminate, as native controls do.
 Resolve the current form owner at reset time and clean up listeners/timers.
 The source 1rem geometry, fixed check path and selected/disabled/focus styles remain independent of label text.

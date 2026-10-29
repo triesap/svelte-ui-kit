@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "radio",
   "kind": "component",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Pinned Radio group and item with controlled string selection, fixed radial mark and native one-field forms.",
   "compatibility": {
     "svelte": "5.57.3",

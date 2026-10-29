@@ -6,6 +6,7 @@
     value = $bindable(""),
     ref = $bindable(null),
     name,
+    autocomplete = "off",
     required = false,
     disabled = false,
     class: className,
@@ -42,27 +43,26 @@
   bind:ref
   class={["kit-radio-group", className]}
 />
-{#if name !== undefined}
-  <input
-    class="kit-radio-input"
-    type="text"
-    {name}
-    {required}
-    {disabled}
-    defaultValue={initialValue}
-    {value}
-    bind:this={inputRef}
-    oninput={(event) => {
-      value = event.currentTarget.value;
-    }}
-    onfocus={() => {
-      ref
-        ?.querySelector<HTMLElement>(
-          '[data-radio-group-item][tabindex="0"]:not([disabled])',
-        )
-        ?.focus();
-    }}
-    aria-hidden="true"
-    tabindex="-1"
-  />
-{/if}
+<input
+  class="kit-radio-input"
+  type="text"
+  {autocomplete}
+  {name}
+  {required}
+  {disabled}
+  defaultValue={initialValue}
+  {value}
+  bind:this={inputRef}
+  oninput={(event) => {
+    value = event.currentTarget.value;
+  }}
+  onfocus={() => {
+    ref
+      ?.querySelector<HTMLElement>(
+        '[data-radio-group-item][tabindex="0"]:not([disabled])',
+      )
+      ?.focus();
+  }}
+  aria-hidden="true"
+  tabindex="-1"
+/>

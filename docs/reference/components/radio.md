@@ -21,13 +21,16 @@ Installation ID: `radio`. Explicit requests and dependency closure remain separa
 
 ## Public contract
 
+The owned native field forwards autocomplete, including the native primitive's default off, during SSR and reactive updates.
+It remains present without a name so reset and required validation still work; omitted/empty names contribute no successful FormData entry.
+
 Compose RadioGroup with labeled RadioItem children, each having a required stable string value.
 Group binds string value (empty default); Group/Item bind actual HTMLElement refs.
 Native orientation, loop, RTL, disabled, readonly and onValueChange own selection and tabstops.
 Group children has no arguments; Item children receives checked; delegated child receives native props (and checked for Item).
 Supply a fieldset/legend or explicit group name and separate item labels.
 Group has no form prop; Item's button form does not associate the group field.
-Exactly one named offscreen text field preserves the native successful-value/required policy and restores the per-instance initial value after uncanceled containing-form resets.
+Exactly one offscreen text field preserves the native successful-value/required policy and restores the per-instance initial value after uncanceled containing-form resets.
 Empty-value arrows move focus without selecting; nonempty arrows/Home/End select.
 Dynamic choice removal retains the selected string until caller/native selection changes it.
 There is no numeric index, selection store or RadioIndicator.

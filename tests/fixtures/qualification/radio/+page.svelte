@@ -23,6 +23,8 @@
   let ref = $state<HTMLElement | null>(null);
   let itemRef = $state<HTMLElement | null>(null);
   let customized = $state(false);
+  let radioName = $state<string | undefined>("choice");
+  let autocomplete = $state<RadioGroupProps["autocomplete"]>();
   let rtl = $state(false);
   const options: Pick<RadioGroupProps, "name" | "required"> = {
     name: "choice",
@@ -40,6 +42,11 @@
 <p id="clicks">{clicks}</p>
 <p id="submitted">{submitted}</p>
 <p id="submits">{submits}</p>
+<button onclick={() => (radioName = undefined)}>Remove radio name</button>
+<button onclick={() => (radioName = "")}>Empty radio name</button>
+<button onclick={() => (autocomplete = autocomplete === "on" ? "off" : "on")}
+  >Toggle radio autocomplete</button
+>
 <button
   onclick={() => {
     value = "";
@@ -126,6 +133,8 @@
       bind:value
       bind:ref
       {...options}
+      name={radioName}
+      {autocomplete}
       aria-labelledby="radio-legend"
       {readonly}
       {disabled}

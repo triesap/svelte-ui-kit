@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "switch",
   "kind": "component",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Thin pinned Bits Switch with owned Thumb and explicit state/ref bindings.",
   "compatibility": {
     "svelte": "5.57.3",

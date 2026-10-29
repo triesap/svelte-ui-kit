@@ -1,3 +1,4 @@
+import { qualifyUnnamedCheckboxReset } from "../helpers/native-form-control.js";
 import { readFileSync, writeFileSync } from "node:fs";
 import { buildCheckboxConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
@@ -83,6 +84,11 @@ for (const custom of [false, true])
       await page.goto(new URL("qualification/checkbox", hosted.baseURL).href);
       await expect(page.locator('[data-ready="true"]')).toBeVisible();
     });
+    test("unnamed controls retain native reset validation and omitted successful fields", async ({
+      page,
+    }) => {
+      await qualifyUnnamedCheckboxReset(page);
+    });
     test("pointer, keyboard, programmatic state and refs use actual primitive bindings", async ({
       page,
     }) => {
@@ -149,7 +155,7 @@ for (const custom of [false, true])
         "Callbacks 0; clicks 1; last false",
       );
     });
-    test("native form contribution, required and disabled behavior use one real checkbox", async ({
+    test("native form contribution, required and disabled behavior use one real checkbox per control", async ({
       page,
     }) => {
       const control = page.locator("#control");
@@ -191,6 +197,12 @@ for (const custom of [false, true])
       await expect(page.locator("#submitted")).toHaveText("");
       await expect(
         page.locator('#main-form input[type="checkbox"]'),
+      ).toHaveCount(2);
+      await expect(
+        page.locator('#main-form input[name="enabled"]'),
+      ).toHaveCount(1);
+      await expect(
+        page.locator('#main-form input[type="checkbox"]:not([name])'),
       ).toHaveCount(1);
     });
     test("initially checked seed and canceled reset stay coherent", async ({
@@ -309,7 +321,7 @@ for (const custom of [false, true])
                 .__checkboxResetListeners.length,
           ),
         )
-        .toBe(4);
+        .toBe(5);
       await page.locator("#lifecycle").click();
       await expect(page.locator("#lifecycle-state")).toHaveText("true");
       await page
@@ -324,7 +336,7 @@ for (const custom of [false, true])
                 .__checkboxResetListeners.length,
           ),
         )
-        .toBe(3);
+        .toBe(4);
       await expect(page.locator('input[name="lifecycle"]')).toHaveCount(0);
       await page
         .getByRole("button", { name: "Remount checkbox", exact: true })
@@ -339,7 +351,7 @@ for (const custom of [false, true])
                 .__checkboxResetListeners.length,
           ),
         )
-        .toBe(4);
+        .toBe(5);
       await expect(page.locator('input[name="lifecycle"]')).toHaveCount(1);
     });
     test("fixed source SVG selection geometry themes focus RTL and reduced motion render", async ({
@@ -597,6 +609,12 @@ for (const custom of [false, true])
         .toBe(true);
       await expect(
         page.locator('#main-form input[type="checkbox"]'),
+      ).toHaveCount(2);
+      await expect(
+        page.locator('#main-form input[name="enabled"]'),
+      ).toHaveCount(1);
+      await expect(
+        page.locator('#main-form input[type="checkbox"]:not([name])'),
       ).toHaveCount(1);
     });
     test("required validation focuses the real visible ref and form owner can change dynamically", async ({
@@ -621,9 +639,10 @@ for (const custom of [false, true])
           exact: true,
         })
         .click();
-      await expect(external).not.toHaveAttribute("form");
-      await expect(page.locator("#native-readonly")).not.toHaveAttribute(
+      await expect(external).toHaveAttribute("form", "alternate-form");
+      await expect(page.locator("#native-readonly")).toHaveAttribute(
         "form",
+        "alternate-form",
       );
       await expect(field).toHaveAttribute("form", "alternate-form");
       await page
@@ -755,7 +774,7 @@ for (const custom of [false, true])
                 .__checkboxResetListeners.length,
           ),
         )
-        .toBe(4);
+        .toBe(5);
       await page
         .getByRole("button", { name: "Remount checkbox", exact: true })
         .click();
@@ -768,7 +787,7 @@ for (const custom of [false, true])
                 .__checkboxResetListeners.length,
           ),
         )
-        .toBe(5);
+        .toBe(6);
       await expect(page.locator('input[name="lifecycle"]')).toHaveCount(1);
     });
   });

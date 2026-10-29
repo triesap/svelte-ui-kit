@@ -18,6 +18,7 @@
   let submitted = $state("not submitted");
   let submits = $state(0);
   let seedChecked = $state(true);
+  let seedName = $state<string | undefined>("seed");
   let cancelReset = $state(false);
   let resetPrevented = $state(false);
   let externalSubmitted = $state("not submitted");
@@ -121,6 +122,8 @@
     cancelReset = !cancelReset;
   }}>Toggle reset cancellation</button
 >
+<button onclick={() => (seedName = undefined)}>Remove seed name</button>
+<button onclick={() => (seedName = "")}>Empty seed name</button>
 <form
   id="seed-form"
   onreset={(event) => {
@@ -131,7 +134,8 @@
   <Switch
     id="seed"
     bind:checked={seedChecked}
-    name="seed"
+    name={seedName}
+    required
     aria-label="Reset seed"
   />
   <p id="seed-state">{String(seedChecked)}</p>

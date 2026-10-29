@@ -70,25 +70,23 @@
   </svg>
 </span>
 
-{#if name !== undefined}
-  <input
-    class="kit-checkbox-input"
-    type="checkbox"
-    {name}
-    {value}
-    {disabled}
-    {required}
-    {readonly}
-    {form}
-    defaultChecked={initialChecked}
-    {checked}
-    onchange={(event) => {
-      checked = event.currentTarget.checked;
-      indeterminate = event.currentTarget.indeterminate;
-    }}
-    onfocus={() => ref?.focus()}
-    bind:this={inputRef}
-    aria-hidden="true"
-    tabindex="-1"
-  />
-{/if}
+<input
+  class="kit-checkbox-input"
+  type="checkbox"
+  {name}
+  {value}
+  {disabled}
+  {required}
+  {readonly}
+  {form}
+  defaultChecked={initialChecked}
+  {checked}
+  onchange={(event) => {
+    checked = event.currentTarget.checked;
+    indeterminate = event.currentTarget.indeterminate;
+  }}
+  onfocus={() => ref?.focus()}
+  bind:this={inputRef}
+  aria-hidden="true"
+  tabindex="-1"
+/>

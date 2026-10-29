@@ -1,3 +1,4 @@
+import { qualifyUnnamedCheckboxReset } from "../helpers/native-form-control.js";
 import { writeFileSync } from "node:fs";
 import { buildSwitchConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
@@ -36,6 +37,39 @@ for (const custom of [false, true])
       });
       await page.goto(new URL("qualification/switch", hosted.baseURL).href);
       await expect(page.locator('[data-ready="true"]')).toBeVisible();
+    });
+    test("invalid submissions focus the visible switch through the native required field", async ({
+      page,
+    }) => {
+      const control = page.locator("#control");
+      await page
+        .getByRole("button", { name: "Toggle required", exact: true })
+        .click();
+      await page
+        .locator("#main-form")
+        .evaluate((node) => (node as HTMLFormElement).requestSubmit());
+      await expect(control).toBeFocused();
+      await expect(page.locator("#submits")).toHaveText("0");
+      await page
+        .getByRole("button", { name: "Focus bound switch", exact: true })
+        .focus();
+      expect(
+        await page
+          .locator("#main-form")
+          .evaluate((node) => (node as HTMLFormElement).reportValidity()),
+      ).toBe(false);
+      await expect(control).toBeFocused();
+      await control.click();
+      await page
+        .locator("#main-form")
+        .evaluate((node) => (node as HTMLFormElement).requestSubmit());
+      await expect(page.locator("#submits")).toHaveText("1");
+      await expect(page.locator("#submitted")).toHaveText("enabled=yes");
+    });
+    test("unnamed controls retain native reset validation and omitted successful fields", async ({
+      page,
+    }) => {
+      await qualifyUnnamedCheckboxReset(page);
     });
     test("pointer, keyboard, programmatic state and refs use actual primitive bindings", async ({
       page,
@@ -103,7 +137,7 @@ for (const custom of [false, true])
         "Callbacks 0; clicks 1; last false",
       );
     });
-    test("native form contribution, required and disabled behavior use one real checkbox", async ({
+    test("native form contribution, required and disabled behavior use one real checkbox per control", async ({
       page,
     }) => {
       const control = page.locator("#control");
@@ -145,6 +179,12 @@ for (const custom of [false, true])
       await expect(page.locator("#submitted")).toHaveText("");
       await expect(
         page.locator('#main-form input[type="checkbox"]'),
+      ).toHaveCount(2);
+      await expect(
+        page.locator('#main-form input[name="enabled"]'),
+      ).toHaveCount(1);
+      await expect(
+        page.locator('#main-form input[type="checkbox"]:not([name])'),
       ).toHaveCount(1);
     });
     test("initially checked seed and canceled reset stay coherent", async ({
