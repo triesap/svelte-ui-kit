@@ -199,7 +199,7 @@ export function installIndependentCli() {
     );
     runTool(
       process.execPath,
-      ["tools/prepare-native-dependency.mjs"],
+      ["tools/prepare-native-artifacts.ts"],
       author,
       "owned-native-preparation",
     );
@@ -211,7 +211,7 @@ export function installIndependentCli() {
     );
     runTool(
       process.execPath,
-      ["tools/prepare-native-dependency.mjs", "--bundle"],
+      ["tools/prepare-native-artifacts.ts", "--bundle"],
       author,
       "owned-native-bundle",
     );

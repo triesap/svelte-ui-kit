@@ -17,9 +17,16 @@ import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { prepareNativeDependency } from "./prepare-native-dependency.mjs";
+import { prepareNativeArtifacts } from "./prepare-native-artifacts.ts";
 import { nativeDigest, NATIVE_RECIPE } from "./build-native-dependency.mjs";
 
 const repository = fileURLToPath(new URL("../", import.meta.url));
+const svelteBaseline = JSON.parse(
+  readFileSync(
+    path.join(repository, "src/project/svelte-runtime-baseline.json"),
+    "utf8",
+  ),
+);
 function project(parent, name) {
   const root = path.join(parent, name);
   mkdirSync(path.join(root, "src/project"), { recursive: true });
@@ -173,7 +180,7 @@ test(
 test(
   "actual compiled CLI tarball delivers an app-owned native install after author and CLI removal",
   { timeout: 300_000 },
-  () => {
+  async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "suik-native-delivery-"));
     const env = { ...process.env, npm_config_verify_deps_before_run: "false" };
     for (const name of [
@@ -235,7 +242,10 @@ test(
         ],
         author,
       );
-      const prepared = prepareNativeDependency({ root: author, bundle: true });
+      const prepared = await prepareNativeArtifacts({
+        root: author,
+        bundle: true,
+      });
       rmSync(path.join(author, "node_modules"));
       const archives = path.join(root, "archives");
       mkdirSync(archives);
@@ -246,13 +256,22 @@ test(
       const archive = path.join(archives, entries[0]);
       const member = `package/dist/native/${NATIVE_RECIPE.native.archive}`;
       const delivered = run("tar", ["-xOf", archive, member], root, true);
-      assert.equal(nativeDigest(delivered), prepared.sha256);
+      assert.equal(nativeDigest(delivered), prepared.bits.sha256);
+      const svelteName = path.basename(prepared.svelte.archive);
+      const svelteDelivered = run(
+        "tar",
+        ["-xOf", archive, `package/dist/native/${svelteName}`],
+        root,
+        true,
+      );
+      assert.equal(nativeDigest(svelteDelivered), prepared.svelte.sha256);
       const app = path.join(root, "application");
       mkdirSync(path.join(app, "vendor"), { recursive: true });
       writeFileSync(
         path.join(app, "vendor", NATIVE_RECIPE.native.archive),
         delivered,
       );
+      writeFileSync(path.join(app, "vendor", svelteName), svelteDelivered);
       writeFileSync(
         path.join(app, "package.json"),
         JSON.stringify({
@@ -261,7 +280,7 @@ test(
           packageManager: "pnpm@12.16.1",
           dependencies: {
             "bits-ui": `file:./vendor/${NATIVE_RECIPE.native.archive}`,
-            svelte: "5.57.3",
+            svelte: `file:./vendor/${svelteName}`,
             "@internationalized/date": "3.12.4",
           },
           devDependencies: {
@@ -294,6 +313,22 @@ test(
       );
       assert.equal(installed.name, "bits-ui");
       assert.equal(installed.version, NATIVE_RECIPE.native.buildVersion);
+      const runtime = JSON.parse(
+        readFileSync(
+          path.join(app, "node_modules/svelte/package.json"),
+          "utf8",
+        ),
+      );
+      assert.equal(runtime.version, svelteBaseline.version);
+      assert.equal(runtime.svelteUiKitNative.buildId, svelteBaseline.buildId);
+      assert.equal(
+        nativeDigest(
+          readFileSync(
+            path.join(app, "node_modules/svelte/NATIVE_PROVENANCE.json"),
+          ),
+        ),
+        svelteBaseline.provenanceSha256,
+      );
       writeFileSync(
         path.join(app, "probe.ts"),
         'import { Button, Calendar } from "bits-ui";\nexport const publicRoots = [Button.Root, Calendar.Root];\n',
@@ -336,7 +371,11 @@ test(
         nativeDigest(
           readFileSync(path.join(app, "vendor", NATIVE_RECIPE.native.archive)),
         ),
-        prepared.sha256,
+        prepared.bits.sha256,
+      );
+      assert.equal(
+        nativeDigest(readFileSync(path.join(app, "vendor", svelteName))),
+        prepared.svelte.sha256,
       );
       run(
         process.execPath,

@@ -29,7 +29,7 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - name: Prepare authenticated native dependency
-        run: node tools/prepare-native-dependency.mjs --fixture
+        run: node tools/prepare-native-artifacts.ts --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
       - name: pnpm run format:check
@@ -68,7 +68,7 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - name: Prepare authenticated native dependency
-        run: node tools/prepare-native-dependency.mjs --fixture
+        run: node tools/prepare-native-artifacts.ts --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
       - name: pnpm run test:integration
@@ -93,7 +93,7 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - name: Prepare authenticated native dependency
-        run: node tools/prepare-native-dependency.mjs --fixture
+        run: node tools/prepare-native-artifacts.ts --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
       - name: pnpm run build
@@ -122,7 +122,7 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - name: Prepare authenticated native dependency
-        run: node tools/prepare-native-dependency.mjs --fixture
+        run: node tools/prepare-native-artifacts.ts --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
       - name: pnpm run test:package
@@ -147,7 +147,7 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - name: Prepare authenticated native dependency
-        run: node tools/prepare-native-dependency.mjs --fixture
+        run: node tools/prepare-native-artifacts.ts --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
       - name: pnpm run build
@@ -176,7 +176,7 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - name: Prepare authenticated native dependency
-        run: node tools/prepare-native-dependency.mjs --fixture
+        run: node tools/prepare-native-artifacts.ts --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
       - name: pnpm run build
@@ -205,7 +205,7 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - name: Prepare authenticated native dependency
-        run: node tools/prepare-native-dependency.mjs --fixture
+        run: node tools/prepare-native-artifacts.ts --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
       - name: pnpm run check:docs
@@ -232,13 +232,15 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - name: Prepare authenticated native dependency
-        run: node tools/prepare-native-dependency.mjs --fixture
+        run: node tools/prepare-native-artifacts.ts --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
       - name: node --test --test-concurrency=1 tools/build-native-dependency.test.mjs tools/prepare-native-dependency.test.mjs
         run: node --test --test-concurrency=1 tools/build-native-dependency.test.mjs tools/prepare-native-dependency.test.mjs
       - name: pnpm run native:runtime:check
         run: pnpm run native:runtime:check
+      - name: pnpm run native:artifacts:check
+        run: pnpm run native:artifacts:check
   filesystem:
     name: filesystem (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -265,7 +267,7 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - name: Prepare authenticated native dependency
-        run: node tools/prepare-native-dependency.mjs --fixture
+        run: node tools/prepare-native-artifacts.ts --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
       - name: pnpm run build

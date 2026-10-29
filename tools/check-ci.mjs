@@ -33,7 +33,7 @@ export const FILESYSTEM_TESTS = Object.freeze(
   ].map((name) => `tests/integration/${name}.test.ts`),
 );
 const bootstrap = Object.freeze([
-  "node tools/prepare-native-dependency.mjs --fixture",
+  "node tools/prepare-native-artifacts.ts --fixture",
   "pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict",
 ]);
 export const CI_LANES = Object.freeze({
@@ -85,6 +85,7 @@ export const CI_LANES = Object.freeze({
     commands: [
       "node --test --test-concurrency=1 tools/build-native-dependency.test.mjs tools/prepare-native-dependency.test.mjs",
       "pnpm run native:runtime:check",
+      "pnpm run native:artifacts:check",
     ],
   },
   filesystem: {
@@ -109,7 +110,7 @@ const scripts = Object.freeze({
     .map((file) => `tsc -p ${file} --noEmit`)
     .join(" && "),
   build:
-    "node tools/prepare-native-dependency.mjs && tsc -p tsconfig.json && node tools/prepare-native-dependency.mjs --bundle",
+    "node tools/prepare-native-artifacts.ts && tsc -p tsconfig.json && node tools/prepare-native-artifacts.ts --bundle",
   "test:unit": "pnpm run build && node tools/run-unit-tests.mjs",
   "test:integration":
     "pnpm run build && node tools/run-unit-tests.mjs --suite integration",
@@ -120,7 +121,10 @@ const scripts = Object.freeze({
     "pnpm run build && node tools/run-unit-tests.mjs --suite package",
   "test:harness": "node --test tools/run-unit-tests.test.mjs",
   "native:runtime:check":
-    "tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-svelte-runtime.ts tools/build-svelte-runtime.test.ts tools/native-runtime/archive.ts tools/native-runtime/recipe.ts && node --test tools/build-svelte-runtime.test.ts",
+    "tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-svelte-runtime.ts tools/build-svelte-runtime.test.ts tools/native-runtime/archive.ts tools/native-runtime/recipe.ts tools/native-artifacts.ts tools/prepare-native-artifacts.ts tools/prepare-native-artifacts.test.ts && node --test tools/build-svelte-runtime.test.ts",
+  "native:prepare": "node tools/prepare-native-artifacts.ts --fixture",
+  "native:artifacts:check":
+    "node --test --test-concurrency=1 tools/prepare-native-artifacts.test.ts",
   "test:cli-bootstrap": "node --test tests/smoke/cli-bootstrap.test.mjs",
   "fixture:tokens:check": "node tools/project-token-fixture.mjs --check",
   "fixture:check":

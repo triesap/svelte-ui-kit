@@ -58,6 +58,33 @@ physical or byte checks remain live at their existing boundaries.
 
 ## Reproduce
 
+Normal authoring bootstrap uses the typed aggregate:
+
+```sh
+node tools/prepare-native-artifacts.ts --fixture
+pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
+pnpm run build
+```
+
+It authenticates both qualified archives before fixture or bundle delivery,
+checks both compiled baselines when bundling and permits exactly the two archive
+members in `dist/native`. Matching existing files retain their bytes, identity
+and mode; foreign, linked or mismatched inputs refuse. The Svelte producer's
+`report.json` remains regular diagnostic data in its source cache and is never
+delivery authority or a bundled member. Shared preparation I/O keeps the legacy
+synchronous Bits-only preparer available for focused controls. Copying archives
+into fixture caches does not select them as installed dependencies; normal
+corrected-Svelte capture, enforcement and consumer adoption require their own
+integration qualification. The CLI's compiler dependency and public peer ranges
+remain ordinary upstream SemVer declarations.
+
+Existing fixture and bundle targets and their ancestry are preflighted as one
+delivery set before creating delivery directories or files. A missing early
+archive cannot be copied ahead of a known corrupt or linked later destination.
+This is a static-state preservation check, not a cross-directory transaction:
+storage faults after preflight can leave a subset, and subsequent preparation
+authenticates existing bytes before completing delivery or refusing a mismatch.
+
 Use Node 24.22.1, pnpm 12.16.1, Git and tar from the repository root:
 
 ```sh

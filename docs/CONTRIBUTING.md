@@ -12,7 +12,7 @@ Clone a checkout, create a task branch and use Node 24.22.1/pnpm 12.16.1. From t
 repository root, prepare the authentic archive before frozen strict installation:
 
 ```sh
-node tools/prepare-native-dependency.mjs --fixture
+node tools/prepare-native-artifacts.ts --fixture
 pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
 pnpm run typecheck
 pnpm run build

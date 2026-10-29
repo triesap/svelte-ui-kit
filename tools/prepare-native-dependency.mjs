@@ -1,15 +1,7 @@
 #!/usr/bin/env node
 /** Developer artifact preparation. The installed CLI never invokes this tool. */
 import assert from "node:assert/strict";
-import {
-  existsSync,
-  lstatSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  realpathSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, readdirSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -17,40 +9,14 @@ import {
   nativeDigest,
   NATIVE_RECIPE,
 } from "./build-native-dependency.mjs";
+import {
+  regularArtifact as regular,
+  artifactDirectory as safeAncestry,
+  copyAuthenticatedArtifact as copyAuthenticated,
+  nativeFixtureRoots,
+} from "./native-artifacts.ts";
 
 const sourceRoot = fileURLToPath(new URL("../", import.meta.url));
-function regular(file) {
-  const entry = lstatSync(file);
-  assert.ok(
-    entry.isFile() && !entry.isSymbolicLink(),
-    "regular artifact file required",
-  );
-  return readFileSync(file);
-}
-function safeAncestry(root, logical, create = false) {
-  let current = root;
-  for (const segment of logical.split("/")) {
-    current = path.join(current, segment);
-    if (!existsSync(current) && create) mkdirSync(current);
-    const entry = lstatSync(current);
-    assert.ok(
-      entry.isDirectory() && !entry.isSymbolicLink(),
-      "regular artifact directory required",
-    );
-  }
-  return current;
-}
-function copyAuthenticated(bytes, target, expected) {
-  assert.equal(nativeDigest(bytes), expected, "authenticated artifact bytes");
-  if (existsSync(target))
-    assert.equal(
-      nativeDigest(regular(target)),
-      expected,
-      "existing artifact must match; refusing overwrite",
-    );
-  else writeFileSync(target, bytes, { flag: "wx", mode: 0o644 });
-}
-
 export function prepareNativeDependency({
   root = sourceRoot,
   bundle = false,
@@ -122,22 +88,7 @@ export function prepareNativeDependency({
     fixture: false,
   };
   if (fixture) {
-    for (const relative of [
-      "tests/fixtures/consumer",
-      "tests/fixtures/astro-consumer",
-      "tests/fixtures/library",
-      "tests/fixtures/library-kit-consumer",
-    ]) {
-      // Historical preparation controls contain only the original consumer.
-      // Present unsafe ancestry still refuses; no symlink is followed.
-      if (
-        relative !== "tests/fixtures/consumer" &&
-        lstatSync(path.join(packageRoot, relative), {
-          throwIfNoEntry: false,
-        }) === undefined
-      )
-        continue;
-      const consumer = safeAncestry(packageRoot, relative);
+    for (const consumer of nativeFixtureRoots(packageRoot)) {
       const destination = safeAncestry(
         consumer,
         `.native-build/${expected.version}`,

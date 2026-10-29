@@ -11,7 +11,7 @@ accommodate tool failures or mistake configured remote jobs for executed evidenc
 From the repository root with Node 24.22.1/pnpm 12.16.1:
 
 ```sh
-node tools/prepare-native-dependency.mjs --fixture
+node tools/prepare-native-artifacts.ts --fixture
 pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
 pnpm run typecheck
 pnpm run build

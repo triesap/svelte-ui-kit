@@ -17,7 +17,7 @@ Clone the repository and change to its root. Prepare the authenticated native
 artifact **before** installing development dependencies:
 
 ```sh
-node tools/prepare-native-dependency.mjs --fixture
+node tools/prepare-native-artifacts.ts --fixture
 pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
 pnpm run typecheck
 pnpm run build

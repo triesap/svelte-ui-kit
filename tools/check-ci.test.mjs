@@ -105,6 +105,8 @@ test("changing a package/component/integration script to a subset or masking fai
     "test:docs",
     "typecheck",
     "test:fixture",
+    "native:runtime:check",
+    "native:artifacts:check",
   ]) {
     const pkg = structuredClone(manifest);
     pkg.scripts[name] += " || true";
@@ -114,7 +116,9 @@ test("changing a package/component/integration script to a subset or masking fai
 
 test("commented-out commands and an omitted producer/delivery control do not count as coverage", () => {
   const workflow = actual();
-  workflow.jobs.native.steps.at(-1).run =
+  workflow.jobs.native.steps.find((step) =>
+    step.run?.includes("tools/build-native-dependency.test.mjs"),
+  ).run =
     "node --test tools/build-native-dependency.test.mjs # tools/prepare-native-dependency.test.mjs";
   has(errors(workflow), "CI_COMMAND_COVERAGE");
   workflow.jobs.contracts.steps.pop();
@@ -132,7 +136,29 @@ test("every job must prepare the native source before a real frozen strict insta
     const relaxed = actual();
     relaxed.jobs[name].steps[4].run = "pnpm install --no-frozen-lockfile";
     has(errors(relaxed), "CI_COMMAND_COVERAGE");
+    const legacyOnly = actual();
+    legacyOnly.jobs[name].steps[3].run =
+      "node tools/prepare-native-dependency.mjs --fixture";
+    has(errors(legacyOnly), "CI_COMMAND_COVERAGE");
   }
+});
+
+test("both runtime and artifact checks and explicit typed-tool coverage are mandatory", () => {
+  for (const command of [
+    "pnpm run native:runtime:check",
+    "pnpm run native:artifacts:check",
+  ]) {
+    const workflow = actual();
+    workflow.jobs.native.steps = workflow.jobs.native.steps.filter(
+      (step) => step.run !== command,
+    );
+    has(errors(workflow), "CI_COMMAND_COVERAGE");
+  }
+  const pkg = structuredClone(manifest);
+  pkg.scripts["native:runtime:check"] = pkg.scripts[
+    "native:runtime:check"
+  ].replace(" tools/prepare-native-artifacts.ts", "");
+  has(errors(source, pkg), "CI_SCRIPT_COVERAGE");
 });
 
 test("unpinned actions, wrong runtimes, partial history and retained credentials are refused", () => {
