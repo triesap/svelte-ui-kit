@@ -1,7 +1,11 @@
 <script lang="ts">
   import { setContext } from "svelte";
-  import { FIELD_CONTEXT, type FieldContext } from "./context.js";
-  import FieldMessage from "./message.svelte";
+  import {
+    FIELD_CONTEXT,
+    uniqueMessages,
+    type FieldContext,
+  } from "./context.js";
+  import OwnedMessage from "./owned-message.svelte";
   import type { FieldRootProps } from "./types.js";
   let {
     id,
@@ -19,9 +23,21 @@
   const base = $derived(id ?? generatedId);
   const messageId = (key: string) =>
     `${base}-message-${encodeURIComponent(key)}`;
+  const ownedMessages = $derived(uniqueMessages(messages));
   const describedBy = $derived(
-    messages.map((message) => messageId(message.key)).join(" ") || undefined,
+    ownedMessages.map((message) => messageId(message.key)).join(" ") ||
+      undefined,
   );
+  function attachRef(
+    owner: NonNullable<FieldRootProps["messages"]>[number],
+    node: HTMLParagraphElement,
+  ) {
+    if (!Object.hasOwn(owner, "ref")) return;
+    owner.ref = node;
+    return () => {
+      if (owner.ref === node) owner.ref = null;
+    };
+  }
   const context: FieldContext = {
     get controlId() {
       return controlId ?? `${base}-control`;
@@ -52,17 +68,7 @@
   data-disabled={disabled ? "true" : undefined}
 >
   {@render children(context)}
-  {#each messages as message (message.key)}
-    {@const { key, ...props } = message}
-    <FieldMessage
-      {...props}
-      id={messageId(key)}
-      bind:ref={
-        () => message.ref ?? null,
-        (node) => {
-          if (Object.hasOwn(message, "ref")) message.ref = node;
-        }
-      }
-    />
+  {#each ownedMessages as message (message.key)}
+    <OwnedMessage {message} id={messageId(message.key)} {attachRef} />
   {/each}
 </div>

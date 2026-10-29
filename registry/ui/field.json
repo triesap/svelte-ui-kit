@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "field",
   "kind": "component",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Native form controls, labels, owned dynamic messages and complete source convenience recipes.",
   "compatibility": {
     "svelte": "5.57.3",
@@ -31,6 +31,12 @@
     {
       "source": "ui/field/message.svelte",
       "target": "field/message.svelte",
+      "kind": "svelte",
+      "cohort": "field"
+    },
+    {
+      "source": "ui/field/owned-message.svelte",
+      "target": "field/owned-message.svelte",
       "kind": "svelte",
       "cohort": "field"
     },

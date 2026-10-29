@@ -21,7 +21,11 @@ This is native Svelte, with no Bits dependency, validation engine, form store or
 FieldSlot is an optional native Snippet type; TextInputType is exactly text/email/password/search/tel/url.
 Root owns keyed messages with required key/children and paragraph attrs (excluding id); both rendered paragraphs and describedBy derive from the same current list, including SSR.
 Removing/reordering messages updates targets while preserving keyed DOM.
-Reactive message descriptors can own refs; direct FieldMessage requires an explicit id.
+Duplicate message keys throw before ambiguous SSR or hydrated relationships are published.
+Reactive message descriptors can own refs; replacing a descriptor with the same key transfers the ref while retaining its paragraph.
+Removal/replacement clears a ref only while it still points at that paragraph; a caller's later reassignment is preserved.
+Root teardown performs that ownership check in a microtask after native destruction, so changes made in the same update are preserved too.
+Direct FieldMessage requires an explicit id and caller-owned aria-describedby; it does not register an automatic relationship.
 Root's children receives controlId/describedBy/required/invalid/disabled.
 Explicit native relationships/states, including false, override context; align explicit control IDs with controlId or Label for.
 One control belongs to one Root.
@@ -30,6 +34,7 @@ No automatic live role or validation occurs.
 Native input/textarea bind string value/ref, preserve actual typed events and defaultValue/form/name/reset; TextArea defaults rows=4.
 NativeSelect is single string selection with option children; no multiple/defaultValue alias or new combobox API.
 Convenience recipes require label/name; SelectField also requires selectedLabel and can compose an icon.
+Recipe id is the root/base ID and derives the control and message IDs. Optional slots are native snippets: omission removes the slot, while a provided empty icon snippet retains its decorative wrapper.
 Native class styles the control; explicit root/surface/label/message/value-row classes style the recipe.
 Initial value is current state, not an implicit reset default.
 Canceled form.reset() preserves native text bindings; trusted reset-button clicks under pinned Svelte/Chromium can restore their defaults despite preventDefault, also reproduced by raw Svelte controls.

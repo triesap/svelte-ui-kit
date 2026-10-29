@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "registryVersion": "0.1.4",
+  "registryVersion": "0.1.5",
   "compatibility": {
     "svelte": "5.57.3",
     "bits": "2.20.2-svelte-ui-kit.1",
@@ -96,5 +96,5 @@
       "manifest": "foundation/tokens.json"
     }
   ],
-  "contentHash": "d27716c9a2943438e2c12968496bee399a05e3851904004b81fdd4a4e46a52eb"
+  "contentHash": "eeb0610126aaaf1c9846f5a62b7828e8a9afa879a5b3265ae5a6722a47bb3aa3"
 }

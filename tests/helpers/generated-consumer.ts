@@ -80,6 +80,7 @@ function buildComponentConsumer(
             "field/surface.svelte",
             "field/label.svelte",
             "field/message.svelte",
+            "field/owned-message.svelte",
             "field/required.svelte",
             "field/text-input.svelte",
             "field/text-area.svelte",
@@ -503,6 +504,27 @@ export function buildFormResetRacesConsumer(custom: boolean) {
     "switch",
     "radio",
   ]);
+}
+
+/** Actual generated Field ownership, SSR refusal and native snippet consumer. */
+export function buildFieldOwnershipConsumer(custom: boolean) {
+  return buildInstalledItemsConsumer(
+    custom,
+    "field-ownership",
+    ["field"],
+    (root) => {
+      writeFileSync(
+        path.join(root, "src/hooks.server.ts"),
+        `import type { HandleServerError } from "@sveltejs/kit";
+export const handleError: HandleServerError = ({ error, event }) => {
+  if (event.url.pathname === "/qualification/field-ownership" && event.url.searchParams.has("duplicate") && error instanceof Error && error.message === "FieldRoot message keys must be unique.")
+    return { message: error.message };
+  console.error(error);
+  return { message: "Unexpected qualification failure" };
+};\n`,
+      );
+    },
+  );
 }
 
 export function buildWrapperConsumer(custom: boolean) {

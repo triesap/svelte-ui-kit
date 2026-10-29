@@ -55,11 +55,12 @@ const names = [
 ];
 const files = [
   ...parts.map((part) => part + ".svelte"),
+  "owned-message.svelte",
   "index.ts",
   "types.ts",
   "context.ts",
 ].sort();
-test("complete shipped Field has exactly twelve flat parts and all fourteen source mappings and a single source/style/export cohort", () => {
+test("complete shipped Field has twelve public parts, private ownership support, all fourteen source mappings and one cohort", () => {
   const loaded = loadRegistrySnapshot(createAssetProvider(process.cwd()));
   assert.equal(loaded.ok, true, JSON.stringify(loaded));
   if (!loaded.ok) return;

@@ -13,6 +13,7 @@ export function buildFieldCandidate() {
         "surface",
         "label",
         "message",
+        "owned-message",
         "required",
         "text-input",
         "text-area",
