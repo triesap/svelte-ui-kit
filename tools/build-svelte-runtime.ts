@@ -16,7 +16,10 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readPackedFiles, normalizeGzip } from "./native-runtime/archive.ts";
-import { SVELTE_RUNTIME_RECIPE as recipe } from "./native-runtime/recipe.ts";
+import {
+  SVELTE_RUNTIME_RECIPE as recipe,
+  type SvelteRuntimeMode,
+} from "./native-runtime/recipe.ts";
 
 const digest = (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
@@ -26,9 +29,15 @@ const inputs = fileURLToPath(new URL("./native-runtime/", import.meta.url));
 export async function buildSvelteRuntime(options: {
   output: string;
   sourceArchive?: string;
-  baseline?: boolean;
+  mode?: SvelteRuntimeMode;
 }) {
   assert.equal(process.versions.node, recipe.node, "qualified producer Node");
+  const mode = options.mode ?? "complete";
+  assert.ok(
+    ["complete", "dispatch-only", "unpatched"].includes(mode),
+    "known correction mode",
+  );
+  const corrected = mode === "complete";
   const output = path.resolve(options.output);
   for (let current = output; ; current = path.dirname(current)) {
     const entry = lstatSync(current, { throwIfNoEntry: false });
@@ -135,9 +144,17 @@ export async function buildSvelteRuntime(options: {
       writeFileSync(target, file.bytes, { flag: "wx", mode: file.mode });
     }
     const patch = readFileSync(path.join(inputs, "reset-dispatch.patch"));
-    if (!options.baseline) {
-      const patchFile = path.join(work, "reset.patch");
-      writeFileSync(patchFile, patch);
+    const bindingsPatch = readFileSync(
+      path.join(inputs, "bindings-reset.patch"),
+    );
+    for (const [index, bytes] of (mode === "unpatched"
+      ? []
+      : corrected
+        ? [patch, bindingsPatch]
+        : [patch]
+    ).entries()) {
+      const patchFile = path.join(work, `reset-${index}.patch`);
+      writeFileSync(patchFile, bytes);
       // Zero context preserves upstream tab indentation in a whitespace-clean
       // patch file. Exact authenticated source bytes remain the preimage gate.
       run("git", ["apply", "--unidiff-zero", "--check", patchFile], stage);
@@ -149,11 +166,17 @@ export async function buildSvelteRuntime(options: {
     assert.equal(manifest.name, recipe.name);
     assert.equal(manifest.version, recipe.sourceVersion);
     const version = recipe.sourceVersion;
-    const buildId = options.baseline ? recipe.controlId : recipe.buildId;
+    const buildId =
+      mode === "unpatched"
+        ? recipe.controlId
+        : mode === "dispatch-only"
+          ? recipe.dispatchControlId
+          : recipe.buildId;
     manifest.svelteUiKitNative = {
       buildId,
       sourceVersion: version,
-      corrected: !options.baseline,
+      corrected,
+      mode,
     };
     delete manifest.scripts;
     delete manifest.devDependencies;
@@ -178,7 +201,8 @@ export async function buildSvelteRuntime(options: {
       name: recipe.name,
       version,
       buildId,
-      corrected: !options.baseline,
+      corrected,
+      mode,
       source: {
         url: recipe.sourceUrl,
         version: recipe.sourceVersion,
@@ -196,6 +220,7 @@ export async function buildSvelteRuntime(options: {
         readFileSync(path.join(inputs, "archive.ts")),
       ),
       patchSha256: digest(patch),
+      bindingsPatchSha256: digest(bindingsPatch),
       toolchain: { node: process.versions.node, pnpm: recipe.pnpm },
       distributionFiles: [...selected]
         .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
@@ -271,15 +296,24 @@ if (
       output: { type: "string" },
       source: { type: "string" },
       baseline: { type: "boolean", default: false },
+      "dispatch-control": { type: "boolean", default: false },
     },
   });
   assert.ok(values.output, "--output is required");
+  assert.ok(
+    !(values.baseline && values["dispatch-control"]),
+    "select one causal control",
+  );
   console.log(
     json(
       await buildSvelteRuntime({
         output: values.output,
         sourceArchive: values.source,
-        baseline: values.baseline,
+        mode: values.baseline
+          ? "unpatched"
+          : values["dispatch-control"]
+            ? "dispatch-only"
+            : "complete",
       }),
     ),
   );

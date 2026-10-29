@@ -17,6 +17,7 @@ import {
   linkedFixtureEnvironment,
   verifyFixtureManager,
 } from "./package-manager.js";
+import type { SvelteRuntimeMode } from "../../tools/native-runtime/recipe.js";
 
 export interface QualificationRuntime {
   readonly archive: string;
@@ -27,12 +28,19 @@ export interface QualificationRuntime {
 const digest = (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 
+export function qualificationRuntimeMode(): SvelteRuntimeMode {
+  const mode = process.env["SUIK_RESET_CAUSAL_CONTROL"];
+  if (mode === undefined || mode === "") return "complete";
+  if (mode === "unpatched" || mode === "dispatch-only") return mode;
+  throw new Error("Unknown native runtime causal control");
+}
+
 export function buildQualificationRuntime(
-  baseline = false,
+  mode: SvelteRuntimeMode = "complete",
 ): QualificationRuntime {
   const output = path.join(
     mkdtempSync(path.join(os.tmpdir(), "suik-reset-runtime-")),
-    baseline ? "unpatched" : "corrected",
+    mode,
   );
   const result = spawnSync(
     process.execPath,
@@ -40,7 +48,11 @@ export function buildQualificationRuntime(
       "tools/build-svelte-runtime.ts",
       "--output",
       output,
-      ...(baseline ? ["--baseline"] : []),
+      ...(mode === "unpatched"
+        ? ["--baseline"]
+        : mode === "dispatch-only"
+          ? ["--dispatch-control"]
+          : []),
     ],
     { encoding: "utf8", timeout: 120000 },
   );

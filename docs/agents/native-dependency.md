@@ -107,6 +107,32 @@ authentication must distinguish this variant from an unpatched same-version
 installation; version compatibility alone cannot establish corrected behavior.
 No peer override or installed/store patch is involved.
 
+The `5.57.3-reset-dispatch.2` producer adds the separate
+[binding correction](../../tools/native-runtime/bindings-reset.patch). Native
+group reset reads the currently checked semantic values through Svelte's own
+group helper. An empty radio selection remains `null`; a selected `undefined`
+value remains `undefined`. This does not change group membership or invent
+per-control group state. Equal checkbox values still share membership, and a
+radio value of `null` still aliases Svelte's no-selection sentinel. Those raw
+model constraints exist without reset. Generated Checkbox uses independent
+checked state and must preserve separate controls' defaults and submission even
+when their submitted values are equal.
+
+Native file reset reads the current `FileList`. When it is still the same live
+object as the bound value, reset can mutate its contents without invalidating
+reactive state. The correction creates a genuine new list with the input
+document's `DataTransfer`, preserving the actual `File` objects, bytes and
+metadata. List identity can change on successful reset; canceled reset preserves
+both list and file identity. A different current list passes through directly.
+An absent owner-document `DataTransfer` throws an explicit error only when a
+same-identity list requires refresh. Refused additions, truncated lists or
+changed file identities also fail explicitly before publishing a partial copy.
+No fake list, recreated file or silent
+stale-state fallback is supplied. Destroyed bindings remain inert. Matched
+nonempty-copy success and refusal controls dispatch synthetic reset events over
+genuine selected files; those events have no browser reset default action and
+isolate copying separately from actual native/programmatic form reset.
+
 ```sh
 node tools/build-svelte-runtime.ts --output .native-build/svelte-reproduction
 pnpm run native:runtime:check
@@ -115,6 +141,11 @@ pnpm exec playwright test tests/browser/reset-semantics.spec.ts
 
 Output must be absent and have regular ancestry. `--source` optionally reads the
 exact upstream archive locally; `--baseline` builds the unpatched causal control.
+`--dispatch-control` applies only the earlier dispatch/teardown correction, so
+group-default and same-identity file reactivity assertions can isolate the new
+binding correction. These flags are mutually exclusive. Provenance and manifest
+record distinct build IDs and a closed correction mode; controls are not
+deliverables.
 Actual streamed/file bytes are bounded before complete allocation. Real pnpm
 packs select the distribution, followed by canonical gzip metadata, an inventory
 of the actual selected files and a final pack containing its provenance. The
@@ -132,9 +163,17 @@ later mounts, teardown and detach-during-reset. Setting the test-only
 `SUIK_RESET_CAUSAL_CONTROL=unpatched` builds the control through the identical
 installation path; the cancellation assertions must genuinely fail there.
 
+The additional browser suites compare numeric/range/checked/select/file/group
+bindings with plain controls, including both binding orders, native and
+programmatic reset, all synchronous cancellation phases and actual submission.
+Separate group controls witness opaque value identity, empty selection, linked
+duplicates and the null sentinel. File controls cover reactive versus direct
+reads, multiple and directory files, intervening edits, teardown, owner-document
+realms and explicit capability failure. Test-only control selection uses the
+same fresh strict/frozen application installation path.
+
 Normal runtime adoption additionally requires authentication/refusal and packed
-consumer qualification plus the remaining native binding-family checks. The
-patch retains upstream raw `bind:group` default-value behavior. Group defaults,
-already-detached/shadow-root reset dispatch and asynchronous cancellation are
-separate native boundaries; the Field qualification does not claim to resolve
-them or qualify an arbitrary Svelte application.
+consumer qualification. Already-detached/shadow-root reset dispatch and
+asynchronous cancellation remain separate native boundaries; producer and Field
+qualification do not qualify an arbitrary Svelte application. Fresh executable
+results, rather than this scope description, establish which gates passed.

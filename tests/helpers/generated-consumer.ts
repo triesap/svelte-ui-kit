@@ -497,6 +497,43 @@ export function buildResetSemanticsConsumer(
   );
 }
 
+/** Additional native bindings use a genuine fresh runtime installation. */
+export function buildResetFamiliesConsumer(
+  custom: boolean,
+  runtime: QualificationRuntime,
+  qualification:
+    | "reset-families"
+    | "reset-group-edges"
+    | "reset-file-lifecycle" = "reset-families",
+) {
+  const consumer = buildInstalledItemsConsumer(
+    custom,
+    qualification,
+    qualification === "reset-group-edges" ? ["field", "checkbox"] : ["field"],
+    (root) => installQualificationRuntime(root, runtime),
+  );
+  return {
+    ...consumer,
+    evidence: {
+      ...consumer.evidence,
+      nativeRuntime: {
+        buildId: runtime.buildId,
+        archiveSha256: runtime.sha256,
+        provenanceSha256: runtime.provenanceSha256,
+      },
+      files: {
+        ...consumer.evidence.files,
+        ...Object.fromEntries(
+          ["package.json", "pnpm-lock.yaml"].map((file) => [
+            file,
+            sha256Hex(readFileSync(path.join(consumer.root, file))),
+          ]),
+        ),
+      },
+    },
+  };
+}
+
 export function buildFormResetRacesConsumer(custom: boolean) {
   return buildInstalledItemsConsumer(custom, "form-reset-races", [
     "field",

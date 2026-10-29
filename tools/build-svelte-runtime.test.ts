@@ -30,12 +30,17 @@ test(
     writeFileSync(source, upstream);
     const original = readPackedFiles(upstream);
     const builds = [];
-    for (const name of ["first", "repeat", "control"]) {
+    for (const name of ["first", "repeat", "control", "dispatch-control"]) {
       const output = path.join(root, name);
       const result = await buildSvelteRuntime({
         output,
         sourceArchive: source,
-        baseline: name === "control",
+        mode:
+          name === "control"
+            ? "unpatched"
+            : name === "dispatch-control"
+              ? "dispatch-only"
+              : "complete",
       });
       const bytes = readFileSync(path.join(output, result.archive));
       const files = readPackedFiles(bytes);
@@ -57,12 +62,16 @@ test(
       );
       assert.deepEqual(files.get("LICENSE.md"), original.get("LICENSE.md"));
       assert.equal(provenance.compiler.rebuilt, false);
-      assert.equal(provenance.corrected, name !== "control");
+      assert.equal(provenance.corrected, name === "first" || name === "repeat");
       const manifest = JSON.parse(files.get("package.json")!.bytes.toString());
       assert.equal(manifest.version, recipe.sourceVersion);
       assert.equal(
         manifest.svelteUiKitNative.buildId,
-        name === "control" ? recipe.controlId : recipe.buildId,
+        name === "control"
+          ? recipe.controlId
+          : name === "dispatch-control"
+            ? recipe.dispatchControlId
+            : recipe.buildId,
       );
       for (const file of provenance.distributionFiles)
         assert.equal(
@@ -81,6 +90,7 @@ test(
     const corrected = [
       "src/internal/client/dom/elements/misc.js",
       "src/internal/client/dom/elements/bindings/shared.js",
+      "src/internal/client/dom/elements/bindings/input.js",
     ];
     for (const [logical, file] of original) {
       if (logical === "package.json") continue;
@@ -100,6 +110,18 @@ test(
           builds[0].files.get(logical),
           file,
           `untouched runtime/compiler/types ${logical}`,
+        );
+      if (corrected.slice(0, 2).includes(logical))
+        assert.deepEqual(
+          builds[3].files.get(logical),
+          builds[0].files.get(logical),
+          `dispatch-only correction ${logical}`,
+        );
+      else
+        assert.deepEqual(
+          builds[3].files.get(logical),
+          file,
+          `group control original ${logical}`,
         );
     }
     const corrupt = path.join(root, "corrupt.tgz");

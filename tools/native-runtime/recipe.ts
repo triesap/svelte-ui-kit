@@ -1,10 +1,13 @@
 /** Immutable upstream runtime input; the upstream compiler remains untouched. */
+export type SvelteRuntimeMode = "complete" | "dispatch-only" | "unpatched";
+
 export const SVELTE_RUNTIME_RECIPE = Object.freeze({
   schemaVersion: 1,
   name: "svelte",
   sourceVersion: "5.57.3",
-  buildId: "5.57.3-reset-dispatch.1",
-  controlId: "5.57.3-reset-dispatch.control",
+  buildId: "5.57.3-reset-dispatch.2",
+  controlId: "5.57.3-reset-dispatch.2.control",
+  dispatchControlId: "5.57.3-reset-dispatch.2.dispatch-control",
   sourceUrl: "https://registry.npmjs.org/svelte/-/svelte-5.57.3.tgz",
   sourceIntegrity:
     "sha512-5mAftM3SoDV9X0zdF386F9p2pv8iKOwi/KfBS1XnBAkVCKFzVOLHUoa8iGWAt4buoicLmyWVRpuuD5wplXOQsg==",

@@ -1,6 +1,9 @@
 import { writeFileSync } from "node:fs";
 import { buildResetSemanticsConsumer } from "../helpers/generated-consumer.js";
-import { buildQualificationRuntime } from "../helpers/qualification-runtime.js";
+import {
+  buildQualificationRuntime,
+  qualificationRuntimeMode,
+} from "../helpers/qualification-runtime.js";
 import { test, expect } from "./browser-issues.js";
 import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
 
@@ -23,25 +26,20 @@ for (const custom of [false, true]) {
       test.setTimeout(240000);
       consumer = buildResetSemanticsConsumer(
         custom,
-        buildQualificationRuntime(
-          process.env["SUIK_RESET_CAUSAL_CONTROL"] === "unpatched",
-        ),
+        buildQualificationRuntime(qualificationRuntimeMode()),
       );
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
+      let closed = false;
       try {
         if (hosted) {
           await hosted.server.stop();
+          closed = true;
           expect(hosted.server.failure()).toBeNull();
         }
       } finally {
-        consumer?.cleanup();
+        if (closed) consumer?.cleanup();
       }
     });
     for (const method of ["native", "programmatic"] as const) {
