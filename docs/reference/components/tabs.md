@@ -56,7 +56,7 @@ The [authoritative manifest](../../../registry/ui/tabs.json) owns this inventory
 | `TabsContentProps` | type  | `tabs/index.ts` |
 
 Registry dependencies: `tokens`.
-Npm requirements: `bits-ui` 2.19.5-svelte-ui-kit.2.
+Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
 - [Authored tabs/root.svelte](../../../registry/ui/tabs/root.svelte)
 - [Authored tabs/list.svelte](../../../registry/ui/tabs/list.svelte)

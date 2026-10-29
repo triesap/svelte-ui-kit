@@ -71,7 +71,7 @@ test("unknown and legacy fields fail", () => {
     { schemaVersion: 1, components: [] },
     { schemaVersion: 1, style: "kit.css" },
     { schemaVersion: 1, leptos: true },
-    { schemaVersion: 1, svelteVersion: "5.57.1" },
+    { schemaVersion: 1, svelteVersion: "5.57.3" },
     { schemaVersion: 1, layout: DEFAULT_LAYOUT_FILE },
   ]) {
     assert.deepEqual(issuesFor(value), ["SCHEMA_INVALID"]);
@@ -83,7 +83,7 @@ test("bad types and unsupported schema versions fail", () => {
     { schemaVersion: "1" },
     { schemaVersion: 2 },
     { schemaVersion: 0 },
-    { schemaVersion: "5.57.1" },
+    { schemaVersion: "5.57.3" },
     { schemaVersion: 1, uiDir: 5 },
     { schemaVersion: 1, requested: "button" },
     { schemaVersion: 1, requested: [1] },
@@ -95,8 +95,8 @@ test("bad types and unsupported schema versions fail", () => {
 
 test("no source framework version is reused as the schema version", () => {
   const result = parseKitConfig({
-    schemaVersion: "5.57.1",
-    svelte: "5.57.1",
+    schemaVersion: "5.57.3",
+    svelte: "5.57.3",
   });
   assert.equal(result.ok, false);
   if (!result.ok) {

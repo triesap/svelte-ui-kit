@@ -18,7 +18,7 @@ function base(overrides: Record<string, unknown>): Record<string, unknown> {
     kind: "component",
     version: "0.1.0",
     description: "A native button.",
-    compatibility: { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" },
+    compatibility: { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" },
     files: [
       {
         source: "templates/button.svelte",
@@ -46,7 +46,7 @@ test("accessibility and dependency metadata parse", () => {
       npmDependencies: [
         { name: "bits-ui", range: "^2.19.3", role: "peer" },
         { name: "@internationalized/date", range: "^3.8.1", role: "peer" },
-        { name: "svelte", range: "^5.57.1", role: "runtime" },
+        { name: "svelte", range: "^5.57.3", role: "runtime" },
       ],
       accessibility: {
         requiredNames: ["accessible button name"],

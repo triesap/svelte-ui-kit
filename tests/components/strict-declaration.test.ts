@@ -513,9 +513,10 @@ test("the version guard rejects every changed or unreadable pin", (t) => {
   }
   const reasons = validateStrictAuditVersions(fakeRoot);
   assert.equal(reasons.length, 6);
-  assert.match(
-    reasons.join("\n"),
-    /bits-ui pin changed: expected 2\.19\.5-svelte-ui-kit\.2/,
+  assert.ok(
+    reasons.includes(
+      `bits-ui pin changed: expected ${NATIVE_BASELINE.version}, found 9.9.9`,
+    ),
   );
 });
 

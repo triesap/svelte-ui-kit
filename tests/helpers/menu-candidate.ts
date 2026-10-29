@@ -72,7 +72,7 @@ export function buildMenuCandidate(
       ...sources.map((file) => `src/lib/candidate/menu/${file}`),
       route,
       "package.json",
-      "svelte.config.js",
+      "svelte.config.ts",
       ...productionFiles.sort(),
     ];
     return {

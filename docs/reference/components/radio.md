@@ -46,7 +46,7 @@ The [authoritative manifest](../../../registry/ui/radio.json) owns this inventor
 | `RadioItemProps`  | type  | `radio/index.ts` |
 
 Registry dependencies: `tokens`.
-Npm requirements: `bits-ui` 2.19.5-svelte-ui-kit.2.
+Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
 - [Authored radio/group.svelte](../../../registry/ui/radio/group.svelte)
 - [Authored radio/item.svelte](../../../registry/ui/radio/item.svelte)

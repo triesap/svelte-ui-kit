@@ -244,7 +244,7 @@ const root = mkdtempSync(path.join(os.tmpdir(), "suik-r3-"));
 cpSync(path.join(installed, "schema"), path.join(root, "schema"), { recursive: true });
 mkdirSync(path.join(root, "registry", "ui"), { recursive: true });
 mkdirSync(path.join(root, "registry", "templates"), { recursive: true });
-const compat = { svelte: "5.57.1", bits: "2.19.3", date: "^3.8.1" };
+const compat = { svelte: "5.57.3", bits: "2.19.3", date: "^3.8.1" };
 const itemManifest = (id, date) => ({
   schemaVersion: 1,
   id,

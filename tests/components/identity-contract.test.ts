@@ -4,6 +4,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { parse } from "svelte/compiler";
 import ts from "typescript";
+import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
 
 const read = (file: string) => readFileSync(file, "utf8");
 const files = (dir: string): string[] =>
@@ -38,7 +39,7 @@ test("original identity has an explicit non generated disposition without regist
   );
   const map = read("docs/reference/compatibility.md");
   assert.match(map, /Disposition: deliberately non-generated/);
-  assert.match(map, /Svelte5\.57\.1 and Bits2\.19\.5-svelte-ui-kit\.2/);
+  assert.ok(map.includes(`and Bits${NATIVE_BASELINE.version} supply native`));
   assert.match(map, /idPrefix/);
   assert.match(map, /FieldLabel/);
 });
@@ -125,7 +126,7 @@ test("Field native rune and context relationships retain exact caller precedence
 test("pinned Svelte SSR identity allocation is per renderer and client hydration consumes its native marker", () => {
   assert.equal(
     JSON.parse(read("node_modules/svelte/package.json")).version,
-    "5.57.1",
+    "5.57.3",
   );
   const renderer = read("node_modules/svelte/src/internal/server/renderer.js");
   assert.match(
@@ -150,7 +151,7 @@ test("pinned Svelte SSR identity allocation is per renderer and client hydration
 test("actual Bits identity formatter and affected parts derive IDs from native component runes", () => {
   assert.equal(
     JSON.parse(read("node_modules/bits-ui/package.json")).version,
-    "2.19.5-svelte-ui-kit.2",
+    "2.20.2-svelte-ui-kit.1",
   );
   const formatter = read("node_modules/bits-ui/dist/internal/create-id.js");
   assert.match(formatter, /export function createId\(prefixOrUid, uid\)/);

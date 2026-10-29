@@ -32,7 +32,7 @@ function snapshot(items: Record<string, readonly string[]>): RegistrySnapshot {
       schemaVersion: 1,
       registryVersion: "0.1.0",
       contentHash: "a".repeat(64),
-      compatibility: { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" },
+      compatibility: { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" },
       items: entries.map(([id]) => ({ id, manifest: `ui/${id}.json` })),
     },
     items: entries.map(([id, dependencies]): RegistrySnapshotItem => ({

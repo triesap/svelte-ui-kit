@@ -1,3 +1,4 @@
+import { observeCatalogs } from "../../src/project/catalogs.js";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -30,14 +31,21 @@ test("actual installed metadata bounds runtime support and retains source notice
   assert.deepEqual(Object.keys(pkg.dependencies).sort(), [
     "@astrojs/compiler-rs",
     "ajv",
+    "ajv-formats",
     "semver",
     "svelte",
     "typescript",
     "yaml",
   ]);
-  const fixture = JSON.parse(
-    readFileSync("tests/fixtures/consumer/package.json", "utf8"),
-  );
+  const normalized = observeCatalogs(path.resolve("tests/fixtures/consumer"));
+  assert.deepEqual(normalized.issues, []);
+  assert.equal(normalized.manifest.kind, "value");
+  if (normalized.manifest.kind !== "value")
+    throw Error("fixture manifest unavailable");
+  const fixture = normalized.manifest.value as Record<
+    string,
+    Record<string, string>
+  >;
   for (const role of ["dependencies", "devDependencies", "peerDependencies"])
     assert.equal(fixture[role]?.[pkg.name], undefined);
   for (const name of ["svelte", "@internationalized/date"])

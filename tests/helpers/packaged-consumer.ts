@@ -28,7 +28,7 @@ export function buildPackagedConsumer(custom: boolean) {
     for (const role of ["dependencies", "devDependencies", "peerDependencies"])
       assert.equal(manifest[role]?.["svelte-ui-kit"], undefined);
     for (const file of [
-      "svelte.config.js",
+      "svelte.config.ts",
       "vite.config.ts",
       "tsconfig.json",
       "src/app.html",

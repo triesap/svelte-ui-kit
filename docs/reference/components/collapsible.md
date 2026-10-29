@@ -50,7 +50,7 @@ The [authoritative manifest](../../../registry/ui/collapsible.json) owns this in
 | `CollapsibleContentProps` | type  | `collapsible/index.ts` |
 
 Registry dependencies: `tokens`.
-Npm requirements: `bits-ui` 2.19.5-svelte-ui-kit.2.
+Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
 - [Authored collapsible/root.svelte](../../../registry/ui/collapsible/root.svelte)
 - [Authored collapsible/trigger.svelte](../../../registry/ui/collapsible/trigger.svelte)

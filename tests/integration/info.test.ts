@@ -33,9 +33,9 @@ function manifest(root: string) {
   write(root, "package.json", {
     name: "consumer",
     type: "module",
-    packageManager: "pnpm@11.22.0",
+    packageManager: "pnpm@12.16.1",
     dependencies: {
-      svelte: "5.57.1",
+      svelte: "5.57.3",
       "@sveltejs/kit": "2.70.3",
       "bits-ui": "2.19.3",
       "@internationalized/date": "3.12.4",
@@ -72,7 +72,7 @@ for (const kind of [
         });
       if (kind === "peer-incompatible" || kind === "ready")
         for (const [name, version, peers] of [
-          ["svelte", kind === "ready" ? "5.57.1" : "4.0.0", {}],
+          ["svelte", kind === "ready" ? "5.57.3" : "4.0.0", {}],
           [
             "bits-ui",
             "2.19.3",

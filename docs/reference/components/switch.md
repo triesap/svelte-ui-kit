@@ -36,7 +36,7 @@ The [authoritative manifest](../../../registry/ui/switch.json) owns this invento
 | `SwitchProps` | type  | `switch.types.ts` |
 
 Registry dependencies: `tokens`.
-Npm requirements: `bits-ui` 2.19.5-svelte-ui-kit.2.
+Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
 - [Authored switch.svelte](../../../registry/ui/switch.svelte)
 - [Authored switch.types.ts](../../../registry/ui/switch.types.ts)

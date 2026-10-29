@@ -32,7 +32,7 @@ function item(overrides: Record<string, unknown>): RegistryItem {
     kind: "component",
     version: "0.1.0",
     description: "A component.",
-    compatibility: { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" },
+    compatibility: { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" },
     files: [
       {
         source: "templates/button.svelte",

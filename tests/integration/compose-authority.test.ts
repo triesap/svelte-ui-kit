@@ -94,7 +94,7 @@ test("a post-planning layout edit is refused rather than blessed as a preimage",
         name: "consumer",
         type: "module",
         dependencies: {
-          svelte: "5.57.1",
+          svelte: "5.57.3",
           "@sveltejs/kit": "2.70.3",
           "upstream-fixture": "2.19.3",
           "@internationalized/date": "3.12.4",
@@ -142,7 +142,7 @@ test("a post-planning manifest dependency change is refused from captured enviro
       name: "consumer",
       type: "module",
       dependencies: {
-        svelte: "5.57.1",
+        svelte: "5.57.3",
         "@sveltejs/kit": "2.70.3",
         "upstream-fixture": "2.19.3",
         "@internationalized/date": "3.12.4",
@@ -222,7 +222,7 @@ const INSTALLED_MANIFEST = {
   name: "consumer",
   type: "module",
   dependencies: {
-    svelte: "5.57.1",
+    svelte: "5.57.3",
     "@sveltejs/kit": "2.70.3",
     "upstream-fixture": "2.19.3",
     "@internationalized/date": "3.12.4",
@@ -343,7 +343,7 @@ const AUTHORITY_CONFIGS: readonly (readonly [string, KitConfig])[] = [
   ],
 ];
 
-const SVELTE_MANIFEST = JSON.stringify({ name: "svelte", version: "5.57.1" });
+const SVELTE_MANIFEST = JSON.stringify({ name: "svelte", version: "5.57.3" });
 
 function seedAuthorityConsumer(root: string): void {
   write(
@@ -353,7 +353,7 @@ function seedAuthorityConsumer(root: string): void {
       name: "consumer",
       type: "module",
       dependencies: {
-        svelte: "5.57.1",
+        svelte: "5.57.3",
         "@sveltejs/kit": "2.70.3",
         "upstream-fixture": "2.19.3",
         "@internationalized/date": "3.12.4",
@@ -648,7 +648,7 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
           name: "consumer",
           type: "module",
           dependencies: {
-            svelte: "5.57.1",
+            svelte: "5.57.3",
             "@sveltejs/kit": "2.70.3",
             "upstream-fixture": "2.19.3",
             "@internationalized/date": "3.12.4",

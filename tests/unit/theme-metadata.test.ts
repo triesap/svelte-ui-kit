@@ -70,7 +70,7 @@ function themeIntegration(overrides: Record<string, unknown> = {}) {
     stylesheet: "kit.css",
     layers: [...LAYERS],
     producer: "svelte-ui-kit",
-    compatibility: { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" },
+    compatibility: { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" },
     portal: { supported: true, strategies: ["document", "custom-host"] },
     tokenContract: {
       id: "urn:svelte-ui-kit:token-contract:v1",

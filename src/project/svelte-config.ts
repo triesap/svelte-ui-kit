@@ -1,3 +1,4 @@
+import { hasLiteralPrototypeAssignment } from "./literal-config.js";
 /**
  * Static SvelteKit configuration inspection (S035).
  *
@@ -26,6 +27,7 @@
  * is introduced.
  */
 import ts from "typescript";
+import path from "node:path";
 
 /** Literal path mappings read from a static SvelteKit configuration. */
 export interface StaticKitMapping {
@@ -33,15 +35,24 @@ export interface StaticKitMapping {
   readonly routesDir: string | null;
   /** `kit.files.lib` when it is a literal string; otherwise `null`. */
   readonly libDir: string | null;
+  /** Explicit files.src, retained for the native feature-version proof. */
+  readonly srcDir?: string;
 }
 
-export type SvelteConfigInspection =
+export type SvelteConfigInspection = (
   | { readonly kind: "static"; readonly mapping: StaticKitMapping }
-  | { readonly kind: "unsupported"; readonly reason: string };
+  | {
+      readonly kind: "unsupported";
+      readonly reason: string;
+      readonly nativeBoundary?: "extensions" | "prototype";
+    }
+) & { readonly minimumKitVersion?: "2.29.0" };
 
 const NO_MAPPING: StaticKitMapping = { routesDir: null, libDir: null };
 
-function unsupported(reason: string): SvelteConfigInspection {
+function unsupported(
+  reason: string,
+): Extract<SvelteConfigInspection, { kind: "unsupported" }> {
   return { kind: "unsupported", reason };
 }
 
@@ -67,7 +78,11 @@ interface Scope {
 
 type Resolution =
   | { readonly kind: "expression"; readonly expression: ts.Expression }
-  | { readonly kind: "unsupported"; readonly reason: string };
+  | {
+      readonly kind: "unsupported";
+      readonly reason: string;
+      readonly nativeBoundary?: "extensions" | "prototype";
+    };
 
 /** Follow a chain of identifiers to the final expression, cycle-safe. */
 function resolveExpression(
@@ -78,6 +93,15 @@ function resolveExpression(
   let current = node;
   let visited = seen;
   for (;;) {
+    if (
+      ts.isParenthesizedExpression(current) ||
+      ts.isAsExpression(current) ||
+      ts.isSatisfiesExpression(current) ||
+      ts.isTypeAssertionExpression(current)
+    ) {
+      current = current.expression;
+      continue;
+    }
     if (!ts.isIdentifier(current)) {
       return { kind: "expression", expression: current };
     }
@@ -267,6 +291,7 @@ function inspectFilesObject(
 ): SvelteConfigInspection {
   let routesDir: string | null = null;
   let libDir: string | null = null;
+  let srcDir: string | null = null;
   const seen = new Set<string>();
   for (const property of object.properties) {
     if (ts.isSpreadAssignment(property)) {
@@ -284,7 +309,7 @@ function inspectFilesObject(
       );
     }
     seen.add(name);
-    if (name !== "routes" && name !== "lib") continue;
+    if (name !== "routes" && name !== "lib" && name !== "src") continue;
     if (!ts.isPropertyAssignment(property)) {
       return unsupported(
         `\`kit.files.${name}\` is not a static property assignment`,
@@ -298,9 +323,20 @@ function inspectFilesObject(
       );
     }
     if (name === "routes") routesDir = resolved.expression.text;
-    else libDir = resolved.expression.text;
+    else if (name === "lib") libDir = resolved.expression.text;
+    else srcDir = resolved.expression.text;
   }
-  return { kind: "static", mapping: { routesDir, libDir } };
+  return {
+    kind: "static",
+    mapping: {
+      routesDir:
+        routesDir ??
+        (srcDir === null ? null : path.posix.join(srcDir, "routes")),
+      libDir:
+        libDir ?? (srcDir === null ? null : path.posix.join(srcDir, "lib")),
+      ...(srcDir === null ? {} : { srcDir }),
+    },
+  };
 }
 
 /**
@@ -429,10 +465,21 @@ function parseDiagnostics(sourceFile: ts.SourceFile): readonly ts.Diagnostic[] {
  * path mapping or an `unsupported` reason for anything that cannot be proven
  * statically.
  */
-export function inspectSvelteConfigSource(
+type ResolvedConfigSource =
+  | {
+      readonly kind: "object";
+      readonly object: ts.ObjectLiteralExpression;
+      readonly scope: Scope;
+    }
+  | Extract<SvelteConfigInspection, { kind: "unsupported" }>;
+function resolveSvelteConfigSource(
   fileName: string,
   source: string,
-): SvelteConfigInspection {
+): ResolvedConfigSource {
+  if (Buffer.byteLength(source, "utf8") > 1024 * 1024)
+    return unsupported(
+      "configuration exceeds the supported 1 MiB bound",
+    ) as Extract<SvelteConfigInspection, { kind: "unsupported" }>;
   let sourceFile: ts.SourceFile;
   try {
     sourceFile = ts.createSourceFile(
@@ -454,6 +501,13 @@ export function inspectSvelteConfigSource(
         : ts.flattenDiagnosticMessageText(first.messageText, " ");
     return unsupported(`the configuration has a static parse error: ${detail}`);
   }
+  if (hasLiteralPrototypeAssignment(sourceFile))
+    return {
+      kind: "unsupported",
+      reason:
+        "Prototype-producing literal configuration properties are unsupported",
+      nativeBoundary: "prototype",
+    };
   const expressions = defaultExportExpressions(sourceFile);
   if (expressions.length === 0) {
     return unsupported(
@@ -474,5 +528,114 @@ export function inspectSvelteConfigSource(
       "the default export is not a static object literal; the mapping cannot be proven",
     );
   }
-  return inspectRootObject(resolved.expression, scope);
+  return { kind: "object", object: resolved.expression, scope };
+}
+export function inspectSvelteConfigSource(
+  fileName: string,
+  source: string,
+): SvelteConfigInspection {
+  const resolved = resolveSvelteConfigSource(fileName, source);
+  return resolved.kind === "unsupported"
+    ? resolved
+    : inspectRootObject(resolved.object, resolved.scope);
+}
+type ObjectPropertyEvidence =
+  | { kind: "absent" }
+  | { kind: "unknown" }
+  | { kind: "object"; object: ts.ObjectLiteralExpression };
+function objectPropertyEvidence(
+  object: ts.ObjectLiteralExpression,
+  key: string,
+  scope: Scope,
+): ObjectPropertyEvidence {
+  const seen = new Set<string>();
+  let found: ts.ObjectLiteralElementLike | undefined;
+  for (const property of object.properties) {
+    const name = literalPropertyName(property.name);
+    if (ts.isSpreadAssignment(property) || name === null || seen.has(name))
+      return { kind: "unknown" };
+    seen.add(name);
+    if (name === key) found = property;
+  }
+  if (!found) return { kind: "absent" };
+  if (!ts.isPropertyAssignment(found)) return { kind: "unknown" };
+  const value = resolveExpression(found.initializer, scope, new Set());
+  return value.kind === "expression" &&
+    ts.isObjectLiteralExpression(value.expression)
+    ? { kind: "object", object: value.expression }
+    : { kind: "unknown" };
+}
+/** Prove absence before allowing old-version manual mapping; source order never drops feature requirements. */
+function requiresSourceDirectorySupport(
+  object: ts.ObjectLiteralExpression,
+  scope: Scope,
+): boolean {
+  const kit = objectPropertyEvidence(object, "kit", scope);
+  if (kit.kind !== "object") return kit.kind === "unknown";
+  const files = objectPropertyEvidence(kit.object, "files", scope);
+  if (files.kind !== "object") return files.kind === "unknown";
+  const seen = new Set<string>();
+  for (const property of files.object.properties) {
+    const name = literalPropertyName(property.name);
+    if (
+      ts.isSpreadAssignment(property) ||
+      name === null ||
+      seen.has(name) ||
+      name === "src"
+    )
+      return true;
+    seen.add(name);
+  }
+  return false;
+}
+/** Native generation must prove that +layout.svelte is an active route extension. */
+export function inspectNativeSvelteConfigSource(
+  fileName: string,
+  source: string,
+): SvelteConfigInspection {
+  const resolved = resolveSvelteConfigSource(fileName, source);
+  if (resolved.kind === "unsupported")
+    return {
+      ...resolved,
+      nativeBoundary: resolved.nativeBoundary ?? "extensions",
+    };
+  const refuse = (reason: string): SvelteConfigInspection => ({
+    kind: "unsupported",
+    reason,
+    nativeBoundary: "extensions",
+  });
+  const seen = new Set<string>();
+  for (const property of resolved.object.properties) {
+    const name = literalPropertyName(property.name);
+    if (ts.isSpreadAssignment(property) || name === null || seen.has(name))
+      return refuse(
+        "Native route extensions require unique statically proven root keys",
+      );
+    seen.add(name);
+    if (name !== "extensions") continue;
+    if (!ts.isPropertyAssignment(property))
+      return refuse(
+        "Native route extensions require a literal ['.svelte'] array",
+      );
+    const value = resolveExpression(
+      property.initializer,
+      resolved.scope,
+      new Set(),
+    );
+    if (
+      value.kind !== "expression" ||
+      !ts.isArrayLiteralExpression(value.expression) ||
+      value.expression.elements.length !== 1
+    )
+      return refuse("Only the default .svelte route extension is supported");
+    const element = value.expression.elements[0];
+    if (!ts.isStringLiteral(element) || element.text !== ".svelte")
+      return refuse("Only the default .svelte route extension is supported");
+  }
+  return {
+    ...inspectRootObject(resolved.object, resolved.scope),
+    ...(requiresSourceDirectorySupport(resolved.object, resolved.scope)
+      ? { minimumKitVersion: "2.29.0" as const }
+      : {}),
+  };
 }

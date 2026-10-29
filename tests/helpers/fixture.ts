@@ -1,3 +1,8 @@
+import {
+  linkedFixtureEnvironment,
+  verifyFixtureManager,
+} from "./package-manager.js";
+import { writeFixtureWorkspace } from "./workspace-catalog.js";
 import { spawnSync } from "node:child_process";
 import {
   cpSync,
@@ -88,6 +93,7 @@ export function copyConsumerFixture(
       recursive: true,
       filter: (source) => !COPY_EXCLUDES.has(path.basename(source)),
     });
+    writeFixtureWorkspace(root, packageRoot);
     linkFixtureNodeModules(
       path.join(fixture, "node_modules"),
       path.join(root, "node_modules"),
@@ -119,9 +125,10 @@ export function runFixtureScript(
     /\.[cm]?js$/.test(execPath);
   const command = viaNode ? process.execPath : "pnpm";
   const args = viaNode ? [execPath, "run", script] : ["run", script];
-  const env = { ...process.env };
+  const env = linkedFixtureEnvironment();
   delete env["NODE_TEST_CONTEXT"];
-  env["npm_config_verify_deps_before_run"] = "false";
+  env["pnpm_config_verify_deps_before_run"] = "false";
+  verifyFixtureManager(command, viaNode ? [execPath] : [], root, env);
   const result = spawnSync(command, args, {
     cwd: root,
     env,

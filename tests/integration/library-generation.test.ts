@@ -44,8 +44,8 @@ function fixture(t: { after(fn: () => void): void }, formatted = true) {
       version: "0.0.0",
       private: true,
       type: "module",
-      packageManager: "pnpm@11.22.0",
-      peerDependencies: { svelte: "5.57.1" },
+      packageManager: "pnpm@12.16.1",
+      peerDependencies: { svelte: "5.57.3" },
       svelte: "./dist/index.js",
       types: "./dist/index.d.ts",
       exports: {
@@ -61,7 +61,7 @@ function fixture(t: { after(fn: () => void): void }, formatted = true) {
   // Metadata-only planning fixture; actual native compilation is a separate consumer lane.
   project.writeFile(
     "node_modules/svelte/package.json",
-    JSON.stringify({ name: "svelte", version: "5.57.1" }),
+    JSON.stringify({ name: "svelte", version: "5.57.3" }),
   );
   project.writeFile(
     "src/lib/_kit/kit.json",

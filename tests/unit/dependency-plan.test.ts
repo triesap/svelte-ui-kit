@@ -33,7 +33,7 @@ function snapshot(
       schemaVersion: 1,
       registryVersion: "0.1.0",
       contentHash: "a".repeat(64),
-      compatibility: { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" },
+      compatibility: { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" },
       items: entries.map(([id]) => ({ id, manifest: `ui/${id}.json` })),
     },
     items: entries.map(([id, spec]): RegistrySnapshotItem => ({
@@ -60,7 +60,7 @@ function codes(value: unknown): string[] {
 
 test("compatible duplicate requirements coalesce with roles preserved", () => {
   const graph = snapshot({
-    button: { npm: [{ name: "svelte", range: "^5.57.1", role: "peer" }] },
+    button: { npm: [{ name: "svelte", range: "^5.57.3", role: "peer" }] },
     card: { npm: [{ name: "svelte", range: "^5.0.0", role: "runtime" }] },
   });
   const result = planDependencies(graph, ["button", "card"]);

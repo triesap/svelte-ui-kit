@@ -493,9 +493,9 @@ test("a captured snapshot does not mix later live dependency metadata", (t) => {
     "package.json",
     JSON.stringify({
       name: "consumer",
-      packageManager: "pnpm@11.22.0",
+      packageManager: "pnpm@12.16.1",
       devDependencies: { "@sveltejs/kit": "2.70.3" },
-      dependencies: { "upstream-fixture": "^2.19.3", svelte: "5.57.1" },
+      dependencies: { "upstream-fixture": "^2.19.3", svelte: "5.57.3" },
     }),
   );
   project.writeFile(
@@ -508,7 +508,7 @@ test("a captured snapshot does not mix later live dependency metadata", (t) => {
   );
   project.writeFile(
     "node_modules/svelte/package.json",
-    JSON.stringify({ name: "svelte", version: "5.57.1" }),
+    JSON.stringify({ name: "svelte", version: "5.57.3" }),
   );
   const registry = buttonRegistry({
     npm: [{ name: "upstream-fixture", range: "^2.19.3", role: "runtime" }],

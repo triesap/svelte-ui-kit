@@ -92,11 +92,11 @@ before(() => {
     path.join(fixture, "package.json"),
     JSON.stringify({
       private: true,
-      packageManager: "pnpm@11.22.0",
+      packageManager: "pnpm@12.16.1",
       devDependencies: { "@sveltejs/kit": "2.70.3" },
       dependencies: {
         "bits-ui": `file:./${archivePath}`,
-        svelte: "5.57.1",
+        svelte: "5.57.3",
         "@internationalized/date": "3.12.4",
       },
     }),
@@ -153,7 +153,7 @@ test("selected-owner native catalog authenticates the real archive and installed
   writeFileSync(file, JSON.stringify(manifest));
   writeFileSync(
     path.join(root, "pnpm-workspace.yaml"),
-    `packages:\n  - .\ncatalog:\n  svelte: 5.57.1\ncatalogs:\n  native:\n    bits-ui: file:./${archivePath}\n`,
+    `packages:\n  - .\ncatalog:\n  svelte: 5.57.3\ncatalogs:\n  native:\n    bits-ui: file:./${archivePath}\n`,
   );
   const before = snapshotTree(root);
   const result = inspectDependencyState(root, requirements);
@@ -444,7 +444,7 @@ test("other package file declarations and unsupported native sources remain inva
     writeFileSync(path.join(root, "package.json"), JSON.stringify(manifest));
     const result = inspectDependencyState(root, [
       ...requirements,
-      { name: "svelte", range: "5.57.1" },
+      { name: "svelte", range: "5.57.3" },
     ]);
     assert.ok(!result.ok);
     assert.ok(

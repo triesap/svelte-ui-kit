@@ -8,7 +8,7 @@ approval to invent select/combobox/popover/date/higher-level APIs.
 
 ## Set up and verify
 
-Clone a checkout, create a task branch and use Node 24.21.0/pnpm 11.22.0. From the
+Clone a checkout, create a task branch and use Node 24.22.1/pnpm 12.16.1. From the
 repository root, prepare the authentic archive before frozen strict installation:
 
 ```sh

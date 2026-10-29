@@ -38,7 +38,7 @@ function setup(label: string, fixture: ReturnType<typeof cliPackage>) {
   write(
     fixture.root,
     "node_modules/svelte/package.json",
-    JSON.stringify({ name: "svelte", version: "5.57.1" }),
+    JSON.stringify({ name: "svelte", version: "5.57.3" }),
   );
   if (label === "broken-cli")
     unlinkSync(path.join(fixture.pkg, "node_modules"));

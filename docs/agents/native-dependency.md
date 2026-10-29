@@ -1,23 +1,28 @@
 # Native dependency reproduction and qualification
 
-Scope: the authentic local Bits 2.19.5-svelte-ui-kit.2 archive and its source/emitter producer. See [compatibility](../reference/compatibility.md) and [testing](testing.md) for consumer/runtime/delivery boundaries. Producer success alone is neither release nor independent acceptance.
+Scope: the authentic local Bits 2.20.2-svelte-ui-kit.1 archive and its source/emitter producer. See [compatibility](../reference/compatibility.md) and [testing](testing.md) for consumer/runtime/delivery boundaries. Producer success alone is neither release nor independent acceptance.
 
 ## Source and correction
 
-[recipe.json](../../tools/native-dependency/recipe.json) pins the public Bits and language-tools Git revisions,
-the producer toolchain and distinct build versions. The language-tools release
-tag is `svelte2tsx-0.7.34`; its source manifest still says `0.7.25`. Provenance
-records both facts instead of claiming the source manifest was already stamped
-with the release version.
+[recipe.json](../../tools/native-dependency/recipe.json) pins Bits 2.20.2 at
+`33186c8cc7bb3e0fb8b665063fa29663b606c416` and language-tools 0.7.62 at
+`b1ab06379bca7d96f64f4c2063ffc3c28c060148`, their exact toolchain and distinct
+local build versions. The emitter tag and source manifest now agree on 0.7.62.
+Upstream build-tool constraints remain frozen in its source and producer lock.
 
-Both emitter and native archives use canonical gzip metadata: the operating
-system marker is 255 (unspecified), the timestamp remains zero and authentic
-tar content and CRC are preserved. The initial build `.1` differed between
-macOS and Linux at the gzip OS byte and failed the frozen emitter integrity
-check on Linux. Build `.2` records this packaging policy in the recipe and
-uses newly qualified archive/provenance and frozen lock digests. Native runtime
-source and the declaration correction are unchanged; historical `.1` evidence
-does not certify this replacement.
+Both archives use canonical gzip metadata: operating-system marker 255 and zero
+timestamp, with genuine tar content and CRC preserved. This policy was introduced
+by the prior 2.19.5-svelte-ui-kit.2 build after its first packaging variant had
+platform-dependent gzip metadata; the new 2.20.2-svelte-ui-kit.1 retains the policy.
+Historical qualification does not qualify a new archive.
+
+The current package3 CLI requires explicit aliases. Genuine upstream Kit2 sync
+runs first with its original configuration. The isolated producer then preserves
+that file as `.native-svelte-config.js` and uses the typed
+[packaging adapter](../../tools/native-dependency/package.config.ts) to provide
+`$lib` explicitly to the public package CLI. Its digest is in provenance. This
+adapts build configuration without rewriting component/runtime source. `csstype`
+is an explicit distribution dependency for the public declaration imports.
 
 [binding-signature.patch](../../tools/native-dependency/binding-signature.patch) changes the real emitter's
 source shim. The normal Svelte `Component` instantiation eagerly checks a
@@ -30,7 +35,7 @@ existing callback types are preserved.
 
 The builder applies this patch only in an owned source copy, builds the actual
 emitter, and verifies that the real package tool resolves that built emitter.
-It then runs Bits' real `package` script. Native component sources and runtime
+It then runs native Kit sync, the actual package3 CLI and publint. Native component sources and runtime
 implementation remain unchanged. Installed declarations, reference checkouts
 and package stores are never patched.
 
@@ -45,7 +50,7 @@ CLI refusals with authoring-source, network and subprocess access blocked.
 
 ## Reproduce
 
-Use Node 24.21.0, pnpm 11.22.0, Git and tar from the repository root:
+Use Node 24.22.1, pnpm 12.16.1, Git and tar from the repository root:
 
 ```sh
 node tools/build-native-dependency.mjs --output .native-build/reproduction

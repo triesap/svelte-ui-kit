@@ -15,16 +15,16 @@ Generated wrappers import application-installed Svelte and Bits UI.
 Svelte and Bits UI carry their own MIT licenses;
 `@internationalized/date` carries Apache-2.0. Explicit dependency installation
 retains their package notices. These dependency licenses are not replaced by
-this package's license. The CLI separately uses its declared Ajv, semver, Svelte
+this package's license. The CLI separately uses its declared Ajv/formats, semver, Svelte
 parser, TypeScript, YAML and native Astro parser dependencies with their
 respective package licenses. The Astro parser and its platform binding retain
 their upstream MIT notices through normal dependency delivery; their CLI-only
 syntax handling does not become a generated application runtime.
 
 The locally packed CLI contains the qualified unstyled Bits dependency at
-`dist/native/bits-ui-2.19.5-svelte-ui-kit.2.tgz` for explicit application-owned
+`dist/native/bits-ui-2.20.2-svelte-ui-kit.1.tgz` for explicit application-owned
 extraction and installation. Its Bits source is revision
-`fd10616a873a8e6e3652e31dcc88c5c2f155a9e2` from
+`33186c8cc7bb3e0fb8b665063fa29663b606c416` from
 [Bits UI](https://github.com/huntabyte/bits-ui). Its emitter source and narrow
 source correction are recorded in the portable producer inputs. The archive
 retains Bits `LICENSE`, emitter `EMITTER_LICENSE` and authenticated

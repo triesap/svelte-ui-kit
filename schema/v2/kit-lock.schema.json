@@ -177,7 +177,8 @@
               "contract": {
                 "enum": ["layout-v1", "astro-layout-v1"]
               }
-            }
+            },
+            "type": "object"
           },
           {
             "properties": {
@@ -187,7 +188,8 @@
               "contract": {
                 "enum": ["foundation-tokens-v1", "stylesheet-v1"]
               }
-            }
+            },
+            "type": "object"
           },
           {
             "properties": {
@@ -197,7 +199,8 @@
               "contract": {
                 "const": "exports-v1"
               }
-            }
+            },
+            "type": "object"
           },
           {
             "properties": {
@@ -211,7 +214,8 @@
                 "type": "string",
                 "pattern": "\\.css$"
               }
-            }
+            },
+            "type": "object"
           }
         ]
       },
@@ -231,10 +235,13 @@
                 "enum": ["layout", "stylesheet-entry"]
               }
             },
-            "required": ["kind"]
-          }
+            "required": ["kind"],
+            "type": "object"
+          },
+          "type": "array"
         }
-      }
+      },
+      "type": "object"
     },
     {
       "properties": {
@@ -245,10 +252,13 @@
                 "const": "stylesheet"
               }
             },
-            "required": ["kind"]
-          }
+            "required": ["kind"],
+            "type": "object"
+          },
+          "type": "array"
         }
-      }
+      },
+      "type": "object"
     },
     {
       "properties": {
@@ -259,10 +269,13 @@
                 "const": "exports"
               }
             },
-            "required": ["kind"]
-          }
+            "required": ["kind"],
+            "type": "object"
+          },
+          "type": "array"
         }
-      }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -270,7 +283,8 @@
           "target": {
             "const": "astro"
           }
-        }
+        },
+        "type": "object"
       },
       "then": {
         "properties": {
@@ -284,10 +298,13 @@
                   "const": "astro-layout-v1"
                 }
               },
-              "required": ["kind", "contract"]
-            }
+              "required": ["kind", "contract"],
+              "type": "object"
+            },
+            "type": "array"
           }
-        }
+        },
+        "type": "object"
       },
       "else": {
         "if": {
@@ -295,7 +312,8 @@
             "target": {
               "const": "svelte-library"
             }
-          }
+          },
+          "type": "object"
         },
         "then": {
           "properties": {
@@ -309,10 +327,13 @@
                     "const": "library-styles-v1"
                   }
                 },
-                "required": ["kind", "contract"]
-              }
+                "required": ["kind", "contract"],
+                "type": "object"
+              },
+              "type": "array"
             }
-          }
+          },
+          "type": "object"
         },
         "else": {
           "properties": {
@@ -326,10 +347,13 @@
                     "const": "layout-v1"
                   }
                 },
-                "required": ["kind", "contract"]
-              }
+                "required": ["kind", "contract"],
+                "type": "object"
+              },
+              "type": "array"
             }
-          }
+          },
+          "type": "object"
         }
       }
     }

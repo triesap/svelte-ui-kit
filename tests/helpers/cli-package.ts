@@ -34,8 +34,8 @@ export function cliPackage(options: CompoundRegistryOptions = {}) {
     JSON.stringify({
       name: "consumer",
       type: "module",
-      packageManager: "pnpm@11.22.0",
-      dependencies: { svelte: "5.57.1", "@sveltejs/kit": "2.70.3" },
+      packageManager: "pnpm@12.16.1",
+      dependencies: { svelte: "5.57.3", "@sveltejs/kit": "2.70.3" },
     }),
   );
   return {

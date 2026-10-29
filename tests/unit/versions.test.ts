@@ -50,8 +50,8 @@ test("initial identities validate and stay independent", () => {
 });
 
 test("advertised tested support is exact and Bits peers stay distinct", () => {
-  assert.equal(INITIAL_COMPATIBILITY.svelte, "5.57.1");
-  assert.equal(INITIAL_COMPATIBILITY.bits, "2.19.5-svelte-ui-kit.2");
+  assert.equal(INITIAL_COMPATIBILITY.svelte, "5.57.3");
+  assert.equal(INITIAL_COMPATIBILITY.bits, "2.20.2-svelte-ui-kit.1");
   assert.equal(INITIAL_COMPATIBILITY.date, "^3.8.1");
   assert.equal(BITS_UI_PEER_REQUIREMENTS.svelte, "^5.33.0");
   assert.equal(BITS_UI_PEER_REQUIREMENTS.date, "^3.8.1");
@@ -138,7 +138,7 @@ test("SemVer validation is strict", () => {
 });
 
 test("compatibility ranges accept npm ranges and reject source kinds", () => {
-  for (const value of ["^5.57.1", "~2.19.0", ">=1 <2 || >=3", "1.2.3", "*"]) {
+  for (const value of ["^5.57.3", "~2.19.0", ">=1 <2 || >=3", "1.2.3", "*"]) {
     assert.equal(isCompatibilityRange(value), true, value);
   }
   for (const value of [
@@ -249,7 +249,7 @@ test("project schema dispatch is independent and refuses every unapproved transi
       3,
       999,
       "1",
-      "5.57.1",
+      "5.57.3",
       null,
       undefined,
     ]) {

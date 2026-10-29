@@ -47,14 +47,16 @@ import {
   type DetectedProject,
   type DiscoveredGenerationConfig,
 } from "./detect.js";
-import { isExplicitTargetConfig } from "./generation-config.js";
+import {
+  captureConfigurationInputs,
+  type ConfigurationInput,
+} from "./configuration-inputs.js";
 import { deepFreeze, FrozenMap } from "./immutable.js";
 import { type JsonObservation } from "./io.js";
 import {
   observeNativeFile,
   type NativeFileObservation,
 } from "./native-dependency.js";
-import { TARGET_CONFIG_FILES } from "./target-config.js";
 
 /**
  * Physical evidence of one environment file captured with the snapshot: an
@@ -124,6 +126,7 @@ export interface CapturedEnvironment {
    * captured dependency/manifest change is refused rather than omitted.
    */
   readonly evidence: readonly EnvironmentEvidence[];
+  readonly configuration: readonly ConfigurationInput[];
   /** Resolved installed metadata keyed by package name. */
   readonly installed: ReadonlyMap<string, InstalledObservation>;
   /**
@@ -439,22 +442,45 @@ export function captureEnvironment(root: string): CapturedEnvironment {
     captureInstalledResolution(root, name),
   );
   const managerResult = detectPackageManager(root);
-  const project = deepFreeze(detectDefaultProject(root));
+  const configuration = captureConfigurationInputs(root);
+  const project = deepFreeze(
+    detectDefaultProject(
+      root,
+      manifest.kind === "value"
+        ? {
+            manifest: manifest.value,
+            configuration,
+            installed: installed.get("@sveltejs/kit"),
+          }
+        : undefined,
+    ),
+  );
   const kitConfig = deepFreeze(discoverGenerationConfig(root));
   return deepFreeze({
     manifest,
     catalogDigest: catalogs.digest,
     catalogIssues: catalogs.issues,
     nativeFile,
+    configuration,
     evidence: [
-      ...captureEvidence(root, [
-        ...installedManifestPaths(root, names),
-        ...(kitConfig.ok &&
-        kitConfig.value.kind === "custom" &&
-        isExplicitTargetConfig(kitConfig.value.config)
-          ? TARGET_CONFIG_FILES
-          : []),
-      ]),
+      ...captureEvidence(root, [...installedManifestPaths(root, names)]),
+      ...configuration
+        .filter((entry) => entry.kind === "file" || entry.kind === "absent")
+        .map((entry) =>
+          entry.kind === "file"
+            ? {
+                path: entry.path,
+                kind: "file" as const,
+                digest: entry.digest,
+                mode: entry.mode,
+              }
+            : {
+                path: entry.path,
+                kind: "absent" as const,
+                digest: null,
+                mode: null,
+              },
+        ),
       ...(nativeFile.kind === "value"
         ? [
             {

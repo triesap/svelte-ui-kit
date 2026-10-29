@@ -30,7 +30,7 @@ for (const mapping of ["default", "explicit-dynamic"] as const)
         write(
           fixture.root,
           "node_modules/svelte/package.json",
-          JSON.stringify({ name: "svelte", version: "5.57.1" }),
+          JSON.stringify({ name: "svelte", version: "5.57.3" }),
         );
         const manifest = JSON.parse(
           readFileSync(path.join(fixture.root, "package.json"), "utf8"),

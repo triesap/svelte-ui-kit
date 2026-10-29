@@ -415,6 +415,24 @@ export function captureSnapshot(
       observeOne(canonical.value.path, logicalPath, ancestors),
     );
   }
+  for (const captured of environment.configuration) {
+    const observation = entries.get(captured.path);
+    if (
+      observation &&
+      (captured.kind === "file" || captured.kind === "absent") &&
+      (observation.kind !== captured.kind ||
+        (captured.kind === "file" &&
+          (observation.hash !== captured.digest ||
+            observation.mode !== captured.mode)))
+    )
+      return fail([
+        issue(
+          "SNAPSHOT_CONFIGURATION_CHANGED",
+          "Configuration changed during original capture; retry",
+          captured.path,
+        ),
+      ]);
+  }
   if (environment.nativeFile.kind === "value") {
     for (const observation of observeAncestors(
       canonical.value.path,

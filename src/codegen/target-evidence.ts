@@ -1,3 +1,4 @@
+import { inspectSvelteKitInputs } from "../project/sveltekit-evidence.js";
 /** Immutable target intent/input evidence, separate from executable generation authority. */
 import { deriveKitPaths } from "../project/config.js";
 import { deepFreeze } from "../project/immutable.js";
@@ -208,6 +209,12 @@ export function inspectTargetEvidence(
     const inspected = inspectAstroConfig(text.text, candidates[0]);
     if (!inspected.ok) return inspected;
   } else if (config.target === "sveltekit") {
+    const framework = inspectSvelteKitInputs({
+      manifest: normalizedManifest,
+      installed: snapshot.environment.installed.get("@sveltejs/kit"),
+      configuration: snapshot.environment.configuration,
+    });
+    if (!framework.ok) return framework;
     if (!has("@sveltejs/kit") || has("astro"))
       return invalid("SvelteKit requires its actual framework declaration");
     if (configs.filter((file) => file.startsWith("svelte.config.")).length > 1)

@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+import {
+  linkedFixtureEnvironment,
+  verifyFixtureManager,
+} from "../helpers/package-manager.js";
 /**
  * S006 tooling unit test.
  *
@@ -39,7 +43,7 @@ const PACKAGE_ROOT = process.cwd();
 const SUBPROCESS_TIMEOUT_MS = 120_000;
 
 const REAL_CONFIG_FILES = [
-  "eslint.config.mjs",
+  "eslint.config.ts",
   ".prettierrc.json",
   ".prettierignore",
 ] as const;
@@ -182,7 +186,7 @@ function pnpmCommand(): { command: string; args: readonly string[] } {
 
 function runFixtureScript(root: string, script: FixtureScript): RunResult {
   const { command, args } = pnpmCommand();
-  const env: NodeJS.ProcessEnv = { ...process.env };
+  const env: NodeJS.ProcessEnv = linkedFixtureEnvironment();
   // Neutralize the inherited node:test runner environment and prevent pnpm
   // from attempting a dependency install against a fixture-local symlink.
   delete env["NODE_OPTIONS"];
@@ -192,6 +196,7 @@ function runFixtureScript(root: string, script: FixtureScript): RunResult {
   env["PATH"] = `${path.dirname(process.execPath)}${path.delimiter}${
     env["PATH"] ?? ""
   }`;
+  verifyFixtureManager(command, args, root, env);
   const result = spawnSync(command, [...args, "run", script], {
     cwd: root,
     env,

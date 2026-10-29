@@ -6,14 +6,35 @@
   "additionalProperties": false,
   "required": ["schemaVersion", "target"],
   "properties": {
-    "schemaVersion": { "const": 2 },
-    "target": { "enum": ["sveltekit", "astro", "svelte-library"] },
-    "toolVersion": { "type": "string", "minLength": 1 },
-    "registry": { "const": "builtin" },
-    "uiDir": { "type": "string", "minLength": 1 },
-    "stylesDir": { "type": "string", "minLength": 1 },
-    "layoutFile": { "type": "string", "minLength": 1 },
-    "styleEntry": { "type": "string", "minLength": 1 },
+    "schemaVersion": {
+      "const": 2
+    },
+    "target": {
+      "enum": ["sveltekit", "astro", "svelte-library"]
+    },
+    "toolVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registry": {
+      "const": "builtin"
+    },
+    "uiDir": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stylesDir": {
+      "type": "string",
+      "minLength": 1
+    },
+    "layoutFile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "styleEntry": {
+      "type": "string",
+      "minLength": 1
+    },
     "requested": {
       "type": "array",
       "items": {
@@ -26,27 +47,63 @@
   "oneOf": [
     {
       "properties": {
-        "target": { "const": "sveltekit" },
-        "layoutFile": { "pattern": "\\.svelte$" }
+        "target": {
+          "const": "sveltekit"
+        },
+        "layoutFile": {
+          "pattern": "\\.svelte$",
+          "type": "string"
+        }
       },
       "required": ["layoutFile"],
-      "not": { "required": ["styleEntry"] }
+      "not": {
+        "required": ["styleEntry"],
+        "type": "object",
+        "properties": {
+          "styleEntry": {}
+        }
+      },
+      "type": "object"
     },
     {
       "properties": {
-        "target": { "const": "astro" },
-        "layoutFile": { "pattern": "\\.astro$" }
+        "target": {
+          "const": "astro"
+        },
+        "layoutFile": {
+          "pattern": "\\.astro$",
+          "type": "string"
+        }
       },
       "required": ["layoutFile"],
-      "not": { "required": ["styleEntry"] }
+      "not": {
+        "required": ["styleEntry"],
+        "type": "object",
+        "properties": {
+          "styleEntry": {}
+        }
+      },
+      "type": "object"
     },
     {
       "properties": {
-        "target": { "const": "svelte-library" },
-        "styleEntry": { "pattern": "\\.css$" }
+        "target": {
+          "const": "svelte-library"
+        },
+        "styleEntry": {
+          "pattern": "\\.css$",
+          "type": "string"
+        }
       },
       "required": ["styleEntry"],
-      "not": { "required": ["layoutFile"] }
+      "not": {
+        "required": ["layoutFile"],
+        "type": "object",
+        "properties": {
+          "layoutFile": {}
+        }
+      },
+      "type": "object"
     }
   ]
 }

@@ -696,13 +696,13 @@ test("the composed plan carries declared/installed/peer readiness evidence", (t)
       name: "consumer",
       type: "module",
       devDependencies: { "@sveltejs/kit": "2.70.3" },
-      dependencies: { svelte: "5.57.1" },
+      dependencies: { svelte: "5.57.3" },
     }),
   );
   const reg = registryOf([
     componentItem("button", {
       exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
-      npm: [{ name: "svelte", range: "^5.57.1", role: "peer" }],
+      npm: [{ name: "svelte", range: "^5.57.3", role: "peer" }],
     }),
   ]);
   const result = planAdd({
@@ -721,7 +721,7 @@ test("the composed plan carries declared/installed/peer readiness evidence", (t)
     (entry) => entry.name === "svelte",
   );
   assert.ok(svelte, JSON.stringify(result.value.dependencyState));
-  assert.equal(svelte.declaredRange, "5.57.1");
+  assert.equal(svelte.declaredRange, "5.57.3");
   assert.equal(svelte.status, "missing_install");
 });
 

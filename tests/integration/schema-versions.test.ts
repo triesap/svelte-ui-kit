@@ -10,7 +10,7 @@ import {
 } from "../../src/project/config.js";
 
 for (const kind of ["config", "lock"] as const)
-  for (const schemaVersion of [0, 2, 999, "1", "0.9.0-alpha", "5.57.1"])
+  for (const schemaVersion of [0, 2, 999, "1", "0.9.0-alpha", "5.57.3"])
     test(`${kind} unsupported schema ${schemaVersion} blocks every mutation without migration`, () => {
       const fixture = cliPackage();
       try {

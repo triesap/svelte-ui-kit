@@ -77,7 +77,7 @@ The [authoritative manifest](../../../registry/ui/alert-dialog.json) owns this i
 | `AlertDialogCancelProps`      | type  | `alert-dialog/index.ts` |
 
 Registry dependencies: `tokens`.
-Npm requirements: `bits-ui` 2.19.5-svelte-ui-kit.2.
+Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
 - [Authored alert-dialog/root.svelte](../../../registry/ui/alert-dialog/root.svelte)
 - [Authored alert-dialog/trigger.svelte](../../../registry/ui/alert-dialog/trigger.svelte)

@@ -86,6 +86,27 @@ stylesheet entry and never borrows a layout field. See
 [Astro applications](../guides/astro.md) and
 [Svelte libraries](../guides/svelte-library.md).
 
+### Supported SvelteKit configuration
+
+Both v1 and v2 application paths require stable Kit2-only declarations and
+independently matching installed metadata when present. Planning captures every
+Svelte/Vite configuration candidate and its absence. A present Vite configuration
+must be one regular bounded ESM file with a literal default object or imported
+`defineConfig({ plugins: [sveltekit()] })`. Even an empty options object changes
+Kit2's configuration source, so all plugin arguments refuse. Dynamic factories,
+extra plugins, relocated roots, competing files and CJS/CTS forms require an
+explicit supported form. A later file appearance or change invalidates apply
+before ordinary writes. No application configuration executes during discovery.
+
+Kit2 discovers `svelte.config.js` and `svelte.config.ts`; present `.mjs`/`.cjs`
+files refuse instead of supplying a mapping the framework would ignore. A `.ts`
+configuration requires Kit>=2.23.0, and `files.src` defaults require Kit>=2.29.0.
+The captured installation must support the feature; when explicitly absent,
+every declared range must stay within that feature floor and Kit2. Literal
+`files.src` supplies missing routes/lib defaults while explicit overrides win.
+Route extensions must remain the default or literal `[".svelte"]`. Configuration
+properties that produce a prototype refuse independently of explicit intent.
+
 ### Existing SvelteKit mapping
 
 Before initialization, create `app/ui/_kit/kit.json` in the selected application:

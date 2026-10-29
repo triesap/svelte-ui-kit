@@ -123,7 +123,7 @@ function seedPackage(root: string): void {
     JSON.stringify({
       name: "consumer",
       type: "module",
-      dependencies: { svelte: "5.57.1" },
+      dependencies: { svelte: "5.57.3" },
     }),
   );
 }
@@ -162,7 +162,7 @@ test("installed resolution drift, nearer shadowing and link retarget are refused
     const root = path.join(base, "consumer");
     mkdirSync(root, { recursive: true });
     seedPackage(root);
-    writeManifest(base, "5.57.1");
+    writeManifest(base, "5.57.3");
     const environment = captureEnvironment(root);
     const installed = installedReads(environment);
     assert.equal(
@@ -184,7 +184,7 @@ test("installed resolution drift, nearer shadowing and link retarget are refused
     const root = path.join(base, "consumer");
     mkdirSync(root, { recursive: true });
     seedPackage(root);
-    writeManifest(base, "5.57.1");
+    writeManifest(base, "5.57.3");
     const environment = captureEnvironment(root);
     const installed = installedReads(environment);
 
@@ -204,12 +204,12 @@ test("installed resolution drift, nearer shadowing and link retarget are refused
     write(
       root,
       "store/a/package.json",
-      JSON.stringify({ name: "svelte", version: "5.57.1" }),
+      JSON.stringify({ name: "svelte", version: "5.57.3" }),
     );
     write(
       root,
       "store/b/package.json",
-      JSON.stringify({ name: "svelte", version: "5.57.1" }),
+      JSON.stringify({ name: "svelte", version: "5.57.3" }),
     );
     mkdirSync(abs(root, "node_modules"), { recursive: true });
     symlinkSync("../store/a", abs(root, "node_modules/svelte"), "dir");
@@ -272,7 +272,7 @@ test("a composed guarded ignore operation recovers without an unapproved-target 
       JSON.stringify({
         name: "consumer",
         type: "module",
-        dependencies: { svelte: "5.57.1", "@sveltejs/kit": "2.70.3" },
+        dependencies: { svelte: "5.57.3", "@sveltejs/kit": "2.70.3" },
       }),
     );
     write(

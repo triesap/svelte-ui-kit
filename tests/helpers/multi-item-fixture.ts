@@ -1,3 +1,4 @@
+import { writeFixtureWorkspace } from "./workspace-catalog.js";
 /**
  * Shared representative multi-item registry fixture for the RCLD-04 lifecycle
  * qualification. Extracted from the accepted `multi-item-lifecycle.test.ts`
@@ -34,7 +35,7 @@ const PKG_ROOT = process.cwd();
 const FIXTURE = path.join(PKG_ROOT, "tests/fixtures/consumer");
 
 export const MULTI_ITEM_COMPATIBILITY = {
-  svelte: "^5.57.1",
+  svelte: "^5.57.3",
   bits: "^2.19.3",
   date: "^3.8.1",
 };
@@ -161,7 +162,7 @@ export function seedMultiItemConsumer(page: string): string {
     "package.json",
     ".native-build",
     "vite.config.ts",
-    "svelte.config.js",
+    "svelte.config.ts",
     "tsconfig.json",
     "src/app.html",
   ]) {
@@ -169,6 +170,7 @@ export function seedMultiItemConsumer(page: string): string {
       recursive: true,
     });
   }
+  writeFixtureWorkspace(consumer);
   symlinkSync(
     path.join(FIXTURE, "node_modules"),
     path.join(consumer, "node_modules"),

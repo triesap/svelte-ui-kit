@@ -25,7 +25,7 @@
  * every operation, while a compiled validator set is never reused across
  * different content.
  *
- * `ajv` 6 is a CommonJS module whose `export =` is a constructable value. It is
+ * `ajv` is loaded as its genuine CommonJS constructable value. It is
  * loaded through `createRequire` so the ESM build does not depend on a
  * synthetic default import.
  */
@@ -43,6 +43,7 @@ import {
 } from "./errors.js";
 
 interface AjvOptions {
+  strict?: boolean;
   allErrors?: boolean;
   coerceTypes?: boolean;
   useDefaults?: boolean;
@@ -58,6 +59,7 @@ type AjvConstructor = new (options?: AjvOptions) => AjvInstance;
 const nodeRequire = createRequire(import.meta.url);
 
 const AJV_OPTIONS: AjvOptions = {
+  strict: true,
   allErrors: true,
   coerceTypes: false,
   useDefaults: false,
@@ -93,7 +95,12 @@ function schemaPath(file: string): string {
 
 function createAjv(): AjvInstance {
   const Ajv = nodeRequire("ajv") as AjvConstructor;
-  return new Ajv(AJV_OPTIONS);
+  const addFormats = nodeRequire("ajv-formats") as (
+    instance: AjvInstance,
+  ) => void;
+  const instance = new Ajv(AJV_OPTIONS);
+  addFormats(instance);
+  return instance;
 }
 
 function toIssues(
@@ -101,7 +108,7 @@ function toIssues(
   locator: string | undefined,
 ): ModelIssue[] {
   return errors.map((error) => {
-    const path = error.dataPath === "" ? "/" : error.dataPath;
+    const path = error.instancePath === "" ? "/" : error.instancePath;
     return issue(
       "SCHEMA_INVALID",
       `${path} ${error.message ?? "failed schema validation"}`,

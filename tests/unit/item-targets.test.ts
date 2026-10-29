@@ -21,7 +21,7 @@ function base(overrides: Record<string, unknown>): Record<string, unknown> {
     kind: "component",
     version: "0.1.0",
     description: "A native button.",
-    compatibility: { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" },
+    compatibility: { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" },
     files: [
       {
         source: "templates/button.svelte",
@@ -106,7 +106,7 @@ test("simple, compound and CSS-only sample items validate", () => {
     kind: "foundation",
     version: "0.1.0",
     description: "Semantic design tokens.",
-    compatibility: { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" },
+    compatibility: { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" },
     files: [],
     exports: [],
     styles: [
@@ -191,7 +191,7 @@ test("a foundation cannot invent a source file or export", () => {
     kind: "foundation",
     version: "0.1.0",
     description: "Semantic design tokens.",
-    compatibility: { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" },
+    compatibility: { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" },
     files: [],
     exports: [{ name: "TokenContract", target: "tokens.ts", kind: "type" }],
     styles: [],

@@ -208,6 +208,7 @@ test(
         "schema",
         "tsconfig.json",
         "package.json",
+        "pnpm-workspace.yaml",
         "README.md",
         "docs/README.md",
         "docs/CHANGELOG.md",
@@ -257,16 +258,16 @@ test(
         JSON.stringify({
           private: true,
           type: "module",
-          packageManager: "pnpm@11.22.0",
+          packageManager: "pnpm@12.16.1",
           dependencies: {
             "bits-ui": `file:./vendor/${NATIVE_RECIPE.native.archive}`,
-            svelte: "5.57.1",
+            svelte: "5.57.3",
             "@internationalized/date": "3.12.4",
           },
           devDependencies: {
-            csstype: "3.1.3",
-            "@types/node": "24.19.0",
-            "svelte-check": "4.7.6",
+            csstype: "3.2.3",
+            "@types/node": "24.19.2",
+            "svelte-check": "4.7.7",
           },
         }),
       );

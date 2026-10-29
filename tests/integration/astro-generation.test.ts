@@ -32,18 +32,18 @@ function fixture(
       name: `${target}-app`,
       type: "module",
       private: true,
-      packageManager: "pnpm@11.22.0",
+      packageManager: "pnpm@12.16.1",
       dependencies: {
         ...(target === "astro"
           ? { astro: "7.4.4", "@astrojs/svelte": "9.1.2" }
           : { "@sveltejs/kit": "2.70.3" }),
-        svelte: "5.57.1",
+        svelte: "5.57.3",
       },
     }),
   );
   project.writeFile(
     "node_modules/svelte/package.json",
-    JSON.stringify({ name: "svelte", version: "5.57.1" }),
+    JSON.stringify({ name: "svelte", version: "5.57.3" }),
   );
   if (target === "astro")
     project.writeFile(

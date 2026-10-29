@@ -65,7 +65,7 @@ for (const custom of [false, true])
       await expect(content).toHaveCount(0);
       await expect(page.locator("#trigger")).toBeFocused();
       await expect(page.locator("#refs")).toHaveText("BUTTON/none");
-      await expect(page.locator("#state")).toContainText("complete false,");
+      await expect(page.locator("#state")).toHaveText(/complete true,false,$/);
     });
     test("Escape and outside dismissal honor exact forwarded cancellation policies", async ({
       page,
@@ -170,14 +170,16 @@ for (const custom of [false, true])
     }) => {
       await page.locator("#trigger").click();
       await expect(page.locator("#content")).toBeVisible();
+      await expect(page.locator("#state")).toHaveText(/complete true,$/);
       await page.locator("#close").click();
       await expect(page.locator("#content")).toHaveCount(0);
-      await expect(page.locator("#state")).toContainText("complete false,");
+      await expect(page.locator("#state")).toHaveText(/complete true,false,$/);
       await page.locator("#native-trigger").click();
       await expect(page.locator("#native-content")).toBeVisible();
+      await expect(page.locator("#native-completes")).toHaveText("true,");
       await page.locator("#native-close").click();
       await expect(page.locator("#native-content")).toHaveCount(0);
-      await expect(page.locator("#native-completes")).toHaveText("false,");
+      await expect(page.locator("#native-completes")).toHaveText("true,false,");
     });
     test("actual autofocus cancellation is preserved and missing accessible-name input is caught", async ({
       page,

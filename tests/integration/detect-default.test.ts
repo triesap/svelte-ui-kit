@@ -26,7 +26,7 @@ test("default SvelteKit consumer is detected without writing", (t) => {
     "package.json",
     JSON.stringify({
       name: "detect-default-fixture",
-      dependencies: { svelte: "5.57.1" },
+      dependencies: { svelte: "5.57.3" },
       devDependencies: { "@sveltejs/kit": "2.70.3" },
     }),
   );
@@ -68,7 +68,7 @@ test("a non-SvelteKit project fails clearly", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ name: "plain", dependencies: { svelte: "5.57.1" } }),
+    JSON.stringify({ name: "plain", dependencies: { svelte: "5.57.3" } }),
   );
 
   const result = detectDefaultProject(project.root);
@@ -123,7 +123,7 @@ test("a config filename alone is not proof of a SvelteKit application", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ name: "svelte-only", dependencies: { svelte: "5.57.1" } }),
+    JSON.stringify({ name: "svelte-only", dependencies: { svelte: "5.57.3" } }),
   );
   project.writeFile("svelte.config.js", "export default {};\n");
 
@@ -248,7 +248,7 @@ test("a spread in the exported config is unsupported, not defaulted", (t) => {
   const result = detectDefaultProject(project.root);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(issueCodes(result), [
-    "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
+    "PROJECT_SVELTEKIT_EXTENSIONS_UNSUPPORTED",
   ]);
 });
 
@@ -281,7 +281,7 @@ test("a later spread overriding a proven kit mapping is unsupported", (t) => {
   const result = detectDefaultProject(root);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(issueCodes(result), [
-    "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
+    "PROJECT_SVELTEKIT_EXTENSIONS_UNSUPPORTED",
   ]);
 });
 
@@ -297,7 +297,7 @@ test("a duplicate kit key is unsupported", (t) => {
   const result = detectDefaultProject(root);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(issueCodes(result), [
-    "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
+    "PROJECT_SVELTEKIT_EXTENSIONS_UNSUPPORTED",
   ]);
 });
 
@@ -317,7 +317,7 @@ test("a later mutation of a referenced config is unsupported", (t) => {
   const result = detectDefaultProject(root);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(issueCodes(result), [
-    "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
+    "PROJECT_SVELTEKIT_EXTENSIONS_UNSUPPORTED",
   ]);
 });
 
@@ -332,7 +332,7 @@ test("a malformed configuration is unsupported", (t) => {
   const result = detectDefaultProject(root);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(issueCodes(result), [
-    "PROJECT_SVELTEKIT_CONFIG_UNSUPPORTED",
+    "PROJECT_SVELTEKIT_EXTENSIONS_UNSUPPORTED",
   ]);
 });
 

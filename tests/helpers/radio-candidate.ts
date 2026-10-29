@@ -52,7 +52,7 @@ export function buildRadioCandidate() {
       ...sources.map((file) => `src/lib/candidate/radio/${file}`),
       route,
       "package.json",
-      "svelte.config.js",
+      "svelte.config.ts",
       ...production.sort(),
     ];
     return {

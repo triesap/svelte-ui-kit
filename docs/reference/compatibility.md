@@ -1,28 +1,49 @@
 # Compatibility and measured limits
 
-Compatibility is bounded by the actual implementation, tests and qualified
-native graph. An engine range, source type or configured CI job is not execution
-evidence. This page records the current contract and the measured baseline at
-revision `ae136d7d08ac4efeffdd2056d49dd554557dd68d`; historical observations are
-not relabeled as fresh tests of a later checkout.
+Compatibility is bounded by actual native checks and reviewed source. Current
+pins and qualified distribution identity are below. The later behavior table
+retains the original measured limits from revision
+`ae136d7d08ac4efeffdd2056d49dd554557dd68d`; it is not a claim that all historical
+browser/platform cases were repeated for each dependency update.
 
 ## Toolchain and distribution
 
-The tested toolchain is Node 24.21.0, pnpm 11.22.0, Svelte 5.57.1,
-Bits 2.19.5-svelte-ui-kit.2, date 3.12.4, TypeScript 6.0.3,
-svelte-check 4.7.6, SvelteKit 2.70.3, Vite 8.3.1 and csstype 3.1.3.
-Package engines admit Node >=24.21.0 <25; that is not a claim of testing every
+The tested toolchain is Node 24.22.1, pnpm 12.16.1, Svelte 5.57.3,
+Bits 2.20.2-svelte-ui-kit.1, date 3.12.4, TypeScript 6.0.3,
+svelte-check 4.7.7, SvelteKit 2.70.3, Vite 8.3.5 and csstype 3.2.3.
+Package engines admit Node >=24.22.1 <25; that is not a claim of testing every
 Node 24 update. The package remains private and unpublished. No registry release
 or automated dependency installation is assumed.
 
 The authentic native archive is a local qualified source build, not an upstream
 release. Its SHA-256 is
-`1384075b9d764f80b92a94e378f233c2382dd6125fb3c301ae46be6d7746e603`.
+`1e952f7cb1edd822650384e9e30dd75e864b3848d4a20fc73cb8ccd5224d1f27`.
 The producer recipe, patch, emitter inputs and locks own reproduction. Strict
 checking uses skipLibCheck=false with zero errors/warnings; installed declaration
 patching, hiding imports and diagnostic suppression do not qualify it. Positive
 bindings, causal invalid controls and representative mutual type comparisons
 complement runtime tests without claiming exhaustive type equivalence.
+
+Normal workspace dependency versions have one authored catalog in
+`pnpm-workspace.yaml`; package-owned native archive locators remain explicit.
+The following compatible stable exceptions are owned by this kit's maintainers:
+
+| Role                             | Selected version | Compatibility reason                                                                                                        |
+| -------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript                       | 6.0.3            | Astro/Svelte/checker/emitter and typescript-eslint peers exclude current TypeScript7.                                       |
+| SvelteKit                        | 2.70.3           | The supported legacy mapping contract uses svelte.config and Kit2 files/lib behavior; Kit3 changes configuration ownership. |
+| Node adapter                     | 5.5.7            | Adapter6 requires Kit3.                                                                                                     |
+| Native Runed                     | 0.35.1           | Bits' pinned upstream catalog requires ^0.35.1; latest0.38 also requires Kit3.                                              |
+| Node declarations                | 24.19.2          | They match the selected Node24 runtime rather than a newer major.                                                           |
+| Emitter build compiler framework | Svelte4.2.20     | The pinned upstream emitter build requires ~4.2.19; application/native consumers use Svelte5.57.3.                          |
+
+These decisions follow the actual package peer/engine/source requirements. See
+[Kit3 migration](https://svelte.dev/docs/kit/migrating-to-sveltekit-3) and the
+producer contract at `docs/agents/native-dependency.md` in the development repository.
+A version range does not qualify an arbitrary installed graph. Supported Kit
+mapping additionally proves one direct zero-argument `sveltekit()` Vite plugin;
+options, dynamic/ambiguous configurations and Kit3 installations refuse with
+captured nonmutating diagnostics. New executable configuration uses TypeScript.
 
 Follow [getting started](../getting-started.md) for explicit archive ownership.
 Generated app source imports local siblings and supported native APIs; it has no
@@ -35,7 +56,7 @@ framework/check/build tooling. The original license texts and attribution remain
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Reset cancellation      | Raw Svelte text and generated Field preserve values for canceled application-invoked form.reset(). Trusted reset-button clicks can restore native text defaults despite preventDefault. Switch/Checkbox/Radio's guarded native fields preserve cancellation and resolve current owners; no universal reset-cancellation claim or extra text engine is made.          |
 | Closed forceMount modal | Both modal families' default nondelegated retained closed Content can lock body pointer interaction even without Overlay. Teardown restores it. Arbitrary caller overlays and animations need their own checks.                                                                                                                                                      |
-| First opening           | Newly portaled first-open completion can omit native completion callbacks; completed close can report false. Direct native controls reproduce this. Callbacks are forwarded without synthesized presence.                                                                                                                                                            |
+| First opening           | Current Bits2.20.2-svelte-ui-kit.1 reports true then false for completed portal opening/closing; wrapper and direct-native controls require that exact sequence. This fixes the historical first-open omission measured on the prior graph. Callbacks remain forwarded without synthesized presence.                                                                 |
 | SSR relationships       | Some inferred links register after earlier server evaluation and complete during hydration. Native caller aria-label is available when initial server naming is necessary. IDs alone do not prove naming.                                                                                                                                                            |
 | Floating wrapper IDs    | Native Menu's nonsemantic floating wrapper useId() is a process counter. Equivalent SSR preserves semantic component/form IDs, state and valid relationships; it does not reset every native wrapper ID per request.                                                                                                                                                 |
 | CSP                     | Denying style attributes rejects native initial floating/measurement styles; later CSSOM geometry does not establish strict SSR parity. Measured Menu policy permits style attributes with nonce scripts and self-hosted CSS. Svelte Avatar's server image event recorder attributes also exist before hydration. Plain CSS is not zero runtime inline styling.      |
@@ -53,7 +74,7 @@ or alter source palettes to disguise an unresolved finding.
 
 Disposition: deliberately non-generated. The original source KitIdProvider and
 use_kit_id counter/provider is not an installable item, helper, export or alias.
-Pinned Svelte5.57.1 and Bits2.19.5-svelte-ui-kit.2 supply native per-instance
+Pinned Svelte5.57.3 and Bits2.20.2-svelte-ui-kit.1 supply native per-instance
 semantic identity. Field uses `$props.id()` and a per-Root context; its shared
 Symbol is a key, not shared relationship state. Native Bits createId formats
 the part's `$props.id()` result rather than allocating a kit counter.

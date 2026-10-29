@@ -41,7 +41,7 @@ for (const custom of [false, true])
         write(
           fixture.root,
           "node_modules/svelte/package.json",
-          JSON.stringify({ name: "svelte", version: "5.57.1" }),
+          JSON.stringify({ name: "svelte", version: "5.57.3" }),
         );
         const added = fixture.run(["add", "card"]);
         assert.equal(added.status, 0, added.stderr + added.stdout);

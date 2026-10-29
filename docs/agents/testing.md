@@ -8,7 +8,7 @@ accommodate tool failures or mistake configured remote jobs for executed evidenc
 
 ## Bootstrap and authoring
 
-From the repository root with Node 24.21.0/pnpm 11.22.0:
+From the repository root with Node 24.22.1/pnpm 12.16.1:
 
 ```sh
 node tools/prepare-native-dependency.mjs --fixture

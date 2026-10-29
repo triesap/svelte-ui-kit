@@ -72,6 +72,7 @@
       "anyOf": [{ "$ref": "#/definitions/digest" }, { "type": "null" }]
     },
     "recipeSha256": { "$ref": "#/definitions/digest" },
+    "packagerAdapterSha256": { "$ref": "#/definitions/digest" },
     "producerLocks": {
       "type": "object",
       "additionalProperties": false,

@@ -149,6 +149,46 @@ function sourceGuard(root: string) {
     controls.push({ kind, output, events });
     writeFileSync(audit, "");
   }
+  // pnpm12 is native; prove its real Node children inherit the guard.
+  const inheritedControls: unknown[] = [];
+  for (const [kind, code, script] of [
+    [
+      "source",
+      "OWNED_AUTHORING_UNAVAILABLE",
+      `const require=(await import('node:module')).createRequire(import.meta.url);require('node:fs').readFileSync(${JSON.stringify(actual)})`,
+    ],
+    [
+      "network",
+      "OWNED_NETWORK_DISABLED",
+      `await fetch('https://example.invalid/owned-guard-control')`,
+    ],
+  ] as const) {
+    const program = `try{${script};throw Error('inherited guard did not reject')}catch(e){if(e.code!==${JSON.stringify(code)})throw e;console.log(e.code)}`;
+    const output = nativeCommand(
+      root,
+      "pnpm",
+      ["exec", process.execPath, "--input-type=module", "--eval", program],
+      env,
+    );
+    assert.ok(output.includes(code));
+    const events = readFileSync(audit, "utf8")
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    assert.equal(events.filter((event) => event.code === code).length, 1);
+    for (const event of events)
+      if (event.code !== code) {
+        assert.equal(event.kind, "unavailable-metadata");
+        assert.equal(event.code, "ENOENT");
+      }
+    inheritedControls.push({ kind, code, output, events });
+    writeFileSync(audit, "");
+  }
+  writeFileSync(
+    path.join(root, "pnpm-guard-controls.json"),
+    JSON.stringify(inheritedControls, null, 2),
+  );
   const absentControls: unknown[] = [];
   const file = JSON.stringify(actual);
   for (const [kind, script] of [
@@ -462,6 +502,7 @@ test(
           root,
           sourceDenials: 4,
           metadataAbsenceControls: 6,
+          inheritedPnpmGuardControls: 2,
           enforcedMetadataAbsences: absences.length,
           status: "pass",
         });

@@ -37,7 +37,7 @@ for (const custom of [false, true])
       write(
         fixture.root,
         "node_modules/svelte/package.json",
-        JSON.stringify({ name: "svelte", version: "5.57.1" }),
+        JSON.stringify({ name: "svelte", version: "5.57.3" }),
       );
       // Use the actual package: public docs must not substitute synthetic items.
       const cli = path.resolve("dist/cli/main.js");

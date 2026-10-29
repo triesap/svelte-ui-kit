@@ -42,13 +42,13 @@ function fixture(
           dependencies: {
             astro: "7.4.4",
             "@astrojs/svelte": "9.1.2",
-            svelte: "5.57.1",
+            svelte: "5.57.3",
           },
         }
       : {
           name: "component-library",
           type: "module",
-          peerDependencies: { svelte: "^5.57.1" },
+          peerDependencies: { svelte: "^5.57.3" },
           exports: {
             ".": {
               types: "./dist/index.d.ts",
@@ -98,7 +98,7 @@ test("Astro requires genuine declared framework and statically captured integrat
   project.writeFile(
     "package.json",
     JSON.stringify({
-      dependencies: { svelte: "5.57.1", "@sveltejs/kit": "2.70.3" },
+      dependencies: { svelte: "5.57.3", "@sveltejs/kit": "2.70.3" },
     }),
   );
   assert.equal(captureTargetEvidence(project.root, astro).ok, false);
@@ -184,8 +184,8 @@ test("library export subpaths and normalized Svelte peer ranges are actual packa
   const base = {
     name: "library",
     type: "module",
-    devDependencies: { svelte: "5.57.1" },
-    peerDependencies: { svelte: "^5.57.1" },
+    devDependencies: { svelte: "5.57.3" },
+    peerDependencies: { svelte: "^5.57.3" },
     exports: {
       ".": { svelte: "./dist/index.js", types: "./dist/index.d.ts" },
       "./styles.css": "./src/styles/index.css",
@@ -223,7 +223,7 @@ test("library export subpaths and normalized Svelte peer ranges are actual packa
   );
   project.writeFile(
     "pnpm-workspace.yaml",
-    "packages:\n  - .\ncatalogs:\n  compatible:\n    svelte: ^5.57.1\n",
+    "packages:\n  - .\ncatalogs:\n  compatible:\n    svelte: ^5.57.3\n",
   );
   const before = snapshotTree(project.root);
   assert.ok(captureTargetEvidence(project.root, library).ok);

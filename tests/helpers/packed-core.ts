@@ -60,7 +60,7 @@ export function installPackedCore() {
         name: "owned-packed-core-host",
         private: true,
         type: "module",
-        packageManager: "pnpm@11.22.0",
+        packageManager: "pnpm@12.16.1",
         dependencies: { "svelte-ui-kit": `file:${archive}` },
       }),
     );

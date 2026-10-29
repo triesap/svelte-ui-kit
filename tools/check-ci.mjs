@@ -148,7 +148,15 @@ const canonical = (value) =>
 const equal = (a, b) =>
   JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
 
-export function checkCi(source, manifest, fixture, fixtureConfig) {
+export function checkCi(
+  source,
+  manifest,
+  fixture,
+  fixtureConfig,
+  workspace = parseDocument(
+    readFileSync(path.join(root, "pnpm-workspace.yaml"), "utf8"),
+  ).toJS(),
+) {
   const issues = [];
   const fail = (code, message) => issues.push({ code, message });
   let workflow;
@@ -253,10 +261,10 @@ export function checkCi(source, manifest, fixture, fixtureConfig) {
         uses: CI_ACTIONS.checkout,
         with: { "fetch-depth": 0, "persist-credentials": false },
       },
-      { uses: CI_ACTIONS.pnpm, with: { version: "11.22.0" } },
+      { uses: CI_ACTIONS.pnpm, with: { version: "12.16.1" } },
       {
         uses: CI_ACTIONS.node,
-        with: { "node-version": "24.21.0", cache: "pnpm" },
+        with: { "node-version": "24.22.1", cache: "pnpm" },
       },
     ];
     expectedActions.forEach((expected, index) => {
@@ -313,8 +321,9 @@ export function checkCi(source, manifest, fixture, fixtureConfig) {
         `${name}: preserve its full repository-owned command without selectors or skipped checks.`,
       );
   if (
-    manifest?.packageManager !== "pnpm@11.22.0" ||
-    manifest?.devDependencies?.yaml !== "2.9.1"
+    manifest?.packageManager !== "pnpm@12.16.1" ||
+    manifest?.dependencies?.yaml !== "catalog:" ||
+    workspace?.catalog?.yaml !== "2.9.1"
   )
     fail(
       "CI_TOOLCHAIN",

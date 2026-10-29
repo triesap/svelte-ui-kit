@@ -132,7 +132,7 @@ test("ordinary library members do not count as applications", (t) => {
   );
   project.writeFile(
     "apps/lib/package.json",
-    JSON.stringify({ name: "lib", dependencies: { svelte: "5.57.1" } }),
+    JSON.stringify({ name: "lib", dependencies: { svelte: "5.57.3" } }),
   );
 
   const result = resolveProjectRoot({ cwd: ".", invocationDir: project.root });
@@ -327,7 +327,7 @@ test("ordinary typed Svelte libraries preserve legacy automatic app selection un
     JSON.stringify({
       name: "@example/ui",
       type: "module",
-      peerDependencies: { svelte: "5.57.1" },
+      peerDependencies: { svelte: "5.57.3" },
       exports: {
         ".": { types: "./dist/index.d.ts", svelte: "./dist/index.js" },
         "./styles.css": "./src/styles.css",

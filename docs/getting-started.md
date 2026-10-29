@@ -7,7 +7,7 @@ assumed. Use a separate CLI host so the application has no kit runtime dependenc
 
 ## Build a local distribution
 
-Use Node **24.21.0** and pnpm **11.22.0** for the tested baseline. These are the
+Use Node **24.22.1** and pnpm **12.16.1** for the tested baseline. These are the
 versions in the repository's `.node-version` and `package.json`; its package
 engine range is narrower than a promise of support for all Node releases.
 Git, a POSIX shell, `tar`, and SHA-256 tooling are needed by the local procedures.
@@ -58,27 +58,27 @@ install Svelte/Bits dependencies into the application or change its manifest.
 Set `APP` to the absolute path of an existing SvelteKit application package, not
 a workspace root. Back up or commit current work before installation. The app
 must declare SvelteKit, have supported configuration and own its check/build
-tooling. The tested setup uses SvelteKit 2.70.3, Vite 8.3.1, TypeScript 6.0.3,
-and svelte-check 4.7.6. The
+tooling. The tested setup uses SvelteKit 2.70.3, Vite 8.3.5, TypeScript 6.0.3,
+and svelte-check 4.7.7. The
 [tested consumer manifest](https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/tests/fixtures/consumer/package.json)
 is a source reference, not a promise that the CLI creates an application.
 
-For the complete catalog, explicitly install Svelte 5.57.1 and
+For the complete catalog, explicitly install Svelte 5.57.3 and
 `@internationalized/date` 3.12.4, then copy the authentic local Bits archive into
 the application **before** installing it. Run this with `APP` and `ARCHIVE` set:
 
 ```sh
-pnpm --dir "$APP" add svelte@5.57.1 @internationalized/date@3.12.4
+pnpm --dir "$APP" add svelte@5.57.3 @internationalized/date@3.12.4
 cd "$APP"
 test ! -L vendor && mkdir -p vendor && test -d vendor
-NATIVE_ARCHIVE=bits-ui-2.19.5-svelte-ui-kit.2.tgz
+NATIVE_ARCHIVE=bits-ui-2.20.2-svelte-ui-kit.1.tgz
 test ! -e "vendor/$NATIVE_ARCHIVE" && test ! -L "vendor/$NATIVE_ARCHIVE" && \
   tar -xOf "$ARCHIVE" "package/dist/native/$NATIVE_ARCHIVE" > "vendor/$NATIVE_ARCHIVE"
 shasum -a 256 "vendor/$NATIVE_ARCHIVE"
 ```
 
 Proceed only if the native archive digest is exactly
-`1384075b9d764f80b92a94e378f233c2382dd6125fb3c301ae46be6d7746e603`.
+`1e952f7cb1edd822650384e9e30dd75e864b3848d4a20fc73cb8ccd5224d1f27`.
 Then, still in `APP`, run:
 
 ```sh

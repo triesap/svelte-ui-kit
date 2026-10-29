@@ -70,7 +70,7 @@ function withRoot(body: (root: string) => void): void {
         name: "consumer",
         type: "module",
         dependencies: {
-          svelte: "5.57.1",
+          svelte: "5.57.3",
           "@sveltejs/kit": "2.70.3",
           "bits-ui": "2.19.3",
           "@internationalized/date": "3.12.4",
@@ -316,7 +316,7 @@ test("a metadata-only re-init publishes only the changed lock", () => {
         schemaVersion: 1,
         registryVersion: "0.2.0",
         compatibility: {
-          svelte: "5.57.1",
+          svelte: "5.57.3",
           bits: "2.19.3",
           date: "^3.8.1",
         },

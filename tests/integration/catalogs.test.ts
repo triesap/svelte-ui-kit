@@ -17,7 +17,7 @@ import { resolveEffectiveConfig } from "../../src/codegen/effective-config.js";
 import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 
 const yaml =
-  "packages:\n  - apps/*\ncatalog:\n  svelte: 5.57.1\ncatalogs:\n  compatible:\n    upstream-fixture: 2.19.3\n";
+  "packages:\n  - apps/*\ncatalog:\n  svelte: 5.57.3\ncatalogs:\n  compatible:\n    upstream-fixture: 2.19.3\n";
 
 function fixture(t: { after(fn: () => void): void }) {
   const workspace = createTempProject();
@@ -25,7 +25,7 @@ function fixture(t: { after(fn: () => void): void }) {
   workspace.writeFile("pnpm-workspace.yaml", yaml);
   workspace.writeFile(
     "package.json",
-    JSON.stringify({ private: true, packageManager: "pnpm@11.22.0" }),
+    JSON.stringify({ private: true, packageManager: "pnpm@12.16.1" }),
   );
   workspace.writeFile(
     "apps/web/package.json",
@@ -42,7 +42,7 @@ function fixture(t: { after(fn: () => void): void }) {
     }),
   );
   for (const [name, version] of [
-    ["svelte", "5.57.1"],
+    ["svelte", "5.57.3"],
     ["upstream-fixture", "2.19.3"],
   ])
     workspace.writeFile(
@@ -83,7 +83,7 @@ test("catalog declarations retain strict installed version and package identity 
     assert.equal(incompatible.value[0]?.status, "install_incompatible");
   workspace.writeFile(
     "apps/web/node_modules/svelte/package.json",
-    JSON.stringify({ name: "foreign", version: "5.57.1" }),
+    JSON.stringify({ name: "foreign", version: "5.57.3" }),
   );
   assert.equal(
     inspectDependencyState(root, [{ name: "svelte", range: "^5" }]).ok,
@@ -94,18 +94,18 @@ test("catalog declarations retain strict installed version and package identity 
 test("malformed, duplicate, aliased, missing and foreign catalog declarations refuse without writes", (t) => {
   const { workspace, root } = fixture(t);
   for (const input of [
-    yaml.replace("svelte: 5.57.1", "svelte: 5.57.1\n  svelte: 5.57.2"),
+    yaml.replace("svelte: 5.57.3", "svelte: 5.57.3\n  svelte: 5.57.2"),
     yaml.replace(
-      "svelte: 5.57.1",
-      "svelte: &version 5.57.1\n  other: *version",
+      "svelte: 5.57.3",
+      "svelte: &version 5.57.3\n  other: *version",
     ),
-    yaml.replace("svelte: 5.57.1", "svelte: !foreign 5.57.1"),
-    yaml.replace("svelte: 5.57.1", "other: 5.57.1"),
-    yaml.replace("svelte: 5.57.1", "svelte: catalog:compatible"),
-    yaml.replace("svelte: 5.57.1", "svelte: file:./vendor/foreign.tgz"),
+    yaml.replace("svelte: 5.57.3", "svelte: !foreign 5.57.3"),
+    yaml.replace("svelte: 5.57.3", "other: 5.57.3"),
+    yaml.replace("svelte: 5.57.3", "svelte: catalog:compatible"),
+    yaml.replace("svelte: 5.57.3", "svelte: file:./vendor/foreign.tgz"),
     yaml.replace(
       "  compatible:",
-      "  default:\n    svelte: 5.57.1\n  compatible:",
+      "  default:\n    svelte: 5.57.3\n  compatible:",
     ),
     yaml + "catalogFile: ./other.yaml\n",
   ]) {
@@ -129,7 +129,7 @@ test("catalogs cannot cross a Git boundary, an excluded member or a symlink", (t
   );
   workspace.writeFile(
     "apps/web/pnpm-workspace.yaml",
-    "packages:\n  - .\ncatalog:\n  svelte: 5.57.1\ncatalogs:\n  compatible:\n    upstream-fixture: 2.19.3\n",
+    "packages:\n  - .\ncatalog:\n  svelte: 5.57.3\ncatalogs:\n  compatible:\n    upstream-fixture: 2.19.3\n",
   );
   assert.equal(
     observeCatalogs(root).issues.length,
@@ -211,12 +211,12 @@ test("captured catalog projection is immutable and later workspace edits invalid
       string,
       string
     >;
-    assert.equal(declared.svelte, "5.57.1");
+    assert.equal(declared.svelte, "5.57.3");
     assert.throws(() => {
       declared.svelte = "4.2.0";
     }, TypeError);
   }
-  workspace.writeFile("pnpm-workspace.yaml", yaml.replace("5.57.1", "5.57.2"));
+  workspace.writeFile("pnpm-workspace.yaml", yaml.replace("5.57.3", "5.57.2"));
   assert.equal(
     verifyCatalogDigest(root, captured.catalogDigest)[0]?.code,
     "AUTHORITY_CATALOG_CHANGED",
@@ -231,7 +231,7 @@ test("catalog edits between original plan and apply refuse before any coordinati
   const validated = validateApplyPlan(input);
   assert.equal(validated.ok, true, JSON.stringify(validated));
   if (!validated.ok) return;
-  workspace.writeFile("pnpm-workspace.yaml", yaml.replace("5.57.1", "5.57.2"));
+  workspace.writeFile("pnpm-workspace.yaml", yaml.replace("5.57.3", "5.57.2"));
   chmodSync(path.join(workspace.root, "apps/web/.hidden/keep"), 0o640);
   const before = snapshotTree(workspace.root);
   const result = applyPlan(validated.value);

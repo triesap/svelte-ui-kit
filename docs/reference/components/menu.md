@@ -69,7 +69,7 @@ The [authoritative manifest](../../../registry/ui/menu.json) owns this inventory
 | `MenuItemIndicatorProps` | type  | `menu/index.ts` |
 
 Registry dependencies: `tokens`.
-Npm requirements: `bits-ui` 2.19.5-svelte-ui-kit.2.
+Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
 - [Authored menu/root.svelte](../../../registry/ui/menu/root.svelte)
 - [Authored menu/trigger.svelte](../../../registry/ui/menu/trigger.svelte)

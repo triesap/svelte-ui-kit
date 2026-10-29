@@ -76,7 +76,7 @@ test("compatible installed peers pass", (t) => {
       dependencies: { svelte: "^5.33.0", "@internationalized/date": "^3.8.1" },
     }),
   );
-  install(project, "svelte", "5.57.1");
+  install(project, "svelte", "5.57.3");
   install(project, "@internationalized/date", "3.12.4");
 
   const before = snapshotTree(project.root);
@@ -114,7 +114,7 @@ test("a peer a particular wrapper does not use is still assessed", (t) => {
     "package.json",
     JSON.stringify({ dependencies: { svelte: "^5.33.0" } }),
   );
-  install(project, "svelte", "5.57.1");
+  install(project, "svelte", "5.57.3");
 
   const result = validatePeerDependencies(project.root, PEER_PLAN);
   assert.equal(result.ok, false);
@@ -138,7 +138,7 @@ test("a declared but uninstalled peer is reported as not installed", (t) => {
       dependencies: { svelte: "^5.33.0", "@internationalized/date": "^3.8.1" },
     }),
   );
-  install(project, "svelte", "5.57.1");
+  install(project, "svelte", "5.57.3");
 
   const result = validatePeerDependencies(project.root, PEER_PLAN);
   assert.equal(result.ok, false);
@@ -243,7 +243,7 @@ test("satisfied actual upstream peers pass", (t) => {
     },
   });
   install(project, "@internationalized/date", "3.12.4");
-  install(project, "svelte", "5.57.1");
+  install(project, "svelte", "5.57.3");
 
   const runtimePlan = plan([
     {
@@ -317,7 +317,7 @@ test("a runtime requirement promotes a conflicting optional upstream peer", (t) 
     peerDependencies: { svelte: "^4" },
     peerDependenciesMeta: { svelte: { optional: true } },
   });
-  install(project, "svelte", "5.57.1");
+  install(project, "svelte", "5.57.3");
 
   const runtimePlan = plan([
     {

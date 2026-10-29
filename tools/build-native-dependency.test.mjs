@@ -65,7 +65,7 @@ test("canonical packing removes OS entropy while preserving genuine content and 
     assert.deepEqual(readFileSync(file), bytes);
   }
 });
-const env = { ...process.env, npm_config_verify_deps_before_run: "false" };
+const env = { ...process.env, pnpm_config_verify_deps_before_run: "false" };
 for (const name of ["NODE_TEST_CONTEXT", "NODE_OPTIONS", "NODE_V8_COVERAGE"])
   delete env[name];
 const positive = `
@@ -320,12 +320,16 @@ test(
           recursive: true,
           filter: (source) => !excluded.has(path.basename(source)),
         });
+        cpSync(
+          path.join(repository, "pnpm-workspace.yaml"),
+          path.join(consumer, "pnpm-workspace.yaml"),
+        );
         const archiveName = path.basename(artifacts[name].archive);
         cpSync(artifacts[name].archive, path.join(consumer, archiveName));
         const manifest = JSON.parse(
           readFileSync(path.join(consumer, "package.json"), "utf8"),
         );
-        manifest.packageManager = "pnpm@11.22.0";
+        manifest.packageManager = "pnpm@12.16.1";
         manifest.dependencies["bits-ui"] = `file:./${archiveName}`;
         writeFileSync(
           path.join(consumer, "package.json"),

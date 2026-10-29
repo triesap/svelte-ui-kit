@@ -73,7 +73,7 @@ const dist = (rel) => import(pathToFileURL(path.join(DIST, rel)).href);
 const abs = (root, rel) => path.join(root, ...rel.split("/"));
 
 const COMPATIBILITY = {
-  svelte: "^5.57.1",
+  svelte: "^5.57.3",
   bits: "^2.19.3",
   date: "^3.8.1",
 };

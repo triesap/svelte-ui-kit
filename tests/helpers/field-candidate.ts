@@ -69,7 +69,7 @@ export function buildFieldCandidate() {
       ...sources.map((file) => `src/lib/candidate/field/${file}`),
       route,
       "package.json",
-      "svelte.config.js",
+      "svelte.config.ts",
       ...production.sort(),
     ];
     return {

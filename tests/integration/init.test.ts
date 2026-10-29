@@ -55,8 +55,8 @@ for (const custom of [false, true])
         JSON.stringify({
           name: "consumer",
           type: "module",
-          packageManager: "pnpm@11.22.0",
-          dependencies: { svelte: "5.57.1", "@sveltejs/kit": "2.70.3" },
+          packageManager: "pnpm@12.16.1",
+          dependencies: { svelte: "5.57.3", "@sveltejs/kit": "2.70.3" },
         }),
       );
       if (custom) {
@@ -157,7 +157,7 @@ test("init rejects a symlinked generated ancestor before any write", () => {
       "package.json",
       JSON.stringify({
         name: "consumer",
-        dependencies: { svelte: "5.57.1", "@sveltejs/kit": "2.70.3" },
+        dependencies: { svelte: "5.57.3", "@sveltejs/kit": "2.70.3" },
       }),
     );
     mkdirSync(path.join(root, "src/lib"), { recursive: true });

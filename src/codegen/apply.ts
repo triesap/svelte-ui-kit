@@ -5,7 +5,7 @@ import {
   type IntegrationFields,
   type LibraryIntegrationFields,
 } from "../project/integration-fields.js";
-import { verifyReadFiles } from "./authority.js";
+import { verifyInstalledReads, verifyReadFiles } from "./authority.js";
 /**
  * The one guarded apply use case (S077, repaired for RCLD04-R1-1/2/3).
  *
@@ -1548,7 +1548,10 @@ export function applyPlan(
 
   // Immutable decision inputs may refuse before coordination. Target/ancestor
   // preimages wait until owned recovery has reconciled interrupted writes.
-  const initialInputs = verifyReadFiles(plan.root, plan.readset.files);
+  const initialInputs = [
+    ...verifyReadFiles(plan.root, plan.readset.files),
+    ...verifyInstalledReads(plan.root, plan.readset.installed ?? []),
+  ];
   if (initialInputs.length)
     return { kind: "refused", transactionId: null, issues: initialInputs };
 

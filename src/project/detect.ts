@@ -1,3 +1,11 @@
+import { observeCatalogs } from "./catalogs.js";
+import { observeInstalled } from "./dependencies.js";
+import { captureConfigurationInputs } from "./configuration-inputs.js";
+import {
+  inspectSvelteKitInputs,
+  validateConfigurationInventory,
+  type SvelteKitCapturedInputs,
+} from "./sveltekit-evidence.js";
 import {
   isLibraryConfig,
   parseGenerationConfig as parseKitConfig,
@@ -105,28 +113,9 @@ type ConfigTextObservation =
   | { readonly kind: "unsafe" }
   | { readonly kind: "unreadable"; readonly code: string };
 
-function readConfigText(abs: string): ConfigTextObservation {
-  const entry = observeEntry(abs);
-  if (entry.kind === "unreadable") return entry;
-  if (entry.kind !== "file") return { kind: "unsafe" };
-  try {
-    return { kind: "ok", text: readFileSync(abs, "utf8") };
-  } catch (error) {
-    return {
-      kind: "unreadable",
-      code: (error as NodeJS.ErrnoException | null)?.code ?? "EIO",
-    };
-  }
-}
-
-/**
- * Detect a default SvelteKit application at `root`. Returns typed
- * `PROJECT_*`/`PROJECT_SVELTEKIT_*` diagnostics for an unsupported or
- * ambiguous target and never writes.
- */
-export function detectDefaultProject(
+function readDetectionManifest(
   root: string,
-): ModelResult<DetectedProject> {
+): ModelResult<Record<string, unknown>> {
   const manifestRel = "package.json";
   const manifestAbs = path.join(root, manifestRel);
   const manifestObservation = observeEntry(manifestAbs);
@@ -202,6 +191,32 @@ export function detectDefaultProject(
     ]);
   }
 
+  return ok(manifest);
+}
+
+/**
+ * Detect a default SvelteKit application at `root`. Returns typed
+ * `PROJECT_*`/`PROJECT_SVELTEKIT_*` diagnostics for an unsupported or
+ * ambiguous target and never writes.
+ */
+export function detectDefaultProject(
+  root: string,
+  captured?: SvelteKitCapturedInputs,
+): ModelResult<DetectedProject> {
+  const manifestRel = "package.json";
+  const readManifest = captured
+    ? ok(captured.manifest)
+    : readDetectionManifest(root);
+  if (!readManifest.ok) return readManifest;
+  const manifest = readManifest.value;
+  const catalog = captured ? null : observeCatalogs(root);
+  if (catalog?.issues.length) return fail(catalog.issues);
+  const inputs: SvelteKitCapturedInputs = captured ?? {
+    manifest:
+      catalog?.manifest.kind === "value" ? catalog.manifest.value : manifest,
+    configuration: captureConfigurationInputs(root),
+    installed: observeInstalled(root, "@sveltejs/kit"),
+  };
   const dependencies = dependencyRecord(manifest, "dependencies");
   const devDependencies = dependencyRecord(manifest, "devDependencies");
   const peerDependencies = dependencyRecord(manifest, "peerDependencies");
@@ -210,11 +225,16 @@ export function detectDefaultProject(
     "@sveltejs/kit" in devDependencies ||
     "@sveltejs/kit" in peerDependencies;
 
+  const inventory = validateConfigurationInventory(inputs.configuration);
+  if (!inventory.ok) return inventory;
+
   // Collect every present config candidate with its non-following kind.
   const present: string[] = [];
   const issues: ModelIssue[] = [];
   for (const candidate of SVELTE_CONFIG_FILES) {
-    const observation = observeEntry(path.join(root, candidate));
+    const observation = inputs.configuration.find(
+      (entry) => entry.path === candidate,
+    )!;
     if (observation.kind === "absent") continue;
     if (observation.kind === "unreadable") {
       issues.push(
@@ -252,6 +272,9 @@ export function detectDefaultProject(
     ]);
   }
 
+  const framework = inspectSvelteKitInputs(inputs);
+  if (!framework.ok) return framework;
+
   if (present.length > 1) {
     return fail([
       issue(
@@ -266,16 +289,13 @@ export function detectDefaultProject(
   let libDir = DEFAULT_LIB_DIR;
   const svelteConfigFile = present[0] ?? null;
   if (svelteConfigFile !== null) {
-    const text = readConfigText(path.join(root, svelteConfigFile));
-    if (text.kind === "unreadable") {
-      return fail([
-        issue(
-          "PROJECT_SVELTEKIT_CONFIG_UNREADABLE",
-          `${svelteConfigFile} could not be read (${text.code})`,
-          svelteConfigFile,
-        ),
-      ]);
-    }
+    const observed = inputs.configuration.find(
+      (entry) => entry.path === svelteConfigFile,
+    )!;
+    const text: ConfigTextObservation =
+      observed.kind === "file"
+        ? { kind: "ok", text: observed.source }
+        : { kind: "unsafe" };
     if (text.kind === "unsafe") {
       return fail([
         issue(

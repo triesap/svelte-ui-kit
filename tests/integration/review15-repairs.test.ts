@@ -137,7 +137,7 @@ function seedPackage(root: string): void {
       name: "consumer",
       type: "module",
       dependencies: {
-        svelte: "5.57.1",
+        svelte: "5.57.3",
         "@sveltejs/kit": "2.70.3",
         "bits-ui": "2.19.3",
         "@internationalized/date": "3.12.4",
@@ -439,13 +439,13 @@ test("an unsafe installed resolution is preserved, never captured as absence", (
       JSON.stringify({
         name: "consumer",
         type: "module",
-        dependencies: { svelte: "5.57.1" },
+        dependencies: { svelte: "5.57.3" },
       }),
     );
     write(
       root,
       "store/package.json",
-      JSON.stringify({ name: "svelte", version: "5.57.1" }),
+      JSON.stringify({ name: "svelte", version: "5.57.3" }),
     );
     mkdirSync(abs(root, "node_modules/svelte"), { recursive: true });
     symlinkSync(

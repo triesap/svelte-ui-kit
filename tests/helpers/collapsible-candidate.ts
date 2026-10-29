@@ -61,7 +61,7 @@ export function buildCollapsibleCandidate() {
       ...sources.map((file) => `src/lib/candidate/collapsible/${file}`),
       route,
       "package.json",
-      "svelte.config.js",
+      "svelte.config.ts",
       ...production.sort(),
     ];
     return {

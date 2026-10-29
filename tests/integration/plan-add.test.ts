@@ -25,7 +25,7 @@ import { createSupportedProject } from "../helpers/project.js";
  * batch (including the config change) when a genuine conflict exists.
  */
 
-const COMPATIBILITY = { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" };
+const COMPATIBILITY = { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" };
 
 function sourceFile(
   fileTarget: string,
@@ -144,7 +144,7 @@ function registryOf(items: readonly RegistrySnapshotItem[]): RegistrySnapshot {
       registryVersion: "0.1.0",
       contentHash: "f".repeat(64),
       compatibility: {
-        svelte: "^5.57.1",
+        svelte: "^5.57.3",
         bits: "^2.19.3",
         date: "^3.8.1",
       },

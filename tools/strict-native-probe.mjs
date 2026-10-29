@@ -21,6 +21,7 @@ import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
 
 const packageRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -57,7 +58,7 @@ const save = () =>
     path.join(reportRoot, `${profile}.json`),
     `${JSON.stringify(record, null, 2)}\n`,
   );
-const env = { ...process.env, npm_config_verify_deps_before_run: "false" };
+const env = { ...process.env, pnpm_config_verify_deps_before_run: "false" };
 for (const name of ["NODE_TEST_CONTEXT", "NODE_OPTIONS", "NODE_V8_COVERAGE"])
   delete env[name];
 function run(command, args, cwd = root) {
@@ -103,7 +104,13 @@ try {
   const manifest = JSON.parse(
     readFileSync(path.join(root, "package.json"), "utf8"),
   );
-  manifest.packageManager = "pnpm@11.22.0";
+  const catalog = parse(
+    readFileSync(path.join(packageRoot, "pnpm-workspace.yaml"), "utf8"),
+  ).catalog;
+  for (const field of ["dependencies", "devDependencies"])
+    for (const [name, value] of Object.entries(manifest[field]))
+      if (value === "catalog:") manifest[field][name] = catalog[name];
+  manifest.packageManager = "pnpm@12.16.1";
   if (profile !== "current") {
     Object.assign(manifest.dependencies, {
       "bits-ui": "2.19.5",

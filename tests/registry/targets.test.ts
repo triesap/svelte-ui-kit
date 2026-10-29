@@ -18,7 +18,7 @@ import { validateResolvedTargets } from "../../src/registry/validate-targets.js"
  * are caught, and unregistered candidates make no public claim.
  */
 
-const COMPATIBILITY = { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" };
+const COMPATIBILITY = { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" };
 
 const file = (target: string, source = `templates/${target}`): ItemFile => ({
   source,

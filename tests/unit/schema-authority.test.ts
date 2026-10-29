@@ -36,7 +36,7 @@ import {
  * paths.
  */
 
-const COMPATIBILITY = { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" };
+const COMPATIBILITY = { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" };
 
 function copySchemas(t: { after: (fn: () => void) => void }): string {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-authority-"));

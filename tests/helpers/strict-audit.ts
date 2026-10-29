@@ -19,9 +19,9 @@ import {
 export const STRICT_AUDIT_PINS = {
   "bits-ui": NATIVE_BASELINE.version,
   typescript: "6.0.3",
-  svelte: "5.57.1",
-  "svelte-check": "4.7.6",
-  csstype: "3.1.3",
+  svelte: "5.57.3",
+  "svelte-check": "4.7.7",
+  csstype: "3.2.3",
   "@internationalized/date": "3.12.4",
 } as const;
 

@@ -12,6 +12,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  renameSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -74,7 +75,7 @@ export function buildNativeDependency({
   assert.equal(NATIVE_RECIPE.schemaVersion, 1, "supported recipe version");
   assert.equal(
     process.versions.node,
-    "24.21.0",
+    NATIVE_RECIPE.toolchain.node,
     "qualified producer Node version",
   );
   assert.ok(output, "explicit fresh output directory required");
@@ -92,11 +93,11 @@ export function buildNativeDependency({
   const work = mkdtempSync(path.join(os.tmpdir(), "suik-native-producer-"));
   writeJson(path.join(work, "package.json"), {
     private: true,
-    packageManager: "pnpm@11.22.0",
+    packageManager: `pnpm@${NATIVE_RECIPE.toolchain.pnpm}`,
   });
   const outcomes = [];
   const reportState = { baseline, outcomes };
-  const env = { ...process.env, npm_config_verify_deps_before_run: "false" };
+  const env = { ...process.env, pnpm_config_verify_deps_before_run: "false" };
   for (const name of ["NODE_TEST_CONTEXT", "NODE_OPTIONS", "NODE_V8_COVERAGE"])
     delete env[name];
   const save = (extra = {}) => {
@@ -205,7 +206,7 @@ export function buildNativeDependency({
   try {
     assert.equal(
       run("pnpm", ["--version"], work).trim(),
-      "11.22.0",
+      NATIVE_RECIPE.toolchain.pnpm,
       "qualified producer pnpm version",
     );
     const emitter = sourceArchive("emitter", emitterSource);
@@ -216,7 +217,7 @@ export function buildNativeDependency({
       run("git", ["apply", patch], emitter.root);
     }
     emitter.manifest.version = NATIVE_RECIPE.emitter.buildVersion;
-    emitter.manifest.packageManager = "pnpm@11.22.0";
+    emitter.manifest.packageManager = `pnpm@${NATIVE_RECIPE.toolchain.pnpm}`;
     Object.assign(
       emitter.manifest.devDependencies,
       NATIVE_RECIPE.emitter.devDependencies,
@@ -235,7 +236,7 @@ export function buildNativeDependency({
     const nativeRoot = path.join(work, "native");
     cpSync(native.root, nativeRoot, { recursive: true });
     native.manifest.version = NATIVE_RECIPE.native.buildVersion;
-    native.manifest.packageManager = "pnpm@11.22.0";
+    native.manifest.packageManager = `pnpm@${NATIVE_RECIPE.toolchain.pnpm}`;
     Object.assign(
       native.manifest.dependencies,
       NATIVE_RECIPE.nativeDependencies,
@@ -244,6 +245,13 @@ export function buildNativeDependency({
       ...NATIVE_RECIPE.nativeDevDependencies,
       svelte2tsx: `file:../tool-archives/${NATIVE_RECIPE.emitter.archive}`,
     };
+    // Package3 no longer supplies the implicit legacy $lib alias. Its public
+    // CLI receives explicit packaging configuration after genuine Kit2 sync.
+    // Both causal variants use identical configuration bytes and commands.
+    const packagerAdapter = readFileSync(
+      path.join(inputRoot, NATIVE_RECIPE.packagerAdapter),
+    );
+    native.manifest.scripts.package = "svelte-package && publint";
     writeJson(path.join(nativeRoot, "package.json"), native.manifest);
     writeFileSync(
       path.join(nativeRoot, "pnpm-workspace.yaml"),
@@ -271,10 +279,16 @@ export function buildNativeDependency({
       ),
       "actual installed source shim",
     );
+    run("pnpm", ["exec", "svelte-kit", "sync"], nativeRoot);
+    renameSync(
+      path.join(nativeRoot, "svelte.config.js"),
+      path.join(nativeRoot, ".native-svelte-config.js"),
+    );
+    writeFileSync(path.join(nativeRoot, "svelte.config.ts"), packagerAdapter);
     run("pnpm", ["run", "package"], nativeRoot);
     for (const [name, bindings] of [
-      ["button", '"ref"'],
-      ["calendar", '"ref" | "value" | "placeholder"'],
+      ["button", ["ref"]],
+      ["calendar", ["ref", "value", "placeholder"]],
     ]) {
       const declaration = readFileSync(
         path.join(
@@ -283,9 +297,25 @@ export function buildNativeDependency({
         ),
         "utf8",
       );
+      save({
+        declarations: { ...reportState.declarations, [name]: declaration },
+      });
       if (!baseline) {
+        const bindingType = /z_\$\$bindings\?:\s*([^;]+);/.exec(
+          declaration,
+        )?.[1];
         assert.ok(
-          declaration.includes(`z_$$bindings?: ${bindings}`),
+          bindingType &&
+            /^"[a-z]+"(?:\s*\|\s*"[a-z]+")*(?:\s*\|\s*undefined)?$/.test(
+              bindingType.trim(),
+            ),
+          `${name} literal binding union: ${JSON.stringify(bindingType)}`,
+        );
+        assert.deepEqual(
+          [...bindingType.matchAll(/"([a-z]+)"/g)]
+            .map((match) => match[1])
+            .sort(),
+          [...bindings].sort(),
           `${name} binding metadata preserved`,
         );
         assert.ok(
@@ -317,6 +347,7 @@ export function buildNativeDependency({
       recipeSha256: nativeDigest(
         readFileSync(path.join(inputRoot, "recipe.json")),
       ),
+      packagerAdapterSha256: nativeDigest(packagerAdapter),
       producerLocks: Object.fromEntries(
         ["emitter", "native"].map((role) => [
           role,

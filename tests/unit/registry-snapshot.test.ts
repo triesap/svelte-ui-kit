@@ -21,7 +21,7 @@ import { computeRegistryContentHash } from "../../src/registry/model.js";
  * wrong identities, missing assets and invalid manifests fail deterministically.
  */
 
-const COMPATIBILITY = { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" };
+const COMPATIBILITY = { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" };
 const SOURCE_TEXT = '<script lang="ts">export interface X {}</script>\n';
 
 function manifestText(id: string): string {

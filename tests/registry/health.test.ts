@@ -29,7 +29,7 @@ import {
  * distinguishes installable advertised items from unregistered candidates.
  */
 
-const COMPATIBILITY = { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" };
+const COMPATIBILITY = { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" };
 const SOURCE_TEXT = '<script lang="ts">export interface X {}</script>\n';
 
 function manifestText(id: string, source: string): string {
@@ -432,7 +432,7 @@ test("a healthy multi-item inventory keeps dependency order and provenance", (t)
     {
       id: "button",
       registryDependencies: ["card"],
-      npmDependencies: [{ name: "svelte", range: "5.57.1", role: "peer" }],
+      npmDependencies: [{ name: "svelte", range: "5.57.3", role: "peer" }],
     },
     {
       id: "card",

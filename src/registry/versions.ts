@@ -74,13 +74,13 @@ export const BITS_UI_PEER_REQUIREMENTS = {
 
 /**
  * Initial advertised frame compatibility: the exact qualified baseline Svelte
- * `5.57.1` and the authenticated local Bits build (exact versions). The `date`
+ * `5.57.3` and the authenticated local Bits build (exact versions). The `date`
  * range is Bits UI's real peer requirement for `@internationalized/date`. This
  * support claim is deliberately narrower than Bits UI's own `^5.33.0` Svelte
  * peer recorded above.
  */
 export const INITIAL_COMPATIBILITY: CompatibilityPolicy = {
-  svelte: "5.57.1",
+  svelte: "5.57.3",
   bits: NATIVE_BASELINE.version,
   date: BITS_UI_PEER_REQUIREMENTS.date,
 };

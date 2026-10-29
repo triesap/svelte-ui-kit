@@ -63,7 +63,7 @@ function onDiskRegistry(root: string): ReturnType<typeof loadRegistrySnapshot> {
     recursive: true,
   });
   const body = "<button>button</button>\n";
-  const compatibility = { svelte: "^5.57.1", bits: "^2.19.3", date: "^3.8.1" };
+  const compatibility = { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" };
   const manifest = JSON.stringify({
     schemaVersion: 1,
     id: "button",

@@ -13,7 +13,7 @@ import type { RegistryItem } from "../../src/registry/item.js";
  */
 
 export const COMPATIBILITY = {
-  svelte: "^5.57.1",
+  svelte: "^5.57.3",
   bits: "^2.19.3",
   date: "^3.8.1",
 };

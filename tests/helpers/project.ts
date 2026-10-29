@@ -113,7 +113,7 @@ export const SUPPORTED_MANIFEST = `${JSON.stringify(
     name: "consumer",
     private: true,
     type: "module",
-    packageManager: "pnpm@11.22.0",
+    packageManager: "pnpm@12.16.1",
     devDependencies: { "@sveltejs/kit": "2.70.3" },
   },
   null,

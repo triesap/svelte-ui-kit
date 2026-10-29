@@ -33,20 +33,20 @@ test("qualified native requirements report complete explicit local setup while o
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ packageManager: "pnpm@11.22.0" }),
+    JSON.stringify({ packageManager: "pnpm@12.16.1" }),
   );
   const before = snapshotTree(project.root);
   const result = render(
     project,
     [`bits-ui@${NATIVE_BASELINE.version}`, "@internationalized/date@^3.8.1"],
-    ["svelte@5.57.1"],
+    ["svelte@5.57.3"],
   );
   assert.ok(result.ok);
   assert.equal(
     result.value.runtimeCommand,
     "pnpm add '@internationalized/date@^3.8.1'",
   );
-  assert.equal(result.value.peerCommand, "pnpm add 'svelte@5.57.1'");
+  assert.equal(result.value.peerCommand, "pnpm add 'svelte@5.57.3'");
   assert.ok(
     result.value.manual?.includes(
       `package/dist/native/${NATIVE_BASELINE.archive}`,
@@ -95,7 +95,7 @@ test("the packageManager field selects the instruction manager", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ packageManager: "pnpm@11.22.0" }),
+    JSON.stringify({ packageManager: "pnpm@12.16.1" }),
   );
 
   const evidence = detectPackageManager(project.root);
@@ -106,12 +106,12 @@ test("the packageManager field selects the instruction manager", (t) => {
   }
 
   const before = snapshotTree(project.root);
-  const result = render(project, ["bits-ui@2.19.3"], ["svelte@5.57.1"]);
+  const result = render(project, ["bits-ui@2.19.3"], ["svelte@5.57.3"]);
   const after = snapshotTree(project.root);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
   assert.equal(result.value.runtimeCommand, "pnpm add 'bits-ui@2.19.3'");
-  assert.equal(result.value.peerCommand, "pnpm add 'svelte@5.57.1'");
+  assert.equal(result.value.peerCommand, "pnpm add 'svelte@5.57.3'");
   // The CLI's own tooling is never part of the consumer instruction.
   assert.ok(!result.value.runtimeCommand?.includes("typescript"));
   assert.deepEqual(after, before, "reporting must not write");
@@ -163,7 +163,7 @@ test("no manager evidence yields null manager and manual guidance", (t) => {
   t.after(() => project.cleanup());
   project.writeFile("package.json", JSON.stringify({ name: "none" }));
 
-  const result = render(project, ["bits-ui@2.19.3"], ["svelte@5.57.1"]);
+  const result = render(project, ["bits-ui@2.19.3"], ["svelte@5.57.3"]);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
   assert.equal(result.value.manager, null);
@@ -229,7 +229,7 @@ test("shell-operator ranges are single-quoted and delivered as one argv", (t) =>
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ packageManager: "pnpm@11.22.0" }),
+    JSON.stringify({ packageManager: "pnpm@12.16.1" }),
   );
 
   for (const [spec, expected] of [
@@ -264,7 +264,7 @@ test("specs with spaces are single-quoted and unsafe specs are rejected", (t) =>
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ packageManager: "pnpm@11.22.0" }),
+    JSON.stringify({ packageManager: "pnpm@12.16.1" }),
   );
 
   const spaced = render(project, ["svelte@^5.0.0 || ^6.0.0"], []);
@@ -293,7 +293,7 @@ test("an unestablished shell yields structured operands, not fabricated quoting"
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ packageManager: "pnpm@11.22.0" }),
+    JSON.stringify({ packageManager: "pnpm@12.16.1" }),
   );
 
   const result = renderDependencyInstructions(project.root, {
@@ -314,12 +314,12 @@ test("reporting never executes a manager or changes the tree", (t) => {
   t.after(() => project.cleanup());
   project.writeFile(
     "package.json",
-    JSON.stringify({ packageManager: "pnpm@11.22.0" }),
+    JSON.stringify({ packageManager: "pnpm@12.16.1" }),
   );
   project.writeDir("node_modules");
   const before = snapshotTree(project.root);
-  render(project, ["bits-ui@2.19.3"], ["svelte@5.57.1"]);
-  render(project, ["bits-ui@2.19.3"], ["svelte@5.57.1"]);
+  render(project, ["bits-ui@2.19.3"], ["svelte@5.57.3"]);
+  render(project, ["bits-ui@2.19.3"], ["svelte@5.57.3"]);
   assert.deepEqual(snapshotTree(project.root), before);
 });
 
@@ -334,7 +334,7 @@ test("the proven owning workspace supplies manager evidence", (t) => {
     "package.json",
     JSON.stringify({
       name: "root",
-      packageManager: "pnpm@11.22.0",
+      packageManager: "pnpm@12.16.1",
       workspaces: ["apps/*"],
     }),
   );

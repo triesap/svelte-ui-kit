@@ -39,7 +39,7 @@ test("declared and installed compatible state is ready", (t) => {
     "package.json",
     JSON.stringify({ dependencies: { svelte: "^5.0.0" } }),
   );
-  install(project, "svelte", "5.57.1");
+  install(project, "svelte", "5.57.3");
 
   const before = snapshotTree(project.root);
   const result = inspectDependencyState(project.root, [
@@ -51,7 +51,7 @@ test("declared and installed compatible state is ready", (t) => {
   if (!result.ok) return;
   assert.equal(result.value[0]?.status, "ready");
   assert.equal(result.value[0]?.declaredField, "dependencies");
-  assert.equal(result.value[0]?.installedVersion, "5.57.1");
+  assert.equal(result.value[0]?.installedVersion, "5.57.3");
   assert.deepEqual(after, before, "inspection must not write");
 });
 
@@ -103,7 +103,7 @@ test("a declared range disjoint from the required range is not ready", (t) => {
     "package.json",
     JSON.stringify({ dependencies: { svelte: "^4" } }),
   );
-  install(project, "svelte", "5.57.1");
+  install(project, "svelte", "5.57.3");
 
   const result = inspectDependencyState(project.root, [
     { name: "svelte", range: "^5" },
@@ -174,7 +174,7 @@ test("a hoisted ancestor install is resolved", (t) => {
     "apps/app/package.json",
     JSON.stringify({ dependencies: { svelte: "^5" } }),
   );
-  install(project, "svelte", "5.57.1");
+  install(project, "svelte", "5.57.3");
 
   const result = inspectDependencyState(`${project.root}/apps/app`, [
     { name: "svelte", range: "^5" },
@@ -182,7 +182,7 @@ test("a hoisted ancestor install is resolved", (t) => {
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
   assert.equal(result.value[0]?.status, "ready");
-  assert.equal(result.value[0]?.installedVersion, "5.57.1");
+  assert.equal(result.value[0]?.installedVersion, "5.57.3");
 });
 
 test("a malformed installed version is typed invalid, not absent", (t) => {
@@ -227,7 +227,7 @@ test("a package-identity mismatch is typed invalid", (t) => {
   );
   project.writeFile(
     "node_modules/svelte/package.json",
-    JSON.stringify({ name: "not-svelte", version: "5.57.1" }),
+    JSON.stringify({ name: "not-svelte", version: "5.57.3" }),
   );
 
   const result = inspectDependencyState(project.root, [

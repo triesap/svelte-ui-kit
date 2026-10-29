@@ -59,7 +59,7 @@ export function buildTabsCandidate(complete = false) {
       ...sources.map((file) => `src/lib/candidate/tabs/${file}`),
       route,
       "package.json",
-      "svelte.config.js",
+      "svelte.config.ts",
       ...production.sort(),
     ];
     return {

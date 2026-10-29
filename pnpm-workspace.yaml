@@ -1,28 +1,43 @@
 packages:
-  - "."
-  - "tests/fixtures/consumer"
-  - "tests/fixtures/astro-consumer"
-  - "tests/fixtures/library"
-  - "tests/fixtures/library-kit-consumer"
+  - .
+  - tests/fixtures/consumer
+  - tests/fixtures/astro-consumer
+  - tests/fixtures/library
+  - tests/fixtures/library-kit-consumer
 catalog:
-  "@astrojs/compiler-rs": "0.5.2"
-  "prettier-plugin-astro": "1.1.2"
-  astro: "7.4.4"
-  "@astrojs/svelte": "9.1.2"
-  "@astrojs/node": "11.1.9"
-  "@astrojs/check": "0.9.12"
-  svelte: "5.57.1"
-  typescript: "6.0.3"
-  "@internationalized/date": "3.12.4"
-  "@types/node": "24.19.0"
-  svelte-check: "4.7.6"
-  csstype: "3.1.3"
-  "@sveltejs/package": "3.0.1"
-  "@sveltejs/kit": "2.70.3"
-  "@sveltejs/adapter-node": "5.5.7"
-  "@sveltejs/vite-plugin-svelte": "7.3.1"
-  vite: "8.3.1"
-  bits-ui: "2.19.5-svelte-ui-kit.2"
+  "@astrojs/compiler-rs": 0.5.2
+  prettier-plugin-astro: 1.1.2
+  astro: 7.4.4
+  "@astrojs/svelte": 9.1.2
+  "@astrojs/node": 11.1.9
+  "@astrojs/check": 0.9.12
+  svelte: 5.57.3
+  typescript: 6.0.3
+  "@internationalized/date": 3.12.4
+  "@types/node": 24.19.2
+  svelte-check: 4.7.7
+  csstype: 3.2.3
+  "@sveltejs/package": 3.0.1
+  "@sveltejs/kit": 2.70.3
+  "@sveltejs/adapter-node": 5.5.7
+  "@sveltejs/vite-plugin-svelte": 7.3.1
+  vite: 8.3.5
+  bits-ui: 2.20.2-svelte-ui-kit.1
+  ajv: 8.20.0
+  semver: 7.8.5
+  yaml: 2.9.1
+  ajv-formats: 3.0.1
+  "@eslint/js": 10.0.1
+  "@playwright/test": 1.64.1
+  "@types/semver": 7.8.0
+  eslint: 10.13.0
+  eslint-config-prettier: 10.1.8
+  eslint-plugin-svelte: 3.23.1
+  globals: 17.13.0
+  prettier: 3.9.10
+  prettier-plugin-svelte: 4.1.1
+  typescript-eslint: 8.72.1
+  jiti: 2.7.0
 minimumReleaseAgeExclude:
   - "@astrojs/markdown-satteri@0.4.6"
   - "@astrojs/prism@4.1.2"

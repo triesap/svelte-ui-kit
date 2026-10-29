@@ -16,17 +16,18 @@
   "bin": {
     "svelte-ui-kit": "./dist/cli/main.js"
   },
-  "packageManager": "pnpm@11.22.0",
+  "packageManager": "pnpm@12.16.1",
   "engines": {
-    "node": ">=24.21.0 <25"
+    "node": ">=24.22.1 <25"
   },
   "dependencies": {
-    "ajv": "6.15.0",
-    "semver": "7.8.5",
-    "svelte": "5.57.1",
-    "typescript": "6.0.3",
-    "yaml": "2.9.1",
-    "@astrojs/compiler-rs": "catalog:"
+    "ajv": "catalog:",
+    "semver": "catalog:",
+    "svelte": "catalog:",
+    "typescript": "catalog:",
+    "yaml": "catalog:",
+    "@astrojs/compiler-rs": "catalog:",
+    "ajv-formats": "catalog:"
   },
   "files": [
     "dist",
@@ -69,22 +70,23 @@
     "test:astro": "node tools/run-unit-tests.mjs --suite integration tests/integration/astro-consumer.test.ts tests/integration/astro-generation.test.ts"
   },
   "devDependencies": {
-    "@eslint/js": "10.0.1",
-    "@internationalized/date": "3.12.4",
-    "@playwright/test": "1.63.0",
-    "@sveltejs/kit": "2.70.3",
-    "@sveltejs/vite-plugin-svelte": "7.3.1",
-    "@types/node": "24.19.0",
-    "@types/semver": "7.8.0",
-    "bits-ui": "file:./.native-build/2.19.5-svelte-ui-kit.2/bits-ui-2.19.5-svelte-ui-kit.2.tgz",
-    "eslint": "10.11.0",
-    "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-svelte": "3.23.0",
-    "globals": "17.12.0",
-    "prettier": "3.9.6",
-    "prettier-plugin-svelte": "4.1.1",
-    "typescript-eslint": "8.71.0",
-    "vite": "8.3.1",
-    "prettier-plugin-astro": "catalog:"
+    "@eslint/js": "catalog:",
+    "@internationalized/date": "catalog:",
+    "@playwright/test": "catalog:",
+    "@sveltejs/kit": "catalog:",
+    "@sveltejs/vite-plugin-svelte": "catalog:",
+    "@types/node": "catalog:",
+    "@types/semver": "catalog:",
+    "bits-ui": "file:./.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-plugin-svelte": "catalog:",
+    "globals": "catalog:",
+    "prettier": "catalog:",
+    "prettier-plugin-svelte": "catalog:",
+    "typescript-eslint": "catalog:",
+    "vite": "catalog:",
+    "prettier-plugin-astro": "catalog:",
+    "jiti": "catalog:"
   }
 }

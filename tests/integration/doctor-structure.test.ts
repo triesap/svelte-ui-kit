@@ -30,7 +30,7 @@ for (const scenario of [
       write(
         fixture.root,
         "node_modules/svelte/package.json",
-        JSON.stringify({ name: "svelte", version: "5.57.1" }),
+        JSON.stringify({ name: "svelte", version: "5.57.3" }),
       );
       const installed = fixture.run(["add", "card"]);
       assert.equal(installed.status, 0, installed.stderr + installed.stdout);

@@ -50,7 +50,7 @@ function realRegistry(root: string): ReturnType<typeof loadRegistrySnapshot> {
   });
   const body = "<button>button</button>\n";
   const compatibility = {
-    svelte: "^5.57.1",
+    svelte: "^5.57.3",
     bits: "^2.19.3",
     date: "^3.8.1",
   };
@@ -108,7 +108,7 @@ function realCompoundRegistry(
     recursive: true,
   });
   const compatibility = {
-    svelte: "^5.57.1",
+    svelte: "^5.57.3",
     bits: "^2.19.3",
     date: "^3.8.1",
   };

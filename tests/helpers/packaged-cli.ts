@@ -1,3 +1,4 @@
+import { writeFixtureWorkspace } from "./workspace-catalog.js";
 /** Build an owned authoring copy, install its real tarball, then remove it. */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -238,7 +239,7 @@ export function installIndependentCli() {
         name: "owned-installed-runtime-host",
         private: true,
         type: "module",
-        packageManager: "pnpm@11.22.0",
+        packageManager: "pnpm@12.16.1",
         dependencies: { "svelte-ui-kit": `file:${archive}` },
       }),
     );
@@ -362,7 +363,7 @@ export function installIndependentCli() {
         ),
       );
       manifest.name = custom ? "owned-runtime-custom" : "owned-runtime-default";
-      manifest.packageManager = "pnpm@11.22.0";
+      manifest.packageManager = "pnpm@12.16.1";
       // Explicit operator setup extracts the actual locally packed CLI member.
       // It never uses an authoring cache as the consumer dependency source.
       const extraction = path.join(consumer, ".owned-cli-extraction");
@@ -389,6 +390,7 @@ export function installIndependentCli() {
         path.join(consumer, "package.json"),
         JSON.stringify(manifest, null, 2),
       );
+      writeFixtureWorkspace(consumer, checkout);
       // Dependency setup is separate from the CLI and uses real declared pins.
       runTool(
         "pnpm",
@@ -407,7 +409,7 @@ export function installIndependentCli() {
         mkdirSync(path.dirname(target), { recursive: true });
         writeFileSync(target, text);
       };
-      write("svelte.config.js", "export default { kit: {} };\n");
+      write("svelte.config.ts", "export default { kit: {} };\n");
       write(
         "src/routes/+layout.svelte",
         '<script lang="ts">let {children} = $props();</script>\n{@render children()}\n',

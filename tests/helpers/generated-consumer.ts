@@ -358,7 +358,7 @@ export const buildRouterLinkConsumer = (custom: boolean, based: boolean) => {
         path.join(root, "static/anchor-download.txt"),
         "Native Anchor download\n",
       );
-      const configFile = path.join(root, "svelte.config.js");
+      const configFile = path.join(root, "svelte.config.ts");
       const config = readFileSync(configFile, "utf8");
       assert.equal(config.split("adapter: adapter(),").length, 2);
       writeFileSync(
@@ -397,7 +397,7 @@ export const buildRouterLinkConsumer = (custom: boolean, based: boolean) => {
         ...consumer.evidence.files,
         ...Object.fromEntries(
           [
-            "svelte.config.js",
+            "svelte.config.ts",
             "src/routes/qualification/router-link/+page.server.ts",
             "src/routes/qualification/router-link-target/+page.svelte",
           ].map((file) => [

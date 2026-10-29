@@ -151,9 +151,9 @@ test("add reports missing/incompatible dependency instructions without installin
           JSON.stringify({
             name: "consumer",
             type: "module",
-            packageManager: "pnpm@11.22.0",
+            packageManager: "pnpm@12.16.1",
             dependencies: {
-              svelte: "5.57.1",
+              svelte: "5.57.3",
               "@sveltejs/kit": "2.70.3",
               "upstream-fixture": "1.0.0",
             },

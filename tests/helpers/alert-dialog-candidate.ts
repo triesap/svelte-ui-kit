@@ -78,7 +78,7 @@ export function buildAlertDialogCandidate(
       ...sources.map((file) => `src/lib/candidate/alert-dialog/${file}`),
       route,
       "package.json",
-      "svelte.config.js",
+      "svelte.config.ts",
       ...productionFiles.sort(),
     ];
     return {
