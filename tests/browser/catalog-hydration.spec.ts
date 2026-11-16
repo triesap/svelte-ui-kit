@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 import { buildCatalogHydrationConsumer } from "../helpers/generated-consumer.js";
 
 async function identity(page: Page) {
@@ -60,22 +64,12 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildCatalogHydrationConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
+      await finishFixtureServer(hosted, () => {
         consumer?.cleanup();
-      }
+      });
     });
     for (const on of [false, true])
       test(`initial values, multiple instances and conditional remount on=${on}`, async ({

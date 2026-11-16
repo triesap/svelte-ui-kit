@@ -1,28 +1,20 @@
 import { writeFileSync } from "node:fs";
 import { buildRadioCandidate } from "../helpers/radio-candidate.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  startFixtureServer,
+  finishFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 let consumer: ReturnType<typeof buildRadioCandidate>;
 let hosted: FixtureServer;
 test.beforeAll(async () => {
   test.setTimeout(240000);
   consumer = buildRadioCandidate();
-  try {
-    hosted = await startFixtureServer({ handler: consumer.handler });
-  } catch (error) {
-    consumer.cleanup();
-    throw error;
-  }
+  hosted = await startFixtureServer({ handler: consumer.handler });
 });
 test.afterAll(async () => {
-  try {
-    if (hosted) {
-      await hosted.server.stop();
-      expect(hosted.server.failure()).toBeNull();
-    }
-  } finally {
-    consumer?.cleanup();
-  }
+  await finishFixtureServer(hosted, () => consumer?.cleanup());
 });
 test.beforeEach(async ({ page }, info) => {
   const file = info.outputPath("radio-candidate.json");
@@ -89,7 +81,7 @@ test("actual disabled and caller cancellation retain native item ordering", asyn
   await expect(page.locator("#value")).toHaveText("b");
   await expect(page.locator("#callbacks")).toHaveText("0; clicks 1");
 });
-test("candidate reset restores its native field and bound selection; raw native control records pinned limitation", async ({
+test("candidate reset restores its native field and bound selection; raw native control records component-state reset policy", async ({
   page,
 }, info) => {
   await page.locator("#choice-b").click();
@@ -102,7 +94,13 @@ test("candidate reset restores its native field and bound selection; raw native 
   await page
     .getByRole("button", { name: "Reset raw native", exact: true })
     .click();
+  // Settle actual native state/DOM before recording its independent policy.
+  await expect(page.locator("#raw-value")).toHaveText("b");
+  await expect(page.locator('input[name="raw"]')).toHaveValue("b");
   const observed = await page.evaluate(() => ({
+    rawForm: new FormData(
+      document.querySelector("#raw-form") as HTMLFormElement,
+    ).get("raw"),
     candidate: document.querySelector("#value")?.textContent,
     raw: document.querySelector("#raw-value")?.textContent,
     candidateField: (
@@ -121,7 +119,8 @@ test("candidate reset restores its native field and bound selection; raw native 
   await expect(page.locator("#choice-a")).toBeChecked();
   await expect(page.locator('input[name="candidate"]')).toHaveValue("a");
   expect(observed.raw).toBe("b");
-  expect(observed.rawField).toBe("");
+  expect(observed.rawField).toBe("b");
+  expect(observed.rawForm).toBe("b");
   await expect(page.locator('input[name="candidate"]')).toHaveCount(1);
 });
 

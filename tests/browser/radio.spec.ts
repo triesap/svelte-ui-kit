@@ -2,7 +2,11 @@ import { readFileSync, writeFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { buildRadioConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 async function instrumentReset(page: Page) {
   await page.addInitScript(() => {
@@ -72,22 +76,12 @@ for (const custom of [false, true]) {
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildRadioConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
+      await finishFixtureServer(hosted, () => {
         consumer?.cleanup();
-      }
+      });
     });
     test.beforeEach(async ({ page }, info) => {
       const file = info.outputPath("installed-radio.json");
@@ -467,22 +461,12 @@ for (const custom of [false, true]) {
       });
       consumer.evidence.ownedMutation =
         "radio-reset-listener-and-timer-cleanup-removed";
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
+      await finishFixtureServer(hosted, () => {
         consumer?.cleanup();
-      }
+      });
     });
     test("missing real cleanup leaks an owner and changes destroyed state so the positive detectors fail", async ({
       page,

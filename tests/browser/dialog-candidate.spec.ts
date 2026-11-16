@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { buildDialogCandidate } from "../helpers/dialog-candidate.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 test.describe("actual unregistered Dialog S106 composition", () => {
   let consumer: ReturnType<typeof buildDialogCandidate>;
@@ -9,22 +13,12 @@ test.describe("actual unregistered Dialog S106 composition", () => {
   test.beforeAll(async () => {
     test.setTimeout(240000);
     consumer = buildDialogCandidate();
-    try {
-      hosted = await startFixtureServer({ handler: consumer.handler });
-    } catch (error) {
-      consumer.cleanup();
-      throw error;
-    }
+    hosted = await startFixtureServer({ handler: consumer.handler });
   });
   test.afterAll(async () => {
-    try {
-      if (hosted) {
-        await hosted.server.stop();
-        expect(hosted.server.failure()).toBeNull();
-      }
-    } finally {
+    await finishFixtureServer(hosted, () => {
       consumer?.cleanup();
-    }
+    });
   });
   test.beforeEach(async ({ page }, info) => {
     const file = info.outputPath("candidate-artifact.json");
@@ -110,22 +104,12 @@ test.describe("actual unregistered Dialog S110 managed CSS", () => {
   test.beforeAll(async () => {
     test.setTimeout(240000);
     consumer = buildDialogCandidate("styles");
-    try {
-      hosted = await startFixtureServer({ handler: consumer.handler });
-    } catch (error) {
-      consumer.cleanup();
-      throw error;
-    }
+    hosted = await startFixtureServer({ handler: consumer.handler });
   });
   test.afterAll(async () => {
-    try {
-      if (hosted) {
-        await hosted.server.stop();
-        expect(hosted.server.failure()).toBeNull();
-      }
-    } finally {
+    await finishFixtureServer(hosted, () => {
       consumer?.cleanup();
-    }
+    });
   });
   test.beforeEach(async ({ page }, info) => {
     const file = info.outputPath("candidate-artifact.json");
@@ -280,22 +264,12 @@ test.describe("actual unregistered Dialog S109 labeling composition", () => {
   test.beforeAll(async () => {
     test.setTimeout(240000);
     consumer = buildDialogCandidate("labeling");
-    try {
-      hosted = await startFixtureServer({ handler: consumer.handler });
-    } catch (error) {
-      consumer.cleanup();
-      throw error;
-    }
+    hosted = await startFixtureServer({ handler: consumer.handler });
   });
   test.afterAll(async () => {
-    try {
-      if (hosted) {
-        await hosted.server.stop();
-        expect(hosted.server.failure()).toBeNull();
-      }
-    } finally {
+    await finishFixtureServer(hosted, () => {
       consumer?.cleanup();
-    }
+    });
   });
   test.beforeEach(async ({ page }, info) => {
     const file = info.outputPath("candidate-artifact.json");
@@ -445,22 +419,12 @@ test.describe("actual unregistered Dialog S108 Content composition", () => {
   test.beforeAll(async () => {
     test.setTimeout(240000);
     consumer = buildDialogCandidate("content");
-    try {
-      hosted = await startFixtureServer({ handler: consumer.handler });
-    } catch (error) {
-      consumer.cleanup();
-      throw error;
-    }
+    hosted = await startFixtureServer({ handler: consumer.handler });
   });
   test.afterAll(async () => {
-    try {
-      if (hosted) {
-        await hosted.server.stop();
-        expect(hosted.server.failure()).toBeNull();
-      }
-    } finally {
+    await finishFixtureServer(hosted, () => {
       consumer?.cleanup();
-    }
+    });
   });
   test.beforeEach(async ({ page }, info) => {
     const file = info.outputPath("candidate-artifact.json");
@@ -517,22 +481,12 @@ test.describe("actual unregistered Dialog S107 portal composition", () => {
   test.beforeAll(async () => {
     test.setTimeout(240000);
     consumer = buildDialogCandidate("portal-overlay");
-    try {
-      hosted = await startFixtureServer({ handler: consumer.handler });
-    } catch (error) {
-      consumer.cleanup();
-      throw error;
-    }
+    hosted = await startFixtureServer({ handler: consumer.handler });
   });
   test.afterAll(async () => {
-    try {
-      if (hosted) {
-        await hosted.server.stop();
-        expect(hosted.server.failure()).toBeNull();
-      }
-    } finally {
+    await finishFixtureServer(hosted, () => {
       consumer?.cleanup();
-    }
+    });
   });
   test.beforeEach(async ({ page }, info) => {
     const file = info.outputPath("candidate-artifact.json");

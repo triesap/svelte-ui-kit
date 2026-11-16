@@ -8,7 +8,11 @@ import {
   qualificationRuntimeMode,
 } from "../helpers/qualification-runtime.js";
 import { test, expect, createIssueCollector } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 type Surface = Page | FrameLocator;
 for (const custom of [false, true]) {
@@ -35,19 +39,10 @@ for (const custom of [false, true]) {
       hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      let closed = false;
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          closed = true;
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        if (closed) {
-          consumer?.cleanup();
-          if (directory) rmSync(directory, { recursive: true });
-        }
-      }
+      await finishFixtureServer(hosted, () => {
+        consumer?.cleanup();
+        if (directory) rmSync(directory, { recursive: true });
+      });
     });
     async function prepare(
       page: Page,

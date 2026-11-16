@@ -21,7 +21,7 @@
     aria-label="Hidden progress"
   />
   <UI.Skeleton /><UI.Skeleton hidden />
-  <UI.Spinner />
+  <UI.Spinner /><UI.Spinner hidden />
   <UI.Avatar
     src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%271%27 height=%271%27/%3E"
     alt="Loaded">{#snippet fallback()}Loaded fallback{/snippet}</UI.Avatar
@@ -29,11 +29,14 @@
   <UI.Avatar src="" alt="Absent"
     >{#snippet fallback()}Absent fallback{/snippet}</UI.Avatar
   >
-  <UI.Avatar src="" hidden alt="Hidden" />
+  <UI.Avatar src="" hidden alt="Hidden"
+    >{#snippet fallback()}Hidden fallback{/snippet}</UI.Avatar
+  >
   <UI.Separator /><UI.Separator orientation="vertical" />
   {#each variants as variant (variant)}{#each sizes as size (size)}
       <UI.Button {variant} {size}>Button</UI.Button>
     {/each}{/each}
+  <UI.Button hidden>Hidden button</UI.Button>
   <UI.Button disabled>Disabled</UI.Button><UI.Button loading>Loading</UI.Button>
   <UI.Switch aria-label="Unchecked switch" /><UI.Checkbox
     aria-label="Unchecked checkbox"

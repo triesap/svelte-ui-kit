@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { buildResetBoundariesConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 // Normal application acceptance covers connected-document roots. Extended native
 // mount environments are a deliberate diagnostic selection, not skipped tests or
@@ -23,16 +27,9 @@ for (const custom of [false, true]) {
       hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      let closed = false;
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          closed = true;
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        if (closed) consumer?.cleanup();
-      }
+      await finishFixtureServer(hosted, () => {
+        consumer?.cleanup();
+      });
     });
     for (const scope of scopes) {
       for (const canceled of [false, true]) {

@@ -2,7 +2,11 @@ import { qualifyUnnamedCheckboxReset } from "../helpers/native-form-control.js";
 import { readFileSync, writeFileSync } from "node:fs";
 import { buildCheckboxConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 for (const custom of [false, true])
   test.describe(`generated Checkbox ${custom ? "custom" : "default"}`, () => {
@@ -11,22 +15,12 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildCheckboxConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
+      await finishFixtureServer(hosted, () => {
         consumer?.cleanup();
-      }
+      });
     });
     test.beforeEach(async ({ page }, info) => {
       const file = info.outputPath("generated-consumer.json");
@@ -734,22 +728,12 @@ for (const custom of [false, true])
         );
       });
       consumer.evidence.ownedMutation = "checkbox-reset-timer-cleanup-removed";
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
+      await finishFixtureServer(hosted, () => {
         consumer?.cleanup();
-      }
+      });
     });
     test("actual missing cleanup changes the destroyed instance state and fails the preservation detector", async ({
       page,

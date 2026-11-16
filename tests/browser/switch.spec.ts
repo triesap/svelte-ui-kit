@@ -2,7 +2,11 @@ import { qualifyUnnamedCheckboxReset } from "../helpers/native-form-control.js";
 import { writeFileSync } from "node:fs";
 import { buildSwitchConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 for (const custom of [false, true])
   test.describe(`generated Switch ${custom ? "custom" : "default"}`, () => {
@@ -11,22 +15,12 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildSwitchConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
+      await finishFixtureServer(hosted, () => {
         consumer?.cleanup();
-      }
+      });
     });
     test.beforeEach(async ({ page }, info) => {
       const file = info.outputPath("generated-consumer.json");

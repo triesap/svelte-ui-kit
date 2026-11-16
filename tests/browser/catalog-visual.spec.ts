@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { buildCatalogConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  startFixtureServer,
+  finishFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 test("complete basic catalog retains identical native presentation across installation mappings", async ({
   page,
@@ -76,14 +80,7 @@ test("complete basic catalog retains identical native presentation across instal
         contentType: "application/json",
       });
     } finally {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        consumer.cleanup();
-      }
+      await finishFixtureServer(hosted, () => consumer.cleanup());
     }
   }
   expect(captures[0]!.equals(captures[1]!)).toBe(true);

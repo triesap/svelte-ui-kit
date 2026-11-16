@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { buildFormResetRacesConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 for (const custom of [false, true]) {
   test.describe(`current native reset truth ${custom ? "custom" : "default"}`, () => {
@@ -10,22 +14,12 @@ for (const custom of [false, true]) {
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildFormResetRacesConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
+      await finishFixtureServer(hosted, () => {
         consumer?.cleanup();
-      }
+      });
     });
     for (const scenario of [
       "defaults",

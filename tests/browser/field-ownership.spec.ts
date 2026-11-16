@@ -3,34 +3,31 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { buildFieldOwnershipConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 for (const custom of [false, true]) {
   test.describe(`Field message ownership ${custom ? "custom" : "default"}`, () => {
     let consumer: ReturnType<typeof buildFieldOwnershipConsumer>;
     let hosted: FixtureServer;
+    let devShutdownQualified = true;
     const messageId = `owned-message-${encodeURIComponent("helper / café")}`;
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildFieldOwnershipConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      let closed = !hosted;
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          closed = true;
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        if (closed) consumer?.cleanup();
-      }
+      await finishFixtureServer(hosted, () => {
+        if (!devShutdownQualified)
+          throw new Error(
+            "Development server shutdown is unqualified; retaining the shared consumer.",
+          );
+        consumer?.cleanup();
+      });
     });
     test.beforeEach(async ({ page }) => {
       await page.goto(new URL(consumer.route, hosted.baseURL).href);
@@ -415,6 +412,7 @@ for (const custom of [false, true]) {
     test("development compilation preserves descriptor ownership without native warnings", async ({
       page,
     }, info) => {
+      devShutdownQualified = false;
       const dev = await startFixtureServer({
         handler: consumer.handler,
         launcher: path.resolve("tests/helpers/field-dev-server.mjs"),
@@ -450,8 +448,9 @@ for (const custom of [false, true]) {
         );
         await page.goto("about:blank");
       } finally {
-        await dev.server.stop();
-        expect(dev.server.failure()).toBeNull();
+        await finishFixtureServer(dev, () => {
+          devShutdownQualified = true;
+        });
         const artifact = info.outputPath("development-diagnostics.json");
         writeFileSync(
           artifact,

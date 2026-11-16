@@ -1,6 +1,10 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  startFixtureServer,
+  finishFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 import { buildCssConsumer } from "../helpers/generated-consumer.js";
 import { cssInventory } from "../helpers/css-inventory.js";
 import path from "node:path";
@@ -71,22 +75,10 @@ for (const custom of [false, true])
           style.source,
         ).toBe(source.slice(expected.contentStart, expected.contentEnd));
       }
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        consumer?.cleanup();
-      }
+      await finishFixtureServer(hosted, () => consumer?.cleanup());
     });
     test.beforeEach(async ({ page }, info) => {
       writeFileSync(
@@ -261,6 +253,14 @@ for (const custom of [false, true])
         JSON.stringify(evidence, null, 2),
       );
       expect(evidence.filter((row) => row.count === 0)).toEqual([]);
+      for (const selector of [
+        ".kit-button[hidden]",
+        ".kit-spinner[hidden]",
+        ".kit-avatar-frame[hidden]",
+      ]) {
+        await expect(page.locator(selector)).toHaveCount(1);
+        await expect(page.locator(selector)).toHaveCSS("display", "none");
+      }
     });
 
     test("broad radius themes preserve circular native geometry", async ({

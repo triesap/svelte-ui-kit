@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { buildCompositionExamplesConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 for (const custom of [false, true])
   test.describe(`app-owned examples ${custom ? "custom" : "default"}`, () => {
@@ -10,22 +14,12 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       app = buildCompositionExamplesConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: app.handler });
-      } catch (error) {
-        app.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: app.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
+      await finishFixtureServer(hosted, () => {
         app?.cleanup();
-      }
+      });
     });
     test.beforeEach(async ({ page }, info) => {
       writeFileSync(

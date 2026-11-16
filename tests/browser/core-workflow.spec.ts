@@ -3,7 +3,11 @@ import { buildCoreConsumer } from "../helpers/generated-consumer.js";
 import { copyCorePackage, evolveCore } from "../helpers/core-workflow.js";
 import { installPackedCore } from "../helpers/packed-core.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 for (const packed of [false, true])
   for (const custom of [false, true])
@@ -16,31 +20,19 @@ for (const packed of [false, true])
         test.setTimeout(300000);
         if (packed) installed = installPackedCore();
         pkg = copyCorePackage(installed?.packageRoot);
-        try {
-          consumer = buildCoreConsumer(
-            custom,
-            installed?.packageRoot ?? pkg.root,
-            (root, config) => evolveCore(pkg.root, root, config),
-          );
-          hosted = await startFixtureServer({ handler: consumer.handler });
-        } catch (error) {
-          consumer?.cleanup();
-          pkg.cleanup();
-          installed?.cleanup();
-          throw error;
-        }
+        consumer = buildCoreConsumer(
+          custom,
+          installed?.packageRoot ?? pkg.root,
+          (root, config) => evolveCore(pkg.root, root, config),
+        );
+        hosted = await startFixtureServer({ handler: consumer.handler });
       });
       test.afterAll(async () => {
-        try {
-          if (hosted) {
-            await hosted.server.stop();
-            expect(hosted.server.failure()).toBeNull();
-          }
-        } finally {
+        await finishFixtureServer(hosted, () => {
           consumer?.cleanup();
           pkg?.cleanup();
           installed?.cleanup();
-        }
+        });
       });
       test.beforeEach(async ({ page }, info) => {
         const file = info.outputPath("core-artifact.json");

@@ -2,7 +2,11 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { buildFieldConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 let consumer: ReturnType<typeof buildFieldConsumer>, hosted: FixtureServer;
 test.beforeAll(async () => {
@@ -22,22 +26,12 @@ test.beforeAll(async () => {
         .replace("return describedBy;", "return capturedDescriptions;"),
     );
   });
-  try {
-    hosted = await startFixtureServer({ handler: consumer.handler });
-  } catch (error) {
-    consumer.cleanup();
-    throw error;
-  }
+  hosted = await startFixtureServer({ handler: consumer.handler });
 });
 test.afterAll(async () => {
-  try {
-    if (hosted) {
-      await hosted.server.stop();
-      expect(hosted.server.failure()).toBeNull();
-    }
-  } finally {
+  await finishFixtureServer(hosted, () => {
     consumer?.cleanup();
-  }
+  });
 });
 test("owned actual stale-description mutation is detected specifically after error removal", async ({
   page,

@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { buildAlertDialogCandidate } from "../helpers/alert-dialog-candidate.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 test.describe("actual incremental Alert Dialog S117 composition", () => {
   let consumer: ReturnType<typeof buildAlertDialogCandidate>;
@@ -9,22 +13,12 @@ test.describe("actual incremental Alert Dialog S117 composition", () => {
   test.beforeAll(async () => {
     test.setTimeout(240000);
     consumer = buildAlertDialogCandidate();
-    try {
-      hosted = await startFixtureServer({ handler: consumer.handler });
-    } catch (error) {
-      consumer.cleanup();
-      throw error;
-    }
+    hosted = await startFixtureServer({ handler: consumer.handler });
   });
   test.afterAll(async () => {
-    try {
-      if (hosted) {
-        await hosted.server.stop();
-        expect(hosted.server.failure()).toBeNull();
-      }
-    } finally {
+    await finishFixtureServer(hosted, () => {
       consumer?.cleanup();
-    }
+    });
   });
   test.beforeEach(async ({ page }, info) => {
     const file = info.outputPath("candidate-artifact.json");
@@ -122,22 +116,12 @@ test.describe("actual incremental Alert Dialog S118 composition", () => {
   test.beforeAll(async () => {
     test.setTimeout(240000);
     consumer = buildAlertDialogCandidate("content");
-    try {
-      hosted = await startFixtureServer({ handler: consumer.handler });
-    } catch (error) {
-      consumer.cleanup();
-      throw error;
-    }
+    hosted = await startFixtureServer({ handler: consumer.handler });
   });
   test.afterAll(async () => {
-    try {
-      if (hosted) {
-        await hosted.server.stop();
-        expect(hosted.server.failure()).toBeNull();
-      }
-    } finally {
+    await finishFixtureServer(hosted, () => {
       consumer?.cleanup();
-    }
+    });
   });
   test.beforeEach(async ({ page }, info) => {
     const file = info.outputPath("candidate-artifact.json");
@@ -230,22 +214,12 @@ test.describe("actual incremental Alert Dialog S119 decision composition", () =>
   test.beforeAll(async () => {
     test.setTimeout(240000);
     consumer = buildAlertDialogCandidate("actions");
-    try {
-      hosted = await startFixtureServer({ handler: consumer.handler });
-    } catch (error) {
-      consumer.cleanup();
-      throw error;
-    }
+    hosted = await startFixtureServer({ handler: consumer.handler });
   });
   test.afterAll(async () => {
-    try {
-      if (hosted) {
-        await hosted.server.stop();
-        expect(hosted.server.failure()).toBeNull();
-      }
-    } finally {
+    await finishFixtureServer(hosted, () => {
       consumer?.cleanup();
-    }
+    });
   });
   test.beforeEach(async ({ page }, info) => {
     const file = info.outputPath("candidate-artifact.json");

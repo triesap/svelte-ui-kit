@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 import { buildPackagedConsumer } from "../helpers/packaged-consumer.js";
 
 async function identity(page: Page) {
@@ -35,22 +39,12 @@ for (const custom of [false, true])
       // and both bounded application check/build commands before server startup.
       test.setTimeout(600000);
       app = buildPackagedConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: app.handler });
-      } catch (error) {
-        app.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: app.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
+      await finishFixtureServer(hosted, () => {
         app?.cleanup();
-      }
+      });
     });
     test.beforeEach(async ({ page }) => {
       await page.goto(hosted.baseURL);
