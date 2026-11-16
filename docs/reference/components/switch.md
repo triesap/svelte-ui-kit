@@ -27,7 +27,7 @@ Associate a visible label with the actual Root ID.
 The wrapper withholds name/value from Root and supplies exactly one offscreen native checkbox for named form participation. Initial checked seeds its native default; uncanceled resets synchronize the completed field's checked value. Current defaults, intervening edits and incoming/outgoing form reassociation remain intact, with listener/timer cleanup on removal.
 Same-ID owner replacement is supported; teardown cancels pending timers/listeners.
 Native empty-name and disabled policies remain intact.
-Source track/thumb contrast is a known concern, not global accessibility certification.
+Default unchecked track/thumb contrast meets 3:1; customized colors still require rendered assessment, not global accessibility certification.
 
 ## Exports and installed assets
 

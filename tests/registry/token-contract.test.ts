@@ -141,16 +141,26 @@ test("portable contracts validate independently without source ABI identities", 
   assert.equal(customization.contractVersion, 1);
 });
 
-test("all observed semantic defaults remain exact with explicit role and value type", () => {
+test("semantic defaults preserve source observations with four explicit readable-palette adaptations", () => {
   const rows = baseline.tokens;
   assert.equal(rows.length, 44);
   assert.equal(semantic.tokens.length, 44);
+  const readableDefaults: Record<string, string> = {
+    "--kit-color-border": "#6b7280",
+    "--kit-color-border-strong": "#4b5563",
+    "--kit-color-info": "#0369a1",
+    "--kit-color-success": "#15803d",
+  };
   for (const row of rows) {
     const token = semantic.tokens.find(
       (entry: { name: string }) => entry.name === row.name,
     );
     assert.ok(token, row.name);
-    assert.equal(token.fallback, row.fallback, row.name);
+    assert.equal(
+      token.fallback,
+      readableDefaults[row.name] ?? row.fallback,
+      row.name,
+    );
     assert.deepEqual(
       mappedRows.find((row) => row[0] === token.name),
       [token.name, token.role, token.type, token.fallback],

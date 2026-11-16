@@ -35,7 +35,7 @@ Empty-value arrows move focus without selecting; nonempty arrows/Home/End select
 Dynamic choice removal retains the selected string until caller/native selection changes it.
 There is no numeric index, selection store or RadioIndicator.
 Item geometry is 1rem with radial-gradient paint and `--kit-radio-radius` full-radius fallback.
-Source boundary contrast remains a concern.
+Default boundary contrast meets 3:1 on the supported light surface; customized colors still need rendered assessment.
 
 ## Exports and installed assets
 

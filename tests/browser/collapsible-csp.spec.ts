@@ -2,7 +2,11 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 import { buildCollapsibleConsumer } from "../helpers/generated-consumer.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 // Collect every diagnostic, including after page closure. Attribute only the
 // tested CSP violation; all exceptions and warnings still fail qualification.
@@ -14,7 +18,7 @@ for (const custom of [false, true])
       test.beforeAll(async () => {
         test.setTimeout(240000);
         consumer = buildCollapsibleConsumer(custom, (root) => {
-          const file = path.join(root, "svelte.config.js");
+          const file = path.join(root, "svelte.config.ts");
           const source = readFileSync(file, "utf8");
           expect(source.split("adapter: adapter(),").length).toBe(2);
           writeFileSync(
@@ -25,22 +29,10 @@ for (const custom of [false, true])
             ),
           );
         });
-        try {
-          hosted = await startFixtureServer({ handler: consumer.handler });
-        } catch (error) {
-          consumer.cleanup();
-          throw error;
-        }
+        hosted = await startFixtureServer({ handler: consumer.handler });
       });
       test.afterAll(async () => {
-        try {
-          if (hosted) {
-            await hosted.server.stop();
-            expect(hosted.server.failure()).toBeNull();
-          }
-        } finally {
-          consumer?.cleanup();
-        }
+        await finishFixtureServer(hosted, () => consumer.cleanup());
       });
       for (const hydrated of [false, true])
         test(`${hydrated ? "hydrated" : "server"} response measures actual measurement styles under the exact policy`, async ({

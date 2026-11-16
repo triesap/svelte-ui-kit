@@ -12,13 +12,13 @@ This foundation installs CSS and contracts through init/item dependency closure.
 
 The CSS-only foundation installs semantic theme defaults and independent component-customization metadata.
 It has no Svelte component, value/type exports, palette reset, selector store or automatic accessibility certification.
-Semantic role/type/default rows below are exact source observations; component hooks remain distinct and versioned independently.
+Semantic role/type/default rows below describe current generated defaults; component hooks remain distinct and versioned independently.
 App-owned themes load after kit CSS and own color-scheme, selectors and persistence.
 Body portals need document-level theme scope or explicit suitable hosts.
 Complete radius grammar permits multi-corner/elliptical lengths, percentages, calc/var and CSS-wide keywords without restrictive @property.
 Geometry-critical avatar/radio/spinner/switch-thumb shapes bypass broad radius roles.
 A defined invalid radius computes to 0px rather than activating var fallback; absence or root initial/unset restores fallback.
-Measured source info/success text pairs are below 4.5:1, and every component/state/custom theme requires its own assessment.
+Current info/success foreground pairs meet 4.5:1, and default control borders and unchecked Switch track/thumb meet 3:1 on the supported light surfaces. Every component/state/custom theme still requires its own assessment.
 Distinct Alert Dialog hooks are target-native additions rather than an original source family.
 Maintained consumer projections are byte-exact and checked before fixture/browser use.
 
@@ -44,9 +44,9 @@ MIT option and retains Copyright (c) 2026 Tyson Lupul and the full
 [MIT notice](../../../LICENSE-MIT). Preserve the distribution's
 [source notices](../../../NOTICE.md) when copying generated assets.
 
-These source observations retain exact fallback order. Application overrides and semantic defaults are distinct.
+Four color defaults deliberately improve the original design: border #6b7280, strong border #4b5563, info #0369a1 and success #15803d. The original source observations remain preserved in the test fixture; they are not rewritten as passing contrast evidence. Other defaults and fallback order are retained. Application overrides and semantic defaults are distinct.
 
-| Property                          | Target role  | Value type        | Reference default               |
+| Property                          | Target role  | Value type        | Current default                 |
 | --------------------------------- | ------------ | ----------------- | ------------------------------- |
 | --kit-color-canvas                | surface      | color             | #f8fafc                         |
 | --kit-color-surface               | surface      | color             | #ffffff                         |
@@ -56,8 +56,8 @@ These source observations retain exact fallback order. Application overrides and
 | --kit-color-text                  | text         | color             | #111827                         |
 | --kit-color-text-secondary        | text         | color             | #374151                         |
 | --kit-color-text-muted            | text         | color             | #4b5563                         |
-| --kit-color-border                | border       | color             | #d1d5db                         |
-| --kit-color-border-strong         | border       | color             | #9ca3af                         |
+| --kit-color-border                | border       | color             | #6b7280                         |
+| --kit-color-border-strong         | border       | color             | #4b5563                         |
 | --kit-color-primary               | color        | color             | #111827                         |
 | --kit-color-primary-hover         | color        | color             | #1f2937                         |
 | --kit-color-primary-foreground    | color        | color             | #ffffff                         |
@@ -68,9 +68,9 @@ These source observations retain exact fallback order. Application overrides and
 | --kit-color-accent                | color        | color             | #2563eb                         |
 | --kit-color-accent-hover          | color        | color             | #1d4ed8                         |
 | --kit-color-accent-foreground     | color        | color             | #ffffff                         |
-| --kit-color-info                  | color        | color             | #0284c7                         |
+| --kit-color-info                  | color        | color             | #0369a1                         |
 | --kit-color-info-foreground       | color        | color             | #ffffff                         |
-| --kit-color-success               | color        | color             | #16a34a                         |
+| --kit-color-success               | color        | color             | #15803d                         |
 | --kit-color-success-foreground    | color        | color             | #ffffff                         |
 | --kit-color-warning               | color        | color             | #d97706                         |
 | --kit-color-warning-foreground    | color        | color             | #111827                         |

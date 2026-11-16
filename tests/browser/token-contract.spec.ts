@@ -231,7 +231,7 @@ test("document and custom-host placement follow CSS theme inheritance", async ({
     "rgb(255, 0, 0)",
   );
 });
-test("baseline contrast observations retain actual computed colors without blanket certification", async ({
+test("default text pairs meet readable contrast without blanket certification", async ({
   page,
   browser,
 }, info) => {
@@ -270,7 +270,7 @@ test("baseline contrast observations retain actual computed colors without blank
   });
   expect(observations).toHaveLength(6);
   for (const observation of observations) {
-    expect(observation.ratio).toBeGreaterThanOrEqual(1);
+    expect(observation.ratio).toBeGreaterThanOrEqual(4.5);
     expect(observation.ratio).toBeLessThanOrEqual(21);
   }
   expect(

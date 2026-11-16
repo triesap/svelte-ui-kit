@@ -1,6 +1,10 @@
 import { writeFileSync } from "node:fs";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 import { buildAccessibilityConsumer } from "../helpers/generated-consumer.js";
 
 for (const custom of [false, true])
@@ -10,22 +14,10 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildAccessibilityConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        consumer?.cleanup();
-      }
+      await finishFixtureServer(hosted, () => consumer.cleanup());
     });
     test.beforeEach(async ({ page }, info) => {
       expect(page.isClosed()).toBe(false);
@@ -296,7 +288,7 @@ for (const custom of [false, true])
             }),
           );
         });
-        test("rendered text contrast passes and source non-text concerns remain explicit", async ({
+        test("rendered text and essential control boundaries meet default contrast thresholds", async ({
           page,
         }, info) => {
           await page
@@ -392,6 +384,14 @@ for (const custom of [false, true])
                 foreground: getComputedStyle(radio).borderTopColor,
                 background: background(radio),
               },
+              ...["#agree", 'input[name="name"]'].map((selector) => {
+                const node = document.querySelector(selector)!;
+                return {
+                  part: `${selector} boundary`,
+                  foreground: getComputedStyle(node).borderTopColor,
+                  background: background(node),
+                };
+              }),
               {
                 part: "Unchecked Switch track versus thumb",
                 foreground: getComputedStyle(control).backgroundColor,
@@ -413,10 +413,10 @@ for (const custom of [false, true])
           expect(ratios.text.filter((record) => record.ratio < 4.5)).toEqual(
             [],
           );
-          // The original source palette is retained. AC18 requires measured baseline
-          // concerns to be recorded rather than an unsupported blanket certificate.
-          expect(ratios.nonText).toHaveLength(2);
-          expect(ratios.nonText.every((record) => record.ratio < 3)).toBe(true);
+          expect(ratios.nonText).toHaveLength(4);
+          expect(ratios.nonText.filter((record) => record.ratio < 3)).toEqual(
+            [],
+          );
         });
       });
   });

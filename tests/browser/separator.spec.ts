@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { buildSeparatorConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 for (const custom of [false, true])
   test.describe(`generated Separator ${custom ? "custom" : "default"}`, () => {
@@ -10,22 +14,10 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildSeparatorConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        consumer?.cleanup();
-      }
+      await finishFixtureServer(hosted, () => consumer.cleanup());
     });
     test.beforeEach(async ({ page }, info) => {
       const file = info.outputPath("generated-consumer.json");
@@ -241,7 +233,7 @@ for (const custom of [false, true])
         flex: "0 0 auto",
         width: "320px",
         height: "1px",
-        background: "rgb(209, 213, 219)",
+        background: "rgb(107, 114, 128)",
       });
       const caller = await style("#styled");
       expect(caller).toMatchObject({
@@ -304,11 +296,11 @@ for (const custom of [false, true])
           ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05),
         };
       });
-      expect(pairs[0]!.ratio).toBeLessThan(3);
+      expect(pairs[0]!.ratio).toBeGreaterThanOrEqual(3);
       expect(pairs[1]!.ratio).toBeGreaterThanOrEqual(3);
-      const file = info.outputPath("source-separator-contrast-concerns.json");
+      const file = info.outputPath("rendered-separator-contrast.json");
       writeFileSync(file, JSON.stringify(pairs, null, 2));
-      await info.attach("source-separator-contrast-concerns", {
+      await info.attach("rendered-separator-contrast", {
         path: file,
         contentType: "application/json",
       });
@@ -332,7 +324,7 @@ for (const custom of [false, true])
         .click();
       expect(await style("#main")).toMatchObject({
         height: "1px",
-        background: "rgb(209, 213, 219)",
+        background: "rgb(107, 114, 128)",
       });
     });
     test("eight concurrent production SSR responses isolate names roles orientation refs and decoration", async ({

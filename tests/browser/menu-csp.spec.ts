@@ -2,7 +2,11 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 import { buildMenuConsumer } from "../helpers/generated-consumer.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 // Every expected CSP diagnostic is retained and attributed to the tested policy.
 // JavaScript-disabled requests measure server style enforcement before hydration.
@@ -15,7 +19,7 @@ for (const custom of [false, true])
       test.beforeAll(async () => {
         test.setTimeout(240000);
         consumer = buildMenuConsumer(custom, "menu-placement", (root) => {
-          const file = path.join(root, "svelte.config.js");
+          const file = path.join(root, "svelte.config.ts");
           const source = readFileSync(file, "utf8");
           expect(source.split("adapter: adapter(),").length).toBe(2);
           writeFileSync(
@@ -26,22 +30,10 @@ for (const custom of [false, true])
             ),
           );
         });
-        try {
-          hosted = await startFixtureServer({ handler: consumer.handler });
-        } catch (error) {
-          consumer.cleanup();
-          throw error;
-        }
+        hosted = await startFixtureServer({ handler: consumer.handler });
       });
       test.afterAll(async () => {
-        try {
-          if (hosted) {
-            await hosted.server.stop();
-            expect(hosted.server.failure()).toBeNull();
-          }
-        } finally {
-          consumer?.cleanup();
-        }
+        await finishFixtureServer(hosted, () => consumer.cleanup());
       });
       test("actual CSP response measures native SSR floating style support and violations", async ({
         page,

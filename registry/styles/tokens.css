@@ -15,8 +15,8 @@
     --kit-color-text: #111827;
     --kit-color-text-secondary: #374151;
     --kit-color-text-muted: #4b5563;
-    --kit-color-border: #d1d5db;
-    --kit-color-border-strong: #9ca3af;
+    --kit-color-border: #6b7280;
+    --kit-color-border-strong: #4b5563;
     --kit-color-primary: #111827;
     --kit-color-primary-hover: #1f2937;
     --kit-color-primary-foreground: #ffffff;
@@ -27,9 +27,9 @@
     --kit-color-accent: #2563eb;
     --kit-color-accent-hover: #1d4ed8;
     --kit-color-accent-foreground: #ffffff;
-    --kit-color-info: #0284c7;
+    --kit-color-info: #0369a1;
     --kit-color-info-foreground: #ffffff;
-    --kit-color-success: #16a34a;
+    --kit-color-success: #15803d;
     --kit-color-success-foreground: #ffffff;
     --kit-color-warning: #d97706;
     --kit-color-warning-foreground: #111827;

@@ -42,6 +42,10 @@ Global theme scopes belong at a document-level ancestor when body-portaled overl
 
 ## Accessibility and motion
 
+The current light defaults strengthen the original border/strong-border and info/success colors without changing token names or component APIs. Generated token foundation version 0.1.14 records this update. Existing custom token blocks reconcile through the ordinary base/local/incoming update plan; no theme is silently overwritten. Historical donor contrast failures remain observations of that palette, not current passing results.
+
+Default text pairs use a 4.5:1 threshold; essential control boundaries and the unchecked Switch track/thumb use 3:1. These checks do not certify arbitrary themes or disabled appearances. Forced-color rendering and assistive-technology speech remain application qualification obligations; no dedicated forced-color palette is shipped.
+
 Keep visible focus states, proper disabled state contrast/affordance, meaningful busy/loading presentation, and inherited typography. Verify the reference switch's strong unchecked track, checked primary color, thumb color override, RTL travel, and reduced-motion behavior after mapping to Bits UI. Do not equate inherited source token values with an automatic accessibility certification; assess actual rendered foreground/background combinations and record findings.
 
 Use reduced-motion alternatives for animated controls; verify logical properties/RTL where direction matters. Forms and overlays must remain legible under supported theme scopes. Do not introduce unapproved palettes or reset styles merely to imitate demo screenshots.

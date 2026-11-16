@@ -60,13 +60,13 @@
       "name": "--kit-color-border",
       "role": "border",
       "type": "color",
-      "fallback": "#d1d5db"
+      "fallback": "#6b7280"
     },
     {
       "name": "--kit-color-border-strong",
       "role": "border",
       "type": "color",
-      "fallback": "#9ca3af"
+      "fallback": "#4b5563"
     },
     {
       "name": "--kit-color-primary",
@@ -132,7 +132,7 @@
       "name": "--kit-color-info",
       "role": "color",
       "type": "color",
-      "fallback": "#0284c7"
+      "fallback": "#0369a1"
     },
     {
       "name": "--kit-color-info-foreground",
@@ -144,7 +144,7 @@
       "name": "--kit-color-success",
       "role": "color",
       "type": "color",
-      "fallback": "#16a34a"
+      "fallback": "#15803d"
     },
     {
       "name": "--kit-color-success-foreground",

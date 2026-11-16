@@ -5,6 +5,9 @@ they do not announce an npm release or broaden tested compatibility.
 
 ## Unreleased
 
+- Stronger light-surface control boundaries and readable info/success text defaults,
+  with unchanged token APIs and ordinary customization-preserving update plans.
+
 - Explicit Astro and standalone Svelte-library generation, target-bound lock and
   recovery metadata, native layout/CSS integration, and independently installed
   generated/packed consumers with strict checking, SSR and hydrated controls.

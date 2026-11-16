@@ -21,7 +21,7 @@ Semantic mode defaults role=separator with owned aria-orientation; decorative=tr
 Contradictory role/orientation/hidden attributes are rejected rather than dropped.
 Native caller attrs/events/style/ref remain intact without interactive behavior.
 Source geometry uses semantic border color; vertical separators need an actual containing block height.
-The baseline border on white and some custom dark combinations are below 3:1; no automatic palette redesign or universal nontext-contrast claim is made.
+The current default border on white meets 3:1; custom dark combinations still require assessment and no universal nontext-contrast claim is made.
 
 ## Exports and installed assets
 
