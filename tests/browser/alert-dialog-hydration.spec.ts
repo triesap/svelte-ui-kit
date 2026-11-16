@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { buildAlertDialogConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  startFixtureServer,
+  finishFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 type ObserverState = { active: number; started: number; disconnected: number };
 function observeDescriptionLifetimes() {
@@ -45,22 +49,11 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildAlertDialogConsumer(custom, "alert-dialog-hydration");
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      // Failed startup retains the generated consumer for diagnosis.
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        consumer?.cleanup();
-      }
+      await finishFixtureServer(hosted, () => consumer?.cleanup());
     });
     test.beforeEach(async ({ page }, info) => {
       await page.addInitScript(observeDescriptionLifetimes);
@@ -227,13 +220,6 @@ test("actual owned negative artifact fails the same observer-teardown assertion"
     }, /toEqual|active/);
     expect((await page.evaluate(observers)).active).toBe(1);
   } finally {
-    try {
-      if (hosted) {
-        await hosted.server.stop();
-        expect(hosted.server.failure()).toBeNull();
-      }
-    } finally {
-      consumer.cleanup();
-    }
+    await finishFixtureServer(hosted, () => consumer.cleanup());
   }
 });

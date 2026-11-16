@@ -47,7 +47,13 @@ Alert Dialog uses the actual distinct primitive, not role emulation.
 All assets form a single dialog compatibility cohort.
 Overlay is transparent by default.
 Portal to is Element|string (body default), disabled renders inline; theme inheritance and clipping follow the actual target.
-First-open completion callbacks and closed forceMount behavior have native limitations described in compatibility.
+The recommended composition above leaves `forceMount` unset, uses a real Title
+and lets the native Portal own normal mounting. Close/unmount must release focus
+and interaction locks. Retaining a closed modal with nondelegated `forceMount`
+can keep body pointer interaction locked in the qualified native version; that
+advanced combination is outside the recommended supported composition. Use a
+separately qualified native child/lock policy if retained content is essential.
+See compatibility for measured presence, portal and CSP boundaries.
 
 ## Exports and installed assets
 

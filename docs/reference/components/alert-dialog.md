@@ -1,5 +1,11 @@
 # AlertDialogRoot
 
+Use the recommended Portal/Content composition below without `forceMount` and
+provide a real accessible title and explicit cancel/decision controls. Retained
+closed modal `forceMount` combinations can keep body pointer interaction locked;
+they need a separately qualified native child/lock policy and are outside this
+recommended composition. Normal close/unmount must release interaction locks.
+
 Distinct complete pinned Alert Dialog family with native decisions and explicit state, refs, snippets and portal composition.
 
 ## Install and compose

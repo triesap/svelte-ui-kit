@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { buildOverlayCompositionConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  startFixtureServer,
+  finishFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 import type { Page } from "@playwright/test";
 async function state(page: Page) {
   return JSON.parse(await page.locator("#state").innerText());
@@ -25,22 +29,11 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildOverlayCompositionConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      // Failed startup retains the generated consumer for diagnosis.
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        consumer?.cleanup();
-      }
+      await finishFixtureServer(hosted, () => consumer?.cleanup());
     });
     test.beforeEach(async ({ page }, info) => {
       expect(page.isClosed()).toBe(false);

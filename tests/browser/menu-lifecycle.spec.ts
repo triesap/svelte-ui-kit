@@ -2,7 +2,11 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { buildMenuConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  startFixtureServer,
+  finishFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 function trackResizeObservers() {
   const Native = window.ResizeObserver;
@@ -73,22 +77,11 @@ for (const custom of [false, true])
         if (negative)
           consumer.evidence.ownedMutation =
             "menu-resize-observer-cleanup-removed";
-        try {
-          hosted = await startFixtureServer({ handler: consumer.handler });
-        } catch (error) {
-          consumer.cleanup();
-          throw error;
-        }
+        // Failed startup retains the generated consumer for diagnosis.
+        hosted = await startFixtureServer({ handler: consumer.handler });
       });
       test.afterAll(async () => {
-        try {
-          if (hosted) {
-            await hosted.server.stop();
-            expect(hosted.server.failure()).toBeNull();
-          }
-        } finally {
-          consumer?.cleanup();
-        }
+        await finishFixtureServer(hosted, () => consumer?.cleanup());
       });
       test("actual ref replacement and root teardown release observed DOM with causal retained-node control", async ({
         page,

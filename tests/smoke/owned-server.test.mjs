@@ -10,10 +10,12 @@
  * resolves both its default and an explicit handler operand.
  */
 import { strict as assert } from "node:assert";
-import { existsSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { finishFixtureServer } from "../browser/fixture-server.ts";
 
 import {
   DEFAULT_HANDLER,
@@ -37,6 +39,43 @@ function startFault(fault) {
     stopTimeoutMs: FAULT_STOP_TIMEOUT_MS,
   });
 }
+
+for (const fault of ["ok", "error-exit-on-term"])
+  test(`fixture finalization ${fault} removes source only after healthy native shutdown`, async () => {
+    const directory = mkdtempSync(
+      path.join(os.tmpdir(), "suik-stop-retention-"),
+    );
+    const sentinel = path.join(directory, "generated-source.svelte");
+    writeFileSync(sentinel, "retained fixture source");
+    const server = startFault(fault);
+    try {
+      const port = await server.ready;
+      const finish = () =>
+        finishFixtureServer(
+          { server, baseURL: `http://127.0.0.1:${port}/` },
+          () => rmSync(directory, { recursive: true }),
+        );
+      if (fault === "ok") {
+        await finish();
+        assert.equal(existsSync(sentinel), false);
+      } else {
+        await assert.rejects(finish(), /code=17/);
+        assert.equal(existsSync(sentinel), true);
+      }
+      assert.equal(server.isClosed(), true);
+    } finally {
+      await server.stop();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+test("fixture finalization retains partial source when startup has no qualified server", async () => {
+  let cleaned = false;
+  await finishFixtureServer(undefined, () => {
+    cleaned = true;
+  });
+  assert.equal(cleaned, false);
+});
 
 test("qualified work rejects shutdown stderr and retains its primary assertion", async () => {
   const server = startFault("stderr-on-term");

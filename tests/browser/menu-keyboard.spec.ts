@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { buildMenuConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  startFixtureServer,
+  finishFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 for (const custom of [false, true])
   test.describe(`installed Menu keyboard ${custom ? "custom" : "default"}`, () => {
     let consumer: ReturnType<typeof buildMenuConsumer>;
@@ -9,22 +13,11 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildMenuConsumer(custom, "menu-keyboard");
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      // Failed startup retains the generated consumer for diagnosis.
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        consumer?.cleanup();
-      }
+      await finishFixtureServer(hosted, () => consumer?.cleanup());
     });
     test.beforeEach(async ({ page }, info) => {
       const file = info.outputPath("installed-artifact.json");
@@ -126,26 +119,130 @@ for (const custom of [false, true])
         "Open true; value small; selections 0",
       );
     });
-    test("Escape outside and caller dismissal cancellation preserve native focus policy", async ({
+    test("Escape outside and explicit caller focus policy preserve keyboard return", async ({
+      page,
+    }, info) => {
+      const observations = [];
+      for (const native of [false, true]) {
+        const url = new URL(consumer.route, hosted.baseURL);
+        if (native) url.searchParams.set("native-menu", "1");
+        await page.goto(url.href);
+        await expect(page.locator('[data-ready="true"]')).toBeVisible();
+        await page.locator("#cancel-dismiss").check();
+        await page.locator("#trigger").press("Enter");
+        await expect(page.locator("#apple")).toBeFocused();
+        await page.keyboard.press("Escape");
+        await expect(page.locator("#content")).toBeVisible();
+        await page.locator("h1").click();
+        await expect(page.locator("#content")).toBeVisible();
+        await expect(page.locator("#state")).toContainText(
+          "escapes 1; outside 1",
+        );
+        await page.locator("#cancel-dismiss").uncheck();
+        await page.locator("#apple").press("Escape");
+        await expect(page.locator("#content")).toHaveCount(0);
+        await expect(page.locator("#trigger")).toBeFocused();
+        await page.locator("#trigger").click();
+        await page.locator("h1").click();
+        await expect(page.locator("#content")).toHaveCount(0);
+        observations.push({
+          native,
+          events: JSON.parse(await page.locator("#focus-events").innerText()),
+        });
+      }
+      writeFileSync(
+        info.outputPath("explicit-focus-policy.json"),
+        JSON.stringify(observations, null, 2),
+      );
+    });
+    test("no-recipe native focus baseline is observed without claiming a repair", async ({
+      page,
+    }, info) => {
+      const observations = [];
+      for (const native of [false, true]) {
+        const url = new URL(consumer.route, hosted.baseURL);
+        url.searchParams.set("focus-policy", "native");
+        if (native) url.searchParams.set("native-menu", "1");
+        await page.goto(url.href);
+        await expect(page.locator('[data-ready="true"]')).toBeVisible();
+        await page.locator("#cancel-dismiss").check();
+        await page.locator("#trigger").press("Enter");
+        await page.locator("h1").click();
+        await page.locator("#cancel-dismiss").uncheck();
+        await page.locator("#apple").press("Escape");
+        await expect(page.locator("#content")).toHaveCount(0);
+        observations.push({
+          native,
+          active: await page.evaluate(() => document.activeElement?.id),
+          events: JSON.parse(await page.locator("#focus-events").innerText()),
+        });
+      }
+      writeFileSync(
+        info.outputPath("native-focus-baseline.json"),
+        JSON.stringify(observations, null, 2),
+      );
+    });
+    for (const state of ["removed", "disabled"])
+      test(`explicit caller focus policy tolerates a ${state} trigger`, async ({
+        page,
+      }) => {
+        for (const native of [false, true]) {
+          const url = new URL(consumer.route, hosted.baseURL);
+          url.searchParams.set("trigger-state", state);
+          if (native) url.searchParams.set("native-menu", "1");
+          await page.goto(url.href);
+          await expect(page.locator('[data-ready="true"]')).toBeVisible();
+          await page.locator("#trigger").press("Enter");
+          await expect(page.locator("#apple")).toBeFocused();
+          await page.keyboard.press("Escape");
+          await expect(page.locator("#content")).toHaveCount(0);
+          if (state === "removed")
+            await expect(page.locator("#trigger")).toHaveCount(0);
+          else await expect(page.locator("#trigger")).toBeDisabled();
+          await expect
+            .poll(async () =>
+              JSON.parse(await page.locator("#focus-events").innerText()).at(
+                -1,
+              ),
+            )
+            .toEqual({ requested: true, restored: false });
+        }
+      });
+    test("explicit caller focus policy does not leak to pointer or another root", async ({
       page,
     }) => {
-      await page.locator("#cancel-dismiss").check();
-      await page.locator("#trigger").press("Enter");
-      await expect(page.locator("#apple")).toBeFocused();
-      await page.keyboard.press("Escape");
-      await expect(page.locator("#content")).toBeVisible();
-      await page.locator("h1").click();
-      await expect(page.locator("#content")).toBeVisible();
-      await expect(page.locator("#state")).toContainText(
-        "escapes 1; outside 1",
-      );
-      await page.locator("#cancel-dismiss").uncheck();
-      await page.locator("#apple").press("Escape");
-      await expect(page.locator("#content")).toHaveCount(0);
-      await expect(page.locator("#trigger")).toBeFocused();
-      await page.locator("#trigger").click();
-      await page.locator("h1").click();
-      await expect(page.locator("#content")).toHaveCount(0);
+      for (const native of [false, true]) {
+        const url = new URL(consumer.route, hosted.baseURL);
+        if (native) url.searchParams.set("native-menu", "1");
+        await page.goto(url.href);
+        await expect(page.locator('[data-ready="true"]')).toBeVisible();
+        await page.locator("#trigger").press("Enter");
+        await expect(page.locator("#apple")).toBeFocused();
+        await page.keyboard.press("Escape");
+        await expect(page.locator("#trigger")).toBeFocused();
+        await page.locator("#trigger").press("Enter");
+        await page.locator("#cancel-selection").click();
+        await expect(page.locator("#content")).toHaveCount(0);
+        await expect(page.locator("#cancel-selection")).toBeFocused();
+        await expect
+          .poll(async () =>
+            JSON.parse(await page.locator("#focus-events").innerText()).at(-1),
+          )
+          .toEqual({ requested: false, restored: false });
+        await page.locator("#trigger").press("Enter");
+        await page.evaluate(() =>
+          window.dispatchEvent(new Event("qualification-close-main-menu")),
+        );
+        await expect(page.locator("#content")).toHaveCount(0);
+        await expect
+          .poll(async () =>
+            JSON.parse(await page.locator("#focus-events").innerText()).at(-1),
+          )
+          .toEqual({ requested: false, restored: false });
+        await page.locator("#alias-trigger").press("Enter");
+        await page.keyboard.press("Escape");
+        await expect(page.locator("#alias-trigger")).toBeFocused();
+      }
     });
     test("nested Menu dismisses before Dialog and restores each actual trigger", async ({
       page,

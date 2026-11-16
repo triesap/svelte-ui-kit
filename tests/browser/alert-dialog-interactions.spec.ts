@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { buildAlertDialogConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  startFixtureServer,
+  finishFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 
 for (const custom of [false, true])
   test.describe(`installed AlertDialog interactions ${custom ? "custom" : "default"}`, () => {
@@ -11,22 +15,11 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildAlertDialogConsumer(custom, "alert-dialog-interactions");
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      // Failed startup retains the generated consumer for diagnosis.
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        consumer?.cleanup();
-      }
+      await finishFixtureServer(hosted, () => consumer?.cleanup());
     });
     test.beforeEach(async ({ page }, info) => {
       const file = info.outputPath("generated-consumer.json");

@@ -27,6 +27,75 @@ Installation ID: `menu`. Explicit requests and dependency closure remain separat
 </MenuRoot>
 ```
 
+## Custom dismissal and keyboard focus
+
+The simple composition above uses native focus policy. When an application
+cancels outside dismissal and requires explicit Escape return focus, compose
+the existing callbacks with a bound trigger. Keep the marker local to each menu,
+reset it on opening and before programmatic closes, and consume it on close.
+Accepted outside pointer interaction keeps its native focus behavior.
+
+```svelte
+<script lang="ts">
+  import {
+    MenuRoot,
+    MenuTrigger,
+    MenuPortal,
+    MenuContent,
+    MenuItem,
+  } from "$lib/components/ui";
+  import type { MenuTriggerProps } from "$lib/components/ui";
+
+  let open = $state(false);
+  let cancelDismiss = $state(false);
+  let trigger = $state<MenuTriggerProps["ref"]>(null);
+  let restoreEscapeFocus = false;
+  function closeFocus(event: Event) {
+    const restore = restoreEscapeFocus;
+    restoreEscapeFocus = false;
+    if (
+      !restore ||
+      event.defaultPrevented ||
+      !trigger?.isConnected ||
+      trigger.matches(":disabled, [aria-disabled='true']")
+    )
+      return;
+    event.preventDefault();
+    trigger.focus();
+  }
+</script>
+
+<MenuRoot
+  bind:open
+  onOpenChange={(value) => {
+    if (value) restoreEscapeFocus = false;
+  }}
+>
+  <MenuTrigger bind:ref={trigger}>Actions</MenuTrigger>
+  <MenuPortal>
+    <MenuContent
+      aria-label="Actions"
+      onEscapeKeydown={(event) => {
+        restoreEscapeFocus = !cancelDismiss;
+        if (cancelDismiss) event.preventDefault();
+      }}
+      onInteractOutside={(event) => {
+        restoreEscapeFocus = false;
+        if (cancelDismiss) event.preventDefault();
+      }}
+      onCloseAutoFocus={closeFocus}
+    >
+      <MenuItem>Copy</MenuItem>
+    </MenuContent>
+  </MenuPortal>
+</MenuRoot>
+```
+
+This is application policy using native APIs, not another focus engine or a
+guarantee about native callback scheduling. If the trigger disappears or becomes
+disabled, the recipe does not force focus onto it. Applications with custom
+rendered triggers or different focus destinations must qualify their composition.
+
 ## Public contract
 
 Compose MenuRoot, MenuTrigger, MenuPortal, MenuContent, MenuItem, MenuRadioGroup, MenuRadioItem and MenuItemIndicator.
