@@ -45,6 +45,18 @@ authorized change affects an actual Rust workspace.
 
 ## Typed runner and focused checks
 
+### Native reset root selection
+
+`tests/browser/reset-boundaries.spec.ts` defaults to four connected-document
+acceptance cases (completed/canceled, default/custom mapping). Setting
+`SUIK_EXTENDED_RESET_CHARACTERIZATION=1` explicitly selects the original sixteen
+cases including detached, ShadowRoot and foreign-document native mounts. The six
+recorded extended-root failures are retained upstream characterization, outside
+the supported reset contract in compatibility.md; they are not repaired, passing
+tests or skipped required cases. Keep diagnostic failures visible in reports.
+No other value is accepted for this selector. Run the supported default selection
+for normal acceptance and the extended selection when investigating that boundary.
+
 `node tools/run-unit-tests.mjs --suite <unit|integration|components|registry|package>`
 accepts repository-relative `*.test.ts` paths under the selected suite. With no
 operands it discovers all entries deterministically, including hidden names.

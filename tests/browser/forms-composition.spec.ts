@@ -170,7 +170,7 @@ for (const custom of [false, true])
       expect((await state(page)).outside).toBe(false);
       expect((await state(page)).resets).toBe(1);
     });
-    test("trusted reset cancellation matches the pinned raw Svelte value binding boundary", async ({
+    test("trusted reset cancellation preserves raw and generated bound values", async ({
       page,
     }, info) => {
       await page
@@ -188,13 +188,15 @@ for (const custom of [false, true])
       await page.locator("#reset-combined").click();
       await expect(
         page.getByRole("textbox", { name: "Raw native title", exact: true }),
-      ).toHaveValue("initial");
+      ).toHaveValue("retained");
       await expect(
         page.getByRole("textbox", { name: "Title", exact: true }),
-      ).toHaveValue("initial");
+      ).toHaveValue("retained");
       const event = JSON.parse(await page.locator("#reset-event").innerText());
       expect(event).toEqual({ cancelable: true, prevented: true });
       const current = await state(page);
+      expect(current.title).toBe("retained");
+      expect(await formData(page)).toContainEqual(["title", "retained"]);
       expect(current.mode).toBe("b");
       expect(current.enabled).toBe(false);
       expect(current.accepted).toBe(false);

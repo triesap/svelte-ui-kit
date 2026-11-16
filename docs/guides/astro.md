@@ -1,5 +1,12 @@
 # Astro applications
 
+First follow [dependency and CLI preparation](../getting-started.md), including
+the application-owned corrected Svelte and Bits archives and their integrity
+checks. The same native dependency requirements apply to Astro, SvelteKit and
+standalone Svelte-library development; declaring ordinary upstream versions is
+not proof of the qualified reset behavior. The commands below select an existing
+Astro application; they do not scaffold it or install its dependencies.
+
 Select a real Astro package with `--cwd`. Declare Svelte, Astro and
 `@astrojs/svelte` in that package, with one statically supported Astro
 configuration. A direct default object or imported `defineConfig` containing

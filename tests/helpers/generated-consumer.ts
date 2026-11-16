@@ -8,6 +8,11 @@ import {
   type KitConfig,
 } from "../../src/project/config.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
+import {
+  observeNativeFile,
+  observeNativeInstall,
+  SVELTE_RUNTIME_BASELINE,
+} from "../../src/project/native-dependency.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
 import {
   installQualificationRuntime,
@@ -495,6 +500,56 @@ export function buildResetSemanticsConsumer(
     ["field"],
     runtime ? (root) => installQualificationRuntime(root, runtime) : undefined,
   );
+}
+
+/** Normal qualified runtime mounted through Svelte's public root API. */
+export function buildResetBoundariesConsumer(custom: boolean) {
+  const consumer = buildInstalledItemsConsumer(
+    custom,
+    "reset-boundaries",
+    ["field"],
+    (root, config) => {
+      const folder = "src/routes/qualification/reset-boundaries";
+      let module = path.posix.relative(folder, `${config.uiDir}/index.js`);
+      if (!module.startsWith(".")) module = `./${module}`;
+      const template = readFileSync(
+        "tests/fixtures/qualification/reset-boundaries/NativeForms.svelte",
+        "utf8",
+      );
+      assert.equal(template.match(/__UI_MODULE__/g)?.length, 1);
+      writeFileSync(
+        path.join(root, folder, "NativeForms.svelte"),
+        template.replaceAll("__UI_MODULE__", module),
+      );
+    },
+  );
+  const file = "src/routes/qualification/reset-boundaries/NativeForms.svelte";
+  const manifest = JSON.parse(
+    readFileSync(path.join(consumer.root, "package.json"), "utf8"),
+  );
+  const source = observeNativeFile(consumer.root, manifest, "svelte");
+  const installed = observeNativeInstall(
+    path.join(consumer.root, "node_modules/svelte"),
+    SVELTE_RUNTIME_BASELINE.version,
+    "svelte",
+  );
+  assert.equal(source.kind, "value");
+  assert.equal(installed.kind, "authenticated");
+  return {
+    ...consumer,
+    evidence: {
+      ...consumer.evidence,
+      nativeRuntime: {
+        source,
+        installed,
+        buildId: SVELTE_RUNTIME_BASELINE.buildId,
+      },
+      files: {
+        ...consumer.evidence.files,
+        [file]: sha256Hex(readFileSync(path.join(consumer.root, file))),
+      },
+    },
+  };
 }
 
 /** Additional native bindings use a genuine fresh runtime installation. */

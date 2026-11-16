@@ -99,7 +99,7 @@ test("actual installed metadata bounds runtime support and retains source notice
     [
       "--input-type=module",
       "--eval",
-      `import { patchAstroLayout } from ${JSON.stringify(path.join(cli.packageRoot, "dist/codegen/astro.js"))}; const result=patchAstroLayout("<main><slot /></main>", [{specifier:"./kit.css"},{specifier:"./themes.css"},{specifier:"./app.css"}]); if(!result.ok)throw new Error(JSON.stringify(result)); console.log(result.value);`,
+      `import { createRequire } from "node:module"; const requireNative = createRequire(${JSON.stringify(path.join(cli.packageRoot, "package.json"))}); requireNative("@astrojs/compiler-rs").parse("<main><slot /></main>"); import { patchAstroLayout } from ${JSON.stringify(path.join(cli.packageRoot, "dist/codegen/astro.js"))}; const result=patchAstroLayout("<main><slot /></main>", [{specifier:"./kit.css"},{specifier:"./themes.css"},{specifier:"./app.css"}]); if(!result.ok)throw new Error(JSON.stringify(result)); console.log(result.value);`,
     ],
     cli.root,
     "packed-native-astro-parser",
