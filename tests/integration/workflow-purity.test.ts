@@ -1,3 +1,4 @@
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, existsSync, readFileSync } from "node:fs";
@@ -27,11 +28,7 @@ for (const mapping of ["default", "explicit-dynamic"] as const)
       const paths = deriveKitPaths(config);
       for (const fixture of fixtures) {
         const probe = path.join(fixture.base, "executed");
-        write(
-          fixture.root,
-          "node_modules/svelte/package.json",
-          JSON.stringify({ name: "svelte", version: "5.57.3" }),
-        );
+        copyQualifiedFixtureRuntime(fixture.root);
         const manifest = JSON.parse(
           readFileSync(path.join(fixture.root, "package.json"), "utf8"),
         );

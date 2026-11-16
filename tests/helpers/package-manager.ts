@@ -1,8 +1,9 @@
-/** Already-installed linked fixtures must never provision a manager or dependencies. */
+/** Explicit bootstrap and pinned-manager verification for test-owned consumers. */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { sha256Hex } from "../../src/codegen/digest.js";
 export function linkedFixtureEnvironment(): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {
     ...process.env,
@@ -36,4 +37,45 @@ export function verifyFixtureManager(
     expected.slice(5),
     "linked fixture uses the actual owner-pinned pnpm, without implicit manager provisioning",
   );
+}
+
+/** Linked fixtures never call this: dependency preparation is an explicit operator step. */
+export function prepareOfflineInstall(
+  root: string,
+  run: (args: string[], stage: string) => unknown,
+  label: string,
+) {
+  run(
+    [
+      "install",
+      "--lockfile-only",
+      "--no-frozen-lockfile",
+      "--ignore-scripts",
+      "--strict-peer-dependencies",
+      "--engine-strict",
+    ],
+    `${label}-resolve-lock`,
+  );
+  const manifest = readFileSync(path.join(root, "package.json"));
+  const lock = readFileSync(path.join(root, "pnpm-lock.yaml"));
+  run(["fetch"], `${label}-fetch`);
+  assert.ok(readFileSync(path.join(root, "pnpm-lock.yaml")).equals(lock));
+  run(
+    [
+      "install",
+      "--offline",
+      "--frozen-lockfile",
+      "--ignore-scripts",
+      "--strict-peer-dependencies",
+      "--engine-strict",
+    ],
+    label,
+  );
+  assert.ok(readFileSync(path.join(root, "package.json")).equals(manifest));
+  assert.ok(readFileSync(path.join(root, "pnpm-lock.yaml")).equals(lock));
+  return {
+    label: `${label}-frozen-inputs`,
+    manifestSha256: sha256Hex(manifest),
+    lockSha256: sha256Hex(lock),
+  };
 }

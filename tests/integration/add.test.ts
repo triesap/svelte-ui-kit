@@ -41,7 +41,13 @@ for (const custom of [false, true])
       const apply = fixture.run(["add", "card"]);
       assert.equal(apply.status, 0, apply.stderr + apply.stdout);
       const outcome = JSON.parse(apply.stdout);
-      assert.equal(outcome.status, "success");
+      assert.equal(outcome.status, "warning");
+      assert.ok(
+        outcome.diagnostics.some(
+          (entry: { code: string }) => entry.code === "DEPENDENCY_NOT_READY",
+        ),
+        apply.stdout,
+      );
       assert.ok(
         outcome.changes.every((entry: { applied: boolean }) => entry.applied),
       );

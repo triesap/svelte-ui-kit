@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { writeFixtureWorkspace } from "../helpers/workspace-catalog.ts";
 /**
  * RCLD04-R2-5 lifecycle-consumer qualification.
  *
@@ -126,6 +127,7 @@ test("a generated default consumer checks, builds and server-renders", async (t)
     recursive: true,
     filter: (entry) => !COPY_EXCLUDES.has(path.basename(entry)),
   });
+  writeFixtureWorkspace(root);
   linkFixtureNodeModules(
     path.join(FIXTURE_ROOT, "node_modules"),
     path.join(root, "node_modules"),

@@ -1,3 +1,4 @@
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync, rmSync, symlinkSync } from "node:fs";
@@ -38,11 +39,7 @@ for (const custom of [false, true])
             paths.stateDir + "/kit.json",
             JSON.stringify(config),
           );
-        write(
-          fixture.root,
-          "node_modules/svelte/package.json",
-          JSON.stringify({ name: "svelte", version: "5.57.3" }),
-        );
+        copyQualifiedFixtureRuntime(fixture.root);
         const added = fixture.run(["add", "card"]);
         assert.equal(added.status, 0, added.stderr + added.stdout);
         const card = config.uiDir + "/card.svelte";

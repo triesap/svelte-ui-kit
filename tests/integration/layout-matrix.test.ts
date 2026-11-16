@@ -98,12 +98,12 @@ for (const mapping of mappings)
           path.join(fixture.root, mapping.routes),
         );
         const original = readFileSync(
-          path.join(fixture.root, "svelte.config.js"),
+          path.join(fixture.root, "svelte.config.ts"),
           "utf8",
         );
         assert.equal(original.split("adapter: adapter(),").length, 2);
         write(
-          "svelte.config.js",
+          "svelte.config.ts",
           original.replace(
             "adapter: adapter(),",
             `adapter: adapter(), files: { routes: ${JSON.stringify(mapping.routes)} },`,
@@ -264,7 +264,7 @@ test("unsupported dynamic Svelte mapping is diagnosed without execution or mutat
   const fixture = copyConsumerFixture();
   try {
     writeFileSync(
-      path.join(fixture.root, "svelte.config.js"),
+      path.join(fixture.root, "svelte.config.ts"),
       `import fs from 'node:fs';\nfs.writeFileSync('CONFIG_EXECUTED','must never run');\nconst route=process.env.ROUTES;\nexport default {kit:{files:{routes:route}}};\n`,
     );
     const before = snapshotTree(fixture.root);

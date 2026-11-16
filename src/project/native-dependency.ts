@@ -299,8 +299,9 @@ export function authenticateNativeInstall(
     }
     // pnpm 12.16.1 adds this executable shim when installing the local Svelte
     // archive. It is installer metadata, absent from a plain tar extraction.
-    // Accept only the exact measured acorn 8.18.0/8.19.0 shims; every shipped
-    // file and every present metadata byte still uses the same fresh inventory.
+    // Accept only the measured Acorn8.18/8.19 ordinary-install shims and the
+    // Acorn8.19 fetch/offline variant (without the optional NODE_PATH block).
+    // Every shipped file and present metadata byte uses the same fresh inventory.
     // No other node_modules content, missing shim, link or future shim qualifies.
     if (name === "svelte") {
       let metadata = false;
@@ -318,6 +319,7 @@ export function authenticateNativeInstall(
           ![
             "bcc9f584096e1eb6a30065bc78a73b8213fdb6e929db31944a9708fdfee43d17",
             "b3ab33f6f443865b444d6ff92f547281238f4e2e90c522776b0274371ab0cf2c",
+            "9d391338d51186f9bbce223b0e4b1d6e8d491b40d91abacce19ef138234b14d0",
           ].includes(hash)
         )
           throw new Error("Unqualified Svelte installer metadata");

@@ -1,3 +1,4 @@
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createTempProject } from "../helpers/project.js";
@@ -32,9 +33,9 @@ for (const target of ["astro", "svelte-library"] as const)
             },
           };
     project.writeFile("package.json", JSON.stringify(manifest));
-    project.writeFile(
-      "node_modules/svelte/package.json",
-      JSON.stringify({ name: "svelte", version: "5.57.3" }),
+    copyQualifiedFixtureRuntime(
+      project.root,
+      target === "svelte-library" ? "devDependencies" : "dependencies",
     );
     if (target === "astro")
       project.writeFile(

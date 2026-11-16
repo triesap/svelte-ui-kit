@@ -61,8 +61,11 @@ cached between mutation boundaries, and the archive/provenance/manifest and late
 physical or byte checks remain live at their existing boundaries.
 
 pnpm 12.16.1 can add `node_modules/.bin/acorn` inside an installed local Svelte
-package. The measured Acorn 8.18.0 and 8.19.0 shim fingerprints are the only
-permitted installer metadata. If that `node_modules` directory exists, the exact
+package. Only three measured fingerprints qualify: the ordinary Acorn 8.18.0
+and 8.19.0 shims and the Acorn 8.19.0 fetch/offline variant without the optional
+`NODE_PATH` block. Both 8.19.0 variants execute the same parser; neither changes
+any shipped Svelte byte. These exact regular-file shims are the only permitted
+installer metadata. If that `node_modules` directory exists, the exact
 regular shim and all its real ancestry are required. Its bytes join the same
 fresh descriptor-hashed inventory; missing, altered or linked shims and every
 other extra entry, including shadow dependencies, refuse. Plain archive extraction

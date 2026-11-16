@@ -78,7 +78,7 @@ function lstatOrNull(abs: string): Stats | null {
  * symlink anywhere (ancestor or final, live or dangling) and a non-directory
  * intermediate component are both rejected.
  */
-function assertPhysicalWithin(root: string, abs: string): void {
+export function assertPhysicalWithin(root: string, abs: string): void {
   const rootStats = lstatOrNull(root);
   if (rootStats === null || !rootStats.isDirectory()) {
     throw new Error(`temp project root is not an existing directory: ${root}`);

@@ -19,7 +19,7 @@ import { test } from "node:test";
  * The registry/schema assets and the *default* model parsers must load from the
  * emitted package copy, not from the authoring checkout. This test copies the
  * built `dist/`, `schema/`, `registry/` and manifest into an isolated
- * directory, links only the declared runtime dependencies (`ajv`, `semver`)
+ * directory, links only the declared runtime dependencies
  * beside it, then runs a child Node process from a *different* CWD that imports
  * the copied emitted modules. It exercises the registry snapshot plus the
  * config, lock, theme and envelope parsers through their contained default
@@ -29,6 +29,9 @@ import { test } from "node:test";
 const PKG_ROOT = process.cwd();
 
 function linkRuntimeDependency(installedRoot: string, name: string): void {
+  mkdirSync(path.dirname(path.join(installedRoot, "node_modules", name)), {
+    recursive: true,
+  });
   symlinkSync(
     path.join(PKG_ROOT, "node_modules", name),
     path.join(installedRoot, "node_modules", name),
@@ -49,7 +52,10 @@ function installedCopy(t: { after: (fn: () => void) => void }): string {
     path.join(installed, "package.json"),
   );
   mkdirSync(path.join(installed, "node_modules"));
-  for (const dependency of ["ajv", "semver", "svelte", "typescript"]) {
+  for (const dependency of Object.keys(
+    JSON.parse(readFileSync(path.join(installed, "package.json"), "utf8"))
+      .dependencies,
+  )) {
     linkRuntimeDependency(installed, dependency);
   }
   return installed;

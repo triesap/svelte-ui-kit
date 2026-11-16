@@ -1,12 +1,10 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
 import {
   cpSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
-  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { createServer } from "node:http";
@@ -14,6 +12,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { pathToFileURL } from "node:url";
+import { stripVTControlCharacters } from "node:util";
 
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { toPlanningEnvelope } from "../../src/codegen/plan.js";
@@ -26,6 +25,8 @@ import {
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { computeRegistryContentHash } from "../../src/registry/model.js";
+import { INITIAL_COMPATIBILITY } from "../../src/registry/versions.js";
+import { copyConsumerFixture, runFixtureScript } from "../helpers/fixture.js";
 
 /**
  * RCLD03-R4-4: a consumer produced by applying exactly the planned add
@@ -38,6 +39,18 @@ const PKG_ROOT = process.cwd();
 const FIXTURE = path.join(PKG_ROOT, "tests/fixtures/consumer");
 const derived = deriveKitPaths(DEFAULT_KIT_CONFIG);
 
+/** Keep the original minimal application tree with current catalog/native/tool setup. */
+function minimalConsumer() {
+  const fixture = copyConsumerFixture();
+  rmSync(path.join(fixture.root, "src"), { recursive: true });
+  mkdirSync(path.join(fixture.root, "src"));
+  cpSync(
+    path.join(FIXTURE, "src/app.html"),
+    path.join(fixture.root, "src/app.html"),
+  );
+  return fixture;
+}
+
 function write(root: string, rel: string, data: string | Uint8Array): void {
   const abs = path.join(root, rel);
   mkdirSync(path.dirname(abs), { recursive: true });
@@ -49,11 +62,7 @@ function realRegistry(root: string): ReturnType<typeof loadRegistrySnapshot> {
     recursive: true,
   });
   const body = "<button>button</button>\n";
-  const compatibility = {
-    svelte: "^5.57.3",
-    bits: "^2.19.3",
-    date: "^3.8.1",
-  };
+  const compatibility = INITIAL_COMPATIBILITY;
   const manifest = JSON.stringify({
     schemaVersion: 1,
     id: "button",
@@ -107,11 +116,7 @@ function realCompoundRegistry(
   cpSync(path.join(PKG_ROOT, "schema"), path.join(root, "schema"), {
     recursive: true,
   });
-  const compatibility = {
-    svelte: "^5.57.3",
-    bits: "^2.19.3",
-    date: "^3.8.1",
-  };
+  const compatibility = INITIAL_COMPATIBILITY;
   const files = [
     {
       source: "templates/dialog/index.ts",
@@ -202,12 +207,9 @@ function applyWrites(
 }
 
 function runPnpm(args: readonly string[], cwd: string) {
-  return spawnSync("pnpm", args, {
-    cwd,
-    encoding: "utf8",
-    timeout: 150_000,
-    env: { ...process.env, CI: "1" },
-  });
+  assert.equal(args[0], "run");
+  assert.equal(args.length, 2);
+  return runFixtureScript(cwd, args[1]!, 150_000);
 }
 
 /**
@@ -240,25 +242,12 @@ test(
   { timeout: 180_000 },
   async (t) => {
     const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-reg-"));
-    const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-pr-app-"));
+    const fixture = minimalConsumer();
+    const consumer = fixture.root;
     t.after(() => {
       rmSync(registryRoot, { recursive: true, force: true });
-      rmSync(consumer, { recursive: true, force: true });
+      fixture.cleanup();
     });
-    for (const file of [
-      "package.json",
-      "vite.config.ts",
-      "svelte.config.js",
-      "tsconfig.json",
-      "src/app.html",
-    ]) {
-      cpSync(path.join(FIXTURE, file), path.join(consumer, file));
-    }
-    symlinkSync(
-      path.join(FIXTURE, "node_modules"),
-      path.join(consumer, "node_modules"),
-      "dir",
-    );
     write(
       consumer,
       "src/routes/+page.svelte",
@@ -318,25 +307,12 @@ test(
   { timeout: 180_000 },
   async (t) => {
     const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-areg-"));
-    const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-pr-aapp-"));
+    const fixture = minimalConsumer();
+    const consumer = fixture.root;
     t.after(() => {
       rmSync(registryRoot, { recursive: true, force: true });
-      rmSync(consumer, { recursive: true, force: true });
+      fixture.cleanup();
     });
-    for (const file of [
-      "package.json",
-      "vite.config.ts",
-      "svelte.config.js",
-      "tsconfig.json",
-      "src/app.html",
-    ]) {
-      cpSync(path.join(FIXTURE, file), path.join(consumer, file));
-    }
-    symlinkSync(
-      path.join(FIXTURE, "node_modules"),
-      path.join(consumer, "node_modules"),
-      "dir",
-    );
     write(
       consumer,
       "src/routes/+page.svelte",
@@ -411,25 +387,12 @@ test(
   { timeout: 180_000 },
   async (t) => {
     const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-creg-"));
-    const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-pr-capp-"));
+    const fixture = minimalConsumer();
+    const consumer = fixture.root;
     t.after(() => {
       rmSync(registryRoot, { recursive: true, force: true });
-      rmSync(consumer, { recursive: true, force: true });
+      fixture.cleanup();
     });
-    for (const file of [
-      "package.json",
-      "vite.config.ts",
-      "svelte.config.js",
-      "tsconfig.json",
-      "src/app.html",
-    ]) {
-      cpSync(path.join(FIXTURE, file), path.join(consumer, file));
-    }
-    symlinkSync(
-      path.join(FIXTURE, "node_modules"),
-      path.join(consumer, "node_modules"),
-      "dir",
-    );
     write(
       consumer,
       "src/routes/+page.svelte",
@@ -503,25 +466,12 @@ test(
   { timeout: 180_000 },
   async (t) => {
     const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-sreg-"));
-    const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-pr-sapp-"));
+    const fixture = minimalConsumer();
+    const consumer = fixture.root;
     t.after(() => {
       rmSync(registryRoot, { recursive: true, force: true });
-      rmSync(consumer, { recursive: true, force: true });
+      fixture.cleanup();
     });
-    for (const file of [
-      "package.json",
-      "vite.config.ts",
-      "svelte.config.js",
-      "tsconfig.json",
-      "src/app.html",
-    ]) {
-      cpSync(path.join(FIXTURE, file), path.join(consumer, file));
-    }
-    symlinkSync(
-      path.join(FIXTURE, "node_modules"),
-      path.join(consumer, "node_modules"),
-      "dir",
-    );
     write(
       consumer,
       "src/routes/+page.svelte",
@@ -576,25 +526,12 @@ test(
   { timeout: 180_000 },
   (t) => {
     const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-negreg-"));
-    const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-pr-negapp-"));
+    const fixture = minimalConsumer();
+    const consumer = fixture.root;
     t.after(() => {
       rmSync(registryRoot, { recursive: true, force: true });
-      rmSync(consumer, { recursive: true, force: true });
+      fixture.cleanup();
     });
-    for (const file of [
-      "package.json",
-      "vite.config.ts",
-      "svelte.config.js",
-      "tsconfig.json",
-      "src/app.html",
-    ]) {
-      cpSync(path.join(FIXTURE, file), path.join(consumer, file));
-    }
-    symlinkSync(
-      path.join(FIXTURE, "node_modules"),
-      path.join(consumer, "node_modules"),
-      "dir",
-    );
     write(
       consumer,
       "src/routes/+page.svelte",
@@ -628,10 +565,20 @@ test(
     if (!planned.ok) return;
     applyWrites(consumer, planned.value.writes);
     const checked = runPnpm(["run", "check"], consumer);
-    assert.notEqual(
-      checked.status,
-      0,
-      `the check lane must fail on a real type error:\n${checked.stdout}\n${checked.stderr}`,
+    const diagnostic = stripVTControlCharacters(
+      `${checked.stdout}\n${checked.stderr}`,
+    );
+    assert.equal(checked.signal, null, diagnostic);
+    assert.notEqual(checked.status, null, diagnostic);
+    assert.notEqual(checked.status, 0, diagnostic);
+    assert.match(diagnostic, /src[/\\]routes[/\\]\+page\.svelte/);
+    assert.match(
+      diagnostic,
+      /Type 'string' is not assignable to type 'number'/,
+    );
+    assert.ok(
+      diagnostic.includes('const broken: number = "not a number"'),
+      diagnostic,
     );
   },
 );
@@ -647,26 +594,14 @@ test(
   { timeout: 180_000 },
   async (t) => {
     const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-vreg-"));
-    const consumer = mkdtempSync(path.join(os.tmpdir(), "suik-pr-vapp-"));
+    const fixture = minimalConsumer();
+    const consumer = fixture.root;
     t.after(() => {
       rmSync(registryRoot, { recursive: true, force: true });
-      rmSync(consumer, { recursive: true, force: true });
+      fixture.cleanup();
     });
-    for (const file of [
-      "package.json",
-      "vite.config.ts",
-      "tsconfig.json",
-      "src/app.html",
-    ]) {
-      cpSync(path.join(FIXTURE, file), path.join(consumer, file));
-    }
-    symlinkSync(
-      path.join(FIXTURE, "node_modules"),
-      path.join(consumer, "node_modules"),
-      "dir",
-    );
     writeFileSync(
-      path.join(consumer, "svelte.config.js"),
+      path.join(consumer, "svelte.config.ts"),
       'import adapter from "@sveltejs/adapter-node";\nimport { vitePreprocess } from "@sveltejs/vite-plugin-svelte";\n\n/** @type {import(\'@sveltejs/kit\').Config} */\nconst config = {\n  preprocess: vitePreprocess(),\n  kit: { adapter: adapter(), files: { routes: "src/views" } },\n};\n\nexport default config;\n',
     );
     write(
@@ -690,7 +625,7 @@ test(
       derived.appCss,
       layoutFile,
       `${derived.rootExportsDir}/button.svelte`,
-      "svelte.config.js",
+      "svelte.config.ts",
     ]);
     assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
     if (!snapshot.ok) return;

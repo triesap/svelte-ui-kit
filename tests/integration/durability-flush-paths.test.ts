@@ -330,8 +330,8 @@ function transientGone(root: string): boolean {
 }
 
 test("applyPlan reports committed_needs_cleanup when the post-release flush fails", () => {
-  const root = fs.mkdtempSync(
-    path.join(os.tmpdir(), "suik-flush-postrelease-"),
+  const root = fs.realpathSync(
+    fs.mkdtempSync(path.join(os.tmpdir(), "suik-flush-postrelease-")),
   );
   const probe = failFsyncWhile(
     (target) => target === abs(root, GUARDED_STATE) && transientGone(root),
@@ -464,7 +464,9 @@ function persistPlannedOnly(root: string, transactionId: string): void {
 }
 
 test("applyPlan reports committed_needs_cleanup when the owned namespace removal fails", () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "suik-rmdir-apply-"));
+  const root = fs.realpathSync(
+    fs.mkdtempSync(path.join(os.tmpdir(), "suik-rmdir-apply-")),
+  );
   const probe = failRmdirWhile(
     (target) => target === transactionsNamespace(root),
   );

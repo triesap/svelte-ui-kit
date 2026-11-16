@@ -1,3 +1,4 @@
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { spawnSync } from "node:child_process";
@@ -34,10 +35,7 @@ function setup(
       dependencies: { svelte: "5.57.3", "@sveltejs/kit": "^2.70.3" },
     }),
   );
-  p.writeFile(
-    "node_modules/svelte/package.json",
-    JSON.stringify({ name: "svelte", version: "5.57.3" }),
-  );
+  copyQualifiedFixtureRuntime(p.root);
   if (installed)
     p.writeFile(
       "node_modules/@sveltejs/kit/package.json",

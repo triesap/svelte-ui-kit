@@ -1,3 +1,4 @@
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, symlinkSync, unlinkSync } from "node:fs";
@@ -35,11 +36,7 @@ const cases = [
   ["config-schema", ["add", "card"], "error", 1, true],
 ] as const;
 function setup(label: string, fixture: ReturnType<typeof cliPackage>) {
-  write(
-    fixture.root,
-    "node_modules/svelte/package.json",
-    JSON.stringify({ name: "svelte", version: "5.57.3" }),
-  );
+  copyQualifiedFixtureRuntime(fixture.root);
   if (label === "broken-cli")
     unlinkSync(path.join(fixture.pkg, "node_modules"));
   if (["init-repeat", "doctor"].includes(label))

@@ -1,7 +1,10 @@
+import { writeFixtureWorkspace } from "../helpers/workspace-catalog.js";
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
   cpSync,
+  readFileSync,
   mkdirSync,
   mkdtempSync,
   rmSync,
@@ -96,11 +99,21 @@ for (const kind of [
               recursive: true,
             },
           );
+        writeFixtureWorkspace(root);
         rmSync(path.join(root, "node_modules/bits-ui"), { recursive: true });
         symlinkSync(
           path.resolve("node_modules/bits-ui"),
           path.join(root, "node_modules/bits-ui"),
         );
+      }
+      if (kind === "ready" || kind === "peer-incompatible") {
+        rmSync(path.join(root, "node_modules/svelte"), { recursive: true });
+        copyQualifiedFixtureRuntime(root);
+        if (kind === "peer-incompatible")
+          write(root, "node_modules/@internationalized/date/package.json", {
+            name: "@internationalized/date",
+            version: "1.0.0",
+          });
       }
       const initial = snapshotTree(root);
       const result = run(root);
@@ -127,13 +140,18 @@ for (const kind of [
         assert.notEqual(result.status, 0);
         assert.equal(envelope.data.ready, false);
       } else {
-        assert.equal(result.status, 0);
+        assert.equal(result.status, 0, result.stdout + result.stderr);
         assert.equal(
           envelope.data.ready,
           kind === "ready",
           "readiness reflects the captured installed versions",
         );
-        assert.equal(envelope.data.registry.version, "0.1.1");
+        assert.equal(
+          envelope.data.registry.version,
+          JSON.parse(
+            readFileSync(path.resolve("registry/registry.json"), "utf8"),
+          ).registryVersion,
+        );
         assert.equal(
           envelope.data.paths.uiDir,
           kind === "custom" ? "app/ui" : DEFAULT_KIT_CONFIG.uiDir,
@@ -142,7 +160,7 @@ for (const kind of [
           assert.ok(
             envelope.data.dependencies.some(
               (entry: { name: string; status: string }) =>
-                entry.name === "svelte" &&
+                entry.name === "@internationalized/date" &&
                 entry.status === "install_incompatible",
             ),
           );

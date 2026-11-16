@@ -1,5 +1,8 @@
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import {
+  openSync,
+  closeSync,
   chmodSync,
   mkdirSync,
   mkdtempSync,
@@ -234,12 +237,14 @@ function writeInstalledDependencies(root: string): void {
   for (const [name, version] of Object.entries(
     INSTALLED_MANIFEST.dependencies,
   )) {
+    if (name === "svelte") continue;
     write(
       root,
       `node_modules/${name}/package.json`,
       JSON.stringify({ name, version }),
     );
   }
+  copyQualifiedFixtureRuntime(root);
 }
 
 test("a guarded init plans and applies the managed ignore entry", () => {
@@ -464,7 +469,7 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
         const root = path.join(base, "consumer");
         mkdirSync(root, { recursive: true });
         seedAuthorityConsumer(root);
-        write(root, "node_modules/svelte/package.json", SVELTE_MANIFEST);
+        copyQualifiedFixtureRuntime(root);
         const { snapshot, writes } = planAuthorityInit(root, config);
         const before = snapshotTree(root);
         const { plan, outcome } = applyAuthority(
@@ -491,7 +496,12 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
         const root = path.join(base, "consumer");
         mkdirSync(root, { recursive: true });
         seedAuthorityConsumer(root);
-        write(base, "node_modules/svelte/package.json", SVELTE_MANIFEST);
+        copyQualifiedFixtureRuntime(
+          root,
+          "dependencies",
+          path.join(base, "node_modules/svelte"),
+          base,
+        );
         const { snapshot, writes } = planAuthorityInit(root, config);
         const external = path.join(base, "node_modules");
         const externalBefore = snapshotTree(external);
@@ -526,7 +536,7 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
         mkdirSync(root, { recursive: true });
         seedAuthorityConsumer(root);
         const store = path.join(base, "store", "svelte");
-        write(base, "store/svelte/package.json", SVELTE_MANIFEST);
+        copyQualifiedFixtureRuntime(root, "dependencies", store, base);
         mkdirSync(path.join(root, "node_modules"), { recursive: true });
         symlinkSync(store, path.join(root, "node_modules", "svelte"), "dir");
         const { snapshot, writes } = planAuthorityInit(root, config);
@@ -561,7 +571,12 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
       const root = path.join(base, "consumer");
       mkdirSync(root, { recursive: true });
       seedAuthorityConsumer(root);
-      write(base, "node_modules/svelte/package.json", SVELTE_MANIFEST);
+      copyQualifiedFixtureRuntime(
+        root,
+        "dependencies",
+        path.join(base, "node_modules/svelte"),
+        base,
+      );
       const { snapshot, writes } = planAuthorityInit(root, config);
       // A nearer incompatible install appears after planning.
       write(
@@ -592,7 +607,12 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
           "svelte",
           "package.json",
         );
-        write(base, "node_modules/svelte/package.json", SVELTE_MANIFEST);
+        copyQualifiedFixtureRuntime(
+          root,
+          "dependencies",
+          path.join(base, "node_modules/svelte"),
+          base,
+        );
         const { snapshot, writes } = planAuthorityInit(root, config);
         if (kind === "bytes") {
           writeFileSync(
@@ -602,8 +622,14 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
         } else if (kind === "mode") {
           chmodSync(manifest, 0o600);
         } else {
-          rmSync(manifest);
-          writeFileSync(manifest, SVELTE_MANIFEST);
+          const original = readFileSync(manifest);
+          const held = openSync(manifest, "r");
+          try {
+            rmSync(manifest);
+            writeFileSync(manifest, original);
+          } finally {
+            closeSync(held);
+          }
         }
         assertAuthorityRefusal(root, config, snapshot, writes, [
           path.join(base, "node_modules"),
@@ -620,8 +646,18 @@ for (const [label, config] of AUTHORITY_CONFIGS) {
       const root = path.join(base, "consumer");
       mkdirSync(root, { recursive: true });
       seedAuthorityConsumer(root);
-      write(base, "store/a/package.json", SVELTE_MANIFEST);
-      write(base, "store/b/package.json", SVELTE_MANIFEST);
+      copyQualifiedFixtureRuntime(
+        root,
+        "dependencies",
+        path.join(base, "store/a"),
+        base,
+      );
+      copyQualifiedFixtureRuntime(
+        root,
+        "dependencies",
+        path.join(base, "store/b"),
+        base,
+      );
       mkdirSync(path.join(root, "node_modules"), { recursive: true });
       const link = path.join(root, "node_modules", "svelte");
       symlinkSync(path.join(base, "store", "a"), link, "dir");

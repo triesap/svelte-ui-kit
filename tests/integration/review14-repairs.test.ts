@@ -1,3 +1,4 @@
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
 import {
@@ -162,7 +163,12 @@ test("installed resolution drift, nearer shadowing and link retarget are refused
     const root = path.join(base, "consumer");
     mkdirSync(root, { recursive: true });
     seedPackage(root);
-    writeManifest(base, "5.57.3");
+    copyQualifiedFixtureRuntime(
+      root,
+      "dependencies",
+      path.join(base, "node_modules/svelte"),
+      base,
+    );
     const environment = captureEnvironment(root);
     const installed = installedReads(environment);
     assert.equal(
@@ -184,7 +190,12 @@ test("installed resolution drift, nearer shadowing and link retarget are refused
     const root = path.join(base, "consumer");
     mkdirSync(root, { recursive: true });
     seedPackage(root);
-    writeManifest(base, "5.57.3");
+    copyQualifiedFixtureRuntime(
+      root,
+      "dependencies",
+      path.join(base, "node_modules/svelte"),
+      base,
+    );
     const environment = captureEnvironment(root);
     const installed = installedReads(environment);
 
@@ -201,15 +212,15 @@ test("installed resolution drift, nearer shadowing and link retarget are refused
     const root = path.join(base, "consumer");
     mkdirSync(root, { recursive: true });
     seedPackage(root);
-    write(
+    copyQualifiedFixtureRuntime(
       root,
-      "store/a/package.json",
-      JSON.stringify({ name: "svelte", version: "5.57.3" }),
+      "dependencies",
+      path.join(root, "store/a"),
     );
-    write(
+    copyQualifiedFixtureRuntime(
       root,
-      "store/b/package.json",
-      JSON.stringify({ name: "svelte", version: "5.57.3" }),
+      "dependencies",
+      path.join(root, "store/b"),
     );
     mkdirSync(abs(root, "node_modules"), { recursive: true });
     symlinkSync("../store/a", abs(root, "node_modules/svelte"), "dir");
@@ -275,6 +286,7 @@ test("a composed guarded ignore operation recovers without an unapproved-target 
         dependencies: { svelte: "5.57.3", "@sveltejs/kit": "2.70.3" },
       }),
     );
+    copyQualifiedFixtureRuntime(root);
     write(
       root,
       `${STATE}/kit.json`,

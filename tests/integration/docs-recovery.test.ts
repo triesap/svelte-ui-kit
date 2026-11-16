@@ -83,7 +83,10 @@ for (const custom of [false, true])
       ]) {
         const target = path.join(root, "node_modules", dependency);
         mkdirSync(path.dirname(target), { recursive: true });
-        symlinkSync(path.resolve("node_modules", dependency), target);
+        symlinkSync(
+          path.resolve("tests/fixtures/consumer/node_modules", dependency),
+          target,
+        );
       }
       const boundary =
         scenario === "committed-cleanup" || scenario === "corrupt-journal"

@@ -1,3 +1,4 @@
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readlinkSync } from "node:fs";
@@ -43,11 +44,7 @@ for (const custom of [false, true])
             deriveKitPaths(config).stateDir + "/kit.json",
             JSON.stringify(config),
           );
-        write(
-          fixture.root,
-          "node_modules/svelte/package.json",
-          JSON.stringify({ name: "svelte", version: "5.57.3" }),
-        );
+        copyQualifiedFixtureRuntime(fixture.root);
         const outside = path.join(fixture.base, "outside"),
           marker = path.join(fixture.base, "injected");
         mkdirSync(outside);

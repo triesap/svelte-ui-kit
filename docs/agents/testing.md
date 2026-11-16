@@ -24,7 +24,13 @@ pnpm run test:docs
 ```
 
 Preparation comes before installation because frozen dependencies refer to the
-authentic local archive. Source fetching/bootstrap can need network access. Do
+authentic local archive. Packed qualification explicitly resolves each owned host/application
+lock and uses `pnpm fetch` before a strict frozen offline install. A frozen source
+workspace install alone need not cache registry metadata for a new host. Preserve
+manifest/lock identities through fetch and offline installation; no runtime guard
+is relaxed and no dependency setup runs inside the CLI. The cold native parser
+still has its original 30-second child bound.
+Source fetching/bootstrap can need network access. Do
 not accept timeout or signal termination as a completed bootstrap test. Owned
 bootstrap CLI children have a 30-second SIGKILL deadline; nested mutation suites
 have a five-minute deadline and must finish normally before their assertions count.

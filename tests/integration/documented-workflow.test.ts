@@ -1,3 +1,4 @@
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
@@ -34,11 +35,7 @@ for (const custom of [false, true])
           deriveKitPaths(config).stateDir + "/kit.json",
           JSON.stringify(config),
         );
-      write(
-        fixture.root,
-        "node_modules/svelte/package.json",
-        JSON.stringify({ name: "svelte", version: "5.57.3" }),
-      );
+      copyQualifiedFixtureRuntime(fixture.root);
       // Use the actual package: public docs must not substitute synthetic items.
       const cli = path.resolve("dist/cli/main.js");
       for (const [index, line] of commands.entries()) {

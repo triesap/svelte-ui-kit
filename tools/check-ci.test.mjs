@@ -262,3 +262,11 @@ test("the consumer cannot silently skip libraries, ignore warnings or replace it
     has(errors(source, manifest, consumer), "CI_CONSUMER_COVERAGE");
   }
 });
+
+test("integration hydration requires the actual pinned Chromium installation", () => {
+  const workflow = actual();
+  workflow.jobs.integration.steps = workflow.jobs.integration.steps.filter(
+    (step) => step.run !== "pnpm exec playwright install --with-deps chromium",
+  );
+  has(errors(workflow), "CI_COMMAND_COVERAGE");
+});

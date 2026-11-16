@@ -14,6 +14,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { sha256Hex } from "../../src/codegen/digest.js";
+import { prepareOfflineInstall } from "./package-manager.js";
 
 export function installPackedCore() {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-core-install-"));
@@ -41,6 +42,8 @@ export function installPackedCore() {
         log,
         `${result.stdout}\n${result.stderr}\nstatus=${result.status}; signal=${result.signal}\n`,
       );
+      assert.equal(result.error, undefined);
+      assert.equal(result.signal, null);
       assert.equal(result.status, 0, result.stdout + result.stderr);
       return { log, stdout: result.stdout };
     };
@@ -64,12 +67,16 @@ export function installPackedCore() {
         dependencies: { "svelte-ui-kit": `file:${archive}` },
       }),
     );
-    const installed = run(
-      "pnpm",
-      ["install", "--offline", "--ignore-scripts", "--lockfile=false"],
+    const installLogs: string[] = [];
+    const hostInstall = prepareOfflineInstall(
       host,
+      (args, stage) => {
+        installLogs.push(run("pnpm", args, host, stage).log);
+      },
       "install",
     );
+    const installLog = installLogs.at(-1);
+    assert.ok(installLog);
     const packageRoot = path.join(host, "node_modules/svelte-ui-kit");
     assert.ok(existsSync(path.join(packageRoot, "dist/cli/main.js")));
     for (const absent of ["src", "tests", "implementation", "tools"])
@@ -80,7 +87,9 @@ export function installPackedCore() {
         readFileSync(path.join(packageRoot, "package.json"), "utf8"),
       ),
       packLog: packed.log,
-      installLog: installed.log,
+      installLog,
+      installLogs,
+      hostInstall,
       registrySha256: sha256Hex(
         readFileSync(path.join(packageRoot, "registry/registry.json")),
       ),

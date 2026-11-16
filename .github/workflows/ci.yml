@@ -71,6 +71,8 @@ jobs:
         run: node tools/prepare-native-artifacts.ts --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
+      - name: Install integration Chromium
+        run: pnpm exec playwright install --with-deps chromium
       - name: pnpm run test:integration
         run: pnpm run test:integration
   components:

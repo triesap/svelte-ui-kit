@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { writeFixtureWorkspace } from "../helpers/workspace-catalog.ts";
 /**
  * RCLD04-R2-5 Q2 resulting-consumer qualification.
  *
@@ -72,11 +73,9 @@ const EVIDENCE_DIR =
 const dist = (rel) => import(pathToFileURL(path.join(DIST, rel)).href);
 const abs = (root, rel) => path.join(root, ...rel.split("/"));
 
-const COMPATIBILITY = {
-  svelte: "^5.57.3",
-  bits: "^2.19.3",
-  date: "^3.8.1",
-};
+const { INITIAL_COMPATIBILITY: COMPATIBILITY } = await dist(
+  "registry/versions.js",
+);
 
 const BUTTON_BODY =
   '<button data-kit-marker="BUTTON_RETAINED">Retained button</button>\n';
@@ -230,7 +229,7 @@ function seedConsumer() {
     "package.json",
     ".native-build",
     "vite.config.ts",
-    "svelte.config.js",
+    "svelte.config.ts",
     "tsconfig.json",
     "src/app.html",
     "src/routes/+layout.svelte",
@@ -241,6 +240,7 @@ function seedConsumer() {
       recursive: true,
     });
   }
+  writeFixtureWorkspace(root);
   // The maintained fixture's own node_modules tree is linked by entry, never
   // copied or mutated, so the shared dependency pins are identical.
   linkFixtureNodeModules(

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import {
   chmodSync,
+  closeSync,
+  fstatSync,
+  openSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -721,8 +724,21 @@ test("a replaced staged publication image before the rename fails closed", () =>
             `${stagedDir(GUARDED_STATE, ids[0] as string)}/kit.lock.json`,
           );
           const bytes = readFileSync(stagedLock);
-          unlinkSync(stagedLock);
-          writeFileSync(stagedLock, bytes, { mode: 0o644 });
+          // Keep the old inode allocated: unlink/recreate may otherwise reuse it
+          // immediately on Linux and fail to inject the intended identity fault.
+          const original = openSync(stagedLock, "r");
+          try {
+            const before = fstatSync(original, { bigint: true });
+            unlinkSync(stagedLock);
+            writeFileSync(stagedLock, bytes, { mode: 0o644 });
+            const after = statSync(stagedLock, { bigint: true });
+            assert.notDeepEqual(
+              [after.dev, after.ino],
+              [before.dev, before.ino],
+            );
+          } finally {
+            closeSync(original);
+          }
           throw new Error("replaced the staged publication image");
         }
       },

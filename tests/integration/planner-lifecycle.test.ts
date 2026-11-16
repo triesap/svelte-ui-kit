@@ -1,3 +1,4 @@
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -506,10 +507,7 @@ test("a captured snapshot does not mix later live dependency metadata", (t) => {
       peerDependencies: { svelte: "^5.0.0" },
     }),
   );
-  project.writeFile(
-    "node_modules/svelte/package.json",
-    JSON.stringify({ name: "svelte", version: "5.57.3" }),
-  );
+  copyQualifiedFixtureRuntime(project.root);
   const registry = buttonRegistry({
     npm: [{ name: "upstream-fixture", range: "^2.19.3", role: "runtime" }],
   });

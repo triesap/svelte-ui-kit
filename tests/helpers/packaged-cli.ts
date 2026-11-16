@@ -1,4 +1,5 @@
 import { writeFixtureWorkspace } from "./workspace-catalog.js";
+import { prepareOfflineInstall } from "./package-manager.js";
 /** Build an owned authoring copy, install its real tarball, then remove it. */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -150,6 +151,16 @@ export function installIndependentCli() {
     assert.equal(result.signal, null);
     return result;
   };
+  const bootstrapOffline = (cwd: string, label: string) => {
+    const identity = prepareOfflineInstall(
+      cwd,
+      (args, stage) => runTool("pnpm", args, cwd, stage),
+      label,
+    );
+    transcript.push(identity);
+    writeEvidence();
+    return identity;
+  };
   try {
     mkdirSync(author);
     for (const file of [
@@ -246,18 +257,7 @@ export function installIndependentCli() {
         dependencies: { "svelte-ui-kit": `file:${archive}` },
       }),
     );
-    runTool(
-      "pnpm",
-      [
-        "install",
-        "--offline",
-        "--ignore-scripts",
-        "--strict-peer-dependencies",
-        "--engine-strict",
-      ],
-      host,
-      "offline-cli-install",
-    );
+    const hostInstall = bootstrapOffline(host, "offline-cli-install");
     const packageRoot = realpathSync(
       path.join(host, "node_modules/svelte-ui-kit"),
     );
@@ -265,6 +265,7 @@ export function installIndependentCli() {
       assert.equal(existsSync(path.join(packageRoot, absent)), false, absent);
     const evidence = {
       archiveSha256: sha256Hex(archiveBytes),
+      hostInstall,
       pack: JSON.parse(packed.stdout),
       executableSha256: sha256Hex(
         readFileSync(path.join(packageRoot, "dist/cli/main.js")),
@@ -401,18 +402,7 @@ export function installIndependentCli() {
       );
       writeFixtureWorkspace(consumer, checkout);
       // Dependency setup is separate from the CLI and uses real declared pins.
-      runTool(
-        "pnpm",
-        [
-          "install",
-          "--offline",
-          "--ignore-scripts",
-          "--strict-peer-dependencies",
-          "--engine-strict",
-        ],
-        consumer,
-        "explicit-consumer-install",
-      );
+      bootstrapOffline(consumer, "explicit-consumer-install");
       const write = (logical: string, text: string) => {
         const target = path.join(consumer, logical);
         mkdirSync(path.dirname(target), { recursive: true });

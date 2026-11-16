@@ -51,7 +51,12 @@ CLI="$CLI_HOST/node_modules/svelte-ui-kit/dist/cli/main.js"
 
 Keep `CLI`, `CLI_HOST`, `ARCHIVE`, and `APP` as task-specific shell variables.
 The CLI host is not the application. Installing this package in the host does not
-install Svelte/Bits dependencies into the application or change its manifest.
+install Svelte/Bits dependencies into the application or change its manifest. A fresh
+host can need network access for registry metadata and platform-native compiler
+binaries. Offline installation requires a previously resolved lock and fetched
+closure for the target platform; an authoring checkout's cache alone is not that
+preparation. Use ordinary pnpm lock resolution and `pnpm fetch` before a frozen
+offline install.
 
 ## Prepare the application
 

@@ -82,7 +82,7 @@ for (const custom of [false, true])
     const read = (file: string) =>
       readFileSync(path.join(app.root, file), "utf8");
     for (const file of [
-      "svelte.config.js",
+      "svelte.config.ts",
       "vite.config.ts",
       "tsconfig.json",
       "src/app.html",

@@ -99,12 +99,37 @@ test("actual installed metadata bounds runtime support and retains source notice
     [
       "--input-type=module",
       "--eval",
-      `import { createRequire } from "node:module"; const requireNative = createRequire(${JSON.stringify(path.join(cli.packageRoot, "package.json"))}); requireNative("@astrojs/compiler-rs").parse("<main><slot /></main>"); import { patchAstroLayout } from ${JSON.stringify(path.join(cli.packageRoot, "dist/codegen/astro.js"))}; const result=patchAstroLayout("<main><slot /></main>", [{specifier:"./kit.css"},{specifier:"./themes.css"},{specifier:"./app.css"}]); if(!result.ok)throw new Error(JSON.stringify(result)); console.log(result.value);`,
+      `import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+const requireNative = createRequire(${JSON.stringify(path.join(cli.packageRoot, "package.json"))});
+const binaries = () => Object.keys(requireNative.cache).filter(file => file.endsWith(".node"));
+if (binaries().length !== 0) throw new Error("Native parser must start unloaded");
+const started = performance.now();
+requireNative("@astrojs/compiler-rs").parse("<main><slot /></main>");
+const firstLoadMs = performance.now() - started;
+const loaded = binaries();
+if (loaded.length !== 1) throw new Error("Expected one actual native parser binding");
+console.log(JSON.stringify({kind:"native-astro-first-load",node:process.version,platform:process.platform,arch:process.arch,firstLoadMs,binaries:loaded.map(file=>({file,sha256:createHash("sha256").update(readFileSync(file)).digest("hex")}))}));
+import { patchAstroLayout } from ${JSON.stringify(path.join(cli.packageRoot, "dist/codegen/astro.js"))};
+const result=patchAstroLayout("<main><slot /></main>", [{specifier:"./kit.css"},{specifier:"./themes.css"},{specifier:"./app.css"}]);
+if(!result.ok)throw new Error(JSON.stringify(result));
+console.log(result.value);`,
     ],
     cli.root,
     "packed-native-astro-parser",
   );
   assert.equal(parser.status, 0, parser.stderr);
+  assert.equal(parser.stderr, "");
+  const firstLoad = JSON.parse(parser.stdout.split("\n")[0]!);
+  assert.equal(firstLoad.kind, "native-astro-first-load");
+  assert.equal(firstLoad.platform, process.platform);
+  assert.equal(firstLoad.arch, process.arch);
+  assert.equal(firstLoad.node, process.version);
+  assert.equal(Number.isFinite(firstLoad.firstLoadMs), true);
+  assert.equal(firstLoad.binaries.length, 1);
+  assert.match(firstLoad.binaries[0].sha256, /^[a-f0-9]{64}$/);
+
   assert.match(parser.stdout, /import "\.\/kit.css"/);
   assert.match(parser.stdout, /<main><slot \/><\/main>/);
   assert.deepEqual(parser.guardEvents, []);

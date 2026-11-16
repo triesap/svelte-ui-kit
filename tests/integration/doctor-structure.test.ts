@@ -1,3 +1,5 @@
+import { writeFixtureWorkspace } from "../helpers/workspace-catalog.js";
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { cpSync, readFileSync, rmSync, symlinkSync } from "node:fs";
 import path from "node:path";
@@ -27,11 +29,7 @@ for (const scenario of [
   test(`actual doctor ${scenario} diagnoses without mutation`, () => {
     const fixture = cliPackage();
     try {
-      write(
-        fixture.root,
-        "node_modules/svelte/package.json",
-        JSON.stringify({ name: "svelte", version: "5.57.3" }),
-      );
+      copyQualifiedFixtureRuntime(fixture.root);
       const installed = fixture.run(["add", "card"]);
       assert.equal(installed.status, 0, installed.stderr + installed.stdout);
       const paths = deriveKitPaths(DEFAULT_KIT_CONFIG);
@@ -93,21 +91,17 @@ for (const scenario of [
             path.join(fixture.root, file),
             { recursive: true },
           );
+        writeFixtureWorkspace(fixture.root);
         symlinkSync(
           path.resolve("node_modules/bits-ui"),
           path.join(fixture.root, "node_modules/bits-ui"),
         );
         write(
           fixture.root,
-          "node_modules/svelte/package.json",
-          JSON.stringify({ name: "svelte", version: "4.0.0" }),
-        );
-        write(
-          fixture.root,
           "node_modules/@internationalized/date/package.json",
           JSON.stringify({
             name: "@internationalized/date",
-            version: "3.12.4",
+            version: "1.0.0",
           }),
         );
       }

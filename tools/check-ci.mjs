@@ -50,7 +50,13 @@ export const CI_LANES = Object.freeze({
       "pnpm run test:ci",
     ],
   },
-  integration: { minutes: 120, commands: ["pnpm run test:integration"] },
+  integration: {
+    minutes: 120,
+    commands: [
+      "pnpm exec playwright install --with-deps chromium",
+      "pnpm run test:integration",
+    ],
+  },
   components: {
     minutes: 60,
     commands: [
