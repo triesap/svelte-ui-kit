@@ -37,8 +37,13 @@ Convenience recipes require label/name; SelectField also requires selectedLabel 
 Recipe id is the root/base ID and derives the control and message IDs. Optional slots are native snippets: omission removes the slot, while a provided empty icon snippet retains its decorative wrapper.
 Native class styles the control; explicit root/surface/label/message/value-row classes style the recipe.
 Initial value is current state, not an implicit reset default.
-Canceled form.reset() preserves native text bindings; trusted reset-button clicks under pinned Svelte/Chromium can restore their defaults despite preventDefault, also reproduced by raw Svelte controls.
+The qualified corrected Svelte runtime preserves text bindings for canceled programmatic and trusted resets in supported connected-document forms. Unpatched upstream historically restored trusted defaults despite preventDefault; that is not the current guarantee. See [compatibility](../compatibility.md) for the retained extended-root limits.
 Checkbox/Switch/Radio guarded resets remain canceled.
+Event-handler promises are not awaited by the native reset algorithm. When an
+async handler must cancel reset, call `preventDefault()` synchronously before
+its first suspension; cancellation after an await is not a guaranteed veto.
+Connected async reset checks compare settled DOM, binding and FormData to the
+actual plain-DOM outcome rather than promising universal late cancellation.
 No second text reset engine hides that boundary.
 
 ## Exports and installed assets

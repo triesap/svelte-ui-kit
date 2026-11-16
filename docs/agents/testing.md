@@ -47,10 +47,13 @@ authorized change affects an actual Rust workspace.
 
 ### Native reset root selection
 
-`tests/browser/reset-boundaries.spec.ts` defaults to four connected-document
-acceptance cases (completed/canceled, default/custom mapping). Setting
+`tests/browser/reset-boundaries.spec.ts` defaults to twelve connected-document
+acceptance cases: four completed/canceled cases and eight async cancellation cases
+(native/programmatic reset, cancellation before/after `await tick()`, both mappings).
+Setting
 `SUIK_EXTENDED_RESET_CHARACTERIZATION=1` explicitly selects the original sixteen
-cases including detached, ShadowRoot and foreign-document native mounts. The six
+original synchronous cases including detached, ShadowRoot and foreign-document
+native mounts, plus the eight connected async cases (24 total). The six
 recorded extended-root failures are retained upstream characterization, outside
 the supported reset contract in compatibility.md; they are not repaired, passing
 tests or skipped required cases. Keep diagnostic failures visible in reports.

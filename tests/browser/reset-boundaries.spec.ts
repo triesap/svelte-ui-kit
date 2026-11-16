@@ -102,5 +102,79 @@ for (const custom of [false, true]) {
         });
       }
     }
+    for (const method of ["native", "programmatic"])
+      for (const timing of ["before-await", "after-await"])
+        test(`connected async ${method} reset cancellation ${timing} matches settled native state`, async ({
+          page,
+        }, info) => {
+          const url = new URL(consumer.route, hosted.baseURL);
+          url.searchParams.set("cancel", timing);
+          await page.goto(url.href);
+          await expect(page.locator('[data-ready="true"]')).toBeVisible();
+          await page
+            .getByRole("button", { name: "Edit controls", exact: true })
+            .click();
+          await page
+            .getByRole("button", { name: "Cancel reset", exact: true })
+            .click();
+          if (method === "native") {
+            for (const cohort of ["plain", "raw", "generated"])
+              await page
+                .getByRole("button", {
+                  name: `Native reset ${cohort}`,
+                  exact: true,
+                })
+                .click();
+            await page
+              .getByRole("button", { name: "Read native state", exact: true })
+              .click();
+          } else {
+            await page
+              .getByRole("button", { name: "Reset controls", exact: true })
+              .click();
+          }
+          await expect
+            .poll(
+              async () =>
+                JSON.parse(await page.locator("#observation").innerText())
+                  .resets.length,
+            )
+            .toBe(3);
+          const observed = JSON.parse(
+            await page.locator("#observation").innerText(),
+          );
+          const nativeValue = observed.controls[0].value;
+          if (timing === "before-await") expect(nativeValue).toBe("Edited");
+          expect(["Edited", "Default"]).toContain(nativeValue);
+          expect(observed.controls).toEqual(
+            ["plain", "raw", "generated"].map((cohort) => ({
+              cohort,
+              value: nativeValue,
+              bound: nativeValue,
+              data: [["value", nativeValue]],
+              connected: true,
+            })),
+          );
+          expect(observed.counts).toEqual({ plain: 1, raw: 1, generated: 1 });
+          expect(observed.resets).toHaveLength(3);
+          expect(
+            observed.resets.every(
+              (event: { prevented: boolean }) => event.prevented,
+            ),
+          ).toBe(true);
+          const artifact = info.outputPath("async-native-reset.json");
+          writeFileSync(
+            artifact,
+            JSON.stringify(
+              { method, timing, observed, inputs: consumer.evidence },
+              null,
+              2,
+            ),
+          );
+          await info.attach("async-native-reset", {
+            path: artifact,
+            contentType: "application/json",
+          });
+        });
   });
 }

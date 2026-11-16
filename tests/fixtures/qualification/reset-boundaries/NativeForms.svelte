@@ -1,13 +1,15 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import type { TextInput, TextInputProps } from "__UI_MODULE__";
 
   let {
     Control,
     defaults,
+    cancellationMode = "sync",
   }: {
     Control: typeof TextInput;
     defaults: Pick<TextInputProps, "defaultValue">;
+    cancellationMode?: "sync" | "before-await" | "after-await";
   } = $props();
   type Cohort = "plain" | "raw" | "generated";
   const cohorts: readonly Cohort[] = ["plain", "raw", "generated"];
@@ -33,8 +35,14 @@
       trusted: boolean;
     }[]
   >([]);
-  function record(cohort: Cohort, event: Event) {
-    if (canceled) event.preventDefault();
+  async function record(cohort: Cohort, event: Event) {
+    if (canceled && cancellationMode === "before-await") {
+      event.preventDefault();
+      await tick();
+    } else if (canceled && cancellationMode === "after-await") {
+      await tick();
+      event.preventDefault();
+    } else if (canceled) event.preventDefault();
     resets.push({
       cohort,
       composed: event.composed,
@@ -99,6 +107,7 @@
     bind:this={inputs.plain}
     oninput={() => counts.plain++}
   />
+  <button type="reset">Native reset plain</button>
 </form>
 <form bind:this={forms.raw} onreset={(event) => record("raw", event)}>
   <label for="raw-input">Raw Svelte</label>
@@ -110,6 +119,7 @@
     bind:this={inputs.raw}
     oninput={() => counts.raw++}
   />
+  <button type="reset">Native reset raw</button>
 </form>
 <form
   bind:this={forms.generated}
@@ -124,4 +134,5 @@
     bind:ref={inputs.generated}
     oninput={() => counts.generated++}
   />
+  <button type="reset">Native reset generated</button>
 </form>

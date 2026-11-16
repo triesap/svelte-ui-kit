@@ -16,6 +16,12 @@
   const scope =
     scopes.find((value) => value === page.url.searchParams.get("scope")) ??
     "connected";
+  const cancellationMode =
+    page.url.searchParams.get("cancel") === "before-await"
+      ? "before-await"
+      : page.url.searchParams.get("cancel") === "after-await"
+        ? "after-await"
+        : "sync";
   let host = $state<HTMLDivElement | null>(null);
   let frame = $state<HTMLIFrameElement | null>(null);
   let ready = $state(false);
@@ -23,7 +29,7 @@
   function create(target: Element | Document | ShadowRoot) {
     return mount(NativeForms, {
       target,
-      props: { Control: TextInput, defaults },
+      props: { Control: TextInput, defaults, cancellationMode },
     });
   }
   let instance: ReturnType<typeof create> | undefined;
@@ -80,6 +86,7 @@
   }}>Reset controls</button
 >
 <pre id="observation">{observation}</pre>
+<button type="button" onclick={publish}>Read native state</button>
 <div bind:this={host}></div>
 {#if scope === "foreign-document"}
   <iframe bind:this={frame} title="Native form document"></iframe>
