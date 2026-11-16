@@ -1,7 +1,8 @@
 # Getting started
 
 svelte-ui-kit installs editable Svelte/TypeScript source and plain CSS into a
-SvelteKit application. The application owns that source and its Svelte/Bits
+SvelteKit or Astro application, or a standalone Svelte library. The consumer owns
+that source and its Svelte/Bits
 dependencies. The kit is a private local CLI distribution; no npm release is
 assumed. Use a separate CLI host so the application has no kit runtime dependency.
 
@@ -58,44 +59,79 @@ closure for the target platform; an authoring checkout's cache alone is not that
 preparation. Use ordinary pnpm lock resolution and `pnpm fetch` before a frozen
 offline install.
 
-## Prepare the application
+## Choose a target
 
-Set `APP` to the absolute path of an existing SvelteKit application package, not
+The CLI-host preparation above is shared. Select the application package with
+`APP`; these commands never scaffold a framework or add dependencies for you.
+Use the archive procedure below for every target, then follow the appropriate
+intent and composition guide **before** initializing:
+
+- SvelteKit: the remaining steps on this page use the default v1 target.
+- [Astro](guides/astro.md): use explicit v2 Astro intent and one Svelte component
+  per contextful island; no SvelteKit dependency is required.
+- [Svelte library](guides/svelte-library.md): use explicit v2 library intent and
+  native development archives, with portable SemVer peers for consumers.
+
+## Prepare native dependencies
+
+For SvelteKit, set `APP` to the absolute path of an existing SvelteKit application package, not
 a workspace root. Back up or commit current work before installation. The app
 must declare SvelteKit, have supported configuration and own its check/build
 tooling. The tested setup uses SvelteKit 2.70.3, Vite 8.3.5, TypeScript 6.0.3,
 and svelte-check 4.7.7. The
-[tested consumer manifest](https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/tests/fixtures/consumer/package.json)
-is a source reference, not a promise that the CLI creates an application.
+[tested consumer manifest](https://github.com/triesap/svelte-ui-kit/blob/dfc7c513fd6edb25546bf43e4b17879554c2bd30/tests/fixtures/consumer/package.json)
+and its [owning version catalog](https://github.com/triesap/svelte-ui-kit/blob/dfc7c513fd6edb25546bf43e4b17879554c2bd30/pnpm-workspace.yaml)
+are source references for the qualified native files and resolved versions,
+not standalone manifests or a promise that the CLI creates an application.
+Astro and library packages use their own framework/build configuration instead.
 
-For the complete catalog, explicitly install `@internationalized/date` 3.12.4,
-then copy both authentic local archives into the application **before** installing
-them. Svelte retains raw version 5.57.3; its qualified reset-runtime build is
+For the complete catalog, applications explicitly install `@internationalized/date`
+3.12.4 as below. Libraries instead declare it as a peer and development dependency
+as shown in the library guide, and skip this application-only `pnpm add` command.
+Every target copies both authentic local archives **before** installing them. Svelte retains raw version 5.57.3; its qualified reset-runtime build is
 `5.57.3-reset-dispatch.2`. An ordinary registry installation of that same version
 does not qualify. Run this with `APP` and `ARCHIVE` set:
 
 ```sh
 pnpm --dir "$APP" add @internationalized/date@3.12.4
-cd "$APP"
-test ! -L vendor && mkdir -p vendor && test -d vendor
-NATIVE_ARCHIVE=bits-ui-2.20.2-svelte-ui-kit.1.tgz
-test ! -e "vendor/$NATIVE_ARCHIVE" && test ! -L "vendor/$NATIVE_ARCHIVE" && \
-  tar -xOf "$ARCHIVE" "package/dist/native/$NATIVE_ARCHIVE" > "vendor/$NATIVE_ARCHIVE"
-shasum -a 256 "vendor/$NATIVE_ARCHIVE"
-SVELTE_ARCHIVE=svelte-5.57.3-reset-dispatch.2.tgz
-test ! -e "vendor/$SVELTE_ARCHIVE" && test ! -L "vendor/$SVELTE_ARCHIVE" && \
-  tar -xOf "$ARCHIVE" "package/dist/native/$SVELTE_ARCHIVE" > "vendor/$SVELTE_ARCHIVE"
-shasum -a 256 "vendor/$SVELTE_ARCHIVE"
 ```
+
+Each extraction runs inside the checked, fail-fast application subshell. A linked
+vendor directory or either existing archive refuses before extracting bytes.
+The archive variables remain available in the calling shell.
+
+<!-- documented-native-extraction:start -->
+
+```sh
+NATIVE_ARCHIVE=bits-ui-2.20.2-svelte-ui-kit.1.tgz
+SVELTE_ARCHIVE=svelte-5.57.3-reset-dispatch.2.tgz
+(
+  set -eu
+  cd "$APP"
+  test ! -L vendor
+  mkdir -p vendor
+  test -d vendor
+  test ! -e "vendor/$NATIVE_ARCHIVE"
+  test ! -L "vendor/$NATIVE_ARCHIVE"
+  test ! -e "vendor/$SVELTE_ARCHIVE"
+  test ! -L "vendor/$SVELTE_ARCHIVE"
+  tar -xOf "$ARCHIVE" "package/dist/native/$NATIVE_ARCHIVE" > "vendor/$NATIVE_ARCHIVE"
+  shasum -a 256 "vendor/$NATIVE_ARCHIVE"
+  tar -xOf "$ARCHIVE" "package/dist/native/$SVELTE_ARCHIVE" > "vendor/$SVELTE_ARCHIVE"
+  shasum -a 256 "vendor/$SVELTE_ARCHIVE"
+)
+```
+
+<!-- documented-native-extraction:end -->
 
 Proceed only if the Bits archive digest is exactly
 `1e952f7cb1edd822650384e9e30dd75e864b3848d4a20fc73cb8ccd5224d1f27`
 and the Svelte archive digest is exactly
 `a7c2bfa42a6827ba2ced3e281a6f1ed2e8e1cfd4b1cddf1698796089f411abc4`.
-Then, still in `APP`, run:
+Then run (libraries use `add -D` and retain SemVer peers):
 
 ```sh
-pnpm add "./vendor/$NATIVE_ARCHIVE" "./vendor/$SVELTE_ARCHIVE"
+pnpm --dir "$APP" add "./vendor/$NATIVE_ARCHIVE" "./vendor/$SVELTE_ARCHIVE"
 ```
 
 Keep both regular archives, the explicit local-file dependencies, and the application
@@ -104,7 +140,14 @@ setup, not a generator side effect. The app must continue checking and building
 after the CLI host and source clone are unavailable. Unknown, changed, escaping
 or linked archives and altered installed distributions are refused.
 
-## Initialize and inspect
+## Initialize a SvelteKit application
+
+Astro and library users now continue with their target guide, not the default
+SvelteKit initialization below. Component reference examples use SvelteKit's
+`$lib/components/ui` alias. The generator does not create that alias in Astro
+or libraries; import the actual generated relative `index.js` or package export.
+
+### Inspect and initialize
 
 With `CLI` and `APP` set, these seven commands inspect, initialize, validate,
 and prove clean replay. A dry run writes nothing, including hidden coordination

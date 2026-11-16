@@ -1,3 +1,4 @@
+import { documentedExample } from "../helpers/documented-example.js";
 import {
   nativeCommand as command,
   verifyTargetConsumer,
@@ -57,9 +58,56 @@ test(
       .replace(/^\.\//, "");
     mkdirSync(path.dirname(path.join(root, archive)), { recursive: true });
     cpSync(path.join(owner, archive), path.join(root, archive));
+    const documentedLayout = documentedExample(
+      "docs/guides/astro.md",
+      "documented-astro-layout",
+      "astro",
+    );
+    const witnessedLayout = documentedLayout
+      .replace(
+        "const { title } = Astro.props;",
+        'const { title } = Astro.props;\nconst witness = process.env.OWNED_FIXTURE_WITNESS ?? "unqualified";',
+      )
+      .replace(
+        "<title>",
+        '<meta name="fixture-witness" content={witness} /><title>',
+      );
+    assert.notEqual(witnessedLayout, documentedLayout);
+    writeFileSync(path.join(root, "src/layouts/Layout.astro"), witnessedLayout);
+    writeFileSync(
+      path.join(root, "astro.config.ts"),
+      documentedExample(
+        "docs/guides/astro.md",
+        "documented-astro-config",
+        "ts",
+      ),
+    );
+    writeFileSync(
+      path.join(root, "src/components/Island.svelte"),
+      documentedExample(
+        "docs/guides/astro.md",
+        "documented-astro-island",
+        "svelte",
+      ),
+    );
+    writeFileSync(
+      path.join(root, "src/pages/index.astro"),
+      documentedExample(
+        "docs/guides/astro.md",
+        "documented-astro-page",
+        "astro",
+      ),
+    );
     const state = path.join(root, "src/generated/ui/_kit");
     mkdirSync(state, { recursive: true });
-    cpSync(path.join(root, "kit-intent.json"), path.join(state, "kit.json"));
+    writeFileSync(
+      path.join(state, "kit.json"),
+      documentedExample(
+        "docs/guides/astro.md",
+        "documented-astro-intent",
+        "json",
+      ),
+    );
     const logs: Record<string, string> = {};
     logs.install = command(root, "pnpm", [
       "install",
@@ -83,7 +131,7 @@ test(
       "utf8",
     );
     logs.init = cli(root, "init");
-    for (const item of ["button", "field", "dialog"])
+    for (const item of ["button", "field", "menu", "dialog"])
       logs[item] = cli(root, "add", item);
     logs.sync = cli(root, "sync");
     assert.equal(

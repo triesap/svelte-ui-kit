@@ -1,3 +1,4 @@
+import { documentedExample } from "../helpers/documented-example.js";
 /** Real packed library and independent native consumers; source metadata is never runtime proof. */
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -396,6 +397,22 @@ test(
     // Retain this owned independent host/library for review; authoring copy/archive were already removed by the helper.
     const library = path.join(cli.root, "library");
     clone("tests/fixtures/library", library);
+    writeFileSync(
+      path.join(library, "package.json"),
+      documentedExample(
+        "docs/guides/svelte-library.md",
+        "documented-library-manifest",
+        "json",
+      ),
+    );
+    writeFileSync(
+      path.join(library, "tsconfig.json"),
+      documentedExample(
+        "docs/guides/svelte-library.md",
+        "documented-library-tsconfig",
+        "json",
+      ),
+    );
     nativeArchive(library, cli.packageRoot);
     mkdirSync(path.join(library, "src/lib/_kit"), { recursive: true });
     cpSync(
@@ -418,6 +435,7 @@ test(
       ["add", "button"],
       ["add", "field"],
       ["add", "dialog"],
+      ["add", "menu"],
       ["sync"],
     ])
       logs[args.join(" ")] = cliResult(cli, library, args);
@@ -477,7 +495,7 @@ test(
       readFileSync(path.join(packed, "src/lib/_kit/kit.lock.json"), "utf8"),
     );
     assert.equal(lineage.target, "svelte-library");
-    assert.deepEqual(lineage.requested, ["button", "dialog", "field"]);
+    assert.deepEqual(lineage.requested, ["button", "dialog", "field", "menu"]);
     const retainedLibrary = path.join(cli.root, "retained-generated-library");
     renameSync(library, retainedLibrary);
     assert.equal(existsSync(library), false);
@@ -528,14 +546,6 @@ test(
           path.join(root, "package.json"),
           JSON.stringify(app, null, 2) + "\n",
         );
-        const authored = readFileSync(
-          path.join(
-            owner,
-            "tests/fixtures/astro-consumer/src/components/Island.svelte",
-          ),
-          "utf8",
-        );
-        assert.equal(authored.split("../generated/ui/index.js").length, 2);
         const island = path.join(
           root,
           framework === "astro"
@@ -545,8 +555,21 @@ test(
         mkdirSync(path.dirname(island), { recursive: true });
         writeFileSync(
           island,
-          authored.replace("../generated/ui/index.js", libraryName),
+          documentedExample(
+            "docs/guides/svelte-library.md",
+            "documented-library-island",
+            "svelte",
+          ),
         );
+        if (framework === "sveltekit")
+          writeFileSync(
+            path.join(root, "src/routes/+layout.svelte"),
+            documentedExample(
+              "docs/guides/svelte-library.md",
+              "documented-library-kit-layout",
+              "svelte",
+            ),
+          );
         if (framework === "astro") {
           const file = path.join(root, "src/layouts/Layout.astro"),
             source = readFileSync(file, "utf8");
@@ -555,7 +578,7 @@ test(
             file,
             source.replace(
               "---\n",
-              `---\nimport "${libraryName}/styles.css";\n`,
+              `---\n${documentedExample("docs/guides/svelte-library.md", "documented-library-css", "ts")}\n`,
             ),
           );
         }

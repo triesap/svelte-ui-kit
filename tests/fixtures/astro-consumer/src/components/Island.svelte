@@ -2,6 +2,11 @@
   import { onMount } from "svelte";
   import {
     Button,
+    MenuRoot,
+    MenuTrigger,
+    MenuPortal,
+    MenuContent,
+    MenuItem,
     TextField,
     DialogRoot,
     DialogTrigger,
@@ -29,6 +34,14 @@
   <p data-testid={`${label}-value`}>{value}</p>
   <Button onclick={() => (count += 1)}>{label} increment</Button>
   <p data-testid={`${label}-count`}>{count}</p>
+  <MenuRoot>
+    <MenuTrigger>{label} actions</MenuTrigger>
+    <MenuPortal>
+      <MenuContent aria-label={`${label} actions`}>
+        <MenuItem onSelect={() => (count += 1)}>Increment {label}</MenuItem>
+      </MenuContent>
+    </MenuPortal>
+  </MenuRoot>
   {#if dialogMounted}
     <DialogRoot>
       <DialogTrigger>{label} dialog</DialogTrigger>

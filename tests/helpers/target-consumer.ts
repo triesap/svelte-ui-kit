@@ -204,6 +204,14 @@ export async function verifyTargetConsumer(
     await page.getByLabel("Second name", { exact: true }).inputValue(),
     "",
   );
+  await page
+    .getByRole("button", { name: "First actions", exact: true })
+    .click();
+  await page
+    .getByRole("menuitem", { name: "Increment First", exact: true })
+    .click();
+  await expect(page.getByTestId("First-count")).toHaveText("2");
+  await expect(page.getByRole("menu")).toHaveCount(0);
   await page.getByRole("button", { name: "First dialog", exact: true }).click();
   await page.getByRole("dialog", { name: "First details" }).waitFor();
   await expect
