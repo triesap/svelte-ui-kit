@@ -2,7 +2,11 @@ import { writeFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { buildTabsConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 const control = (page: Page, name: string) =>
   page.getByRole("button", { name, exact: true });
 const selected = async (page: Page, value: string) => {
@@ -22,22 +26,10 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildTabsConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        consumer?.cleanup();
-      }
+      await finishFixtureServer(hosted, () => consumer.cleanup());
     });
     test.beforeEach(async ({ page }, info) => {
       const file = info.outputPath("installed-tabs.json");
@@ -187,6 +179,7 @@ for (const custom of [false, true])
       await expect(page.locator("#dynamic-refs")).toHaveText("BUTTON;DIV");
       await page.locator("#tab-c").click();
       await control(page, "Toggle tab C").click();
+      await expect(control(page, "Toggle tab C")).toBeFocused();
       await expect(page.locator("#tab-c")).toHaveCount(0);
       await expect(page.locator("#dynamic-refs")).toHaveText("none;DIV");
       await expect(page.locator("#panel-c")).toBeVisible();
@@ -195,6 +188,7 @@ for (const custom of [false, true])
       );
       await expect(page.locator("#value")).toHaveText("c; callbacks 1");
       await control(page, "Toggle panel C").click();
+      await expect(control(page, "Toggle panel C")).toBeFocused();
       await expect(page.locator("#dynamic-refs")).toHaveText("none;none");
       await expect(page.locator("#panel-c")).toHaveCount(0);
       await expect(page.locator("#panel-a")).toBeHidden();

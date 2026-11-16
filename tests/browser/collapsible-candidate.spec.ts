@@ -1,28 +1,20 @@
 import { writeFileSync } from "node:fs";
 import { buildCollapsibleCandidate } from "../helpers/collapsible-candidate.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 let consumer: ReturnType<typeof buildCollapsibleCandidate>;
 let hosted: FixtureServer;
 test.beforeAll(async () => {
   test.setTimeout(240000);
   consumer = buildCollapsibleCandidate();
-  try {
-    hosted = await startFixtureServer({ handler: consumer.handler });
-  } catch (error) {
-    consumer.cleanup();
-    throw error;
-  }
+  hosted = await startFixtureServer({ handler: consumer.handler });
 });
 test.afterAll(async () => {
-  try {
-    if (hosted) {
-      await hosted.server.stop();
-      expect(hosted.server.failure()).toBeNull();
-    }
-  } finally {
-    consumer?.cleanup();
-  }
+  await finishFixtureServer(hosted, () => consumer.cleanup());
 });
 test.beforeEach(async ({ page }, info) => {
   const file = info.outputPath("collapsible-candidate.json");

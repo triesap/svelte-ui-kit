@@ -40,6 +40,9 @@ Native reciprocal controls/labelledby relationships complete after registration/
 The panel keeps input DOM/state while hidden.
 SSR relationship timing differs from hydrated DOM; do not synthesize IDs or infer server links from browser effects.
 
+When a user action removes a trigger or panel, keep focus on a surviving application control.
+Removing the currently focused part imperatively requires an application-owned focus destination; the kit does not select an arbitrary replacement tab.
+
 ## Exports and installed assets
 
 The [authoritative manifest](../../../registry/ui/tabs.json) owns this inventory.

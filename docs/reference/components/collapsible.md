@@ -36,6 +36,9 @@ Rapid toggles and destruction preserve native completion/cleanup.
 Compose independent disclosures in app code; there is no Accordion engine.
 Denied style attributes reject native SSR measurement styles; hydrated CSSOM measurements do not prove arbitrary CSP/motion support.
 
+When removing a disclosure, keep a surviving application control as the focus destination.
+Imperatively removing a focused subtree requires application-owned focus restoration; native part cleanup does not choose a replacement control.
+
 ## Exports and installed assets
 
 The [authoritative manifest](../../../registry/ui/collapsible.json) owns this inventory.

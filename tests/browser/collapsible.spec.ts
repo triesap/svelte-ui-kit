@@ -1,7 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { buildCollapsibleConsumer } from "../helpers/generated-consumer.js";
 import { test, expect } from "./browser-issues.js";
-import { startFixtureServer, type FixtureServer } from "./fixture-server.js";
+import {
+  finishFixtureServer,
+  startFixtureServer,
+  type FixtureServer,
+} from "./fixture-server.js";
 for (const custom of [false, true])
   test.describe(`installed Collapsible behavior ${custom ? "custom" : "default"}`, () => {
     let consumer: ReturnType<typeof buildCollapsibleConsumer>;
@@ -9,22 +13,10 @@ for (const custom of [false, true])
     test.beforeAll(async () => {
       test.setTimeout(240000);
       consumer = buildCollapsibleConsumer(custom);
-      try {
-        hosted = await startFixtureServer({ handler: consumer.handler });
-      } catch (error) {
-        consumer.cleanup();
-        throw error;
-      }
+      hosted = await startFixtureServer({ handler: consumer.handler });
     });
     test.afterAll(async () => {
-      try {
-        if (hosted) {
-          await hosted.server.stop();
-          expect(hosted.server.failure()).toBeNull();
-        }
-      } finally {
-        consumer?.cleanup();
-      }
+      await finishFixtureServer(hosted, () => consumer.cleanup());
     });
     test.beforeEach(async ({ page }, info) => {
       const file = info.outputPath("installed-collapsible.json");
@@ -392,6 +384,29 @@ for (const custom of [false, true])
       await trigger.press("Enter");
       await expect(content).toBeVisible();
       await expect(page.locator("#completions")).toHaveText("2");
+    });
+
+    test("user-driven removal keeps a live focus destination and restores associations on remount", async ({
+      page,
+    }) => {
+      const mount = page.getByRole("button", {
+        name: "Toggle disclosure mount",
+        exact: true,
+      });
+      await page.locator("#disclosure-trigger").click();
+      await expect(page.locator("#disclosure-content")).toBeVisible();
+      await mount.click();
+      await expect(mount).toBeFocused();
+      await expect(page.locator("#disclosure-trigger")).toHaveCount(0);
+      await expect(page.locator("#refs")).toHaveText("none;none;none;SECTION");
+      await mount.click();
+      await expect(mount).toBeFocused();
+      await expect(page.locator("#disclosure-trigger")).toHaveAttribute(
+        "aria-controls",
+        "disclosure-content",
+      );
+      await page.locator("#disclosure-trigger").press("Enter");
+      await expect(page.locator("#disclosure-content")).toBeVisible();
     });
 
     test("concurrent same-worker SSR and both initial hydration states keep each disclosure request local", async ({
