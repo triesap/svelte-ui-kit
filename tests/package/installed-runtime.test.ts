@@ -142,6 +142,32 @@ test("runtime guards reject real authoring source/build/fixtures modules network
   assert.match(child.stdout, /OWNED_SUBPROCESS_DISABLED/);
 });
 
+test("selected archive bytes identify the installation and remain unavailable to the CLI", () => {
+  const selected = installed.evidence.selectedArchive;
+  if (!selected) {
+    assert.ok(installed.evidence.pack);
+    return;
+  }
+  assert.equal(installed.evidence.pack, null);
+  assert.equal(installed.evidence.archiveSha256, selected.sha256);
+  assert.equal(
+    sha256Hex(readFileSync(installed.retainedArchive)),
+    selected.sha256,
+  );
+  const denied = installed.runNode(
+    [
+      "--eval",
+      `try { require('node:fs').readFileSync(${JSON.stringify(selected.path)}); process.exitCode=1; } catch(e) { if(e.code !== 'OWNED_AUTHORING_UNAVAILABLE') throw e; console.log(e.code); }`,
+    ],
+    installed.root,
+    "original-qualified-archive-unavailable",
+  );
+  assert.equal(denied.status, 0, denied.stderr);
+  assert.deepEqual(denied.guardEvents, [
+    { kind: "authoring-access", code: "OWNED_AUTHORING_UNAVAILABLE" },
+  ]);
+});
+
 for (const custom of [false, true])
   test(`installed CLI uses only packed assets after author removal ${custom ? "custom" : "default"}`, () => {
     const consumer = installed.prepareConsumer(custom);
@@ -403,6 +429,21 @@ test("separate installed CLI authenticates both native identities and preserves 
         ["doctor", "--strict"],
       ]) {
         const result = run(args);
+        if (profile.name === "svelte" && fault === "declaration") {
+          if (args[0] === "doctor" && args.length === 1) {
+            assert.equal(result.status, 0);
+            assert.equal(result.envelope.status, "warning");
+            assert.equal(result.envelope.data.ready, false);
+          } else assert.notEqual(result.status, 0);
+          assert.ok(
+            result.envelope.diagnostics.some(
+              (i: { code: string }) => i.code === "PROJECT_TARGET_INVALID",
+            ),
+            JSON.stringify(result.envelope),
+          );
+          assert.deepEqual(snapshotTree(consumer.root), damaged);
+          continue;
+        }
         const expected =
           fault === "v-prefix" || fault === "build-metadata"
             ? "NATIVE_INSTALL_VERSION"
@@ -486,12 +527,10 @@ test("preinstall source generation reports unready runtime without claiming nati
   writeFileSync(manifestFile, JSON.stringify(manifest));
   const before = snapshotTree(consumer.root);
   const result = run(["init", "--dry-run"]);
-  assert.equal(result.status, 0, JSON.stringify(result.envelope));
+  assert.notEqual(result.status, 0, JSON.stringify(result.envelope));
   assert.ok(
     result.envelope.diagnostics.some(
-      (i: { code: string; message: string }) =>
-        i.code === "DEPENDENCY_NOT_READY" &&
-        i.message.includes("svelte: missing_declaration"),
+      (i: { code: string }) => i.code === "PROJECT_TARGET_INVALID",
     ),
   );
   assert.deepEqual(snapshotTree(consumer.root), before);

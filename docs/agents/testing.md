@@ -93,6 +93,22 @@ replace full acceptance or prove arbitrary application behavior.
 
 ## Cumulative acceptance lanes
 
+To qualify identical package bytes across independent hosts, set both
+`SUIK_QUALIFICATION_ARCHIVE` (an absolute existing tarball path) and
+`SUIK_QUALIFICATION_SHA256` (its lowercase SHA-256 digest). The installed-runtime,
+packed-consumer, library-consumer and Astro-consumer harnesses verify and copy
+that archive rather than rebuilding it. A missing pair or digest mismatch fails
+before host creation. Without the pair, each harness uses the production packer.
+The original archive is unavailable to guarded CLI execution, alongside the author
+checkout; installation records distinguish supplied bytes from an executed pack.
+Installed CLI/bootstrap transcripts record PID, cwd, elapsed time and unchanged
+deadlines; abnormal completion retains their host. Astro consumer captures retain
+their host. Framework setup shares explicit lock resolution, fetch and strict
+frozen offline installation, preserving manifest/lock fingerprints. Framework
+guards report unavailable source metadata as ENOENT while denying content,
+directory listings and module imports. Independent library consumers also deny
+their actual CLI-host root; the direct Astro consumer removes that host.
+
 | Lane                | Required command / purpose                                                                                                                                                                                   |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Foundation          | test:unit, test:harness and test:cli-bootstrap; grammar/protocol/observations/planners plus runner/bootstrap refusal controls.                                                                               |

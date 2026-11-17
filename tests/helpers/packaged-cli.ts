@@ -27,6 +27,8 @@ import {
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
+  parseKitConfig,
+  type TargetKind,
 } from "../../src/project/config.js";
 
 export function runtimeGuard(
@@ -34,6 +36,8 @@ export function runtimeGuard(
   audit: string,
   ownedRuntime: string | null = null,
   allowNativeSubprocesses = false,
+  unavailablePaths: readonly string[] = [],
+  missingSourceMetadata = false,
 ) {
   if (ownedRuntime !== null) {
     const relative = path.relative(checkout, ownedRuntime);
@@ -49,9 +53,11 @@ export function runtimeGuard(
   return `const fs = require('node:fs'), path = require('node:path'), url = require('node:url'), mod = require('node:module');
 const forbidden = ${JSON.stringify(checkout)}, audit = ${JSON.stringify(audit)};
 const ownedRuntime = ${JSON.stringify(ownedRuntime)};
+const missingSourceMetadata = ${JSON.stringify(missingSourceMetadata)};
+const unavailablePaths = ${JSON.stringify(unavailablePaths)};
 const append = fs.appendFileSync.bind(fs), physical = fs.realpathSync.bind(fs), metadata = fs.lstatSync.bind(fs);
 const deny = (kind, code, p) => { append(audit, JSON.stringify({kind, code, ...(ownedRuntime && p ? {locator:path.relative(forbidden,p)} : {})})+'\\n'); const e = new Error('Owned installed-runtime guard: '+kind); e.code = code; throw e; };
-const inside = p => (p === forbidden || p.startsWith(forbidden+path.sep)) && !(ownedRuntime && (p === ownedRuntime || p.startsWith(ownedRuntime+path.sep)));
+const inside = p => unavailablePaths.some(root => p === root || p.startsWith(root+path.sep)) || ((p === forbidden || p.startsWith(forbidden+path.sep)) && !(ownedRuntime && (p === ownedRuntime || p.startsWith(ownedRuntime+path.sep))));
 // Realpath needs directory identities along the canonical owned subtree. This
 // exception grants no directory listing, file content or module access.
 const ancestor = p => { if(!ownedRuntime || !ownedRuntime.startsWith(p+path.sep))return false;try {const s=metadata(p);return s.isDirectory()&&!s.isSymbolicLink();}catch{return false;} };
@@ -64,12 +70,12 @@ const check = (input, meta=false, operation='module') => {
   if (typeof input !== 'string') return;
   const absolute = path.resolve(input);
   if (inside(absolute) && !(meta && ancestor(absolute))) {
-    if(ownedRuntime && meta) return unavailable(absolute,operation);
+    if((ownedRuntime || missingSourceMetadata) && meta) return unavailable(absolute,operation);
     deny('authoring-access', 'OWNED_AUTHORING_UNAVAILABLE', absolute);
   }
   let resolved = absolute; try {resolved = physical(absolute);} catch {}
   if ((inside(absolute) && !(meta && ancestor(absolute))) || (inside(resolved) && !(meta && ancestor(resolved)))) {
-    if(ownedRuntime && meta) return unavailable(resolved,operation);
+    if((ownedRuntime || missingSourceMetadata) && meta) return unavailable(resolved,operation);
     deny('authoring-access', 'OWNED_AUTHORING_UNAVAILABLE', resolved);
   }
 };
@@ -91,7 +97,7 @@ for (const name of ['readFileSync','readFile','openSync','open','statSync','stat
 for (const name of ['readFile','open','stat','lstat','realpath','readdir','opendir','readlink','access']) {
   const original = fs.promises[name]; fs.promises[name] = function(p,...args) {if(check(p,metadataOperation(name),name)===false)return Promise.reject(missing(p,name));return original.call(this,p,...args);};
 }
-mod.registerHooks({resolve(specifier,context,next) {if(ownedRuntime){if(specifier.startsWith('file:'))check(new URL(specifier));else if(path.isAbsolute(specifier))check(specifier);else if((specifier.startsWith('./')||specifier.startsWith('../'))&&context.parentURL?.startsWith('file:'))check(new URL(specifier,context.parentURL));}const r=next(specifier,context);if(r.url.startsWith('file:'))check(new URL(r.url));return r;},load(location,context,next) {if(location.startsWith('file:'))check(new URL(location));return next(location,context);}});
+mod.registerHooks({resolve(specifier,context,next) {if(ownedRuntime || missingSourceMetadata){if(specifier.startsWith('file:'))check(new URL(specifier));else if(path.isAbsolute(specifier))check(specifier);else if((specifier.startsWith('./')||specifier.startsWith('../'))&&context.parentURL?.startsWith('file:'))check(new URL(specifier,context.parentURL));}const r=next(specifier,context);if(r.url.startsWith('file:'))check(new URL(r.url));return r;},load(location,context,next) {if(location.startsWith('file:'))check(new URL(location));return next(location,context);}});
 const network = () => deny('network', 'OWNED_NETWORK_DISABLED');
 const child = require('node:child_process');
 ${allowNativeSubprocesses ? "" : "for(const name of ['spawn','spawnSync','exec','execSync','execFile','execFileSync','fork']) child[name] = () => deny('subprocess', 'OWNED_SUBPROCESS_DISABLED');"}
@@ -103,7 +109,35 @@ mod.syncBuiltinESMExports();
 `;
 }
 
+/** Qualification can bind every host to the same already-built distribution. */
+export function selectedArchive(env: NodeJS.ProcessEnv = process.env) {
+  const archive = env.SUIK_QUALIFICATION_ARCHIVE;
+  const digest = env.SUIK_QUALIFICATION_SHA256;
+  if (archive === undefined && digest === undefined) return null;
+  assert.ok(
+    archive && path.isAbsolute(archive),
+    "qualification archive must be absolute",
+  );
+  assert.match(
+    digest ?? "",
+    /^[a-f0-9]{64}$/,
+    "qualification archive requires SHA-256",
+  );
+  const physical = realpathSync(archive);
+  assert.ok(
+    lstatSync(physical).isFile(),
+    "qualification archive must be a file",
+  );
+  assert.equal(
+    sha256Hex(readFileSync(physical)),
+    digest,
+    "qualification archive digest mismatch",
+  );
+  return { path: physical, sha256: digest! };
+}
+
 export function installIndependentCli() {
+  const selected = selectedArchive();
   const checkout = realpathSync(process.cwd());
   const root = realpathSync(
     mkdtempSync(path.join(os.tmpdir(), "suik-installed-runtime-")),
@@ -117,7 +151,10 @@ export function installIndependentCli() {
   const env = { ...process.env };
   for (const name of ["NODE_OPTIONS", "NODE_TEST_CONTEXT", "NODE_V8_COVERAGE"])
     delete env[name];
-  const cleanup = () => rmSync(root, { recursive: true, force: true });
+  let abnormal = false;
+  const cleanup = () => {
+    if (!abnormal) rmSync(root, { recursive: true, force: true });
+  };
   const writeEvidence = () =>
     writeFileSync(
       path.join(logRoot, `${prefix}-transcript.json`),
@@ -129,6 +166,7 @@ export function installIndependentCli() {
     cwd: string,
     label: string,
   ) => {
+    const started = performance.now();
     const result = spawnSync(command, args, {
       cwd,
       env,
@@ -140,6 +178,12 @@ export function installIndependentCli() {
       label,
       command,
       args,
+      cwd,
+      pid: result.pid,
+      elapsedMs: performance.now() - started,
+      timeoutMs: 240000,
+      errorCode:
+        (result.error as NodeJS.ErrnoException | undefined)?.code ?? null,
       status: result.status,
       signal: result.signal,
       stdout: result.stdout,
@@ -206,13 +250,22 @@ export function installIndependentCli() {
     );
     const archives = path.join(root, "archives");
     mkdirSync(archives);
-    const packed = runTool(
-      process.execPath,
-      ["tools/build-package.ts", "--pack-destination", archives],
-      author,
-      "owned-production-build-and-pack",
-    );
+    const packed = selected
+      ? null
+      : runTool(
+          process.execPath,
+          ["tools/build-package.ts", "--pack-destination", archives],
+          author,
+          "owned-production-build-and-pack",
+        );
     rmSync(path.join(author, "node_modules"));
+    if (selected) {
+      const bytes = readFileSync(selected.path);
+      assert.equal(sha256Hex(bytes), selected.sha256);
+      writeFileSync(path.join(archives, path.basename(selected.path)), bytes, {
+        flag: "wx",
+      });
+    }
     const names = readdirSync(archives);
     assert.equal(names.length, 1);
     assert.match(names[0]!, /\.tgz$/);
@@ -241,7 +294,8 @@ export function installIndependentCli() {
     const evidence = {
       archiveSha256: sha256Hex(archiveBytes),
       hostInstall,
-      pack: JSON.parse(packed.stdout),
+      pack: packed ? JSON.parse(packed.stdout) : null,
+      selectedArchive: selected,
       executableSha256: sha256Hex(
         readFileSync(path.join(packageRoot, "dist/cli/main.js")),
       ),
@@ -260,7 +314,16 @@ export function installIndependentCli() {
     assert.equal(existsSync(archive), false);
     const guard = path.join(root, "runtime-guard.cjs");
     const audit = path.join(root, "runtime-guard.jsonl");
-    writeFileSync(guard, runtimeGuard(checkout, audit));
+    writeFileSync(
+      guard,
+      runtimeGuard(
+        checkout,
+        audit,
+        null,
+        false,
+        selected ? [selected.path] : [],
+      ),
+    );
     writeFileSync(
       path.join(logRoot, `${prefix}-identity.json`),
       JSON.stringify(evidence, null, 2),
@@ -273,6 +336,7 @@ export function installIndependentCli() {
       cwd: string,
       label: string,
       timeoutMs = 30_000,
+      expectedSignal: "SIGKILL" | null = null,
     ) => {
       assert.ok(
         Number.isSafeInteger(timeoutMs) &&
@@ -280,6 +344,7 @@ export function installIndependentCli() {
           timeoutMs <= 300_000,
       );
       writeFileSync(audit, "");
+      const started = performance.now();
       const result = spawnSync(process.execPath, [...nodeArgs, ...args], {
         cwd,
         env,
@@ -294,6 +359,9 @@ export function installIndependentCli() {
         .map((line) => JSON.parse(line));
       transcript.push({
         label,
+        pid: result.pid,
+        cwd,
+        elapsedMs: performance.now() - started,
         args,
         status: result.status,
         signal: result.signal,
@@ -305,8 +373,9 @@ export function installIndependentCli() {
         guardEvents,
       });
       writeEvidence();
+      if (result.error || result.signal) abnormal = true;
       assert.equal(result.error, undefined);
-      assert.equal(result.signal, null);
+      assert.equal(result.signal, expectedSignal);
       return { ...result, guardEvents };
     };
     const run = (args: string[], cwd: string, cliRoot = packageRoot) =>
@@ -329,14 +398,17 @@ export function installIndependentCli() {
         | "native-authentication"
         | "catalog"
         | "preinstall" = "adoption",
+      target: TargetKind = "sveltekit",
     ) => {
       const consumer = path.join(
         root,
         purpose !== "adoption"
           ? `${purpose}-consumer`
-          : custom
-            ? "custom-consumer"
-            : "default-consumer",
+          : target !== "sveltekit"
+            ? `${target}-consumer`
+            : custom
+              ? "custom-consumer"
+              : "default-consumer",
       );
       mkdirSync(consumer);
       const manifest = JSON.parse(
@@ -347,6 +419,27 @@ export function installIndependentCli() {
       );
       manifest.name = custom ? "owned-runtime-custom" : "owned-runtime-default";
       manifest.packageManager = "pnpm@12.16.1";
+      if (target !== "sveltekit") {
+        delete manifest.devDependencies["@sveltejs/kit"];
+        delete manifest.devDependencies["@sveltejs/adapter-node"];
+      }
+      if (target === "astro") {
+        manifest.dependencies.astro = "catalog:";
+        manifest.dependencies["@astrojs/svelte"] = "catalog:";
+      }
+      if (target === "svelte-library") {
+        manifest.peerDependencies = { svelte: "catalog:" };
+        manifest.svelte = "./dist/index.js";
+        manifest.types = "./dist/index.d.ts";
+        manifest.exports = {
+          ".": {
+            types: "./dist/index.d.ts",
+            svelte: "./dist/index.js",
+            default: "./dist/index.js",
+          },
+          "./styles.css": "./src/styles.css",
+        };
+      }
       // Explicit operator setup extracts the actual locally packed CLI member.
       // It never uses an authoring cache as the consumer dependency source.
       const extraction = path.join(consumer, ".owned-cli-extraction");
@@ -383,16 +476,50 @@ export function installIndependentCli() {
         mkdirSync(path.dirname(target), { recursive: true });
         writeFileSync(target, text);
       };
-      write("svelte.config.ts", "export default { kit: {} };\n");
-      write(
-        "src/routes/+layout.svelte",
-        '<script lang="ts">let {children} = $props();</script>\n{@render children()}\n',
+      if (target === "sveltekit") {
+        write("svelte.config.ts", "export default { kit: {} };\n");
+        write(
+          "src/routes/+layout.svelte",
+          '<script lang="ts">let {children} = $props();</script>\n{@render children()}\n',
+        );
+      }
+      const parsed = parseKitConfig(
+        target === "sveltekit"
+          ? custom
+            ? {
+                ...DEFAULT_KIT_CONFIG,
+                uiDir: "app/ui",
+                stylesDir: "assets/styles",
+              }
+            : DEFAULT_KIT_CONFIG
+          : {
+              schemaVersion: 1,
+              target,
+              uiDir: "src/lib",
+              stylesDir: "src/styles",
+              requested: [],
+              ...(target === "astro"
+                ? { layoutFile: "src/layouts/Layout.astro" }
+                : { styleEntry: "src/styles.css" }),
+            },
       );
-      const config = custom
-        ? { ...DEFAULT_KIT_CONFIG, uiDir: "app/ui", stylesDir: "assets/styles" }
-        : DEFAULT_KIT_CONFIG;
+      assert.ok(parsed.ok, JSON.stringify(parsed));
+      const config = parsed.value;
       const paths = deriveKitPaths(config);
-      if (custom) write(`${paths.stateDir}/kit.json`, JSON.stringify(config));
+      if (custom || target !== "sveltekit")
+        write(`${paths.stateDir}/kit.json`, JSON.stringify(config));
+      if (target === "astro") {
+        write(
+          "astro.config.ts",
+          'import {defineConfig} from "astro/config";import svelte from "@astrojs/svelte";export default defineConfig({integrations:[svelte()]});\n',
+        );
+        write(
+          "src/layouts/Layout.astro",
+          '---\nconst title="Preserved";\n---\n<main><h1>{title}</h1><slot /></main>\n',
+        );
+      }
+      if (target === "svelte-library")
+        write("src/styles.css", "/* application stylesheet */\n");
       return { root: consumer, config, paths, write };
     };
     const clone = (name: string) => {
@@ -431,7 +558,8 @@ export function installIndependentCli() {
       cleanup,
     };
   } catch (error) {
-    cleanup();
+    transcript.push({ failedRoot: root, error: String(error) });
+    writeEvidence();
     throw error;
   }
 }

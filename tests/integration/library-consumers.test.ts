@@ -20,10 +20,13 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import { parse, stringify } from "yaml";
+import { parse } from "yaml";
+import { prepareOfflineInstall } from "../helpers/package-manager.js";
+import { writeFixtureWorkspace } from "../helpers/workspace-catalog.js";
 import {
   installIndependentCli,
   runtimeGuard,
+  selectedArchive,
 } from "../helpers/packaged-cli.js";
 import {
   nativeCommand,
@@ -58,14 +61,7 @@ function clone(blueprint: string, root: string) {
           ].includes(p),
         ),
   });
-  writeFileSync(
-    path.join(root, "pnpm-workspace.yaml"),
-    stringify({
-      packages: ["."],
-      catalog: workspace.catalog,
-      minimumReleaseAgeExclude: workspace.minimumReleaseAgeExclude,
-    }),
-  );
+  writeFixtureWorkspace(root, owner);
 }
 function nativeArchive(root: string, packageRoot: string) {
   const manifest = JSON.parse(
@@ -86,20 +82,17 @@ function nativeArchive(root: string, packageRoot: string) {
   }
 }
 function setup(root: string, logs: Record<string, string>) {
-  logs.install = nativeCommand(root, "pnpm", [
-    "install",
-    "--ignore-scripts",
-    "--strict-peer-dependencies",
-    "--engine-strict",
-  ]);
-  logs.frozenInstall = nativeCommand(root, "pnpm", [
-    "install",
-    "--frozen-lockfile",
-    "--offline",
-    "--ignore-scripts",
-    "--strict-peer-dependencies",
-    "--engine-strict",
-  ]);
+  const identity = prepareOfflineInstall(
+    root,
+    (args, stage) => {
+      logs[stage] = nativeCommand(root, "pnpm", args);
+    },
+    "library-consumer-install",
+  );
+  writeFileSync(
+    path.join(root, "dependency-inputs.json"),
+    JSON.stringify(identity, null, 2),
+  );
 }
 function cliResult(
   cli: ReturnType<typeof installIndependentCli>,
@@ -111,11 +104,21 @@ function cliResult(
   assert.deepEqual(result.guardEvents, []);
   return result.stdout;
 }
-function sourceGuard(root: string) {
+function sourceGuard(
+  root: string,
+  cli: ReturnType<typeof installIndependentCli>,
+) {
   const audit = path.join(root, "source-audit.jsonl"),
     guard = path.join(root, "source-guard.cjs");
   writeFileSync(audit, "");
-  writeFileSync(guard, runtimeGuard(owner, audit, root, true));
+  const selected = selectedArchive();
+  writeFileSync(
+    guard,
+    runtimeGuard(owner, audit, root, true, [
+      cli.root,
+      ...(selected ? [selected.path] : []),
+    ]),
+  );
   const env = {
     NODE_OPTIONS: `--require ${JSON.stringify(guard)}`,
     ASTRO_TELEMETRY_DISABLED: "1",
@@ -134,6 +137,10 @@ function sourceGuard(root: string) {
     [
       "module",
       `await import(${JSON.stringify(path.join(owner, "dist/project/config.js"))})`,
+    ],
+    [
+      "cli-host",
+      `require('node:fs').readFileSync(${JSON.stringify(path.join(cli.packageRoot, "dist/cli/main.js"))})`,
     ],
   ] as const) {
     const code = `try { ${script}; throw Error('source denial control did not reject'); } catch(e) { if(e.code!=='OWNED_AUTHORING_UNAVAILABLE') throw e; console.log(e.code); }`;
@@ -595,7 +602,11 @@ test(
           ),
           true,
         );
-        const guarded = sourceGuard(root);
+        assert.equal(
+          existsSync(path.join(cli.packageRoot, "dist/cli/main.js")),
+          true,
+        );
+        const guarded = sourceGuard(root, cli);
         nativeLogs.check = nativeCommand(
           root,
           "pnpm",
@@ -656,6 +667,8 @@ test(
           framework,
           root,
           sourceDenials: 4,
+          cliHostDenials: 1,
+          unavailableRuntimeRoot: cli.root,
           metadataAbsenceControls: 6,
           inheritedPnpmGuardControls: 2,
           enforcedMetadataAbsences: absences.length,
