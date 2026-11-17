@@ -10,10 +10,7 @@ import {
 } from "../../src/project/config.js";
 import { cliPackage, write } from "../helpers/cli-package.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
-import {
-  writerLockDir,
-  transactionDir,
-} from "../../src/codegen/transaction-types.js";
+import { writerLockDir, transactionDir } from "../../src/transactions/types.js";
 for (const scenario of [
   "healthy",
   "missing",

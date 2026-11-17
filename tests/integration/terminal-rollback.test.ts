@@ -14,8 +14,8 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import { recoverTransaction } from "../../src/codegen/recovery.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
+import { recoverTransaction } from "../../src/transactions/recovery.js";
 import {
   DEFAULT_KIT_CONFIG as config,
   deriveKitPaths,

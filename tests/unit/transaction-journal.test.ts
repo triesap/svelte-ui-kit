@@ -13,7 +13,7 @@ import {
   serializeJournal,
   validateJournalTargets,
   type TransactionJournal,
-} from "../../src/codegen/transaction-journal.js";
+} from "../../src/transactions/journal.js";
 
 const ROOTS = {
   configSchema: 1 as const,

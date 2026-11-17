@@ -28,16 +28,16 @@ import path from "node:path";
 
 import { isSafeLogicalRelativePath, pathsOverlap } from "../project/paths.js";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
-import { sha256Hex } from "./digest.js";
+import { sha256Hex } from "../codegen/digest.js";
 import { flushFile } from "./durability.js";
-import type { ChangeOperation } from "./plan.js";
-import { canonicalJson } from "./serialize.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+import type { ChangeOperation } from "../codegen/plan.js";
+import { canonicalJson } from "../codegen/serialize.js";
+import { fireHooks, type TransactionHooks } from "./hooks.js";
 import {
   renameOwnedCreation,
   writeOwnedFile,
   type OwnedCreation,
-} from "./transaction-inventory.js";
+} from "./inventory.js";
 import {
   APPROVED_IGNORE_FILES,
   isTransactionId,
@@ -45,7 +45,7 @@ import {
   TRANSACTION_PHASES,
   type TransactionPhase,
   type DurableTransactionPhase,
-} from "./transaction-types.js";
+} from "./types.js";
 
 const HEX64 = /^[0-9a-f]{64}$/;
 const SAFE_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/;

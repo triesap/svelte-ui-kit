@@ -6,7 +6,7 @@ import {
   DEFAULT_KIT_CONFIG,
 } from "../../src/project/config.js";
 import { parseKitLock } from "../../src/codegen/lock.js";
-import { parseJournal } from "../../src/codegen/transaction-journal.js";
+import { parseJournal } from "../../src/transactions/journal.js";
 import { SHIPPED_SCHEMAS } from "../../src/registry/schema.js";
 import { TOOL_VERSION } from "../../src/registry/versions.js";
 

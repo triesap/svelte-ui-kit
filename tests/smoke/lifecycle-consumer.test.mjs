@@ -138,7 +138,7 @@ test("a generated default consumer checks, builds and server-renders", async (t)
   const { captureSnapshot } = await dist("codegen/snapshot.js");
   const { planInit } = await dist("codegen/plan-init.js");
   const { composeApplyPlan } = await dist("codegen/compose.js");
-  const { validateApplyPlan, applyPlan } = await dist("codegen/apply.js");
+  const { validateApplyPlan, applyPlan } = await dist("transactions/apply.js");
   const { createAssetProvider } = await dist("registry/assets.js");
   const { loadRegistrySnapshot } = await dist("registry/load.js");
 

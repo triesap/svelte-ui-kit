@@ -13,21 +13,18 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { backupPath } from "../../src/codegen/replace.js";
+import { backupPath } from "../../src/transactions/replace.js";
 import {
   stageOperations,
   type StageOperation,
-} from "../../src/codegen/stage.js";
-import {
-  faultAfter,
-  faultAtOccurrence,
-} from "../../src/codegen/transaction-hooks.js";
+} from "../../src/transactions/stage.js";
+import { faultAfter, faultAtOccurrence } from "../../src/transactions/hooks.js";
 import {
   persistJournal,
   prepareJournal,
   type TransactionDraft,
-} from "../../src/codegen/transaction-journal.js";
-import { journalPath } from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/journal.js";
+import { journalPath } from "../../src/transactions/types.js";
 import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";

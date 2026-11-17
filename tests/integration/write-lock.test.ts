@@ -21,13 +21,10 @@ import {
   releaseWriterLock,
   holdsWriterLock,
   verifyHeldWriterLock,
-} from "../../src/codegen/write-lock.js";
+} from "../../src/transactions/write-lock.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { faultAt } from "../../src/codegen/transaction-hooks.js";
-import {
-  transientRoot,
-  writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+import { faultAt } from "../../src/transactions/hooks.js";
+import { transientRoot, writerLockDir } from "../../src/transactions/types.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 const ID_ONE = "1111111111111111";

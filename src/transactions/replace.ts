@@ -22,21 +22,21 @@ import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
 import { observeEntry } from "../project/io.js";
-import { sha256Hex } from "./digest.js";
+import { sha256Hex } from "../codegen/digest.js";
 import { flushDirectory } from "./durability.js";
-import { observeTarget } from "./revalidate.js";
+import { observeTarget } from "../codegen/revalidate.js";
 import {
   persistJournal,
   type JournalOperationRecord,
   type TransactionJournal,
-} from "./transaction-journal.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+} from "./journal.js";
+import { fireHooks, type TransactionHooks } from "./hooks.js";
 import {
   backupsDir,
   journalPath,
   stagedDir,
   type TransactionPhase,
-} from "./transaction-types.js";
+} from "./types.js";
 import type { StagedBatch, StagedRecord } from "./stage.js";
 import {
   backupOwnedPreimage,
@@ -44,7 +44,7 @@ import {
   forgetRenamedCreation,
   verifyOwnedCreations,
   type OwnedCreation,
-} from "./transaction-inventory.js";
+} from "./inventory.js";
 import {
   verifyMutationAuthority,
   verifyMutationTarget,

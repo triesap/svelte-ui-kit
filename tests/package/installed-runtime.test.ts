@@ -22,10 +22,7 @@ import {
   NATIVE_BASELINE,
   SVELTE_RUNTIME_BASELINE,
 } from "../../src/project/native-dependency.js";
-import {
-  transientRoot,
-  writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+import { transientRoot, writerLockDir } from "../../src/transactions/types.js";
 
 let installed: ReturnType<typeof installIndependentCli>;
 before(() => {
@@ -218,7 +215,7 @@ for (const custom of [false, true])
     const omission = installed.clone(
       `owned-unchanged-omission-${custom ? "custom" : "default"}`,
     );
-    const module = path.join(omission, "dist/codegen/recovery.js");
+    const module = path.join(omission, "dist/transactions/recovery.js");
     const source = readFileSync(module, "utf8");
     const start = source.indexOf("export function inspectUnchangedState(");
     const end = source.indexOf("export function inspectTransactions(", start);

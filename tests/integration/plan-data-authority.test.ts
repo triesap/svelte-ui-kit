@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { validateApplyPlan } from "../../src/codegen/apply.js";
+import { validateApplyPlan } from "../../src/transactions/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { planInit } from "../../src/codegen/plan-init.js";

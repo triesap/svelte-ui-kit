@@ -4,9 +4,9 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import { faultAt } from "../../src/codegen/transaction-hooks.js";
-import { lockPath } from "../../src/codegen/transaction-types.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
+import { faultAt } from "../../src/transactions/hooks.js";
+import { lockPath } from "../../src/transactions/types.js";
 import {
   abs,
   GUARDED_STATE,

@@ -23,33 +23,33 @@ import {
   verifyOwnedCreations,
   writeOwnedFile,
   type OwnedCreation,
-} from "./transaction-inventory.js";
+} from "./inventory.js";
 
 import type { ModelIssue } from "../registry/errors.js";
-import { sha256Hex } from "./digest.js";
+import { sha256Hex } from "../codegen/digest.js";
 import { flushDirectory, flushFile } from "./durability.js";
 import {
   parseKitLock,
   type AnyLockValidationContext as LockValidationContext,
-} from "./lock.js";
+} from "../codegen/lock.js";
 import {
   verifyMutationAuthority,
   verifyMutationTarget,
   type MutationAuthority,
 } from "./mutation-authority.js";
 import { writePublicationIntent } from "./publication-intent.js";
-import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
 import {
-  persistJournal,
-  type TransactionJournal,
-} from "./transaction-journal.js";
+  revalidatePreimages,
+  type TargetPreimage,
+} from "../codegen/revalidate.js";
+import { fireHooks, type TransactionHooks } from "./hooks.js";
+import { persistJournal, type TransactionJournal } from "./journal.js";
 import {
   journalPath,
   lockPath,
   publicationIntentPath,
   stagedDir,
-} from "./transaction-types.js";
+} from "./types.js";
 
 export type LockPublicationResult =
   | {

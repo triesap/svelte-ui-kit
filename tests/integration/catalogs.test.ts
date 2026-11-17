@@ -8,7 +8,7 @@ import {
 } from "../../src/project/catalogs.js";
 import { inspectDependencyState } from "../../src/project/dependencies.js";
 import { captureEnvironment } from "../../src/project/environment.js";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import { createTempProject } from "../helpers/project.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";

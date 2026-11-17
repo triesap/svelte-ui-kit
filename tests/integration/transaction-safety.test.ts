@@ -14,25 +14,25 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import {
   recoverTransaction,
   recoverTransactions,
-} from "../../src/codegen/recovery.js";
-import { faultAfter } from "../../src/codegen/transaction-hooks.js";
+} from "../../src/transactions/recovery.js";
+import { faultAfter } from "../../src/transactions/hooks.js";
 import {
   persistJournal,
   type TransactionJournal,
-} from "../../src/codegen/transaction-journal.js";
+} from "../../src/transactions/journal.js";
 import {
   backupsDir,
   journalPath,
   lockPath,
   transactionDir,
   transactionsDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import {
   abs,
   capturedFixtureInit,

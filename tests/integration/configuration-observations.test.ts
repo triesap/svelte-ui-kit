@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { deriveKitPaths, parseKitConfig } from "../../src/project/config.js";
 import { composeGenerationFoundation } from "../helpers/generation-project.js";
 import { createTempProject } from "../helpers/project.js";

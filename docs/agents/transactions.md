@@ -1,8 +1,7 @@
 # Filesystem transactions, concurrency and recovery
 
 Scope: physical validation, authenticated plan application, writer coordination,
-journals, durability, publication and recovery. `src/codegen/transaction-*`,
-`apply.ts`, recovery helpers and `tests/integration` own the executable protocol.
+journals, durability, publication and recovery. `src/transactions`, its apply/recovery helpers and `tests/integration` own the executable protocol.
 Use the public [recovery guide](../guides/recovery.md) for manual operations.
 
 ## Threat model and paths

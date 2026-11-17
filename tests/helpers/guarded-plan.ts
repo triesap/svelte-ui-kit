@@ -4,15 +4,12 @@ import path from "node:path";
 import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 
 import { existsSync } from "node:fs";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit } from "../../src/codegen/plan-init.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import { ignoreBlockWithEntry } from "../../src/codegen/transaction-cleanup.js";
-import {
-  ignoreEntryFor,
-  lockPath,
-} from "../../src/codegen/transaction-types.js";
+import { ignoreBlockWithEntry } from "../../src/codegen/ignore.js";
+import { ignoreEntryFor, lockPath } from "../../src/transactions/types.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,

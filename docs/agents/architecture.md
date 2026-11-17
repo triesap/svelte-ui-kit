@@ -20,7 +20,7 @@ runtime dependencies; CLI internals never become app imports.
 | src/registry                                  | Package-relative asset provider, authenticated complete manifests/contracts, targets/exports/closure/dependency validation. No remote registry or caller plan self-certification.          |
 | src/codegen planners                          | Immutable incoming bytes, previous lock and actual read-set observations produce deterministic changes/conflicts/dependency instructions. No writes, coordination or package installation. |
 | src/codegen patchers                          | Narrow structural CSS/export/layout transformation that preserves unrelated text and rejects malformed/ambiguous structure. No whole-file formatting.                                      |
-| src/codegen transaction/recovery              | Exclusive cooperative writer, revalidation, same-filesystem stage, journals, replacement, publication witness, rollback/roll-forward and owned cleanup.                                    |
+| src/transactions                              | Exclusive cooperative writer, revalidation, same-filesystem stage, journals, replacement, publication witness, rollback/roll-forward and owned cleanup.                                    |
 | assets/registry/ui and assets/registry/styles | App-owned native/Bits wrapper markup, actual public types, source design classes/styles and complete compatibility cohorts. No CLI/Node imports or primitive state clone.                  |
 
 ## Machine contracts and authority
@@ -135,3 +135,9 @@ Legacy `<slot>` and `export let children` do not establish this contract. Existi
 layouts are checked before unchanged planner success; the CLI diagnoses unsupported
 rendering without rewriting it. Native Astro slots and ordinary component parsing
 retain their independent behavior.
+
+Transaction effects live in `src/transactions`: exclusive writers, staging,
+durable journals, replacements, publication and recovery. Read-only physical
+observations and sealed readset data remain in codegen authority/snapshot/revalidate;
+transactions consume those original observations. Codegen may use transaction
+namespace/type constants, but composition never loads the application engine.

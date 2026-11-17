@@ -13,7 +13,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit } from "../../src/codegen/plan-init.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
@@ -21,18 +21,18 @@ import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import {
   type RecoveryResult,
   type RecoveryRoots,
-} from "../../src/codegen/recovery.js";
+} from "../../src/transactions/recovery.js";
 import {
   captureSnapshot,
   type ProjectSnapshot,
 } from "../../src/codegen/snapshot.js";
-import { faultAt } from "../../src/codegen/transaction-hooks.js";
+import { faultAt } from "../../src/transactions/hooks.js";
 import {
   lockPath,
   transactionsDir,
   transientRoot,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,

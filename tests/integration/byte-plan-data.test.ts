@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { validateApplyPlan } from "../../src/codegen/apply.js";
+import { validateApplyPlan } from "../../src/transactions/apply.js";
 import { generationFixture } from "../helpers/generation-fixture.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 

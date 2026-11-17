@@ -12,12 +12,12 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { recoverTransaction } from "../../src/codegen/recovery.js";
+import { recoverTransaction } from "../../src/transactions/recovery.js";
 import {
   backupsDir,
   journalPath,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import { runWorker, spawnWorker } from "../helpers/fault-process.js";
 import { write } from "../helpers/guarded-plan.js";
 import {

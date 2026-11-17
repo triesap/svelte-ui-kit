@@ -1,3 +1,4 @@
+import { ignoreBlockWithEntry } from "../codegen/ignore.js";
 /**
  * Owned transaction cleanup and safe ignore integration (S072).
  *
@@ -27,15 +28,15 @@ import {
   parseJournal,
   serializeJournal,
   type TransactionJournal,
-} from "./transaction-journal.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+} from "./journal.js";
+import { fireHooks, type TransactionHooks } from "./hooks.js";
 import {
   ownedInventoryFor,
   captureCleanupInventory,
   removeCleanupEntries,
   verifyOwnedCreations,
   type OwnedCreation,
-} from "./transaction-inventory.js";
+} from "./inventory.js";
 import {
   backupsDir,
   ignoreEntryFor,
@@ -44,7 +45,7 @@ import {
   lockPath,
   stagedDir,
   transactionDir,
-} from "./transaction-types.js";
+} from "./types.js";
 
 export interface CleanupResult {
   readonly ok: boolean;
@@ -305,23 +306,6 @@ export function cleanupTransaction(
 export interface IgnoreResult {
   readonly changed: boolean;
   readonly issues: readonly ModelIssue[];
-}
-
-const MANAGED_HEADER = "# svelte-ui-kit transient transaction state";
-
-/**
- * Append the managed ignore block to existing ignore content, preserving every
- * existing rule byte-for-byte. Exported so the planner can compute the exact
- * bytes of a guarded ignore-file change without writing.
- */
-export function ignoreBlockWithEntry(existing: string, entry: string): string {
-  const prefix = existing.length === 0 || existing.endsWith("\n") ? "" : "\n";
-  return `${existing}${prefix}${MANAGED_HEADER}\n${entry}\n`;
-}
-
-/** True when the managed entry is already present as a whole line. */
-export function hasIgnoreEntry(existing: string, entry: string): boolean {
-  return existing.split("\n").some((line) => line.trim() === entry);
 }
 
 /**

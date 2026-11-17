@@ -12,14 +12,14 @@ import { test } from "node:test";
 import { completeLockFixture } from "../helpers/lock-fixture.js";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { stageOperations } from "../../src/codegen/stage.js";
+import { stageOperations } from "../../src/transactions/stage.js";
 import {
   persistJournal,
   prepareJournal,
   type TransactionJournal,
   type TransactionDraft,
-} from "../../src/codegen/transaction-journal.js";
-import { journalPath, lockPath } from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/journal.js";
+import { journalPath, lockPath } from "../../src/transactions/types.js";
 import { publishPreparedLock as publishLock } from "../helpers/publication.js";
 import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 

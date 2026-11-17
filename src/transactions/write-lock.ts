@@ -37,12 +37,12 @@ import {
   verifyOwnedCreations,
   writeOwnedFile,
   type OwnedCreation,
-} from "./transaction-inventory.js";
+} from "./inventory.js";
 import { removeOwnedAncestors } from "./owned-ancestry.js";
-import type { PhysicalIdentity } from "./authority.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
-import { isTransactionId, writerLockDir } from "./transaction-types.js";
-import type { JournalCreatedDir } from "./transaction-journal.js";
+import type { PhysicalIdentity } from "../codegen/authority.js";
+import { fireHooks, type TransactionHooks } from "./hooks.js";
+import { isTransactionId, writerLockDir } from "./types.js";
+import type { JournalCreatedDir } from "./journal.js";
 
 export interface WriterOwner {
   readonly schemaVersion: 1;

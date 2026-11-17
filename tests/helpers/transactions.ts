@@ -13,7 +13,7 @@ import {
   identityDigest,
   observeRootIdentity,
 } from "../../src/codegen/authority.js";
-import { writerLockDir } from "../../src/codegen/transaction-types.js";
+import { writerLockDir } from "../../src/transactions/types.js";
 
 export const RECOVERY_ROOTS = {
   configSchema: 1 as const,

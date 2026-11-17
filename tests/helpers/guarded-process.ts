@@ -23,6 +23,11 @@ export function codegenBaseUrl(): string {
   return new URL("../../src/codegen/", import.meta.url).href;
 }
 
+/** Base URL of the independent transaction owner in the compiled test tree. */
+export function transactionsBaseUrl(): string {
+  return new URL("../../src/transactions/", import.meta.url).href;
+}
+
 export interface GuardedWorkerOptions {
   readonly root: string;
   readonly uiDir: string;
@@ -57,6 +62,7 @@ export interface ProductionWorkerOptions {
 
 const WORKER = String.raw`
 const base = process.env.SUIK_CODEGEN;
+const transactions = process.env.SUIK_TRANSACTIONS;
 const root = process.env.SUIK_ROOT;
 const uiDir = process.env.SUIK_UI;
 const stylesDir = process.env.SUIK_STYLES;
@@ -66,7 +72,7 @@ const mode = process.env.SUIK_MODE || "kill";
 const holdMs = Number(process.env.SUIK_HOLD_MS || "0");
 const {capturedFixtureInit, write} = await import(base + "../../tests/helpers/guarded-plan.js");
 const {DEFAULT_KIT_CONFIG,serializeKitConfig} = await import(base + "../project/config.js");
-const {validateApplyPlan, applyPlan} = await import(base + "apply.js");
+const {validateApplyPlan, applyPlan} = await import(transactions + "apply.js");
 const config = {...DEFAULT_KIT_CONFIG, uiDir, stylesDir, layoutFile};
 write(root, stylesDir + "/kit.css", "old css");
 write(root, uiDir + "/_kit/kit.json", serializeKitConfig(config));
@@ -85,6 +91,7 @@ function workerEnv(options: GuardedWorkerOptions): NodeJS.ProcessEnv {
   return {
     ...process.env,
     SUIK_CODEGEN: codegenBaseUrl(),
+    SUIK_TRANSACTIONS: transactionsBaseUrl(),
     SUIK_PKG: process.cwd(),
     SUIK_ROOT: options.root,
     SUIK_UI: options.uiDir,
@@ -106,6 +113,7 @@ function workerEnv(options: GuardedWorkerOptions): NodeJS.ProcessEnv {
  */
 const PRODUCTION_WORKER = String.raw`
 const base = process.env.SUIK_CODEGEN;
+const transactions = process.env.SUIK_TRANSACTIONS;
 const root = process.env.SUIK_ROOT;
 const pkg = process.env.SUIK_PKG;
 const uiDir = process.env.SUIK_UI;
@@ -115,7 +123,8 @@ const boundary = process.env.SUIK_BOUNDARY;
 const mode = process.env.SUIK_MODE || "kill";
 const holdMs = Number(process.env.SUIK_HOLD_MS || "0");
 const load = (name) => import(base + name);
-const { applyPlan, validateApplyPlan } = await load("apply.js");
+const loadTransaction = (name) => import(transactions + name);
+const { applyPlan, validateApplyPlan } = await loadTransaction("apply.js");
 const { composeApplyPlan } = await load("compose.js");
 const { planInit } = await load("plan-init.js");
 const { captureSnapshot } = await load("snapshot.js");
@@ -199,6 +208,7 @@ export function runGuardedProductionWorker(
       env: {
         ...process.env,
         SUIK_CODEGEN: codegenBaseUrl(),
+        SUIK_TRANSACTIONS: transactionsBaseUrl(),
         SUIK_ROOT: options.root,
         SUIK_PKG: options.pkgRoot,
         SUIK_UI: options.uiDir,
@@ -253,6 +263,7 @@ export const DEFAULT_RECOVERY_TIMEOUT_MS = 30_000;
 
 const RECOVERY_WORKER = String.raw`
 const base = process.env.SUIK_CODEGEN;
+const transactions = process.env.SUIK_TRANSACTIONS;
 const root = process.env.SUIK_ROOT;
 const stateDir = process.env.SUIK_STATE_DIR;
 const uiDir = process.env.SUIK_UI;
@@ -262,7 +273,8 @@ const mode = process.env.SUIK_RECOVERY_MODE;
 const transactionId = process.env.SUIK_TRANSACTION_ID || "";
 const stallMs = Number(process.env.SUIK_RECOVERY_STALL_MS || "0");
 const load = (name) => import(base + name);
-const { recoverTransaction, recoverTransactions } = await load("recovery.js");
+const loadTransaction = (name) => import(transactions + name);
+const { recoverTransaction, recoverTransactions } = await loadTransaction("recovery.js");
 const roots = { configSchema: 1, target: "sveltekit", uiDir, stylesDir, layoutFile };
 let results;
 if (mode === "single") {
@@ -283,6 +295,7 @@ function recoveryEnv(options: RecoveryWorkerOptions): NodeJS.ProcessEnv {
   return {
     ...process.env,
     SUIK_CODEGEN: codegenBaseUrl(),
+    SUIK_TRANSACTIONS: transactionsBaseUrl(),
     SUIK_ROOT: options.root,
     SUIK_STATE_DIR: options.stateDir,
     SUIK_UI: options.uiDir,

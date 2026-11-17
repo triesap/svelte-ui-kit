@@ -1,9 +1,9 @@
 import { generationFields, integrationMapping } from "../../project/config.js";
 /** One explicit add request through original projection and guarded application. */
-import { applyPlan, validateApplyPlan } from "../../codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../transactions/apply.js";
 import { composeApplyPlan } from "../../codegen/compose.js";
 import { planAdd, type AddPlan } from "../../codegen/plan-add.js";
-import { inspectUnchangedState } from "../../codegen/recovery.js";
+import { inspectUnchangedState } from "../../transactions/recovery.js";
 import { deriveKitPaths } from "../../project/config.js";
 import { issue, type ModelIssue } from "../../registry/errors.js";
 import type { CommandRequest } from "../args.js";

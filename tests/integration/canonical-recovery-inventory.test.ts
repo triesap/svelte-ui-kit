@@ -5,17 +5,14 @@ import { test } from "node:test";
 import {
   recoverTransaction,
   recoverTransactions,
-} from "../../src/codegen/recovery.js";
+} from "../../src/transactions/recovery.js";
 import {
   persistJournal,
   serializeJournal,
   type TransactionDraft,
   type TransactionJournal,
-} from "../../src/codegen/transaction-journal.js";
-import {
-  journalPath,
-  writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/journal.js";
+import { journalPath, writerLockDir } from "../../src/transactions/types.js";
 import { createTempProject } from "../helpers/project.js";
 import { liveRootIdentity } from "../helpers/transactions.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";

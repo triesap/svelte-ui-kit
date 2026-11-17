@@ -1,6 +1,7 @@
+import { TRANSACTION_MODULE_MOVES } from "../helpers/transaction-modules.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import ts from "typescript";
@@ -52,7 +53,7 @@ function reachable(start: string) {
 test("composition cannot reach the application engine through runtime imports", () => {
   assert.equal(
     reachable("src/codegen/compose.ts").modules.has(
-      path.resolve("src/codegen/apply.ts"),
+      path.resolve("src/transactions/apply.ts"),
     ),
     false,
   );
@@ -182,3 +183,13 @@ for (const sample of cases)
         digest,
       );
   });
+
+test("composition reaches only pure transaction namespace data, not an effect owner", () => {
+  for (const file of reachable("src/codegen/compose.ts").modules)
+    if (file.includes(`${path.sep}transactions${path.sep}`))
+      assert.equal(path.basename(file), "types.ts", file);
+  for (const [oldName, current] of TRANSACTION_MODULE_MOVES) {
+    assert.equal(existsSync(`src/codegen/${oldName}.ts`), false);
+    assert.equal(existsSync(`src/transactions/${current}.ts`), true);
+  }
+});

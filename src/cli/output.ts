@@ -1,6 +1,6 @@
 /** S078: pure, shared presentation for typed semantic command outcomes. */
 import { canonicalJson } from "../codegen/serialize.js";
-import type { ApplyOutcome } from "../codegen/apply.js";
+import type { ApplyOutcome } from "../transactions/apply.js";
 import type { ModelIssue } from "../registry/errors.js";
 import {
   createEnvelope,

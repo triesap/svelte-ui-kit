@@ -18,10 +18,10 @@ import {
   type ApplyTarget,
   type ValidatedApplyPlan,
 } from "../../src/codegen/plan.js";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { capturePreimage } from "../../src/codegen/revalidate.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { lockPath } from "../../src/codegen/transaction-types.js";
+import { lockPath } from "../../src/transactions/types.js";
 import {
   abs,
   GUARDED_STATE,

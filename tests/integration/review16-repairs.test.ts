@@ -21,7 +21,7 @@ import {
 import { completeLockFixture } from "../helpers/lock-fixture.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { captureReadset, identityDigest } from "../../src/codegen/authority.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { type ApplyPlanInput } from "../../src/codegen/plan.js";
@@ -30,17 +30,17 @@ import {
   recoverTransaction,
   type RecoveryResult,
   type RecoveryRoots,
-} from "../../src/codegen/recovery.js";
+} from "../../src/transactions/recovery.js";
 import {
   journalPath,
   lockPath,
   transactionsDir,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import {
   acquireWriterLock,
   releaseWriterLock,
-} from "../../src/codegen/write-lock.js";
+} from "../../src/transactions/write-lock.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,

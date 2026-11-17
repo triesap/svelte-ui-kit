@@ -17,27 +17,27 @@ import { sha256Hex } from "../../src/codegen/digest.js";
 import {
   observeFileIdentity,
   writePublicationIntent,
-} from "../../src/codegen/publication-intent.js";
+} from "../../src/transactions/publication-intent.js";
 import {
   inspectTransactions,
   inspectUnchangedState,
   recoverTransaction,
-} from "../../src/codegen/recovery.js";
-import { stageOperations } from "../../src/codegen/stage.js";
+} from "../../src/transactions/recovery.js";
+import { stageOperations } from "../../src/transactions/stage.js";
 import {
   persistJournal,
   prepareJournal,
   serializeJournal,
   type TransactionJournal,
   type TransactionDraft,
-} from "../../src/codegen/transaction-journal.js";
+} from "../../src/transactions/journal.js";
 import {
   backupsDir,
   journalPath,
   publicationIntentPath,
   stagedDir,
   transactionDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";

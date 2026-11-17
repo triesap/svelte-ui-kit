@@ -3,14 +3,14 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { inspectLibraryStyles } from "../../src/codegen/library-styles.js";
 import { parseKitLock } from "../../src/codegen/lock.js";
 import { type LibraryApplyPlanInput } from "../../src/codegen/plan.js";
 import {
   parseJournal,
   validateJournalTargets,
-} from "../../src/codegen/transaction-journal.js";
+} from "../../src/transactions/journal.js";
 import {
   generationFields,
   parseKitConfig,
@@ -230,7 +230,7 @@ test("a real killed standalone-entry write recovers with the original sealed pla
   assert.ok(original.ok);
   const helper = new URL("../helpers/generation-project.js", import.meta.url)
       .href,
-    apply = new URL("../../src/codegen/apply.js", import.meta.url).href;
+    apply = new URL("../../src/transactions/apply.js", import.meta.url).href;
   const script = `import {composeGenerationFoundation} from ${JSON.stringify(helper)};import{applyPlan,validateApplyPlan}from ${JSON.stringify(apply)};const f=composeGenerationFoundation(process.env.OWNED_PROJECT,process.env.OWNED_REGISTRY,JSON.parse(process.env.OWNED_CONFIG));const v=validateApplyPlan(f.composed);if(!v.ok)throw Error(JSON.stringify(v));applyPlan(v.value,{after:(phase,detail)=>{if(phase==='replace:apply'&&detail===f.integration.path){console.log('owned killed pid '+process.pid);process.kill(process.pid,'SIGKILL')}}});process.exit(9);`;
   const env = {
     ...process.env,

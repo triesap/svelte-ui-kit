@@ -18,7 +18,7 @@ import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import { completeLockFixture } from "../helpers/lock-fixture.js";
 import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import {
   captureReadset,
   identityDigest,
@@ -29,17 +29,17 @@ import { type ApplyPlanInput } from "../../src/codegen/plan.js";
 import {
   recoverTransaction,
   recoverTransactions,
-} from "../../src/codegen/recovery.js";
+} from "../../src/transactions/recovery.js";
 import { revalidatePreimages } from "../../src/codegen/revalidate.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import { faultAt } from "../../src/codegen/transaction-hooks.js";
+import { faultAt } from "../../src/transactions/hooks.js";
 import {
   journalPath,
   lockPath,
   publicationIntentPath,
   transactionsDir,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 import {
   captureEnvironment,

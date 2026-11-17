@@ -27,7 +27,7 @@ import {
   journalPath,
   transactionsDir,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 
 import { documentedExample } from "../helpers/documented-example.js";
 const diagnosis = documentedExample(

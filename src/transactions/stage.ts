@@ -20,18 +20,18 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
-import { sha256Hex } from "./digest.js";
+import { sha256Hex } from "../codegen/digest.js";
 import { flushDirectory, flushFile } from "./durability.js";
-import type { ChangeOperation } from "./plan.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
-import { stagedDir } from "./transaction-types.js";
+import type { ChangeOperation } from "../codegen/plan.js";
+import { fireHooks, type TransactionHooks } from "./hooks.js";
+import { stagedDir } from "./types.js";
 import {
   cleanupOwnedCreations,
   createOwnedDirectory,
   verifyOwnedCreations,
   writeOwnedFile,
   type OwnedCreation,
-} from "./transaction-inventory.js";
+} from "./inventory.js";
 
 export interface StageOperation {
   readonly path: string;

@@ -15,19 +15,19 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { holdMutationAuthority } from "../../src/codegen/mutation-authority.js";
+import { holdMutationAuthority } from "../../src/transactions/mutation-authority.js";
 import {
   cleanupTransaction as cleanPublished,
   ensureIgnoreEntry,
-} from "../../src/codegen/transaction-cleanup.js";
-import type { TransactionHooks } from "../../src/codegen/transaction-hooks.js";
-import { faultAt } from "../../src/codegen/transaction-hooks.js";
+} from "../../src/transactions/cleanup.js";
+import type { TransactionHooks } from "../../src/transactions/hooks.js";
+import { faultAt } from "../../src/transactions/hooks.js";
 import {
   serializeJournal,
   type TransactionJournal,
-} from "../../src/codegen/transaction-journal.js";
+} from "../../src/transactions/journal.js";
 import {
   backupsDir,
   journalPath,
@@ -38,12 +38,12 @@ import {
   transactionsDir,
   transientRoot,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import {
   acquireWriterLock,
   releaseWriterLock,
   type WriterLockHandle,
-} from "../../src/codegen/write-lock.js";
+} from "../../src/transactions/write-lock.js";
 import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 

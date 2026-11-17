@@ -26,7 +26,7 @@ import {
   transactionsDir,
   transientRoot,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 
 const commands = [["init"], ["add", "button"], ["sync"]];
 const id = "11111111-1111-4111-8111-111111111111";
@@ -321,7 +321,7 @@ for (const custom of [false, true]) {
         const {captureCommandContext} = await import(base + "cli/commands/context.js");
         const {planSync} = await import(base + "codegen/plan-sync.js");
         const {composeApplyPlan} = await import(base + "codegen/compose.js");
-        const {validateApplyPlan,applyPlan} = await import(base + "codegen/apply.js");
+        const {validateApplyPlan,applyPlan} = await import(base + "transactions/apply.js");
         const request = {kind:"command",command:"sync",item:null,json:true,cwd:process.env.SUIK_APP,dryRun:false,source:false,strict:false};
         const captured = captureCommandContext(request,process.env.SUIK_PKG);
         if (!captured.ok) throw Error(JSON.stringify(captured));
@@ -415,7 +415,7 @@ for (const custom of [false, true]) {
       if (scenario === "held" || scenario === "committed") {
         // Remove only the inspection in this owned executable copy. Its old
         // silent success must return for all three genuinely unchanged plans.
-        const module = path.join(f.pkg, "dist/codegen/recovery.js");
+        const module = path.join(f.pkg, "dist/transactions/recovery.js");
         const source = readFileSync(module, "utf8");
         const start = source.indexOf("export function inspectUnchangedState(");
         const end = source.indexOf(

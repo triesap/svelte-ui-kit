@@ -19,10 +19,10 @@ import { lstatSync, mkdirSync, rmdirSync } from "node:fs";
 import path from "node:path";
 
 import type { ModelIssue } from "../registry/errors.js";
-import type { PlanAncestor } from "./authority.js";
+import type { PlanAncestor } from "../codegen/authority.js";
 import { flushDirectory } from "./durability.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
-import type { JournalCreatedDir } from "./transaction-journal.js";
+import { fireHooks, type TransactionHooks } from "./hooks.js";
+import type { JournalCreatedDir } from "./journal.js";
 
 function codeOf(error: unknown): string {
   const code = (error as NodeJS.ErrnoException | null)?.code;

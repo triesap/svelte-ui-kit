@@ -3,10 +3,10 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import { stageOperations } from "../../src/codegen/stage.js";
-import { persistJournal } from "../../src/codegen/transaction-journal.js";
-import { journalPath } from "../../src/codegen/transaction-types.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
+import { stageOperations } from "../../src/transactions/stage.js";
+import { persistJournal } from "../../src/transactions/journal.js";
+import { journalPath } from "../../src/transactions/types.js";
 import {
   DEFAULT_KIT_CONFIG,
   serializeKitConfig,

@@ -1,3 +1,7 @@
+import {
+  linkedFixtureEnvironment,
+  verifyFixtureManager,
+} from "../helpers/package-manager.js";
 import assert from "node:assert/strict";
 import { writeFixtureWorkspace } from "../helpers/workspace-catalog.js";
 import { spawnSync } from "node:child_process";
@@ -7,6 +11,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -15,7 +20,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { hashBytes } from "../../src/codegen/compare.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
@@ -465,7 +470,7 @@ test("a custom mapping init applies through the guarded path", () => {
       consumer,
       "app/ui/_kit/kit.json",
       JSON.stringify({
-        schemaVersion: 1,
+        ...DEFAULT_KIT_CONFIG,
         uiDir: "app/ui",
         stylesDir: "app/styles",
         layoutFile: "src/routes/+layout.svelte",
@@ -560,13 +565,22 @@ test(
       assert.equal(existsSync(abs(consumer, derived.kitCss)), true);
 
       // The generated application must actually check with the shipped registry.
+      const env = { ...linkedFixtureEnvironment(), CI: "1" };
+      verifyFixtureManager("pnpm", [], consumer, env);
+      const runtime = realpathSync(path.join(FIXTURE, "node_modules/svelte"));
+      const runtimeBefore = snapshotTree(runtime);
       const check = spawnSync("pnpm", ["run", "check"], {
         cwd: consumer,
         encoding: "utf8",
         timeout: 180_000,
-        env: { ...process.env, CI: "1" },
+        env,
       });
       assert.equal(check.status, 0, `${check.stdout}\n${check.stderr}`);
+      assert.deepEqual(
+        snapshotTree(runtime),
+        runtimeBefore,
+        "linked check preserves complete maintained runtime including installer metadata",
+      );
 
       const before = snapshotTree(consumer);
       const second = captureSnapshot(consumer, consumerPaths());
@@ -605,7 +619,7 @@ test("a custom mapping satisfied sync replays through the guarded path", () => {
       consumer,
       "app/ui/_kit/kit.json",
       JSON.stringify({
-        schemaVersion: 1,
+        ...DEFAULT_KIT_CONFIG,
         uiDir: "app/ui",
         stylesDir: "app/styles",
         layoutFile: "src/routes/+layout.svelte",

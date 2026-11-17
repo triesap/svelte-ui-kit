@@ -29,10 +29,10 @@ import {
   renameOwnedCreation,
   writeOwnedFile,
   type OwnedCreation,
-} from "./transaction-inventory.js";
+} from "./inventory.js";
 
 import type { ModelIssue } from "../registry/errors.js";
-import { isTransactionId } from "./transaction-types.js";
+import { isTransactionId } from "./types.js";
 
 export interface PublicationIdentity {
   readonly device: number;

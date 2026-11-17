@@ -16,7 +16,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit } from "../../src/codegen/plan-init.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";

@@ -1,3 +1,4 @@
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { syncBuiltinESMExports } from "node:module";
@@ -7,7 +8,7 @@ import { test } from "node:test";
 import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import type {
   ApplyPlanInput,
   ValidatedApplyPlan,
@@ -16,12 +17,9 @@ import type {
 import {
   recoverTransaction,
   recoverTransactions,
-} from "../../src/codegen/recovery.js";
-import { persistJournal } from "../../src/codegen/transaction-journal.js";
-import {
-  journalPath,
-  transientRoot,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/recovery.js";
+import { persistJournal } from "../../src/transactions/journal.js";
+import { journalPath, transientRoot } from "../../src/transactions/types.js";
 import {
   GUARDED_STATE,
   GUARDED_STYLES,
@@ -556,17 +554,25 @@ for (const [label, recover] of [
   });
 }
 
-test("an unrelated entry in the transient namespace is preserved and not an error", () => {
+test("foreign transient inventory refuses before mutation and preserves operator notes", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "suik-rmdir-control-"));
   try {
     makeGuardedPlan(root);
-    // A non-empty owned transient namespace is a legitimate ENOTEMPTY outcome,
-    // not a cleanup failure: unrelated state survives and the batch is clean.
+    // The complete-inventory contract refuses unrecorded reserved state.
+    // Preserve it rather than treating an arbitrary entry as harmless cleanup.
     const notes = abs(root, `${transientRoot(GUARDED_STATE)}/notes.txt`);
     fs.mkdirSync(path.dirname(notes), { recursive: true });
     fs.writeFileSync(notes, "operator notes");
-    const outcome = applyPlan(sealed(makeGuardedPlan(root)));
-    assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+    const plan = sealed(makeGuardedPlan(root));
+    const before = snapshotTree(root);
+    const outcome = applyPlan(plan);
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
+    assert.ok(
+      outcome.issues.some(
+        (issue) => issue.code === "RECOVERY_UNEXPECTED_ENTRY",
+      ),
+    );
+    assert.deepEqual(snapshotTree(root), before);
     assert.equal(fs.readFileSync(notes, "utf8"), "operator notes");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

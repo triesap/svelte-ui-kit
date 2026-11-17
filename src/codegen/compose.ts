@@ -63,8 +63,8 @@ import type {
   TargetObservation,
 } from "./snapshot.js";
 import { decodeObservedText } from "./snapshot.js";
-import { hasIgnoreEntry, ignoreBlockWithEntry } from "./transaction-cleanup.js";
-import { ignoreEntryFor, lockPath } from "./transaction-types.js";
+import { hasIgnoreEntry, ignoreBlockWithEntry } from "./ignore.js";
+import { ignoreEntryFor, lockPath } from "../transactions/types.js";
 
 export interface ComposeApplyPlanInput {
   readonly root: string;

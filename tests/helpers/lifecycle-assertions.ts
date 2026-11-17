@@ -12,7 +12,7 @@ import {
   applyPlan,
   validateApplyPlan,
   type ApplyOutcome,
-} from "../../src/codegen/apply.js";
+} from "../../src/transactions/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import type { KitLock } from "../../src/codegen/lock.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";

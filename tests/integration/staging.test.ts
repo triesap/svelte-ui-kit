@@ -20,9 +20,9 @@ import {
   stageOperations,
   verifyStaged,
   type StageOperation,
-} from "../../src/codegen/stage.js";
-import { faultAt } from "../../src/codegen/transaction-hooks.js";
-import { stagedDir } from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/stage.js";
+import { faultAt } from "../../src/transactions/hooks.js";
+import { stagedDir } from "../../src/transactions/types.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";

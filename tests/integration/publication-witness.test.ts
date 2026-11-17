@@ -19,23 +19,23 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import {
   identityDigest,
   observeRootIdentity,
 } from "../../src/codegen/authority.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { parseKitLock } from "../../src/codegen/lock.js";
-import { holdMutationAuthority } from "../../src/codegen/mutation-authority.js";
+import { holdMutationAuthority } from "../../src/transactions/mutation-authority.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
-import { publishLock } from "../../src/codegen/publish-lock.js";
-import { recoverTransactions } from "../../src/codegen/recovery.js";
+import { publishLock } from "../../src/transactions/publish-lock.js";
+import { recoverTransactions } from "../../src/transactions/recovery.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import { stageOperations } from "../../src/codegen/stage.js";
+import { stageOperations } from "../../src/transactions/stage.js";
 import {
   persistJournal,
   type TransactionJournal,
-} from "../../src/codegen/transaction-journal.js";
+} from "../../src/transactions/journal.js";
 import {
   journalPath,
   lockPath,
@@ -43,11 +43,11 @@ import {
   stagedDir,
   transactionsDir,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import {
   acquireWriterLock,
   releaseWriterLock,
-} from "../../src/codegen/write-lock.js";
+} from "../../src/transactions/write-lock.js";
 import {
   DEFAULT_KIT_CONFIG,
   generationInputPaths,

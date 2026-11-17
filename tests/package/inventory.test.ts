@@ -1,3 +1,4 @@
+import { TRANSACTION_MODULE_MOVES } from "../helpers/transaction-modules.js";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
@@ -43,6 +44,17 @@ test("real packed inventory contains only standalone distribution assets and run
     const list = spawnSync("tar", ["-tzf", archive], { encoding: "utf8" });
     assert.equal(list.status, 0, list.stderr);
     const entries = list.stdout.trim().split("\n");
+    for (const [retired, current] of TRANSACTION_MODULE_MOVES) {
+      assert.ok(
+        entries.includes(`package/dist/transactions/${current}.js`),
+        current,
+      );
+      assert.equal(
+        entries.includes(`package/dist/codegen/${retired}.js`),
+        false,
+        retired,
+      );
+    }
     for (const entry of entries) {
       assert.ok(entry.startsWith("package/"), entry);
       assert.equal(entry.split("/").includes(".."), false, entry);

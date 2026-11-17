@@ -3,17 +3,17 @@ import { RECOVERY_ROOTS } from "./transactions.js";
 import assert from "node:assert/strict";
 
 import type { LockValidationContext } from "../../src/codegen/lock.js";
-import { holdMutationAuthority } from "../../src/codegen/mutation-authority.js";
-import { publishLock } from "../../src/codegen/publish-lock.js";
-import type { TransactionHooks } from "../../src/codegen/transaction-hooks.js";
-import type { OwnedCreation } from "../../src/codegen/transaction-inventory.js";
-import type { TransactionJournal } from "../../src/codegen/transaction-journal.js";
-import { lockPath, stagedDir } from "../../src/codegen/transaction-types.js";
+import { holdMutationAuthority } from "../../src/transactions/mutation-authority.js";
+import { publishLock } from "../../src/transactions/publish-lock.js";
+import type { TransactionHooks } from "../../src/transactions/hooks.js";
+import type { OwnedCreation } from "../../src/transactions/inventory.js";
+import type { TransactionJournal } from "../../src/transactions/journal.js";
+import { lockPath, stagedDir } from "../../src/transactions/types.js";
 import {
   acquireWriterLock,
   holdsWriterLock,
   releaseWriterLock,
-} from "../../src/codegen/write-lock.js";
+} from "../../src/transactions/write-lock.js";
 
 export function publishPreparedLock(
   root: string,

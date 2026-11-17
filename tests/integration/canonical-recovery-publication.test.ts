@@ -13,15 +13,15 @@ import { parseKitLock } from "../../src/codegen/lock.js";
 import {
   observeFileIdentity,
   writePublicationIntent,
-} from "../../src/codegen/publication-intent.js";
-import { recoverTransaction } from "../../src/codegen/recovery.js";
-import { persistJournal } from "../../src/codegen/transaction-journal.js";
+} from "../../src/transactions/publication-intent.js";
+import { recoverTransaction } from "../../src/transactions/recovery.js";
+import { persistJournal } from "../../src/transactions/journal.js";
 import {
   journalPath,
   lockPath,
   publicationIntentPath,
   stagedDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import { mappedIntegration } from "../../src/project/integration-fields.js";
 import type { TargetKind } from "../../src/project/config.js";
 import { createTempProject } from "../helpers/project.js";

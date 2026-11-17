@@ -38,9 +38,9 @@ import {
   captureAncestors,
   identityDigest,
   observeRootIdentity,
-} from "./authority.js";
-import { sha256Hex } from "./digest.js";
-import { parseKitLock } from "./lock.js";
+} from "../codegen/authority.js";
+import { sha256Hex } from "../codegen/digest.js";
+import { parseKitLock } from "../codegen/lock.js";
 import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
 import {
   holdMutationAuthority,
@@ -55,8 +55,11 @@ import {
   readPublicationIntent,
   type PublicationIntent,
 } from "./publication-intent.js";
-import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+import {
+  revalidatePreimages,
+  type TargetPreimage,
+} from "../codegen/revalidate.js";
+import { fireHooks, type TransactionHooks } from "./hooks.js";
 import {
   captureCleanupInventory,
   emptyOwnedInventory,
@@ -65,7 +68,7 @@ import {
   removeCleanupEntries,
   verifyOwnedInventory,
   type OwnedInventory,
-} from "./transaction-inventory.js";
+} from "./inventory.js";
 import {
   parseJournal,
   persistJournal,
@@ -73,7 +76,7 @@ import {
   type JournalCreatedDir,
   type JournalOperationRecord,
   type TransactionJournal,
-} from "./transaction-journal.js";
+} from "./journal.js";
 import {
   backupsDir,
   isTransactionId,
@@ -87,7 +90,7 @@ import {
   transactionsDir,
   transientRoot,
   writerLockDir,
-} from "./transaction-types.js";
+} from "./types.js";
 import {
   acquireWriterLock,
   holdsWriterLock,

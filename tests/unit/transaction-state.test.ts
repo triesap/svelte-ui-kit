@@ -19,7 +19,7 @@ import {
   transactionsDir,
   transientRoot,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 
 test("the ordered phase table only admits documented transitions", () => {
   assert.deepEqual(TRANSACTION_PHASES, [

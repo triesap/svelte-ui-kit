@@ -15,17 +15,14 @@ import {
   verifyRootIdentity,
   type PlanReadset,
   type PlanAncestor,
-} from "./authority.js";
+} from "../codegen/authority.js";
 import {
   capturePreimage,
   revalidatePreimages,
   type TargetPreimage,
-} from "./revalidate.js";
-import type { JournalCreatedDir } from "./transaction-journal.js";
-import {
-  verifyOwnedCreations,
-  type OwnedCreation,
-} from "./transaction-inventory.js";
+} from "../codegen/revalidate.js";
+import type { JournalCreatedDir } from "./journal.js";
+import { verifyOwnedCreations, type OwnedCreation } from "./inventory.js";
 import { verifyHeldWriterLock } from "./write-lock.js";
 
 export interface MutationAuthority {

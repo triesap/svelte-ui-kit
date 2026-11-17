@@ -3,15 +3,15 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { inspectAstroLayout } from "../../src/codegen/astro.js";
 import { parseKitLock } from "../../src/codegen/lock.js";
-import { validateLockForPublication } from "../../src/codegen/publish-lock.js";
+import { validateLockForPublication } from "../../src/transactions/publish-lock.js";
 import { inspectTargetEvidence } from "../../src/codegen/target-evidence.js";
 import {
   parseJournal,
   validateJournalTargets,
-} from "../../src/codegen/transaction-journal.js";
+} from "../../src/transactions/journal.js";
 import {
   deriveKitPaths,
   generationFields,
@@ -261,7 +261,8 @@ for (const target of ["astro", "sveltekit"] as const)
     assert.ok(sealed.ok);
     const helper = new URL("../helpers/generation-project.js", import.meta.url)
       .href;
-    const apply = new URL("../../src/codegen/apply.js", import.meta.url).href;
+    const apply = new URL("../../src/transactions/apply.js", import.meta.url)
+      .href;
     const childEnvironment = { ...process.env };
     for (const key of ["NODE_TEST_CONTEXT", "NODE_OPTIONS", "NODE_V8_COVERAGE"])
       delete childEnvironment[key];

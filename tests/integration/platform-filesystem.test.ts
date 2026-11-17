@@ -15,8 +15,11 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import { parseKitConfig } from "../../src/project/config.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
+import {
+  DEFAULT_KIT_CONFIG,
+  parseKitConfig,
+} from "../../src/project/config.js";
 import { isSafeLogicalRelativePath } from "../../src/project/paths.js";
 import { createTempProject } from "../helpers/project.js";
 import {
@@ -43,13 +46,13 @@ test("portable paths and case collisions fail before filesystem mutation", (t) =
   ]) {
     assert.equal(isSafeLogicalRelativePath(value), false, value);
     assert.equal(
-      parseKitConfig({ schemaVersion: 1, uiDir: value }).ok,
+      parseKitConfig({ ...DEFAULT_KIT_CONFIG, uiDir: value }).ok,
       false,
       value,
     );
   }
   const collision = parseKitConfig({
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "app/UI",
     stylesDir: "app/ui",
   });
@@ -57,7 +60,7 @@ test("portable paths and case collisions fail before filesystem mutation", (t) =
   if (!collision.ok) assert.equal(collision.issues[0]?.code, "PATH_OVERLAP");
   assert.equal(
     parseKitConfig({
-      schemaVersion: 1,
+      ...DEFAULT_KIT_CONFIG,
       uiDir: "app/ui",
       stylesDir: "app/ui-extra",
     }).ok,
@@ -137,7 +140,9 @@ test("a symlink substituted after planning cannot redirect a batch", (t) => {
   const outcome = applyPlan(planned.value);
   assert.equal(outcome.kind, "refused");
   assert.ok(
-    outcome.issues.some((issue) => /ANCESTOR|SYMLINK/.test(issue.code)),
+    outcome.issues.some((issue) =>
+      /ANCESTOR|ANCESTRY|SYMLINK/.test(issue.code),
+    ),
     JSON.stringify(outcome.issues),
   );
   assert.deepEqual(snapshotTree(project.root), localBefore);

@@ -17,7 +17,7 @@ import {
   applyPlan,
   validateApplyPlan,
   type ApplyOutcome,
-} from "../../src/codegen/apply.js";
+} from "../../src/transactions/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit, type InitPlan } from "../../src/codegen/plan-init.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";

@@ -16,12 +16,12 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import {
   recoverTransaction,
   recoverTransactions,
-} from "../../src/codegen/recovery.js";
+} from "../../src/transactions/recovery.js";
 import {
   backupsDir,
   journalPath,
@@ -29,11 +29,11 @@ import {
   transactionDir,
   transactionsDir,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import {
   acquireWriterLock,
   releaseWriterLock,
-} from "../../src/codegen/write-lock.js";
+} from "../../src/transactions/write-lock.js";
 import {
   abs,
   GUARDED_STATE,

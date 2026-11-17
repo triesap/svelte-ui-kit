@@ -14,18 +14,18 @@ import path from "node:path";
 import { test } from "node:test";
 import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import {
   createOwnedAncestors,
   removeOwnedAncestors,
-} from "../../src/codegen/owned-ancestry.js";
+} from "../../src/transactions/owned-ancestry.js";
 import type { ApplyPlanInput } from "../../src/codegen/plan.js";
-import { recoverTransactions } from "../../src/codegen/recovery.js";
+import { recoverTransactions } from "../../src/transactions/recovery.js";
 import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
-import { faultAt } from "../../src/codegen/transaction-hooks.js";
-import { lockPath } from "../../src/codegen/transaction-types.js";
+import { faultAt } from "../../src/transactions/hooks.js";
+import { lockPath } from "../../src/transactions/types.js";
 import { abs } from "../helpers/guarded-plan.js";
 
 /**

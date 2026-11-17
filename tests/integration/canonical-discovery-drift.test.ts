@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { serializeKitConfig } from "../../src/project/config.js";
 import { generationFixture } from "../helpers/generation-fixture.js";
 import { composeGenerationFoundation } from "../helpers/generation-project.js";

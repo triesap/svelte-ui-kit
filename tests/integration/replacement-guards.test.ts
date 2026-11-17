@@ -13,16 +13,16 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { holdMutationAuthority } from "../../src/codegen/mutation-authority.js";
-import { applyReplacements } from "../../src/codegen/replace.js";
-import { stageOperations } from "../../src/codegen/stage.js";
+import { holdMutationAuthority } from "../../src/transactions/mutation-authority.js";
+import { applyReplacements } from "../../src/transactions/replace.js";
+import { stageOperations } from "../../src/transactions/stage.js";
 import {
   persistJournal,
   prepareJournal,
   type TransactionDraft,
-} from "../../src/codegen/transaction-journal.js";
+} from "../../src/transactions/journal.js";
 import {
   backupsDir,
   journalPath,
@@ -30,11 +30,11 @@ import {
   stagedDir,
   transactionsDir,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import {
   acquireWriterLock,
   releaseWriterLock,
-} from "../../src/codegen/write-lock.js";
+} from "../../src/transactions/write-lock.js";
 import {
   abs,
   GUARDED_STATE,

@@ -13,8 +13,8 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { stageOperations } from "../../src/codegen/stage.js";
-import { faultAt } from "../../src/codegen/transaction-hooks.js";
+import { stageOperations } from "../../src/transactions/stage.js";
+import { faultAt } from "../../src/transactions/hooks.js";
 import {
   parseJournal,
   persistJournal,
@@ -22,8 +22,8 @@ import {
   verifyPreparedJournal,
   type TransactionJournal,
   type TransactionDraft,
-} from "../../src/codegen/transaction-journal.js";
-import { journalPath, stagedDir } from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/journal.js";
+import { journalPath, stagedDir } from "../../src/transactions/types.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 const ID = "4444444444444444";

@@ -36,7 +36,7 @@ import { isSafeLogicalRelativePath } from "../project/paths.js";
 import { observeEntry } from "../project/io.js";
 import { resolveInstalledManifestCandidate } from "../project/dependencies.js";
 import { sha256Hex } from "./digest.js";
-import { TRANSIENT_NAMESPACE } from "./transaction-types.js";
+import { TRANSIENT_NAMESPACE } from "../transactions/types.js";
 import {
   nativeArchiveIssues,
   nativeDeclaration,

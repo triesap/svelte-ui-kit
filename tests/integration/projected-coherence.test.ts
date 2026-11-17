@@ -13,7 +13,7 @@ import { test } from "node:test";
 import { capturePreimage } from "../../src/codegen/revalidate.js";
 import { completeLockFixture } from "../helpers/lock-fixture.js";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import {
   captureReadFile,
   captureReadset,

@@ -10,11 +10,11 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { validateApplyPlan } from "../../src/codegen/apply.js";
+import { validateApplyPlan } from "../../src/transactions/apply.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { recoverTransactions } from "../../src/codegen/recovery.js";
-import { writerLockDir } from "../../src/codegen/transaction-types.js";
-import { readWriterLock } from "../../src/codegen/write-lock.js";
+import { recoverTransactions } from "../../src/transactions/recovery.js";
+import { writerLockDir } from "../../src/transactions/types.js";
+import { readWriterLock } from "../../src/transactions/write-lock.js";
 import { serializeKitConfig } from "../../src/project/config.js";
 import { copyIntegrationFields } from "../../src/project/integration-fields.js";
 import { generationFixture } from "../helpers/generation-fixture.js";
@@ -36,8 +36,8 @@ const save = () =>
 const worker = `
 import fs from 'node:fs'; import path from 'node:path';
 import {composeGenerationFoundation} from ${JSON.stringify(new URL("../helpers/generation-project.js", import.meta.url).href)};
-import {applyPlan,validateApplyPlan} from ${JSON.stringify(new URL("../../src/codegen/apply.js", import.meta.url).href)};
-import {recoverTransactions} from ${JSON.stringify(new URL("../../src/codegen/recovery.js", import.meta.url).href)};
+import {applyPlan,validateApplyPlan} from ${JSON.stringify(new URL("../../src/transactions/apply.js", import.meta.url).href)};
+import {recoverTransactions} from ${JSON.stringify(new URL("../../src/transactions/recovery.js", import.meta.url).href)};
 const o=JSON.parse(process.env.OWNED_CONFIG_OPTIONS);
 if(o.recovery){console.log(JSON.stringify({pid:process.pid,results:recoverTransactions(o.root,o.stateDir,o.roots)}));}
 else {

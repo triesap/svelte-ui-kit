@@ -17,14 +17,14 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { after, test } from "node:test";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import { inspectTransactions } from "../../src/codegen/recovery.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
+import { inspectTransactions } from "../../src/transactions/recovery.js";
 import { copyIntegrationFields } from "../../src/project/integration-fields.js";
-import { readWriterLock } from "../../src/codegen/write-lock.js";
+import { readWriterLock } from "../../src/transactions/write-lock.js";
 import {
   transactionsDir,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import { generationFixture } from "../helpers/generation-fixture.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
@@ -43,8 +43,8 @@ after(() => {
 const worker = `
 import fs from 'node:fs'; import path from 'node:path';
 import {composeGenerationFoundation} from ${JSON.stringify(new URL("../helpers/generation-project.js", import.meta.url).href)};
-import {applyPlan,validateApplyPlan} from ${JSON.stringify(new URL("../../src/codegen/apply.js", import.meta.url).href)};
-import {recoverTransactions} from ${JSON.stringify(new URL("../../src/codegen/recovery.js", import.meta.url).href)};
+import {applyPlan,validateApplyPlan} from ${JSON.stringify(new URL("../../src/transactions/apply.js", import.meta.url).href)};
+import {recoverTransactions} from ${JSON.stringify(new URL("../../src/transactions/recovery.js", import.meta.url).href)};
 const o=JSON.parse(process.env.OWNED_GENERATION_OPTIONS), config=o.config;
 const base=path.join(o.root,o.stateDir,'.svelte-ui-kit','transactions');
 function journals(){return fs.existsSync(base)?fs.readdirSync(base).map(id=>{const p=path.join(base,id,'journal.json');return fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):null}):[]}

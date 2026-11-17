@@ -18,10 +18,10 @@ import {
   validateProjectedLock,
   type AnyProjectedBatch as ProjectedBatch,
 } from "../../codegen/projected-batch.js";
-import { inspectTransactions } from "../../codegen/recovery.js";
+import { inspectTransactions } from "../../transactions/recovery.js";
 import { decodeObservedText } from "../../codegen/snapshot.js";
 import { targetIntegrationAdapter } from "../../codegen/target-integration.js";
-import { writerLockDir } from "../../codegen/transaction-types.js";
+import { writerLockDir } from "../../transactions/types.js";
 import { deriveKitPaths } from "../../project/config.js";
 import {
   inspectDependencyStateFromEvidence,

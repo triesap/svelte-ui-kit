@@ -34,10 +34,10 @@ import {
   type ModelResult,
 } from "../registry/errors.js";
 import { observeEntry } from "../project/io.js";
-import type { TransactionJournal } from "./transaction-journal.js";
-import { sha256Hex } from "./digest.js";
+import type { TransactionJournal } from "./journal.js";
+import { sha256Hex } from "../codegen/digest.js";
 import { flushDirectory } from "./durability.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+import { fireHooks, type TransactionHooks } from "./hooks.js";
 import {
   backupsDir,
   journalTempName,
@@ -45,7 +45,7 @@ import {
   publicationIntentTempName,
   stagedDir,
   transactionDir,
-} from "./transaction-types.js";
+} from "./types.js";
 
 export interface OwnedInventory {
   readonly topLevelFiles: ReadonlySet<string>;

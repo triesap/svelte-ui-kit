@@ -1,3 +1,8 @@
+import { snapshotTree } from "../helpers/tree-snapshot.js";
+import {
+  observeNativeInstall,
+  SVELTE_RUNTIME_BASELINE,
+} from "../../src/project/native-dependency.js";
 import assert from "node:assert/strict";
 import { writeFixtureWorkspace } from "../helpers/workspace-catalog.js";
 import {
@@ -11,6 +16,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -21,7 +27,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { pathToFileURL } from "node:url";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { planInit } from "../../src/codegen/plan-init.js";
@@ -147,11 +153,14 @@ function seedConsumer(page: string): string {
 function runPnpm(args: readonly string[], cwd: string) {
   const env = { ...linkedFixtureEnvironment(), CI: "1" };
   verifyFixtureManager("pnpm", [], cwd, env);
-  const shim = path.join(
-    FIXTURE,
-    "node_modules/svelte/node_modules/.bin/acorn",
+  const runtime = path.join(FIXTURE, "node_modules/svelte");
+  const before = observeNativeInstall(
+    runtime,
+    SVELTE_RUNTIME_BASELINE.version,
+    "svelte",
   );
-  const before = readFileSync(shim);
+  assert.equal(before.kind, "authenticated", JSON.stringify(before));
+  const beforeTree = snapshotTree(realpathSync(runtime));
   const result = spawnSync("pnpm", args, {
     cwd,
     encoding: "utf8",
@@ -159,9 +168,14 @@ function runPnpm(args: readonly string[], cwd: string) {
     env,
   });
   assert.deepEqual(
-    readFileSync(shim),
+    observeNativeInstall(runtime, SVELTE_RUNTIME_BASELINE.version, "svelte"),
     before,
     "linked consumer commands must not rewrite the maintained runtime",
+  );
+  assert.deepEqual(
+    snapshotTree(realpathSync(runtime)),
+    beforeTree,
+    "linked checks preserve every runtime file, mode and optional installer entry",
   );
   return result;
 }

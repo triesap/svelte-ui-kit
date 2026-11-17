@@ -13,7 +13,7 @@ import { test } from "node:test";
 import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import { completeLockFixture } from "../helpers/lock-fixture.js";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import {
   captureReadset,
   identityDigest,
@@ -23,22 +23,22 @@ import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { planInit } from "../../src/codegen/plan-init.js";
 import { type ApplyPlanInput } from "../../src/codegen/plan.js";
-import { recoverTransaction } from "../../src/codegen/recovery.js";
+import { recoverTransaction } from "../../src/transactions/recovery.js";
 import {
   capturePreimage,
   revalidatePreimages,
 } from "../../src/codegen/revalidate.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import { faultAt } from "../../src/codegen/transaction-hooks.js";
+import { faultAt } from "../../src/transactions/hooks.js";
 import {
   journalPath,
   lockPath,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
+} from "../../src/transactions/types.js";
 import {
   acquireWriterLock,
   holdsWriterLock,
-} from "../../src/codegen/write-lock.js";
+} from "../../src/transactions/write-lock.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,

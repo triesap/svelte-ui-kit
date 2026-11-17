@@ -19,6 +19,11 @@ export function codegenBaseUrl(): string {
   return new URL("../../src/codegen/", import.meta.url).href;
 }
 
+/** Base URL of the independent transaction owner in the compiled test tree. */
+export function transactionsBaseUrl(): string {
+  return new URL("../../src/transactions/", import.meta.url).href;
+}
+
 export interface WorkerOptions {
   readonly mode: "lock" | "apply" | "kill" | "recover-kill";
   readonly root: string;
@@ -32,6 +37,7 @@ export interface WorkerOptions {
 
 const WORKER = String.raw`
 const base = process.env.SUIK_CODEGEN;
+const transactions = process.env.SUIK_TRANSACTIONS;
 const root = process.env.SUIK_ROOT;
 const stateDir = process.env.SUIK_STATE_DIR;
 const id = process.env.SUIK_TXN_ID;
@@ -41,11 +47,12 @@ const operation = process.env.SUIK_OPERATION || "update";
 const holdMs = Number(process.env.SUIK_HOLD_MS || "0");
 const { pathToFileURL } = await import("node:url");
 const load = (name) => import(base + name);
+const loadTransaction = (name) => import(transactions + name);
 const fs = await import("node:fs");
 const path = await import("node:path");
 
 if (mode === "lock") {
-  const { acquireWriterLock, releaseWriterLock } = await load("write-lock.js");
+  const { acquireWriterLock, releaseWriterLock } = await loadTransaction("write-lock.js");
   const acquired = acquireWriterLock(root, stateDir, id);
   console.log(acquired.ok ? "acquired" : "busy:" + acquired.issues[0].code);
   if (acquired.ok && holdMs > 0) {
@@ -56,7 +63,7 @@ if (mode === "lock") {
 }
 
 if (mode === "recover-kill") {
-  const { recoverTransaction } = await load("recovery.js");
+  const { recoverTransaction } = await loadTransaction("recovery.js");
   const event = process.env.SUIK_EVENT || "before";
   const stop = (candidate) => { if (candidate === boundary) { console.log("SUIK_KILL_PID " + process.pid); process.kill(process.pid, "SIGKILL"); } };
   const result = recoverTransaction(root, stateDir, id, {
@@ -67,13 +74,13 @@ if (mode === "recover-kill") {
 }
 
 const { sha256Hex } = await load("digest.js");
-const { stageOperations } = await load("stage.js");
-const { prepareJournal, persistJournal } = await load("transaction-journal.js");
-const { applyReplacements } = await load("replace.js");
-const { holdMutationAuthority } = await load("mutation-authority.js");
-const { acquireWriterLock, releaseWriterLock } = await load("write-lock.js");
-const { faultAt } = await load("transaction-hooks.js");
-const { journalPath, stagedDir } = await load("transaction-types.js");
+const { stageOperations } = await loadTransaction("stage.js");
+const { prepareJournal, persistJournal } = await loadTransaction("journal.js");
+const { applyReplacements } = await loadTransaction("replace.js");
+const { holdMutationAuthority } = await loadTransaction("mutation-authority.js");
+const { acquireWriterLock, releaseWriterLock } = await loadTransaction("write-lock.js");
+const { faultAt } = await loadTransaction("hooks.js");
+const { journalPath, stagedDir } = await loadTransaction("types.js");
 const { observeRootIdentity, identityDigest } = await load("authority.js");
 
 const css = path.join(root, ..."src/styles/kit.css".split("/"));
@@ -150,6 +157,7 @@ function workerEnv(options: WorkerOptions): NodeJS.ProcessEnv {
   return {
     ...process.env,
     SUIK_CODEGEN: codegenBaseUrl(),
+    SUIK_TRANSACTIONS: transactionsBaseUrl(),
     SUIK_ROOT: options.root,
     SUIK_STATE_DIR: options.stateDir,
     SUIK_TXN_ID: options.transactionId,

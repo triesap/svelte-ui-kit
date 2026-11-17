@@ -11,7 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { planInit } from "../../src/codegen/plan-init.js";

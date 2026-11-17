@@ -10,7 +10,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { test, type TestContext } from "node:test";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { parseKitLock, type KitLock } from "../../src/codegen/lock.js";
 import {

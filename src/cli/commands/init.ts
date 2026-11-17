@@ -6,11 +6,11 @@ import {
 } from "../../project/config.js";
 import { validateDiscoveryCapture } from "../../project/detect.js";
 /** S081: orchestration consumes the accepted pure planner and guarded applier. */
-import { applyPlan, validateApplyPlan } from "../../codegen/apply.js";
+import { applyPlan, validateApplyPlan } from "../../transactions/apply.js";
 import { composeApplyPlan } from "../../codegen/compose.js";
 import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
 import { planInit } from "../../codegen/plan-init.js";
-import { inspectUnchangedState } from "../../codegen/recovery.js";
+import { inspectUnchangedState } from "../../transactions/recovery.js";
 import { captureSnapshot, observedText } from "../../codegen/snapshot.js";
 import {
   DEFAULT_KIT_CONFIG,

@@ -4,7 +4,7 @@ import {
   copyIntegrationFields,
   mappedIntegration,
 } from "../project/integration-fields.js";
-import { verifyInstalledReads, verifyReadFiles } from "./authority.js";
+import { verifyInstalledReads, verifyReadFiles } from "../codegen/authority.js";
 /**
  * The one guarded apply use case (S077, repaired for RCLD04-R1-1/2/3).
  *
@@ -51,12 +51,12 @@ import {
   type PlanAncestor,
   type PlanReadFile,
   type PlanReadset,
-} from "./authority.js";
-import { isOriginalComposition } from "./compose.js";
-import { sha256Hex } from "./digest.js";
+} from "../codegen/authority.js";
+import { isOriginalComposition } from "../codegen/compose.js";
+import { sha256Hex } from "../codegen/digest.js";
 import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
-import { validateExportReceipt } from "./exports.js";
-import { parseKitLock } from "./lock.js";
+import { validateExportReceipt } from "../codegen/exports.js";
+import { parseKitLock } from "../codegen/lock.js";
 import {
   holdMutationAuthority,
   scopeMutationAuthority,
@@ -65,7 +65,7 @@ import {
   createOwnedAncestors,
   removeOwnedAncestors,
 } from "./owned-ancestry.js";
-import { isPlanData } from "./plan-data.js";
+import { isPlanData } from "../codegen/plan-data.js";
 import {
   derivePlanDigest,
   type AnyApplyPlanInput,
@@ -76,12 +76,12 @@ import {
   type ValidatedApplyPlan,
   type ValidatedApplyTarget,
   type ValidatedLibraryApplyPlan,
-} from "./plan.js";
+} from "../codegen/plan.js";
 import {
   resolveProjectedConfig,
   validateProjectedLock,
   type ExportAuthority,
-} from "./projected-batch.js";
+} from "../codegen/projected-batch.js";
 import {
   classifyPublication,
   observeFileIdentity,
@@ -94,22 +94,25 @@ import {
   recoveredCreatedDirectories,
 } from "./recovery.js";
 import { applyReplacements } from "./replace.js";
-import { revalidatePreimages, type TargetPreimage } from "./revalidate.js";
+import {
+  revalidatePreimages,
+  type TargetPreimage,
+} from "../codegen/revalidate.js";
 import { stageOperations } from "./stage.js";
-import { cleanupTransaction } from "./transaction-cleanup.js";
-import { fireHooks, type TransactionHooks } from "./transaction-hooks.js";
+import { cleanupTransaction } from "./cleanup.js";
+import { fireHooks, type TransactionHooks } from "./hooks.js";
 import {
   cleanupOwnedCreations,
   createOwnedDirectory,
   type OwnedCreation,
-} from "./transaction-inventory.js";
+} from "./inventory.js";
 import {
   persistJournal,
   prepareJournal,
   type JournalCreatedDir,
   type TransactionJournal,
   type TransactionDraft,
-} from "./transaction-journal.js";
+} from "./journal.js";
 import {
   APPROVED_IGNORE_FILES,
   createTransactionIdentity,
@@ -121,7 +124,7 @@ import {
   transactionsDir,
   transientRoot,
   type TransactionOutcomeKind,
-} from "./transaction-types.js";
+} from "./types.js";
 import { acquireWriterLock, releaseWriterLock } from "./write-lock.js";
 
 const VALIDATED_PLANS = new WeakSet<object>();

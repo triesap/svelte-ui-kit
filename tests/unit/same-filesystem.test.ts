@@ -4,7 +4,7 @@ import { test } from "node:test";
 import {
   sameFilesystemIssues,
   type DeviceObservation,
-} from "../../src/codegen/apply.js";
+} from "../../src/transactions/apply.js";
 
 /**
  * RCLD04-R2-2: deterministic cross-device refusal coverage, including the

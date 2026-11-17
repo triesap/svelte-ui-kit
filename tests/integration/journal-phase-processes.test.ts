@@ -15,7 +15,7 @@ import path from "node:path";
 import { test } from "node:test";
 import type { SpawnSyncReturns } from "node:child_process";
 
-import { parseJournal } from "../../src/codegen/transaction-journal.js";
+import { parseJournal } from "../../src/transactions/journal.js";
 import {
   journalPath,
   lockPath,
@@ -23,12 +23,12 @@ import {
   stagedDir,
   transactionsDir,
   writerLockDir,
-} from "../../src/codegen/transaction-types.js";
-import { readWriterLock } from "../../src/codegen/write-lock.js";
+} from "../../src/transactions/types.js";
+import { readWriterLock } from "../../src/transactions/write-lock.js";
 import {
   inspectTransactions,
   inspectUnchangedState,
-} from "../../src/codegen/recovery.js";
+} from "../../src/transactions/recovery.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
