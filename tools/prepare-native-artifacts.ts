@@ -19,6 +19,8 @@ interface PreparationOptions {
   readonly root?: string;
   readonly bundle?: boolean;
   readonly fixture?: boolean;
+  /** Fresh compiler output selected by the production builder. */
+  readonly compiledRoot?: string;
 }
 interface PreparedArtifact {
   readonly built: boolean;
@@ -40,6 +42,7 @@ export async function prepareNativeArtifacts({
   root = sourceRoot,
   bundle = false,
   fixture = false,
+  compiledRoot,
 }: PreparationOptions = {}): Promise<{
   readonly bits: PreparedArtifact;
   readonly svelte: PreparedArtifact;
@@ -120,7 +123,7 @@ export async function prepareNativeArtifacts({
   }[] = [];
   let bundleRoot: string | undefined;
   if (bundle) {
-    const dist = realpathSync(path.join(packageRoot, "dist"));
+    const dist = realpathSync(compiledRoot ?? path.join(packageRoot, "dist"));
     for (const [name, value] of [
       ["native-dependency-baseline.json", bitsExpected],
       ["svelte-runtime-baseline.json", expected],

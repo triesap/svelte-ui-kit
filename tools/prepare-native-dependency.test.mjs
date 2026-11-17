@@ -233,23 +233,12 @@ test(
         path.join(repository, "node_modules"),
         path.join(author, "node_modules"),
       );
-      run(
-        process.execPath,
-        [
-          path.join(repository, "node_modules/typescript/bin/tsc"),
-          "-p",
-          "tsconfig.json",
-        ],
-        author,
-      );
-      const prepared = await prepareNativeArtifacts({
-        root: author,
-        bundle: true,
-      });
-      rmSync(path.join(author, "node_modules"));
+      const prepared = await prepareNativeArtifacts({ root: author });
       const archives = path.join(root, "archives");
       mkdirSync(archives);
-      run("pnpm", ["pack", "--json", "--pack-destination", archives], author);
+      const { buildPackage } = await import("./build-package.ts");
+      await buildPackage({ root: author, packDestination: archives });
+      rmSync(path.join(author, "node_modules"));
       const entries = readdirSync(archives);
       assert.equal(entries.length, 1);
       assert.match(entries[0], /\.tgz$/);

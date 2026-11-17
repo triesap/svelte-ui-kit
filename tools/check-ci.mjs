@@ -105,18 +105,20 @@ export const CI_LANES = Object.freeze({
 const scripts = Object.freeze({
   "format:check": "prettier --check .",
   lint: "eslint . --max-warnings 0",
-  typecheck: [
-    "tsconfig.json",
-    "tsconfig.unit.json",
-    "tsconfig.integration.json",
-    "tsconfig.components.json",
-    "tsconfig.registry.json",
-    "tsconfig.package.json",
-  ]
-    .map((file) => `tsc -p ${file} --noEmit`)
-    .join(" && "),
-  build:
-    "node tools/prepare-native-artifacts.ts && tsc -p tsconfig.json && node tools/prepare-native-artifacts.ts --bundle",
+  typecheck:
+    [
+      "tsconfig.json",
+      "tsconfig.unit.json",
+      "tsconfig.integration.json",
+      "tsconfig.components.json",
+      "tsconfig.registry.json",
+      "tsconfig.package.json",
+    ]
+      .map((file) => `tsc -p ${file} --noEmit`)
+      .join(" && ") +
+    " && tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-package.ts tools/build-package.test.ts",
+  build: "node tools/build-package.ts",
+  "pack:local": "node tools/build-package.ts --pack-destination",
   "test:unit": "pnpm run build && node tools/run-unit-tests.mjs",
   "test:integration":
     "pnpm run build && node tools/run-unit-tests.mjs --suite integration",
@@ -124,7 +126,7 @@ const scripts = Object.freeze({
   "test:registry":
     "pnpm run build && node tools/run-unit-tests.mjs --suite registry",
   "test:package":
-    "pnpm run build && node tools/run-unit-tests.mjs --suite package",
+    "pnpm run build && node --test tools/build-package.test.ts && node tools/run-unit-tests.mjs --suite package",
   "test:harness": "node --test tools/run-unit-tests.test.mjs",
   "native:runtime:check":
     "tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-svelte-runtime.ts tools/build-svelte-runtime.test.ts tools/native-runtime/archive.ts tools/native-runtime/recipe.ts tools/native-artifacts.ts tools/prepare-native-artifacts.ts tools/prepare-native-artifacts.test.ts && node --test tools/build-svelte-runtime.test.ts",

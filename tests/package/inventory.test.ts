@@ -29,8 +29,8 @@ test("real packed inventory contains only standalone distribution assets and run
     mkdirSync(unpack);
     mkdirSync(consumer);
     const packed = spawnSync(
-      "pnpm",
-      ["pack", "--json", "--pack-destination", archives],
+      process.execPath,
+      ["tools/build-package.ts", "--pack-destination", archives],
       { encoding: "utf8", timeout: 60_000 },
     );
     assert.equal(packed.status, 0, packed.stdout + packed.stderr);

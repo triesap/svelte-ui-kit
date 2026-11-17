@@ -48,8 +48,8 @@ export function installPackedCore() {
       return { log, stdout: result.stdout };
     };
     const packed = run(
-      "pnpm",
-      ["pack", "--json", "--pack-destination", archives],
+      process.execPath,
+      ["tools/build-package.ts", "--pack-destination", archives],
       process.cwd(),
       "pack",
     );

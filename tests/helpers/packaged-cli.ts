@@ -205,39 +205,15 @@ export function installIndependentCli() {
       path.join(checkout, "node_modules"),
       path.join(author, "node_modules"),
     );
-    // Run the repository build's exact compiler command with an explicit
-    // compiler input. A package-manager run must not try to replace a linked
-    // authoring dependency directory through its automatic install check.
-    const compiler = createRequire(path.join(checkout, "package.json")).resolve(
-      "typescript/bin/tsc",
-    );
-    runTool(
-      process.execPath,
-      ["tools/prepare-native-artifacts.ts"],
-      author,
-      "owned-native-preparation",
-    );
-    runTool(
-      process.execPath,
-      [compiler, "-p", "tsconfig.json"],
-      author,
-      "owned-author-build",
-    );
-    runTool(
-      process.execPath,
-      ["tools/prepare-native-artifacts.ts", "--bundle"],
-      author,
-      "owned-native-bundle",
-    );
-    rmSync(path.join(author, "node_modules"));
     const archives = path.join(root, "archives");
     mkdirSync(archives);
     const packed = runTool(
-      "pnpm",
-      ["pack", "--json", "--pack-destination", archives],
+      process.execPath,
+      ["tools/build-package.ts", "--pack-destination", archives],
       author,
-      "owned-author-pack",
+      "owned-production-build-and-pack",
     );
+    rmSync(path.join(author, "node_modules"));
     const names = readdirSync(archives);
     assert.equal(names.length, 1);
     assert.match(names[0]!, /\.tgz$/);

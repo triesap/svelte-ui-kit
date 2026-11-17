@@ -29,10 +29,10 @@ Builds authenticate the caches and bundle both native archives into the CLI. Do 
 replace frozen pins or edit installed declarations to make a check pass.
 
 Set `ARCHIVES` to a fresh absolute directory for local package artifacts, create
-it, and pack from the repository root:
+it, and build/pack through the production staging implementation from the repository root:
 
 ```sh
-pnpm pack --json --pack-destination "$ARCHIVES"
+pnpm run pack:local "$ARCHIVES"
 ```
 
 Set `ARCHIVE` to the absolute `.tgz` path actually returned by pack. Record and
