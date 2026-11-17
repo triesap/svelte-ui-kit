@@ -1,10 +1,11 @@
 import {
-  generationLockContext,
+  generationFields,
   integrationMapping,
-  parseGenerationConfig as parseKitConfig,
-  type GenerationConfig as KitConfig,
+  parseKitConfig,
+  serializeKitConfig,
+  type KitConfig,
   type LibraryConfig,
-} from "../project/generation-config.js";
+} from "../project/config.js";
 /**
  * Pure initialization planning (S057).
  *
@@ -29,14 +30,10 @@ import {
  */
 import path from "node:path";
 
-import { deriveKitPaths } from "../project/config.js";
-import {
-  generationLockIdentity,
-  generationTarget,
-} from "../project/generation-config.js";
+import { deriveKitPaths, generationTarget } from "../project/config.js";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import type { RegistrySnapshot } from "../registry/load.js";
-import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
+import { TOOL_VERSION } from "../registry/versions.js";
 import { hashBytes } from "./compare.js";
 import { parseManagedCss } from "./css-parse.js";
 import { composeManagedCss, FOUNDATION_TOKENS_CONTRACT } from "./css.js";
@@ -85,7 +82,7 @@ export interface InitPlan {
 }
 
 export interface InitPlanInput {
-  readonly config: import("../project/app-config.js").AppProjectConfig;
+  readonly config: import("../project/config.js").ApplicationConfig;
   readonly layoutFile: string;
   readonly layoutSource: string;
   readonly snapshot: ProjectSnapshot;
@@ -273,7 +270,7 @@ export function planInit(input: AnyInitPlanInput): ModelResult<InitPlan> {
         stateDir: derived.stateDir,
         uiDir: config.uiDir,
         stylesDir: config.stylesDir,
-        ...generationLockContext(config),
+        ...generationFields(config),
       });
       if (!parsed.ok) return fail(parsed.issues);
       existingLock = parsed.value;
@@ -358,7 +355,7 @@ export function planInit(input: AnyInitPlanInput): ModelResult<InitPlan> {
   const writes: PlannedWrite[] = [];
   const diagnostics: string[] = [];
 
-  const configJson = `${JSON.stringify(config, null, 2)}\n`;
+  const configJson = serializeKitConfig(config);
   const configText = textOf(targets.kitJson);
   if (!configText.ok) return configText;
   // Malformed observed configuration must never be overwritten: reconcile it
@@ -676,8 +673,9 @@ export function planInit(input: AnyInitPlanInput): ModelResult<InitPlan> {
   });
 
   const lock: KitLock = {
-    ...generationLockIdentity(config),
-    toolVersion: INITIAL_TOOL_VERSION,
+    schemaVersion: 1,
+    target: config.target,
+    toolVersion: TOOL_VERSION,
     registryVersion,
     registryHash,
     configHash,
@@ -694,7 +692,7 @@ export function planInit(input: AnyInitPlanInput): ModelResult<InitPlan> {
     stateDir: derived.stateDir,
     uiDir: config.uiDir,
     stylesDir: config.stylesDir,
-    ...generationLockContext(config),
+    ...generationFields(config),
   });
   if (!validated.ok) return fail(validated.issues);
   const finalLock = validated.value;
@@ -717,7 +715,9 @@ export function planInit(input: AnyInitPlanInput): ModelResult<InitPlan> {
   const lockChanged =
     existingLock === null ||
     JSON.stringify(existingLock) !== JSON.stringify(finalLock);
-  if (lockChanged) {
+  // Ordinary writes require a physical publication witness even when metadata
+  // bytes are unchanged; digest equality never establishes a commit.
+  if (lockChanged || writes.length > 0) {
     writes.push({
       path: lockPath,
       operation: existingLock === null ? "create" : "update",

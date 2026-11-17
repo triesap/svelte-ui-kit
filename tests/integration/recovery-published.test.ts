@@ -11,6 +11,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { completeLockFixture } from "../helpers/lock-fixture.js";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
 import {
@@ -18,23 +19,23 @@ import {
   writePublicationIntent,
 } from "../../src/codegen/publication-intent.js";
 import {
-  prepareJournal,
+  inspectUnchangedState,
+  recoverTransaction,
+} from "../../src/codegen/recovery.js";
+import { stageOperations } from "../../src/codegen/stage.js";
+import {
   persistJournal,
+  prepareJournal,
   type TransactionJournal,
 } from "../../src/codegen/transaction-journal.js";
-import { publishPreparedLock as publishLock } from "../helpers/publication.js";
-import {
-  recoverTransaction,
-  inspectUnchangedState,
-} from "../../src/codegen/recovery.js";
-import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
-import { stageOperations } from "../../src/codegen/stage.js";
 import {
   journalPath,
   lockPath,
   publicationIntentPath,
   transactionDir,
 } from "../../src/codegen/transaction-types.js";
+import { publishPreparedLock as publishLock } from "../helpers/publication.js";
+import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
@@ -56,7 +57,8 @@ const abs = (root: string, logical: string): string =>
 function lockBytes(configHash: string): Uint8Array {
   return new TextEncoder().encode(
     `${JSON.stringify(
-      {
+      completeLockFixture({
+        target: "sveltekit",
         schemaVersion: 1,
         toolVersion: "0.1.0",
         registryVersion: "0.1.0",
@@ -67,7 +69,7 @@ function lockBytes(configHash: string): Uint8Array {
         files: [],
         cssBlocks: [],
         integrations: [],
-      },
+      }),
       null,
       2,
     )}\n`,
@@ -76,7 +78,10 @@ function lockBytes(configHash: string): Uint8Array {
 
 function journalFor(root: string): TransactionJournal {
   return {
-    schemaVersion: 1,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     transactionId: ID,
     rootIdentity: liveRootIdentity(root),
     planDigest: "b".repeat(64),

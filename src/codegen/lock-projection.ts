@@ -12,16 +12,16 @@
  * The projection is pure data; the caller validates it through `parseKitLock`
  * (schema and index checks) before publication planning.
  */
+import type { RequestProjection } from "../registry/projection.js";
 import type {
+  KitLock,
   LockCssBlock,
   LockFileRecord,
   LockIntegration,
   LockItem,
-  KitLock,
 } from "./lock.js";
-import type { RequestProjection } from "../registry/projection.js";
-import type { SourcePlan } from "./source-plan.js";
 import type { RetirementRecord } from "./retire.js";
+import type { SourcePlan } from "./source-plan.js";
 
 export interface LockSourceMeta {
   readonly owner: string;
@@ -41,6 +41,7 @@ export interface LockCssOutcome {
 }
 
 export interface LockProjectionInput {
+  readonly target: KitLock["target"];
   readonly items: readonly LockItem[];
   readonly desired: RequestProjection;
   readonly lock: KitLock | null;
@@ -159,6 +160,7 @@ export function buildLockProjection(
 
   const lock: KitLock = {
     schemaVersion: 1,
+    target: input.target,
     toolVersion: input.toolVersion,
     registryVersion: input.registryVersion,
     registryHash: input.registryHash,

@@ -13,13 +13,7 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
-import {
-  prepareJournal,
-  persistJournal,
-  type TransactionJournal,
-} from "../../src/codegen/transaction-journal.js";
 import { backupPath } from "../../src/codegen/replace.js";
-import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 import {
   stageOperations,
   type StageOperation,
@@ -28,7 +22,13 @@ import {
   faultAfter,
   faultAtOccurrence,
 } from "../../src/codegen/transaction-hooks.js";
+import {
+  persistJournal,
+  prepareJournal,
+  type TransactionJournal,
+} from "../../src/codegen/transaction-journal.js";
 import { journalPath } from "../../src/codegen/transaction-types.js";
+import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 const ID = "5555555555555555";
@@ -79,7 +79,10 @@ const OPERATIONS: StageOperation[] = [
 
 function journalFor(): TransactionJournal {
   return {
-    schemaVersion: 1,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     transactionId: ID,
     rootIdentity: "a".repeat(64),
     planDigest: "b".repeat(64),

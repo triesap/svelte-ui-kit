@@ -1,29 +1,28 @@
 import assert from "node:assert/strict";
-import { readFileSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { parseKitConfig } from "../../src/project/config.js";
-import {
-  parseTargetConfig,
-  integrationFor,
-} from "../../src/project/target-config.js";
 import { captureTargetEvidence } from "../../src/codegen/target-evidence.js";
 import {
   svelteKitIntegration,
   targetIntegrationAdapter,
 } from "../../src/codegen/target-integration.js";
+import {
+  integrationMapping,
+  parseKitConfig,
+} from "../../src/project/config.js";
 import { createTempProject } from "../helpers/project.js";
-import { snapshotTree } from "../helpers/tree-snapshot.js";
 import { linkQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 const astro = {
-  schemaVersion: 2,
+  schemaVersion: 1,
   target: "astro",
   layoutFile: "src/layouts/Layout.astro",
 };
 const library = {
-  schemaVersion: 2,
+  schemaVersion: 1,
   target: "svelte-library",
   styleEntry: "src/styles/index.css",
 };
@@ -64,18 +63,17 @@ function fixture(
   return project;
 }
 
-test("v2 target union is strict and v1 schema and defaults remain unchanged", () => {
+test("canonical target union is strict and retired project formats refuse", () => {
   const legacy = parseKitConfig({ schemaVersion: 1 });
-  assert.ok(legacy.ok);
-  assert.equal(legacy.value.layoutFile, "src/routes/+layout.svelte");
+  assert.equal(legacy.ok, false);
   for (const valid of [
     astro,
     library,
-    { schemaVersion: 2, target: "sveltekit", layoutFile: "app/+layout.svelte" },
+    { schemaVersion: 1, target: "sveltekit", layoutFile: "app/+layout.svelte" },
   ])
-    assert.ok(parseTargetConfig(valid).ok);
+    assert.ok(parseKitConfig(valid).ok);
   for (const value of [
-    { ...astro, schemaVersion: 1 },
+    { ...astro, schemaVersion: 2 },
     { ...astro, styleEntry: "x.css" },
     { ...library, layoutFile: "fake.svelte" },
     { ...astro, layoutFile: "a.svelte" },
@@ -84,9 +82,9 @@ test("v2 target union is strict and v1 schema and defaults remain unchanged", ()
     { ...astro, future: true },
     { ...astro, requested: ["button", "button"] },
   ])
-    assert.equal(parseTargetConfig(value).ok, false, JSON.stringify(value));
+    assert.equal(parseKitConfig(value).ok, false, JSON.stringify(value));
   assert.equal(parseKitConfig({ schemaVersion: 1, target: "astro" }).ok, false);
-  assert.equal(parseKitConfig(astro).ok, false);
+  assert.equal(parseKitConfig(astro).ok, true);
 });
 
 test("Astro requires genuine declared framework and statically captured integration without Kit", (t) => {
@@ -286,9 +284,9 @@ test("target adapters preserve native application and standalone stylesheet stru
     value: { imports: ["./kit.css"] },
   });
   assert.equal(targetIntegrationAdapter("unknown" as never).ok, false);
-  const parsed = parseTargetConfig(library);
+  const parsed = parseKitConfig(library);
   assert.ok(parsed.ok);
-  assert.equal(integrationFor(parsed.value).kind, "stylesheet-entry");
+  assert.equal(integrationMapping(parsed.value).kind, "stylesheet-entry");
 });
 
 test("CLI refuses future target configuration without fallback or any hidden writes", (t) => {

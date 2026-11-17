@@ -1,44 +1,19 @@
-import { selectProjectSchema } from "./migrations.js";
-/**
- * Strict kit configuration (S014).
- *
- * `kit.json` is the user-editable desired state. This module performs strict
- * draft-07 schema validation plus a small amount of semantic validation, then
- * normalizes the result with the documented defaults. It never coerces a
- * value, injects a JSON Schema `default`, removes an unknown field or executes
- * application/Svelte configuration.
- *
- * Absent optional fields receive the documented defaults; an explicit custom
- * safe mapping is honored. Lexical path safety and reserved-state overlap are
- * enforced here; real filesystem containment and later project discovery
- * remain a distinct later gate.
- */
-import {
-  fail,
-  issue,
-  ok,
-  type ModelIssue,
-  type ModelResult,
-} from "../registry/errors.js";
+/** One strict canonical project format. Desired config never establishes installed authority. */
+import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import {
   validateWithSchema,
   type SchemaAuthority,
 } from "../registry/schema.js";
-import {
-  INITIAL_SCHEMA_VERSION,
-  INITIAL_TOOL_VERSION,
-  isSemVer,
-} from "../registry/versions.js";
+import { isSemVer, TOOL_VERSION } from "../registry/versions.js";
+import { deepFreeze } from "./immutable.js";
 import {
   isSafeLogicalRelativePath,
   isSameOrBelow,
   pathsOverlap,
 } from "./paths.js";
-
-/** Schema document that owns the `kit.json` shape. */
 export const KIT_CONFIG_SCHEMA = "kit.schema.json";
 
-export const SUPPORTED_SCHEMA_VERSION = INITIAL_SCHEMA_VERSION;
+export const SUPPORTED_SCHEMA_VERSION = 1 as const;
 export const DEFAULT_REGISTRY = "builtin" as const;
 export const DEFAULT_UI_DIR = "src/lib/components/ui";
 export const DEFAULT_STYLES_DIR = "src/styles";
@@ -51,26 +26,42 @@ export const KIT_CSS_NAME = "kit.css";
 export const THEMES_CSS_NAME = "themes.css";
 export const APP_CSS_NAME = "app.css";
 
-export interface KitConfig {
-  readonly schemaVersion: number;
+export type TargetKind = "sveltekit" | "astro" | "svelte-library";
+interface ConfigCommon {
+  readonly schemaVersion: 1;
   readonly toolVersion: string;
   readonly registry: typeof DEFAULT_REGISTRY;
   readonly uiDir: string;
   readonly stylesDir: string;
-  readonly layoutFile: string;
   readonly requested: readonly string[];
 }
-
-export const DEFAULT_KIT_CONFIG: KitConfig = {
-  schemaVersion: SUPPORTED_SCHEMA_VERSION,
-  toolVersion: INITIAL_TOOL_VERSION,
+export type SvelteKitConfig = ConfigCommon & {
+  readonly target: "sveltekit";
+  readonly layoutFile: string;
+  readonly styleEntry?: never;
+};
+export type AstroConfig = ConfigCommon & {
+  readonly target: "astro";
+  readonly layoutFile: string;
+  readonly styleEntry?: never;
+};
+export type LibraryConfig = ConfigCommon & {
+  readonly target: "svelte-library";
+  readonly styleEntry: string;
+  readonly layoutFile?: never;
+};
+export type ApplicationConfig = SvelteKitConfig | AstroConfig;
+export type KitConfig = ApplicationConfig | LibraryConfig;
+export const DEFAULT_KIT_CONFIG: SvelteKitConfig = {
+  schemaVersion: 1,
+  target: "sveltekit",
+  toolVersion: TOOL_VERSION,
   registry: DEFAULT_REGISTRY,
   uiDir: DEFAULT_UI_DIR,
   stylesDir: DEFAULT_STYLES_DIR,
   layoutFile: DEFAULT_LAYOUT_FILE,
   requested: [],
 };
-
 /** Derived logical paths for a validated configuration. */
 export interface KitDerivedPaths {
   readonly stateDir: string;
@@ -108,187 +99,233 @@ export function deriveKitPaths<
   };
 }
 
-/** Strip a single trailing separator run, matching `deriveKitPaths`. */
-function trimTrailingSeparators(value: string): string {
-  return value.replace(/\/+$/, "");
+export type TargetIntegration =
+  | {
+      readonly kind: "layout";
+      readonly path: string;
+      readonly contract: "layout-v1" | "astro-layout-v1";
+    }
+  | {
+      readonly kind: "stylesheet-entry";
+      readonly path: string;
+      readonly contract: "library-styles-v1";
+    };
+
+export function integrationMapping(config: KitConfig): TargetIntegration {
+  return config.target === "svelte-library"
+    ? {
+        kind: "stylesheet-entry",
+        path: config.styleEntry,
+        contract: "library-styles-v1",
+      }
+    : {
+        kind: "layout",
+        path: config.layoutFile,
+        contract: config.target === "astro" ? "astro-layout-v1" : "layout-v1",
+      };
 }
 
-function describe(value: unknown): string {
-  if (typeof value === "string") return JSON.stringify(value);
-  if (value === null) return "null";
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  return Array.isArray(value) ? "an array" : typeof value;
-}
-
-/**
- * Parse and normalize a candidate `kit.json` value. Unknown/legacy fields, bad
- * types, unsupported schema versions, malformed values, lexically unsafe roots
- * and reserved-state/overlap collisions fail with typed issues; a valid value
- * is completed with the documented defaults.
- */
+/** Strict contained schema validation, no conversion of v1 or application configuration. */
 export function parseKitConfig(
   value: unknown,
   locator = "kit.json",
   authority?: SchemaAuthority,
 ): ModelResult<KitConfig> {
-  const selectedSchema = selectProjectSchema(value, "config", locator);
-  if (!selectedSchema.ok) return fail(selectedSchema.issues);
-  const schemaResult = validateWithSchema(
+  const valid = validateWithSchema(
     KIT_CONFIG_SCHEMA,
     value,
     locator,
     authority,
   );
-  if (!schemaResult.ok) return fail(schemaResult.issues);
-
+  if (
+    !valid.ok &&
+    valid.issues.some((entry) => entry.code !== "SCHEMA_INVALID")
+  )
+    return fail(valid.issues);
+  // Safe logical roles retain their owning diagnostics even if a framework suffix
+  // is also invalid. Never normalize or accept a schema-invalid input.
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    return fail(
+      valid.ok
+        ? [
+            issue(
+              "SCHEMA_INVALID",
+              "Canonical project object required",
+              locator,
+            ),
+          ]
+        : valid.issues,
+    );
+  const shape = value as Record<string, unknown>;
+  if (
+    shape.schemaVersion !== 1 ||
+    typeof shape.target !== "string" ||
+    !["sveltekit", "astro", "svelte-library"].includes(shape.target) ||
+    ["uiDir", "stylesDir"].some(
+      (field) => shape[field] !== undefined && typeof shape[field] !== "string",
+    ) ||
+    typeof shape[
+      shape.target === "svelte-library" ? "styleEntry" : "layoutFile"
+    ] !== "string" ||
+    (shape.requested !== undefined && !Array.isArray(shape.requested))
+  ) {
+    if (!valid.ok) return fail(valid.issues);
+    return fail([
+      issue("SCHEMA_INVALID", "Canonical project shape is required", locator),
+    ]);
+  }
   const record = value as Record<string, unknown>;
-  const issues: ModelIssue[] = [];
-
-  const toolVersion = record["toolVersion"];
-  if (toolVersion !== undefined && !isSemVer(toolVersion)) {
-    issues.push(
+  if (record.toolVersion !== undefined && !isSemVer(record.toolVersion))
+    return fail([
       issue(
         "SCHEMA_INVALID",
-        `toolVersion must be a strict SemVer 2.0.0 release, received ${describe(toolVersion)}`,
+        "toolVersion must be strict SemVer",
         "toolVersion",
       ),
-    );
-  }
-
-  const roots: readonly (readonly [string, string, string])[] = [
-    ["uiDir", "UI root", DEFAULT_UI_DIR],
-    ["stylesDir", "styles root", DEFAULT_STYLES_DIR],
-    ["layoutFile", "layout file", DEFAULT_LAYOUT_FILE],
-  ];
-  const normalized = new Map<string, string>();
-  for (const [field, label, fallback] of roots) {
-    const raw = record[field];
-    if (raw === undefined) {
-      normalized.set(field, fallback);
-      continue;
-    }
-    const candidate = trimTrailingSeparators(raw as string);
-    if (!isSafeLogicalRelativePath(candidate)) {
-      issues.push(
-        issue(
-          "PATH_UNSAFE",
-          `${label} (${field}) must be a safe logical relative path, received ${describe(raw)}`,
-          field,
-        ),
-      );
-      continue;
-    }
-    normalized.set(field, candidate);
-  }
-  if (issues.length > 0) return fail(issues);
-
-  const uiDir = normalized.get("uiDir") as string;
-  const stylesDir = normalized.get("stylesDir") as string;
-  const layoutFile = normalized.get("layoutFile") as string;
-  const derived = deriveKitPaths({
-    ...DEFAULT_KIT_CONFIG,
-    uiDir,
-    stylesDir,
-    layoutFile,
-  });
-
-  // Validate the complete derived target set with explicit file/directory
-  // roles. A required directory and a generated file are different roles and
-  // may only be related by strict ancestry (file strictly below directory): a
-  // file may never equal or be an ancestor of a directory, layout may never
-  // alias the reserved state directory, and two generated files must stay
-  // distinct. Nesting one required directory under another (the intentional UI
-  // `_kit` state directory) remains allowed.
-  const directoryRoles: readonly {
-    readonly label: string;
-    readonly locator: string;
-    readonly path: string;
-  }[] = [
-    { label: "UI root", locator: "uiDir", path: uiDir },
-    { label: "styles root", locator: "stylesDir", path: stylesDir },
-  ];
-  const fileRoles: readonly {
-    readonly label: string;
-    readonly locator: string;
-    readonly path: string;
-  }[] = [
-    { label: "layout file", locator: "layoutFile", path: layoutFile },
-    {
-      label: "root exports file",
-      locator: "uiDir",
-      path: derived.rootExports,
-    },
-    { label: "kit stylesheet", locator: "stylesDir", path: derived.kitCss },
-    {
-      label: "themes stylesheet",
-      locator: "stylesDir",
-      path: derived.themesCss,
-    },
-    { label: "app stylesheet", locator: "stylesDir", path: derived.appCss },
-  ];
-
-  for (const directory of directoryRoles) {
-    for (const file of fileRoles) {
-      if (isSameOrBelow(directory.path, file.path)) {
-        issues.push(
-          issue(
-            "PATH_OVERLAP",
-            `${file.label} ${JSON.stringify(file.path)} must not equal or contain the ${directory.label} ${JSON.stringify(directory.path)}`,
-            file.locator,
-          ),
-        );
-      }
-    }
-  }
-
-  if (pathsOverlap(layoutFile, derived.stateDir)) {
-    issues.push(
-      issue(
-        "PATH_OVERLAP",
-        `layoutFile ${JSON.stringify(layoutFile)} must not overlap the reserved state directory ${JSON.stringify(derived.stateDir)}`,
-        "layoutFile",
-      ),
-    );
-  }
-  if (pathsOverlap(stylesDir, derived.stateDir)) {
-    issues.push(
-      issue(
-        "PATH_OVERLAP",
-        `stylesDir ${JSON.stringify(stylesDir)} must not overlap the reserved state directory ${JSON.stringify(derived.stateDir)}`,
-        "stylesDir",
-      ),
-    );
-  }
-
-  for (let left = 0; left < fileRoles.length; left += 1) {
-    for (let right = left + 1; right < fileRoles.length; right += 1) {
-      if (pathsOverlap(fileRoles[left].path, fileRoles[right].path)) {
-        issues.push(
-          issue(
-            "PATH_OVERLAP",
-            `${fileRoles[left].label} ${JSON.stringify(fileRoles[left].path)} must not equal or contain the ${fileRoles[right].label} ${JSON.stringify(fileRoles[right].path)}`,
-            fileRoles[left].locator,
-          ),
-        );
-      }
-    }
-  }
-
-  if (issues.length > 0) return fail(issues);
-
-  const requested = record["requested"];
-  return ok({
-    schemaVersion: SUPPORTED_SCHEMA_VERSION,
+    ]);
+  const common = {
+    schemaVersion: 1 as const,
     toolVersion:
-      typeof toolVersion === "string" ? toolVersion : INITIAL_TOOL_VERSION,
-    registry: DEFAULT_REGISTRY,
-    uiDir,
-    stylesDir,
-    layoutFile,
-    requested: Array.isArray(requested)
-      ? (requested as readonly string[]).slice()
-      : [],
-  });
+      (record.toolVersion as string | undefined) ??
+      DEFAULT_KIT_CONFIG.toolVersion,
+    registry: "builtin" as const,
+    uiDir: (record.uiDir as string | undefined) ?? DEFAULT_KIT_CONFIG.uiDir,
+    stylesDir:
+      (record.stylesDir as string | undefined) ?? DEFAULT_KIT_CONFIG.stylesDir,
+    requested: [...((record.requested as string[] | undefined) ?? [])],
+  };
+  const config: KitConfig =
+    record.target === "svelte-library"
+      ? {
+          ...common,
+          target: "svelte-library",
+          styleEntry: record.styleEntry as string,
+        }
+      : {
+          ...common,
+          target: record.target as "sveltekit" | "astro",
+          layoutFile: record.layoutFile as string,
+        };
+  const integration = integrationMapping(config);
+  const derived = deriveKitPaths(common);
+  const directories = [config.uiDir, config.stylesDir];
+  const files = [
+    integration.path,
+    derived.rootExports,
+    derived.kitCss,
+    derived.themesCss,
+    derived.appCss,
+  ];
+  if (
+    [...directories, ...files].some(
+      (value) => !isSafeLogicalRelativePath(value),
+    )
+  )
+    return fail([
+      issue(
+        "PATH_UNSAFE",
+        `Target mappings must be safe package-relative logical paths: ${[
+          ...directories,
+          ...files,
+        ]
+          .filter((value) => !isSafeLogicalRelativePath(value))
+          .map((value) => JSON.stringify(value))
+          .join(", ")}`,
+        locator,
+      ),
+    ]);
+  if (
+    directories.some((dir) => files.some((file) => isSameOrBelow(dir, file))) ||
+    pathsOverlap(integration.path, derived.stateDir) ||
+    pathsOverlap(config.stylesDir, derived.stateDir) ||
+    files.some((file, index) =>
+      files.slice(index + 1).some((other) => pathsOverlap(file, other)),
+    )
+  )
+    return fail([
+      issue(
+        "PATH_OVERLAP",
+        "Target integration, generated files and reserved state must have distinct roles",
+        locator,
+      ),
+    ]);
+  if (!valid.ok) return fail(valid.issues);
+  return ok(deepFreeze(config));
+}
+
+export const ASTRO_CONFIG_FILES = [
+  "astro.config.ts",
+  "astro.config.mts",
+  "astro.config.js",
+  "astro.config.mjs",
+] as const;
+export const TARGET_CONFIG_FILES = [
+  ...ASTRO_CONFIG_FILES,
+  "astro.config.cjs",
+  "svelte.config.ts",
+  "svelte.config.js",
+  "svelte.config.mjs",
+  "svelte.config.cjs",
+] as const;
+
+export function isLibraryConfig(config: KitConfig): config is LibraryConfig {
+  return config.target === "svelte-library";
+}
+export function generationTarget(config: KitConfig): TargetKind {
+  return config.target;
+}
+export function generationInputPaths(): readonly string[] {
+  return ["package.json", ...TARGET_CONFIG_FILES];
+}
+export function generationFields(
+  config: ApplicationConfig,
+): import("./integration-fields.js").ApplicationIntegrationFields;
+export function generationFields(
+  config: LibraryConfig,
+): import("./integration-fields.js").LibraryIntegrationFields;
+export function generationFields(
+  config: KitConfig,
+): import("./integration-fields.js").IntegrationFields;
+export function generationFields(
+  config: KitConfig,
+): import("./integration-fields.js").IntegrationFields {
+  return config.target === "svelte-library"
+    ? {
+        configSchema: 1 as const,
+        target: config.target,
+        styleEntry: config.styleEntry,
+      }
+    : {
+        configSchema: 1 as const,
+        target: config.target,
+        layoutFile: config.layoutFile,
+      };
+}
+export function initializationFields(config: KitConfig, source: string) {
+  return config.target === "svelte-library"
+    ? { config, styleEntry: config.styleEntry, styleSource: source }
+    : { config, layoutFile: config.layoutFile, layoutSource: source };
+}
+
+/** Deterministic canonical writer metadata and desired state. Reading historical
+ * toolVersion remains valid; a new publication always identifies this build. */
+export function serializeKitConfig(config: KitConfig): string {
+  return (
+    JSON.stringify(
+      {
+        schemaVersion: SUPPORTED_SCHEMA_VERSION,
+        target: config.target,
+        toolVersion: TOOL_VERSION,
+        registry: config.registry,
+        uiDir: config.uiDir,
+        stylesDir: config.stylesDir,
+        ...(config.target === "svelte-library"
+          ? { styleEntry: config.styleEntry }
+          : { layoutFile: config.layoutFile }),
+        requested: [...config.requested],
+      },
+      null,
+      2,
+    ) + "\n"
+  );
 }

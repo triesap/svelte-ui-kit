@@ -5,7 +5,7 @@
  * CWD, source-checkout or network fallback: a caller that wants a different
  * root must say so (the source-tree provider is an explicit test/development
  * injection, never a hidden runtime path). Requests are restricted to the
- * `registry/` and `schema/v1/` roots and the known text asset extensions.
+ * `registry/` and `schema/` roots and the known text asset extensions.
  *
  * Reads reject absolute/traversal/separator-confused logical paths, missing
  * assets, non-files, symlinked assets and symlinked ancestors that resolve
@@ -29,7 +29,7 @@ import {
   type ModelResult,
 } from "./errors.js";
 
-export const ASSET_ROOTS = ["registry", "schema/v1", "schema/v2"] as const;
+export const ASSET_ROOTS = ["registry", "schema"] as const;
 export const ASSET_EXTENSIONS = [".json", ".css", ".svelte", ".ts"] as const;
 
 export interface AssetProvider {

@@ -3,16 +3,16 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 
+import type { KitLock } from "../../src/codegen/lock.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { planInit } from "../../src/codegen/plan-init.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
-import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import type { ProjectSnapshot } from "../../src/codegen/snapshot.js";
-import type { KitLock } from "../../src/codegen/lock.js";
+import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
-  type KitConfig,
+  type SvelteKitConfig,
 } from "../../src/project/config.js";
 import {
   createSupportedProject,
@@ -39,7 +39,7 @@ import { componentItem, registryOf, sourceFile } from "../helpers/registry.js";
 
 const DEFAULT = DEFAULT_KIT_CONFIG;
 
-function mappingPaths(config: KitConfig, extra: readonly string[] = []) {
+function mappingPaths(config: SvelteKitConfig, extra: readonly string[] = []) {
   const derived = deriveKitPaths(config);
   return [
     `${derived.stateDir}/kit.json`,
@@ -75,7 +75,7 @@ function buttonRegistry() {
 
 function add(
   snapshot: ProjectSnapshot,
-  config: KitConfig = DEFAULT,
+  config: SvelteKitConfig = DEFAULT,
   addedRoots: readonly string[] = ["button"],
   lock: KitLock | null = null,
 ) {
@@ -93,7 +93,7 @@ function add(
 
 function init(
   snapshot: ProjectSnapshot,
-  config: KitConfig,
+  config: SvelteKitConfig,
   layoutFile: string,
 ) {
   const registry = registryOf([]);
@@ -213,7 +213,7 @@ test("a stale default layout is rejected, never planned against", (t) => {
 test("an observed custom installation determines the mapping over a stale default", (t) => {
   const project = createSupportedProject();
   t.after(() => project.cleanup());
-  const custom: KitConfig = {
+  const custom: SvelteKitConfig = {
     ...DEFAULT,
     uiDir: "src/lib/custom-ui",
     stylesDir: "custom-styles",
@@ -258,7 +258,7 @@ test("an observed custom installation determines the mapping over a stale defaul
 test("an incomplete custom observation is rejected as a conflict, not planned by default", (t) => {
   const project = createSupportedProject();
   t.after(() => project.cleanup());
-  const custom: KitConfig = {
+  const custom: SvelteKitConfig = {
     ...DEFAULT,
     uiDir: "src/lib/custom-ui",
     stylesDir: "custom-styles",
@@ -290,7 +290,7 @@ test("a valid explicit kit.json resolves an unsupported dynamic routes config", 
     "svelte.config.js",
     "export default { kit: { files: { routes: process.env.ROUTES } } };\n",
   );
-  const explicit: KitConfig = {
+  const explicit: SvelteKitConfig = {
     ...DEFAULT,
     layoutFile: "src/views/+layout.svelte",
   };
@@ -353,11 +353,11 @@ test("an ambiguous discovery is a non-executable conflict, never a guessed defau
   t.after(() => project.cleanup());
   project.writeFile(
     "a/ui/_kit/kit.json",
-    JSON.stringify({ schemaVersion: 1, uiDir: "a/ui" }),
+    JSON.stringify({ ...DEFAULT, uiDir: "a/ui" }),
   );
   project.writeFile(
     "b/ui/_kit/kit.json",
-    JSON.stringify({ schemaVersion: 1, uiDir: "b/ui" }),
+    JSON.stringify({ ...DEFAULT, uiDir: "b/ui" }),
   );
   const result = add(snapshotOf(project, mappingPaths(DEFAULT)));
   assert.equal(result.ok, true, JSON.stringify(result));
@@ -395,7 +395,7 @@ test("a location-mismatched discovery is a non-executable conflict", (t) => {
 test("sync retirement follows the effective custom mapping", (t) => {
   const project = createSupportedProject();
   t.after(() => project.cleanup());
-  const custom: KitConfig = {
+  const custom: SvelteKitConfig = {
     ...DEFAULT,
     uiDir: "src/lib/custom-ui",
     stylesDir: "custom-styles",

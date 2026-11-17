@@ -259,7 +259,7 @@ test("missing provider schemas fail the snapshot", (t) => {
 test("a provider item schema that rejects everything fails the snapshot", (t) => {
   const root = buildFixture(t);
   writeFileSync(
-    path.join(root, "assets/schemas", "v1", "registry-item.schema.json"),
+    path.join(root, "assets/schemas", "registry-item.schema.json"),
     `${JSON.stringify(
       {
         $id: "urn:svelte-ui-kit:schema:v1:registry-item",
@@ -282,10 +282,7 @@ test("a provider item schema that rejects everything fails the snapshot", (t) =>
 
 test("a non-object provider schema fails without throwing", (t) => {
   const root = buildFixture(t);
-  writeFileSync(
-    path.join(root, "assets/schemas", "v1", "kit.schema.json"),
-    "null",
-  );
+  writeFileSync(path.join(root, "assets/schemas", "kit.schema.json"), "null");
   const result = loadRegistrySnapshot(createAssetProvider(root));
   assert.equal(result.ok, false);
   if (!result.ok) {

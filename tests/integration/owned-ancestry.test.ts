@@ -1,8 +1,7 @@
-import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
 import {
-  existsSync,
   chmodSync,
+  existsSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
@@ -13,14 +12,15 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import type { ApplyPlanInput } from "../../src/codegen/plan.js";
-import { recoverTransactions } from "../../src/codegen/recovery.js";
 import {
   createOwnedAncestors,
   removeOwnedAncestors,
 } from "../../src/codegen/owned-ancestry.js";
+import type { ApplyPlanInput } from "../../src/codegen/plan.js";
+import { recoverTransactions } from "../../src/codegen/recovery.js";
 import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
@@ -133,7 +133,10 @@ test("fresh rollback cleanup can resume after its recorded empty directories wer
       },
     });
     assert.equal(outcome.kind, "refused", JSON.stringify(outcome));
-    const recovered = recoverTransactions(root, STATE_DIR, DEFAULT_KIT_CONFIG);
+    const recovered = recoverTransactions(root, STATE_DIR, {
+      ...DEFAULT_KIT_CONFIG,
+      configSchema: 1,
+    });
     assert.ok(recovered.length > 0);
     assert.ok(
       recovered.every(
@@ -190,7 +193,10 @@ test("an owned-directory removal flush failure retains terminal proof for a clea
       readFileSync(path.join(namespace, id, "journal.json"), "utf8"),
     );
     assert.equal(journal.phase, "rolled_back");
-    const recovered = recoverTransactions(root, STATE_DIR, DEFAULT_KIT_CONFIG);
+    const recovered = recoverTransactions(root, STATE_DIR, {
+      ...DEFAULT_KIT_CONFIG,
+      configSchema: 1,
+    });
     assert.ok(
       recovered.every(
         (entry) => entry.status === "rolled_back" || entry.status === "cleaned",

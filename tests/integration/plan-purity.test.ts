@@ -4,12 +4,12 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { hashBytes } from "../../src/codegen/compare.js";
+import type { KitLock } from "../../src/codegen/lock.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { planInit } from "../../src/codegen/plan-init.js";
-import { toPlanningEnvelope } from "../../src/codegen/plan.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
+import { toPlanningEnvelope } from "../../src/codegen/plan.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import type { KitLock } from "../../src/codegen/lock.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
@@ -198,6 +198,7 @@ test("sync planning reaches the intended B/L/I conflict with complete observatio
     }),
   ]);
   const lock: KitLock = {
+    target: "sveltekit",
     schemaVersion: 1,
     toolVersion: "1.0.0",
     registryVersion: "0.1.0",

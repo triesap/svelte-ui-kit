@@ -7,23 +7,23 @@ import { fileURLToPath } from "node:url";
 
 import { hashBytes } from "../../src/codegen/compare.js";
 import { renderManagedBlock } from "../../src/codegen/css.js";
+import type { KitLock } from "../../src/codegen/lock.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { planInit } from "../../src/codegen/plan-init.js";
-import { toPlanningEnvelope } from "../../src/codegen/plan.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
+import { toPlanningEnvelope } from "../../src/codegen/plan.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import type { KitLock } from "../../src/codegen/lock.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
 } from "../../src/project/config.js";
+import { strictApply } from "../helpers/apply.js";
 import {
   createSupportedProject,
   createTempProject,
   type TempProject,
 } from "../helpers/project.js";
 import { componentItem, registryOf, sourceFile } from "../helpers/registry.js";
-import { strictApply } from "../helpers/apply.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 /**
@@ -78,6 +78,7 @@ function baseLock(
   overrides: Partial<KitLock> = {},
 ): KitLock {
   return {
+    target: "sveltekit",
     schemaVersion: 1,
     toolVersion: "0.1.0",
     registryVersion: "0.1.0",

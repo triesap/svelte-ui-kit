@@ -1,15 +1,15 @@
-import type { AppProjectConfig } from "../project/app-config.js";
 import type {
-  GenerationConfig,
+  ApplicationConfig,
+  KitConfig,
   LibraryConfig,
-} from "../project/generation-config.js";
+} from "../project/config.js";
 import {
-  generationLockContext,
+  generationFields,
   generationTarget,
   integrationMapping,
-  parseGenerationConfig as parseKitConfig,
-  type GenerationConfig as KitConfig,
-} from "../project/generation-config.js";
+  parseKitConfig,
+  serializeKitConfig,
+} from "../project/config.js";
 /**
  * Pure add-request planning (S058).
  *
@@ -47,7 +47,6 @@ import {
   renderDependencyInstructionsFromEvidence,
   type DependencyInstruction,
 } from "../project/dependency-instructions.js";
-import { generationLockIdentity } from "../project/generation-config.js";
 import {
   planDependencies,
   type DependencyPlan,
@@ -65,7 +64,7 @@ import {
   type RequestProjection,
 } from "../registry/projection.js";
 import { isTokenMetadataPath } from "../registry/theme.js";
-import { INITIAL_TOOL_VERSION } from "../registry/versions.js";
+import { TOOL_VERSION } from "../registry/versions.js";
 import { applyCohortPolicy, type CohortMember } from "./cohorts.js";
 import { hashBytes } from "./compare.js";
 import { classifyCssBlocks } from "./css-compare.js";
@@ -120,7 +119,7 @@ export function originalAddPlanning(
   return ORIGINAL_ADD_PLANS.get(authority);
 }
 
-export interface AddPlanInput<C extends GenerationConfig = AppProjectConfig> {
+export interface AddPlanInput<C extends KitConfig = ApplicationConfig> {
   readonly registry: RegistrySnapshot;
   readonly config: C;
   /** Explicit roots being added by this request. */
@@ -131,7 +130,7 @@ export interface AddPlanInput<C extends GenerationConfig = AppProjectConfig> {
   readonly registryHash: string;
 }
 
-export interface AddPlan<C extends GenerationConfig = AppProjectConfig> {
+export interface AddPlan<C extends KitConfig = ApplicationConfig> {
   /** Whether the proposed batch can be applied; conflicts make it false. */
   readonly executable: boolean;
   readonly projection: RequestProjection;
@@ -255,17 +254,17 @@ function itemVersion(registry: RegistrySnapshot, id: string): string | null {
  * executable, so a conflict leaves `kit.json` untouched.
  */
 export function planAdd(
-  input: AddPlanInput<AppProjectConfig>,
-): ModelResult<AddPlan<AppProjectConfig>>;
+  input: AddPlanInput<ApplicationConfig>,
+): ModelResult<AddPlan<ApplicationConfig>>;
 export function planAdd(
   input: AddPlanInput<LibraryConfig>,
 ): ModelResult<AddPlan<LibraryConfig>>;
 export function planAdd(
-  input: AddPlanInput<GenerationConfig>,
-): ModelResult<AddPlan<GenerationConfig>>;
+  input: AddPlanInput<KitConfig>,
+): ModelResult<AddPlan<KitConfig>>;
 export function planAdd(
-  input: AddPlanInput<GenerationConfig>,
-): ModelResult<AddPlan<GenerationConfig>> {
+  input: AddPlanInput<KitConfig>,
+): ModelResult<AddPlan<KitConfig>> {
   const { registry, snapshot, lock } = input;
   // One resolved effective mapping shared with init and sync: the captured
   // selected-project evidence and bounded `_kit/kit.json` discovery determine
@@ -373,7 +372,7 @@ export function planAdd(
         stateDir: joinLogical(config.uiDir, "_kit"),
         uiDir: config.uiDir,
         stylesDir: config.stylesDir,
-        ...generationLockContext(config),
+        ...generationFields(config),
       });
       if (!validatedObservedLock.ok) {
         for (const entry of validatedObservedLock.issues) {
@@ -1254,7 +1253,7 @@ export function planAdd(
   const writes: PlannedWrite[] = [];
   let projectedLock: KitLock | null = lock;
   if (!hasConflict) {
-    const configJson = `${JSON.stringify(desiredConfig, null, 2)}\n`;
+    const configJson = serializeKitConfig(desiredConfig);
     if (kitJsonState.status !== "file" || kitJsonState.text !== configJson) {
       writes.push({
         operation: kitJsonState.status === "file" ? "update" : "create",
@@ -1352,6 +1351,7 @@ export function planAdd(
     );
 
     const built = buildLockProjection({
+      target: config.target,
       items: desired.items.map((entry) => ({
         id: entry.id,
         version: itemVersion(registry, entry.id) ?? "0.0.0",
@@ -1369,22 +1369,22 @@ export function planAdd(
       registryVersion,
       registryHash,
       configHash: hashBytes(utf8(configJson)) as string,
-      toolVersion: INITIAL_TOOL_VERSION,
+      toolVersion: TOOL_VERSION,
     });
-    const validated = parseKitLock(
-      { ...built.lock, ...generationLockIdentity(config) },
-      lockPath,
-      {
-        stateDir: joinLogical(config.uiDir, "_kit"),
-        uiDir: config.uiDir,
-        stylesDir: config.stylesDir,
-        ...generationLockContext(config),
-      },
-    );
+    const validated = parseKitLock(built.lock, lockPath, {
+      stateDir: joinLogical(config.uiDir, "_kit"),
+      uiDir: config.uiDir,
+      stylesDir: config.stylesDir,
+      ...generationFields(config),
+    });
     if (!validated.ok) return fail(validated.issues);
     projectedLock = validated.value;
     const lockJson = `${JSON.stringify(projectedLock, null, 2)}\n`;
-    if (lockState.status !== "file" || lockState.text !== lockJson) {
+    if (
+      writes.length > 0 ||
+      lockState.status !== "file" ||
+      lockState.text !== lockJson
+    ) {
       writes.push({
         operation: lockState.status === "absent" ? "create" : "update",
         path: lockPath,

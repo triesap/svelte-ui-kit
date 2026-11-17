@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import ts from "typescript";
@@ -119,35 +119,39 @@ const base = {
     },
   },
 } as const;
-// These fixed protocol witnesses were obtained from the pre-extraction actual
-// compiled engine at ae41e53, before rebuilding this candidate. Moving a pure
-// calculation must not silently alter its domain or optional-field treatment.
+// Canonical1 witnesses were calculated by the actual retained prior engine
+// against these explicit target inputs. This is pure digest evidence, never
+// permission to validate or adopt a retired project format.
 const cases = [
   {
-    name: "legacy application",
-    mapping: { layoutFile: "src/routes/+layout.svelte" },
+    name: "canonical SvelteKit",
+    mapping: {
+      configSchema: 1,
+      target: "sveltekit",
+      layoutFile: "src/routes/+layout.svelte",
+    },
     expected:
       "124ea97d71dc006cf00d5834a3200b34e557916e416aa4bdb583fba5ffb73d6b",
   },
   {
     name: "explicit Astro",
     mapping: {
-      configSchema: 2,
+      configSchema: 1,
       target: "astro",
       layoutFile: "src/layouts/Layout.astro",
     },
     expected:
-      "dd090624fb192c067953ca7b9a223714e84acc1ac11e5ac35d80ed18e98cac03",
+      "b912422106201b32403242a372a4ad050b8ec4a4757d0c6bddb31618f899049d",
   },
   {
     name: "standalone library",
     mapping: {
-      configSchema: 2,
+      configSchema: 1,
       target: "svelte-library",
       styleEntry: "src/styles/entry.css",
     },
     expected:
-      "185cd3f7f6313b2ac46e95fcda53d9a3e370e418d4a2614a8e41555edf898a92",
+      "3ea3c0dfedfae4bb46db50548f39ff0b451afea8d7e84b75f1d79564eb6d7e79",
   },
 ] as const;
 for (const sample of cases)

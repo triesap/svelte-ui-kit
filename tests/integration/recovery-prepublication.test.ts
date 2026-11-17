@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {
+import fsDefault, {
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -8,20 +8,14 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import fsDefault from "node:fs";
 import { syncBuiltinESMExports } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
-import {
-  prepareJournal,
-  persistJournal,
-  type TransactionJournal,
-} from "../../src/codegen/transaction-journal.js";
 import { recoverTransaction } from "../../src/codegen/recovery.js";
-import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
+import { backupPath } from "../../src/codegen/replace.js";
 import {
   stageOperations,
   type StageOperation,
@@ -30,11 +24,16 @@ import {
   faultAt,
   faultAtOccurrence,
 } from "../../src/codegen/transaction-hooks.js";
-import { backupPath } from "../../src/codegen/replace.js";
+import {
+  persistJournal,
+  prepareJournal,
+  type TransactionJournal,
+} from "../../src/codegen/transaction-journal.js";
 import {
   journalPath,
   transactionDir,
 } from "../../src/codegen/transaction-types.js";
+import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
@@ -69,7 +68,10 @@ const OPERATIONS: StageOperation[] = [
 
 function journalFor(root: string): TransactionJournal {
   return {
-    schemaVersion: 1,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     transactionId: ID,
     rootIdentity: liveRootIdentity(root),
     planDigest: "b".repeat(64),

@@ -4,7 +4,7 @@ import {
   patchLibraryStyles,
 } from "./library-styles.js";
 /** Target-specific structure; shared planners never guess another framework. */
-import type { TargetKind } from "../project/target-config.js";
+import type { TargetKind } from "../project/config.js";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import {
   inspectAstroLayout,

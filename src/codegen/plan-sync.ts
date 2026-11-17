@@ -1,9 +1,9 @@
-import type { AppProjectConfig } from "../project/app-config.js";
 import type {
-  GenerationConfig,
+  ApplicationConfig,
+  KitConfig,
   LibraryConfig,
-} from "../project/generation-config.js";
-import { generationLockContext } from "../project/generation-config.js";
+} from "../project/config.js";
+import { generationFields } from "../project/config.js";
 /**
  * Full synchronization planning (S060–S062).
  *
@@ -60,12 +60,12 @@ export function originalSyncPlanning(
   return ORIGINAL_SYNC_PLANS.get(authority);
 }
 
-export type SyncPlanInput<C extends GenerationConfig = AppProjectConfig> = Omit<
+export type SyncPlanInput<C extends KitConfig = ApplicationConfig> = Omit<
   AddPlanInput<C>,
   "addedRoots"
 >;
 
-export interface SyncPlan<C extends GenerationConfig = AppProjectConfig> {
+export interface SyncPlan<C extends KitConfig = ApplicationConfig> {
   readonly executable: boolean;
   readonly projection: RequestProjection;
   readonly dependencies: DependencyPlan;
@@ -108,17 +108,17 @@ function observedText(
  * reconciliation; any source or CSS retirement conflict blocks the whole batch.
  */
 export function planSync(
-  input: SyncPlanInput<AppProjectConfig>,
-): ModelResult<SyncPlan<AppProjectConfig>>;
+  input: SyncPlanInput<ApplicationConfig>,
+): ModelResult<SyncPlan<ApplicationConfig>>;
 export function planSync(
   input: SyncPlanInput<LibraryConfig>,
 ): ModelResult<SyncPlan<LibraryConfig>>;
 export function planSync(
-  input: SyncPlanInput<GenerationConfig>,
-): ModelResult<SyncPlan<GenerationConfig>>;
+  input: SyncPlanInput<KitConfig>,
+): ModelResult<SyncPlan<KitConfig>>;
 export function planSync(
-  input: SyncPlanInput<GenerationConfig>,
-): ModelResult<SyncPlan<GenerationConfig>> {
+  input: SyncPlanInput<KitConfig>,
+): ModelResult<SyncPlan<KitConfig>> {
   const base = planAdd({ ...input, addedRoots: [] });
   if (!base.ok) return fail(base.issues);
   revokeAddPlanning(base.value.exportAuthority);
@@ -263,7 +263,7 @@ export function planSync(
         stateDir: derived.stateDir,
         uiDir: effectiveConfig.uiDir,
         stylesDir: effectiveConfig.stylesDir,
-        ...generationLockContext(effectiveConfig),
+        ...generationFields(effectiveConfig),
       });
       if (!validated.ok) return fail(validated.issues);
       finalLock = validated.value;

@@ -1,7 +1,4 @@
-import {
-  generationFields,
-  integrationMapping,
-} from "../../project/generation-config.js";
+import { generationFields, integrationMapping } from "../../project/config.js";
 /** One explicit add request through original projection and guarded application. */
 import { applyPlan, validateApplyPlan } from "../../codegen/apply.js";
 import { composeApplyPlan } from "../../codegen/compose.js";
@@ -50,7 +47,7 @@ export function executeItemPlan(
   command: "add" | "sync",
   request: CommandRequest,
   context: CommandContext,
-  plan: AddPlan<import("../../project/generation-config.js").GenerationConfig>,
+  plan: AddPlan<import("../../project/config.js").KitConfig>,
 ): InfoResult {
   const data = {
     requested: plan.projection.requested,

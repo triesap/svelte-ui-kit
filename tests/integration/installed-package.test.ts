@@ -12,6 +12,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { completeLockFixture } from "../helpers/lock-fixture.js";
 
 /**
  * Installed-artifact execution (S025–S027, RCLD02-R2-2).
@@ -77,9 +78,9 @@ const RUNNER_SOURCE = [
   "  result.ok ? [] : result.issues.map((issue) => issue.code);",
   "const provider = assets.createInstalledAssetProvider();",
   "const snapshot = load.loadRegistrySnapshot(provider);",
-  "const configResult = config.parseKitConfig({ schemaVersion: 1 });",
-  "const lockResult = lock.parseKitLock({",
-  "  schemaVersion: 1,",
+  "const configResult = config.parseKitConfig(config.DEFAULT_KIT_CONFIG);",
+  "const lockResult = lock.parseKitLock(completeLockFixture({",
+  "  schemaVersion: 1, target: 'sveltekit',",
   "  toolVersion: '0.1.0',",
   "  registryVersion: '0.1.0',",
   "  registryHash: 'a'.repeat(64),",
@@ -89,7 +90,7 @@ const RUNNER_SOURCE = [
   "  files: [],",
   "  cssBlocks: [],",
   "  integrations: [],",
-  "});",
+  "}));",
   "const tokenContract = theme.parseTokenContract({",
   "  id: 'urn:svelte-ui-kit:token-contract:v1',",
   "  contractVersion: 1,",
@@ -147,7 +148,10 @@ function runChild(
   const runner = mkdtempSync(path.join(os.tmpdir(), "suik-runner-"));
   t.after(() => rmSync(runner, { recursive: true, force: true }));
   const runnerScript = path.join(runner, "run.mjs");
-  writeFileSync(runnerScript, RUNNER_SOURCE);
+  writeFileSync(
+    runnerScript,
+    completeLockFixture.toString() + "\n" + RUNNER_SOURCE,
+  );
   const result = spawnSync(process.execPath, [runnerScript], {
     cwd: runner,
     encoding: "utf8",
@@ -180,7 +184,7 @@ test("emitted modules and every default parser load from an isolated package cop
 
 test("a missing copied schema fails the default parsers with no checkout fallback", (t) => {
   const installed = installedCopy(t);
-  rmSync(path.join(installed, "assets/schemas", "v1", "kit.schema.json"));
+  rmSync(path.join(installed, "assets/schemas", "kit.schema.json"));
   const output = runChild(t, installed);
   assert.equal(output.config.ok, false);
   assert.equal(output.config.codes.includes("ASSET_MISSING"), true);
@@ -191,7 +195,7 @@ test("a missing copied schema fails the default parsers with no checkout fallbac
 test("a corrupt copied schema fails the default parsers", (t) => {
   const installed = installedCopy(t);
   writeFileSync(
-    path.join(installed, "assets/schemas", "v1", "kit.schema.json"),
+    path.join(installed, "assets/schemas", "kit.schema.json"),
     "{ not json\n",
   );
   const output = runChild(t, installed);
@@ -205,10 +209,10 @@ test("an escaping copied schema symlink is rejected", (t) => {
   t.after(() => rmSync(outside, { recursive: true, force: true }));
   const external = path.join(outside, "kit.json");
   writeFileSync(external, "{}\n");
-  rmSync(path.join(installed, "assets/schemas", "v1", "kit.schema.json"));
+  rmSync(path.join(installed, "assets/schemas", "kit.schema.json"));
   symlinkSync(
     external,
-    path.join(installed, "assets/schemas", "v1", "kit.schema.json"),
+    path.join(installed, "assets/schemas", "kit.schema.json"),
   );
   const output = runChild(t, installed);
   assert.equal(output.config.ok, false);
@@ -301,7 +305,7 @@ const fileRecord = (p, owner) => ({
   itemVersion: "0.1.0",
   cohort: "core",
 });
-const lockValue = {
+const lockValue = completeLockFixture({ target: "sveltekit",
   schemaVersion: 1,
   toolVersion: "0.1.0",
   registryVersion: "0.1.0",
@@ -324,9 +328,9 @@ const lockValue = {
         ],
   cssBlocks: [],
   integrations: [],
-};
+}, {uiDir: "src/ui", stylesDir: "src/ui/styles"});
 const lockResult = lock.parseKitLock(lockValue, "kit.lock.json", {
-  uiDir: "src/ui",
+  configSchema: 1, target: "sveltekit", uiDir: "src/ui",
   stylesDir: "src/ui/styles",
   stateDir: "src/ui/_kit",
 });
@@ -357,7 +361,10 @@ function runR3Child(
   const runner = mkdtempSync(path.join(os.tmpdir(), "suik-r3-runner-"));
   t.after(() => rmSync(runner, { recursive: true, force: true }));
   const runnerScript = path.join(runner, "run.mjs");
-  writeFileSync(runnerScript, R3_RUNNER_SOURCE);
+  writeFileSync(
+    runnerScript,
+    completeLockFixture.toString() + "\n" + R3_RUNNER_SOURCE,
+  );
   const result = spawnSync(process.execPath, [runnerScript], {
     cwd: runner,
     encoding: "utf8",
@@ -397,7 +404,7 @@ const imp = (relative) =>
   import(pathToFileURL(path.join(installed, "dist", relative)).href);
 const lock = await imp("codegen/lock.js");
 const H = (c) => c.repeat(64);
-const base = (overrides) => ({
+const base = (overrides, mapping) => completeLockFixture({ target: "sveltekit",
   schemaVersion: 1,
   toolVersion: "0.1.0",
   registryVersion: "0.1.0",
@@ -409,11 +416,11 @@ const base = (overrides) => ({
   cssBlocks: [],
   integrations: [],
   ...overrides,
-});
+}, mapping);
 const file = (p) => ({ path: p, owner: "button", baseHash: H("e"), itemVersion: "0.1.0", cohort: "core" });
 const block = (p, id) => ({ path: p, owner: "button", blockId: id, baseHash: H("e"), itemVersion: "0.1.0", cohort: "core" });
-const integration = (p, kind) => ({ kind, path: p, baseline: H("e"), contract: "layout-v1" });
-const context = { uiDir: "src/ui", stylesDir: "src/ui/styles", stateDir: "src/ui/_kit" };
+const integration = (p, kind) => ({ kind, path: p, baseline: H("e"), contract: kind === "layout" ? "layout-v1" : kind === "stylesheet" ? "stylesheet-v1" : "exports-v1" });
+const context = { configSchema: 1, target: "sveltekit", uiDir: "src/ui", stylesDir: "src/ui/styles", stateDir: "src/ui/_kit" };
 const cases = [
   { name: "file-vs-layout-exact", fields: { files: [file("src/ui/button.svelte")], integrations: [integration("src/ui/button.svelte", "layout")] }, expected: false, code: "LOCK_PATH_OVERLAP" },
   { name: "file-vs-integration-alias", fields: { files: [file("src/ui/button.svelte")], integrations: [integration("src/ui/Button.svelte", "layout")] }, expected: false, code: "LOCK_CASE_ALIAS" },
@@ -424,10 +431,10 @@ const cases = [
   { name: "block-vs-stylesheet-alias", fields: { cssBlocks: [block("src/ui/styles/kit.css", "button")], integrations: [integration("src/ui/styles/Kit.css", "stylesheet")] }, expected: false, code: "LOCK_CASE_ALIAS" },
   { name: "shared-aggregate", fields: { cssBlocks: [block("src/ui/styles/kit.css", "button"), block("src/ui/styles/kit.css", "card")], integrations: [integration("src/ui/styles/kit.css", "stylesheet")] }, expected: true },
   { name: "disjoint-valid", fields: { files: [file("src/ui/button/root.svelte")], cssBlocks: [block("src/ui/styles/kit.css", "button")], integrations: [integration("src/routes/+layout.svelte", "layout")] }, expected: true },
-  { name: "file-ancestor-of-nested-styles-dir", fields: { files: [file("src/ui/styles")] }, expected: false, code: "LOCK_NAMESPACE", context: { uiDir: "src/ui", stylesDir: "src/ui/styles/nested", stateDir: "src/ui/_kit" } },
+  { name: "file-ancestor-of-nested-styles-dir", fields: { files: [file("src/ui/styles")] }, expected: false, code: "LOCK_NAMESPACE", context: { configSchema: 1, target: "sveltekit", uiDir: "src/ui", stylesDir: "src/ui/styles/nested", stateDir: "src/ui/_kit" } },
 ];
 const results = cases.map((entry) => {
-  const result = lock.parseKitLock(base(entry.fields), "kit.lock.json", entry.context ?? context);
+  const result = lock.parseKitLock(base(entry.fields, entry.context ?? context), "kit.lock.json", entry.context ?? context);
   const codes = result.ok ? [] : result.issues.map((issue) => issue.code);
   return {
     name: entry.name,
@@ -460,7 +467,10 @@ function runR4Child(
   const runner = mkdtempSync(path.join(os.tmpdir(), "suik-r4-runner-"));
   t.after(() => rmSync(runner, { recursive: true, force: true }));
   const runnerScript = path.join(runner, "run.mjs");
-  writeFileSync(runnerScript, R4_RUNNER_SOURCE);
+  writeFileSync(
+    runnerScript,
+    completeLockFixture.toString() + "\n" + R4_RUNNER_SOURCE,
+  );
   const result = spawnSync(process.execPath, [runnerScript], {
     cwd: runner,
     encoding: "utf8",
@@ -509,7 +519,7 @@ const fsModule = await import("node:fs");
 const osModule = await import("node:os");
 const provider = assetsModule.createInstalledAssetProvider();
 const registryResult = loadModule.loadRegistrySnapshot(provider);
-const configResult = configModule.parseKitConfig({ schemaVersion: 1 });
+const configResult = configModule.parseKitConfig(configModule.DEFAULT_KIT_CONFIG);
 const projectRoot = fsModule.mkdtempSync(path.join(osModule.tmpdir(), "suik-installed-plan-"));
 const derived = configModule.deriveKitPaths(configResult.value);
 fsModule.writeFileSync(
@@ -595,7 +605,10 @@ function runR5Child(
   const runner = mkdtempSync(path.join(os.tmpdir(), "suik-r5-runner-"));
   t.after(() => rmSync(runner, { recursive: true, force: true }));
   const runnerScript = path.join(runner, "run.mjs");
-  writeFileSync(runnerScript, R5_RUNNER_SOURCE);
+  writeFileSync(
+    runnerScript,
+    completeLockFixture.toString() + "\n" + R5_RUNNER_SOURCE,
+  );
   const result = spawnSync(process.execPath, [runnerScript], {
     cwd: runner,
     encoding: "utf8",

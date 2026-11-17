@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { test } from "node:test";
 
-import type { ModelResult } from "../../src/registry/errors.js";
 import { resolveProjectRoot } from "../../src/project/root.js";
+import type { ModelResult } from "../../src/registry/errors.js";
 import { createTempProject, type TempProject } from "../helpers/project.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
@@ -345,7 +345,7 @@ test("ordinary typed Svelte libraries preserve legacy automatic app selection un
   project.writeFile(
     "packages/ui/src/ui/_kit/kit.json",
     JSON.stringify({
-      schemaVersion: 2,
+      schemaVersion: 1,
       target: "svelte-library",
       uiDir: "src/ui",
       stylesDir: "src/styles",

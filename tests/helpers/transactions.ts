@@ -7,15 +7,17 @@
  * identity to the live project root, so hand-written journals must record the
  * live identity digest rather than a placeholder.
  */
+import { rmSync } from "node:fs";
+import path from "node:path";
 import {
   identityDigest,
   observeRootIdentity,
 } from "../../src/codegen/authority.js";
 import { writerLockDir } from "../../src/codegen/transaction-types.js";
-import { rmSync } from "node:fs";
-import path from "node:path";
 
 export const RECOVERY_ROOTS = {
+  configSchema: 1 as const,
+  target: "sveltekit" as const,
   uiDir: "src/lib/components/ui",
   stylesDir: "src/styles",
   layoutFile: "src/routes/+layout.svelte",

@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import {
   existsSync,
-  readFileSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -12,15 +12,15 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { planInit } from "../../src/codegen/plan-init.js";
+import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
-  type KitConfig,
+  type SvelteKitConfig,
 } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
@@ -48,7 +48,7 @@ import {
  */
 
 const PKG_ROOT = process.cwd();
-const CONFIGS: readonly [string, KitConfig][] = [
+const CONFIGS: readonly [string, SvelteKitConfig][] = [
   ["default", DEFAULT_KIT_CONFIG],
   ["custom", CUSTOM_MULTI_ITEM_CONFIG],
 ];
@@ -59,7 +59,7 @@ function write(root: string, rel: string, data: string | Uint8Array): void {
   writeFileSync(target, data);
 }
 
-function initPaths(config: KitConfig): string[] {
+function initPaths(config: SvelteKitConfig): string[] {
   const derived = deriveKitPaths(config);
   return [
     `${derived.stateDir}/kit.json`,
@@ -90,7 +90,7 @@ function seed(root: string): void {
   );
 }
 
-function capturedInit(root: string, config: KitConfig): ApplyPlanInput {
+function capturedInit(root: string, config: SvelteKitConfig): ApplyPlanInput {
   const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
   assert.equal(registry.ok, true, JSON.stringify(registry));
   if (!registry.ok) throw new Error("registry invalid");
@@ -134,7 +134,7 @@ function replaceLayout(
   };
 }
 
-const IMPORTS = (config: KitConfig): string => {
+const IMPORTS = (config: SvelteKitConfig): string => {
   const derived = deriveKitPaths(config);
   const from = path.posix.dirname(config.layoutFile);
   return [derived.kitCss, derived.themesCss, derived.appCss]
@@ -148,7 +148,7 @@ const IMPORTS = (config: KitConfig): string => {
 };
 
 function withCapturedInit(
-  config: KitConfig,
+  config: SvelteKitConfig,
   body: (root: string, plan: ApplyPlanInput) => void,
 ): void {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-semantic-"));
@@ -306,7 +306,7 @@ for (const [label, config] of CONFIGS) {
 /** A real registry-backed `planAdd(button)` composed batch for one mapping. */
 function buttonAdd(
   root: string,
-  config: KitConfig,
+  config: SvelteKitConfig,
 ): { readonly plan: ApplyPlanInput; readonly barrelPath: string } {
   const derived = deriveKitPaths(config);
   const registryRoot = mkdtempSync(

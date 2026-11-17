@@ -1,4 +1,4 @@
-import { generationLockContext } from "../project/generation-config.js";
+import { generationFields } from "../project/config.js";
 import {
   copyIntegrationFields,
   mappedIntegration,
@@ -52,7 +52,6 @@ import {
   type PlanReadset,
 } from "./authority.js";
 import { isOriginalComposition } from "./compose.js";
-import { isPlanData } from "./plan-data.js";
 import { sha256Hex } from "./digest.js";
 import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
 import { validateExportReceipt } from "./exports.js";
@@ -65,16 +64,17 @@ import {
   createOwnedAncestors,
   removeOwnedAncestors,
 } from "./owned-ancestry.js";
+import { isPlanData } from "./plan-data.js";
 import {
   derivePlanDigest,
-  type ChangeOperation,
-  type ApplyPlanInput,
-  type LibraryApplyPlanInput,
   type AnyApplyPlanInput,
-  type ValidatedApplyTarget,
-  type ValidatedApplyPlan,
-  type ValidatedLibraryApplyPlan,
   type AnyValidatedApplyPlan,
+  type ApplyPlanInput,
+  type ChangeOperation,
+  type LibraryApplyPlanInput,
+  type ValidatedApplyPlan,
+  type ValidatedApplyTarget,
+  type ValidatedLibraryApplyPlan,
 } from "./plan.js";
 import {
   resolveProjectedConfig,
@@ -245,14 +245,14 @@ function validateApplyPlanData(
   }
   unknownKeys(input, PLAN_KEYS, "PLAN_UNKNOWN_FIELD", "plan", problems);
   if (
-    (Object.hasOwn(input, "configSchema") || Object.hasOwn(input, "target")) &&
-    (input.configSchema !== 2 ||
-      !["astro", "sveltekit", "svelte-library"].includes(String(input.target)))
+    input.configSchema !== 1 ||
+    typeof input.target !== "string" ||
+    !["astro", "sveltekit", "svelte-library"].includes(input.target)
   )
     problems.push(
       issue(
         "PLAN_TARGET_INVALID",
-        "V2 application authority requires explicit configSchema:2 and its supported target",
+        "Canonical application authority requires explicit configSchema:1 and its supported target",
         "target",
       ),
     );
@@ -966,7 +966,7 @@ function validateApplyPlanData(
           stateDir: derivedPaths.stateDir,
           uiDir: projected.config.uiDir,
           stylesDir: projected.config.stylesDir,
-          ...generationLockContext(projected.config),
+          ...generationFields(projected.config),
           stylesheetPath: derivedPaths.kitCss,
           exportsPath: derivedPaths.rootExports,
         });
@@ -1549,8 +1549,8 @@ function applyUnderLock(
   }
 
   const journal: TransactionJournal = {
-    schemaVersion: plan.configSchema === 2 ? 2 : 1,
-    ...(plan.configSchema === 2 ? { target: plan.target } : {}),
+    schemaVersion: 3,
+    target: plan.target,
     transactionId,
     rootIdentity: plan.rootIdentity,
     planDigest: plan.planDigest,
@@ -1571,6 +1571,7 @@ function applyUnderLock(
     })),
     lock: null,
     ignoreFiles: [...plan.ignoreFiles],
+    createdDirs: [],
   };
 
   // 5. Setup: a failure here is typed and cleans only the owned directory.

@@ -4,19 +4,19 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { hashBytes } from "../../src/codegen/compare.js";
+import type { KitLock, LockFileRecord } from "../../src/codegen/lock.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import type { KitLock, LockFileRecord } from "../../src/codegen/lock.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
 } from "../../src/project/config.js";
+import type { RegistryItem } from "../../src/registry/item.js";
 import type {
   RegistrySnapshot,
   RegistrySnapshotFile,
   RegistrySnapshotItem,
 } from "../../src/registry/load.js";
-import type { RegistryItem } from "../../src/registry/item.js";
 import { createSupportedProject } from "../helpers/project.js";
 
 /**
@@ -285,6 +285,7 @@ test("a source conflict prevents the executable config-only change", (t) => {
     }),
   ]);
   const lock: KitLock = {
+    target: "sveltekit",
     schemaVersion: 1,
     toolVersion: "1.0.0",
     registryVersion: "0.1.0",

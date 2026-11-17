@@ -5,27 +5,26 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
+import type { KitLock } from "../../src/codegen/lock.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { planInit } from "../../src/codegen/plan-init.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
+import type { ApplyPlanInput, PlanWrite } from "../../src/codegen/plan.js";
 import {
   captureSnapshot,
   type ProjectSnapshot,
 } from "../../src/codegen/snapshot.js";
-import type { KitLock } from "../../src/codegen/lock.js";
-import type { PlanWrite } from "../../src/codegen/plan.js";
-import { snapshotTree } from "../helpers/tree-snapshot.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
-  type KitConfig,
+  type SvelteKitConfig,
 } from "../../src/project/config.js";
 import {
   CUSTOM_MULTI_ITEM_CONFIG,
   compoundRegistry,
 } from "../helpers/multi-item-fixture.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 /**
  * RCLD04-R2 independent export/cohort authority (review 6f2d877).
@@ -44,7 +43,7 @@ import {
  *    fabricated baselines.
  */
 
-const CONFIGS: readonly [string, KitConfig][] = [
+const CONFIGS: readonly [string, SvelteKitConfig][] = [
   ["default", DEFAULT_KIT_CONFIG],
   ["custom", CUSTOM_MULTI_ITEM_CONFIG],
 ];
@@ -71,7 +70,10 @@ function seed(root: string): void {
   writeFileSync(path.join(root, "package.json"), manifest);
 }
 
-function pathsFor(config: KitConfig, extra: readonly string[] = []): string[] {
+function pathsFor(
+  config: SvelteKitConfig,
+  extra: readonly string[] = [],
+): string[] {
   const derived = deriveKitPaths(config);
   return [
     `${derived.stateDir}/kit.json`,
@@ -89,7 +91,7 @@ function pathsFor(config: KitConfig, extra: readonly string[] = []): string[] {
 /** A real registry-backed `planAdd(button)` before composition. */
 function buttonPlan(
   root: string,
-  config: KitConfig,
+  config: SvelteKitConfig,
   registryRoot: string,
 ): {
   readonly snapshot: ProjectSnapshot;
@@ -464,7 +466,7 @@ for (const [label, config] of CONFIGS) {
       ) as KitLock;
       const installedConfig = JSON.parse(
         readFileSync(abs(root, `${derived.stateDir}/kit.json`), "utf8"),
-      ) as KitConfig;
+      ) as SvelteKitConfig;
       const recaptured = captureSnapshot(
         root,
         pathsFor(config, [`${derived.rootExportsDir}/button.svelte`]),

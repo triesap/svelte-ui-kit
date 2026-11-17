@@ -1,20 +1,19 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { cpSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { test } from "node:test";
-import { generationFixture } from "../helpers/generation-fixture.js";
-import { createTempProject } from "../helpers/project.js";
-import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { parseTargetConfig } from "../../src/project/target-config.js";
-import { generationLockContext } from "../../src/project/generation-config.js";
-import { captureSnapshot } from "../../src/codegen/snapshot.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import { parseKitLock } from "../../src/codegen/lock.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
+import { captureSnapshot } from "../../src/codegen/snapshot.js";
+import { generationFields, parseKitConfig } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { computeRegistryContentHash } from "../../src/registry/model.js";
-import { sha256Hex } from "../../src/codegen/digest.js";
+import { generationFixture } from "../helpers/generation-fixture.js";
+import { createTempProject } from "../helpers/project.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 for (const target of ["astro", "svelte-library"] as const)
   test(`${target}: an authenticated incoming style cannot split a locally customized source cohort`, (t) => {
@@ -90,7 +89,7 @@ for (const target of ["astro", "svelte-library"] as const)
       createAssetProvider(incomingOwner.root),
     );
     assert.ok(incoming.ok, JSON.stringify(incoming));
-    const config = parseTargetConfig(
+    const config = parseKitConfig(
       JSON.parse(
         readFileSync(
           path.join(f.project.root, f.paths.stateDir, "kit.json"),
@@ -111,7 +110,7 @@ for (const target of ["astro", "svelte-library"] as const)
         uiDir: f.config.uiDir,
         stylesDir: f.config.stylesDir,
         stateDir: f.paths.stateDir,
-        ...generationLockContext(config.value),
+        ...generationFields(config.value),
       },
     );
     assert.ok(lock.ok, JSON.stringify(lock));

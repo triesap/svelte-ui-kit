@@ -68,10 +68,8 @@ const AJV_OPTIONS: AjvOptions = {
 
 /** Shipped schema file name → fixed local `$id` identity. */
 export const SHIPPED_SCHEMAS: Readonly<Record<string, string>> = {
-  "v2/kit.schema.json": "urn:svelte-ui-kit:schema:v2:kit",
-  "v2/kit-lock.schema.json": "urn:svelte-ui-kit:schema:v2:kit-lock",
-  "kit.schema.json": "urn:svelte-ui-kit:schema:v1:kit",
-  "kit-lock.schema.json": "urn:svelte-ui-kit:schema:v1:kit-lock",
+  "kit.schema.json": "urn:svelte-ui-kit:schema:v1:project-config",
+  "kit-lock.schema.json": "urn:svelte-ui-kit:schema:v1:install-lock",
   "registry.schema.json": "urn:svelte-ui-kit:schema:v1:registry",
   "registry-item.schema.json": "urn:svelte-ui-kit:schema:v1:registry-item",
   "token-contract.schema.json": "urn:svelte-ui-kit:schema:v1:token-contract",
@@ -92,7 +90,7 @@ export const SHIPPED_SCHEMA_PATHS: readonly string[] =
   Object.keys(SHIPPED_SCHEMAS).map(schemaPath);
 
 export function schemaPath(file: string): string {
-  return file.startsWith("v2/") ? `schema/${file}` : `schema/v1/${file}`;
+  return `schema/${file}`;
 }
 
 function createAjv(): AjvInstance {

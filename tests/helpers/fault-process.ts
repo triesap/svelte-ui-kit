@@ -60,7 +60,7 @@ if (mode === "recover-kill") {
   const event = process.env.SUIK_EVENT || "before";
   const stop = (candidate) => { if (candidate === boundary) { console.log("SUIK_KILL_PID " + process.pid); process.kill(process.pid, "SIGKILL"); } };
   const result = recoverTransaction(root, stateDir, id, {
-    uiDir: "src/lib/components/ui", stylesDir: "src/styles", layoutFile: "src/routes/+layout.svelte",
+    configSchema: 1, target: "sveltekit", uiDir: "src/lib/components/ui", stylesDir: "src/styles", layoutFile: "src/routes/+layout.svelte",
   }, {[event]: stop});
   console.log(JSON.stringify(result));
   process.exit(9);
@@ -87,7 +87,7 @@ if (!rootIdentityResult.ok) { console.log("root-identity-failed"); process.exit(
 const rootIdentity = identityDigest(rootIdentityResult.value);
 
 const journal = {
-  schemaVersion: 1,
+  schemaVersion: 3, target: "sveltekit", createdDirs: [], ignoreFiles: [],
   transactionId: id,
   rootIdentity,
   planDigest: "b".repeat(64),

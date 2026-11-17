@@ -1,11 +1,11 @@
-import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
-import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { syncBuiltinESMExports } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
+import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import type {
@@ -13,15 +13,15 @@ import type {
   ValidatedApplyPlan,
 } from "../../src/codegen/plan.js";
 
+import {
+  recoverTransaction,
+  recoverTransactions,
+} from "../../src/codegen/recovery.js";
 import { persistJournal } from "../../src/codegen/transaction-journal.js";
 import {
   journalPath,
   transientRoot,
 } from "../../src/codegen/transaction-types.js";
-import {
-  recoverTransaction,
-  recoverTransactions,
-} from "../../src/codegen/recovery.js";
 import {
   GUARDED_STATE,
   GUARDED_STYLES,
@@ -449,15 +449,18 @@ function transactionsNamespace(root: string): string {
   return abs(root, `${GUARDED_STATE}/.svelte-ui-kit/transactions`);
 }
 
-/** A journal-only planned transaction is the minimal owned residue. */
+/** An empty prepared transaction is valid durable residue; planned is memory-only. */
 function persistPlannedOnly(root: string, transactionId: string): void {
   write(root, `${GUARDED_STATE}/kit.json`, "old config");
   persistJournal(root, journalPath(GUARDED_STATE, transactionId), {
-    schemaVersion: 1,
+    schemaVersion: 3,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
     transactionId,
     rootIdentity: liveRootIdentity(root),
     planDigest: "b".repeat(64),
-    phase: "planned",
+    phase: "prepared",
     operations: [],
     lock: null,
   });

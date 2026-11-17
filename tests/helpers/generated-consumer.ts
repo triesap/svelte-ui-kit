@@ -1,19 +1,19 @@
 import assert from "node:assert/strict";
-import { runGeneratedCommand } from "./generated-command.js";
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
-  type KitConfig,
+  type SvelteKitConfig,
 } from "../../src/project/config.js";
-import { sha256Hex } from "../../src/codegen/digest.js";
 import {
   observeNativeFile,
   observeNativeInstall,
   SVELTE_RUNTIME_BASELINE,
 } from "../../src/project/native-dependency.js";
 import { copyConsumerFixture, runFixtureScript } from "./fixture.js";
+import { runGeneratedCommand } from "./generated-command.js";
 import {
   installQualificationRuntime,
   type QualificationRuntime,
@@ -48,7 +48,7 @@ function buildComponentConsumer(
   qualification: string = item,
   removeDescriptionObserverCleanup = false,
   packageRoot = process.cwd(),
-  beforeBuild?: (root: string, config: KitConfig) => void,
+  beforeBuild?: (root: string, config: SvelteKitConfig) => void,
 ) {
   const fixture = copyConsumerFixture();
   try {
@@ -816,7 +816,7 @@ function buildInstalledItemsConsumer(
   custom: boolean,
   qualification: string,
   requested: string[],
-  beforeBuild?: (root: string, config: KitConfig) => void,
+  beforeBuild?: (root: string, config: SvelteKitConfig) => void,
 ) {
   let additional: Record<string, string> = {};
   const consumer = buildComponentConsumer(
@@ -912,7 +912,7 @@ export const buildAlertDialogConsumer = (
 export const buildCoreConsumer = (
   custom: boolean,
   packageRoot = process.cwd(),
-  beforeBuild?: (root: string, config: KitConfig) => void,
+  beforeBuild?: (root: string, config: SvelteKitConfig) => void,
 ) =>
   buildComponentConsumer(
     "core",
@@ -926,7 +926,7 @@ export const buildCoreConsumer = (
 export const buildMenuConsumer = (
   custom: boolean,
   qualification = "menu",
-  beforeBuild?: (root: string, config: KitConfig) => void,
+  beforeBuild?: (root: string, config: SvelteKitConfig) => void,
 ) =>
   buildComponentConsumer(
     "menu",
@@ -939,7 +939,7 @@ export const buildMenuConsumer = (
 
 export const buildCheckboxConsumer = (
   custom: boolean,
-  beforeBuild?: (root: string, config: KitConfig) => void,
+  beforeBuild?: (root: string, config: SvelteKitConfig) => void,
 ) =>
   buildComponentConsumer(
     "checkbox",
@@ -952,7 +952,7 @@ export const buildCheckboxConsumer = (
 
 export const buildRadioConsumer = (
   custom: boolean,
-  beforeBuild?: (root: string, config: KitConfig) => void,
+  beforeBuild?: (root: string, config: SvelteKitConfig) => void,
 ) =>
   buildComponentConsumer(
     "radio",
@@ -965,7 +965,7 @@ export const buildRadioConsumer = (
 
 export const buildTabsConsumer = (
   custom: boolean,
-  beforeBuild?: (root: string, config: KitConfig) => void,
+  beforeBuild?: (root: string, config: SvelteKitConfig) => void,
 ) =>
   buildComponentConsumer(
     "tabs",
@@ -978,7 +978,7 @@ export const buildTabsConsumer = (
 
 export const buildCollapsibleConsumer = (
   custom: boolean,
-  beforeBuild?: (root: string, config: KitConfig) => void,
+  beforeBuild?: (root: string, config: SvelteKitConfig) => void,
 ) =>
   buildComponentConsumer(
     "collapsible",
@@ -991,7 +991,7 @@ export const buildCollapsibleConsumer = (
 
 export const buildFieldConsumer = (
   custom: boolean,
-  beforeBuild?: (root: string, config: KitConfig) => void,
+  beforeBuild?: (root: string, config: SvelteKitConfig) => void,
 ) =>
   buildComponentConsumer(
     "field",

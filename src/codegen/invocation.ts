@@ -15,7 +15,6 @@
  * captured evidence and starts no writer or package manager.
  */
 import type { DetectedProject } from "../project/detect.js";
-import { isExplicitTargetConfig } from "../project/generation-config.js";
 import type { ModelResult } from "../registry/errors.js";
 import { fail, ok } from "../registry/errors.js";
 import type { ProjectSnapshot } from "./snapshot.js";
@@ -41,11 +40,7 @@ export function validateInvocation(
   if (snapshot.environment.catalogIssues.length > 0)
     return fail(snapshot.environment.catalogIssues);
   const installation = snapshot.environment.kitConfig;
-  if (
-    installation.ok &&
-    installation.value.kind === "custom" &&
-    isExplicitTargetConfig(installation.value.config)
-  ) {
+  if (installation.ok && installation.value.kind === "custom") {
     if (snapshot.environment.managerIssues.length)
       return fail(snapshot.environment.managerIssues);
     const proof = inspectTargetEvidence(snapshot, installation.value.config);

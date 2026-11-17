@@ -90,12 +90,12 @@ export interface JournalCreatedDir {
   readonly device: number;
   readonly inode: number;
   /** Recorded for new receipts; legacy records omit this field. */
-  readonly mode?: number;
+  readonly mode: number;
 }
 
 export interface TransactionJournal {
-  readonly schemaVersion: 1 | 2;
-  readonly target?: "sveltekit" | "astro" | "svelte-library";
+  readonly schemaVersion: 3;
+  readonly target: "sveltekit" | "astro" | "svelte-library";
   readonly transactionId: string;
   readonly rootIdentity: string;
   readonly planDigest: string;
@@ -106,18 +106,21 @@ export interface TransactionJournal {
    * Owned generated-ancestry directories created by this attempt. Absent on
    * older/legacy records, which therefore claim no owned ancestry.
    */
-  readonly createdDirs?: readonly JournalCreatedDir[];
+  readonly createdDirs: readonly JournalCreatedDir[];
   /**
    * The narrowly approved application ignore files this batch edits. Recorded
    * so journal validation, recovery, rollback and restart recognize the same
    * ignore role instead of rejecting the guarded ignore operation. Absent on
    * legacy records, which therefore claim no ignore authority.
    */
-  readonly ignoreFiles?: readonly string[];
+  readonly ignoreFiles: readonly string[];
 }
 
 const JOURNAL_KEYS = [
   "schemaVersion",
+  "target",
+  "createdDirs",
+  "ignoreFiles",
   "transactionId",
   "rootIdentity",
   "planDigest",
@@ -137,7 +140,7 @@ const OPERATION_KEYS = [
 ] as const;
 const PREIMAGE_KEYS = ["kind", "digest", "mode"] as const;
 const LOCK_KEYS = ["path", "digest", "published", "unchanged"] as const;
-const CREATED_DIR_KEYS = ["path", "device", "inode"] as const;
+const CREATED_DIR_KEYS = ["path", "device", "inode", "mode"] as const;
 
 /**
  * Require every key in `required` and tolerate the listed `optional` keys, while
@@ -166,6 +169,10 @@ function exactlyKeys(
       problems.push(`${expectedLabel}; missing key ${key}`);
     }
   }
+}
+
+function numberData(value: unknown): number {
+  return typeof value === "number" ? value : NaN;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -198,24 +205,15 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
     ]);
   }
   const problems: string[] = [];
-  exactlyKeys(parsed, JOURNAL_KEYS, problems, "journal", [
-    "createdDirs",
-    "ignoreFiles",
-    "target",
-  ]);
+  exactlyKeys(parsed, JOURNAL_KEYS, problems, "journal");
 
-  if (parsed.schemaVersion !== 1 && parsed.schemaVersion !== 2)
-    problems.push("journal schemaVersion must be 1 or 2");
+  if (parsed.schemaVersion !== 3)
+    problems.push("journal schemaVersion must be 3");
   if (
-    parsed.schemaVersion === 2
-      ? !["astro", "sveltekit", "svelte-library"].includes(
-          String(parsed.target),
-        )
-      : Object.hasOwn(parsed, "target")
+    typeof parsed.target !== "string" ||
+    !["astro", "sveltekit", "svelte-library"].includes(parsed.target)
   )
-    problems.push(
-      "journal target must be explicit only for a supported v2 application journal",
-    );
+    problems.push("journal target must be a supported canonical target");
   if (!isTransactionId(parsed["transactionId"])) {
     problems.push("journal transactionId is not a valid identifier");
   }
@@ -225,8 +223,13 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
   if (!isDigest(parsed["planDigest"])) {
     problems.push("journal planDigest must be a lowercase 64-hex digest");
   }
-  if (!TRANSACTION_PHASES.includes(parsed["phase"] as TransactionPhase)) {
-    problems.push(`journal phase is unknown: ${String(parsed["phase"])}`);
+  if (
+    parsed.phase === "planned" ||
+    !TRANSACTION_PHASES.includes(parsed["phase"] as TransactionPhase)
+  ) {
+    problems.push(
+      `journal phase is unknown: ${JSON.stringify(parsed["phase"])}`,
+    );
   }
   if (!Array.isArray(parsed["operations"])) {
     problems.push("journal operations must be an array");
@@ -255,7 +258,9 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
       }
       const operation = raw["operation"];
       if (!OPERATIONS.includes(operation as ChangeOperation)) {
-        problems.push(`${label} operation is unknown: ${String(operation)}`);
+        problems.push(
+          `${label} operation is unknown: ${JSON.stringify(operation)}`,
+        );
       }
       const preimage = raw["preimage"];
       if (!isPlainObject(preimage)) {
@@ -281,7 +286,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
         }
         if (operation !== "create" && preimage["kind"] !== "file") {
           problems.push(
-            `${label} ${String(operation)} must record a file preimage`,
+            `${label} ${JSON.stringify(operation)} must record a file preimage`,
           );
         }
         if (
@@ -342,7 +347,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
         problems.push(`${label} applied must be a boolean`);
       }
       operations.push({
-        path: String(target),
+        path: typeof target === "string" ? target : "",
         operation: operation as ChangeOperation,
         preimage: isPlainObject(preimage)
           ? {
@@ -351,8 +356,8 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
               mode: (preimage["mode"] as number | null) ?? null,
             }
           : { kind: "file", digest: null, mode: null },
-        resultDigest: String(raw["resultDigest"]),
-        resultMode: Number(raw["resultMode"]),
+        resultDigest: raw["resultDigest"] as string,
+        resultMode: numberData(raw["resultMode"]),
         backupId: (raw["backupId"] as string | null) ?? null,
         stagedId: (raw["stagedId"] as string | null) ?? null,
         applied: raw["applied"] === true,
@@ -380,15 +385,17 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
         problems.push("journal lock unchanged must be a boolean");
       }
       lock = {
-        path: String(rawLock["path"]),
-        digest: String(rawLock["digest"]),
+        path: typeof rawLock.path === "string" ? rawLock.path : "",
+        digest: typeof rawLock.digest === "string" ? rawLock.digest : "",
         published: rawLock["published"] === true,
         unchanged: rawLock["unchanged"] === true,
       };
     }
   }
 
-  let createdDirs: JournalCreatedDir[] | undefined;
+  let createdDirs: JournalCreatedDir[] = [];
+  if (!Object.hasOwn(parsed, "createdDirs"))
+    problems.push("journal createdDirs is required");
   const rawCreatedDirs = parsed["createdDirs"];
   if (rawCreatedDirs !== undefined) {
     if (!Array.isArray(rawCreatedDirs)) {
@@ -402,12 +409,11 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
           problems.push(`${label} must be an object`);
           continue;
         }
-        exactlyKeys(raw, CREATED_DIR_KEYS, problems, label, ["mode"]);
+        exactlyKeys(raw, CREATED_DIR_KEYS, problems, label);
         if (
-          raw["mode"] !== undefined &&
-          (!Number.isInteger(raw["mode"]) ||
-            Number(raw["mode"]) < 0 ||
-            Number(raw["mode"]) > 0o7777)
+          !Number.isInteger(raw["mode"]) ||
+          numberData(raw["mode"]) < 0 ||
+          numberData(raw["mode"]) > 0o7777
         )
           problems.push(`${label} mode must be permission bits`);
         if (!isSafeLogicalRelativePath(raw["path"])) {
@@ -426,16 +432,18 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
           problems.push(`${label} must carry integer device/inode`);
         }
         createdDirs.push({
-          path: String(raw["path"]),
-          device: Number(raw["device"]),
-          inode: Number(raw["inode"]),
-          ...(raw["mode"] === undefined ? {} : { mode: Number(raw["mode"]) }),
+          path: raw["path"] as string,
+          device: numberData(raw["device"]),
+          inode: numberData(raw["inode"]),
+          mode: numberData(raw["mode"]),
         });
       }
     }
   }
 
-  let ignoreFiles: string[] | undefined;
+  let ignoreFiles: string[] = [];
+  if (!Object.hasOwn(parsed, "ignoreFiles"))
+    problems.push("journal ignoreFiles is required");
   const rawIgnoreFiles = parsed["ignoreFiles"];
   if (rawIgnoreFiles !== undefined) {
     if (!Array.isArray(rawIgnoreFiles)) {
@@ -489,7 +497,8 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
   )
     problems.push("journal planned phase cannot claim applied progress");
   if (
-    ["applied", "published", "cleaned"].includes(String(parsed["phase"])) &&
+    typeof parsed.phase === "string" &&
+    ["applied", "published", "cleaned"].includes(parsed.phase) &&
     operations.some((entry) => !entry.applied)
   )
     problems.push(
@@ -511,18 +520,16 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
   }
 
   return ok({
-    schemaVersion: parsed.schemaVersion as 1 | 2,
-    ...(parsed.schemaVersion === 2
-      ? { target: parsed.target as "sveltekit" | "astro" | "svelte-library" }
-      : {}),
+    schemaVersion: 3,
+    target: parsed.target as "sveltekit" | "astro" | "svelte-library",
     transactionId: parsed["transactionId"] as string,
     rootIdentity: parsed["rootIdentity"] as string,
     planDigest: parsed["planDigest"] as string,
     phase: parsed["phase"] as TransactionPhase,
     operations,
     lock,
-    ...(createdDirs === undefined ? {} : { createdDirs }),
-    ...(ignoreFiles === undefined ? {} : { ignoreFiles }),
+    createdDirs,
+    ignoreFiles,
   });
 }
 
@@ -543,18 +550,16 @@ export function validateJournalTargets(
     readonly uiDir: string;
     readonly stylesDir: string;
     readonly stateDir: string;
-    readonly target?: "sveltekit" | "astro" | "svelte-library";
+    readonly target: "sveltekit" | "astro" | "svelte-library";
   } & IntegrationFields,
 ): ModelResult<TransactionJournal> {
   const problems = [];
   if (
-    roots.configSchema === 2
-      ? journal.schemaVersion !== 2 ||
-        journal.target !== roots.target ||
-        !["astro", "sveltekit", "svelte-library"].includes(String(roots.target))
-      : journal.schemaVersion !== 1 ||
-        journal.target !== undefined ||
-        roots.target !== undefined
+    roots.configSchema !== 1 ||
+    journal.schemaVersion !== 3 ||
+    journal.target !== roots.target ||
+    typeof roots.target !== "string" ||
+    !["astro", "sveltekit", "svelte-library"].includes(roots.target)
   )
     problems.push(
       issue(

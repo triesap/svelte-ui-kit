@@ -13,15 +13,15 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
+import { stageOperations } from "../../src/codegen/stage.js";
+import { faultAt } from "../../src/codegen/transaction-hooks.js";
 import {
-  prepareJournal,
-  persistJournal,
   parseJournal,
+  persistJournal,
+  prepareJournal,
   verifyPreparedJournal,
   type TransactionJournal,
 } from "../../src/codegen/transaction-journal.js";
-import { stageOperations } from "../../src/codegen/stage.js";
-import { faultAt } from "../../src/codegen/transaction-hooks.js";
 import { journalPath, stagedDir } from "../../src/codegen/transaction-types.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
@@ -41,7 +41,10 @@ const abs = (root: string, logical: string): string =>
 
 function freshJournal(): TransactionJournal {
   return {
-    schemaVersion: 1,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     transactionId: ID,
     rootIdentity: "a".repeat(64),
     planDigest: "b".repeat(64),

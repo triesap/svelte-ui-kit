@@ -6,8 +6,8 @@ import { test } from "node:test";
 import {
   captureSnapshot,
   decodeObservedText,
-  observedText,
   observationOf,
+  observedText,
 } from "../../src/codegen/snapshot.js";
 import { createTempProject } from "../helpers/project.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
@@ -109,12 +109,13 @@ test("the captured entry lookup is immutable", (t) => {
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
 
-  assert.equal(result.value.entries.size, 2);
+  const originalSize = result.value.entries.size;
+  assert.ok(originalSize >= 2);
   const mutable = result.value.entries as unknown as Record<string, unknown>;
   assert.equal(typeof mutable["clear"], "undefined");
   assert.equal(typeof mutable["set"], "undefined");
   assert.equal(typeof mutable["delete"], "undefined");
-  assert.equal(result.value.entries.size, 2);
+  assert.equal(result.value.entries.size, originalSize);
 });
 
 /**

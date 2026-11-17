@@ -9,17 +9,18 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { completeLockFixture } from "../helpers/lock-fixture.js";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
+import { stageOperations } from "../../src/codegen/stage.js";
 import {
-  prepareJournal,
   persistJournal,
+  prepareJournal,
   type TransactionJournal,
 } from "../../src/codegen/transaction-journal.js";
-import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
-import { publishPreparedLock as publishLock } from "../helpers/publication.js";
-import { stageOperations } from "../../src/codegen/stage.js";
 import { journalPath, lockPath } from "../../src/codegen/transaction-types.js";
+import { publishPreparedLock as publishLock } from "../helpers/publication.js";
+import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 const ID = "6666666666666666";
@@ -37,7 +38,8 @@ const abs = (root: string, logical: string): string =>
   path.join(root, ...logical.split("/"));
 
 function lockValue(configHash: string): Record<string, unknown> {
-  return {
+  return completeLockFixture({
+    target: "sveltekit",
     schemaVersion: 1,
     toolVersion: "0.1.0",
     registryVersion: "0.1.0",
@@ -48,7 +50,7 @@ function lockValue(configHash: string): Record<string, unknown> {
     files: [],
     cssBlocks: [],
     integrations: [],
-  };
+  });
 }
 
 const lockBytes = (configHash: string): Uint8Array =>
@@ -58,7 +60,10 @@ const lockBytes = (configHash: string): Uint8Array =>
 
 function journalFor(): TransactionJournal {
   return {
-    schemaVersion: 1,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     transactionId: ID,
     rootIdentity: "a".repeat(64),
     planDigest: "b".repeat(64),

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { completeLockFixture } from "../helpers/lock-fixture.js";
 
 import {
   blocksOwnedBy,
@@ -17,23 +18,33 @@ const H = (char: string) => char.repeat(64);
 
 function base(
   overrides: Record<string, unknown> = {},
+  mapping: { uiDir?: string; stylesDir?: string } = {},
 ): Record<string, unknown> {
-  return {
-    schemaVersion: 1,
-    toolVersion: "0.1.0",
-    registryVersion: "0.1.0",
-    registryHash: H("a"),
-    configHash: H("b"),
-    requested: ["button"],
-    items: [
-      { id: "button", version: "0.1.0", digest: H("c"), origin: "explicit" },
-      { id: "spinner", version: "0.1.0", digest: H("d"), origin: "transitive" },
-    ],
-    files: [],
-    cssBlocks: [],
-    integrations: [],
-    ...overrides,
-  };
+  return completeLockFixture(
+    {
+      target: "sveltekit",
+      schemaVersion: 1,
+      toolVersion: "0.1.0",
+      registryVersion: "0.1.0",
+      registryHash: H("a"),
+      configHash: H("b"),
+      requested: ["button"],
+      items: [
+        { id: "button", version: "0.1.0", digest: H("c"), origin: "explicit" },
+        {
+          id: "spinner",
+          version: "0.1.0",
+          digest: H("d"),
+          origin: "transitive",
+        },
+      ],
+      files: [],
+      cssBlocks: [],
+      integrations: [],
+      ...overrides,
+    },
+    mapping,
+  );
 }
 
 function codesFor(value: unknown): string[] {
@@ -194,13 +205,13 @@ test("integration records parse and duplicate kind/path pairs fail", () => {
     kind: "layout",
     path: "src/routes/+layout.svelte",
     baseline: H("1"),
-    contract: "urn:svelte-ui-kit:schema:v1:kit",
+    contract: "layout-v1",
   };
   const stylesheet = {
     kind: "stylesheet",
     path: KIT_CSS,
     baseline: H("2"),
-    contract: "theme-v1",
+    contract: "stylesheet-v1",
   };
   const good = parseKitLock(base({ integrations: [layout, stylesheet] }));
   assert.equal(good.ok, true, JSON.stringify(good));
@@ -212,7 +223,7 @@ test("integration records parse and duplicate kind/path pairs fail", () => {
   }
   assert.equal(
     codesFor(base({ integrations: [layout, { ...layout }] })).includes(
-      "LOCK_DUPLICATE_INTEGRATION",
+      "SCHEMA_INVALID",
     ),
     true,
   );

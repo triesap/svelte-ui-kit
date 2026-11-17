@@ -14,39 +14,36 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import {
-  stagedDir,
-  lockPath,
-  transactionsDir,
-} from "../../src/codegen/transaction-types.js";
-import {
-  abs,
-  GUARDED_STATE,
-  GUARDED_STYLES,
-  makeGuardedPlan,
-  lockJson,
-  write,
-} from "../helpers/guarded-plan.js";
-import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { applyReplacements } from "../../src/codegen/replace.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import { holdMutationAuthority } from "../../src/codegen/mutation-authority.js";
+import { applyReplacements } from "../../src/codegen/replace.js";
 import { stageOperations } from "../../src/codegen/stage.js";
 import {
-  prepareJournal,
   persistJournal,
+  prepareJournal,
   type TransactionJournal,
 } from "../../src/codegen/transaction-journal.js";
 import {
   backupsDir,
   journalPath,
+  lockPath,
+  stagedDir,
+  transactionsDir,
   writerLockDir,
 } from "../../src/codegen/transaction-types.js";
 import {
   acquireWriterLock,
   releaseWriterLock,
 } from "../../src/codegen/write-lock.js";
-import { sha256Hex } from "../../src/codegen/digest.js";
+import {
+  abs,
+  GUARDED_STATE,
+  GUARDED_STYLES,
+  makeGuardedPlan,
+  write,
+} from "../helpers/guarded-plan.js";
 import { liveRootIdentity } from "../helpers/transactions.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 /**
  * RCLD04-R2-2: live/staged physical authority at replacement boundaries.
@@ -74,8 +71,11 @@ function sealed(plan: unknown) {
 for (const logical of [`${GUARDED_STYLES}/kit.css`, lockPath(GUARDED_STATE)]) {
   test(`an equal-byte physical replacement of ${logical} invalidates the original plan`, () => {
     withRoot((root) => {
-      write(root, lockPath(GUARDED_STATE), lockJson("c".repeat(64)));
-      const plan = sealed(makeGuardedPlan(root));
+      const plan = sealed(
+        makeGuardedPlan(root, {
+          metadataOnly: logical === lockPath(GUARDED_STATE),
+        }),
+      );
       const target = abs(root, logical);
       const bytes = readFileSync(target);
       renameSync(target, `${target}.original`);
@@ -166,7 +166,10 @@ function boundaryFixture(
   assert.equal(staged.ok, true, JSON.stringify(staged));
   if (!staged.ok) throw new Error("staging failed");
   const journal: TransactionJournal = {
-    schemaVersion: 1,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     transactionId: id,
     rootIdentity: liveRootIdentity(root),
     planDigest: "b".repeat(64),

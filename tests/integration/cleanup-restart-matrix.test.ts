@@ -13,11 +13,11 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit } from "../../src/codegen/plan-init.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
+import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import {
   type RecoveryResult,
   type RecoveryRoots,
@@ -36,25 +36,25 @@ import {
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
-  type KitConfig,
+  type SvelteKitConfig,
 } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { computeRegistryContentHash } from "../../src/registry/model.js";
-import {
-  runGuardedProductionWorker,
-  runGuardedWorker,
-  runRecoveryWorker,
-  parseRecoveryWorkerOutput,
-} from "../helpers/guarded-process.js";
 import { runWorker } from "../helpers/fault-process.js";
-import { clearOrphanedWriterLock } from "../helpers/transactions.js";
 import {
   GUARDED_LAYOUT,
   GUARDED_STATE,
   GUARDED_STYLES,
   GUARDED_UI,
 } from "../helpers/guarded-plan.js";
+import {
+  parseRecoveryWorkerOutput,
+  runGuardedProductionWorker,
+  runGuardedWorker,
+  runRecoveryWorker,
+} from "../helpers/guarded-process.js";
+import { clearOrphanedWriterLock } from "../helpers/transactions.js";
 import {
   assertTreeAfterMutations,
   snapshotTree,
@@ -115,15 +115,17 @@ function write(root: string, logical: string, data: string | Uint8Array): void {
   writeFileSync(target, data);
 }
 
-function rootsFor(config: KitConfig): RecoveryRoots {
+function rootsFor(config: SvelteKitConfig): RecoveryRoots {
   return {
+    configSchema: 1 as const,
+    target: "sveltekit" as const,
     uiDir: config.uiDir,
     stylesDir: config.stylesDir,
     layoutFile: config.layoutFile,
   };
 }
 
-function initPaths(config: KitConfig): string[] {
+function initPaths(config: SvelteKitConfig): string[] {
   const derived = deriveKitPaths(config);
   return [
     `${derived.stateDir}/kit.json`,
@@ -137,7 +139,11 @@ function initPaths(config: KitConfig): string[] {
   ];
 }
 
-function planFor(root: string, config: KitConfig, configHash = "b".repeat(64)) {
+function planFor(
+  root: string,
+  config: SvelteKitConfig,
+  configHash = "b".repeat(64),
+) {
   const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
   assert.equal(registry.ok, true, JSON.stringify(registry));
   if (!registry.ok) throw new Error("registry load failed");
@@ -163,7 +169,7 @@ function planFor(root: string, config: KitConfig, configHash = "b".repeat(64)) {
 
 function planMutations(
   plan: ValidatedApplyPlan,
-  config: KitConfig,
+  config: SvelteKitConfig,
 ): TreeMutation[] {
   const derived = deriveKitPaths(config);
   const mutations: TreeMutation[] = plan.targets.map((target) => ({
@@ -183,7 +189,7 @@ function planMutations(
 
 function applyCaptured(
   root: string,
-  config: KitConfig,
+  config: SvelteKitConfig,
   snapshot: ProjectSnapshot,
   writes: readonly PlanWrite[],
   hooks?: Parameters<typeof applyPlan>[1],
@@ -235,7 +241,7 @@ function recoverInFreshProcess(options: {
   return envelope.results as readonly RecoveryResult[];
 }
 
-const CONFIGS: readonly [string, KitConfig][] = [
+const CONFIGS: readonly [string, SvelteKitConfig][] = [
   ["default", DEFAULT_KIT_CONFIG],
   [
     "custom",

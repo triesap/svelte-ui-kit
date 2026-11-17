@@ -16,6 +16,8 @@ import {
 } from "../../src/codegen/transaction-journal.js";
 
 const ROOTS = {
+  configSchema: 1 as const,
+  target: "sveltekit" as const,
   uiDir: "src/lib/components/ui",
   stylesDir: "src/styles",
   layoutFile: "src/routes/+layout.svelte",
@@ -24,11 +26,14 @@ const ROOTS = {
 
 function validJournal(): TransactionJournal {
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
     transactionId: "0123456789abcdef0123456789abcdef",
     rootIdentity: "a".repeat(64),
     planDigest: "b".repeat(64),
-    phase: "planned",
+    phase: "prepared",
     operations: [
       {
         path: "src/styles/kit.css",
@@ -152,7 +157,7 @@ test("logical phase matrix preserves crash lag and refuses contradictory progres
       JSON.stringify(journal),
     );
   for (const journal of [
-    { ...baseline, operations: forward },
+    { ...baseline, phase: "planned", operations: forward },
     { ...baseline, phase: "applied" },
     {
       ...baseline,
@@ -397,7 +402,7 @@ test("persistJournal writes a durable, re-readable record", () => {
 test("owned created-directory records round-trip and reject malformed entries", () => {
   const journal = {
     ...validJournal(),
-    createdDirs: [{ path: "src/styles", device: 42, inode: 7 }],
+    createdDirs: [{ path: "src/styles", device: 42, inode: 7, mode: 0o755 }],
   };
   const text = serializeJournal(journal);
   const parsed = parseJournal(text);
@@ -407,7 +412,7 @@ test("owned created-directory records round-trip and reject malformed entries", 
   const unsafe = parseJournal(
     JSON.stringify({
       ...journal,
-      createdDirs: [{ path: "../escape", device: 1, inode: 2 }],
+      createdDirs: [{ path: "../escape", device: 1, inode: 2, mode: 0o755 }],
     }),
   );
   assert.equal(unsafe.ok, false);
@@ -424,24 +429,23 @@ test("owned created-directory records round-trip and reject malformed entries", 
     JSON.stringify({
       ...journal,
       createdDirs: [
-        { path: "src/styles", device: 1, inode: 2 },
-        { path: "SRC/STYLES", device: 3, inode: 4 },
+        { path: "src/styles", device: 1, inode: 2, mode: 0o755 },
+        { path: "SRC/STYLES", device: 3, inode: 4, mode: 0o755 },
       ],
     }),
   );
   assert.equal(duplicate.ok, false);
 });
 
-test("new ancestry modes preserve legacy omission and reject unprovable mode claims", () => {
+test("canonical ancestry modes require proof and reject retired omission", () => {
   const baseline = validJournal();
-  const legacy = parseJournal(
-    serializeJournal({
+  const retired = parseJournal(
+    JSON.stringify({
       ...baseline,
       createdDirs: [{ path: "src/styles", device: 42, inode: 7 }],
     }),
   );
-  assert.equal(legacy.ok, true);
-  if (legacy.ok) assert.equal(legacy.value.createdDirs?.[0]?.mode, undefined);
+  assert.equal(retired.ok, false);
   const current = parseJournal(
     serializeJournal({
       ...baseline,

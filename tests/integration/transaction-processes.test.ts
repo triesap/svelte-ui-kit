@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import {
   existsSync,
   mkdtempSync,
@@ -9,22 +10,21 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import type { ChildProcessWithoutNullStreams } from "node:child_process";
 
+import { sha256Hex } from "../../src/codegen/digest.js";
 import { recoverTransaction } from "../../src/codegen/recovery.js";
-import { runWorker, spawnWorker } from "../helpers/fault-process.js";
-import {
-  RECOVERY_ROOTS,
-  clearOrphanedWriterLock,
-  liveRootIdentity,
-} from "../helpers/transactions.js";
 import {
   backupsDir,
   journalPath,
   writerLockDir,
 } from "../../src/codegen/transaction-types.js";
-import { sha256Hex } from "../../src/codegen/digest.js";
+import { runWorker, spawnWorker } from "../helpers/fault-process.js";
 import { write } from "../helpers/guarded-plan.js";
+import {
+  RECOVERY_ROOTS,
+  clearOrphanedWriterLock,
+  liveRootIdentity,
+} from "../helpers/transactions.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
@@ -47,7 +47,10 @@ for (const operation of ["create", "update", "retire"] as const) {
           root,
           journalPath(STATE_DIR, id),
           JSON.stringify({
-            schemaVersion: 1,
+            target: "sveltekit",
+            createdDirs: [],
+            ignoreFiles: [],
+            schemaVersion: 3,
             transactionId: id,
             rootIdentity: liveRootIdentity(root),
             planDigest: "b".repeat(64),

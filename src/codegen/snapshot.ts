@@ -1,3 +1,7 @@
+import {
+  CONFIGURATION_FILES,
+  readConfigurationBytes,
+} from "../project/configuration-inputs.js";
 /**
  * Read-only project observations (S041).
  *
@@ -30,13 +34,13 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
-import { isSafeLogicalRelativePath } from "../project/paths.js";
-import { FrozenMap } from "../project/immutable.js";
 import {
   captureEnvironment,
   type CapturedEnvironment,
 } from "../project/environment.js";
+import { FrozenMap } from "../project/immutable.js";
+import { isSafeLogicalRelativePath } from "../project/paths.js";
+import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 
 export type ObservedKind =
   | "absent"
@@ -307,7 +311,9 @@ function observeOne(
   if (stats.isFile()) {
     let buffer: Buffer;
     try {
-      buffer = readFileSync(abs);
+      buffer = (CONFIGURATION_FILES as readonly string[]).includes(logicalPath)
+        ? readConfigurationBytes(abs)
+        : readFileSync(abs);
     } catch (error) {
       const code = (error as NodeJS.ErrnoException | null)?.code;
       return unreadableObservation(logicalPath, code ?? "EIO");
@@ -376,7 +382,7 @@ function canonicalRoot(
 }
 
 /**
- * Capture read-only observations for the given logical paths. A lexically
+ * Capture the given targets plus bounded package/framework input observations. A lexically
  * unsafe path or unsafe root is a typed failure; every safe path yields exactly
  * one observation. No write of any kind occurs.
  */
@@ -400,10 +406,40 @@ export function captureSnapshot(
   const canonical = canonicalRoot(root);
   if (!canonical.ok) return canonical;
   const environment = captureEnvironment(canonical.value.path);
+  const oversized = environment.configuration.find(
+    (entry) =>
+      entry.kind === "malformed" && entry.code === "CONFIGURATION_TOO_LARGE",
+  );
+  if (oversized)
+    return fail([
+      issue(
+        "SNAPSHOT_CONFIGURATION_TOO_LARGE",
+        "Framework configuration exceeds the supported 1 MiB byte bound",
+        oversized.path,
+      ),
+    ]);
+  // Canonical target proof always binds package/framework candidates and their
+  // absence in the same snapshot. Callers add product targets, never remember a
+  // second format-dependent capture protocol. No live fallback is permitted.
+  const paths = [
+    ...new Set([
+      ...logicalPaths,
+      "package.json",
+      ...CONFIGURATION_FILES,
+      ...(environment.kitConfig.ok &&
+      environment.kitConfig.value.kind === "custom"
+        ? [environment.kitConfig.value.configPath]
+        : []),
+    ]),
+  ];
+  if (paths.some((logical) => !isSafeLogicalRelativePath(logical)))
+    return fail([
+      issue("SNAPSHOT_PATH_INVALID", "Captured configuration path is unsafe"),
+    ]);
 
   const entries = new Map<string, TargetObservation>();
   const ancestorMap = new Map<string, AncestorObservation>();
-  for (const logicalPath of logicalPaths) {
+  for (const logicalPath of paths) {
     const ancestors = observeAncestors(canonical.value.path, logicalPath);
     for (const observation of ancestors.observations) {
       if (!ancestorMap.has(observation.path)) {
@@ -449,7 +485,7 @@ export function captureSnapshot(
       rootIdentity: canonical.value.identity,
       entries: new FrozenMap(entries),
       ancestors: new FrozenMap(ancestorMap),
-      paths: Object.freeze([...logicalPaths]),
+      paths: Object.freeze(paths),
       environment,
     }),
   );

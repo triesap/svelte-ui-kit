@@ -1,8 +1,8 @@
 import {
-  generationLockContext,
+  generationFields,
   integrationMapping,
-  type GenerationConfig as KitConfig,
-} from "../../project/generation-config.js";
+  type KitConfig,
+} from "../../project/config.js";
 import { projectRequests } from "../../registry/projection.js";
 import { tokenMetadataPaths } from "../../registry/theme.js";
 /** Capture complete command planning authority; never fill snapshot gaps live. */
@@ -14,9 +14,12 @@ import {
   decodeObservedText,
   type ProjectSnapshot,
 } from "../../codegen/snapshot.js";
-import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
+import {
+  DEFAULT_KIT_CONFIG,
+  deriveKitPaths,
+  generationInputPaths,
+} from "../../project/config.js";
 import { captureEnvironment } from "../../project/environment.js";
-import { generationInputPaths } from "../../project/generation-config.js";
 import { readJsonObject } from "../../project/io.js";
 import { resolveProjectRoot } from "../../project/root.js";
 import { createAssetProvider } from "../../registry/assets.js";
@@ -66,7 +69,7 @@ export function captureCommandContext(
     stateDir: derived.stateDir,
     uiDir: config.uiDir,
     stylesDir: config.stylesDir,
-    ...generationLockContext(config),
+    ...generationFields(config),
   };
   const preliminaryLock = readJsonObject(
     path.join(selected.value.root, lockPath),
@@ -85,7 +88,7 @@ export function captureCommandContext(
       ),
     ]);
   const paths = new Set([
-    ...generationInputPaths(config),
+    ...generationInputPaths(),
     derived.stateDir + "/kit.json",
     lockPath,
     derived.rootExports,

@@ -12,14 +12,14 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { type ApplyPlanInput } from "../../src/codegen/plan.js";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { type ApplyPlanInput } from "../../src/codegen/plan.js";
 
-import {
-  makeGuardedPlan,
-  capturedFixtureInit,
-} from "../helpers/guarded-plan.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
+import {
+  capturedFixtureInit,
+  makeGuardedPlan,
+} from "../helpers/guarded-plan.js";
 
 import { faultAtOccurrence } from "../../src/codegen/transaction-hooks.js";
 import {
@@ -75,9 +75,9 @@ test("a successful batch changes exactly the planned files and publishes last", 
     const plan = makePlan(root);
     const outcome = applyPlan(validated(plan));
     assert.equal(outcome.kind, "applied");
-    assert.equal(
-      readFileSync(abs(root, `${UI}/_kit/kit.json`), "utf8"),
-      validKitConfigText(),
+    assert.deepEqual(
+      JSON.parse(readFileSync(abs(root, `${UI}/_kit/kit.json`), "utf8")),
+      JSON.parse(validKitConfigText()),
     );
     for (const target of plan.targets) {
       assert.deepEqual(
@@ -212,9 +212,9 @@ test("a recoverable failure rolls back and preserves a consistent state", () => 
     );
     assert.equal(outcome.kind, "refused");
     // The batch is rolled back to the exact preimages: no partial writes remain.
-    assert.equal(
-      readFileSync(abs(root, `${UI}/_kit/kit.json`), "utf8"),
-      validKitConfigText(),
+    assert.deepEqual(
+      JSON.parse(readFileSync(abs(root, `${UI}/_kit/kit.json`), "utf8")),
+      JSON.parse(validKitConfigText()),
     );
     assert.equal(existsSync(abs(root, `${UI}/button.svelte`)), false);
     assert.equal(

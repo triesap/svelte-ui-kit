@@ -22,7 +22,10 @@ function issuesFor(value: unknown): string[] {
 }
 
 test("canonical/default configuration validates", () => {
-  for (const value of [DEFAULT_KIT_CONFIG, { schemaVersion: 1 }]) {
+  for (const value of [
+    DEFAULT_KIT_CONFIG,
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1 },
+  ]) {
     const result = parseKitConfig(value);
     assert.equal(result.ok, true, JSON.stringify(result));
     if (result.ok) assert.deepEqual(result.value, DEFAULT_KIT_CONFIG);
@@ -31,6 +34,7 @@ test("canonical/default configuration validates", () => {
 
 test("an explicit custom safe mapping is honored", () => {
   const result = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
     schemaVersion: 1,
     registry: "builtin",
     uiDir: "app/lib/ui",
@@ -67,12 +71,12 @@ test("fixed paths derive from the validated roots", () => {
 
 test("unknown and legacy fields fail", () => {
   for (const value of [
-    { schemaVersion: 1, ui: "src/ui" },
-    { schemaVersion: 1, components: [] },
-    { schemaVersion: 1, style: "kit.css" },
-    { schemaVersion: 1, leptos: true },
-    { schemaVersion: 1, svelteVersion: "5.57.3" },
-    { schemaVersion: 1, layout: DEFAULT_LAYOUT_FILE },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, ui: "src/ui" },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, components: [] },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, style: "kit.css" },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, leptos: true },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, svelteVersion: "5.57.3" },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, layout: DEFAULT_LAYOUT_FILE },
   ]) {
     assert.deepEqual(issuesFor(value), ["SCHEMA_INVALID"]);
   }
@@ -80,14 +84,14 @@ test("unknown and legacy fields fail", () => {
 
 test("bad types and unsupported schema versions fail", () => {
   for (const value of [
-    { schemaVersion: "1" },
-    { schemaVersion: 2 },
-    { schemaVersion: 0 },
-    { schemaVersion: "5.57.3" },
-    { schemaVersion: 1, uiDir: 5 },
-    { schemaVersion: 1, requested: "button" },
-    { schemaVersion: 1, requested: [1] },
-    { schemaVersion: 1, registry: "remote" },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: "1" },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 2 },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 0 },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: "5.57.3" },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, uiDir: 5 },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, requested: "button" },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, requested: [1] },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, registry: "remote" },
   ]) {
     assert.equal(issuesFor(value).includes("SCHEMA_INVALID"), true);
   }
@@ -95,6 +99,7 @@ test("bad types and unsupported schema versions fail", () => {
 
 test("no source framework version is reused as the schema version", () => {
   const result = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
     schemaVersion: "5.57.3",
     svelte: "5.57.3",
   });
@@ -113,24 +118,36 @@ test("no source framework version is reused as the schema version", () => {
 
 test("duplicate and malformed desired item ids fail", () => {
   for (const value of [
-    { schemaVersion: 1, requested: ["button", "button"] },
-    { schemaVersion: 1, requested: ["Button"] },
-    { schemaVersion: 1, requested: ["alert_dialog"] },
-    { schemaVersion: 1, requested: ["-button"] },
-    { schemaVersion: 1, requested: [""] },
+    {
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      requested: ["button", "button"],
+    },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, requested: ["Button"] },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, requested: ["alert_dialog"] },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, requested: ["-button"] },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, requested: [""] },
   ]) {
     assert.equal(issuesFor(value).includes("SCHEMA_INVALID"), true);
   }
 });
 
 test("an invalid tool provenance version fails", () => {
-  const result = parseKitConfig({ schemaVersion: 1, toolVersion: "v1.2.3" });
+  const result = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
+    schemaVersion: 1,
+    toolVersion: "v1.2.3",
+  });
   assert.equal(result.ok, false);
   if (!result.ok) {
     assert.equal(result.issues[0]?.code, "SCHEMA_INVALID");
     assert.equal(result.issues[0]?.locator, "toolVersion");
   }
-  const valid = parseKitConfig({ schemaVersion: 1, toolVersion: "0.1.0" });
+  const valid = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
+    schemaVersion: 1,
+    toolVersion: "0.1.0",
+  });
   assert.equal(valid.ok, true);
 });
 
@@ -151,7 +168,11 @@ test("lexically unsafe roots are rejected", () => {
     ["uiDir", "src//ui"],
   ];
   for (const [field, value] of cases) {
-    const result = parseKitConfig({ schemaVersion: 1, [field]: value });
+    const result = parseKitConfig({
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      [field]: value,
+    });
     assert.equal(result.ok, false, `${field}=${value}`);
     if (!result.ok) {
       assert.equal(result.issues[0]?.code, "PATH_UNSAFE", `${field}=${value}`);
@@ -161,6 +182,7 @@ test("lexically unsafe roots are rejected", () => {
 
 test("stylesDir cannot overlap the reserved state directory", () => {
   const result = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
     schemaVersion: 1,
     uiDir: "src/lib/components/ui",
     stylesDir: "src/lib/components/ui/_kit",
@@ -173,6 +195,7 @@ test("stylesDir cannot overlap the reserved state directory", () => {
 
 test("layoutFile cannot live in the state dir or collide with root exports", () => {
   const inState = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
     schemaVersion: 1,
     uiDir: "src/lib/components/ui",
     layoutFile: "src/lib/components/ui/_kit/kit.lock.json",
@@ -181,6 +204,7 @@ test("layoutFile cannot live in the state dir or collide with root exports", () 
   if (!inState.ok) assert.equal(inState.issues[0]?.code, "PATH_OVERLAP");
 
   const rootExports = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
     schemaVersion: 1,
     uiDir: "src/lib/components/ui",
     layoutFile: "src/lib/components/ui/index.ts",
@@ -193,6 +217,7 @@ test("layoutFile cannot live in the state dir or collide with root exports", () 
 
 test("prefix siblings and nested safe roots are not rejected", () => {
   const result = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
     schemaVersion: 1,
     uiDir: "src/lib/components/ui",
     stylesDir: "src/lib/components/ui-kit",
@@ -211,7 +236,11 @@ test("file and directory roles cannot collide", () => {
     ["layoutFile", `${DEFAULT_UI_DIR}/_kit/kit.lock.json`],
   ];
   for (const [field, value] of cases) {
-    const result = parseKitConfig({ schemaVersion: 1, [field]: value });
+    const result = parseKitConfig({
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      [field]: value,
+    });
     assert.equal(result.ok, false, `${field}=${value}`);
     if (!result.ok) {
       assert.equal(result.issues[0]?.code, "PATH_OVERLAP", `${field}=${value}`);
@@ -223,18 +252,21 @@ test("safe nested and sibling custom mappings are preserved", () => {
   for (const value of [
     DEFAULT_KIT_CONFIG,
     {
+      ...DEFAULT_KIT_CONFIG,
       schemaVersion: 1,
       uiDir: "app/lib/ui",
       stylesDir: "app/styles",
       layoutFile: "src/routes/root/+layout.svelte",
     },
     {
+      ...DEFAULT_KIT_CONFIG,
       schemaVersion: 1,
       uiDir: "src/lib/components/ui",
       stylesDir: "src/lib/components/ui/styles",
       layoutFile: "src/routes/+layout.svelte",
     },
     {
+      ...DEFAULT_KIT_CONFIG,
       schemaVersion: 1,
       uiDir: "src/lib/components/ui",
       stylesDir: "src/lib/components/ui-kit",

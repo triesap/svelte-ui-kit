@@ -8,20 +8,20 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import {
   applyPlan,
   validateApplyPlan,
   type ApplyOutcome,
 } from "../../src/codegen/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
-import type { PlanWrite } from "../../src/codegen/plan.js";
 import type { KitLock } from "../../src/codegen/lock.js";
+import type { PlanWrite } from "../../src/codegen/plan.js";
+import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import type { ProjectSnapshot } from "../../src/codegen/snapshot.js";
 import {
   deriveKitPaths,
-  type KitConfig,
   type KitDerivedPaths,
+  type SvelteKitConfig,
 } from "../../src/project/config.js";
 import {
   assertTreeAfterMutations,
@@ -41,7 +41,7 @@ export interface GuardedApply {
 /** Compose, validate and apply a planned write set through the guarded core. */
 export function applyGuarded(
   root: string,
-  config: KitConfig,
+  config: SvelteKitConfig,
   snapshot: ProjectSnapshot,
   writes: readonly PlanWrite[],
 ): GuardedApply {
@@ -82,7 +82,7 @@ export function planMutations(
 export function assertApplied(
   label: string,
   consumer: string,
-  config: KitConfig,
+  config: SvelteKitConfig,
   before: ReturnType<typeof snapshotTree>,
   guarded: GuardedApply,
 ): void {
@@ -116,7 +116,7 @@ export interface OwnershipSpec {
 /** Whole-lock ownership and cohort comparison against an explicit expectation. */
 export function assertLockOwnership(
   lock: KitLock,
-  config: KitConfig,
+  config: SvelteKitConfig,
   spec: OwnershipSpec,
 ): void {
   const derived = deriveKitPaths(config);

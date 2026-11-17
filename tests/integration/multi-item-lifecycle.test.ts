@@ -10,7 +10,7 @@ import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
-  type KitConfig,
+  type SvelteKitConfig,
 } from "../../src/project/config.js";
 import {
   ADDED_OWNERSHIP,
@@ -53,7 +53,7 @@ function abs(root: string, rel: string): string {
  * compares the complete resulting tree against the pre-state plus the composed
  * production plan.
  */
-function runMultiItemLifecycle(config: KitConfig): void {
+function runMultiItemLifecycle(config: SvelteKitConfig): void {
   const derived = deriveKitPaths(config);
   const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-reg-"));
   const updatedRoot = mkdtempSync(path.join(os.tmpdir(), "suik-multi-upd-"));

@@ -13,11 +13,11 @@ import {
   INITIAL_ITEM_VERSION,
   INITIAL_REGISTRY_VERSION,
   INITIAL_SCHEMA_VERSION,
-  INITIAL_TOOL_VERSION,
   isCompatibilityRange,
   isContentHash,
   isPositiveInteger,
   isSemVer,
+  TOOL_VERSION,
   validateCompatibilityRange,
   validateContentHash,
   validateSchemaVersion,
@@ -41,7 +41,7 @@ test("initial identities validate and stay independent", () => {
   const result = validateVersionIdentities(INITIAL_IDENTITIES);
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(INITIAL_SCHEMA_VERSION, 1);
-  assert.equal(INITIAL_TOOL_VERSION, "0.1.0");
+  assert.equal(TOOL_VERSION, "0.2.0");
   assert.equal(INITIAL_REGISTRY_VERSION, "0.1.0");
   assert.equal(INITIAL_ITEM_VERSION, "0.1.0");
   // The compatibility range is a range, never the integer schema identity.
@@ -231,41 +231,23 @@ test("validateVersionIdentities collects every problem in one pass", () => {
   }
 });
 
-test("project schema dispatch is independent and refuses every unapproved transition", async () => {
-  const { selectProjectSchema } =
-    await import("../../src/project/migrations.js");
-  for (const kind of ["config", "lock"] as const) {
-    assert.equal(
-      selectProjectSchema(
-        { schemaVersion: 1, toolVersion: "9.9.9", registryVersion: "8.0.0" },
-        kind,
-        "kit.json",
-      ).ok,
-      true,
-    );
-    for (const schemaVersion of [
-      0,
-      ...(kind === "config" ? [2] : []),
-      3,
-      999,
-      "1",
-      "5.57.3",
-      null,
-      undefined,
-    ]) {
-      const result = selectProjectSchema({ schemaVersion }, kind, "kit.json");
-      assert.equal(result.ok, false);
-      if (!result.ok)
-        assert.match(result.issues[0]!.message, /Unsupported.*schemaVersion/);
-    }
-  }
-  assert.deepEqual(
-    selectProjectSchema({ schemaVersion: 2 }, "lock", "kit.lock.json"),
-    { ok: true, value: 2 },
-  );
+test("project parsing refuses every retired schema independent of other version axes", async () => {
+  const { parseKitConfig, DEFAULT_KIT_CONFIG } =
+    await import("../../src/project/config.js");
   assert.equal(
-    selectProjectSchema({ schemaVersion: 1, aliases: {} }, "config", "kit.json")
-      .ok,
+    parseKitConfig({ ...DEFAULT_KIT_CONFIG, toolVersion: "9.9.9" }).ok,
+    true,
+  );
+  for (const schemaVersion of [0, 2, 3, 999, "1", "5.57.3", null, undefined])
+    assert.equal(
+      parseKitConfig({ ...DEFAULT_KIT_CONFIG, schemaVersion }).ok,
+      false,
+    );
+  const retired: Record<string, unknown> = { ...DEFAULT_KIT_CONFIG };
+  delete retired.target;
+  assert.equal(parseKitConfig(retired).ok, false);
+  assert.equal(
+    parseKitConfig({ ...DEFAULT_KIT_CONFIG, aliases: {} }).ok,
     false,
   );
 });

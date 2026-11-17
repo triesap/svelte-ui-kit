@@ -17,7 +17,7 @@ import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
-  type KitConfig,
+  type SvelteKitConfig,
 } from "../../src/project/config.js";
 import {
   ADDED_OWNERSHIP,
@@ -53,7 +53,7 @@ function abs(root: string, rel: string): string {
   return path.join(root, ...rel.split("/"));
 }
 
-function runDispositions(config: KitConfig): void {
+function runDispositions(config: SvelteKitConfig): void {
   const derived = deriveKitPaths(config);
   const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-q2-reg-"));
   const metadataRoot = mkdtempSync(path.join(os.tmpdir(), "suik-q2-meta-"));
@@ -239,7 +239,7 @@ test("custom mapping: multi-item satisfied, metadata-only and conflict dispositi
  * that conflict with an adopting update, and the whole batch is non-executable
  * with zero planned writes and an exactly preserved whole tree and lock.
  */
-function runCohortConflict(config: KitConfig): void {
+function runCohortConflict(config: SvelteKitConfig): void {
   const derived = deriveKitPaths(config);
   const installRoot = mkdtempSync(
     path.join(os.tmpdir(), "suik-q2-coh-install-"),

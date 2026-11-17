@@ -20,7 +20,7 @@ import {
   DEFAULT_KIT_CONFIG as config,
   deriveKitPaths,
 } from "../../src/project/config.js";
-import { capturedFixtureInit, abs } from "../helpers/guarded-plan.js";
+import { abs, capturedFixtureInit } from "../helpers/guarded-plan.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 const stateDir = deriveKitPaths(config).stateDir;
@@ -96,7 +96,10 @@ for (const kind of [
         writeFileSync(journalPath, JSON.stringify(journal));
       }
       const beforeRetry = snapshotTree(root);
-      const recovered = recoverTransaction(root, stateDir, id, config);
+      const recovered = recoverTransaction(root, stateDir, id, {
+        ...config,
+        configSchema: 1,
+      });
       if (kind === "control") {
         assert.equal(
           recovered.status,

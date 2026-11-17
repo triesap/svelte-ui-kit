@@ -11,15 +11,15 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 
 import { parseKitConfig } from "../../src/project/config.js";
-import { parseTargetConfig } from "../../src/project/target-config.js";
 import {
   createAssetProvider,
   type AssetProvider,
 } from "../../src/registry/assets.js";
-import { buildEmptyDevelopmentRegistry } from "../../src/registry/model.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
+import { buildEmptyDevelopmentRegistry } from "../../src/registry/model.js";
 import {
   createSchemaAuthority,
   defaultSchemaAuthority,
@@ -67,14 +67,14 @@ test("the installed default authority validates against the shipped schemas", ()
   const authority = defaultSchemaAuthority();
   assert.equal(authority.ok, true, JSON.stringify(authority));
   if (authority.ok) {
-    const config = parseKitConfig({ schemaVersion: 1 });
+    const config = parseKitConfig({ ...DEFAULT_KIT_CONFIG, schemaVersion: 1 });
     assert.equal(config.ok, true, JSON.stringify(config));
   }
 });
 
 test("a missing shipped schema is a typed failure without throwing", (t) => {
   const root = copySchemas(t);
-  rmSync(path.join(root, "assets/schemas", "v1", "kit.schema.json"));
+  rmSync(path.join(root, "assets/schemas", "kit.schema.json"));
   const authority = createSchemaAuthority(createAssetProvider(root));
   assert.equal(authority.ok, false);
   if (!authority.ok) {
@@ -82,14 +82,22 @@ test("a missing shipped schema is a typed failure without throwing", (t) => {
   }
 });
 
-test("v2 target schemas use the same contained provider without a source fallback", (t) => {
+test("canonical project schemas use the same contained provider without a source fallback", (t) => {
   const root = copySchemas(t);
-  const file = path.join(root, "assets/schemas", "v2", "kit.schema.json");
-  writeFileSync(file, rejectAllSchema("urn:svelte-ui-kit:schema:v2:kit"));
+  const file = path.join(root, "assets/schemas", "kit.schema.json");
+  writeFileSync(
+    file,
+    rejectAllSchema("urn:svelte-ui-kit:schema:v1:project-config"),
+  );
   const authority = createSchemaAuthority(createAssetProvider(root));
   assert.ok(authority.ok);
-  const result = parseTargetConfig(
-    { schemaVersion: 2, target: "astro", layoutFile: "src/Layout.astro" },
+  const result = parseKitConfig(
+    {
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      target: "astro",
+      layoutFile: "src/Layout.astro",
+    },
     "kit.json",
     authority.value,
   );
@@ -104,11 +112,8 @@ test("an escaping schema symlink cannot widen validation", (t) => {
   t.after(() => rmSync(outside, { recursive: true, force: true }));
   const external = path.join(outside, "kit.json");
   writeFileSync(external, "{}\n");
-  rmSync(path.join(root, "assets/schemas", "v1", "kit.schema.json"));
-  symlinkSync(
-    external,
-    path.join(root, "assets/schemas", "v1", "kit.schema.json"),
-  );
+  rmSync(path.join(root, "assets/schemas", "kit.schema.json"));
+  symlinkSync(external, path.join(root, "assets/schemas", "kit.schema.json"));
 
   const authority = createSchemaAuthority(createAssetProvider(root));
   assert.equal(authority.ok, false);
@@ -120,14 +125,14 @@ test("an escaping schema symlink cannot widen validation", (t) => {
 test("a replace-everything schema is applied by the config parser", (t) => {
   const root = copySchemas(t);
   writeFileSync(
-    path.join(root, "assets/schemas", "v1", "kit.schema.json"),
-    rejectAllSchema("urn:svelte-ui-kit:schema:v1:kit"),
+    path.join(root, "assets/schemas", "kit.schema.json"),
+    rejectAllSchema("urn:svelte-ui-kit:schema:v1:project-config"),
   );
   const authority = createSchemaAuthority(createAssetProvider(root));
   assert.equal(authority.ok, true, JSON.stringify(authority));
   if (!authority.ok) return;
   const result = parseKitConfig(
-    { schemaVersion: 1, unknown: true },
+    { ...DEFAULT_KIT_CONFIG, schemaVersion: 1, unknown: true },
     "kit.json",
     authority.value,
   );
@@ -171,7 +176,7 @@ test("a same-root provider with replace-everything schemas is not shadowed", (t)
     exists: (logicalPath) => first.exists(logicalPath),
     list: (prefix) => first.list(prefix),
     readText: (logicalPath) => {
-      if (logicalPath === "schema/v1/registry-item.schema.json") {
+      if (logicalPath === "schema/registry-item.schema.json") {
         return {
           ok: true,
           value: rejectAllSchema("urn:svelte-ui-kit:schema:v1:registry-item"),

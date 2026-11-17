@@ -2,12 +2,15 @@
 import assert from "node:assert/strict";
 import { chmodSync, copyFileSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { parseTargetConfig } from "../../src/project/target-config.js";
+import {
+  parseKitConfig,
+  serializeKitConfig,
+} from "../../src/project/config.js";
 import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
-import { createTempProject } from "./project.js";
-import { writeFixtureWorkspace } from "./workspace-catalog.js";
 import { composeGenerationFoundation } from "./generation-project.js";
+import { createTempProject } from "./project.js";
 import { linkQualifiedFixtureRuntime } from "./qualified-runtime.js";
+import { writeFixtureWorkspace } from "./workspace-catalog.js";
 
 export function generationFixture(
   t: { after(fn: () => void): void },
@@ -17,8 +20,8 @@ export function generationFixture(
   const owner = process.cwd(),
     project = createTempProject();
   t.after(() => project.cleanup());
-  const parsed = parseTargetConfig({
-    schemaVersion: 2,
+  const parsed = parseKitConfig({
+    schemaVersion: 1,
     target,
     uiDir: custom ? "components/design" : "src/lib",
     stylesDir: custom ? "theme/site" : "src/styles",
@@ -85,7 +88,7 @@ export function generationFixture(
   );
   project.writeFile(
     `${config.uiDir}/_kit/kit.json`,
-    JSON.stringify(config, null, 2) + "\n",
+    serializeKitConfig(config),
   );
   if (target === "astro")
     project.writeFile(

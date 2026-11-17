@@ -1,4 +1,3 @@
-import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -11,8 +10,9 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { capturedFixtureInit } from "../helpers/guarded-plan.js";
+import { completeLockFixture } from "../helpers/lock-fixture.js";
 
-import { type ApplyPlanInput } from "../../src/codegen/plan.js";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import {
   captureReadset,
@@ -20,13 +20,15 @@ import {
   type PlanInstalledRead,
 } from "../../src/codegen/authority.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import { planInit } from "../../src/codegen/plan-init.js";
+import { type ApplyPlanInput } from "../../src/codegen/plan.js";
+import { recoverTransaction } from "../../src/codegen/recovery.js";
 import {
   capturePreimage,
   revalidatePreimages,
 } from "../../src/codegen/revalidate.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import { recoverTransaction } from "../../src/codegen/recovery.js";
 import { faultAt } from "../../src/codegen/transaction-hooks.js";
 import {
   journalPath,
@@ -38,16 +40,15 @@ import {
   holdsWriterLock,
 } from "../../src/codegen/write-lock.js";
 import {
-  captureEnvironment,
-  type CapturedEnvironment,
-} from "../../src/project/environment.js";
-import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
 } from "../../src/project/config.js";
+import {
+  captureEnvironment,
+  type CapturedEnvironment,
+} from "../../src/project/environment.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
-import { sha256Hex } from "../../src/codegen/digest.js";
 import { runWorker } from "../helpers/fault-process.js";
 import { validKitConfigBytes } from "../helpers/kit-config.js";
 import { clearOrphanedWriterLock } from "../helpers/transactions.js";
@@ -67,7 +68,13 @@ const UI = "src/lib/components/ui";
 const STYLES = "src/styles";
 const LAYOUT = "src/routes/+layout.svelte";
 const STATE = `${UI}/_kit`;
-const ROOTS = { uiDir: UI, stylesDir: STYLES, layoutFile: LAYOUT };
+const ROOTS = {
+  configSchema: 1 as const,
+  target: "sveltekit" as const,
+  uiDir: UI,
+  stylesDir: STYLES,
+  layoutFile: LAYOUT,
+};
 
 const abs = (root: string, logical: string): string =>
   path.join(root, ...logical.split("/"));
@@ -94,18 +101,21 @@ function lockBytes(
   integrations: unknown[] = [],
 ): Uint8Array {
   return enc(
-    `${JSON.stringify({
-      schemaVersion: 1,
-      toolVersion: "0.1.0",
-      registryVersion: "0.1.0",
-      registryHash: "a".repeat(64),
-      configHash,
-      requested: [],
-      items: [],
-      files: [],
-      cssBlocks: [],
-      integrations,
-    })}\n`,
+    `${JSON.stringify(
+      completeLockFixture({
+        target: "sveltekit",
+        schemaVersion: 1,
+        toolVersion: "0.1.0",
+        registryVersion: "0.1.0",
+        registryHash: "a".repeat(64),
+        configHash,
+        requested: [],
+        items: [],
+        files: [],
+        cssBlocks: [],
+        integrations,
+      }),
+    )}\n`,
   );
 }
 
@@ -144,17 +154,20 @@ function seedPackage(root: string): void {
 }
 
 function makePlan(root: string): ApplyPlanInput {
-  write(
-    root,
-    STATE + "/kit.json",
-    Buffer.from(validKitConfigBytes(ROOTS)).toString("utf8"),
-  );
-  write(
-    root,
-    lockPath(STATE),
-    Buffer.from(lockBytes("c".repeat(64))).toString("utf8"),
-  );
-  return capturedFixtureInit(root, { ...DEFAULT_KIT_CONFIG, ...ROOTS });
+  if (!existsSync(abs(root, STYLES + "/kit.css")))
+    write(root, STYLES + "/kit.css", "old css");
+  if (!existsSync(abs(root, STATE + "/kit.json")))
+    write(
+      root,
+      STATE + "/kit.json",
+      Buffer.from(validKitConfigBytes(ROOTS)).toString("utf8"),
+    );
+  return capturedFixtureInit(root, {
+    ...DEFAULT_KIT_CONFIG,
+    uiDir: ROOTS.uiDir,
+    stylesDir: ROOTS.stylesDir,
+    layoutFile: ROOTS.layoutFile,
+  });
 }
 
 function validatedPlan(root: string) {
@@ -178,6 +191,8 @@ function metadataOnlyPlan(root: string): ApplyPlanInput {
   assert.equal(readset.ok, true);
   if (!readset.ok) throw new Error("readset capture failed");
   return {
+    configSchema: 1 as const,
+    target: "sveltekit" as const,
     root,
     stateDir: STATE,
     uiDir: UI,
@@ -241,11 +256,14 @@ test("a registered acquisition cannot bypass a contradictory live owner", () => 
       root,
       journalPath(STATE, tid),
       JSON.stringify({
-        schemaVersion: 1,
+        target: "sveltekit",
+        createdDirs: [],
+        ignoreFiles: [],
+        schemaVersion: 3,
         transactionId: tid,
         rootIdentity: identityDigest(readset.value.root),
         planDigest: "b".repeat(64),
-        phase: "planned",
+        phase: "prepared",
         operations: [],
         lock: null,
       }),
@@ -475,6 +493,9 @@ test("a final layout integration must match the approved layout mapping", () => 
     const plan = metadataOnlyPlan(root);
     const parsed = JSON.parse(Buffer.from(plan.lock.bytes).toString("utf8"));
     parsed.integrations = [
+      ...parsed.integrations.filter(
+        (entry: { kind: string }) => entry.kind !== "layout",
+      ),
       {
         kind: "layout",
         path: "notes.svelte",
@@ -527,11 +548,14 @@ test("an exported recovery cleanup-directory failure is a typed partial outcome"
       root,
       journalPath(STATE, tid),
       JSON.stringify({
-        schemaVersion: 1,
+        target: "sveltekit",
+        createdDirs: [],
+        ignoreFiles: [],
+        schemaVersion: 3,
         transactionId: tid,
         rootIdentity: identityDigest(readset.value.root),
         planDigest: "b".repeat(64),
-        phase: "planned",
+        phase: "prepared",
         operations: [],
         lock: null,
       }),

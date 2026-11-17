@@ -1,33 +1,36 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { createTempProject } from "../helpers/project.js";
-import { composeGenerationFoundation } from "../helpers/generation-project.js";
-import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { clearOrphanedWriterLock } from "../helpers/transactions.js";
-import { parseTargetConfig } from "../../src/project/target-config.js";
-import { linkQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
-import { generationLockContext } from "../../src/project/generation-config.js";
-import { type LibraryApplyPlanInput } from "../../src/codegen/plan.js";
+import { test } from "node:test";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { inspectLibraryStyles } from "../../src/codegen/library-styles.js";
 import { parseKitLock } from "../../src/codegen/lock.js";
+import { type LibraryApplyPlanInput } from "../../src/codegen/plan.js";
 import {
   parseJournal,
   validateJournalTargets,
 } from "../../src/codegen/transaction-journal.js";
 import {
-  discoverKitConfig,
+  generationFields,
+  parseKitConfig,
+  serializeKitConfig,
+} from "../../src/project/config.js";
+import {
   discoverGenerationConfig,
+  discoverKitConfig,
 } from "../../src/project/detect.js";
+import { composeGenerationFoundation } from "../helpers/generation-project.js";
+import { createTempProject } from "../helpers/project.js";
+import { linkQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
+import { clearOrphanedWriterLock } from "../helpers/transactions.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 const owner = process.cwd();
 function fixture(t: { after(fn: () => void): void }, formatted = true) {
   const project = createTempProject();
   t.after(() => project.cleanup());
-  const config = parseTargetConfig({
-    schemaVersion: 2,
+  const config = parseKitConfig({
+    schemaVersion: 1,
     target: "svelte-library",
     uiDir: "src/lib",
     stylesDir: "src/styles",
@@ -59,8 +62,7 @@ function fixture(t: { after(fn: () => void): void }, formatted = true) {
   linkQualifiedFixtureRuntime(project, "devDependencies");
   project.writeFile(
     "src/lib/_kit/kit.json",
-    JSON.stringify(config.value, null, formatted ? 2 : undefined) +
-      (formatted ? "\n" : ""),
+    formatted ? serializeKitConfig(config.value) : JSON.stringify(config.value),
   );
   return {
     project,
@@ -127,7 +129,7 @@ test("standalone source and CSS entry generation has genuine library ownership a
       uiDir: f.config.uiDir,
       stylesDir: f.config.stylesDir,
       stateDir: f.paths.stateDir,
-      ...generationLockContext(f.config),
+      ...generationFields(f.config),
     }).ok,
   );
 });
@@ -265,7 +267,7 @@ test("a real killed standalone-entry write recovers with the original sealed pla
       uiDir: f.config.uiDir,
       stylesDir: f.config.stylesDir,
       stateDir: f.paths.stateDir,
-      configSchema: 2,
+      configSchema: 1,
       target: "svelte-library",
       styleEntry: f.config.styleEntry,
     }).ok,
@@ -275,7 +277,7 @@ test("a real killed standalone-entry write recovers with the original sealed pla
       uiDir: f.config.uiDir,
       stylesDir: f.config.stylesDir,
       stateDir: f.paths.stateDir,
-      configSchema: 2,
+      configSchema: 1,
       target: "astro",
       layoutFile: f.config.styleEntry,
     }).ok,

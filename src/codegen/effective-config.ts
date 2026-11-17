@@ -1,7 +1,4 @@
-import {
-  integrationMapping,
-  type GenerationConfig as KitConfig,
-} from "../project/generation-config.js";
+import { integrationMapping, type KitConfig } from "../project/config.js";
 /**
  * Effective mapping resolution (RCLD03-R8-1).
  *
@@ -26,12 +23,12 @@ import {
  * hard typed failure; a discovery failure resolves to a typed `issues` list so
  * add/sync can report a non-executable conflict while init refuses outright.
  */
-import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../project/config.js";
 import {
+  DEFAULT_KIT_CONFIG,
+  deriveKitPaths,
   generationTarget,
-  isExplicitTargetConfig,
-  parseGenerationConfig,
-} from "../project/generation-config.js";
+  parseKitConfig,
+} from "../project/config.js";
 import {
   fail,
   issue,
@@ -48,7 +45,7 @@ export type MappingProvenance = "explicit" | "detected" | "default";
 
 export interface EffectiveConfig {
   /** The effective mapping plus the desired `requested` roots. */
-  readonly config: import("../project/app-config.js").AppProjectConfig;
+  readonly config: import("../project/config.js").ApplicationConfig;
   /**
    * The `requested` roots recorded in an observed explicit installation, or the
    * supplied roots when there is none. Initialization writes this back so a
@@ -84,11 +81,11 @@ const MAPPING_ONLY_CODES: ReadonlySet<string> = new Set([
  */
 export function resolveEffectiveConfig(
   snapshot: ProjectSnapshot,
-  supplied: import("../project/app-config.js").AppProjectConfig,
+  supplied: import("../project/config.js").ApplicationConfig,
 ): ModelResult<EffectiveConfig>;
 export function resolveEffectiveConfig(
   snapshot: ProjectSnapshot,
-  supplied: import("../project/generation-config.js").LibraryConfig,
+  supplied: import("../project/config.js").LibraryConfig,
 ): ModelResult<GenerationEffectiveConfig>;
 export function resolveEffectiveConfig(
   snapshot: ProjectSnapshot,
@@ -106,22 +103,17 @@ export function resolveEffectiveConfig(
     return fail([...environment.managerIssues]);
   }
 
-  const suppliedConfig = parseGenerationConfig(supplied);
+  const suppliedConfig = parseKitConfig(supplied);
   if (!suppliedConfig.ok) return suppliedConfig;
   const targetInstallation = environment.kitConfig;
   const observed =
     targetInstallation.ok && targetInstallation.value.kind === "custom"
       ? targetInstallation.value
       : null;
-  if (
-    (observed && isExplicitTargetConfig(observed.config)) ||
-    isExplicitTargetConfig(supplied)
-  ) {
+  if (observed !== null || supplied.target !== "sveltekit") {
     const installed = observed?.config ?? supplied;
     if (
-      !isExplicitTargetConfig(installed) ||
-      (isExplicitTargetConfig(supplied) &&
-        generationTarget(supplied) !== installed.target) ||
+      generationTarget(supplied) !== installed.target ||
       integrationMapping(supplied).kind !== integrationMapping(installed).kind
     )
       return fail([

@@ -1,9 +1,5 @@
-import {
-  capturedFixtureInit,
-  makeGuardedPlan,
-} from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
-import {
+import fsDefault, {
   existsSync,
   lstatSync,
   mkdirSync,
@@ -14,17 +10,21 @@ import {
   writeFileSync,
   type Stats,
 } from "node:fs";
-import fsDefault from "node:fs";
 import { syncBuiltinESMExports } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import {
+  capturedFixtureInit,
+  makeGuardedPlan,
+} from "../helpers/guarded-plan.js";
+import { completeLockFixture } from "../helpers/lock-fixture.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
-import { type ApplyPlanInput } from "../../src/codegen/plan.js";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { captureReadset, identityDigest } from "../../src/codegen/authority.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
+import { type ApplyPlanInput } from "../../src/codegen/plan.js";
 
 import {
   recoverTransaction,
@@ -67,6 +67,8 @@ const STYLES = "src/styles";
 const LAYOUT = "src/routes/+layout.svelte";
 const STATE = `${UI}/_kit`;
 const ROOTS: RecoveryRoots = {
+  configSchema: 1 as const,
+  target: "sveltekit" as const,
   uiDir: UI,
   stylesDir: STYLES,
   layoutFile: LAYOUT,
@@ -96,18 +98,21 @@ function lockBytes(
   integrations: unknown[] = [],
 ): Uint8Array {
   return enc(
-    `${JSON.stringify({
-      schemaVersion: 1,
-      toolVersion: "0.1.0",
-      registryVersion: "0.1.0",
-      registryHash: "a".repeat(64),
-      configHash,
-      requested: [],
-      items: [],
-      files: [],
-      cssBlocks: [],
-      integrations,
-    })}\n`,
+    `${JSON.stringify(
+      completeLockFixture({
+        target: "sveltekit",
+        schemaVersion: 1,
+        toolVersion: "0.1.0",
+        registryVersion: "0.1.0",
+        registryHash: "a".repeat(64),
+        configHash,
+        requested: [],
+        items: [],
+        files: [],
+        cssBlocks: [],
+        integrations,
+      }),
+    )}\n`,
   );
 }
 
@@ -120,11 +125,14 @@ function journalRecord(
   assert.equal(readset.ok, true);
   if (!readset.ok) throw new Error("readset capture failed");
   return JSON.stringify({
-    schemaVersion: 1,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     transactionId: tid,
     rootIdentity: identityDigest(readset.value.root),
     planDigest: "b".repeat(64),
-    phase: "planned",
+    phase: "prepared",
     operations: [],
     lock: null,
     ...more,
@@ -133,14 +141,20 @@ function journalRecord(
 
 /** A minimal valid plan with one CSS update. */
 function makePlan(root: string): ApplyPlanInput {
-  write(root, STYLES + "/kit.css", "old css");
-  write(root, STATE + "/kit.json", validKitConfigBytes(ROOTS));
-  write(
-    root,
-    lockPath(STATE),
-    Buffer.from(lockBytes(sha256Hex(validKitConfigBytes(ROOTS)))).toString(),
-  );
-  return capturedFixtureInit(root, { ...DEFAULT_KIT_CONFIG, ...ROOTS });
+  if (!existsSync(abs(root, STYLES + "/kit.css")))
+    write(root, STYLES + "/kit.css", "old css");
+  if (!existsSync(abs(root, STATE + "/kit.json")))
+    write(
+      root,
+      STATE + "/kit.json",
+      Buffer.from(validKitConfigBytes(ROOTS)).toString("utf8"),
+    );
+  return capturedFixtureInit(root, {
+    ...DEFAULT_KIT_CONFIG,
+    uiDir: ROOTS.uiDir,
+    stylesDir: ROOTS.stylesDir,
+    layoutFile: ROOTS.layoutFile,
+  });
 }
 
 /** A metadata-only plan whose lock alone carries integrations. */
@@ -201,9 +215,19 @@ test("planned recovery refuses a created-directory identity contradiction", () =
           },
         ],
         createdDirs: [
-          { path: logical, device: stats.dev, inode: stats.ino + 999 },
+          {
+            path: logical,
+            device: stats.dev,
+            inode: stats.ino + 999,
+            mode: stats.mode & 0o7777,
+          },
         ],
       }),
+    );
+    write(root, `${STATE}/.svelte-ui-kit/transactions/${tid}/staged/x`, "x");
+    fsDefault.chmodSync(
+      abs(root, `${STATE}/.svelte-ui-kit/transactions/${tid}/staged/x`),
+      0o644,
     );
     const result = recoverTransaction(root, STATE, tid, ROOTS);
     assert.equal(result.status, "refused", JSON.stringify(result));
@@ -240,8 +264,20 @@ test("planned recovery refuses a post-removal ancestry flush fault", () => {
             applied: false,
           },
         ],
-        createdDirs: [{ path: logical, device: stats.dev, inode: stats.ino }],
+        createdDirs: [
+          {
+            path: logical,
+            device: stats.dev,
+            inode: stats.ino,
+            mode: stats.mode & 0o7777,
+          },
+        ],
       }),
+    );
+    write(root, `${STATE}/.svelte-ui-kit/transactions/${tid}/staged/x`, "x");
+    fsDefault.chmodSync(
+      abs(root, `${STATE}/.svelte-ui-kit/transactions/${tid}/staged/x`),
+      0o644,
     );
     let active = false;
     let fired = false;
@@ -315,7 +351,7 @@ test("recovery cleanup flushes the transaction and transient parents", () => {
       fsDefault.closeSync = originalClose;
       syncBuiltinESMExports();
     }
-    assert.equal(result?.status, "cleaned", JSON.stringify(result));
+    assert.equal(result?.status, "rolled_back", JSON.stringify(result));
     assert.ok(
       seen.includes(abs(root, transactionsDir(STATE))),
       JSON.stringify(seen.map((entry) => entry.replace(root, ""))),
@@ -492,7 +528,9 @@ test("guarded apply refuses a cross-device state directory with no semantic writ
     assert.equal(validated.ok, true, JSON.stringify(validated));
     if (!validated.ok) return;
     const cssBefore = readFileSync(abs(root, `${STYLES}/kit.css`), "utf8");
-    const lockBefore = readFileSync(abs(root, lockPath(STATE)), "utf8");
+    const lockBefore = existsSync(abs(root, lockPath(STATE)))
+      ? readFileSync(abs(root, lockPath(STATE)), "utf8")
+      : null;
     const outcome = withForeignStateDevice(root, () =>
       applyPlan(validated.value),
     );
@@ -505,7 +543,13 @@ test("guarded apply refuses a cross-device state directory with no semantic writ
       readFileSync(abs(root, `${STYLES}/kit.css`), "utf8"),
       cssBefore,
     );
-    assert.equal(readFileSync(abs(root, lockPath(STATE)), "utf8"), lockBefore);
+    if (lockBefore === null)
+      assert.equal(existsSync(abs(root, lockPath(STATE))), false);
+    else
+      assert.equal(
+        readFileSync(abs(root, lockPath(STATE)), "utf8"),
+        lockBefore,
+      );
     assert.equal(existsSync(abs(root, transactionsDir(STATE))), false);
   });
 });

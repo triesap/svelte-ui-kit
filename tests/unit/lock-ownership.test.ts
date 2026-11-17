@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { completeLockFixture } from "../helpers/lock-fixture.js";
 
 import {
   parseKitLock,
@@ -20,6 +21,8 @@ import {
 const H = (char: string) => char.repeat(64);
 
 const CONTEXT: LockValidationContext = {
+  configSchema: 1 as const,
+  target: "sveltekit" as const,
   uiDir: "src/ui",
   stylesDir: "src/ui/styles",
   stateDir: "src/ui/_kit",
@@ -27,22 +30,27 @@ const CONTEXT: LockValidationContext = {
 
 function base(
   overrides: Record<string, unknown> = {},
+  mapping: { uiDir?: string; stylesDir?: string } = CONTEXT,
 ): Record<string, unknown> {
-  return {
-    schemaVersion: 1,
-    toolVersion: "0.1.0",
-    registryVersion: "0.1.0",
-    registryHash: H("a"),
-    configHash: H("b"),
-    requested: ["button"],
-    items: [
-      { id: "button", version: "0.1.0", digest: H("c"), origin: "explicit" },
-    ],
-    files: [],
-    cssBlocks: [],
-    integrations: [],
-    ...overrides,
-  };
+  return completeLockFixture(
+    {
+      target: "sveltekit",
+      schemaVersion: 1,
+      toolVersion: "0.1.0",
+      registryVersion: "0.1.0",
+      registryHash: H("a"),
+      configHash: H("b"),
+      requested: ["button"],
+      items: [
+        { id: "button", version: "0.1.0", digest: H("c"), origin: "explicit" },
+      ],
+      files: [],
+      cssBlocks: [],
+      integrations: [],
+      ...overrides,
+    },
+    mapping,
+  );
 }
 
 function file(path: string, owner = "button"): Record<string, unknown> {
@@ -74,7 +82,17 @@ function integration(
   path: string,
   kind: "layout" | "stylesheet" | "exports" = "layout",
 ): Record<string, unknown> {
-  return { kind, path, baseline: H("e"), contract: "layout-v1" };
+  return {
+    kind,
+    path,
+    baseline: H("e"),
+    contract:
+      kind === "layout"
+        ? "layout-v1"
+        : kind === "exports"
+          ? "exports-v1"
+          : "stylesheet-v1",
+  };
 }
 
 function codes(result: ReturnType<typeof parseKitLock>): string[] {
@@ -352,7 +370,7 @@ test("same block identity in one aggregate is still a duplicate", () => {
   assert.equal(codes(duplicate).includes("LOCK_DUPLICATE_BLOCK"), true);
 });
 
-test("same integration identity is still a duplicate, not an overlap", () => {
+test("duplicate integration identity refuses the canonical inventory before overlap", () => {
   const duplicate = parseKitLock(
     base({
       integrations: [
@@ -365,7 +383,7 @@ test("same integration identity is still a duplicate, not an overlap", () => {
   );
   assert.equal(duplicate.ok, false);
   const found = codes(duplicate);
-  assert.equal(found.includes("LOCK_DUPLICATE_INTEGRATION"), true);
+  assert.equal(found.includes("SCHEMA_INVALID"), true);
   assert.equal(found.includes("LOCK_PATH_OVERLAP"), false);
 });
 
@@ -410,16 +428,21 @@ test("disjoint compound siblings and prefix confusion stay valid", () => {
 
 test("directory nesting below required directories stays valid", () => {
   const nested = {
+    target: "sveltekit" as const,
+    configSchema: 1 as const,
     uiDir: "src/ui",
     stylesDir: "src/ui/styles/nested",
     stateDir: "src/ui/_kit",
   } satisfies LockValidationContext;
   const valid = parseKitLock(
-    base({
-      files: [file("src/ui/components/button.svelte")],
-      cssBlocks: [block("src/ui/styles/nested/kit.css", "button")],
-      integrations: [integration("src/routes/+layout.svelte", "layout")],
-    }),
+    base(
+      {
+        files: [file("src/ui/components/button.svelte")],
+        cssBlocks: [block("src/ui/styles/nested/kit.css", "button")],
+        integrations: [integration("src/routes/+layout.svelte", "layout")],
+      },
+      nested,
+    ),
     "kit.lock.json",
     nested,
   );
@@ -500,6 +523,8 @@ function fieldsFor(
 
 test("no file claim may equal or be an ancestor of a required directory", () => {
   const nested = {
+    target: "sveltekit" as const,
+    configSchema: 1 as const,
     uiDir: "src/ui",
     stylesDir: "src/ui/styles/nested",
     stateDir: "src/ui/_kit",
@@ -530,21 +555,21 @@ test("the same matrix applies without optional mapping context", () => {
   assert.equal(noContext.ok, false);
   assert.equal(codes(noContext).includes("LOCK_PATH_OVERLAP"), true);
 
-  // Required-directory roles are only enforced when a context is supplied.
-  const withoutContext = parseKitLock(
-    base({ files: [file("src/ui/styles")] }),
-    "kit.lock.json",
+  // Keep mandatory canonical integrations disjoint, so only the supplied
+  // namespace context can make this otherwise ordinary managed file a directory.
+  const candidate = base(
+    { files: [file("src/ui/styles")] },
+    { uiDir: "src/ui", stylesDir: "src/css" },
   );
+  const withoutContext = parseKitLock(candidate, "kit.lock.json");
   assert.equal(withoutContext.ok, true, JSON.stringify(withoutContext));
-  const withContext = parseKitLock(
-    base({ files: [file("src/ui/styles")] }),
-    "kit.lock.json",
-    {
-      uiDir: "src/ui",
-      stylesDir: "src/ui/styles/nested",
-      stateDir: "src/ui/_kit",
-    },
-  );
+  const withContext = parseKitLock(candidate, "kit.lock.json", {
+    configSchema: 1,
+    target: "sveltekit",
+    uiDir: "src/ui",
+    stylesDir: "src/ui/styles/nested",
+    stateDir: "src/ui/_kit",
+  });
   assert.equal(withContext.ok, false);
   assert.equal(codes(withContext).includes("LOCK_NAMESPACE"), true);
 });

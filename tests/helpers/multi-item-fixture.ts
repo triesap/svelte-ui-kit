@@ -25,7 +25,7 @@ import { hashBytes } from "../../src/codegen/compare.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
-  type KitConfig,
+  type SvelteKitConfig,
 } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
@@ -41,7 +41,7 @@ export const MULTI_ITEM_COMPATIBILITY = {
 };
 
 /** An independently rooted custom mapping paired with the default one. */
-export const CUSTOM_MULTI_ITEM_CONFIG: KitConfig = {
+export const CUSTOM_MULTI_ITEM_CONFIG: SvelteKitConfig = {
   ...DEFAULT_KIT_CONFIG,
   uiDir: "app/ui",
   stylesDir: "assets/styles",
@@ -278,7 +278,7 @@ export function compoundRegistry(
 }
 
 /** The observed path set the multi-item lifecycle planner reads. */
-export function compoundPaths(config: KitConfig): string[] {
+export function compoundPaths(config: SvelteKitConfig): string[] {
   const derived = deriveKitPaths(config);
   return [
     `${derived.stateDir}/kit.json`,

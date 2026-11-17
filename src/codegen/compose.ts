@@ -1,12 +1,10 @@
 import {
   generationFields,
   generationInputPaths,
-  generationLockContext,
-  generationPlanIdentity,
   generationTarget,
-  type GenerationConfig as KitConfig,
+  type KitConfig,
   type LibraryConfig,
-} from "../project/generation-config.js";
+} from "../project/config.js";
 /**
  * Compose a planner's writes into a guarded apply plan (RCLD04-R2-1).
  *
@@ -35,13 +33,6 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
-import type {
-  AnyApplyPlanInput,
-  ApplyPlanInput,
-  ApplyTarget,
-  LibraryApplyPlanInput,
-} from "./plan.js";
-import { derivePlanDigest } from "./plan.js";
 import type { PlanInstalledRead } from "./authority.js";
 import { identityDigest, type PlanReadFile } from "./authority.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";
@@ -57,8 +48,14 @@ import { parseKitLock } from "./lock.js";
 import { originalAddPlanning } from "./plan-add.js";
 import { originalInitPlanning } from "./plan-init.js";
 import { originalSyncPlanning } from "./plan-sync.js";
-import type { PlanWrite } from "./plan.js";
-import { planningWritesDigest } from "./plan.js";
+import type {
+  AnyApplyPlanInput,
+  ApplyPlanInput,
+  ApplyTarget,
+  LibraryApplyPlanInput,
+  PlanWrite,
+} from "./plan.js";
+import { derivePlanDigest, planningWritesDigest } from "./plan.js";
 import type {
   AncestorObservation,
   ProjectSnapshot,
@@ -185,7 +182,7 @@ function ancestorFor(observation: AncestorObservation): {
  */
 export function composeApplyPlan(
   input: ComposeApplyPlanInput & {
-    config: import("../project/app-config.js").AppProjectConfig;
+    config: import("../project/config.js").ApplicationConfig;
   },
 ): ModelResult<ApplyPlanInput>;
 export function composeApplyPlan(
@@ -443,7 +440,7 @@ export function composeApplyPlan(
     const observation = snapshot.entries.get(path);
     if (
       observation?.kind === "absent" &&
-      generationInputPaths(input.config).includes(path)
+      generationInputPaths().includes(path)
     ) {
       evidenceSeen.add(path);
       evidenceFiles.push({
@@ -523,7 +520,7 @@ export function composeApplyPlan(
       : (() => {
           const validated = parseKitLock(parsedLockValue, canonicalLock, {
             stateDir,
-            ...generationLockContext(input.config),
+            ...generationFields(input.config),
           });
           return validated.ok ? validated.value : null;
         })();
@@ -773,7 +770,7 @@ export function composeApplyPlan(
     uiDir: input.config.uiDir,
     stylesDir: input.config.stylesDir,
     ...generationFields(input.config),
-    configSchema: generationPlanIdentity(input.config).configSchema ?? 1,
+    configSchema: input.config.schemaVersion,
     target: generationTarget(input.config),
     rootIdentity,
     targets: targets.map((target) => ({

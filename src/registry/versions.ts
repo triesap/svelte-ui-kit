@@ -1,3 +1,4 @@
+import { INITIAL_PROTOCOL_VERSION } from "./protocol-version.js";
 /**
  * Independent version identities (S013).
  *
@@ -22,9 +23,13 @@
  * user-provided configuration.
  */
 import { createRequire } from "node:module";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { readPackageIdentity } from "../package-identity.js";
 import { NATIVE_BASELINE } from "../project/native-dependency.js";
+import { resolvePackageRoot } from "./assets.js";
 
-import { fail, issue, ok, ModelError, type ModelResult } from "./errors.js";
+import { fail, issue, ModelError, ok, type ModelResult } from "./errors.js";
 
 /**
  * `semver` is loaded on first use. The bootstrap CLI surface (help, version,
@@ -55,9 +60,16 @@ export type CompatibilityRange = string;
 export type ContentHash = string;
 
 export const INITIAL_SCHEMA_VERSION: SchemaVersion = 1;
-export const INITIAL_PROTOCOL_VERSION: ProtocolVersion = 1;
+export { INITIAL_PROTOCOL_VERSION } from "./protocol-version.js";
 export const INITIAL_CONTRACT_VERSION: ContractVersion = 1;
-export const INITIAL_TOOL_VERSION: SemVer = "0.1.0";
+/** Same validated packaged identity used by the executable. No independent writer version. */
+export const TOOL_VERSION: SemVer = (() => {
+  const identity = readPackageIdentity(
+    pathToFileURL(join(resolvePackageRoot(import.meta.url), "package.json")),
+  );
+  if (!identity.ok) throw new Error(identity.message);
+  return identity.value.version;
+})();
 export const INITIAL_REGISTRY_VERSION: SemVer = "0.1.0";
 export const INITIAL_ITEM_VERSION: SemVer = "0.1.0";
 
@@ -126,7 +138,7 @@ export const INITIAL_IDENTITIES: VersionIdentities = {
   schemaVersion: INITIAL_SCHEMA_VERSION,
   protocolVersion: INITIAL_PROTOCOL_VERSION,
   contractVersion: INITIAL_CONTRACT_VERSION,
-  toolVersion: INITIAL_TOOL_VERSION,
+  toolVersion: TOOL_VERSION,
   registryVersion: INITIAL_REGISTRY_VERSION,
   itemVersion: INITIAL_ITEM_VERSION,
   compatibility: INITIAL_COMPATIBILITY,

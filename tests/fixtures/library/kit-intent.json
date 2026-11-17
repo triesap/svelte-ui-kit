@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 1,
   "target": "svelte-library",
   "uiDir": "src/lib",
   "stylesDir": "src/styles",

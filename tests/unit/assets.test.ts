@@ -38,7 +38,7 @@ test("the installed provider reads the bundled registry and schema", () => {
     const parsed = JSON.parse(registry.value) as { schemaVersion: number };
     assert.equal(parsed.schemaVersion, 1);
   }
-  const schema = provider.readText("schema/v1/kit.schema.json");
+  const schema = provider.readText("schema/kit.schema.json");
   assert.equal(schema.ok, true);
   const bytes = provider.readBytes("registry/registry.json");
   assert.equal(bytes.ok, true);
@@ -61,7 +61,7 @@ test("assets load from an isolated package root regardless of CWD", (t) => {
 
   // A path that exists only in the real authoring repo is missing here: there
   // is no hidden fallback to the source checkout or CWD.
-  const noFallback = provider.readText("schema/v1/kit.schema.json");
+  const noFallback = provider.readText("schema/kit.schema.json");
   assert.equal(noFallback.ok, false);
   if (!noFallback.ok) assert.equal(noFallback.issues[0]?.code, "ASSET_MISSING");
 });

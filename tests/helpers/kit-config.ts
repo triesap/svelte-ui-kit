@@ -18,8 +18,9 @@ export interface KitConfigOverrides {
 export function validKitConfigText(overrides: KitConfigOverrides = {}): string {
   return `${JSON.stringify(
     {
+      ...DEFAULT_KIT_CONFIG,
       schemaVersion: 1,
-      toolVersion: "0.1.0",
+      toolVersion: DEFAULT_KIT_CONFIG.toolVersion,
       registry: "builtin",
       uiDir: overrides.uiDir ?? DEFAULT_KIT_CONFIG.uiDir,
       stylesDir: overrides.stylesDir ?? DEFAULT_KIT_CONFIG.stylesDir,

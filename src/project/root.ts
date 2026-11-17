@@ -31,8 +31,8 @@
  */
 import { readFileSync, readdirSync, realpathSync } from "node:fs";
 import path from "node:path";
+import { isLibraryConfig } from "./config.js";
 import { discoverGenerationConfig } from "./detect.js";
-import { isLibraryConfig } from "./generation-config.js";
 
 import {
   fail,

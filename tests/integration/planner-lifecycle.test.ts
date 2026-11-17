@@ -1,25 +1,25 @@
-import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 
 import { hashBytes } from "../../src/codegen/compare.js";
-import { strictApply as strictApplyRoot } from "../helpers/apply.js";
 import {
   FOUNDATION_TOKENS_CONTRACT,
   renderManagedBlock,
 } from "../../src/codegen/css.js";
+import type { KitLock } from "../../src/codegen/lock.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { TOKENS_BODY, planInit } from "../../src/codegen/plan-init.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import type { KitLock } from "../../src/codegen/lock.js";
-import type { ModelResult } from "../../src/registry/errors.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
 } from "../../src/project/config.js";
+import type { ModelResult } from "../../src/registry/errors.js";
+import { strictApply as strictApplyRoot } from "../helpers/apply.js";
 import { createSupportedProject } from "../helpers/project.js";
 import { componentItem, registryOf, sourceFile } from "../helpers/registry.js";
 
@@ -318,6 +318,7 @@ test("legacy aggregate-only stylesheet evidence does not confer tokens ownership
   t.after(() => project.cleanup());
   project.writeFile(KIT_CSS, renderManagedBlock("tokens", TOKENS_BODY));
   const lock: KitLock = {
+    target: "sveltekit",
     schemaVersion: 1,
     toolVersion: "0.1.0",
     registryVersion: "0.1.0",

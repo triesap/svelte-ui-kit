@@ -1,4 +1,3 @@
-import { capturePreimage } from "../../src/codegen/revalidate.js";
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -11,27 +10,29 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { capturePreimage } from "../../src/codegen/revalidate.js";
+import { completeLockFixture } from "../helpers/lock-fixture.js";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 import {
-  captureReadset,
   captureReadFile,
+  captureReadset,
 } from "../../src/codegen/authority.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
-import { planInit } from "../../src/codegen/plan-init.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
+import { planInit } from "../../src/codegen/plan-init.js";
+import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
+import type { SvelteKitConfig } from "../../src/project/config.js";
 import {
-  deriveKitPaths,
   DEFAULT_KIT_CONFIG,
+  deriveKitPaths,
 } from "../../src/project/config.js";
-import type { KitConfig } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
-import { planMutations } from "../helpers/lifecycle-assertions.js";
 import { makeGuardedPlan } from "../helpers/guarded-plan.js";
 import { validKitConfigBytes } from "../helpers/kit-config.js";
+import { planMutations } from "../helpers/lifecycle-assertions.js";
 import {
   assertTreeAfterMutations,
   snapshotTree,
@@ -52,7 +53,7 @@ import {
 
 const PKG_ROOT = process.cwd();
 const DEFAULT = DEFAULT_KIT_CONFIG;
-const CUSTOM: KitConfig = {
+const CUSTOM: SvelteKitConfig = {
   ...DEFAULT_KIT_CONFIG,
   uiDir: "app/ui",
   stylesDir: "assets/styles",
@@ -88,7 +89,7 @@ function seed(root: string): void {
   );
 }
 
-function initPaths(config: KitConfig): string[] {
+function initPaths(config: SvelteKitConfig): string[] {
   const derived = deriveKitPaths(config);
   return [
     `${derived.stateDir}/kit.json`,
@@ -103,7 +104,7 @@ function initPaths(config: KitConfig): string[] {
 }
 
 /** A real captured `planInit` -> `composeApplyPlan` batch for one mapping. */
-function capturedInit(root: string, config: KitConfig): ApplyPlanInput {
+function capturedInit(root: string, config: SvelteKitConfig): ApplyPlanInput {
   const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
   assert.equal(registry.ok, true, JSON.stringify(registry));
   if (!registry.ok) throw new Error("registry invalid");
@@ -145,7 +146,7 @@ function capturedInit(root: string, config: KitConfig): ApplyPlanInput {
 }
 
 function withCapturedInit(
-  config: KitConfig,
+  config: SvelteKitConfig,
   body: (root: string, plan: ApplyPlanInput) => void,
 ): void {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-projected-"));
@@ -408,7 +409,8 @@ test("a lock that owns a file absent from the projected tree is refused", () => 
 function lockDoc(overrides: Record<string, unknown> = {}): Uint8Array {
   return new TextEncoder().encode(
     `${JSON.stringify(
-      {
+      completeLockFixture({
+        target: "sveltekit",
         schemaVersion: 1,
         toolVersion: "0.1.0",
         registryVersion: "0.1.0",
@@ -420,7 +422,7 @@ function lockDoc(overrides: Record<string, unknown> = {}): Uint8Array {
         cssBlocks: [],
         integrations: [],
         ...overrides,
-      },
+      }),
       null,
       2,
     )}\n`,
@@ -434,7 +436,7 @@ function lockDoc(overrides: Record<string, unknown> = {}): Uint8Array {
  */
 function assertComposedRefused(
   root: string,
-  config: KitConfig,
+  config: SvelteKitConfig,
   writes: { path: string; operation: "create" | "update"; bytes: Uint8Array }[],
   paths: string[],
   expectedCode: string,
@@ -459,6 +461,8 @@ function assertComposedRefused(
   // Structural/projection diagnostics precede provenance checks. Negative raw
   // inputs can exercise those diagnostics but can never be applied.
   const result = validateApplyPlan({
+    configSchema: 1 as const,
+    target: "sveltekit" as const,
     root,
     stateDir: derived.stateDir,
     uiDir: config.uiDir,

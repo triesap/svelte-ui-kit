@@ -51,6 +51,7 @@ function plan(changes: readonly SourcePlanChange[]): SourcePlan {
 
 function baseLock(): KitLock {
   return {
+    target: "sveltekit",
     schemaVersion: 1,
     toolVersion: "1.0.0",
     registryVersion: "0.1.0",
@@ -84,6 +85,7 @@ function project(
   overrides: Partial<Parameters<typeof buildLockProjection>[0]> = {},
 ) {
   return buildLockProjection({
+    target: "sveltekit",
     items: baseLock().items,
     desired: projection(["button"]),
     lock: baseLock(),

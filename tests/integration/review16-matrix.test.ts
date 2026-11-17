@@ -13,7 +13,6 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import {
   applyPlan,
   validateApplyPlan,
@@ -22,6 +21,7 @@ import {
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit, type InitPlan } from "../../src/codegen/plan-init.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
+import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import {
   captureSnapshot,
   type ProjectSnapshot,
@@ -29,7 +29,7 @@ import {
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
-  type KitConfig,
+  type SvelteKitConfig,
 } from "../../src/project/config.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
@@ -89,7 +89,7 @@ function write(root: string, logical: string, data: string | Uint8Array): void {
   writeFileSync(target, data);
 }
 
-function initPaths(config: KitConfig): string[] {
+function initPaths(config: SvelteKitConfig): string[] {
   const derived = deriveKitPaths(config);
   return [
     `${derived.stateDir}/kit.json`,
@@ -103,7 +103,11 @@ function initPaths(config: KitConfig): string[] {
   ];
 }
 
-function planFor(root: string, config: KitConfig, configHash = "b".repeat(64)) {
+function planFor(
+  root: string,
+  config: SvelteKitConfig,
+  configHash = "b".repeat(64),
+) {
   const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
   assert.equal(registry.ok, true, JSON.stringify(registry));
   if (!registry.ok) throw new Error("registry load failed");
@@ -129,7 +133,7 @@ function planFor(root: string, config: KitConfig, configHash = "b".repeat(64)) {
 
 function planMutations(
   plan: ValidatedApplyPlan,
-  config: KitConfig,
+  config: SvelteKitConfig,
 ): TreeMutation[] {
   const derived = deriveKitPaths(config);
   const mutations: TreeMutation[] = plan.targets.map((target) => ({
@@ -154,7 +158,7 @@ interface GuardedApply {
 
 function applyGuarded(
   root: string,
-  config: KitConfig,
+  config: SvelteKitConfig,
   snapshot: ProjectSnapshot,
   writes: readonly PlanWrite[],
 ): GuardedApply {
@@ -169,7 +173,7 @@ function applyGuarded(
 
 function assertGeneratedDefaults(
   root: string,
-  config: KitConfig,
+  config: SvelteKitConfig,
   lock: InitPlan["lock"],
 ): void {
   const derived = deriveKitPaths(config);
@@ -264,7 +268,7 @@ test("a satisfied re-init through the guarded core is a no-change apply", () => 
 });
 
 test("custom mapping init generates under the configured roots", () => {
-  const config: KitConfig = {
+  const config: SvelteKitConfig = {
     ...DEFAULT_KIT_CONFIG,
     uiDir: "app/ui",
     stylesDir: "assets/styles",

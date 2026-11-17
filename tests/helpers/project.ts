@@ -25,7 +25,7 @@ import path from "node:path";
  */
 export interface TempProject {
   readonly root: string;
-  writeFile(rel: string, contents: string): string;
+  writeFile(rel: string, contents: string | Uint8Array): string;
   writeDir(rel: string): string;
   symlink(target: string, rel: string): string;
   cleanup(): void;
@@ -114,7 +114,7 @@ export const SUPPORTED_MANIFEST = `${JSON.stringify(
     private: true,
     type: "module",
     packageManager: "pnpm@12.16.1",
-    devDependencies: { "@sveltejs/kit": "2.70.3" },
+    devDependencies: { "@sveltejs/kit": "2.70.3", svelte: "5.57.3" },
   },
   null,
   2,

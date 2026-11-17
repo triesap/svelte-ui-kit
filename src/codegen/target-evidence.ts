@@ -1,18 +1,19 @@
 import { inspectSvelteKitInputs } from "../project/sveltekit-evidence.js";
 /** Immutable target intent/input evidence, separate from executable generation authority. */
-import { deriveKitPaths } from "../project/config.js";
-import { deepFreeze } from "../project/immutable.js";
-import { inspectAstroConfig } from "../project/astro-config.js";
-import { isSafeLogicalRelativePath } from "../project/paths.js";
-import { inspectSvelteConfigSource } from "../project/svelte-config.js";
 import { satisfies, validRange } from "semver";
-import { SVELTE_RUNTIME_BASELINE } from "../project/native-dependency.js";
+import { inspectAstroConfig } from "../project/astro-config.js";
 import {
-  integrationFor,
-  parseTargetConfig,
-  type TargetConfig,
+  ASTRO_CONFIG_FILES,
+  deriveKitPaths,
+  integrationMapping,
+  parseKitConfig,
+  TARGET_CONFIG_FILES,
+  type KitConfig,
   type TargetIntegration,
-} from "../project/target-config.js";
+} from "../project/config.js";
+import { deepFreeze } from "../project/immutable.js";
+import { SVELTE_RUNTIME_BASELINE } from "../project/native-dependency.js";
+import { isSafeLogicalRelativePath } from "../project/paths.js";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import {
   captureSnapshot,
@@ -20,16 +21,9 @@ import {
   type ProjectSnapshot,
 } from "./snapshot.js";
 
-export {
-  ASTRO_CONFIG_FILES,
-  TARGET_CONFIG_FILES,
-} from "../project/target-config.js";
-import {
-  ASTRO_CONFIG_FILES,
-  TARGET_CONFIG_FILES,
-} from "../project/target-config.js";
+export { ASTRO_CONFIG_FILES, TARGET_CONFIG_FILES } from "../project/config.js";
 export interface TargetEvidence {
-  readonly config: TargetConfig;
+  readonly config: KitConfig;
   readonly snapshot: ProjectSnapshot;
   readonly integration: TargetIntegration;
   readonly packageName: string | null;
@@ -67,7 +61,7 @@ export function captureTargetEvidence(
   root: string,
   input: unknown,
 ): ModelResult<TargetEvidence> {
-  const parsed = parseTargetConfig(input);
+  const parsed = parseKitConfig(input);
   if (!parsed.ok) return parsed;
   const config = parsed.value;
   const configPath = `${deriveKitPaths(config).stateDir}/kit.json`;
@@ -85,7 +79,7 @@ export function inspectTargetEvidence(
   snapshot: ProjectSnapshot,
   input: unknown,
 ): ModelResult<TargetEvidence> {
-  const parsed = parseTargetConfig(input);
+  const parsed = parseKitConfig(input);
   if (!parsed.ok) return parsed;
   const config = parsed.value;
   const configPath = `${deriveKitPaths(config).stateDir}/kit.json`;
@@ -220,16 +214,9 @@ export function inspectTargetEvidence(
       return invalid("SvelteKit requires its actual framework declaration");
     if (configs.filter((file) => file.startsWith("svelte.config.")).length > 1)
       return invalid("Keep exactly one Svelte configuration");
-    for (const file of configs.filter((file) =>
-      file.startsWith("svelte.config."),
-    )) {
-      const text = decodeObservedText(snapshot.entries.get(file)!);
-      if (
-        text.kind !== "text" ||
-        inspectSvelteConfigSource(file, text.text).kind !== "static"
-      )
-        return invalid("Svelte mapping cannot be proven statically", file);
-    }
+    // Explicit canonical kit mapping resolves dynamic routes/lib values without
+    // executing Svelte config. The shared native inspector above still proves
+    // filename, syntax, extensions, prototype and source-directory feature floors.
   } else {
     if (
       typeof manifest.value.name !== "string" ||
@@ -306,7 +293,7 @@ export function inspectTargetEvidence(
   if (observedConfig.kind !== "absent") {
     const actual = objectText(snapshot, configPath);
     if (!actual.ok) return actual;
-    const normalized = parseTargetConfig(actual.value, configPath);
+    const normalized = parseKitConfig(actual.value, configPath);
     if (!normalized.ok) return normalized;
     if (JSON.stringify(normalized.value) !== JSON.stringify(config))
       return invalid(
@@ -318,7 +305,7 @@ export function inspectTargetEvidence(
     deepFreeze({
       config,
       snapshot,
-      integration: integrationFor(config),
+      integration: integrationMapping(config),
       packageName:
         typeof manifest.value.name === "string" ? manifest.value.name : null,
     }),

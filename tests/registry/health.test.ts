@@ -12,11 +12,11 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { sha256Hex } from "../../src/codegen/digest.js";
+import { transitiveRequests } from "../../src/project/requests.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { computeRegistryContentHash } from "../../src/registry/model.js";
 import { resolveClosure } from "../../src/registry/resolve.js";
-import { transitiveRequests } from "../../src/project/requests.js";
 import {
   isInstallable,
   validateRegistryHealth,
@@ -146,7 +146,7 @@ test("advertised items are installable and candidates are not", (t) => {
 
 test("a schema identity mismatch fails", (t) => {
   const root = buildHealthFixture(t);
-  const kitPath = path.join(root, "assets/schemas", "v1", "kit.schema.json");
+  const kitPath = path.join(root, "assets/schemas", "kit.schema.json");
   const schema = JSON.parse(readFileSync(kitPath, "utf8")) as Record<
     string,
     unknown
@@ -173,7 +173,7 @@ test("an advertised item missing its source fails health", (t) => {
 test("a provided item schema that rejects everything fails health", (t) => {
   const root = buildHealthFixture(t);
   writeFileSync(
-    path.join(root, "assets/schemas", "v1", "registry-item.schema.json"),
+    path.join(root, "assets/schemas", "registry-item.schema.json"),
     `${JSON.stringify(
       {
         $id: "urn:svelte-ui-kit:schema:v1:registry-item",

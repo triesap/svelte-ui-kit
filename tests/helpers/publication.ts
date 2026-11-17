@@ -1,9 +1,10 @@
+import { RECOVERY_ROOTS } from "./transactions.js";
 /** Low-level publication fixtures still acquire a real physical writer. */
 import assert from "node:assert/strict";
 
+import type { LockValidationContext } from "../../src/codegen/lock.js";
 import { holdMutationAuthority } from "../../src/codegen/mutation-authority.js";
 import { publishLock } from "../../src/codegen/publish-lock.js";
-import type { LockValidationContext } from "../../src/codegen/lock.js";
 import type { TransactionHooks } from "../../src/codegen/transaction-hooks.js";
 import type { OwnedCreation } from "../../src/codegen/transaction-inventory.js";
 import type { TransactionJournal } from "../../src/codegen/transaction-journal.js";
@@ -20,7 +21,7 @@ export function publishPreparedLock(
   journal: TransactionJournal,
   bytes: Uint8Array,
   mode = 0o644,
-  context: LockValidationContext = {},
+  context: LockValidationContext = RECOVERY_ROOTS,
   hooks?: TransactionHooks,
   ownership?: OwnedCreation[],
 ) {

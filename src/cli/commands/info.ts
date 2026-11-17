@@ -1,18 +1,18 @@
-import { generationFields } from "../../project/generation-config.js";
+import { generationFields } from "../../project/config.js";
 /** S079: actual read-only inspection of the selected consumer package. */
 import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
 import { captureSnapshot } from "../../codegen/snapshot.js";
-import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
+import {
+  DEFAULT_KIT_CONFIG,
+  deriveKitPaths,
+  generationInputPaths,
+} from "../../project/config.js";
 import {
   inspectDependencyStateFromEvidence,
   validatePeerDependenciesFromEvidence,
   type DependencyRequirement,
 } from "../../project/dependencies.js";
 import { discoverGenerationConfig } from "../../project/detect.js";
-import {
-  generationInputPaths,
-  isExplicitTargetConfig,
-} from "../../project/generation-config.js";
 import { resolveProjectRoot } from "../../project/root.js";
 import { createAssetProvider } from "../../registry/assets.js";
 import {
@@ -81,13 +81,8 @@ export function inspectInfo(
   if (!registry.ok) return failure(registry.issues, "registry_failure");
   const located = discoverGenerationConfig(selected.value.root);
   const targetPaths =
-    located.ok &&
-    located.value.kind === "custom" &&
-    isExplicitTargetConfig(located.value.config)
-      ? [
-          ...generationInputPaths(located.value.config),
-          located.value.configPath,
-        ]
+    located.ok && located.value.kind === "custom"
+      ? [...generationInputPaths(), located.value.configPath]
       : [];
   const snapshot = captureSnapshot(selected.value.root, targetPaths);
   if (!snapshot.ok) return failure(snapshot.issues, "unsafe_path");

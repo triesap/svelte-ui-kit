@@ -147,8 +147,8 @@ function nonCoordinationDirectories(
 
 /** The approved mapping required to authorize recovery of a journal. */
 export interface RecoveryRoots {
-  readonly configSchema?: 2;
-  readonly target?: "sveltekit" | "astro";
+  readonly configSchema: 1;
+  readonly target: "sveltekit" | "astro";
   readonly uiDir: string;
   readonly stylesDir: string;
   readonly layoutFile: string;

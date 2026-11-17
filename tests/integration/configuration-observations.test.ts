@@ -1,11 +1,10 @@
-import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createTempProject } from "../helpers/project.js";
-import { composeGenerationFoundation } from "../helpers/generation-project.js";
-import { parseGenerationConfig } from "../../src/project/generation-config.js";
-import { deriveKitPaths } from "../../src/project/config.js";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { deriveKitPaths, parseKitConfig } from "../../src/project/config.js";
+import { composeGenerationFoundation } from "../helpers/generation-project.js";
+import { createTempProject } from "../helpers/project.js";
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 for (const target of ["astro", "svelte-library"] as const)
   test(`${target} keeps invalid unselected Vite observations distinct from proven absence`, (t) => {
     const project = createTempProject();
@@ -43,11 +42,11 @@ for (const target of ["astro", "svelte-library"] as const)
         'import svelte from "@astrojs/svelte"; export default {integrations:[svelte()]};',
       );
     project.symlink("unavailable-external", "vite.config.ts");
-    const parsed = parseGenerationConfig(
+    const parsed = parseKitConfig(
       target === "astro"
-        ? { schemaVersion: 2, target, layoutFile: "src/layouts/Layout.astro" }
+        ? { schemaVersion: 1, target, layoutFile: "src/layouts/Layout.astro" }
         : {
-            schemaVersion: 2,
+            schemaVersion: 1,
             target,
             uiDir: "src/lib",
             styleEntry: "src/styles.css",

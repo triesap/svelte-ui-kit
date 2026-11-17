@@ -2,13 +2,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
+import { serializeKitConfig } from "../../src/project/config.js";
 
 import { hashBytes } from "../../src/codegen/compare.js";
 import { renderManagedBlock } from "../../src/codegen/css.js";
-import { exportRegionContent } from "../../src/codegen/exports.js";
+import {
+  exportRegionContent,
+  patchExportRegion,
+} from "../../src/codegen/exports.js";
+import type { KitLock } from "../../src/codegen/lock.js";
 import { planSync } from "../../src/codegen/plan-sync.js";
 import { captureSnapshot } from "../../src/codegen/snapshot.js";
-import type { KitLock } from "../../src/codegen/lock.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
@@ -101,13 +105,32 @@ function registry(): RegistrySnapshot {
   ]);
 }
 
+function installedExports(): string {
+  const rendered = patchExportRegion(ROOT_EXPORTS, "", [
+    { name: "Button", target: "./button.svelte", kind: "value" },
+    { name: "Card", target: "./card.svelte", kind: "value" },
+  ]);
+  assert.ok(rendered.ok, JSON.stringify(rendered));
+  return rendered.value;
+}
+const INSTALLED_LAYOUT =
+  '<script>import "../../styles/kit.css"; import "../../styles/themes.css"; import "../../styles/app.css";</script>\n<slot />\n';
+function installedConfig(): string {
+  return serializeKitConfig({
+    ...DEFAULT_KIT_CONFIG,
+    requested: ["button", "card"],
+  });
+}
 function lockFor(): KitLock {
   return {
+    target: "sveltekit",
     schemaVersion: 1,
     toolVersion: "1.0.0",
     registryVersion: "0.1.0",
     registryHash: "a".repeat(64),
-    configHash: "b".repeat(64),
+    configHash: hashBytes(
+      new TextEncoder().encode(installedConfig()),
+    ) as string,
     requested: ["button", "card"],
     items: [
       {
@@ -170,7 +193,32 @@ function lockFor(): KitLock {
         cohort: "core",
       },
     ],
-    integrations: [],
+    integrations: [
+      {
+        kind: "layout",
+        path: DEFAULT_KIT_CONFIG.layoutFile,
+        contract: "layout-v1",
+        baseline: hashBytes(
+          new TextEncoder().encode(INSTALLED_LAYOUT),
+        ) as string,
+      },
+      {
+        kind: "stylesheet",
+        path: KIT_CSS,
+        contract: "foundation-tokens-v1",
+        baseline: hashBytes(new TextEncoder().encode(TOKEN_BODY)) as string,
+      },
+      {
+        kind: "exports",
+        path: ROOT_EXPORTS,
+        contract: "exports-v1",
+        baseline: hashBytes(
+          new TextEncoder().encode(
+            exportRegionContent(ROOT_EXPORTS, installedExports())!,
+          ),
+        ) as string,
+      },
+    ],
   };
 }
 
@@ -179,6 +227,9 @@ function seed(
   cardSource: string,
   cardCss: string,
 ): void {
+  project.writeFile(`${derived.stateDir}/kit.json`, installedConfig());
+  project.writeFile(ROOT_EXPORTS, installedExports());
+  project.writeFile(DEFAULT_KIT_CONFIG.layoutFile, INSTALLED_LAYOUT);
   project.writeFile(BUTTON, "BUTTON");
   project.writeFile(CARD, cardSource);
   project.writeFile(TOKENS, "TOKENS");
@@ -260,14 +311,14 @@ test("application exports are not silently erased", (t) => {
   const project = createSupportedProject();
   t.after(() => project.cleanup());
   seed(project, "CARD", CARD_BODY);
-  const region =
-    '// svelte-ui-kit:start exports\nexport { Card } from "./card.svelte";\n// svelte-ui-kit:end exports\nexport const AppThing = 1;\n';
+  const region = installedExports() + "export const AppThing = 1;\n";
   project.writeFile(ROOT_EXPORTS, region);
   // The managed region is only patchable when the lock owns it. Markers alone
   // confer no ownership (RCLD03-R4-2).
   const lock: KitLock = {
     ...lockFor(),
     integrations: [
+      ...lockFor().integrations.filter((entry) => entry.kind !== "exports"),
       {
         kind: "exports",
         path: ROOT_EXPORTS,
@@ -294,6 +345,11 @@ test("application exports are not silently erased", (t) => {
   });
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
+  assert.equal(
+    result.value.executable,
+    true,
+    JSON.stringify(result.value.diagnostics),
+  );
   const write = result.value.writes.find(
     (entry) => entry.path === ROOT_EXPORTS,
   );

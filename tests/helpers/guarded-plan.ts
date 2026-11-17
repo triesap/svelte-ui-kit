@@ -1,29 +1,31 @@
-import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 
-import { lockPath } from "../../src/codegen/transaction-types.js";
-import { validKitConfigBytes } from "./kit-config.js";
-import { captureSnapshot } from "../../src/codegen/snapshot.js";
+import { existsSync } from "node:fs";
+import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
+import { planInit } from "../../src/codegen/plan-init.js";
+import { captureSnapshot } from "../../src/codegen/snapshot.js";
+import { ignoreBlockWithEntry } from "../../src/codegen/transaction-cleanup.js";
+import {
+  ignoreEntryFor,
+  lockPath,
+} from "../../src/codegen/transaction-types.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
-  type KitConfig,
+  type ApplicationConfig,
 } from "../../src/project/config.js";
-import { existsSync } from "node:fs";
-import { ignoreBlockWithEntry } from "../../src/codegen/transaction-cleanup.js";
-import { ignoreEntryFor } from "../../src/codegen/transaction-types.js";
-import { planInit } from "../../src/codegen/plan-init.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { validKitConfigBytes } from "./kit-config.js";
 
 /** Construct authentic production initialization, including zero-item plans. */
 export function capturedFixtureInit(
   root: string,
-  config: KitConfig = DEFAULT_KIT_CONFIG,
+  config: ApplicationConfig = DEFAULT_KIT_CONFIG,
   seedIgnore = true,
 ): ApplyPlanInput {
   if (!existsSync(abs(root, "package.json"))) {
@@ -141,6 +143,7 @@ export function lockJson(configHash: string): Uint8Array {
     `${JSON.stringify(
       {
         schemaVersion: 1,
+        target: "sveltekit",
         toolVersion: "0.1.0",
         registryVersion: "0.1.0",
         registryHash: "a".repeat(64),
@@ -149,7 +152,26 @@ export function lockJson(configHash: string): Uint8Array {
         items: [],
         files: [],
         cssBlocks: [],
-        integrations: [],
+        integrations: [
+          {
+            kind: "layout",
+            path: GUARDED_LAYOUT,
+            contract: "layout-v1",
+            baseline: "e".repeat(64),
+          },
+          {
+            kind: "stylesheet",
+            path: `${GUARDED_STYLES}/kit.css`,
+            contract: "foundation-tokens-v1",
+            baseline: "e".repeat(64),
+          },
+          {
+            kind: "exports",
+            path: `${GUARDED_UI}/index.ts`,
+            contract: "exports-v1",
+            baseline: "e".repeat(64),
+          },
+        ],
       },
       null,
       2,

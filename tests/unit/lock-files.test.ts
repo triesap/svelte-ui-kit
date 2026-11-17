@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { completeLockFixture } from "../helpers/lock-fixture.js";
 
 import {
   adoptBaseOnClean,
@@ -22,38 +23,48 @@ const H = (char: string) => char.repeat(64);
 
 function base(
   overrides: Record<string, unknown> = {},
+  mapping: { uiDir?: string; stylesDir?: string } = {},
 ): Record<string, unknown> {
-  return {
-    schemaVersion: 1,
-    toolVersion: "0.1.0",
-    registryVersion: "0.1.0",
-    registryHash: H("a"),
-    configHash: H("b"),
-    requested: ["button"],
-    items: [
-      { id: "button", version: "0.1.0", digest: H("c"), origin: "explicit" },
-      { id: "spinner", version: "0.1.0", digest: H("d"), origin: "transitive" },
-    ],
-    files: [
-      {
-        path: "src/lib/components/ui/button.svelte",
-        owner: "button",
-        baseHash: H("e"),
-        itemVersion: "0.1.0",
-        cohort: "core",
-      },
-      {
-        path: "src/lib/components/ui/spinner.svelte",
-        owner: "spinner",
-        baseHash: H("f"),
-        itemVersion: "0.1.0",
-        cohort: "core",
-      },
-    ],
-    cssBlocks: [],
-    integrations: [],
-    ...overrides,
-  };
+  return completeLockFixture(
+    {
+      target: "sveltekit",
+      schemaVersion: 1,
+      toolVersion: "0.1.0",
+      registryVersion: "0.1.0",
+      registryHash: H("a"),
+      configHash: H("b"),
+      requested: ["button"],
+      items: [
+        { id: "button", version: "0.1.0", digest: H("c"), origin: "explicit" },
+        {
+          id: "spinner",
+          version: "0.1.0",
+          digest: H("d"),
+          origin: "transitive",
+        },
+      ],
+      files: [
+        {
+          path: "src/lib/components/ui/button.svelte",
+          owner: "button",
+          baseHash: H("e"),
+          itemVersion: "0.1.0",
+          cohort: "core",
+        },
+        {
+          path: "src/lib/components/ui/spinner.svelte",
+          owner: "spinner",
+          baseHash: H("f"),
+          itemVersion: "0.1.0",
+          cohort: "core",
+        },
+      ],
+      cssBlocks: [],
+      integrations: [],
+      ...overrides,
+    },
+    mapping,
+  );
 }
 
 function codesFor(value: unknown): string[] {
@@ -226,6 +237,8 @@ test("release identities must be strict SemVer at the parse boundary", () => {
 
 test("validated mapping context rejects reserved-state and out-of-namespace records", () => {
   const context = {
+    configSchema: 1 as const,
+    target: "sveltekit" as const,
     stateDir: "src/lib/components/ui/_kit",
     uiDir: "src/lib/components/ui",
     stylesDir: "src/styles",
@@ -282,6 +295,8 @@ test("validated mapping context rejects reserved-state and out-of-namespace reco
 
 test("managed files cannot claim a namespace directory or reserve state ancestry", () => {
   const context = {
+    configSchema: 1 as const,
+    target: "sveltekit" as const,
     stateDir: "src/lib/components/ui/_kit",
     uiDir: "src/lib/components/ui",
     stylesDir: "src/styles",
@@ -433,6 +448,8 @@ test("valid compound siblings and multiple blocks in one aggregate remain valid"
 
 test("an integration path cannot claim a required namespace directory", () => {
   const context = {
+    configSchema: 1 as const,
+    target: "sveltekit" as const,
     stateDir: "src/ui/_kit",
     uiDir: "src/ui",
     stylesDir: "src/ui/styles",
@@ -454,10 +471,13 @@ test("an integration path cannot claim a required namespace directory", () => {
   }
 
   const valid = parseKitLock(
-    base({
-      files: [],
-      integrations: [integration("src/routes/+layout.svelte")],
-    }),
+    base(
+      {
+        files: [],
+        integrations: [integration("src/routes/+layout.svelte")],
+      },
+      context,
+    ),
     ".kit/kit.lock.json",
     context,
   );

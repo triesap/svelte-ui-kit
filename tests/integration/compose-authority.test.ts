@@ -1,11 +1,10 @@
-import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
 import {
-  openSync,
-  closeSync,
   chmodSync,
+  closeSync,
   mkdirSync,
   mkdtempSync,
+  openSync,
   readFileSync,
   rmSync,
   symlinkSync,
@@ -15,22 +14,23 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit } from "../../src/codegen/plan-init.js";
+import type { PlanWrite } from "../../src/codegen/plan.js";
 import {
   captureSnapshot,
   type ProjectSnapshot,
 } from "../../src/codegen/snapshot.js";
-import { createAssetProvider } from "../../src/registry/assets.js";
-import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
-  type KitConfig,
+  type SvelteKitConfig,
 } from "../../src/project/config.js";
-import type { PlanWrite } from "../../src/codegen/plan.js";
+import { createAssetProvider } from "../../src/registry/assets.js";
+import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { planMutations } from "../helpers/lifecycle-assertions.js";
 import {
   assertTreeAfterMutations,
@@ -340,7 +340,7 @@ test("a post-planning installed-package metadata change is refused", () => {
 // validate/apply path (RCLD04-R2-1).
 // ---------------------------------------------------------------------------
 
-const AUTHORITY_CONFIGS: readonly (readonly [string, KitConfig])[] = [
+const AUTHORITY_CONFIGS: readonly (readonly [string, SvelteKitConfig])[] = [
   ["default", DEFAULT_KIT_CONFIG],
   [
     "custom",
@@ -367,7 +367,7 @@ function seedAuthorityConsumer(root: string): void {
   );
 }
 
-function authorityInitPaths(config: KitConfig): string[] {
+function authorityInitPaths(config: SvelteKitConfig): string[] {
   const d = deriveKitPaths(config);
   return [
     `${d.stateDir}/kit.json`,
@@ -381,7 +381,7 @@ function authorityInitPaths(config: KitConfig): string[] {
   ];
 }
 
-function planAuthorityInit(root: string, config: KitConfig) {
+function planAuthorityInit(root: string, config: SvelteKitConfig) {
   const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
   assert.equal(registry.ok, true, JSON.stringify(registry));
   if (!registry.ok) throw new Error("registry invalid");
@@ -407,7 +407,7 @@ function planAuthorityInit(root: string, config: KitConfig) {
 
 function applyAuthority(
   root: string,
-  config: KitConfig,
+  config: SvelteKitConfig,
   snapshot: ProjectSnapshot,
   writes: readonly PlanWrite[],
 ) {
@@ -429,7 +429,7 @@ function applyAuthority(
  */
 function assertAuthorityRefusal(
   root: string,
-  config: KitConfig,
+  config: SvelteKitConfig,
   snapshot: ProjectSnapshot,
   writes: readonly PlanWrite[],
   externalRoots: readonly string[] = [],

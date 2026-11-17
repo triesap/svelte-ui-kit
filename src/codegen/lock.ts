@@ -1,5 +1,4 @@
 import { type LibraryIntegrationFields } from "../project/integration-fields.js";
-import { selectProjectSchema } from "../project/migrations.js";
 /**
  * Source-file ownership lock records (S019).
  *
@@ -80,8 +79,8 @@ export interface LockIntegration {
 }
 
 export interface KitLock {
-  readonly schemaVersion: number;
-  readonly target?: "sveltekit" | "astro" | "svelte-library";
+  readonly schemaVersion: 1;
+  readonly target: "sveltekit" | "astro" | "svelte-library";
   readonly toolVersion: string;
   readonly registryVersion: string;
   readonly registryHash: string;
@@ -105,7 +104,7 @@ export function isSafeLockPath(value: unknown): value is string {
  * checks.
  */
 export interface LockValidationContext {
-  readonly configSchema?: 1 | 2;
+  readonly configSchema?: 1;
   readonly target?: "sveltekit" | "astro";
   readonly stateDir?: string;
   readonly uiDir?: string;
@@ -307,10 +306,8 @@ export function parseKitLock(
   context: AnyLockValidationContext = {},
   authority?: SchemaAuthority,
 ): ModelResult<KitLock> {
-  const selectedSchema = selectProjectSchema(value, "lock", locator);
-  if (!selectedSchema.ok) return fail(selectedSchema.issues);
   const schemaResult = validateWithSchema(
-    selectedSchema.value === 2 ? "v2/kit-lock.schema.json" : KIT_LOCK_SCHEMA,
+    KIT_LOCK_SCHEMA,
     value,
     locator,
     authority,
@@ -328,7 +325,11 @@ export function parseKitLock(
     context.target,
     context.configSchema,
   ].some((value) => value !== undefined);
-  if (mapped && selectedSchema.value !== (context.configSchema ?? 1))
+  if (
+    mapped &&
+    context.configSchema !== undefined &&
+    context.configSchema !== 1
+  )
     issues.push(
       issue(
         "LOCK_SCHEMA_CONTEXT",
@@ -336,7 +337,7 @@ export function parseKitLock(
         locator,
       ),
     );
-  if (selectedSchema.value === 2) {
+  {
     const target = record.target;
     if (
       (context.target !== undefined && context.target !== target) ||
@@ -352,7 +353,7 @@ export function parseKitLock(
       issues.push(
         issue(
           "LOCK_TARGET_CONTEXT",
-          "V2 lock target requires the exact approved application target",
+          "Canonical lock target requires the exact approved application target",
           locator,
         ),
       );
@@ -373,7 +374,7 @@ export function parseKitLock(
       issues.push(
         issue(
           "LOCK_INTEGRATION_INVENTORY",
-          "V2 locks require exactly three target-matched integrations",
+          "Canonical locks require exactly three target-matched integrations",
           locator,
         ),
       );
@@ -386,7 +387,7 @@ export function parseKitLock(
         issues.push(
           issue(
             "LOCK_INTEGRATION_INVENTORY",
-            "V2 locks require exactly one approved layout, stylesheet and exports integration",
+            "Canonical locks require exactly one approved layout, stylesheet and exports integration",
             locator,
           ),
         );
@@ -414,22 +415,11 @@ export function parseKitLock(
       issues.push(
         issue(
           "LOCK_TARGET_INTEGRATION",
-          "Layout contract and file role must match the exact v2 target",
+          "Layout contract and file role must match the exact canonical target",
           locator,
         ),
       );
-  } else if (
-    context.target === "astro" ||
-    context.target === "svelte-library" ||
-    context.configSchema === 2
-  )
-    issues.push(
-      issue(
-        "LOCK_TARGET_CONTEXT",
-        "Legacy locks cannot establish explicit v2 application ownership",
-        locator,
-      ),
-    );
+  }
 
   for (const field of ["toolVersion", "registryVersion"] as const) {
     const result = validateSemVer(record[field], field, field);
@@ -817,10 +807,8 @@ export function parseKitLock(
 
   if (issues.length > 0) return fail(issues);
   return ok({
-    schemaVersion: selectedSchema.value,
-    ...(selectedSchema.value === 2
-      ? { target: record.target as "sveltekit" | "astro" | "svelte-library" }
-      : {}),
+    schemaVersion: 1,
+    target: record.target as "sveltekit" | "astro" | "svelte-library",
     toolVersion: record["toolVersion"] as string,
     registryVersion: record["registryVersion"] as string,
     registryHash: record["registryHash"] as string,

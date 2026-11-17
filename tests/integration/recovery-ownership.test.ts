@@ -17,17 +17,11 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
 import {
   recoverTransaction,
   recoverTransactions,
 } from "../../src/codegen/recovery.js";
-import { sha256Hex } from "../../src/codegen/digest.js";
-import {
-  acquireWriterLock,
-  releaseWriterLock,
-} from "../../src/codegen/write-lock.js";
-import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { liveRootIdentity } from "../helpers/transactions.js";
 import {
   backupsDir,
   journalPath,
@@ -37,11 +31,17 @@ import {
   writerLockDir,
 } from "../../src/codegen/transaction-types.js";
 import {
+  acquireWriterLock,
+  releaseWriterLock,
+} from "../../src/codegen/write-lock.js";
+import {
   abs,
   GUARDED_STATE,
   makeGuardedPlan,
   write,
 } from "../helpers/guarded-plan.js";
+import { liveRootIdentity } from "../helpers/transactions.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 /**
  * RCLD04-R2-4: coordinated recovery, owned inventory, typed failures and
@@ -50,12 +50,14 @@ import {
 
 const ID = "dededededededede";
 const ROOTS = {
+  configSchema: 1 as const,
+  target: "sveltekit" as const,
   uiDir: "src/lib/components/ui",
   stylesDir: "src/styles",
   layoutFile: "src/routes/+layout.svelte",
 } as const;
 
-for (const phase of ["planned", "rolled_back", "applied"] as const) {
+for (const phase of ["prepared", "rolled_back", "applied"] as const) {
   for (const mutation of [
     "none",
     "writer",
@@ -78,7 +80,9 @@ for (const phase of ["planned", "rolled_back", "applied"] as const) {
           root,
           journalPath(GUARDED_STATE, ID),
           JSON.stringify({
-            schemaVersion: 1,
+            target: "sveltekit",
+            ignoreFiles: [],
+            schemaVersion: 3,
             transactionId: ID,
             rootIdentity: liveRootIdentity(root),
             planDigest: "b".repeat(64),
@@ -102,11 +106,17 @@ for (const phase of ["planned", "rolled_back", "applied"] as const) {
                 resultMode: 0o644,
                 backupId: null,
                 stagedId: "stage-0",
-                applied: phase !== "planned",
+                applied: phase !== "prepared",
               },
             ],
           }),
         );
+        if (phase === "prepared")
+          write(
+            root,
+            `${GUARDED_STATE}/.svelte-ui-kit/transactions/${ID}/staged/stage-0`,
+            "result bytes",
+          );
         const writer = acquireWriterLock(
           root,
           GUARDED_STATE,
@@ -146,11 +156,7 @@ for (const phase of ["planned", "rolled_back", "applied"] as const) {
           `real coordinated directory removal must reach hook: ${JSON.stringify(result)}`,
         );
         if (mutation === "none") {
-          assert.equal(
-            result.status,
-            phase === "planned" ? "cleaned" : "rolled_back",
-            JSON.stringify(result),
-          );
+          assert.equal(result.status, "rolled_back", JSON.stringify(result));
           for (const directory of directories)
             assert.equal(existsSync(abs(root, directory)), false);
         } else {
@@ -183,7 +189,10 @@ function sealed(plan: unknown) {
 
 function journalWith(operation: Record<string, unknown>): string {
   return JSON.stringify({
-    schemaVersion: 1,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     transactionId: ID,
     rootIdentity: "a".repeat(64),
     planDigest: "b".repeat(64),
@@ -217,7 +226,10 @@ function finalRecoveryFixture(
     root,
     journalPath(GUARDED_STATE, ID),
     JSON.stringify({
-      schemaVersion: 1,
+      target: "sveltekit",
+      createdDirs: [],
+      ignoreFiles: [],
+      schemaVersion: 3,
       transactionId: ID,
       rootIdentity: liveRootIdentity(root),
       planDigest: "b".repeat(64),

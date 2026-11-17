@@ -1,16 +1,12 @@
 import { observeCatalogs } from "./catalogs.js";
-import { observeInstalled } from "./dependencies.js";
+import { isLibraryConfig, parseKitConfig, type KitConfig } from "./config.js";
 import { captureConfigurationInputs } from "./configuration-inputs.js";
+import { observeInstalled } from "./dependencies.js";
 import {
   inspectSvelteKitInputs,
   validateConfigurationInventory,
   type SvelteKitCapturedInputs,
 } from "./sveltekit-evidence.js";
-import {
-  isLibraryConfig,
-  parseGenerationConfig as parseKitConfig,
-  type GenerationConfig as KitConfig,
-} from "./generation-config.js";
 /**
  * Default SvelteKit application detection (S035) and `_kit` discovery (S037).
  *
@@ -623,7 +619,7 @@ export interface DiscoveredKitConfig extends Omit<
   DiscoveredGenerationConfig,
   "config"
 > {
-  readonly config: import("./app-config.js").AppProjectConfig;
+  readonly config: import("./config.js").ApplicationConfig;
 }
 export function discoverKitConfig(
   root: string,

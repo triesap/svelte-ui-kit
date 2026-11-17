@@ -119,11 +119,10 @@ export function validateLockForPublication(
     return { ok: false, issues };
   }
   if (
-    journal.schemaVersion !== validated.value.schemaVersion ||
-    (journal.schemaVersion === 2
-      ? journal.target !== validated.value.target ||
-        journal.target !== context.target
-      : journal.target !== undefined || validated.value.target !== undefined)
+    journal.schemaVersion !== 3 ||
+    validated.value.schemaVersion !== 1 ||
+    journal.target !== validated.value.target ||
+    journal.target !== context.target
   )
     issues.push({
       code: "LOCK_JOURNAL_TARGET_MISMATCH",

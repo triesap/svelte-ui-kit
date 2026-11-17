@@ -1,26 +1,26 @@
-import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import assert from "node:assert/strict";
-import { test } from "node:test";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { createTempProject } from "../helpers/project.js";
-import { composeGenerationFoundation } from "../helpers/generation-project.js";
-import { snapshotTree } from "../helpers/tree-snapshot.js";
+import { test } from "node:test";
+import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { planInit } from "../../src/codegen/plan-init.js";
 import {
   DEFAULT_KIT_CONFIG,
   deriveKitPaths,
+  initializationFields,
+  parseKitConfig,
 } from "../../src/project/config.js";
-import { parseAppConfig } from "../../src/project/app-config.js";
 import { captureEnvironment } from "../../src/project/environment.js";
-import { initializationFields } from "../../src/project/generation-config.js";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import { planInit } from "../../src/codegen/plan-init.js";
+import { composeGenerationFoundation } from "../helpers/generation-project.js";
+import { createTempProject } from "../helpers/project.js";
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 const vite =
   'import {defineConfig} from "vite";import {sveltekit} from "@sveltejs/kit/vite";export default defineConfig({plugins:[sveltekit()]});\n';
 function setup(
   t: { after(fn: () => void): void },
-  v2 = false,
+  minimal = false,
   installed = true,
 ) {
   const p = createTempProject();
@@ -41,10 +41,10 @@ function setup(
       "node_modules/@sveltejs/kit/package.json",
       JSON.stringify({ name: "@sveltejs/kit", version: "2.70.3" }),
     );
-  const parsed = parseAppConfig(
-    v2
+  const parsed = parseKitConfig(
+    minimal
       ? {
-          schemaVersion: 2,
+          schemaVersion: 1,
           target: "sveltekit",
           layoutFile: "src/routes/+layout.svelte",
         }
@@ -59,9 +59,9 @@ function setup(
   );
   return { p, config, paths };
 }
-for (const v2 of [false, true]) {
-  test(`Kit ${v2 ? "v2" : "v1"} rejects new Vite candidate appearance before coordination`, (t) => {
-    const f = setup(t, v2),
+for (const minimal of [false, true]) {
+  test(`Kit ${minimal ? "minimal" : "normalized"} rejects new Vite candidate appearance before coordination`, (t) => {
+    const f = setup(t, minimal),
       prepared = composeGenerationFoundation(f.p.root, process.cwd(), f.config),
       sealed = validateApplyPlan(prepared.composed);
     assert.ok(sealed.ok);
@@ -72,8 +72,8 @@ for (const v2 of [false, true]) {
     assert.equal(out.transactionId, null);
     assert.deepEqual(snapshotTree(f.p.root), before);
   });
-  test(`Kit ${v2 ? "v2" : "v1"} uses original Vite bytes for planning and refuses changed write-time evidence`, (t) => {
-    const f = setup(t, v2);
+  test(`Kit ${minimal ? "minimal" : "normalized"} uses original Vite bytes for planning and refuses changed write-time evidence`, (t) => {
+    const f = setup(t, minimal);
     f.p.writeFile("vite.config.ts", vite);
     const prepared = composeGenerationFoundation(
         f.p.root,
@@ -213,8 +213,8 @@ test("impossible absent-install declarations and incomplete captured inputs refu
   assert.deepEqual(snapshotTree(f.p.root), before);
 });
 
-test("native filenames and route extensions cannot be waived by explicit v1 or v2 intent", (t) => {
-  for (const v2 of [false, true])
+test("native filenames and route extensions cannot be waived by explicit v1 or minimal intent", (t) => {
+  for (const minimal of [false, true])
     for (const variant of [
       "mjs",
       "cjs",
@@ -222,7 +222,7 @@ test("native filenames and route extensions cannot be waived by explicit v1 or v
       "additional",
       "dynamic",
     ] as const) {
-      const f = setup(t, v2);
+      const f = setup(t, minimal);
       const source =
         variant === "custom"
           ? 'export default {extensions:[".svx"]};'
@@ -403,9 +403,9 @@ test("genuine native Kit uses inherited configuration, while both generation sch
     'export default {kit:{__proto__:{files:{src:"app"}}}};',
     'export default {kit:{files:{"__proto__":{src:"app"}}}};',
   ];
-  for (const v2 of [false, true])
+  for (const minimal of [false, true])
     for (const source of sources) {
-      const f = setup(t, v2);
+      const f = setup(t, minimal);
       f.p.writeFile("svelte.config.js", source);
       const before = snapshotTree(f.p.root),
         r = spawnSync(

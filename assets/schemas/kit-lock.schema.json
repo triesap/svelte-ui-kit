@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "urn:svelte-ui-kit:schema:v2:kit-lock",
-  "title": "Explicit application target install lock (v2)",
+  "$id": "urn:svelte-ui-kit:schema:v1:install-lock",
+  "title": "Canonical install-lock (1)",
   "description": "Observed installed lineage. Canonical owner records only; no redundant reverse index is stored. S020 adds managed CSS blocks and integration records.",
   "type": "object",
   "additionalProperties": false,
@@ -20,7 +20,8 @@
   ],
   "properties": {
     "schemaVersion": {
-      "const": 2
+      "type": "integer",
+      "const": 1
     },
     "toolVersion": {
       "type": "string",

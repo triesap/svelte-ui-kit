@@ -3,7 +3,7 @@
 All paths are relative to one selected application or library package. `--cwd`
 selects that package; the CLI does not scan and mutate every workspace member or
 execute application configuration/scripts to discover it. Configuration is
-validated against the [v1 schema](../../assets/schemas/v1/kit.schema.json).
+validated against the [v1 schema](../../assets/schemas/kit.schema.json).
 
 ## Desired configuration
 
@@ -50,7 +50,7 @@ nor its workspace is rewritten during discovery or refusal.
 
 ### Explicit target schema
 
-The independent [v2 target schema](../../assets/schemas/v2/kit.schema.json) defines
+The independent [v2 target schema](../../assets/schemas/kit.schema.json) defines
 explicit target discovery and integration intent. The CLI generates v1 SvelteKit
 and v2 SvelteKit, Astro and standalone Svelte-library installations.
 Existing v1 defaults, custom paths and unknown-field
@@ -134,7 +134,7 @@ mislocated candidates fail rather than selecting one by accident.
 
 ## Installed observations
 
-The [lock schema](../../assets/schemas/v1/kit-lock.schema.json) owns installed lineage:
+The [lock schema](../../assets/schemas/kit-lock.schema.json) owns installed lineage:
 requested versus transitive origin, registry/item identities, file/CSS cohort
 owners, baseline hashes and integration contracts. Commit this tool-managed
 semantic metadata. Do not edit hashes to hide local work. Ephemeral coordination,

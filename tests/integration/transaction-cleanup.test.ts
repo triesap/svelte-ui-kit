@@ -1,51 +1,51 @@
 import assert from "node:assert/strict";
 import {
-  existsSync,
   chmodSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
   renameSync,
   rmSync,
-  writeFileSync,
   symlinkSync,
+  writeFileSync,
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
+import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
+import { sha256Hex } from "../../src/codegen/digest.js";
+import { holdMutationAuthority } from "../../src/codegen/mutation-authority.js";
 import {
-  ensureIgnoreEntry,
   cleanupTransaction as cleanPublished,
+  ensureIgnoreEntry,
 } from "../../src/codegen/transaction-cleanup.js";
+import type { TransactionHooks } from "../../src/codegen/transaction-hooks.js";
+import { faultAt } from "../../src/codegen/transaction-hooks.js";
 import {
   serializeJournal,
   type TransactionJournal,
 } from "../../src/codegen/transaction-journal.js";
-import { sha256Hex } from "../../src/codegen/digest.js";
-import { faultAt } from "../../src/codegen/transaction-hooks.js";
-import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import { capturedFixtureInit } from "../helpers/guarded-plan.js";
-import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { holdMutationAuthority } from "../../src/codegen/mutation-authority.js";
+import {
+  backupsDir,
+  journalPath,
+  lockPath,
+  publicationIntentPath,
+  stagedDir,
+  transactionDir,
+  transactionsDir,
+  transientRoot,
+  writerLockDir,
+} from "../../src/codegen/transaction-types.js";
 import {
   acquireWriterLock,
   releaseWriterLock,
   type WriterLockHandle,
 } from "../../src/codegen/write-lock.js";
-import type { TransactionHooks } from "../../src/codegen/transaction-hooks.js";
-import {
-  backupsDir,
-  journalPath,
-  stagedDir,
-  transactionDir,
-  transientRoot,
-  transactionsDir,
-  lockPath,
-  writerLockDir,
-  publicationIntentPath,
-} from "../../src/codegen/transaction-types.js";
+import { capturedFixtureInit } from "../helpers/guarded-plan.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 const STATE_DIR = "src/lib/components/ui/_kit";
 const ID = "7777777777777777";
@@ -147,7 +147,10 @@ const abs = (root: string, logical: string): string =>
 
 function publishedJournal(id = ID): TransactionJournal {
   return {
-    schemaVersion: 1,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     transactionId: id,
     rootIdentity: "a".repeat(64),
     planDigest: "b".repeat(64),

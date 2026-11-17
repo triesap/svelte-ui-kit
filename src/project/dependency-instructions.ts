@@ -30,13 +30,13 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
+import type { TargetKind } from "./config.js";
 import { isRegularFile, readJsonObject } from "./io.js";
-import { findOwningWorkspaceRoot } from "./root.js";
 import {
   QUALIFIED_NATIVE_NAMES,
   qualifiedNativeBaseline,
 } from "./native-dependency.js";
-import type { TargetKind } from "./target-config.js";
+import { findOwningWorkspaceRoot } from "./root.js";
 
 export const PACKAGE_MANAGERS = ["pnpm", "npm", "yarn"] as const;
 export type PackageManager = (typeof PACKAGE_MANAGERS)[number];

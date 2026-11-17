@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 
 import {
   DEFAULT_STYLES_DIR,
@@ -25,6 +26,7 @@ function code(value: Record<string, unknown>): string | undefined {
 
 test("stylesheet, config and export targets must stay distinct", () => {
   const derived = deriveKitPaths({
+    ...DEFAULT_KIT_CONFIG,
     schemaVersion: 1,
     toolVersion: "0.1.0",
     registry: "builtin",
@@ -34,34 +36,58 @@ test("stylesheet, config and export targets must stay distinct", () => {
     requested: [],
   });
   assert.equal(
-    code({ schemaVersion: 1, layoutFile: derived.kitCss }),
+    code({
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      layoutFile: derived.kitCss,
+    }),
     "PATH_OVERLAP",
   );
   assert.equal(
-    code({ schemaVersion: 1, layoutFile: derived.themesCss }),
+    code({
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      layoutFile: derived.themesCss,
+    }),
     "PATH_OVERLAP",
   );
   assert.equal(
-    code({ schemaVersion: 1, layoutFile: derived.rootExports }),
+    code({
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      layoutFile: derived.rootExports,
+    }),
     "PATH_OVERLAP",
   );
   assert.equal(
-    code({ schemaVersion: 1, stylesDir: derived.rootExports }),
+    code({
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      stylesDir: derived.rootExports,
+    }),
     "PATH_OVERLAP",
   );
 });
 
 test("file roles may not equal or contain a directory root", () => {
   assert.equal(
-    code({ schemaVersion: 1, layoutFile: "src/lib" }),
+    code({ ...DEFAULT_KIT_CONFIG, schemaVersion: 1, layoutFile: "src/lib" }),
     "PATH_OVERLAP",
   );
   assert.equal(
-    code({ schemaVersion: 1, stylesDir: `${DEFAULT_UI_DIR}/index.ts` }),
+    code({
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      stylesDir: `${DEFAULT_UI_DIR}/index.ts`,
+    }),
     "PATH_OVERLAP",
   );
   assert.equal(
-    code({ schemaVersion: 1, stylesDir: `${DEFAULT_UI_DIR}` }),
+    code({
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      stylesDir: `${DEFAULT_UI_DIR}`,
+    }),
     "PATH_OVERLAP",
   );
 });
@@ -73,12 +99,18 @@ test("reserved state directory collisions fail across casing variants", () => {
     `${DEFAULT_UI_DIR}/_Kit`,
   ]) {
     assert.equal(
-      code({ schemaVersion: 1, uiDir: DEFAULT_UI_DIR, stylesDir: state }),
+      code({
+        ...DEFAULT_KIT_CONFIG,
+        schemaVersion: 1,
+        uiDir: DEFAULT_UI_DIR,
+        stylesDir: state,
+      }),
       "PATH_OVERLAP",
       `stylesDir=${state}`,
     );
     assert.equal(
       code({
+        ...DEFAULT_KIT_CONFIG,
         schemaVersion: 1,
         uiDir: DEFAULT_UI_DIR,
         layoutFile: `${state}/kit.lock.json`,
@@ -92,12 +124,19 @@ test("reserved state directory collisions fail across casing variants", () => {
 test("prefix siblings are not incorrectly rejected", () => {
   const okValues = [
     {
+      ...DEFAULT_KIT_CONFIG,
       schemaVersion: 1,
       uiDir: "src/lib/components/ui",
       stylesDir: "src/lib/components/ui-kit",
     },
-    { schemaVersion: 1, uiDir: "app/ui", stylesDir: "app/ui-extra" },
     {
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      uiDir: "app/ui",
+      stylesDir: "app/ui-extra",
+    },
+    {
+      ...DEFAULT_KIT_CONFIG,
       schemaVersion: 1,
       uiDir: "src/lib/components/ui",
       stylesDir: "src/lib/components/ui/styles",
@@ -113,11 +152,21 @@ test("prefix siblings are not incorrectly rejected", () => {
 
 test("case-aliased sibling roots collide deterministically", () => {
   assert.equal(
-    code({ schemaVersion: 1, uiDir: "src/UI", stylesDir: "src/ui" }),
+    code({
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      uiDir: "src/UI",
+      stylesDir: "src/ui",
+    }),
     "PATH_OVERLAP",
   );
   assert.equal(
-    code({ schemaVersion: 1, uiDir: "src/Ui", stylesDir: "src/uI" }),
+    code({
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      uiDir: "src/Ui",
+      stylesDir: "src/uI",
+    }),
     "PATH_OVERLAP",
   );
 });

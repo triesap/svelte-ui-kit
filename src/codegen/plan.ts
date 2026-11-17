@@ -11,19 +11,19 @@
  * This module owns plan data and pure digests/normalizers: importing it performs no
  * planning, no filesystem access and no writer/package-manager work.
  */
-import { hashBytes } from "./compare.js";
-import type { BarrelExportAuthority } from "./exports.js";
-import { canonicalContentHash, sha256Hex } from "./digest.js";
-import type { ProjectSnapshot } from "./snapshot.js";
-import type { KitLock } from "./lock.js";
-import type { PlanReadset } from "./authority.js";
-import type { TargetPreimage } from "./revalidate.js";
-import type { ExportAuthority } from "./projected-batch.js";
 import {
   copyIntegrationFields,
-  type LibraryIntegrationFields,
   type IntegrationFields,
+  type LibraryIntegrationFields,
 } from "../project/integration-fields.js";
+import type { PlanReadset } from "./authority.js";
+import { hashBytes } from "./compare.js";
+import { canonicalContentHash, sha256Hex } from "./digest.js";
+import type { BarrelExportAuthority } from "./exports.js";
+import type { KitLock } from "./lock.js";
+import type { ExportAuthority } from "./projected-batch.js";
+import type { TargetPreimage } from "./revalidate.js";
+import type { ProjectSnapshot } from "./snapshot.js";
 
 export interface OriginalPlanningReceipt {
   readonly snapshot: ProjectSnapshot;
@@ -157,8 +157,8 @@ export interface ApplyPlanInput {
   readonly stylesDir: string;
   readonly layoutFile: string;
   readonly styleEntry?: never;
-  readonly configSchema?: 2;
-  readonly target?: "sveltekit" | "astro";
+  readonly configSchema: 1;
+  readonly target: "sveltekit" | "astro";
   readonly rootIdentity: string;
   readonly planDigest: string;
   readonly readset: PlanReadset;
@@ -214,8 +214,8 @@ export interface ValidatedApplyPlan {
   readonly stylesDir: string;
   readonly layoutFile: string;
   readonly styleEntry?: never;
-  readonly configSchema?: 2;
-  readonly target?: "sveltekit" | "astro";
+  readonly configSchema: 1;
+  readonly target: "sveltekit" | "astro";
   readonly rootIdentity: string;
   readonly planDigest: string;
   readonly readset: PlanReadset;
@@ -267,8 +267,8 @@ export function derivePlanDigest(
     uiDir: input.uiDir,
     stylesDir: input.stylesDir,
     ...copyIntegrationFields(input),
-    configSchema: input.configSchema ?? 1,
-    target: input.target ?? "sveltekit",
+    configSchema: input.configSchema,
+    target: input.target,
     rootIdentity: input.rootIdentity,
     ignoreFiles: [...(input.ignoreFiles ?? [])].map((entry) =>
       entry.toLowerCase(),

@@ -1,5 +1,3 @@
-import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
-import { capturedFixtureInit } from "../helpers/guarded-plan.js";
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -16,8 +14,10 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { capturedFixtureInit } from "../helpers/guarded-plan.js";
+import { completeLockFixture } from "../helpers/lock-fixture.js";
+import { copyQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 
-import { type ApplyPlanInput } from "../../src/codegen/plan.js";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import {
   captureReadset,
@@ -25,12 +25,13 @@ import {
   type PlanInstalledRead,
 } from "../../src/codegen/authority.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
-import { revalidatePreimages } from "../../src/codegen/revalidate.js";
-import { captureSnapshot } from "../../src/codegen/snapshot.js";
+import { type ApplyPlanInput } from "../../src/codegen/plan.js";
 import {
   recoverTransaction,
   recoverTransactions,
 } from "../../src/codegen/recovery.js";
+import { revalidatePreimages } from "../../src/codegen/revalidate.js";
+import { captureSnapshot } from "../../src/codegen/snapshot.js";
 import { faultAt } from "../../src/codegen/transaction-hooks.js";
 import {
   journalPath,
@@ -39,11 +40,11 @@ import {
   transactionsDir,
   writerLockDir,
 } from "../../src/codegen/transaction-types.js";
+import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 import {
   captureEnvironment,
   type CapturedEnvironment,
 } from "../../src/project/environment.js";
-import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 
 import type { PlanWrite } from "../../src/codegen/plan.js";
 import { validKitConfigBytes } from "../helpers/kit-config.js";
@@ -60,7 +61,13 @@ const UI = "src/lib/components/ui";
 const STYLES = "src/styles";
 const LAYOUT = "src/routes/+layout.svelte";
 const STATE = `${UI}/_kit`;
-const ROOTS = { uiDir: UI, stylesDir: STYLES, layoutFile: LAYOUT };
+const ROOTS = {
+  configSchema: 1 as const,
+  target: "sveltekit" as const,
+  uiDir: UI,
+  stylesDir: STYLES,
+  layoutFile: LAYOUT,
+};
 
 const abs = (root: string, logical: string): string =>
   path.join(root, ...logical.split("/"));
@@ -82,18 +89,21 @@ function withRoot(body: (root: string) => void): void {
 
 function lockBytes(configHash: string): Uint8Array {
   return new TextEncoder().encode(
-    `${JSON.stringify({
-      schemaVersion: 1,
-      toolVersion: "0.1.0",
-      registryVersion: "0.1.0",
-      registryHash: "a".repeat(64),
-      configHash,
-      requested: [],
-      items: [],
-      files: [],
-      cssBlocks: [],
-      integrations: [],
-    })}\n`,
+    `${JSON.stringify(
+      completeLockFixture({
+        target: "sveltekit",
+        schemaVersion: 1,
+        toolVersion: "0.1.0",
+        registryVersion: "0.1.0",
+        registryHash: "a".repeat(64),
+        configHash,
+        requested: [],
+        items: [],
+        files: [],
+        cssBlocks: [],
+        integrations: [],
+      }),
+    )}\n`,
   );
 }
 
@@ -135,17 +145,20 @@ function writeManifest(targetRoot: string, version: string): void {
 }
 
 function makePlan(root: string): ApplyPlanInput {
-  write(
-    root,
-    STATE + "/kit.json",
-    Buffer.from(validKitConfigBytes(ROOTS)).toString("utf8"),
-  );
-  write(
-    root,
-    lockPath(STATE),
-    Buffer.from(lockBytes("c".repeat(64))).toString("utf8"),
-  );
-  return capturedFixtureInit(root, { ...DEFAULT_KIT_CONFIG, ...ROOTS });
+  if (!existsSync(abs(root, STYLES + "/kit.css")))
+    write(root, STYLES + "/kit.css", "old css");
+  if (!existsSync(abs(root, STATE + "/kit.json")))
+    write(
+      root,
+      STATE + "/kit.json",
+      Buffer.from(validKitConfigBytes(ROOTS)).toString("utf8"),
+    );
+  return capturedFixtureInit(root, {
+    ...DEFAULT_KIT_CONFIG,
+    uiDir: ROOTS.uiDir,
+    stylesDir: ROOTS.stylesDir,
+    layoutFile: ROOTS.layoutFile,
+  });
 }
 
 function validatedPlan(root: string) {
@@ -327,15 +340,22 @@ test("an unapproved created-directory claim refuses and preserves the directory"
       root,
       journalPath(STATE, tid),
       JSON.stringify({
-        schemaVersion: 1,
+        target: "sveltekit",
+        ignoreFiles: [],
+        schemaVersion: 3,
         transactionId: tid,
         rootIdentity: identityDigest(readset.value.root),
         planDigest: "b".repeat(64),
-        phase: "planned",
+        phase: "prepared",
         operations: [],
         lock: null,
         createdDirs: [
-          { path: "unrelated-empty", device: stats.dev, inode: stats.ino },
+          {
+            path: "unrelated-empty",
+            device: stats.dev,
+            inode: stats.ino,
+            mode: stats.mode & 0o7777,
+          },
         ],
       }),
     );
@@ -361,11 +381,14 @@ test("a foreign owner record naming this PID does not bypass acquisition", () =>
       root,
       journalPath(STATE, tid),
       JSON.stringify({
-        schemaVersion: 1,
+        target: "sveltekit",
+        createdDirs: [],
+        ignoreFiles: [],
+        schemaVersion: 3,
         transactionId: tid,
         rootIdentity: identityDigest(readset.value.root),
         planDigest: "b".repeat(64),
-        phase: "planned",
+        phase: "prepared",
         operations: [],
         lock: null,
       }),
@@ -499,11 +522,14 @@ test("a stale dead-writer lock refuses automatically before the bounded manual s
       root,
       journalPath(STATE, tid),
       JSON.stringify({
-        schemaVersion: 1,
+        target: "sveltekit",
+        createdDirs: [],
+        ignoreFiles: [],
+        schemaVersion: 3,
         transactionId: tid,
         rootIdentity: identityDigest(readset.value.root),
         planDigest: "b".repeat(64),
-        phase: "planned",
+        phase: "prepared",
         operations: [],
         lock: null,
       }),

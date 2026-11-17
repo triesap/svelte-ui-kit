@@ -386,8 +386,8 @@ export function checkDocs(root) {
     fail("assets/registry/registry.json", "CATALOG", error.message);
   }
   for (const [file, pointer] of [
-    ["docs/reference/configuration.md", "assets/schemas/v1/kit.schema.json"],
-    ["docs/reference/cli.md", "assets/schemas/v1/command-envelope.schema.json"],
+    ["docs/reference/configuration.md", "assets/schemas/kit.schema.json"],
+    ["docs/reference/cli.md", "assets/schemas/command-envelope.schema.json"],
     ["docs/agents/native-dependency.md", "tools/native-dependency/recipe.json"],
   ]) {
     try {

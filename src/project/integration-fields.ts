@@ -1,13 +1,13 @@
 /** Closed physical roles at planning/recovery boundaries; intent remains authoritative. */
-import type { TargetIntegration } from "./target-config.js";
+import type { TargetIntegration } from "./config.js";
 export interface ApplicationIntegrationFields {
   readonly layoutFile: string;
   readonly styleEntry?: never;
-  readonly configSchema?: 2;
-  readonly target?: "sveltekit" | "astro";
+  readonly configSchema: 1;
+  readonly target: "sveltekit" | "astro";
 }
 export interface LibraryIntegrationFields {
-  readonly configSchema: 2;
+  readonly configSchema: 1;
   readonly target: "svelte-library";
   readonly styleEntry: string;
   readonly layoutFile?: never;
@@ -44,14 +44,13 @@ export function copyIntegrationFields(
 ): IntegrationFields {
   return fields.target === "svelte-library"
     ? {
-        configSchema: 2,
+        configSchema: 1,
         target: "svelte-library",
         styleEntry: fields.styleEntry,
       }
     : {
-        ...(fields.configSchema === 2
-          ? { configSchema: 2 as const, target: fields.target }
-          : {}),
+        configSchema: 1,
+        target: fields.target,
         layoutFile: fields.layoutFile,
       };
 }

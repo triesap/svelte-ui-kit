@@ -1,25 +1,27 @@
-import { composeGenerationFoundation } from "../helpers/generation-project.js";
-import { spawnSync } from "node:child_process";
-import { clearOrphanedWriterLock } from "../helpers/transactions.js";
-import { appLockContext } from "../../src/project/app-config.js";
-import { parseKitLock } from "../../src/codegen/lock.js";
-import { validateLockForPublication } from "../../src/codegen/publish-lock.js";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { parseAppConfig } from "../../src/project/app-config.js";
-import { deriveKitPaths } from "../../src/project/config.js";
-import { createTempProject } from "../helpers/project.js";
-import { snapshotTree } from "../helpers/tree-snapshot.js";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { inspectAstroLayout } from "../../src/codegen/astro.js";
+import { parseKitLock } from "../../src/codegen/lock.js";
+import { validateLockForPublication } from "../../src/codegen/publish-lock.js";
+import { inspectTargetEvidence } from "../../src/codegen/target-evidence.js";
 import {
   parseJournal,
   validateJournalTargets,
 } from "../../src/codegen/transaction-journal.js";
-import { inspectTargetEvidence } from "../../src/codegen/target-evidence.js";
+import {
+  deriveKitPaths,
+  generationFields,
+  parseKitConfig,
+} from "../../src/project/config.js";
+import { composeGenerationFoundation } from "../helpers/generation-project.js";
+import { createTempProject } from "../helpers/project.js";
 import { linkQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
+import { clearOrphanedWriterLock } from "../helpers/transactions.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 function fixture(
   t: { after(fn: () => void): void },
@@ -48,16 +50,22 @@ function fixture(
       "astro.config.ts",
       'import {defineConfig} from "astro/config";\nimport svelte from "@astrojs/svelte";\nexport default defineConfig({integrations:[svelte()]});\n',
     );
-  const config = parseAppConfig(
+  const config = parseKitConfig(
     target === "astro"
       ? {
-          schemaVersion: 2,
+          schemaVersion: 1,
           target: "astro",
           layoutFile: "src/layouts/Layout.astro",
         }
-      : { schemaVersion: 1 },
+      : {
+          schemaVersion: 1,
+          target: "sveltekit",
+          layoutFile: "src/routes/+layout.svelte",
+        },
   );
   assert.ok(config.ok);
+  if (config.value.target === "svelte-library")
+    throw new Error("application fixture requires layout role");
   const paths = deriveKitPaths(config.value);
   project.writeFile(`${paths.stateDir}/kit.json`, JSON.stringify(config.value));
   return {
@@ -66,7 +74,7 @@ function fixture(
   };
 }
 
-test("Astro generates a genuine native layout and target-bound v2 semantic lock without Kit", (t) => {
+test("Astro generates a genuine native layout and target-bound canonical semantic lock without Kit", (t) => {
   const f = fixture(t);
   const valid = validateApplyPlan(f.composed);
   assert.ok(valid.ok, JSON.stringify(valid));
@@ -86,7 +94,7 @@ test("Astro generates a genuine native layout and target-bound v2 semantic lock 
       "utf8",
     ),
   );
-  assert.equal(lock.schemaVersion, 2);
+  assert.equal(lock.schemaVersion, 1);
   assert.equal(lock.target, "astro");
   assert.equal(
     lock.integrations.find((entry: { kind: string }) => entry.kind === "layout")
@@ -134,14 +142,16 @@ test("target decisions remain attached to original bytes and cannot be reinterpr
   assert.deepEqual(snapshotTree(f.project.root), before);
 });
 
-test("Astro recovery requires a v2 journal with the same explicit target and exact file role", () => {
+test("Astro recovery requires independent journal3 with the same explicit target and exact file role", () => {
   const base = {
-    schemaVersion: 2,
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     target: "astro",
     transactionId: "11111111-1111-4111-8111-111111111111",
     rootIdentity: "a".repeat(64),
     planDigest: "b".repeat(64),
-    phase: "planned",
+    phase: "prepared",
     operations: [],
     lock: null,
   };
@@ -152,7 +162,7 @@ test("Astro recovery requires a v2 journal with the same explicit target and exa
     stylesDir: "src/styles",
     layoutFile: "src/Layout.astro",
     stateDir: "src/ui/_kit",
-    configSchema: 2 as const,
+    configSchema: 1 as const,
     target: "astro" as const,
   };
   assert.ok(validateJournalTargets(parsed.value, roots).ok);
@@ -165,8 +175,7 @@ test("Astro recovery requires a v2 journal with the same explicit target and exa
   const { target: unused, ...old } = base;
   assert.equal(unused, "astro");
   const oldJournal = parseJournal(JSON.stringify({ ...old, schemaVersion: 1 }));
-  assert.ok(oldJournal.ok);
-  assert.equal(validateJournalTargets(oldJournal.value, roots).ok, false);
+  assert.equal(oldJournal.ok, false);
 });
 
 test("mapped locks cannot silently adopt or downgrade configuration schemas and publication checks the journal target", (t) => {
@@ -175,7 +184,7 @@ test("mapped locks cannot silently adopt or downgrade configuration schemas and 
   const context = {
     ...f.config,
     stateDir: f.paths.stateDir,
-    ...appLockContext(f.config),
+    ...generationFields(f.config),
   };
   assert.ok(parseKitLock(lock, "kit.lock.json", context).ok);
   const kit = {
@@ -188,29 +197,24 @@ test("mapped locks cannot silently adopt or downgrade configuration schemas and 
     ),
   };
   assert.ok(parseKitLock(kit).ok);
+  assert.equal(parseKitLock(kit, "kit.lock.json", context).ok, false);
+  const { target: ignored, ...v1 } = kit;
+  assert.equal(ignored, "sveltekit");
+  v1.schemaVersion = 1;
+  assert.equal(parseKitLock(v1).ok, false);
   assert.equal(
-    parseKitLock(kit, "kit.lock.json", {
+    parseKitLock(v1, "kit.lock.json", {
       stateDir: f.paths.stateDir,
       configSchema: 1,
       target: "sveltekit",
     }).ok,
     false,
   );
-  const { target: ignored, ...v1 } = kit;
-  assert.equal(ignored, "sveltekit");
-  v1.schemaVersion = 1;
-  assert.ok(parseKitLock(v1).ok);
-  assert.equal(
-    parseKitLock(v1, "kit.lock.json", {
-      stateDir: f.paths.stateDir,
-      configSchema: 2,
-      target: "sveltekit",
-    }).ok,
-    false,
-  );
   const parsed = parseJournal(
     JSON.stringify({
-      schemaVersion: 2,
+      createdDirs: [],
+      ignoreFiles: [],
+      schemaVersion: 3,
       target: "astro",
       transactionId: "11111111-1111-4111-8111-111111111111",
       rootIdentity: "a".repeat(64),
@@ -232,8 +236,12 @@ test("mapped locks cannot silently adopt or downgrade configuration schemas and 
   );
   const { target: removed, ...old } = parsed.value;
   assert.equal(removed, "astro");
+  assert.equal(
+    parseJournal(JSON.stringify({ ...old, schemaVersion: 1 })).ok,
+    false,
+  );
   const mismatched = validateLockForPublication(
-    { ...old, schemaVersion: 1 },
+    { ...parsed.value, target: "sveltekit" },
     f.composed.lock.bytes,
     f.paths.stateDir,
     context,
@@ -295,6 +303,6 @@ for (const target of ["astro", "sveltekit"] as const)
         "utf8",
       ),
     );
-    assert.equal(lock.target, target === "astro" ? "astro" : undefined);
-    assert.equal(lock.schemaVersion, target === "astro" ? 2 : 1);
+    assert.equal(lock.target, target);
+    assert.equal(lock.schemaVersion, 1);
   });

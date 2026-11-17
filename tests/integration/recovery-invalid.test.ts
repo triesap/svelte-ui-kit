@@ -19,25 +19,25 @@ import {
   writePublicationIntent,
 } from "../../src/codegen/publication-intent.js";
 import {
-  prepareJournal,
-  persistJournal,
-  serializeJournal,
-  type TransactionJournal,
-} from "../../src/codegen/transaction-journal.js";
-import {
   inspectTransactions,
   inspectUnchangedState,
   recoverTransaction,
 } from "../../src/codegen/recovery.js";
-import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 import { stageOperations } from "../../src/codegen/stage.js";
 import {
-  journalPath,
+  persistJournal,
+  prepareJournal,
+  serializeJournal,
+  type TransactionJournal,
+} from "../../src/codegen/transaction-journal.js";
+import {
   backupsDir,
-  stagedDir,
+  journalPath,
   publicationIntentPath,
+  stagedDir,
   transactionDir,
 } from "../../src/codegen/transaction-types.js";
+import { applyPreparedReplacements as applyReplacements } from "../helpers/replacement.js";
 import { RECOVERY_ROOTS, liveRootIdentity } from "../helpers/transactions.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
@@ -63,11 +63,14 @@ function writeJournal(root: string, id: string, text: string): void {
 
 function baseJournal(id: string): TransactionJournal {
   return {
-    schemaVersion: 1,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     transactionId: id,
     rootIdentity: "a".repeat(64),
     planDigest: "b".repeat(64),
-    phase: "planned",
+    phase: "prepared",
     operations: [],
     lock: null,
   };
@@ -165,7 +168,7 @@ for (const evidence of [
   "edited",
   "staged-lock",
 ] as const) {
-  test(`planned recovery positively qualifies ${evidence} physical evidence`, () => {
+  test(`prepared recovery qualifies ${evidence} physical evidence`, () => {
     withRoot((root) => {
       const id = "abacabadabacabad";
       const live = abs(root, "src/styles/kit.css");
@@ -197,13 +200,7 @@ for (const evidence of [
             applied: false,
           },
         ],
-        // Reserved intent fields alone do not prove publication or forbid planned cleanup.
-        lock: {
-          path: `${STATE_DIR}/kit.lock.json`,
-          digest: sha256Hex("lock"),
-          published: false,
-          unchanged: false,
-        },
+        lock: null,
       };
       writeJournal(root, id, serializeJournal(journal));
       const stage = abs(root, `${stagedDir(STATE_DIR, id)}/stage-0`);
@@ -224,28 +221,28 @@ for (const evidence of [
       )[0];
       assert.equal(
         inspection?.ok,
-        evidence === "clean",
+        evidence === "clean" || evidence === "backup",
         JSON.stringify(inspection),
       );
       const unchanged = inspectUnchangedState(root, STATE_DIR, RECOVERY_ROOTS);
       assert.equal(
         unchanged[0]?.code,
-        evidence === "clean"
+        evidence === "clean" || evidence === "backup"
           ? "RECOVERY_PENDING"
-          : evidence === "backup"
-            ? "RECOVERY_PHASE_CONTRADICTION"
-            : evidence === "staged-lock"
-              ? "RECOVERY_AMBIGUOUS_PUBLICATION"
-              : "RECOVERY_USER_EDIT",
+          : evidence === "edited"
+            ? "RECOVERY_USER_EDIT"
+            : "RECOVERY_PHASE_CONTRADICTION",
       );
       assert.deepEqual(snapshotTree(root), before);
       const result = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
       assert.equal(
         result.status,
-        evidence === "clean" ? "cleaned" : "refused",
+        evidence === "clean" || evidence === "backup"
+          ? "rolled_back"
+          : "refused",
         JSON.stringify(result),
       );
-      if (evidence === "clean") {
+      if (evidence === "clean" || evidence === "backup") {
         assert.equal(readFileSync(live, "utf8"), "old css");
         assert.equal(
           existsSync(abs(root, transactionDir(STATE_DIR, id))),
@@ -255,6 +252,47 @@ for (const evidence of [
         assert.deepEqual(snapshotTree(root), before);
       }
     });
+  });
+}
+
+for (const schemaVersion of [1, 2, 3]) {
+  test(`retired persisted planned journal${schemaVersion} cannot authorize recovery even with backup or publication evidence`, () => {
+    for (const evidence of ["backup", "publication"] as const)
+      withRoot((root) => {
+        const id = "afafafafafafafaf";
+        const journal = {
+          ...baseJournal(id),
+          schemaVersion,
+          phase: "planned",
+          rootIdentity: liveRootIdentity(root),
+        };
+        writeJournal(root, id, JSON.stringify(journal));
+        const evidencePath =
+          evidence === "backup"
+            ? `${backupsDir(STATE_DIR, id)}/backup-0`
+            : `${stagedDir(STATE_DIR, id)}/kit.lock.json`;
+        const physical = abs(root, evidencePath);
+        mkdirSync(path.dirname(physical), { recursive: true });
+        writeFileSync(physical, evidence === "backup" ? "old css" : "lock", {
+          mode: 0o644,
+        });
+        if (evidence === "publication")
+          writePublicationIntent(root, publicationIntentPath(STATE_DIR, id), {
+            schemaVersion: 1,
+            transactionId: id,
+            rootIdentity: journal.rootIdentity,
+            planDigest: journal.planDigest,
+            digest: sha256Hex("lock"),
+            mode: 0o644,
+            preimage: null,
+            staged: observeFileIdentity(physical),
+          });
+        const before = snapshotTree(root);
+        const outcome = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
+        assert.equal(outcome.status, "refused");
+        assert.equal(outcome.issues[0]?.code, "JOURNAL_INVALID");
+        assert.deepEqual(snapshotTree(root), before);
+      });
   });
 }
 
@@ -379,11 +417,12 @@ test("applied progress cannot discard a surviving staged operation image", () =>
   });
 });
 
-test("a historical planned lock intent with positive prepublication witness remains recoverable", () => {
+test("an applied unpublished lock intent with physical prepublication witness remains recoverable", () => {
   withRoot((root) => {
     const id = "aeaeaeaeaeaeaeae";
     const journal: TransactionJournal = {
       ...baseJournal(id),
+      phase: "applied",
       rootIdentity: liveRootIdentity(root),
       lock: {
         path: `${STATE_DIR}/kit.lock.json`,
@@ -411,7 +450,7 @@ test("a historical planned lock intent with positive prepublication witness rema
       true,
     );
     const result = recoverTransaction(root, STATE_DIR, id, RECOVERY_ROOTS);
-    assert.equal(result.status, "cleaned", JSON.stringify(result));
+    assert.equal(result.status, "rolled_back", JSON.stringify(result));
     assert.equal(existsSync(abs(root, transactionDir(STATE_DIR, id))), false);
     assert.equal(existsSync(abs(root, `${STATE_DIR}/kit.lock.json`)), false);
   });
@@ -434,7 +473,10 @@ test("age and PID alone cannot authorize destructive cleanup", () => {
     assert.equal(staged.ok, true);
     if (!staged.ok) return;
     const journal: TransactionJournal = {
-      schemaVersion: 1,
+      target: "sveltekit",
+      createdDirs: [],
+      ignoreFiles: [],
+      schemaVersion: 3,
       transactionId: id,
       rootIdentity: "a".repeat(64),
       planDigest: "b".repeat(64),

@@ -28,11 +28,11 @@ import {
   type ModelIssue,
   type ModelResult,
 } from "../registry/errors.js";
+import { INITIAL_PROTOCOL_VERSION } from "../registry/protocol-version.js";
 import {
   validateWithSchema,
   type SchemaAuthority,
 } from "../registry/schema.js";
-import { INITIAL_PROTOCOL_VERSION } from "../registry/versions.js";
 
 /** Schema document that owns the envelope shape. */
 export const COMMAND_ENVELOPE_SCHEMA = "command-envelope.schema.json";

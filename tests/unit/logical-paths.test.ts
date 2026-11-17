@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 
 import { parseKitConfig } from "../../src/project/config.js";
 import {
@@ -163,15 +164,24 @@ test("prefix siblings are not treated as overlapping or nested", () => {
 });
 
 test("config parsing rejects reserved and case-aliased target roots", () => {
-  const reserved = parseKitConfig({ schemaVersion: 1, uiDir: "src/CON" });
+  const reserved = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
+    schemaVersion: 1,
+    uiDir: "src/CON",
+  });
   assert.equal(reserved.ok, false);
   if (!reserved.ok) assert.equal(reserved.issues[0]?.code, "PATH_UNSAFE");
 
-  const trailing = parseKitConfig({ schemaVersion: 1, uiDir: "src/ui." });
+  const trailing = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
+    schemaVersion: 1,
+    uiDir: "src/ui.",
+  });
   assert.equal(trailing.ok, false);
   if (!trailing.ok) assert.equal(trailing.issues[0]?.code, "PATH_UNSAFE");
 
   const colon = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
     schemaVersion: 1,
     layoutFile: "src/a:b.svelte",
   });
@@ -179,7 +189,11 @@ test("config parsing rejects reserved and case-aliased target roots", () => {
   if (!colon.ok) assert.equal(colon.issues[0]?.code, "PATH_UNSAFE");
 
   for (const value of ["src/a?.svelte", "src/a*.svelte", "src/a|b.ts"]) {
-    const result = parseKitConfig({ schemaVersion: 1, uiDir: value });
+    const result = parseKitConfig({
+      ...DEFAULT_KIT_CONFIG,
+      schemaVersion: 1,
+      uiDir: value,
+    });
     assert.equal(result.ok, false, value);
     if (!result.ok) assert.equal(result.issues[0]?.code, "PATH_UNSAFE");
   }
@@ -187,7 +201,11 @@ test("config parsing rejects reserved and case-aliased target roots", () => {
 
 test("config diagnostics never echo an unsafe raw locator", () => {
   const value = "src/\u0007bad";
-  const result = parseKitConfig({ schemaVersion: 1, uiDir: value });
+  const result = parseKitConfig({
+    ...DEFAULT_KIT_CONFIG,
+    schemaVersion: 1,
+    uiDir: value,
+  });
   assert.equal(result.ok, false);
   if (result.ok) return;
   const issue = result.issues[0];

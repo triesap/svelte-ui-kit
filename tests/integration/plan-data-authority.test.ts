@@ -1,18 +1,18 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { validateApplyPlan } from "../../src/codegen/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
-import { captureSnapshot, observedText } from "../../src/codegen/snapshot.js";
-import { planInit } from "../../src/codegen/plan-init.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
+import { planInit } from "../../src/codegen/plan-init.js";
+import { captureSnapshot, observedText } from "../../src/codegen/snapshot.js";
 import {
   generationInputPaths,
   initializationFields,
-} from "../../src/project/generation-config.js";
-import { parseTargetConfig } from "../../src/project/target-config.js";
+  parseKitConfig,
+} from "../../src/project/config.js";
 import { generationFixture } from "../helpers/generation-fixture.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
@@ -184,13 +184,13 @@ test("semantic validation cannot borrow complete evidence then seal an authentic
     path.join(f.project.root, f.paths.stateDir, "kit.json"),
     "utf8",
   );
-  const config = parseTargetConfig(JSON.parse(configText));
+  const config = parseKitConfig(JSON.parse(configText));
   assert.ok(config.ok && config.value.target === "svelte-library");
   const lockPath = `${f.paths.stateDir}/kit.lock.json`,
     lockBytes = readFileSync(path.join(f.project.root, lockPath));
   const lock = JSON.parse(lockBytes.toString());
   const base = [
-    ...generationInputPaths(config.value),
+    ...generationInputPaths(),
     `${f.paths.stateDir}/kit.json`,
     lockPath,
     f.paths.rootExports,

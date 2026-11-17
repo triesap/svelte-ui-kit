@@ -14,20 +14,20 @@
  * `loadRegistrySnapshot` already enforces that.
  */
 import type { AssetProvider } from "./assets.js";
+import { validateCompatibility } from "./compatibility.js";
+import { planDependencies, type DependencyPlan } from "./dependency-plan.js";
 import { fail, ok, type ModelIssue, type ModelResult } from "./errors.js";
 import { loadRegistrySnapshot, type RegistrySnapshot } from "./load.js";
-import { planDependencies, type DependencyPlan } from "./dependency-plan.js";
 import { resolveClosure } from "./resolve.js";
+import {
+  createSchemaAuthority,
+  schemaPath,
+  SHIPPED_SCHEMAS,
+} from "./schema.js";
 import {
   validateResolvedTargets,
   type ResolvedTargets,
 } from "./validate-targets.js";
-import { validateCompatibility } from "./compatibility.js";
-import {
-  createSchemaAuthority,
-  SHIPPED_SCHEMAS,
-  schemaPath,
-} from "./schema.js";
 
 /** Fixed local schema identities the parser compiles. */
 export const SCHEMA_IDENTITIES: Readonly<Record<string, string>> =
@@ -40,7 +40,7 @@ export const SCHEMA_IDENTITIES: Readonly<Record<string, string>> =
     ),
   );
 
-/** The `schema/v1/...` logical paths of every shipped schema. */
+/** The `schema/...` logical paths of every shipped schema. */
 export const SCHEMA_PATHS: readonly string[] = Object.freeze(
   Object.keys(SHIPPED_SCHEMAS).map((file) => schemaPath(file)),
 );

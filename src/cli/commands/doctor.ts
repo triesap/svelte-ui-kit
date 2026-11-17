@@ -1,10 +1,7 @@
 import { parse, parseCss } from "svelte/compiler";
 import { sha256Hex } from "../../codegen/digest.js";
+import { generationFields, generationTarget } from "../../project/config.js";
 import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
-import {
-  generationFields,
-  generationTarget,
-} from "../../project/generation-config.js";
 import { projectRequests } from "../../registry/projection.js";
 import {
   isTokenMetadataPath,

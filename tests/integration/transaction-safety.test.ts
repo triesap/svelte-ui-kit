@@ -14,18 +14,18 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
+import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import {
   recoverTransaction,
   recoverTransactions,
 } from "../../src/codegen/recovery.js";
+import { faultAfter } from "../../src/codegen/transaction-hooks.js";
 import {
   persistJournal,
   type TransactionJournal,
 } from "../../src/codegen/transaction-journal.js";
-import { faultAfter } from "../../src/codegen/transaction-hooks.js";
 import {
   backupsDir,
   journalPath,
@@ -34,24 +34,25 @@ import {
   transactionsDir,
 } from "../../src/codegen/transaction-types.js";
 import {
-  RECOVERY_ROOTS,
-  clearOrphanedWriterLock,
-} from "../helpers/transactions.js";
-import {
-  runGuardedWorker,
-  spawnGuardedWorker,
-  waitForExit,
-  waitForHeld,
-} from "../helpers/guarded-process.js";
-import { snapshotTree } from "../helpers/tree-snapshot.js";
-import {
   abs,
+  capturedFixtureInit,
   GUARDED_LAYOUT,
   GUARDED_STATE,
   GUARDED_STYLES,
   GUARDED_UI,
   makeGuardedPlan,
 } from "../helpers/guarded-plan.js";
+import {
+  runGuardedWorker,
+  spawnGuardedWorker,
+  waitForExit,
+  waitForHeld,
+} from "../helpers/guarded-process.js";
+import {
+  clearOrphanedWriterLock,
+  RECOVERY_ROOTS,
+} from "../helpers/transactions.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 function withRoot(body: (root: string) => void): void {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-safety-"));
@@ -73,6 +74,7 @@ function lockValue(configHash: string): Uint8Array {
   return new TextEncoder().encode(
     `${JSON.stringify(
       {
+        target: "sveltekit",
         schemaVersion: 1,
         toolVersion: "0.1.0",
         registryVersion: "0.1.0",
@@ -177,10 +179,15 @@ test("a transaction-creation fault is typed and leaves no orphan", () => {
 test("the existing canonical lock mode is preserved", () => {
   withRoot((root) => {
     const lock = abs(root, lockPath(GUARDED_STATE));
-    mkdirSync(path.dirname(lock), { recursive: true });
-    writeFileSync(lock, lockValue("c".repeat(64)));
+    const installed = sealed(makeGuardedPlan(root));
+    assert.equal(applyPlan(installed).kind, "applied");
     chmodSync(lock, 0o640);
-    const plan = sealed(makeGuardedPlan(root));
+    const config = abs(root, `${GUARDED_STATE}/kit.json`);
+    writeFileSync(
+      config,
+      JSON.stringify(JSON.parse(readFileSync(config, "utf8"))),
+    );
+    const plan = sealed(capturedFixtureInit(root));
     const outcome = applyPlan(plan);
     assert.equal(outcome.kind, "applied");
     assert.equal(statSync(lock).mode & 0o777, 0o640);
@@ -191,7 +198,10 @@ test("recovery refuses a forged journal target outside the approved roots", () =
   withRoot((root) => {
     writeFileSync(abs(root, "notes.txt"), "keep me");
     const journal: TransactionJournal = {
-      schemaVersion: 1,
+      target: "sveltekit",
+      createdDirs: [],
+      ignoreFiles: [],
+      schemaVersion: 3,
       transactionId: ID,
       rootIdentity: "a".repeat(64),
       planDigest: "b".repeat(64),
@@ -229,7 +239,10 @@ test("recovery refuses a corrupted backup instead of restoring it", () => {
     mkdirSync(path.dirname(css), { recursive: true });
     writeFileSync(css, "new css");
     const journal: TransactionJournal = {
-      schemaVersion: 1,
+      target: "sveltekit",
+      createdDirs: [],
+      ignoreFiles: [],
+      schemaVersion: 3,
       transactionId: ID,
       rootIdentity: "a".repeat(64),
       planDigest: "b".repeat(64),
@@ -272,7 +285,10 @@ test("recovery refuses a symlinked ancestor and preserves outside files", () => 
       mkdirSync(abs(root, "src"), { recursive: true });
       symlinkSync(outside, abs(root, GUARDED_STYLES), "dir");
       const journal: TransactionJournal = {
-        schemaVersion: 1,
+        target: "sveltekit",
+        createdDirs: [],
+        ignoreFiles: [],
+        schemaVersion: 3,
         transactionId: ID,
         rootIdentity: "a".repeat(64),
         planDigest: "b".repeat(64),
@@ -316,7 +332,10 @@ test("published recovery retains an unexpected entry and refuses cleanup", () =>
     const lock = abs(root, lockPath(GUARDED_STATE));
     writeFileSync(lock, lockValue("d".repeat(64)));
     const journal: TransactionJournal = {
-      schemaVersion: 1,
+      target: "sveltekit",
+      createdDirs: [],
+      ignoreFiles: [],
+      schemaVersion: 3,
       transactionId: ID,
       rootIdentity: "a".repeat(64),
       planDigest: "b".repeat(64),
@@ -349,6 +368,8 @@ test("published recovery retains an unexpected entry and refuses cleanup", () =>
 
 function guardedOptions(root: string) {
   return {
+    configSchema: 1 as const,
+    target: "sveltekit" as const,
     root,
     uiDir: GUARDED_UI,
     stylesDir: GUARDED_STYLES,

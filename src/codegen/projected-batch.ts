@@ -1,8 +1,8 @@
 import {
   integrationMapping,
-  parseGenerationConfig as parseKitConfig,
-  type GenerationConfig as KitConfig,
-} from "../project/generation-config.js";
+  parseKitConfig,
+  type KitConfig,
+} from "../project/config.js";
 import {
   mappedIntegration,
   type LibraryIntegrationFields,
@@ -44,11 +44,7 @@ import {
  */
 import path from "node:path";
 
-import { deriveKitPaths } from "../project/config.js";
-import {
-  generationTarget,
-  isExplicitTargetConfig,
-} from "../project/generation-config.js";
+import { deriveKitPaths, generationTarget } from "../project/config.js";
 import { issue, type ModelIssue } from "../registry/errors.js";
 import {
   isTokenMetadataPath,
@@ -107,8 +103,8 @@ export interface ProjectedBatch {
   readonly stylesDir: string;
   readonly layoutFile: string;
   readonly styleEntry?: never;
-  readonly configSchema?: 2;
-  readonly target?: "sveltekit" | "astro";
+  readonly configSchema: 1;
+  readonly target: "sveltekit" | "astro";
   readonly targets: readonly ProjectedTarget[];
   readonly evidence: readonly ProjectedEvidence[];
   /**
@@ -272,11 +268,7 @@ export function resolveProjectedConfig(
     return { config: null, bytes, state, issues: validated.issues };
   }
   const issues: ModelIssue[] = [];
-  if (
-    isExplicitTargetConfig(validated.value)
-      ? batch.configSchema !== 2 || batch.target !== validated.value.target
-      : batch.configSchema !== undefined || batch.target !== undefined
-  )
+  if (batch.configSchema !== 1 || batch.target !== validated.value.target)
     issues.push(
       issue(
         "PROJECTED_TARGET_MISMATCH",
@@ -591,9 +583,7 @@ export function validateProjectedLock(
   const config = projected.config;
   if (
     config !== null &&
-    (isExplicitTargetConfig(config)
-      ? lock.schemaVersion !== 2 || lock.target !== config.target
-      : lock.schemaVersion !== 1 || lock.target !== undefined)
+    (lock.schemaVersion !== 1 || lock.target !== config.target)
   )
     issues.push(
       issue(

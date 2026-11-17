@@ -3,7 +3,7 @@ import {
   generationTarget,
   initializationFields,
   integrationMapping,
-} from "../../project/generation-config.js";
+} from "../../project/config.js";
 /** S081: orchestration consumes the accepted pure planner and guarded applier. */
 import { applyPlan, validateApplyPlan } from "../../codegen/apply.js";
 import { composeApplyPlan } from "../../codegen/compose.js";
@@ -11,11 +11,14 @@ import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
 import { planInit } from "../../codegen/plan-init.js";
 import { inspectUnchangedState } from "../../codegen/recovery.js";
 import { captureSnapshot, observedText } from "../../codegen/snapshot.js";
-import { DEFAULT_KIT_CONFIG, deriveKitPaths } from "../../project/config.js";
-import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
+import {
+  DEFAULT_KIT_CONFIG,
+  deriveKitPaths,
+  generationInputPaths,
+} from "../../project/config.js";
 import { inspectDependencyStateFromEvidence } from "../../project/dependencies.js";
+import { renderDependencyInstructionsFromEvidence } from "../../project/dependency-instructions.js";
 import { captureEnvironment } from "../../project/environment.js";
-import { generationInputPaths } from "../../project/generation-config.js";
 import { resolveProjectRoot } from "../../project/root.js";
 import { createAssetProvider } from "../../registry/assets.js";
 import { issue, type ModelIssue } from "../../registry/errors.js";
@@ -80,7 +83,7 @@ export function initialize(
         };
   const paths = deriveKitPaths(supplied);
   const snapshot = captureSnapshot(selected.value.root, [
-    ...generationInputPaths(supplied),
+    ...generationInputPaths(),
     paths.stateDir + "/kit.json",
     paths.stateDir + "/kit.lock.json",
     ...tokenMetadataPaths(paths.stateDir),

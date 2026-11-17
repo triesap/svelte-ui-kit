@@ -3,9 +3,9 @@ import {
   chmodSync,
   closeSync,
   fstatSync,
-  openSync,
   mkdirSync,
   mkdtempSync,
+  openSync,
   readdirSync,
   readFileSync,
   renameSync,
@@ -20,40 +20,52 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import { recoverTransactions } from "../../src/codegen/recovery.js";
 import {
+  identityDigest,
+  observeRootIdentity,
+} from "../../src/codegen/authority.js";
+import { composeApplyPlan } from "../../src/codegen/compose.js";
+import { parseKitLock } from "../../src/codegen/lock.js";
+import { holdMutationAuthority } from "../../src/codegen/mutation-authority.js";
+import { planAdd } from "../../src/codegen/plan-add.js";
+import { publishLock } from "../../src/codegen/publish-lock.js";
+import { recoverTransactions } from "../../src/codegen/recovery.js";
+import { captureSnapshot } from "../../src/codegen/snapshot.js";
+import { stageOperations } from "../../src/codegen/stage.js";
+import {
+  persistJournal,
+  type TransactionJournal,
+} from "../../src/codegen/transaction-journal.js";
+import {
+  journalPath,
   lockPath,
   publicationIntentPath,
   stagedDir,
   transactionsDir,
   writerLockDir,
 } from "../../src/codegen/transaction-types.js";
-import { publishLock } from "../../src/codegen/publish-lock.js";
-import { holdMutationAuthority } from "../../src/codegen/mutation-authority.js";
-import { stageOperations } from "../../src/codegen/stage.js";
-import {
-  persistJournal,
-  type TransactionJournal,
-} from "../../src/codegen/transaction-journal.js";
-import { journalPath } from "../../src/codegen/transaction-types.js";
-import {
-  observeRootIdentity,
-  identityDigest,
-} from "../../src/codegen/authority.js";
 import {
   acquireWriterLock,
   releaseWriterLock,
 } from "../../src/codegen/write-lock.js";
-import { snapshotTree } from "../helpers/tree-snapshot.js";
-import { RECOVERY_ROOTS } from "../helpers/transactions.js";
+import {
+  DEFAULT_KIT_CONFIG,
+  generationInputPaths,
+} from "../../src/project/config.js";
+import { createAssetProvider } from "../../src/registry/assets.js";
+import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import {
   abs,
+  capturedFixtureInit,
+  GUARDED_LAYOUT,
   GUARDED_STATE,
   GUARDED_STYLES,
   lockJson,
   makeGuardedPlan,
   write,
 } from "../helpers/guarded-plan.js";
+import { RECOVERY_ROOTS } from "../helpers/transactions.js";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 /**
  * RCLD04-R2-3: unique publication from a physical rename witness.
@@ -97,7 +109,10 @@ function publicationFixture(root: string, existing = true) {
   const identity = observeRootIdentity(root);
   if (!identity.ok) throw new Error("root unavailable");
   const journal: TransactionJournal = {
-    schemaVersion: 1,
+    target: "sveltekit",
+    createdDirs: [],
+    ignoreFiles: [],
+    schemaVersion: 3,
     transactionId: id,
     rootIdentity: identityDigest(identity.value),
     planDigest: "b".repeat(64),
@@ -177,7 +192,7 @@ for (const event of ["after-stage", "before-publish"] as const) {
             fixture.journal,
             lockJson("d".repeat(64)),
             0o644,
-            {},
+            RECOVERY_ROOTS,
             {
               before: (boundary) => {
                 if (event === "before-publish" && boundary === "lock:publish")
@@ -231,7 +246,7 @@ test("an absent canonical that appears at publication survives", () => {
         fixture.journal,
         lockJson("d".repeat(64)),
         0o644,
-        {},
+        RECOVERY_ROOTS,
         {
           before: (boundary) => {
             if (boundary !== "lock:publish") return;
@@ -266,7 +281,7 @@ test("publication cannot bless a canonical replaced before invocation", () => {
         fixture.journal,
         lockJson("d".repeat(64)),
         0o644,
-        {},
+        RECOVERY_ROOTS,
         undefined,
         undefined,
         fixture.authority,
@@ -293,7 +308,7 @@ for (const invalid of ["copied", "unheld"] as const) {
           fixture.journal,
           lockJson("d".repeat(64)),
           0o644,
-          {},
+          RECOVERY_ROOTS,
           undefined,
           undefined,
           invalid === "copied" ? { ...fixture.authority } : fixture.authority,
@@ -348,7 +363,7 @@ test("publication freezes intended bytes before returning hooks", () => {
         fixture.journal,
         bytes,
         0o644,
-        {},
+        RECOVERY_ROOTS,
         {
           before: (boundary) => {
             if (boundary === "lock:stage") bytes.fill(0);
@@ -379,7 +394,7 @@ test("a completed publication rename remains committed if its next hook throws",
         fixture.journal,
         bytes,
         0o644,
-        {},
+        RECOVERY_ROOTS,
         {
           before: (boundary) => {
             if (boundary === "durability:lock-publish")
@@ -513,50 +528,69 @@ for (const mutation of ["bytes", "mode", "identity", "writer"] as const) {
   });
 }
 
+function sameByteRepair(root: string) {
+  const initial = makeGuardedPlan(root);
+  const originalLayout = readFileSync(abs(root, GUARDED_LAYOUT));
+  assert.equal(applyPlan(sealed(initial)).kind, "applied");
+  const installedLayout = readFileSync(abs(root, GUARDED_LAYOUT));
+  const css = readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`));
+  writeFileSync(abs(root, GUARDED_LAYOUT), originalLayout);
+  const candidate = capturedFixtureInit(root);
+  const lock = readFileSync(abs(root, lockPath(GUARDED_STATE)));
+  assert.deepEqual(Buffer.from(candidate.lock.bytes), lock);
+  assert.ok(candidate.targets.some((target) => target.path === GUARDED_LAYOUT));
+  return {
+    plan: sealed(candidate),
+    originalLayout,
+    installedLayout,
+    css,
+    lock,
+  };
+}
+
 test("a same-byte interruption before the rename is not a false commit", () => {
   withRoot((root) => {
-    // Seed the canonical lock with exactly the planned publication bytes, so a
-    // digest-only classification would wrongly report a commit.
-    const bytes = new TextDecoder().decode(lockJson("d".repeat(64)));
-    write(root, lockPath(GUARDED_STATE), bytes);
-    const plan = sealed(makeGuardedPlan(root));
-    const outcome = applyPlan(plan, {
+    const fixture = sameByteRepair(root);
+    let reached = false;
+    const outcome = applyPlan(fixture.plan, {
       before: (boundary) => {
         if (boundary === "lock:publish") {
+          reached = true;
           throw new Error("interruption before canonical rename");
         }
       },
     });
+    assert.equal(reached, true);
     assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
-    assert.equal(
-      readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "old css",
+    assert.deepEqual(
+      readFileSync(abs(root, GUARDED_LAYOUT)),
+      fixture.originalLayout,
     );
-    assert.equal(
-      readFileSync(abs(root, lockPath(GUARDED_STATE)), "utf8"),
-      bytes,
+    assert.deepEqual(
+      readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`)),
+      fixture.css,
+    );
+    assert.deepEqual(
+      readFileSync(abs(root, lockPath(GUARDED_STATE))),
+      fixture.lock,
     );
   });
 });
 
 test("a canonical lock deleted before the rename is a contradiction that preserves source", () => {
   withRoot((root) => {
-    // Seed a real canonical preimage so its recorded physical identity proves
-    // the lock existed before the interrupted rename.
-    write(
-      root,
-      lockPath(GUARDED_STATE),
-      new TextDecoder().decode(lockJson("c".repeat(64))),
-    );
-    const plan = sealed(makeGuardedPlan(root));
-    const outcome = applyPlan(plan, {
+    const fixture = sameByteRepair(root);
+    let reached = false;
+    const outcome = applyPlan(fixture.plan, {
       before: (boundary) => {
         if (boundary === "lock:publish") {
+          reached = true;
           unlinkSync(abs(root, lockPath(GUARDED_STATE)));
           throw new Error("canonical was removed before the rename");
         }
       },
     });
+    assert.equal(reached, true);
     assert.equal(outcome.kind, "refused", JSON.stringify(outcome.issues));
     assert.ok(
       outcome.issues.some(
@@ -564,9 +598,88 @@ test("a canonical lock deleted before the rename is a contradiction that preserv
       ),
       JSON.stringify(outcome.issues),
     );
+    assert.deepEqual(
+      readFileSync(abs(root, GUARDED_LAYOUT)),
+      fixture.installedLayout,
+    );
+    assert.deepEqual(
+      readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`)),
+      fixture.css,
+    );
+  });
+});
+
+test("add publishes a physical witness when only canonical config formatting changes", () => {
+  withRoot((root) => {
+    assert.equal(applyPlan(sealed(makeGuardedPlan(root))).kind, "applied");
+    const configPath = `${GUARDED_STATE}/kit.json`;
+    const canonicalConfig = readFileSync(abs(root, configPath));
+    writeFileSync(
+      abs(root, configPath),
+      JSON.stringify(JSON.parse(canonicalConfig.toString())),
+    );
+    const beforeConfig = readFileSync(abs(root, configPath));
+    const lockBytes = readFileSync(abs(root, lockPath(GUARDED_STATE)));
+    const lock = parseKitLock(JSON.parse(lockBytes.toString()));
+    assert.ok(lock.ok, JSON.stringify(lock));
+    const registry = loadRegistrySnapshot(createAssetProvider(process.cwd()));
+    assert.ok(registry.ok, JSON.stringify(registry));
+    const snapshot = captureSnapshot(root, [
+      ...generationInputPaths(),
+      configPath,
+      lockPath(GUARDED_STATE),
+      `${DEFAULT_KIT_CONFIG.uiDir}/index.ts`,
+      `${GUARDED_STYLES}/kit.css`,
+      `${GUARDED_STYLES}/themes.css`,
+      `${GUARDED_STYLES}/app.css`,
+      GUARDED_LAYOUT,
+      ".gitignore",
+    ]);
+    assert.ok(snapshot.ok, JSON.stringify(snapshot));
+    const added = planAdd({
+      config: DEFAULT_KIT_CONFIG,
+      registry: registry.value,
+      snapshot: snapshot.value,
+      lock: lock.value,
+      addedRoots: [],
+      registryVersion: registry.value.root.registryVersion,
+      registryHash: registry.value.root.contentHash,
+    });
+    assert.ok(added.ok, JSON.stringify(added));
     assert.equal(
-      readFileSync(abs(root, `${GUARDED_STYLES}/kit.css`), "utf8"),
-      "old css/* svelte-ui-kit:start tokens */\n@layer svelte-ui-kit.tokens, svelte-ui-kit.themes, svelte-ui-kit.components;\n/* svelte-ui-kit:end tokens */",
+      added.value.executable,
+      true,
+      JSON.stringify(added.value.diagnostics),
+    );
+    assert.ok(added.value.writes.some((write) => write.path === configPath));
+    const publication = added.value.writes.find(
+      (write) => write.path === lockPath(GUARDED_STATE),
+    );
+    assert.ok(publication);
+    assert.deepEqual(Buffer.from(publication.bytes), lockBytes);
+    const composed = composeApplyPlan({
+      root,
+      config: DEFAULT_KIT_CONFIG,
+      snapshot: snapshot.value,
+      writes: added.value.writes,
+      exportAuthority: added.value.exportAuthority,
+    });
+    assert.ok(composed.ok, JSON.stringify(composed));
+    let reached = false;
+    const outcome = applyPlan(sealed(composed.value), {
+      before(boundary) {
+        if (boundary === "lock:publish") {
+          reached = true;
+          throw new Error("before same-byte publication");
+        }
+      },
+    });
+    assert.equal(reached, true);
+    assert.equal(outcome.kind, "refused", JSON.stringify(outcome));
+    assert.deepEqual(readFileSync(abs(root, configPath)), beforeConfig);
+    assert.deepEqual(
+      readFileSync(abs(root, lockPath(GUARDED_STATE))),
+      lockBytes,
     );
   });
 });
