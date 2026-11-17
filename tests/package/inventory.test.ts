@@ -49,7 +49,7 @@ test("real packed inventory contains only standalone distribution assets and run
       const logical = entry.slice("package/".length);
       assert.match(
         logical,
-        /^(?:dist\/|registry\/|schema\/|docs\/(?:README\.md$|CHANGELOG\.md$|getting-started\.md$|guides\/|reference\/)|package\.json$|README\.md$|NOTICE\.md$|LICENSE-MIT$|LICENSE-APACHE$)/,
+        /^(?:dist\/|assets\/|docs\/(?:README\.md$|CHANGELOG\.md$|getting-started\.md$|guides\/|reference\/)|package\.json$|README\.md$|NOTICE\.md$|LICENSE-MIT$|LICENSE-APACHE$)/,
         logical,
       );
       assert.doesNotMatch(
@@ -175,8 +175,8 @@ test("real packed inventory contains only standalone distribution assets and run
       }
     };
     visit("dist");
-    visit("schema");
-    visit("registry");
+    visit("assets/schemas");
+    visit("assets/registry");
     for (const file of ["LICENSE-MIT", "LICENSE-APACHE", "NOTICE.md"])
       assertBytes(file);
     const local = loadRegistrySnapshot(createAssetProvider(process.cwd()));

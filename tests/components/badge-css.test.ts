@@ -9,7 +9,7 @@ interface Rule {
 const source = JSON.parse(
   readFileSync("tests/fixtures/badge-candidate/source-css.json", "utf8"),
 ) as { source: { revision: string; sha256: string }; rules: Rule[] };
-const css = readFileSync("registry/styles/badge.css", "utf8");
+const css = readFileSync("assets/registry/styles/badge.css", "utf8");
 const rules: Rule[] = [];
 function collect(value: unknown): void {
   if (Array.isArray(value)) {

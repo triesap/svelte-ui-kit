@@ -27,7 +27,7 @@ Loading behavior does not implement an application action or async state store.
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/button.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/button.json) owns this inventory.
 
 | Export          | Kind  | Local target      |
 | --------------- | ----- | ----------------- |
@@ -39,9 +39,9 @@ The [authoritative manifest](../../../registry/ui/button.json) owns this invento
 Registry dependencies: `spinner`, `tokens`.
 Npm requirements: none.
 
-- [Authored button.svelte](../../../registry/ui/button.svelte)
-- [Authored button.types.ts](../../../registry/ui/button.types.ts)
-- [Managed button CSS](../../../registry/styles/button.css)
+- [Authored button.svelte](../../../assets/registry/ui/button.svelte)
+- [Authored button.types.ts](../../../assets/registry/ui/button.types.ts)
+- [Managed button CSS](../../../assets/registry/styles/button.css)
 
 Source adaptations preserve the original named surface: `Button`, `ButtonSize`, `ButtonType`, `ButtonVariant`. The names here describe source attribution, not extra target aliases.
 

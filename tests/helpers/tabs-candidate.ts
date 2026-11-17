@@ -16,7 +16,7 @@ export function buildTabsCandidate(complete = false) {
     for (const file of sources) {
       const target = path.join(fixture.root, "src/lib/candidate/tabs", file);
       mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, readFileSync(`registry/ui/tabs/${file}`));
+      writeFileSync(target, readFileSync(`assets/registry/ui/tabs/${file}`));
     }
     const route = `src/routes/${complete ? "tabs-parts" : "tabs-candidate"}/+page.svelte`;
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
@@ -75,7 +75,7 @@ export function buildTabsCandidate(complete = false) {
           ...(complete ? ["TabsTrigger", "TabsContent"] : []),
         ],
         catalogRegistered: JSON.parse(
-          readFileSync("registry/registry.json", "utf8"),
+          readFileSync("assets/registry/registry.json", "utf8"),
         ).items.some((item: { id: string }) => item.id === "tabs"),
         logs,
         files: Object.fromEntries(

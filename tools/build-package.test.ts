@@ -26,8 +26,7 @@ function fixture(t: { after(callback: () => void): void }) {
   for (const file of [
     "src",
     "tools",
-    "registry",
-    "schema",
+    "assets",
     "package.json",
     "pnpm-workspace.yaml",
     "tsconfig.json",

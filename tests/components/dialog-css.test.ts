@@ -12,7 +12,7 @@ interface Rule {
   selectors: string[];
   declarations: Declaration[];
 }
-const css = readFileSync("registry/styles/dialog.css", "utf8");
+const css = readFileSync("assets/registry/styles/dialog.css", "utf8");
 const source = JSON.parse(
   readFileSync("tests/fixtures/dialog-candidate/source-css.json", "utf8"),
 ) as { source: { revision: string; sha256: string }; rules: Rule[] };
@@ -83,7 +83,10 @@ test("all58 immutable source Dialog declarations retain fallbacks with only docu
 });
 test("all45 source Dialog customization hooks remain in actual CSS and portable v1 metadata", () => {
   const metadata = JSON.parse(
-    readFileSync("registry/contracts/component-customization-v1.json", "utf8"),
+    readFileSync(
+      "assets/registry/contracts/component-customization-v1.json",
+      "utf8",
+    ),
   ) as { properties: { name: string; scope: string; fallback: string }[] };
   const properties = metadata.properties.filter((p) => p.scope === "dialog");
   assert.equal(properties.length, 45);

@@ -324,7 +324,7 @@ export function checkDocs(root) {
   }
   try {
     const registry = JSON.parse(
-      readFileSync(localFile(root, "registry/registry.json"), "utf8"),
+      readFileSync(localFile(root, "assets/registry/registry.json"), "utf8"),
     );
     const items = registry.items;
     if (
@@ -361,7 +361,7 @@ export function checkDocs(root) {
     )
       fail(indexFile, "CATALOG", "missing or extra component reference page");
     for (const item of items) {
-      const manifestPath = "registry/" + item.manifest;
+      const manifestPath = "assets/registry/" + item.manifest;
       const manifest = JSON.parse(
         readFileSync(localFile(root, manifestPath), "utf8"),
       );
@@ -380,14 +380,14 @@ export function checkDocs(root) {
         ...(manifest.files ?? []),
         ...(manifest.styles ?? []),
       ])
-        localFile(root, "registry/" + asset.source);
+        localFile(root, "assets/registry/" + asset.source);
     }
   } catch (error) {
-    fail("registry/registry.json", "CATALOG", error.message);
+    fail("assets/registry/registry.json", "CATALOG", error.message);
   }
   for (const [file, pointer] of [
-    ["docs/reference/configuration.md", "schema/v1/kit.schema.json"],
-    ["docs/reference/cli.md", "schema/v1/command-envelope.schema.json"],
+    ["docs/reference/configuration.md", "assets/schemas/v1/kit.schema.json"],
+    ["docs/reference/cli.md", "assets/schemas/v1/command-envelope.schema.json"],
     ["docs/agents/native-dependency.md", "tools/native-dependency/recipe.json"],
   ]) {
     try {

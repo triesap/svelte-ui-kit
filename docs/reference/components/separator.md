@@ -25,7 +25,7 @@ The current default border on white meets 3:1; custom dark combinations still re
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/separator.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/separator.json) owns this inventory.
 
 | Export                 | Kind  | Local target         |
 | ---------------------- | ----- | -------------------- |
@@ -36,9 +36,9 @@ The [authoritative manifest](../../../registry/ui/separator.json) owns this inve
 Registry dependencies: `tokens`.
 Npm requirements: none.
 
-- [Authored separator.svelte](../../../registry/ui/separator.svelte)
-- [Authored separator.types.ts](../../../registry/ui/separator.types.ts)
-- [Managed separator CSS](../../../registry/styles/separator.css)
+- [Authored separator.svelte](../../../assets/registry/ui/separator.svelte)
+- [Authored separator.types.ts](../../../assets/registry/ui/separator.types.ts)
+- [Managed separator CSS](../../../assets/registry/styles/separator.css)
 
 Source adaptations preserve the original named surface: `Separator`, `SeparatorOrientation`. The names here describe source attribution, not extra target aliases.
 

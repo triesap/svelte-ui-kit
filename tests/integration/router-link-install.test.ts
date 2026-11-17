@@ -35,7 +35,10 @@ test("optional RouterLink declares exact native source reuse and dependency/styl
       (file) => file.owner === "router-link" && file.cohort === "router-link",
     ),
   );
-  const component = readFileSync("registry/ui/router-link.svelte", "utf8");
+  const component = readFileSync(
+    "assets/registry/ui/router-link.svelte",
+    "utf8",
+  );
   assert.match(component, /import Anchor from "\.\/anchor\.svelte"/);
   assert.doesNotMatch(
     component,
@@ -103,7 +106,7 @@ for (const custom of [false, true])
       ])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

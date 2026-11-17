@@ -24,7 +24,7 @@ import { refreshRegistryContent } from "./registry-content.js";
 export function copyCorePackage(source = process.cwd()) {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-core-package-"));
   try {
-    for (const file of ["dist", "schema", "registry", "package.json"])
+    for (const file of ["dist", "assets", "package.json"])
       cpSync(path.join(source, file), path.join(root, file), {
         recursive: true,
       });
@@ -163,19 +163,19 @@ export function evolveCore(
   const settledCustomization = snapshotTree(root);
   run(["sync"]);
   assert.deepEqual(snapshotTree(root), settledCustomization);
-  const revised = path.join(packageRoot, "registry/ui/button.svelte");
+  const revised = path.join(packageRoot, "assets/registry/ui/button.svelte");
   writeFileSync(
     revised,
     readFileSync(revised, "utf8") +
       "\n<!-- Synthetic core safe source revision -->\n",
   );
-  const manifestPath = path.join(packageRoot, "registry/ui/button.json");
+  const manifestPath = path.join(packageRoot, "assets/registry/ui/button.json");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
   const buttonRevision = inc(manifest.version, "patch");
   assert.ok(buttonRevision, "Button fixture requires a valid base version");
   manifest.version = buttonRevision;
   writeFileSync(manifestPath, JSON.stringify(manifest));
-  const registryPath = path.join(packageRoot, "registry/registry.json");
+  const registryPath = path.join(packageRoot, "assets/registry/registry.json");
   const registry = JSON.parse(readFileSync(registryPath, "utf8"));
   const registryRevision = inc(registry.registryVersion, "patch");
   assert.ok(registryRevision, "Registry fixture requires a valid base version");
@@ -212,7 +212,7 @@ export function evolveCore(
   assert.deepEqual(snapshotTree(root), afterSafe);
   const incomingClose = path.join(
     packageRoot,
-    "registry/ui/dialog/close.svelte",
+    "assets/registry/ui/dialog/close.svelte",
   );
   writeFileSync(
     incomingClose,
@@ -221,7 +221,7 @@ export function evolveCore(
       'type = "reset"',
     ),
   );
-  const dialogPath = path.join(packageRoot, "registry/ui/dialog.json");
+  const dialogPath = path.join(packageRoot, "assets/registry/ui/dialog.json");
   const dialog = JSON.parse(readFileSync(dialogPath, "utf8"));
   const dialogRevision = inc(dialog.version, "patch");
   assert.ok(dialogRevision, "Dialog fixture requires a valid base version");

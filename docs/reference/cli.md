@@ -29,7 +29,7 @@ See [configuration](configuration.md), [upgrading](../guides/upgrading.md) and
 
 ## Structured output and exits
 
-The [command envelope schema](../../schema/v1/command-envelope.schema.json) owns
+The [command envelope schema](../../assets/schemas/v1/command-envelope.schema.json) owns
 the independent v1 format: `{ schemaVersion, command, status, diagnostics,
 changes, data }`. Status is success/planned/no_change/warning/conflict/error/unsupported.
 Diagnostics have stable code, info/warn/error level, message and optional safe

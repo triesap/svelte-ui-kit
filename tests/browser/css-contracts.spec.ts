@@ -17,7 +17,10 @@ const properties: {
   fallback: string;
   scope: string;
 }[] = JSON.parse(
-  readFileSync("registry/contracts/component-customization-v1.json", "utf8"),
+  readFileSync(
+    "assets/registry/contracts/component-customization-v1.json",
+    "utf8",
+  ),
 ).properties;
 function override(grammar: string): string {
   if (grammar.includes("{1,4}")) return "13px 17px / 19px 23px";
@@ -50,19 +53,19 @@ for (const custom of [false, true])
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) throw new Error("Invalid aggregate CSS");
       const registry = JSON.parse(
-        readFileSync("registry/registry.json", "utf8"),
+        readFileSync("assets/registry/registry.json", "utf8"),
       );
       const styles: { source: string; blockId: string }[] =
         registry.items.flatMap(
           (item: { manifest: string }) =>
-            JSON.parse(readFileSync(`registry/${item.manifest}`, "utf8"))
+            JSON.parse(readFileSync(`assets/registry/${item.manifest}`, "utf8"))
               .styles,
         );
       expect(parsed.value.blocks.map((block) => block.id).sort()).toEqual(
         styles.map((style) => style.blockId).sort(),
       );
       for (const style of styles) {
-        const source = readFileSync(`registry/${style.source}`, "utf8");
+        const source = readFileSync(`assets/registry/${style.source}`, "utf8");
         const original = parseManagedCss(source);
         expect(original.ok).toBe(true);
         if (!original.ok) throw new Error(style.source);

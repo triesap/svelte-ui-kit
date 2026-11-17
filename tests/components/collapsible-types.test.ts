@@ -20,7 +20,7 @@ function diagnostics(body: string) {
     writeFileSync(path.join(root, "package.json"), '{"type":"module"}');
     writeFileSync(
       path.join(root, "src/collapsible.types.ts"),
-      readFileSync("registry/ui/collapsible/types.ts"),
+      readFileSync("assets/registry/ui/collapsible/types.ts"),
     );
     const fixture = path.join(root, "src/fixture.ts");
     writeFileSync(

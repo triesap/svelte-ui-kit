@@ -210,11 +210,11 @@ test("complete advertised root resolves every source style export and dependency
     ["anchor"],
   );
   assert.match(
-    readFileSync("registry/ui/alert-dialog/root.svelte", "utf8"),
+    readFileSync("assets/registry/ui/alert-dialog/root.svelte", "utf8"),
     /AlertDialog as BitsAlertDialog/,
   );
   assert.doesNotMatch(
-    readFileSync("registry/ui/alert-dialog/root.svelte", "utf8"),
+    readFileSync("assets/registry/ui/alert-dialog/root.svelte", "utf8"),
     /Dialog as BitsDialog/,
   );
 });

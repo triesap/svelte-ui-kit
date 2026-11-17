@@ -28,7 +28,7 @@ Nested theme overrides remain independent.
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/card.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/card.json) owns this inventory.
 
 | Export      | Kind  | Local target    |
 | ----------- | ----- | --------------- |
@@ -38,9 +38,9 @@ The [authoritative manifest](../../../registry/ui/card.json) owns this inventory
 Registry dependencies: `tokens`.
 Npm requirements: none.
 
-- [Authored card.svelte](../../../registry/ui/card.svelte)
-- [Authored card.types.ts](../../../registry/ui/card.types.ts)
-- [Managed card CSS](../../../registry/styles/card.css)
+- [Authored card.svelte](../../../assets/registry/ui/card.svelte)
+- [Authored card.types.ts](../../../assets/registry/ui/card.types.ts)
+- [Managed card CSS](../../../assets/registry/styles/card.css)
 
 Source adaptations preserve the original named surface: `Card`. The names here describe source attribution, not extra target aliases.
 

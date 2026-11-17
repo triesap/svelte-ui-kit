@@ -59,7 +59,7 @@ First-open callbacks and closed forceMount retain native limitations.
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/alert-dialog.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/alert-dialog.json) owns this inventory.
 
 | Export                        | Kind  | Local target            |
 | ----------------------------- | ----- | ----------------------- |
@@ -85,18 +85,18 @@ The [authoritative manifest](../../../registry/ui/alert-dialog.json) owns this i
 Registry dependencies: `tokens`.
 Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
-- [Authored alert-dialog/root.svelte](../../../registry/ui/alert-dialog/root.svelte)
-- [Authored alert-dialog/trigger.svelte](../../../registry/ui/alert-dialog/trigger.svelte)
-- [Authored alert-dialog/portal.svelte](../../../registry/ui/alert-dialog/portal.svelte)
-- [Authored alert-dialog/overlay.svelte](../../../registry/ui/alert-dialog/overlay.svelte)
-- [Authored alert-dialog/content.svelte](../../../registry/ui/alert-dialog/content.svelte)
-- [Authored alert-dialog/title.svelte](../../../registry/ui/alert-dialog/title.svelte)
-- [Authored alert-dialog/description.svelte](../../../registry/ui/alert-dialog/description.svelte)
-- [Authored alert-dialog/action.svelte](../../../registry/ui/alert-dialog/action.svelte)
-- [Authored alert-dialog/cancel.svelte](../../../registry/ui/alert-dialog/cancel.svelte)
-- [Authored alert-dialog/types.ts](../../../registry/ui/alert-dialog/types.ts)
-- [Authored alert-dialog/index.ts](../../../registry/ui/alert-dialog/index.ts)
-- [Managed alert-dialog CSS](../../../registry/styles/alert-dialog.css)
+- [Authored alert-dialog/root.svelte](../../../assets/registry/ui/alert-dialog/root.svelte)
+- [Authored alert-dialog/trigger.svelte](../../../assets/registry/ui/alert-dialog/trigger.svelte)
+- [Authored alert-dialog/portal.svelte](../../../assets/registry/ui/alert-dialog/portal.svelte)
+- [Authored alert-dialog/overlay.svelte](../../../assets/registry/ui/alert-dialog/overlay.svelte)
+- [Authored alert-dialog/content.svelte](../../../assets/registry/ui/alert-dialog/content.svelte)
+- [Authored alert-dialog/title.svelte](../../../assets/registry/ui/alert-dialog/title.svelte)
+- [Authored alert-dialog/description.svelte](../../../assets/registry/ui/alert-dialog/description.svelte)
+- [Authored alert-dialog/action.svelte](../../../assets/registry/ui/alert-dialog/action.svelte)
+- [Authored alert-dialog/cancel.svelte](../../../assets/registry/ui/alert-dialog/cancel.svelte)
+- [Authored alert-dialog/types.ts](../../../assets/registry/ui/alert-dialog/types.ts)
+- [Authored alert-dialog/index.ts](../../../assets/registry/ui/alert-dialog/index.ts)
+- [Managed alert-dialog CSS](../../../assets/registry/styles/alert-dialog.css)
 
 ## Source styling and fallback contracts
 

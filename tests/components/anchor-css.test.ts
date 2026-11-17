@@ -10,7 +10,7 @@ interface Rule {
 const source = JSON.parse(
   readFileSync("tests/fixtures/anchor-candidate/source-css.json", "utf8"),
 ) as { source: { revision: string; sha256: string }; rules: Rule[] };
-const css = readFileSync("registry/styles/anchor.css", "utf8");
+const css = readFileSync("assets/registry/styles/anchor.css", "utf8");
 const rules: Rule[] = [];
 function collect(value: unknown): void {
   if (Array.isArray(value)) {
@@ -70,7 +70,10 @@ test("immutable Anchor declarations preserve all 8 source layout control and sta
 
 test("Anchor appends nine source hooks while preserving all263 original customization records", () => {
   const contract = JSON.parse(
-    readFileSync("registry/contracts/component-customization-v1.json", "utf8"),
+    readFileSync(
+      "assets/registry/contracts/component-customization-v1.json",
+      "utf8",
+    ),
   );
   assert.ok(contract.properties.length >= 272);
   assert.equal(

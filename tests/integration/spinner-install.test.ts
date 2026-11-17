@@ -87,7 +87,9 @@ for (const custom of [false, true])
       const source = readFileSync(
         path.join(fixture.root, config.uiDir, "spinner.svelte"),
       );
-      assert.ok(source.equals(readFileSync("registry/ui/spinner.svelte")));
+      assert.ok(
+        source.equals(readFileSync("assets/registry/ui/spinner.svelte")),
+      );
       for (const file of lock.files)
         assert.equal(
           file.baseHash,

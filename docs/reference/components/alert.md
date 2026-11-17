@@ -27,7 +27,7 @@ Chromium accessibility-tree evidence does not measure screen-reader speech.
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/alert.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/alert.json) owns this inventory.
 
 | Export       | Kind  | Local target     |
 | ------------ | ----- | ---------------- |
@@ -37,9 +37,9 @@ The [authoritative manifest](../../../registry/ui/alert.json) owns this inventor
 Registry dependencies: `tokens`.
 Npm requirements: none.
 
-- [Authored alert.svelte](../../../registry/ui/alert.svelte)
-- [Authored alert.types.ts](../../../registry/ui/alert.types.ts)
-- [Managed alert CSS](../../../registry/styles/alert.css)
+- [Authored alert.svelte](../../../assets/registry/ui/alert.svelte)
+- [Authored alert.types.ts](../../../assets/registry/ui/alert.types.ts)
+- [Managed alert CSS](../../../assets/registry/styles/alert.css)
 
 Source adaptations preserve the original named surface: `Alert`. The names here describe source attribution, not extra target aliases.
 

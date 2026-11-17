@@ -42,14 +42,14 @@ for (const target of ["astro", "svelte-library"] as const)
     );
     const incomingOwner = createTempProject();
     t.after(() => incomingOwner.cleanup());
-    for (const name of ["registry", "schema"])
+    for (const name of ["assets"])
       cpSync(path.join(f.owner, name), path.join(incomingOwner.root, name), {
         recursive: true,
       });
     const item = f.registry.items.find((item) => item.id === "button")!;
     const style = path.join(
       incomingOwner.root,
-      "registry",
+      "assets/registry",
       item.manifest.styles[0]!.source,
     );
     const styleSource = readFileSync(style, "utf8"),
@@ -62,7 +62,11 @@ for (const target of ["astro", "svelte-library"] as const)
         `.kit-button { outline-offset: 7px; }\n${endMarker}`,
       ),
     );
-    const manifestPath = path.join(incomingOwner.root, item.manifestPath);
+    const manifestPath = path.join(
+      incomingOwner.root,
+      "assets",
+      item.manifestPath,
+    );
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     manifest.version = "0.1.99";
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
@@ -71,11 +75,11 @@ for (const target of ["astro", "svelte-library"] as const)
     const assets = f.registry.assets.map((asset) => ({
       path: asset.path,
       digest: sha256Hex(
-        readFileSync(path.join(incomingOwner.root, asset.path)),
+        readFileSync(path.join(incomingOwner.root, "assets", asset.path)),
       ),
     }));
     writeFileSync(
-      path.join(incomingOwner.root, "registry/registry.json"),
+      path.join(incomingOwner.root, "assets/registry/registry.json"),
       JSON.stringify(
         { ...basis, contentHash: computeRegistryContentHash(basis, assets) },
         null,

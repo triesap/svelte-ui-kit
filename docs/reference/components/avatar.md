@@ -34,7 +34,7 @@ Pinned Svelte SSR emits inline image event recorder attributes before hydration 
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/avatar.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/avatar.json) owns this inventory.
 
 | Export        | Kind  | Local target      |
 | ------------- | ----- | ----------------- |
@@ -44,9 +44,9 @@ The [authoritative manifest](../../../registry/ui/avatar.json) owns this invento
 Registry dependencies: `tokens`.
 Npm requirements: none.
 
-- [Authored avatar.svelte](../../../registry/ui/avatar.svelte)
-- [Authored avatar.types.ts](../../../registry/ui/avatar.types.ts)
-- [Managed avatar CSS](../../../registry/styles/avatar.css)
+- [Authored avatar.svelte](../../../assets/registry/ui/avatar.svelte)
+- [Authored avatar.types.ts](../../../assets/registry/ui/avatar.types.ts)
+- [Managed avatar CSS](../../../assets/registry/styles/avatar.css)
 
 Source adaptations preserve the original named surface: `Avatar`. The names here describe source attribution, not extra target aliases.
 

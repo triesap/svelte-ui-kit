@@ -20,7 +20,7 @@ function diagnostics(body: string) {
     writeFileSync(path.join(root, "package.json"), '{"type":"module"}');
     writeFileSync(
       path.join(root, "src/dialog.types.ts"),
-      readFileSync("registry/ui/dialog/types.ts"),
+      readFileSync("assets/registry/ui/dialog/types.ts"),
     );
     const fixture = path.join(root, "src/fixture.ts");
     writeFileSync(
@@ -119,13 +119,17 @@ for (const [name, body] of [
   });
 
 test("Dialog registration requires the complete single cohort and distinct Alert Dialog remains separate", () => {
-  const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  const root = JSON.parse(
+    readFileSync("assets/registry/registry.json", "utf8"),
+  );
   for (const id of ["dialog", "alert-dialog"])
     assert.equal(
       root.items.filter((item: { id: string }) => item.id === id).length,
       1,
     );
-  const item = JSON.parse(readFileSync("registry/ui/dialog.json", "utf8"));
+  const item = JSON.parse(
+    readFileSync("assets/registry/ui/dialog.json", "utf8"),
+  );
   assert.equal(item.files.length, 10);
   assert.equal(item.exports.length, 16);
   assert.ok(
@@ -134,7 +138,7 @@ test("Dialog registration requires the complete single cohort and distinct Alert
     ),
   );
   const alert = JSON.parse(
-    readFileSync("registry/ui/alert-dialog.json", "utf8"),
+    readFileSync("assets/registry/ui/alert-dialog.json", "utf8"),
   );
   const parts = [
     "Root",
@@ -167,7 +171,7 @@ test("Dialog registration requires the complete single cohort and distinct Alert
   );
   for (const part of parts) {
     const source = readFileSync(
-      `registry/ui/alert-dialog/${part.toLowerCase()}.svelte`,
+      `assets/registry/ui/alert-dialog/${part.toLowerCase()}.svelte`,
       "utf8",
     );
     assert.match(

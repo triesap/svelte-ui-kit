@@ -31,7 +31,7 @@ Default unchecked track/thumb contrast meets 3:1; customized colors still requir
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/switch.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/switch.json) owns this inventory.
 
 | Export        | Kind  | Local target      |
 | ------------- | ----- | ----------------- |
@@ -41,9 +41,9 @@ The [authoritative manifest](../../../registry/ui/switch.json) owns this invento
 Registry dependencies: `tokens`.
 Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
-- [Authored switch.svelte](../../../registry/ui/switch.svelte)
-- [Authored switch.types.ts](../../../registry/ui/switch.types.ts)
-- [Managed switch CSS](../../../registry/styles/switch.css)
+- [Authored switch.svelte](../../../assets/registry/ui/switch.svelte)
+- [Authored switch.types.ts](../../../assets/registry/ui/switch.types.ts)
+- [Managed switch CSS](../../../assets/registry/styles/switch.css)
 
 Source adaptations preserve the original named surface: `Switch`. The names here describe source attribution, not extra target aliases.
 

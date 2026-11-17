@@ -36,7 +36,7 @@ test("real Button declares complete native exports and direct source dependencie
       (file) => file.owner === "button" && file.cohort === "button",
     ),
   );
-  const component = readFileSync("registry/ui/button.svelte", "utf8");
+  const component = readFileSync("assets/registry/ui/button.svelte", "utf8");
   assert.match(component, /import Spinner from "\.\/spinner\.svelte"/);
   assert.doesNotMatch(
     component,
@@ -104,7 +104,7 @@ for (const custom of [false, true])
       ])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

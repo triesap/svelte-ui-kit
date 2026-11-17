@@ -36,7 +36,7 @@ test("real Status declares complete native exports and direct source dependencie
       (file) => file.owner === "status" && file.cohort === "status",
     ),
   );
-  const component = readFileSync("registry/ui/status.svelte", "utf8");
+  const component = readFileSync("assets/registry/ui/status.svelte", "utf8");
   assert.match(
     component,
     /import type \{ StatusProps \} from "\.\/status\.types\.js"/,
@@ -101,7 +101,7 @@ for (const custom of [false, true])
       for (const name of ["status.svelte", "status.types.ts"])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

@@ -45,7 +45,7 @@ Removing the currently focused part imperatively requires an application-owned f
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/tabs.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/tabs.json) owns this inventory.
 
 | Export             | Kind  | Local target    |
 | ------------------ | ----- | --------------- |
@@ -61,13 +61,13 @@ The [authoritative manifest](../../../registry/ui/tabs.json) owns this inventory
 Registry dependencies: `tokens`.
 Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
-- [Authored tabs/root.svelte](../../../registry/ui/tabs/root.svelte)
-- [Authored tabs/list.svelte](../../../registry/ui/tabs/list.svelte)
-- [Authored tabs/trigger.svelte](../../../registry/ui/tabs/trigger.svelte)
-- [Authored tabs/content.svelte](../../../registry/ui/tabs/content.svelte)
-- [Authored tabs/types.ts](../../../registry/ui/tabs/types.ts)
-- [Authored tabs/index.ts](../../../registry/ui/tabs/index.ts)
-- [Managed tabs CSS](../../../registry/styles/tabs.css)
+- [Authored tabs/root.svelte](../../../assets/registry/ui/tabs/root.svelte)
+- [Authored tabs/list.svelte](../../../assets/registry/ui/tabs/list.svelte)
+- [Authored tabs/trigger.svelte](../../../assets/registry/ui/tabs/trigger.svelte)
+- [Authored tabs/content.svelte](../../../assets/registry/ui/tabs/content.svelte)
+- [Authored tabs/types.ts](../../../assets/registry/ui/tabs/types.ts)
+- [Authored tabs/index.ts](../../../assets/registry/ui/tabs/index.ts)
+- [Managed tabs CSS](../../../assets/registry/styles/tabs.css)
 
 Source adaptations preserve the original named surface: `TabsActivation`, `TabsDirection`, `TabsList`, `TabsLoop`, `TabsOrientation`, `TabsPanel`, `TabsRoot`, `TabsTrigger`. The names here describe source attribution, not extra target aliases.
 

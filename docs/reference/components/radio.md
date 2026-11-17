@@ -39,7 +39,7 @@ Default boundary contrast meets 3:1 on the supported light surface; customized c
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/radio.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/radio.json) owns this inventory.
 
 | Export            | Kind  | Local target     |
 | ----------------- | ----- | ---------------- |
@@ -51,11 +51,11 @@ The [authoritative manifest](../../../registry/ui/radio.json) owns this inventor
 Registry dependencies: `tokens`.
 Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
-- [Authored radio/group.svelte](../../../registry/ui/radio/group.svelte)
-- [Authored radio/item.svelte](../../../registry/ui/radio/item.svelte)
-- [Authored radio/types.ts](../../../registry/ui/radio/types.ts)
-- [Authored radio/index.ts](../../../registry/ui/radio/index.ts)
-- [Managed radio CSS](../../../registry/styles/radio.css)
+- [Authored radio/group.svelte](../../../assets/registry/ui/radio/group.svelte)
+- [Authored radio/item.svelte](../../../assets/registry/ui/radio/item.svelte)
+- [Authored radio/types.ts](../../../assets/registry/ui/radio/types.ts)
+- [Authored radio/index.ts](../../../assets/registry/ui/radio/index.ts)
+- [Managed radio CSS](../../../assets/registry/styles/radio.css)
 
 Source adaptations preserve the original named surface: `Radio`. The names here describe source attribution, not extra target aliases.
 

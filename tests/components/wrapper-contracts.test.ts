@@ -27,7 +27,10 @@ function diagnostics(body: string) {
       "dialog/types.ts",
     ]) {
       mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-      writeFileSync(path.join(root, file), readFileSync(`registry/ui/${file}`));
+      writeFileSync(
+        path.join(root, file),
+        readFileSync(`assets/registry/ui/${file}`),
+      );
     }
     const fixture = path.join(root, "fixture.ts");
     writeFileSync(

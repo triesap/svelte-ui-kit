@@ -201,9 +201,13 @@ export function compoundRegistry(
   root: string,
   options: CompoundRegistryOptions = {},
 ): ReturnType<typeof loadRegistrySnapshot> {
-  cpSync(path.join(PKG_ROOT, "schema"), path.join(root, "schema"), {
-    recursive: true,
-  });
+  cpSync(
+    path.join(PKG_ROOT, "assets/schemas"),
+    path.join(root, "assets/schemas"),
+    {
+      recursive: true,
+    },
+  );
   const includeCard = options.includeCard ?? true;
   const card: CompoundItem = { ...CARD, body: options.cardBody ?? CARD.body };
   const itemsToWrite = includeCard ? [BUTTON, card] : [BUTTON];
@@ -229,7 +233,7 @@ export function compoundRegistry(
       })),
       registryDependencies: item.dependencies,
     });
-    write(root, `registry/ui/${item.id}.json`, manifest);
+    write(root, `assets/registry/ui/${item.id}.json`, manifest);
     assets.push({
       path: `registry/ui/${item.id}.json`,
       digest: hashBytes(utf8(manifest)) as string,
@@ -240,7 +244,7 @@ export function compoundRegistry(
         file.kind === "svelte"
           ? item.body
           : `export interface ${item.exports.find((entry) => entry.target === file.target && entry.kind === "type")?.name ?? `${item.id}Props`} {}\n`;
-      write(root, `registry/${file.source}`, body);
+      write(root, `assets/registry/${file.source}`, body);
       assets.push({
         path: `registry/${file.source}`,
         digest: hashBytes(utf8(body)) as string,
@@ -249,7 +253,7 @@ export function compoundRegistry(
     for (const style of item.styles) {
       const body =
         options.cssBodyOverrides?.[style.blockId] ?? `.${style.blockId} {}\n`;
-      write(root, `registry/${style.source}`, body);
+      write(root, `assets/registry/${style.source}`, body);
       assets.push({
         path: `registry/${style.source}`,
         digest: hashBytes(utf8(body)) as string,
@@ -264,7 +268,7 @@ export function compoundRegistry(
   };
   write(
     root,
-    "registry/registry.json",
+    "assets/registry/registry.json",
     JSON.stringify({
       ...basis,
       contentHash: computeRegistryContentHash(basis, assets),

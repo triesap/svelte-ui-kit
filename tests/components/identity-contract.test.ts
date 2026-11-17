@@ -15,14 +15,16 @@ const files = (dir: string): string[] =>
   );
 
 test("original identity has an explicit non generated disposition without registry aliases exports or dependencies", () => {
-  const registry = JSON.parse(read("registry/registry.json"));
+  const registry = JSON.parse(read("assets/registry/registry.json"));
   assert.equal(registry.items.length, 22);
   assert.equal(
     registry.items.some((item: { id: string }) => item.id === "identity"),
     false,
   );
   for (const item of registry.items) {
-    const manifest = JSON.parse(read(path.join("registry", item.manifest)));
+    const manifest = JSON.parse(
+      read(path.join("assets/registry", item.manifest)),
+    );
     assert.ok(!manifest.registryDependencies.includes("identity"));
     assert.ok(
       manifest.exports.every(
@@ -33,7 +35,7 @@ test("original identity has an explicit non generated disposition without regist
     );
   }
   assert.ok(
-    !files("registry/ui").some((file) =>
+    !files("assets/registry/ui").some((file) =>
       /[/\\]identity(?:[./\\]|$)/.test(file),
     ),
   );
@@ -45,7 +47,7 @@ test("original identity has an explicit non generated disposition without regist
 });
 
 test("registered Svelte instances introduce no module level identity state or provider counter clone", () => {
-  for (const file of files("registry/ui").filter((file) =>
+  for (const file of files("assets/registry/ui").filter((file) =>
     file.endsWith(".svelte"),
   )) {
     const source = read(file);
@@ -57,7 +59,7 @@ test("registered Svelte instances introduce no module level identity state or pr
       file,
     );
   }
-  for (const file of files("registry/ui").filter((file) =>
+  for (const file of files("assets/registry/ui").filter((file) =>
     file.endsWith(".ts"),
   )) {
     const source = ts.createSourceFile(
@@ -102,25 +104,28 @@ test("module state audit distinguishes a real module scope from per instance cod
 });
 
 test("Field native rune and context relationships retain exact caller precedence and deterministic message ownership", () => {
-  const root = read("registry/ui/field/root.svelte");
+  const root = read("assets/registry/ui/field/root.svelte");
   assert.match(root, /const generatedId = \$props\.id\(\)/);
   assert.match(root, /id \?\? generatedId/);
   assert.match(root, /controlId \?\? `\$\{base\}-control`/);
   assert.match(root, /encodeURIComponent\(key\)/);
   assert.match(root, /setContext\(FIELD_CONTEXT, context\)/);
   for (const name of ["text-input", "text-area", "native-select"]) {
-    const source = read(`registry/ui/field/${name}.svelte`);
+    const source = read(`assets/registry/ui/field/${name}.svelte`);
     assert.match(source, /const generatedId = \$props\.id\(\)/);
     assert.match(source, /id \?\? context\?\.controlId \?\? generatedId/);
   }
-  const label = read("registry/ui/field/label.svelte");
+  const label = read("assets/registry/ui/field/label.svelte");
   assert.match(label, /target === undefined \? context\?\.controlId : target/);
   assert.match(label, /for=\{controlTarget\}/);
   for (const name of ["text-field", "text-area-field", "select-field"]) {
-    const source = read(`registry/ui/field/${name}.svelte`);
+    const source = read(`assets/registry/ui/field/${name}.svelte`);
     assert.match(source, /<FieldRoot\s+\{id\}/);
   }
-  assert.match(read("registry/ui/field/context.ts"), /FIELD_CONTEXT = Symbol/);
+  assert.match(
+    read("assets/registry/ui/field/context.ts"),
+    /FIELD_CONTEXT = Symbol/,
+  );
 });
 
 test("pinned Svelte SSR identity allocation is per renderer and client hydration consumes its native marker", () => {

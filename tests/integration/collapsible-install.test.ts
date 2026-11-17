@@ -136,7 +136,7 @@ for (const custom of [false, true])
         assert.ok(
           readFileSync(
             path.join(fixture.root, config.uiDir, "collapsible", name),
-          ).equals(readFileSync(`registry/ui/collapsible/${name}`)),
+          ).equals(readFileSync(`assets/registry/ui/collapsible/${name}`)),
           name,
         );
       for (const file of lock.files)
@@ -351,7 +351,7 @@ test("actual built CLI refuses a required missing Collapsible asset before any c
     path.join(os.tmpdir(), "suik-collapsible-package-"),
   );
   try {
-    for (const directory of ["registry", "schema", "dist"])
+    for (const directory of ["assets", "dist"])
       cpSync(directory, path.join(packageRoot, directory), { recursive: true });
     cpSync("package.json", path.join(packageRoot, "package.json"));
     symlinkSync(
@@ -371,7 +371,9 @@ test("actual built CLI refuses a required missing Collapsible asset before any c
       0,
       initialized.stdout + initialized.stderr,
     );
-    rmSync(path.join(packageRoot, "registry/ui/collapsible/content.svelte"));
+    rmSync(
+      path.join(packageRoot, "assets/registry/ui/collapsible/content.svelte"),
+    );
     const before = snapshotTree(fixture.root);
     const refused = run(["add", "collapsible"]);
     assert.equal(refused.status, 12, refused.stdout + refused.stderr);

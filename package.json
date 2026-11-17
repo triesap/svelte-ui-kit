@@ -31,8 +31,7 @@
   },
   "files": [
     "dist",
-    "schema",
-    "registry",
+    "assets",
     "README.md",
     "NOTICE.md",
     "LICENSE-MIT",

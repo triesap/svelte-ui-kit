@@ -10,6 +10,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 import {
   createAssetProvider,
@@ -24,7 +25,9 @@ import {
  */
 
 function tempRoot(prefix = "suik-assets-"): string {
-  return mkdtempSync(path.join(os.tmpdir(), prefix));
+  const root = mkdtempSync(path.join(os.tmpdir(), prefix));
+  mkdirSync(path.join(root, "assets"));
+  return root;
 }
 
 test("the installed provider reads the bundled registry and schema", () => {
@@ -44,9 +47,9 @@ test("the installed provider reads the bundled registry and schema", () => {
 test("assets load from an isolated package root regardless of CWD", (t) => {
   const root = tempRoot();
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  mkdirSync(path.join(root, "registry"));
+  mkdirSync(path.join(root, "assets/registry"), { recursive: true });
   writeFileSync(
-    path.join(root, "registry", "registry.json"),
+    path.join(root, "assets/registry", "registry.json"),
     '{"isolated":true}\n',
   );
 
@@ -87,8 +90,10 @@ test("traversal, absolute and out-of-root paths are rejected", () => {
 test("missing and non-file assets are typed errors", (t) => {
   const root = tempRoot();
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  mkdirSync(path.join(root, "registry", "sub.json"), { recursive: true });
-  writeFileSync(path.join(root, "registry", "registry.json"), "{}\n");
+  mkdirSync(path.join(root, "assets/registry", "sub.json"), {
+    recursive: true,
+  });
+  writeFileSync(path.join(root, "assets/registry", "registry.json"), "{}\n");
   const provider = createAssetProvider(root);
 
   const missing = provider.readText("registry/missing.json");
@@ -103,11 +108,11 @@ test("missing and non-file assets are typed errors", (t) => {
 test("symlinked assets and escaping symlink ancestors are rejected", (t) => {
   const root = tempRoot();
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  mkdirSync(path.join(root, "registry"));
+  mkdirSync(path.join(root, "assets/registry"), { recursive: true });
   writeFileSync(path.join(root, "outside.json"), "{}\n");
   symlinkSync(
     path.join(root, "outside.json"),
-    path.join(root, "registry", "link.json"),
+    path.join(root, "assets/registry", "link.json"),
   );
   const provider = createAssetProvider(root);
   const linked = provider.readText("registry/link.json");
@@ -120,7 +125,7 @@ test("symlinked assets and escaping symlink ancestors are rejected", (t) => {
   const outside = tempRoot("suik-assets-outside-");
   t.after(() => rmSync(outside, { recursive: true, force: true }));
   writeFileSync(path.join(outside, "registry.json"), "{}\n");
-  symlinkSync(outside, path.join(escaped, "registry"));
+  symlinkSync(outside, path.join(escaped, "assets/registry"));
   const escaping = createAssetProvider(escaped).readText(
     "registry/registry.json",
   );
@@ -132,9 +137,9 @@ test("symlinked assets and escaping symlink ancestors are rejected", (t) => {
 test("invalid UTF-8 text is rejected while bytes remain readable", (t) => {
   const root = tempRoot();
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  mkdirSync(path.join(root, "registry"));
+  mkdirSync(path.join(root, "assets/registry"), { recursive: true });
   writeFileSync(
-    path.join(root, "registry", "bad.json"),
+    path.join(root, "assets/registry", "bad.json"),
     Uint8Array.from([0xff, 0xfe, 0x00]),
   );
   const provider = createAssetProvider(root);
@@ -150,7 +155,7 @@ test("the packaged asset inventory excludes authoring-only trees", () => {
   const manifest = JSON.parse(
     readFileSync(path.join(process.cwd(), "package.json"), "utf8"),
   ) as { files?: string[] };
-  for (const required of ["dist", "schema", "registry"]) {
+  for (const required of ["dist", "assets"]) {
     assert.ok(
       manifest.files?.includes(required),
       `files must include ${required}`,
@@ -164,10 +169,64 @@ test("a symlinked listing start directory is rejected", (t) => {
   const outside = tempRoot("suik-assets-list-outside-");
   t.after(() => rmSync(outside, { recursive: true, force: true }));
   writeFileSync(path.join(outside, "outside.json"), "{}\n");
-  symlinkSync(outside, path.join(root, "registry"));
+  symlinkSync(outside, path.join(root, "assets/registry"));
   const result = createAssetProvider(root).list("registry");
   assert.equal(result.ok, false);
   if (!result.ok) {
     assert.equal(result.issues[0]?.code, "ASSET_SYMLINK_ESCAPE");
   }
+});
+
+for (const boundary of ["assets", "registry", "nested"] as const)
+  test(`asset reads and lists reject linked ${boundary} ancestry inside the package`, (t) => {
+    const root = tempRoot();
+    t.after(() => rmSync(root, { recursive: true, force: true }));
+    const actual = path.join(root, "actual");
+    mkdirSync(path.join(actual, "assets/registry/nested"), { recursive: true });
+    writeFileSync(
+      path.join(actual, "assets/registry/nested/sample.json"),
+      "{}\n",
+    );
+    assert.equal(
+      createAssetProvider(actual).readText("registry/nested/sample.json").ok,
+      true,
+    );
+    if (boundary === "assets") {
+      rmSync(path.join(root, "assets"), { recursive: true });
+      symlinkSync(path.join(actual, "assets"), path.join(root, "assets"));
+    } else if (boundary === "registry")
+      symlinkSync(
+        path.join(actual, "assets/registry"),
+        path.join(root, "assets/registry"),
+      );
+    else {
+      mkdirSync(path.join(root, "assets/registry"));
+      symlinkSync(
+        path.join(actual, "assets/registry/nested"),
+        path.join(root, "assets/registry/nested"),
+      );
+    }
+    const provider = createAssetProvider(root),
+      before = snapshotTree(root);
+    for (const result of [
+      provider.readText("registry/nested/sample.json"),
+      provider.list("registry/nested"),
+    ]) {
+      assert.equal(result.ok, false);
+      if (!result.ok)
+        assert.equal(result.issues[0]?.code, "ASSET_SYMLINK_ESCAPE");
+    }
+    assert.deepEqual(snapshotTree(root), before);
+  });
+
+test("old physical asset roots never provide fallback authority", (t) => {
+  const root = tempRoot();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(path.join(root, "registry"));
+  writeFileSync(path.join(root, "registry/registry.json"), "{}\n");
+  const provider = createAssetProvider(root),
+    before = snapshotTree(root);
+  assert.equal(provider.readText("registry/registry.json").ok, false);
+  assert.deepEqual(provider.list("registry"), { ok: true, value: [] });
+  assert.deepEqual(snapshotTree(root), before);
 });

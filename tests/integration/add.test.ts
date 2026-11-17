@@ -128,13 +128,13 @@ test("add reports missing/incompatible dependency instructions without installin
   try {
     const manifestPath = "registry/ui/button.json";
     const manifest = JSON.parse(
-      readFileSync(path.join(fixture.pkg, manifestPath), "utf8"),
+      readFileSync(path.join(fixture.pkg, "assets", manifestPath), "utf8"),
     );
     manifest.npmDependencies = [
       { name: "upstream-fixture", range: "^2.19.3", role: "runtime" },
     ];
     const text = JSON.stringify(manifest);
-    write(fixture.pkg, manifestPath, text);
+    write(fixture.pkg, "assets/" + manifestPath, text);
     const root = { ...fixture.registry.root };
     const assets = fixture.registry.assets.map((entry) =>
       entry.path === manifestPath
@@ -143,7 +143,7 @@ test("add reports missing/incompatible dependency instructions without installin
     );
     write(
       fixture.pkg,
-      "registry/registry.json",
+      "assets/registry/registry.json",
       JSON.stringify({
         ...root,
         contentHash: computeRegistryContentHash(root, assets),

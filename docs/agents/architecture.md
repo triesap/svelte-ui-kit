@@ -2,7 +2,7 @@
 
 Scope: module responsibilities, observation/plan authority and installed asset
 composition. The implementation is modular TypeScript in `src`, with authored
-assets in `registry`, versioned formats in `schema` and executable controls in
+assets in `assets/registry`, versioned formats in `assets/schemas` and executable controls in
 `tests`/`tools`. There is one distributable CLI, not a runtime library ecosystem.
 
 ## Data flow and responsibilities
@@ -13,20 +13,27 @@ ownership → deterministic complete plan → guarded apply/recovery → app-own
 source/CSS/semantic lock. The application then runs SvelteKit with its native
 runtime dependencies; CLI internals never become app imports.
 
-| Boundary                         | Responsibility                                                                                                                                                                             |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| src/cli                          | Arguments, help/version, use-case orchestration, one result envelope and stable human/JSON channels/exits. No ad hoc writes or duplicate reconciliation engine.                            |
-| src/project                      | Explicit package identity, static safe configuration/mappings, physical paths and dependency observations. Do not evaluate app config or mutate workspace neighbors.                       |
-| src/registry                     | Package-relative asset provider, authenticated complete manifests/contracts, targets/exports/closure/dependency validation. No remote registry or caller plan self-certification.          |
-| src/codegen planners             | Immutable incoming bytes, previous lock and actual read-set observations produce deterministic changes/conflicts/dependency instructions. No writes, coordination or package installation. |
-| src/codegen patchers             | Narrow structural CSS/export/layout transformation that preserves unrelated text and rejects malformed/ambiguous structure. No whole-file formatting.                                      |
-| src/codegen transaction/recovery | Exclusive cooperative writer, revalidation, same-filesystem stage, journals, replacement, publication witness, rollback/roll-forward and owned cleanup.                                    |
-| registry/ui and registry/styles  | App-owned native/Bits wrapper markup, actual public types, source design classes/styles and complete compatibility cohorts. No CLI/Node imports or primitive state clone.                  |
+| Boundary                                      | Responsibility                                                                                                                                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| src/cli                                       | Arguments, help/version, use-case orchestration, one result envelope and stable human/JSON channels/exits. No ad hoc writes or duplicate reconciliation engine.                            |
+| src/project                                   | Explicit package identity, static safe configuration/mappings, physical paths and dependency observations. Do not evaluate app config or mutate workspace neighbors.                       |
+| src/registry                                  | Package-relative asset provider, authenticated complete manifests/contracts, targets/exports/closure/dependency validation. No remote registry or caller plan self-certification.          |
+| src/codegen planners                          | Immutable incoming bytes, previous lock and actual read-set observations produce deterministic changes/conflicts/dependency instructions. No writes, coordination or package installation. |
+| src/codegen patchers                          | Narrow structural CSS/export/layout transformation that preserves unrelated text and rejects malformed/ambiguous structure. No whole-file formatting.                                      |
+| src/codegen transaction/recovery              | Exclusive cooperative writer, revalidation, same-filesystem stage, journals, replacement, publication witness, rollback/roll-forward and owned cleanup.                                    |
+| assets/registry/ui and assets/registry/styles | App-owned native/Bits wrapper markup, actual public types, source design classes/styles and complete compatibility cohorts. No CLI/Node imports or primitive state clone.                  |
 
 ## Machine contracts and authority
 
+The package-relative provider resolves stable logical `registry/...` identifiers
+under `assets/registry/...` and logical schema paths under `assets/schemas/...`.
+Manifests, hashes and `view --source --json` retain their logical registry names;
+there is no old-directory or source-checkout fallback. Explicit tests inject a
+package root through the same provider. Schema filename, ID, validation and
+reported inventory derive from one schema catalog and path mapping.
+
 `package.json` owns scripts, identity, engines and pinned dependencies.
-[Registry inventory](../../registry/registry.json) and each manifest own IDs,
+[Registry inventory](../../assets/registry/registry.json) and each manifest own IDs,
 sources, targets, public exports, dependencies and compatibility. Versioned
 schemas own serialized input/output fields; reject unknown/unsupported variants.
 Schemas/protocol/package/registry/items/CSS/framework versions remain independent.

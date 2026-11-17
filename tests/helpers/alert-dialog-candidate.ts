@@ -33,7 +33,10 @@ export function buildAlertDialogCandidate(
         file,
       );
       mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, readFileSync(`registry/ui/alert-dialog/${file}`));
+      writeFileSync(
+        target,
+        readFileSync(`assets/registry/ui/alert-dialog/${file}`),
+      );
     }
     const routeName =
       stage === "actions"
@@ -102,7 +105,7 @@ export function buildAlertDialogCandidate(
         ],
         installation: "candidate-copy",
         catalogRegistered: JSON.parse(
-          readFileSync("registry/registry.json", "utf8"),
+          readFileSync("assets/registry/registry.json", "utf8"),
         ).items.some((item: { id: string }) => item.id === "alert-dialog"),
         logs,
         files: Object.fromEntries(

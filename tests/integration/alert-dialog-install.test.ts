@@ -142,7 +142,7 @@ for (const custom of [false, true])
         assert.ok(
           readFileSync(
             path.join(fixture.root, config.uiDir, "alert-dialog", name),
-          ).equals(readFileSync(`registry/ui/alert-dialog/${name}`)),
+          ).equals(readFileSync(`assets/registry/ui/alert-dialog/${name}`)),
           name,
         );
       for (const file of lock.files)
@@ -290,7 +290,7 @@ test("actual built CLI refuses a required missing AlertDialog asset before any c
     path.join(os.tmpdir(), "suik-alert-dialog-package-"),
   );
   try {
-    for (const directory of ["registry", "schema", "dist"])
+    for (const directory of ["assets", "dist"])
       cpSync(directory, path.join(packageRoot, directory), { recursive: true });
     cpSync("package.json", path.join(packageRoot, "package.json"));
     symlinkSync(
@@ -310,7 +310,9 @@ test("actual built CLI refuses a required missing AlertDialog asset before any c
       0,
       initialized.stdout + initialized.stderr,
     );
-    rmSync(path.join(packageRoot, "registry/ui/alert-dialog/content.svelte"));
+    rmSync(
+      path.join(packageRoot, "assets/registry/ui/alert-dialog/content.svelte"),
+    );
     const before = snapshotTree(fixture.root);
     const refused = run(["add", "alert-dialog"]);
     assert.equal(refused.status, 12, refused.stdout + refused.stderr);

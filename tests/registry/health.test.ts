@@ -60,30 +60,36 @@ function manifestText(id: string, source: string): string {
 function buildHealthFixture(t: { after: (fn: () => void) => void }): string {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-health-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  cpSync(path.join(process.cwd(), "schema"), path.join(root, "schema"), {
+  cpSync(
+    path.join(process.cwd(), "assets/schemas"),
+    path.join(root, "assets/schemas"),
+    {
+      recursive: true,
+    },
+  );
+  mkdirSync(path.join(root, "assets/registry", "ui"), { recursive: true });
+  mkdirSync(path.join(root, "assets/registry", "templates"), {
     recursive: true,
   });
-  mkdirSync(path.join(root, "registry", "ui"), { recursive: true });
-  mkdirSync(path.join(root, "registry", "templates"), { recursive: true });
 
   const buttonManifest = manifestText("button", "templates/button.svelte");
   writeFileSync(
-    path.join(root, "registry", "ui", "button.json"),
+    path.join(root, "assets/registry", "ui", "button.json"),
     buttonManifest,
   );
   writeFileSync(
-    path.join(root, "registry", "templates", "button.svelte"),
+    path.join(root, "assets/registry", "templates", "button.svelte"),
     SOURCE_TEXT,
   );
 
   // An unregistered candidate authoring item: its files exist but the root does
   // not advertise it.
   writeFileSync(
-    path.join(root, "registry", "ui", "spinner.json"),
+    path.join(root, "assets/registry", "ui", "spinner.json"),
     manifestText("spinner", "templates/spinner.svelte"),
   );
   writeFileSync(
-    path.join(root, "registry", "templates", "spinner.svelte"),
+    path.join(root, "assets/registry", "templates", "spinner.svelte"),
     SOURCE_TEXT,
   );
 
@@ -102,7 +108,7 @@ function buildHealthFixture(t: { after: (fn: () => void) => void }): string {
   };
   const contentHash = computeRegistryContentHash(basis, assets);
   writeFileSync(
-    path.join(root, "registry", "registry.json"),
+    path.join(root, "assets/registry", "registry.json"),
     `${JSON.stringify({ ...basis, contentHash }, null, 2)}\n`,
   );
   return root;
@@ -114,7 +120,9 @@ test("the shipped registry is healthy with no candidates", () => {
   );
   assert.equal(result.ok, true, JSON.stringify(result));
   if (result.ok) {
-    const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+    const root = JSON.parse(
+      readFileSync("assets/registry/registry.json", "utf8"),
+    );
     assert.deepEqual(
       result.value.advertised,
       root.items.map((item: { id: string }) => item.id),
@@ -138,7 +146,7 @@ test("advertised items are installable and candidates are not", (t) => {
 
 test("a schema identity mismatch fails", (t) => {
   const root = buildHealthFixture(t);
-  const kitPath = path.join(root, "schema", "v1", "kit.schema.json");
+  const kitPath = path.join(root, "assets/schemas", "v1", "kit.schema.json");
   const schema = JSON.parse(readFileSync(kitPath, "utf8")) as Record<
     string,
     unknown
@@ -154,7 +162,7 @@ test("a schema identity mismatch fails", (t) => {
 
 test("an advertised item missing its source fails health", (t) => {
   const root = buildHealthFixture(t);
-  rmSync(path.join(root, "registry", "templates", "button.svelte"));
+  rmSync(path.join(root, "assets/registry", "templates", "button.svelte"));
   const result = validateRegistryHealth(createAssetProvider(root));
   assert.equal(result.ok, false);
   if (!result.ok) {
@@ -165,7 +173,7 @@ test("an advertised item missing its source fails health", (t) => {
 test("a provided item schema that rejects everything fails health", (t) => {
   const root = buildHealthFixture(t);
   writeFileSync(
-    path.join(root, "schema", "v1", "registry-item.schema.json"),
+    path.join(root, "assets/schemas", "v1", "registry-item.schema.json"),
     `${JSON.stringify(
       {
         $id: "urn:svelte-ui-kit:schema:v1:registry-item",
@@ -189,7 +197,7 @@ test("a provided item schema that rejects everything fails health", (t) => {
 test("invalid UTF-8 advertised source bytes fail health", (t) => {
   const root = buildHealthFixture(t);
   writeFileSync(
-    path.join(root, "registry", "templates", "button.svelte"),
+    path.join(root, "assets/registry", "templates", "button.svelte"),
     Uint8Array.from([0xff, 0xfe]),
   );
   const result = validateRegistryHealth(createAssetProvider(root));
@@ -204,7 +212,7 @@ test("invalid UTF-8 advertised source bytes fail health", (t) => {
 
 test("a missing provider schema set fails health without throwing", (t) => {
   const root = buildHealthFixture(t);
-  rmSync(path.join(root, "schema"), { recursive: true, force: true });
+  rmSync(path.join(root, "assets/schemas"), { recursive: true, force: true });
   const result = validateRegistryHealth(createAssetProvider(root));
   assert.equal(result.ok, false);
   if (!result.ok) {
@@ -255,11 +263,17 @@ function buildInventoryFixture(
 ): string {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-inventory-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  cpSync(path.join(process.cwd(), "schema"), path.join(root, "schema"), {
+  cpSync(
+    path.join(process.cwd(), "assets/schemas"),
+    path.join(root, "assets/schemas"),
+    {
+      recursive: true,
+    },
+  );
+  mkdirSync(path.join(root, "assets/registry", "ui"), { recursive: true });
+  mkdirSync(path.join(root, "assets/registry", "templates"), {
     recursive: true,
   });
-  mkdirSync(path.join(root, "registry", "ui"), { recursive: true });
-  mkdirSync(path.join(root, "registry", "templates"), { recursive: true });
 
   const assets: { path: string; digest: string }[] = [];
   const items: { id: string; manifest: string }[] = [];
@@ -296,13 +310,19 @@ function buildInventoryFixture(
       npmDependencies: spec.npmDependencies ?? [],
     };
     const text = `${JSON.stringify(manifest, null, 2)}\n`;
-    writeFileSync(path.join(root, "registry", "ui", `${spec.id}.json`), text);
+    writeFileSync(
+      path.join(root, "assets/registry", "ui", `${spec.id}.json`),
+      text,
+    );
     assets.push({
       path: `registry/ui/${spec.id}.json`,
       digest: sha256Hex(text),
     });
     for (const file of files) {
-      writeFileSync(path.join(root, "registry", file.source), SOURCE_TEXT);
+      writeFileSync(
+        path.join(root, "assets/registry", file.source),
+        SOURCE_TEXT,
+      );
       assets.push({
         path: `registry/${file.source}`,
         digest: sha256Hex(SOURCE_TEXT),
@@ -310,7 +330,7 @@ function buildInventoryFixture(
     }
     for (const style of spec.styles ?? []) {
       const css = `.${style.blockId} {}\n`;
-      writeFileSync(path.join(root, "registry", style.source), css);
+      writeFileSync(path.join(root, "assets/registry", style.source), css);
       assets.push({
         path: `registry/${style.source}`,
         digest: sha256Hex(css),
@@ -325,7 +345,7 @@ function buildInventoryFixture(
     items,
   };
   writeFileSync(
-    path.join(root, "registry", "registry.json"),
+    path.join(root, "assets/registry", "registry.json"),
     `${JSON.stringify({ ...basis, contentHash: computeRegistryContentHash(basis, assets) }, null, 2)}\n`,
   );
   return root;
@@ -907,10 +927,24 @@ test("an unregistered candidate never joins the compatibility closure", (t) => {
     null,
     2,
   )}\n`;
-  writeFileSync(path.join(root, "registry", "ui", "ghost.json"), candidate);
+  writeFileSync(
+    path.join(root, "assets/registry", "ui", "ghost.json"),
+    candidate,
+  );
   const result = validateRegistryHealth(createAssetProvider(root));
   assert.equal(result.ok, true, JSON.stringify(result));
   if (result.ok) {
     assert.deepEqual(result.value.candidates, ["registry/ui/ghost.json"]);
+  }
+});
+
+test("every reported schema path opens through the same packaged asset provider", () => {
+  const provider = createAssetProvider(process.cwd());
+  const result = validateSchemaIdentities(provider);
+  assert.ok(result.ok, JSON.stringify(result));
+  for (const logical of result.value) {
+    const content = provider.readText(logical);
+    assert.ok(content.ok, logical);
+    assert.equal(typeof JSON.parse(content.value).$id, "string");
   }
 });

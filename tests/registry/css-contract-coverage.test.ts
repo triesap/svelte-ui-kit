@@ -3,13 +3,18 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { cssInventory } from "../helpers/css-inventory.js";
 
-const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+const registry = JSON.parse(
+  readFileSync("assets/registry/registry.json", "utf8"),
+);
 const manifests = registry.items.map((item: { manifest: string }) =>
-  JSON.parse(readFileSync(`registry/${item.manifest}`, "utf8")),
+  JSON.parse(readFileSync(`assets/registry/${item.manifest}`, "utf8")),
 );
 const rules = cssInventory();
 const contract = JSON.parse(
-  readFileSync("registry/contracts/component-customization-v1.json", "utf8"),
+  readFileSync(
+    "assets/registry/contracts/component-customization-v1.json",
+    "utf8",
+  ),
 );
 
 test("all 278 public properties have an authoritative parsed declaration use", () => {
@@ -27,7 +32,7 @@ test("all 278 public properties have an authoritative parsed declaration use", (
   const publicNames = new Set(
     contract.properties.map((p: { name: string }) => p.name),
   );
-  const theme = readFileSync("registry/styles/tokens.css", "utf8");
+  const theme = readFileSync("assets/registry/styles/tokens.css", "utf8");
   const optionalSourceTokens = new Set([
     "--kit-color-ghost",
     "--kit-color-ghost-foreground",
@@ -56,7 +61,7 @@ test("every authoritative kit class maps to component markup or the documented M
     .flatMap((manifest: { files: { source: string }[] }) =>
       manifest.files
         .filter((f) => f.source.endsWith(".svelte"))
-        .map((f) => readFileSync(`registry/${f.source}`, "utf8")),
+        .map((f) => readFileSync(`assets/registry/${f.source}`, "utf8")),
     )
     .join("\n");
   const map = readFileSync("docs/reference/components/menu.md", "utf8");
@@ -93,14 +98,14 @@ test("catalog owns each CSS source once and forbids parallel component pipelines
   assert.equal(styles.length, 21);
   assert.equal(new Set(styles.map((s) => s.source)).size, styles.length);
   for (const style of styles) {
-    const css = readFileSync(`registry/${style.source}`, "utf8");
+    const css = readFileSync(`assets/registry/${style.source}`, "utf8");
     assert.doesNotMatch(css, /@tailwind|@apply|@import|styled\(|css`/);
     assert.equal([...css.matchAll(/svelte-ui-kit:start /g)].length, 1);
   }
   for (const manifest of manifests)
     for (const file of manifest.files) {
       if (!file.source.endsWith(".svelte")) continue;
-      const source = readFileSync(`registry/${file.source}`, "utf8");
+      const source = readFileSync(`assets/registry/${file.source}`, "utf8");
       assert.doesNotMatch(
         source,
         /<style|import\s+["'][^"']*\.css["']|@tailwind|@apply/,

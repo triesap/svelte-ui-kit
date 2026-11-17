@@ -167,8 +167,7 @@ export function installIndependentCli() {
       "src",
       "tools",
       ".native-build",
-      "registry",
-      "schema",
+      "assets",
       "tsconfig.json",
       "package.json",
       "pnpm-workspace.yaml",
@@ -247,7 +246,7 @@ export function installIndependentCli() {
         readFileSync(path.join(packageRoot, "dist/cli/main.js")),
       ),
       registrySha256: sha256Hex(
-        readFileSync(path.join(packageRoot, "registry/registry.json")),
+        readFileSync(path.join(packageRoot, "assets/registry/registry.json")),
       ),
       manifest: JSON.parse(
         readFileSync(path.join(packageRoot, "package.json"), "utf8"),
@@ -399,7 +398,7 @@ export function installIndependentCli() {
     const clone = (name: string) => {
       const cloned = path.join(root, name);
       mkdirSync(cloned);
-      for (const file of ["dist", "registry", "schema", "package.json"])
+      for (const file of ["dist", "assets", "package.json"])
         cpSync(path.join(packageRoot, file), path.join(cloned, file), {
           recursive: true,
         });

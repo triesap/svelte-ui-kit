@@ -12,7 +12,7 @@ import path from "node:path";
 import { test } from "node:test";
 import ts from "typescript";
 
-const contract = readFileSync("registry/ui/spinner.types.ts", "utf8");
+const contract = readFileSync("assets/registry/ui/spinner.types.ts", "utf8");
 const mapping = readFileSync("docs/reference/components/spinner.md", "utf8");
 function diagnostics(body: string) {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-spinner-types-"));

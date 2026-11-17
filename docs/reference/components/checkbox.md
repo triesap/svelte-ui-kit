@@ -32,7 +32,7 @@ The source 1rem geometry, fixed check path and selected/disabled/focus styles re
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/checkbox.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/checkbox.json) owns this inventory.
 
 | Export          | Kind  | Local target        |
 | --------------- | ----- | ------------------- |
@@ -42,9 +42,9 @@ The [authoritative manifest](../../../registry/ui/checkbox.json) owns this inven
 Registry dependencies: `tokens`.
 Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
-- [Authored checkbox.svelte](../../../registry/ui/checkbox.svelte)
-- [Authored checkbox.types.ts](../../../registry/ui/checkbox.types.ts)
-- [Managed checkbox CSS](../../../registry/styles/checkbox.css)
+- [Authored checkbox.svelte](../../../assets/registry/ui/checkbox.svelte)
+- [Authored checkbox.types.ts](../../../assets/registry/ui/checkbox.types.ts)
+- [Managed checkbox CSS](../../../assets/registry/styles/checkbox.css)
 
 Source adaptations preserve the original named surface: `Checkbox`. The names here describe source attribution, not extra target aliases.
 

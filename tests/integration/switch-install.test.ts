@@ -36,7 +36,7 @@ test("real Switch declares complete native exports and direct source dependencie
       (file) => file.owner === "switch" && file.cohort === "switch",
     ),
   );
-  const component = readFileSync("registry/ui/switch.svelte", "utf8");
+  const component = readFileSync("assets/registry/ui/switch.svelte", "utf8");
   assert.match(component, /import \{ Switch as BitsSwitch \} from "bits-ui"/);
   assert.doesNotMatch(
     component,
@@ -98,7 +98,7 @@ for (const custom of [false, true])
       for (const name of ["switch.svelte", "switch.types.ts"])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

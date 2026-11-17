@@ -34,7 +34,7 @@ const mappings = [
   },
 ];
 const requested = JSON.parse(
-  readFileSync("registry/registry.json", "utf8"),
+  readFileSync("assets/registry/registry.json", "utf8"),
 ).items.map((item: { id: string }) => item.id) as string[];
 for (const mapping of mappings)
   test(`all catalog explicit mapping and workspace --cwd isolation: ${mapping.label}`, () => {
@@ -188,7 +188,7 @@ for (const mapping of mappings)
             bytes.equals(
               readFileSync(
                 path.join(
-                  "registry/ui",
+                  "assets/registry/ui",
                   file.path.slice(config.uiDir.length + 1),
                 ),
               ),

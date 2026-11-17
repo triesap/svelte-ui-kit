@@ -39,7 +39,7 @@ const write = (root: string, file: string, text: string) => {
 const read = (root: string, file: string) =>
   readFileSync(path.join(root, file), "utf8");
 function version(root: string, id: string, incoming: boolean) {
-  const file = `registry/ui/${id}.json`;
+  const file = `assets/registry/ui/${id}.json`;
   const manifest = JSON.parse(read(root, file));
   manifest.version = incoming
     ? revisions.incomingVersion
@@ -49,7 +49,7 @@ function version(root: string, id: string, incoming: boolean) {
 }
 function evolve(root: string, id: string) {
   const family = revisions.families.find((entry) => entry.id === id)!;
-  const source = `registry/ui/${family.source}`;
+  const source = `assets/registry/ui/${family.source}`;
   const previous = read(root, source);
   const needle = `"${family.className}",`;
   assert.equal(previous.split(needle).length, 2);
@@ -58,12 +58,12 @@ function evolve(root: string, id: string) {
     source,
     previous.replace(needle, `${needle} "kit-${id}-synthetic-upgrade",`),
   );
-  const style = read(root, `registry/styles/${id}.css`);
+  const style = read(root, `assets/registry/styles/${id}.css`);
   const end = `/* svelte-ui-kit:end ${id} */`;
   assert.equal(style.split(end).length, 2);
   write(
     root,
-    `registry/styles/${id}.css`,
+    `assets/registry/styles/${id}.css`,
     style.replace(
       end,
       `\n/* Synthetic compatible DOM/CSS revision */\n.kit-${id}-synthetic-upgrade { --synthetic-${id}-revision: 1; }\n${end}`,
@@ -71,15 +71,15 @@ function evolve(root: string, id: string) {
   );
   write(
     root,
-    `registry/ui/${family.types}`,
-    read(root, `registry/ui/${family.types}`) +
+    `assets/registry/ui/${family.types}`,
+    read(root, `assets/registry/ui/${family.types}`) +
       `\nexport type ${family.marker} = "synthetic-incoming";\n`,
   );
   if (id !== "button")
     write(
       root,
-      `registry/ui/${id}/index.ts`,
-      read(root, `registry/ui/${id}/index.ts`) +
+      `assets/registry/ui/${id}/index.ts`,
+      read(root, `assets/registry/ui/${id}/index.ts`) +
         `\nexport type { ${family.marker} } from "./types.js";\n`,
     );
   const manifest = version(root, id, true);
@@ -88,7 +88,7 @@ function evolve(root: string, id: string) {
     target: family.types,
     kind: "type",
   });
-  write(root, `registry/ui/${id}.json`, JSON.stringify(manifest));
+  write(root, `assets/registry/ui/${id}.json`, JSON.stringify(manifest));
 }
 for (const custom of [false, true])
   for (const scenario of revisions.scenarios)
@@ -211,8 +211,8 @@ for (const custom of [false, true])
           const marker = "SpinnerUpgradeMarker";
           write(
             pkg.root,
-            "registry/ui/spinner.types.ts",
-            read(pkg.root, "registry/ui/spinner.types.ts") +
+            "assets/registry/ui/spinner.types.ts",
+            read(pkg.root, "assets/registry/ui/spinner.types.ts") +
               `\nexport type ${marker} = "synthetic-dependent-api";\n`,
           );
           manifest.exports.push({
@@ -220,11 +220,21 @@ for (const custom of [false, true])
             target: "spinner.types.ts",
             kind: "type",
           });
-          write(pkg.root, "registry/ui/spinner.json", JSON.stringify(manifest));
+          write(
+            pkg.root,
+            "assets/registry/ui/spinner.json",
+            JSON.stringify(manifest),
+          );
         }
-        const registry = JSON.parse(read(pkg.root, "registry/registry.json"));
+        const registry = JSON.parse(
+          read(pkg.root, "assets/registry/registry.json"),
+        );
         registry.registryVersion = revisions.incomingVersion;
-        write(pkg.root, "registry/registry.json", JSON.stringify(registry));
+        write(
+          pkg.root,
+          "assets/registry/registry.json",
+          JSON.stringify(registry),
+        );
         refreshRegistryContent(pkg.root);
         const before = snapshotTree(consumer.root);
         const conflicting = [
@@ -256,14 +266,14 @@ for (const custom of [false, true])
             const installed = `${config.uiDir}/${family.source}`;
             assert.equal(
               read(consumer.root, installed),
-              read(pkg.root, `registry/ui/${family.source}`),
+              read(pkg.root, `assets/registry/ui/${family.source}`),
             );
             if (family.id === "menu" && scenario === "preserve-menu") continue;
             assert.equal(
               after.files.find((entry) => entry.path === installed)?.baseHash,
               sha256Hex(
                 readFileSync(
-                  path.join(pkg.root, `registry/ui/${family.source}`),
+                  path.join(pkg.root, `assets/registry/ui/${family.source}`),
                 ),
               ),
             );

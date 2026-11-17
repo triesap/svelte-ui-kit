@@ -349,9 +349,13 @@ test("default: a metadata-only commit publishes only the lock and survives recov
     // An empty registry with a bumped version changes only lock metadata.
     const altRoot = mkdtempSync(path.join(os.tmpdir(), "suik-restart-reg-"));
     try {
-      cpSync(path.join(PKG_ROOT, "schema"), path.join(altRoot, "schema"), {
-        recursive: true,
-      });
+      cpSync(
+        path.join(PKG_ROOT, "assets/schemas"),
+        path.join(altRoot, "assets/schemas"),
+        {
+          recursive: true,
+        },
+      );
       const basis = {
         schemaVersion: 1,
         registryVersion: "0.2.0",
@@ -360,7 +364,7 @@ test("default: a metadata-only commit publishes only the lock and survives recov
       };
       write(
         altRoot,
-        "registry/registry.json",
+        "assets/registry/registry.json",
         JSON.stringify({
           ...basis,
           contentHash: computeRegistryContentHash(basis, []),

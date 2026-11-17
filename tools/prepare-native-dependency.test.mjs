@@ -211,8 +211,7 @@ test(
       mkdirSync(author);
       for (const name of [
         "src",
-        "registry",
-        "schema",
+        "assets",
         "tsconfig.json",
         "package.json",
         "pnpm-workspace.yaml",

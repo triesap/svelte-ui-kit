@@ -116,7 +116,7 @@ Compatible measured policy uses nonce scripts, self-hosted CSS and allowed style
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/menu.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/menu.json) owns this inventory.
 
 | Export                   | Kind  | Local target    |
 | ------------------------ | ----- | --------------- |
@@ -140,17 +140,17 @@ The [authoritative manifest](../../../registry/ui/menu.json) owns this inventory
 Registry dependencies: `tokens`.
 Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
-- [Authored menu/root.svelte](../../../registry/ui/menu/root.svelte)
-- [Authored menu/trigger.svelte](../../../registry/ui/menu/trigger.svelte)
-- [Authored menu/portal.svelte](../../../registry/ui/menu/portal.svelte)
-- [Authored menu/content.svelte](../../../registry/ui/menu/content.svelte)
-- [Authored menu/item.svelte](../../../registry/ui/menu/item.svelte)
-- [Authored menu/radio-group.svelte](../../../registry/ui/menu/radio-group.svelte)
-- [Authored menu/radio-item.svelte](../../../registry/ui/menu/radio-item.svelte)
-- [Authored menu/item-indicator.svelte](../../../registry/ui/menu/item-indicator.svelte)
-- [Authored menu/types.ts](../../../registry/ui/menu/types.ts)
-- [Authored menu/index.ts](../../../registry/ui/menu/index.ts)
-- [Managed menu CSS](../../../registry/styles/menu.css)
+- [Authored menu/root.svelte](../../../assets/registry/ui/menu/root.svelte)
+- [Authored menu/trigger.svelte](../../../assets/registry/ui/menu/trigger.svelte)
+- [Authored menu/portal.svelte](../../../assets/registry/ui/menu/portal.svelte)
+- [Authored menu/content.svelte](../../../assets/registry/ui/menu/content.svelte)
+- [Authored menu/item.svelte](../../../assets/registry/ui/menu/item.svelte)
+- [Authored menu/radio-group.svelte](../../../assets/registry/ui/menu/radio-group.svelte)
+- [Authored menu/radio-item.svelte](../../../assets/registry/ui/menu/radio-item.svelte)
+- [Authored menu/item-indicator.svelte](../../../assets/registry/ui/menu/item-indicator.svelte)
+- [Authored menu/types.ts](../../../assets/registry/ui/menu/types.ts)
+- [Authored menu/index.ts](../../../assets/registry/ui/menu/index.ts)
+- [Managed menu CSS](../../../assets/registry/styles/menu.css)
 
 Source adaptations preserve the original named surface: `MenuContent`, `MenuContentAlign`, `MenuContentSide`, `MenuDirection`, `MenuItem`, `MenuItemIndicator`, `MenuItemKind`, `MenuLoop`, `MenuRadioItem`, `MenuRoot`, `MenuTrigger`. The names here describe source attribution, not extra target aliases.
 

@@ -58,9 +58,13 @@ function write(root: string, rel: string, data: string | Uint8Array): void {
 }
 
 function realRegistry(root: string): ReturnType<typeof loadRegistrySnapshot> {
-  cpSync(path.join(PKG_ROOT, "schema"), path.join(root, "schema"), {
-    recursive: true,
-  });
+  cpSync(
+    path.join(PKG_ROOT, "assets/schemas"),
+    path.join(root, "assets/schemas"),
+    {
+      recursive: true,
+    },
+  );
   const body = "<button>button</button>\n";
   const compatibility = INITIAL_COMPATIBILITY;
   const manifest = JSON.stringify({
@@ -81,8 +85,8 @@ function realRegistry(root: string): ReturnType<typeof loadRegistrySnapshot> {
     exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
     styles: [],
   });
-  write(root, "registry/ui/button.json", manifest);
-  write(root, "registry/templates/button.svelte", body);
+  write(root, "assets/registry/ui/button.json", manifest);
+  write(root, "assets/registry/templates/button.svelte", body);
   const assets = [
     {
       path: "registry/ui/button.json",
@@ -101,7 +105,7 @@ function realRegistry(root: string): ReturnType<typeof loadRegistrySnapshot> {
   };
   write(
     root,
-    "registry/registry.json",
+    "assets/registry/registry.json",
     JSON.stringify({
       ...basis,
       contentHash: computeRegistryContentHash(basis, assets),
@@ -113,9 +117,13 @@ function realRegistry(root: string): ReturnType<typeof loadRegistrySnapshot> {
 function realCompoundRegistry(
   root: string,
 ): ReturnType<typeof loadRegistrySnapshot> {
-  cpSync(path.join(PKG_ROOT, "schema"), path.join(root, "schema"), {
-    recursive: true,
-  });
+  cpSync(
+    path.join(PKG_ROOT, "assets/schemas"),
+    path.join(root, "assets/schemas"),
+    {
+      recursive: true,
+    },
+  );
   const compatibility = INITIAL_COMPATIBILITY;
   const files = [
     {
@@ -156,7 +164,7 @@ function realCompoundRegistry(
     "templates/dialog/root.svelte": "<div><slot /></div>\n",
     "templates/dialog/trigger.svelte": "<button>open</button>\n",
   };
-  write(root, "registry/ui/dialog.json", manifest);
+  write(root, "assets/registry/ui/dialog.json", manifest);
   const assets = [
     {
       path: "registry/ui/dialog.json",
@@ -164,7 +172,7 @@ function realCompoundRegistry(
     },
   ];
   for (const [source, body] of Object.entries(bodies)) {
-    write(root, `registry/${source}`, body);
+    write(root, `assets/registry/${source}`, body);
     assets.push({
       path: `registry/${source}`,
       digest: hashBytes(utf8(body)) as string,
@@ -178,7 +186,7 @@ function realCompoundRegistry(
   };
   write(
     root,
-    "registry/registry.json",
+    "assets/registry/registry.json",
     JSON.stringify({
       ...basis,
       contentHash: computeRegistryContentHash(basis, assets),

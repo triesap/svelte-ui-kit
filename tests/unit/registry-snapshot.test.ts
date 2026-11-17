@@ -57,15 +57,24 @@ function buildFixture(
   const rootId = options.rootId ?? "button";
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-snapshot-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  cpSync(path.join(process.cwd(), "schema"), path.join(root, "schema"), {
+  cpSync(
+    path.join(process.cwd(), "assets/schemas"),
+    path.join(root, "assets/schemas"),
+    {
+      recursive: true,
+    },
+  );
+  mkdirSync(path.join(root, "assets/registry", "ui"), { recursive: true });
+  mkdirSync(path.join(root, "assets/registry", "templates"), {
     recursive: true,
   });
-  mkdirSync(path.join(root, "registry", "ui"), { recursive: true });
-  mkdirSync(path.join(root, "registry", "templates"), { recursive: true });
   const manifest = manifestText(manifestId);
-  writeFileSync(path.join(root, "registry", "ui", "button.json"), manifest);
   writeFileSync(
-    path.join(root, "registry", "templates", "button.svelte"),
+    path.join(root, "assets/registry", "ui", "button.json"),
+    manifest,
+  );
+  writeFileSync(
+    path.join(root, "assets/registry", "templates", "button.svelte"),
     SOURCE_TEXT,
   );
   const assets = [
@@ -83,7 +92,7 @@ function buildFixture(
   };
   const contentHash = computeRegistryContentHash(basis, assets);
   writeFileSync(
-    path.join(root, "registry", "registry.json"),
+    path.join(root, "assets/registry", "registry.json"),
     `${JSON.stringify({ ...basis, contentHash }, null, 2)}\n`,
   );
   return root;
@@ -115,7 +124,7 @@ test("provider mutation after snapshot creation cannot change resolved bytes", (
   const before = result.value.items[0]?.files[0];
   assert.ok(before);
   writeFileSync(
-    path.join(root, "registry", "templates", "button.svelte"),
+    path.join(root, "assets/registry", "templates", "button.svelte"),
     "changed after snapshot\n",
   );
   assert.equal(before.bytes.length, Buffer.byteLength(SOURCE_TEXT));
@@ -138,7 +147,7 @@ test("a manifest whose id disagrees with the root is rejected", (t) => {
 
 test("a missing manifest and a missing source asset are typed errors", (t) => {
   const missingManifest = buildFixture(t);
-  rmSync(path.join(missingManifest, "registry", "ui", "button.json"));
+  rmSync(path.join(missingManifest, "assets/registry", "ui", "button.json"));
   const manifestResult = loadRegistrySnapshot(
     createAssetProvider(missingManifest),
   );
@@ -148,7 +157,9 @@ test("a missing manifest and a missing source asset are typed errors", (t) => {
   }
 
   const missingSource = buildFixture(t);
-  rmSync(path.join(missingSource, "registry", "templates", "button.svelte"));
+  rmSync(
+    path.join(missingSource, "assets/registry", "templates", "button.svelte"),
+  );
   const sourceResult = loadRegistrySnapshot(createAssetProvider(missingSource));
   assert.equal(sourceResult.ok, false);
   if (!sourceResult.ok) {
@@ -163,7 +174,7 @@ test("a missing manifest and a missing source asset are typed errors", (t) => {
 test("an invalid manifest fails deterministically", (t) => {
   const root = buildFixture(t);
   writeFileSync(
-    path.join(root, "registry", "ui", "button.json"),
+    path.join(root, "assets/registry", "ui", "button.json"),
     "{ not json\n",
   );
   const result = loadRegistrySnapshot(createAssetProvider(root));
@@ -175,7 +186,7 @@ test("an invalid manifest fails deterministically", (t) => {
 
 test("a tampered root content hash is rejected", (t) => {
   const root = buildFixture(t);
-  const registryPath = path.join(root, "registry", "registry.json");
+  const registryPath = path.join(root, "assets/registry", "registry.json");
   const parsed = JSON.parse(readFileSync(registryPath, "utf8")) as Record<
     string,
     unknown
@@ -191,7 +202,7 @@ test("a tampered root content hash is rejected", (t) => {
 test("the empty development registry loads with no assets", (t) => {
   const root = buildFixture(t);
   writeFileSync(
-    path.join(root, "registry", "registry.json"),
+    path.join(root, "assets/registry", "registry.json"),
     readFileSync("tests/fixtures/registry/empty.json"),
   );
   const result = loadRegistrySnapshot(createAssetProvider(root));
@@ -234,7 +245,7 @@ test("a snapshot is deeply immutable and byte views are defensive copies", (t) =
 
 test("missing provider schemas fail the snapshot", (t) => {
   const root = buildFixture(t);
-  rmSync(path.join(root, "schema"), { recursive: true, force: true });
+  rmSync(path.join(root, "assets/schemas"), { recursive: true, force: true });
   const result = loadRegistrySnapshot(createAssetProvider(root));
   assert.equal(result.ok, false);
   if (!result.ok) {
@@ -248,7 +259,7 @@ test("missing provider schemas fail the snapshot", (t) => {
 test("a provider item schema that rejects everything fails the snapshot", (t) => {
   const root = buildFixture(t);
   writeFileSync(
-    path.join(root, "schema", "v1", "registry-item.schema.json"),
+    path.join(root, "assets/schemas", "v1", "registry-item.schema.json"),
     `${JSON.stringify(
       {
         $id: "urn:svelte-ui-kit:schema:v1:registry-item",
@@ -271,7 +282,10 @@ test("a provider item schema that rejects everything fails the snapshot", (t) =>
 
 test("a non-object provider schema fails without throwing", (t) => {
   const root = buildFixture(t);
-  writeFileSync(path.join(root, "schema", "v1", "kit.schema.json"), "null");
+  writeFileSync(
+    path.join(root, "assets/schemas", "v1", "kit.schema.json"),
+    "null",
+  );
   const result = loadRegistrySnapshot(createAssetProvider(root));
   assert.equal(result.ok, false);
   if (!result.ok) {
@@ -282,7 +296,7 @@ test("a non-object provider schema fails without throwing", (t) => {
 test("invalid UTF-8 source bytes fail the snapshot", (t) => {
   const root = buildFixture(t);
   writeFileSync(
-    path.join(root, "registry", "templates", "button.svelte"),
+    path.join(root, "assets/registry", "templates", "button.svelte"),
     Uint8Array.from([0xff, 0xfe]),
   );
   const result = loadRegistrySnapshot(createAssetProvider(root));

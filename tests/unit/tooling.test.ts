@@ -547,7 +547,7 @@ test("reserved output and dependency trees are excluded at root and nested depth
 test("maintained consumer and registry source still fail for intended diagnostics and restore green", (t) => {
   const fixture = createFixture(t, "maintained-source");
   const maintainedRoots = [
-    "registry/components",
+    "assets/registry/components",
     "tests/fixtures/consumer/src",
   ] as const;
 

@@ -35,7 +35,7 @@ test("real Separator declares complete native exports and direct source dependen
       (file) => file.owner === "separator" && file.cohort === "separator",
     ),
   );
-  const component = readFileSync("registry/ui/separator.svelte", "utf8");
+  const component = readFileSync("assets/registry/ui/separator.svelte", "utf8");
   assert.match(
     component,
     /import type \{ SeparatorProps \} from "\.\/separator\.types\.js"/,
@@ -100,7 +100,7 @@ for (const custom of [false, true])
       for (const name of ["separator.svelte", "separator.types.ts"])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

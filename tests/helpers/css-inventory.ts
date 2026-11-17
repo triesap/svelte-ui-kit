@@ -7,18 +7,20 @@ export interface CssRule {
   declarations: { property: string; value: string }[];
 }
 export function cssInventory(): CssRule[] {
-  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  const registry = JSON.parse(
+    readFileSync("assets/registry/registry.json", "utf8"),
+  );
   const files: string[] = registry.items.flatMap(
     (item: { manifest: string }) => {
       const manifest = JSON.parse(
-        readFileSync(`registry/${item.manifest}`, "utf8"),
+        readFileSync(`assets/registry/${item.manifest}`, "utf8"),
       );
       return manifest.styles.map((style: { source: string }) => style.source);
     },
   );
   const rules: CssRule[] = [];
   for (const file of files.filter((file) => file !== "styles/tokens.css")) {
-    const css = readFileSync(`registry/${file}`, "utf8");
+    const css = readFileSync(`assets/registry/${file}`, "utf8");
     function walk(value: unknown): void {
       if (Array.isArray(value)) {
         value.forEach(walk);

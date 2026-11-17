@@ -60,9 +60,13 @@ function utf8(value: string): Uint8Array {
 
 /** A real on-disk registry for one `button` item, loaded through the validator. */
 function onDiskRegistry(root: string): ReturnType<typeof loadRegistrySnapshot> {
-  cpSync(path.join(PKG_ROOT, "schema"), path.join(root, "schema"), {
-    recursive: true,
-  });
+  cpSync(
+    path.join(PKG_ROOT, "assets/schemas"),
+    path.join(root, "assets/schemas"),
+    {
+      recursive: true,
+    },
+  );
   const body = "<button>button</button>\n";
   const compatibility = { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" };
   const manifest = JSON.stringify({
@@ -83,8 +87,8 @@ function onDiskRegistry(root: string): ReturnType<typeof loadRegistrySnapshot> {
     exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
     styles: [],
   });
-  write(root, "registry/ui/button.json", manifest);
-  write(root, "registry/templates/button.svelte", body);
+  write(root, "assets/registry/ui/button.json", manifest);
+  write(root, "assets/registry/templates/button.svelte", body);
   const assets = [
     {
       path: "registry/ui/button.json",
@@ -103,7 +107,7 @@ function onDiskRegistry(root: string): ReturnType<typeof loadRegistrySnapshot> {
   };
   write(
     root,
-    "registry/registry.json",
+    "assets/registry/registry.json",
     JSON.stringify({
       ...basis,
       contentHash: computeRegistryContentHash(basis, assets),

@@ -13,7 +13,7 @@ import { runCli } from "../helpers/cli.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
 const roots = JSON.parse(
-  readFileSync("registry/registry.json", "utf8"),
+  readFileSync("assets/registry/registry.json", "utf8"),
 ).items.map((i: { id: string }) => i.id) as string[];
 for (const custom of [false, true])
   test(`real full catalog retirement, detached customization and re-add ${custom ? "custom" : "default"}`, () => {
@@ -195,7 +195,7 @@ for (const custom of [false, true])
           read(record.path),
           readFileSync(
             path.join(
-              "registry/ui",
+              "assets/registry/ui",
               record.path.slice(config.uiDir.length + 1),
             ),
             "utf8",

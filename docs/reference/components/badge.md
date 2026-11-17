@@ -25,7 +25,7 @@ Application themes and direct radius overrides remain app-owned.
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/badge.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/badge.json) owns this inventory.
 
 | Export       | Kind  | Local target     |
 | ------------ | ----- | ---------------- |
@@ -35,9 +35,9 @@ The [authoritative manifest](../../../registry/ui/badge.json) owns this inventor
 Registry dependencies: `tokens`.
 Npm requirements: none.
 
-- [Authored badge.svelte](../../../registry/ui/badge.svelte)
-- [Authored badge.types.ts](../../../registry/ui/badge.types.ts)
-- [Managed badge CSS](../../../registry/styles/badge.css)
+- [Authored badge.svelte](../../../assets/registry/ui/badge.svelte)
+- [Authored badge.types.ts](../../../assets/registry/ui/badge.types.ts)
+- [Managed badge CSS](../../../assets/registry/styles/badge.css)
 
 Source adaptations preserve the original named surface: `Badge`. The names here describe source attribution, not extra target aliases.
 

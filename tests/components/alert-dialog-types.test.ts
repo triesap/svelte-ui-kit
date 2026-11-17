@@ -23,7 +23,7 @@ function diagnostics(body: string) {
     writeFileSync(path.join(root, "package.json"), '{"type":"module"}');
     writeFileSync(
       path.join(root, "src/alert-dialog.types.ts"),
-      readFileSync("registry/ui/alert-dialog/types.ts"),
+      readFileSync("assets/registry/ui/alert-dialog/types.ts"),
     );
     const fixture = path.join(root, "src/fixture.ts");
     writeFileSync(
@@ -142,9 +142,11 @@ test("owned unadvertised Alert Dialog candidate is refused and never aliased thr
     path.join(os.tmpdir(), "suik-unadvertised-alert-"),
   );
   try {
-    for (const directory of ["registry", "schema"])
+    for (const directory of ["assets"])
       cpSync(directory, path.join(isolated, directory), { recursive: true });
-    const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+    const root = JSON.parse(
+      readFileSync("assets/registry/registry.json", "utf8"),
+    );
     assert.ok(root.items.some((item: { id: string }) => item.id === "dialog"));
     assert.ok(
       root.items.some((item: { id: string }) => item.id === "alert-dialog"),
@@ -153,11 +155,13 @@ test("owned unadvertised Alert Dialog candidate is refused and never aliased thr
       (item: { id: string }) => item.id !== "alert-dialog",
     );
     writeFileSync(
-      path.join(isolated, "registry/registry.json"),
+      path.join(isolated, "assets/registry/registry.json"),
       JSON.stringify(root),
     );
     refreshRegistryContent(isolated);
-    const item = JSON.parse(readFileSync("registry/ui/dialog.json", "utf8"));
+    const item = JSON.parse(
+      readFileSync("assets/registry/ui/dialog.json", "utf8"),
+    );
     assert.equal(item.files.length, 10);
     assert.equal(item.exports.length, 16);
     assert.ok(

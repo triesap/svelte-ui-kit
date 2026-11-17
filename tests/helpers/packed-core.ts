@@ -91,7 +91,7 @@ export function installPackedCore() {
       installLogs,
       hostInstall,
       registrySha256: sha256Hex(
-        readFileSync(path.join(packageRoot, "registry/registry.json")),
+        readFileSync(path.join(packageRoot, "assets/registry/registry.json")),
       ),
       executableSha256: sha256Hex(
         readFileSync(path.join(packageRoot, "dist/cli/main.js")),

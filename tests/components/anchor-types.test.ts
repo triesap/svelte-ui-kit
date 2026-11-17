@@ -20,7 +20,7 @@ function diagnostics(body: string) {
     writeFileSync(path.join(root, "package.json"), '{"type":"module"}');
     writeFileSync(
       path.join(root, "src/anchor.types.ts"),
-      readFileSync("registry/ui/anchor.types.ts"),
+      readFileSync("assets/registry/ui/anchor.types.ts"),
     );
     const fixture = path.join(root, "src/fixture.ts");
     writeFileSync(

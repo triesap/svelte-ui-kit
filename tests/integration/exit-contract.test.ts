@@ -70,7 +70,7 @@ function setup(label: string, fixture: ReturnType<typeof cliPackage>) {
       recursive: true,
     });
     symlinkSync(
-      path.join(fixture.pkg, "registry/templates/button.svelte"),
+      path.join(fixture.pkg, "assets/registry/templates/button.svelte"),
       path.join(fixture.root, DEFAULT_KIT_CONFIG.uiDir, "button.svelte"),
     );
   }

@@ -24,7 +24,7 @@ Its registry dependency is Anchor; shared styles arrive through that closure.
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/router-link.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/router-link.json) owns this inventory.
 
 | Export            | Kind  | Local target           |
 | ----------------- | ----- | ---------------------- |
@@ -34,8 +34,8 @@ The [authoritative manifest](../../../registry/ui/router-link.json) owns this in
 Registry dependencies: `anchor`.
 Npm requirements: none.
 
-- [Authored router-link.svelte](../../../registry/ui/router-link.svelte)
-- [Authored router-link.types.ts](../../../registry/ui/router-link.types.ts)
+- [Authored router-link.svelte](../../../assets/registry/ui/router-link.svelte)
+- [Authored router-link.types.ts](../../../assets/registry/ui/router-link.types.ts)
 
 Source adaptations preserve the original named surface: `RouterLink`. The names here describe source attribution, not extra target aliases.
 

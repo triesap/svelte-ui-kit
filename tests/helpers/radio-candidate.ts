@@ -11,7 +11,7 @@ export function buildRadioCandidate() {
     for (const file of sources) {
       const target = path.join(fixture.root, "src/lib/candidate/radio", file);
       mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, readFileSync(`registry/ui/radio/${file}`));
+      writeFileSync(target, readFileSync(`assets/registry/ui/radio/${file}`));
     }
     const route = "src/routes/radio-candidate/+page.svelte";
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
@@ -64,7 +64,7 @@ export function buildRadioCandidate() {
         installation: "candidate-copy",
         authored: ["RadioGroup", "RadioItem"],
         catalogRegistered: JSON.parse(
-          readFileSync("registry/registry.json", "utf8"),
+          readFileSync("assets/registry/registry.json", "utf8"),
         ).items.some((item: { id: string }) => item.id === "radio"),
         logs,
         files: Object.fromEntries(

@@ -77,9 +77,13 @@ function onDiskRegistry(
   root: string,
   options: RegistryOptions = {},
 ): ReturnType<typeof loadRegistrySnapshot> {
-  cpSync(path.join(PKG_ROOT, "schema"), path.join(root, "schema"), {
-    recursive: true,
-  });
+  cpSync(
+    path.join(PKG_ROOT, "assets/schemas"),
+    path.join(root, "assets/schemas"),
+    {
+      recursive: true,
+    },
+  );
   const body = options.body ?? "<button>button</button>\n";
   const includeButton = options.includeButton ?? true;
   const assets: { path: string; digest: string }[] = [];
@@ -103,8 +107,8 @@ function onDiskRegistry(
       exports: [{ name: "Button", target: "button.svelte", kind: "value" }],
       styles: [],
     });
-    write(root, "registry/ui/button.json", manifest);
-    write(root, "registry/templates/button.svelte", body);
+    write(root, "assets/registry/ui/button.json", manifest);
+    write(root, "assets/registry/templates/button.svelte", body);
     assets.push(
       {
         path: "registry/ui/button.json",
@@ -125,7 +129,7 @@ function onDiskRegistry(
   };
   write(
     root,
-    "registry/registry.json",
+    "assets/registry/registry.json",
     JSON.stringify({
       ...basis,
       contentHash: computeRegistryContentHash(basis, assets),

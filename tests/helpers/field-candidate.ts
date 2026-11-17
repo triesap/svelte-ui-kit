@@ -29,7 +29,7 @@ export function buildFieldCandidate() {
     for (const file of sources) {
       const target = path.join(fixture.root, "src/lib/candidate/field", file);
       mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, readFileSync(`registry/ui/field/${file}`));
+      writeFileSync(target, readFileSync(`assets/registry/ui/field/${file}`));
     }
     const route = "src/routes/field-candidate/+page.svelte";
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
@@ -95,7 +95,7 @@ export function buildFieldCandidate() {
           "SelectField",
         ],
         catalogRegistered: JSON.parse(
-          readFileSync("registry/registry.json", "utf8"),
+          readFileSync("assets/registry/registry.json", "utf8"),
         ).items.some((item: { id: string }) => item.id === "field"),
         logs,
         files: Object.fromEntries(

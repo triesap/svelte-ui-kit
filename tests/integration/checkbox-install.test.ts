@@ -36,7 +36,7 @@ test("real Checkbox declares complete native exports and direct source dependenc
       (file) => file.owner === "checkbox" && file.cohort === "checkbox",
     ),
   );
-  const component = readFileSync("registry/ui/checkbox.svelte", "utf8");
+  const component = readFileSync("assets/registry/ui/checkbox.svelte", "utf8");
   assert.match(
     component,
     /import \{ Checkbox as BitsCheckbox \} from "bits-ui"/,
@@ -102,7 +102,7 @@ for (const custom of [false, true])
       for (const name of ["checkbox.svelte", "checkbox.types.ts"])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

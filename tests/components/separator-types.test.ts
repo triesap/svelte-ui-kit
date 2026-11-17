@@ -20,7 +20,7 @@ function diagnostics(body: string) {
     writeFileSync(path.join(root, "package.json"), '{"type":"module"}');
     writeFileSync(
       path.join(root, "src/separator.types.ts"),
-      readFileSync("registry/ui/separator.types.ts"),
+      readFileSync("assets/registry/ui/separator.types.ts"),
     );
     const fixture = path.join(root, "src/fixture.ts");
     writeFileSync(

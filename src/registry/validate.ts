@@ -23,14 +23,18 @@ import {
   type ResolvedTargets,
 } from "./validate-targets.js";
 import { validateCompatibility } from "./compatibility.js";
-import { createSchemaAuthority, SHIPPED_SCHEMAS } from "./schema.js";
+import {
+  createSchemaAuthority,
+  SHIPPED_SCHEMAS,
+  schemaPath,
+} from "./schema.js";
 
 /** Fixed local schema identities the parser compiles. */
 export const SCHEMA_IDENTITIES: Readonly<Record<string, string>> =
   Object.freeze(
     Object.fromEntries(
       Object.entries(SHIPPED_SCHEMAS).map(([file, id]) => [
-        `schema/v1/${file}`,
+        schemaPath(file),
         id,
       ]),
     ),
@@ -38,7 +42,7 @@ export const SCHEMA_IDENTITIES: Readonly<Record<string, string>> =
 
 /** The `schema/v1/...` logical paths of every shipped schema. */
 export const SCHEMA_PATHS: readonly string[] = Object.freeze(
-  Object.keys(SHIPPED_SCHEMAS).map((file) => `schema/v1/${file}`),
+  Object.keys(SHIPPED_SCHEMAS).map((file) => schemaPath(file)),
 );
 
 export interface RegistryHealth {

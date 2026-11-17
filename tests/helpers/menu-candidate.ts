@@ -27,7 +27,7 @@ export function buildMenuCandidate(
     for (const file of sources) {
       const target = path.join(fixture.root, "src/lib/candidate/menu", file);
       mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, readFileSync(`registry/ui/menu/${file}`));
+      writeFileSync(target, readFileSync(`assets/registry/ui/menu/${file}`));
     }
     const routeName =
       stage === "items"
@@ -96,7 +96,7 @@ export function buildMenuCandidate(
             : [...(stage === "root-trigger" ? ["Content"] : []), "Item"],
         installation: "candidate-copy",
         catalogRegistered: JSON.parse(
-          readFileSync("registry/registry.json", "utf8"),
+          readFileSync("assets/registry/registry.json", "utf8"),
         ).items.some((item: { id: string }) => item.id === "menu"),
         logs,
         files: Object.fromEntries(

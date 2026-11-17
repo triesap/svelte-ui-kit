@@ -255,9 +255,13 @@ function seedConsumer() {
  * and an explicit value+type hybrid per item, then load its snapshot.
  */
 function buildRegistry(root, items) {
-  cpSync(path.join(PACKAGE_ROOT, "schema"), path.join(root, "schema"), {
-    recursive: true,
-  });
+  cpSync(
+    path.join(PACKAGE_ROOT, "assets/schemas"),
+    path.join(root, "assets/schemas"),
+    {
+      recursive: true,
+    },
+  );
   const assets = [];
   const entries = [];
   for (const item of items) {
@@ -273,7 +277,7 @@ function buildRegistry(root, items) {
       styles: item.styles,
       registryDependencies: item.dependencies,
     });
-    write(root, `registry/ui/${item.id}.json`, manifest);
+    write(root, `assets/registry/ui/${item.id}.json`, manifest);
     assets.push({
       path: `registry/ui/${item.id}.json`,
       digest: sha256(utf8(manifest)),
@@ -284,7 +288,7 @@ function buildRegistry(root, items) {
         file.kind === "svelte"
           ? item.body
           : `export interface ${pascal(file.target)} { readonly marker?: string }\n`;
-      write(root, `registry/${file.source}`, body);
+      write(root, `assets/registry/${file.source}`, body);
       assets.push({
         path: `registry/${file.source}`,
         digest: sha256(utf8(body)),
@@ -292,7 +296,7 @@ function buildRegistry(root, items) {
     }
     for (const style of item.styles) {
       const body = `.${style.blockId} {}\n`;
-      write(root, `registry/${style.source}`, body);
+      write(root, `assets/registry/${style.source}`, body);
       assets.push({
         path: `registry/${style.source}`,
         digest: sha256(utf8(body)),
@@ -307,7 +311,7 @@ function buildRegistry(root, items) {
   };
   write(
     root,
-    "registry/registry.json",
+    "assets/registry/registry.json",
     JSON.stringify({
       ...basis,
       contentHash: computeRegistryContentHash(basis, assets),

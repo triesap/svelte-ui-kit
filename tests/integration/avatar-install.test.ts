@@ -34,7 +34,7 @@ test("real Avatar declares complete native exports and direct source dependencie
       (file) => file.owner === "avatar" && file.cohort === "avatar",
     ),
   );
-  const component = readFileSync("registry/ui/avatar.svelte", "utf8");
+  const component = readFileSync("assets/registry/ui/avatar.svelte", "utf8");
   assert.match(
     component,
     /import type \{ AvatarProps \} from "\.\/avatar\.types\.js"/,
@@ -99,7 +99,7 @@ for (const custom of [false, true])
       for (const name of ["avatar.svelte", "avatar.types.ts"])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

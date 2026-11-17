@@ -231,7 +231,7 @@ function buildComponentConsumer(
     for (const name of sources) {
       assert.ok(
         readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-          readFileSync(path.join(packageRoot, "registry/ui", name)),
+          readFileSync(path.join(packageRoot, "assets/registry/ui", name)),
         ),
       );
     }
@@ -462,14 +462,16 @@ export function buildIdentityConsumer(custom: boolean) {
 }
 
 export function buildCatalogConsumer(custom: boolean) {
-  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  const registry = JSON.parse(
+    readFileSync("assets/registry/registry.json", "utf8"),
+  );
   return buildInstalledItemsConsumer(
     custom,
     "catalog",
     registry.items.map((item: { id: string }) => item.id),
     (root, config) => {
       const manifests = registry.items.map((item: { manifest: string }) =>
-        JSON.parse(readFileSync(`registry/${item.manifest}`, "utf8")),
+        JSON.parse(readFileSync(`assets/registry/${item.manifest}`, "utf8")),
       );
       const exports = manifests.flatMap(
         (manifest: { exports: { name: string; kind: string }[] }) =>
@@ -620,7 +622,9 @@ export const handleError: HandleServerError = ({ error, event }) => {
 }
 
 export function buildWrapperConsumer(custom: boolean) {
-  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  const registry = JSON.parse(
+    readFileSync("assets/registry/registry.json", "utf8"),
+  );
   return buildInstalledItemsConsumer(
     custom,
     "wrapper-contracts",
@@ -629,7 +633,9 @@ export function buildWrapperConsumer(custom: boolean) {
 }
 
 export function buildCssConsumer(custom: boolean) {
-  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  const registry = JSON.parse(
+    readFileSync("assets/registry/registry.json", "utf8"),
+  );
   return buildInstalledItemsConsumer(
     custom,
     "css-contracts",
@@ -638,7 +644,9 @@ export function buildCssConsumer(custom: boolean) {
 }
 
 export function buildCatalogThemesConsumer(custom: boolean) {
-  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  const registry = JSON.parse(
+    readFileSync("assets/registry/registry.json", "utf8"),
+  );
   let preservation: Record<string, string> = {};
   const consumer = buildInstalledItemsConsumer(
     custom,
@@ -696,7 +704,9 @@ export function buildCatalogThemesConsumer(custom: boolean) {
 }
 
 export function buildAccessibilityConsumer(custom: boolean) {
-  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  const registry = JSON.parse(
+    readFileSync("assets/registry/registry.json", "utf8"),
+  );
   return buildInstalledItemsConsumer(
     custom,
     "accessibility-states",
@@ -705,7 +715,9 @@ export function buildAccessibilityConsumer(custom: boolean) {
 }
 
 export function buildCatalogHydrationConsumer(custom: boolean) {
-  const registry = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  const registry = JSON.parse(
+    readFileSync("assets/registry/registry.json", "utf8"),
+  );
   const consumer = buildInstalledItemsConsumer(
     custom,
     "catalog-hydration",
@@ -839,7 +851,9 @@ function buildInstalledItemsConsumer(
             const relative = file.path.slice(config.uiDir.length + 1);
             if (!relative.startsWith("_kit/"))
               assert.ok(
-                bytes.equals(readFileSync(path.join("registry/ui", relative))),
+                bytes.equals(
+                  readFileSync(path.join("assets/registry/ui", relative)),
+                ),
                 file.path,
               );
             assert.equal(sha256Hex(bytes), file.baseHash);
@@ -1031,7 +1045,7 @@ export function buildFieldFormsConsumer(custom: boolean) {
           const relative = `${config.uiDir}/${file}`,
             bytes = readFileSync(path.join(root, relative));
           assert.ok(
-            bytes.equals(readFileSync(`registry/ui/${file}`)),
+            bytes.equals(readFileSync(`assets/registry/ui/${file}`)),
             relative,
           );
           return [relative, sha256Hex(bytes)];

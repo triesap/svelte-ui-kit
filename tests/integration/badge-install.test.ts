@@ -34,7 +34,7 @@ test("real Badge declares complete native exports and direct source dependencies
       (file) => file.owner === "badge" && file.cohort === "badge",
     ),
   );
-  const component = readFileSync("registry/ui/badge.svelte", "utf8");
+  const component = readFileSync("assets/registry/ui/badge.svelte", "utf8");
   assert.match(
     component,
     /import type \{ BadgeProps \} from "\.\/badge\.types\.js"/,
@@ -99,7 +99,7 @@ for (const custom of [false, true])
       for (const name of ["badge.svelte", "badge.types.ts"])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

@@ -34,7 +34,7 @@ test("real Progress declares complete native exports and direct source dependenc
       (file) => file.owner === "progress" && file.cohort === "progress",
     ),
   );
-  const component = readFileSync("registry/ui/progress.svelte", "utf8");
+  const component = readFileSync("assets/registry/ui/progress.svelte", "utf8");
   assert.match(
     component,
     /import type \{ ProgressProps \} from "\.\/progress\.types\.js"/,
@@ -99,7 +99,7 @@ for (const custom of [false, true])
       for (const name of ["progress.svelte", "progress.types.ts"])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

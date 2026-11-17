@@ -10,7 +10,7 @@ interface Rule {
 const source = JSON.parse(
   readFileSync("tests/fixtures/status-candidate/source-css.json", "utf8"),
 ) as { source: { revision: string; sha256: string }; rules: Rule[] };
-const css = readFileSync("registry/styles/status.css", "utf8");
+const css = readFileSync("assets/registry/styles/status.css", "utf8");
 const rules: Rule[] = [];
 function collect(value: unknown): void {
   if (Array.isArray(value)) {
@@ -70,7 +70,10 @@ test("immutable Status declarations preserve all 5 source layout control and sta
 
 test("Status preserves original274 customization records and appends exactly four source hooks", () => {
   const contract = JSON.parse(
-    readFileSync("registry/contracts/component-customization-v1.json", "utf8"),
+    readFileSync(
+      "assets/registry/contracts/component-customization-v1.json",
+      "utf8",
+    ),
   );
   assert.ok(contract.properties.length >= 278);
   assert.equal(

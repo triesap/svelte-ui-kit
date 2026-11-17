@@ -150,8 +150,8 @@ for (const custom of [false, true])
     // Synthetic copied installed revisions qualify the documented commands;
     // neither revision is asserted to be a published release.
     const incoming = cli.clone("documented-incoming");
-    const sourcePath = path.join(incoming, "registry/ui/button.svelte");
-    const itemPath = path.join(incoming, "registry/ui/button.json");
+    const sourcePath = path.join(incoming, "assets/registry/ui/button.svelte");
+    const itemPath = path.join(incoming, "assets/registry/ui/button.json");
     const source = readFileSync(sourcePath, "utf8");
     assert.equal(source.split("<button\n").length, 2);
     const safeSource = source.replace(

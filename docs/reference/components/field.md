@@ -48,7 +48,7 @@ No second text reset engine hides that boundary.
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/field.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/field.json) owns this inventory.
 
 | Export               | Kind  | Local target     |
 | -------------------- | ----- | ---------------- |
@@ -82,22 +82,22 @@ The [authoritative manifest](../../../registry/ui/field.json) owns this inventor
 Registry dependencies: `tokens`.
 Npm requirements: none.
 
-- [Authored field/root.svelte](../../../registry/ui/field/root.svelte)
-- [Authored field/surface.svelte](../../../registry/ui/field/surface.svelte)
-- [Authored field/label.svelte](../../../registry/ui/field/label.svelte)
-- [Authored field/message.svelte](../../../registry/ui/field/message.svelte)
-- [Authored field/required.svelte](../../../registry/ui/field/required.svelte)
-- [Authored field/text-input.svelte](../../../registry/ui/field/text-input.svelte)
-- [Authored field/text-area.svelte](../../../registry/ui/field/text-area.svelte)
-- [Authored field/native-select.svelte](../../../registry/ui/field/native-select.svelte)
-- [Authored field/select-icon.svelte](../../../registry/ui/field/select-icon.svelte)
-- [Authored field/text-field.svelte](../../../registry/ui/field/text-field.svelte)
-- [Authored field/text-area-field.svelte](../../../registry/ui/field/text-area-field.svelte)
-- [Authored field/select-field.svelte](../../../registry/ui/field/select-field.svelte)
-- [Authored field/types.ts](../../../registry/ui/field/types.ts)
-- [Authored field/context.ts](../../../registry/ui/field/context.ts)
-- [Authored field/index.ts](../../../registry/ui/field/index.ts)
-- [Managed field CSS](../../../registry/styles/field.css)
+- [Authored field/root.svelte](../../../assets/registry/ui/field/root.svelte)
+- [Authored field/surface.svelte](../../../assets/registry/ui/field/surface.svelte)
+- [Authored field/label.svelte](../../../assets/registry/ui/field/label.svelte)
+- [Authored field/message.svelte](../../../assets/registry/ui/field/message.svelte)
+- [Authored field/required.svelte](../../../assets/registry/ui/field/required.svelte)
+- [Authored field/text-input.svelte](../../../assets/registry/ui/field/text-input.svelte)
+- [Authored field/text-area.svelte](../../../assets/registry/ui/field/text-area.svelte)
+- [Authored field/native-select.svelte](../../../assets/registry/ui/field/native-select.svelte)
+- [Authored field/select-icon.svelte](../../../assets/registry/ui/field/select-icon.svelte)
+- [Authored field/text-field.svelte](../../../assets/registry/ui/field/text-field.svelte)
+- [Authored field/text-area-field.svelte](../../../assets/registry/ui/field/text-area-field.svelte)
+- [Authored field/select-field.svelte](../../../assets/registry/ui/field/select-field.svelte)
+- [Authored field/types.ts](../../../assets/registry/ui/field/types.ts)
+- [Authored field/context.ts](../../../assets/registry/ui/field/context.ts)
+- [Authored field/index.ts](../../../assets/registry/ui/field/index.ts)
+- [Managed field CSS](../../../assets/registry/styles/field.css)
 
 Source adaptations preserve the original named surface: `FieldLabel`, `FieldMessage`, `FieldRequired`, `FieldRoot`, `FieldSlot`, `FieldSurface`, `NativeSelect`, `SelectField`, `SelectIcon`, `TextArea`, `TextAreaField`, `TextField`, `TextInput`, `TextInputType`. The names here describe source attribution, not extra target aliases.
 

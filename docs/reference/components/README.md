@@ -1,6 +1,6 @@
 # Component reference
 
-Installable items come from the [bundled registry](../../../registry/registry.json).
+Installable items come from the [bundled registry](../../../assets/registry/registry.json).
 Install with `node "$CLI" --cwd "$APP" add <id>` after [getting started](../../getting-started.md).
 Import values and types from the application-owned UI barrel; custom mappings change that local import path.
 Types and manifests own the supported API; the wider upstream catalog is not the kit API.

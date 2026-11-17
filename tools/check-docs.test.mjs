@@ -70,12 +70,12 @@ function fixture() {
   }
   write(
     root,
-    "registry/registry.json",
+    "assets/registry/registry.json",
     JSON.stringify({ items: [{ id: "sample", manifest: "ui/sample.json" }] }),
   );
   write(
     root,
-    "registry/ui/sample.json",
+    "assets/registry/ui/sample.json",
     JSON.stringify({
       id: "sample",
       exports: [{ name: "Sample" }],
@@ -83,7 +83,7 @@ function fixture() {
       styles: [],
     }),
   );
-  write(root, "registry/ui/sample.svelte", "<button>sample</button>\n");
+  write(root, "assets/registry/ui/sample.svelte", "<button>sample</button>\n");
   write(
     root,
     "docs/reference/components/README.md",
@@ -92,11 +92,11 @@ function fixture() {
   write(
     root,
     "docs/reference/components/sample.md",
-    "# Sample\n\n`Sample`\n\n[Manifest](../../../registry/ui/sample.json)\n",
+    "# Sample\n\n`Sample`\n\n[Manifest](../../../assets/registry/ui/sample.json)\n",
   );
   for (const [file, pointer] of [
-    ["docs/reference/configuration.md", "schema/v1/kit.schema.json"],
-    ["docs/reference/cli.md", "schema/v1/command-envelope.schema.json"],
+    ["docs/reference/configuration.md", "assets/schemas/v1/kit.schema.json"],
+    ["docs/reference/cli.md", "assets/schemas/v1/command-envelope.schema.json"],
     ["docs/agents/native-dependency.md", "tools/native-dependency/recipe.json"],
   ]) {
     write(root, pointer, "{}\n");
@@ -259,7 +259,7 @@ const failures = [
   ],
   [
     "missing schema",
-    (root) => rmSync(path.join(root, "schema/v1/kit.schema.json")),
+    (root) => rmSync(path.join(root, "assets/schemas/v1/kit.schema.json")),
     "POINTER",
   ],
   [
@@ -270,7 +270,7 @@ const failures = [
   ],
   [
     "missing manifest source",
-    (root) => rmSync(path.join(root, "registry/ui/sample.svelte")),
+    (root) => rmSync(path.join(root, "assets/registry/ui/sample.svelte")),
     "CATALOG",
   ],
   [
@@ -305,7 +305,7 @@ const failures = [
       write(
         root,
         "docs/reference/components/sample.md",
-        "# Sample\n[Manifest](../../../registry/ui/sample.json)\n",
+        "# Sample\n[Manifest](../../../assets/registry/ui/sample.json)\n",
       ),
     "CATALOG",
   ],

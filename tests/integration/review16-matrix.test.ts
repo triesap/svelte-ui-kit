@@ -309,9 +309,13 @@ test("a metadata-only re-init publishes only the changed lock", () => {
     // generated application content is identical, so only the lock is written.
     const altRoot = mkdtempSync(path.join(os.tmpdir(), "suik-matrix-reg-"));
     try {
-      cpSync(path.join(PKG_ROOT, "schema"), path.join(altRoot, "schema"), {
-        recursive: true,
-      });
+      cpSync(
+        path.join(PKG_ROOT, "assets/schemas"),
+        path.join(altRoot, "assets/schemas"),
+        {
+          recursive: true,
+        },
+      );
       const basis = {
         schemaVersion: 1,
         registryVersion: "0.2.0",
@@ -324,7 +328,7 @@ test("a metadata-only re-init publishes only the changed lock", () => {
       };
       write(
         altRoot,
-        "registry/registry.json",
+        "assets/registry/registry.json",
         JSON.stringify({
           ...basis,
           contentHash: computeRegistryContentHash(basis, []),

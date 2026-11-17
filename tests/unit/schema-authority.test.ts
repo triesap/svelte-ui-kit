@@ -41,9 +41,13 @@ const COMPATIBILITY = { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" };
 function copySchemas(t: { after: (fn: () => void) => void }): string {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-authority-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  cpSync(path.join(process.cwd(), "schema"), path.join(root, "schema"), {
-    recursive: true,
-  });
+  cpSync(
+    path.join(process.cwd(), "assets/schemas"),
+    path.join(root, "assets/schemas"),
+    {
+      recursive: true,
+    },
+  );
   return root;
 }
 
@@ -70,7 +74,7 @@ test("the installed default authority validates against the shipped schemas", ()
 
 test("a missing shipped schema is a typed failure without throwing", (t) => {
   const root = copySchemas(t);
-  rmSync(path.join(root, "schema", "v1", "kit.schema.json"));
+  rmSync(path.join(root, "assets/schemas", "v1", "kit.schema.json"));
   const authority = createSchemaAuthority(createAssetProvider(root));
   assert.equal(authority.ok, false);
   if (!authority.ok) {
@@ -80,7 +84,7 @@ test("a missing shipped schema is a typed failure without throwing", (t) => {
 
 test("v2 target schemas use the same contained provider without a source fallback", (t) => {
   const root = copySchemas(t);
-  const file = path.join(root, "schema", "v2", "kit.schema.json");
+  const file = path.join(root, "assets/schemas", "v2", "kit.schema.json");
   writeFileSync(file, rejectAllSchema("urn:svelte-ui-kit:schema:v2:kit"));
   const authority = createSchemaAuthority(createAssetProvider(root));
   assert.ok(authority.ok);
@@ -100,8 +104,11 @@ test("an escaping schema symlink cannot widen validation", (t) => {
   t.after(() => rmSync(outside, { recursive: true, force: true }));
   const external = path.join(outside, "kit.json");
   writeFileSync(external, "{}\n");
-  rmSync(path.join(root, "schema", "v1", "kit.schema.json"));
-  symlinkSync(external, path.join(root, "schema", "v1", "kit.schema.json"));
+  rmSync(path.join(root, "assets/schemas", "v1", "kit.schema.json"));
+  symlinkSync(
+    external,
+    path.join(root, "assets/schemas", "v1", "kit.schema.json"),
+  );
 
   const authority = createSchemaAuthority(createAssetProvider(root));
   assert.equal(authority.ok, false);
@@ -113,7 +120,7 @@ test("an escaping schema symlink cannot widen validation", (t) => {
 test("a replace-everything schema is applied by the config parser", (t) => {
   const root = copySchemas(t);
   writeFileSync(
-    path.join(root, "schema", "v1", "kit.schema.json"),
+    path.join(root, "assets/schemas", "v1", "kit.schema.json"),
     rejectAllSchema("urn:svelte-ui-kit:schema:v1:kit"),
   );
   const authority = createSchemaAuthority(createAssetProvider(root));
@@ -132,18 +139,18 @@ test("a replace-everything schema is applied by the config parser", (t) => {
 
 test("a warm provider whose schemas are removed fails the next operation", (t) => {
   const root = copySchemas(t);
-  mkdirSync(path.join(root, "registry"), { recursive: true });
+  mkdirSync(path.join(root, "assets/registry"), { recursive: true });
   const empty = buildEmptyDevelopmentRegistry(COMPATIBILITY);
   assert.equal(typeof empty.contentHash, "string");
   writeFileSync(
-    path.join(root, "registry", "registry.json"),
+    path.join(root, "assets/registry", "registry.json"),
     `${JSON.stringify(empty, null, 2)}\n`,
   );
 
   const provider = createAssetProvider(root);
   const cold = loadRegistrySnapshot(provider);
   assert.equal(cold.ok, true, JSON.stringify(cold));
-  rmSync(path.join(root, "schema"), { recursive: true, force: true });
+  rmSync(path.join(root, "assets/schemas"), { recursive: true, force: true });
   const warm = loadRegistrySnapshot(provider);
   assert.equal(warm.ok, false);
   if (!warm.ok) {
@@ -211,12 +218,12 @@ test("a same-root provider with replace-everything schemas is not shadowed", (t)
 test("ordinary read failures are typed and never leak host paths", (t) => {
   const root = mkdtempSync(path.join(os.tmpdir(), "suik-authority-io-"));
   t.after(() => {
-    chmodSync(path.join(root, "registry", "x.json"), 0o600);
+    chmodSync(path.join(root, "assets/registry", "x.json"), 0o600);
     rmSync(root, { recursive: true, force: true });
   });
-  mkdirSync(path.join(root, "registry"), { recursive: true });
-  writeFileSync(path.join(root, "registry", "x.json"), "{}\n");
-  chmodSync(path.join(root, "registry", "x.json"), 0);
+  mkdirSync(path.join(root, "assets/registry"), { recursive: true });
+  writeFileSync(path.join(root, "assets/registry", "x.json"), "{}\n");
+  chmodSync(path.join(root, "assets/registry", "x.json"), 0);
   const provider = createAssetProvider(root);
   const result = provider.readBytes("registry/x.json");
   assert.equal(result.ok, false);

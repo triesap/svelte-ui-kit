@@ -27,7 +27,7 @@ The reduced-motion rule stops animation; meaningful busy feedback belongs to the
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/spinner.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/spinner.json) owns this inventory.
 
 | Export         | Kind  | Local target       |
 | -------------- | ----- | ------------------ |
@@ -38,9 +38,9 @@ The [authoritative manifest](../../../registry/ui/spinner.json) owns this invent
 Registry dependencies: `tokens`.
 Npm requirements: none.
 
-- [Authored spinner.svelte](../../../registry/ui/spinner.svelte)
-- [Authored spinner.types.ts](../../../registry/ui/spinner.types.ts)
-- [Managed spinner CSS](../../../registry/styles/spinner.css)
+- [Authored spinner.svelte](../../../assets/registry/ui/spinner.svelte)
+- [Authored spinner.types.ts](../../../assets/registry/ui/spinner.types.ts)
+- [Managed spinner CSS](../../../assets/registry/styles/spinner.css)
 
 Source adaptations preserve the original named surface: `Spinner`, `SpinnerMode`. The names here describe source attribution, not extra target aliases.
 

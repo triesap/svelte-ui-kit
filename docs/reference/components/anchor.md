@@ -27,7 +27,7 @@ Opening a new context and its security policy are explicit app choices.
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/anchor.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/anchor.json) owns this inventory.
 
 | Export         | Kind  | Local target      |
 | -------------- | ----- | ----------------- |
@@ -38,9 +38,9 @@ The [authoritative manifest](../../../registry/ui/anchor.json) owns this invento
 Registry dependencies: `tokens`.
 Npm requirements: none.
 
-- [Authored anchor.svelte](../../../registry/ui/anchor.svelte)
-- [Authored anchor.types.ts](../../../registry/ui/anchor.types.ts)
-- [Managed anchor CSS](../../../registry/styles/anchor.css)
+- [Authored anchor.svelte](../../../assets/registry/ui/anchor.svelte)
+- [Authored anchor.types.ts](../../../assets/registry/ui/anchor.types.ts)
+- [Managed anchor CSS](../../../assets/registry/styles/anchor.css)
 
 Source adaptations preserve the original named surface: `Anchor`, `AnchorTarget`. The names here describe source attribution, not extra target aliases.
 

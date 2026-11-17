@@ -10,10 +10,13 @@ import {
 } from "../../src/registry/theme.js";
 
 const semantic = JSON.parse(
-  readFileSync("registry/contracts/theme-v1.json", "utf8"),
+  readFileSync("assets/registry/contracts/theme-v1.json", "utf8"),
 );
 const customization = JSON.parse(
-  readFileSync("registry/contracts/component-customization-v1.json", "utf8"),
+  readFileSync(
+    "assets/registry/contracts/component-customization-v1.json",
+    "utf8",
+  ),
 );
 const mapping = readFileSync("docs/reference/components/tokens.md", "utf8");
 const baseline = JSON.parse(
@@ -60,7 +63,8 @@ for (const [family, count] of [
         if (key !== "metadata") visit(child);
     };
     visit(
-      parseCss(readFileSync(`registry/styles/${family}.css`, "utf8")).children,
+      parseCss(readFileSync(`assets/registry/styles/${family}.css`, "utf8"))
+        .children,
     );
     const documented = readFileSync(
       `docs/reference/components/${family}.md`,
@@ -114,7 +118,10 @@ test("source-supported Spinner hooks match actual compiler-parsed stylesheet fal
     for (const [key, child] of Object.entries(node))
       if (key !== "metadata") visit(child);
   };
-  visit(parseCss(readFileSync("registry/styles/spinner.css", "utf8")).children);
+  visit(
+    parseCss(readFileSync("assets/registry/styles/spinner.css", "utf8"))
+      .children,
+  );
   for (const property of properties)
     assert.ok(
       values.some((value) =>

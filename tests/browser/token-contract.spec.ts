@@ -5,7 +5,10 @@ import { startFixtureServer, type OwnedServer } from "./fixture-server";
 
 const properties: { name: string; scope: string; fallback: string }[] =
   JSON.parse(
-    readFileSync("registry/contracts/component-customization-v1.json", "utf8"),
+    readFileSync(
+      "assets/registry/contracts/component-customization-v1.json",
+      "utf8",
+    ),
   ).properties.filter(
     (property: { name: string }) =>
       property.name.endsWith("-radius") ||
@@ -15,9 +18,9 @@ let server: OwnedServer | undefined;
 let baseURL = "";
 test.beforeAll(async () => {
   for (const [source, name] of [
-    ["registry/styles/tokens.css", "tokens.css"],
+    ["assets/registry/styles/tokens.css", "tokens.css"],
     [
-      "registry/contracts/component-customization-v1.json",
+      "assets/registry/contracts/component-customization-v1.json",
       "component-customization-v1.json",
     ],
   ]) {

@@ -30,11 +30,12 @@ for (const custom of [false, true])
       const root = sources.get("index.ts")!;
       const declarations = parseGeneratedDeclarations(root);
       const registry = JSON.parse(
-        readFileSync("registry/registry.json", "utf8"),
+        readFileSync("assets/registry/registry.json", "utf8"),
       );
       const expected = registry.items.flatMap(
         (item: { manifest: string }) =>
-          JSON.parse(readFileSync(`registry/${item.manifest}`, "utf8")).exports,
+          JSON.parse(readFileSync(`assets/registry/${item.manifest}`, "utf8"))
+            .exports,
       );
       assert.deepEqual(
         declarations.map((entry) => `${entry.name}:${entry.kind}`).sort(),

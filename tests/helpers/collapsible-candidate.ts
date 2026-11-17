@@ -20,7 +20,10 @@ export function buildCollapsibleCandidate() {
         file,
       );
       mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, readFileSync(`registry/ui/collapsible/${file}`));
+      writeFileSync(
+        target,
+        readFileSync(`assets/registry/ui/collapsible/${file}`),
+      );
     }
     const route = "src/routes/collapsible-candidate/+page.svelte";
     mkdirSync(path.dirname(path.join(fixture.root, route)), {
@@ -77,7 +80,7 @@ export function buildCollapsibleCandidate() {
           "CollapsibleContent",
         ],
         catalogRegistered: JSON.parse(
-          readFileSync("registry/registry.json", "utf8"),
+          readFileSync("assets/registry/registry.json", "utf8"),
         ).items.some((item: { id: string }) => item.id === "collapsible"),
         logs,
         files: Object.fromEntries(

@@ -25,7 +25,7 @@ Source track/value styles and indicator/default/full radius remain; native engin
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/progress.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/progress.json) owns this inventory.
 
 | Export          | Kind  | Local target        |
 | --------------- | ----- | ------------------- |
@@ -35,9 +35,9 @@ The [authoritative manifest](../../../registry/ui/progress.json) owns this inven
 Registry dependencies: `tokens`.
 Npm requirements: none.
 
-- [Authored progress.svelte](../../../registry/ui/progress.svelte)
-- [Authored progress.types.ts](../../../registry/ui/progress.types.ts)
-- [Managed progress CSS](../../../registry/styles/progress.css)
+- [Authored progress.svelte](../../../assets/registry/ui/progress.svelte)
+- [Authored progress.types.ts](../../../assets/registry/ui/progress.types.ts)
+- [Managed progress CSS](../../../assets/registry/styles/progress.css)
 
 Source adaptations preserve the original named surface: `Progress`. The names here describe source attribution, not extra target aliases.
 

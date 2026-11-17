@@ -23,7 +23,7 @@ function diagnostics(body: string) {
     writeFileSync(path.join(root, "package.json"), '{"type":"module"}');
     writeFileSync(
       path.join(root, "src/menu.types.ts"),
-      readFileSync("registry/ui/menu/types.ts"),
+      readFileSync("assets/registry/ui/menu/types.ts"),
     );
     const fixture = path.join(root, "src/fixture.ts");
     writeFileSync(
@@ -156,15 +156,17 @@ test("Menu source selection is explicit and owned unadvertised candidate is refu
     path.join(os.tmpdir(), "suik-unadvertised-menu-"),
   );
   try {
-    for (const directory of ["registry", "schema"])
+    for (const directory of ["assets"])
       cpSync(directory, path.join(isolated, directory), { recursive: true });
-    const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+    const root = JSON.parse(
+      readFileSync("assets/registry/registry.json", "utf8"),
+    );
     assert.ok(root.items.some((item: { id: string }) => item.id === "menu"));
     root.items = root.items.filter(
       (item: { id: string }) => item.id !== "menu",
     );
     writeFileSync(
-      path.join(isolated, "registry/registry.json"),
+      path.join(isolated, "assets/registry/registry.json"),
       JSON.stringify(root),
     );
     refreshRegistryContent(isolated);

@@ -12,8 +12,8 @@ test("native Anchor resolution scope retains application navigation and accessib
   };
   assert.deepEqual(
     await messages(
-      readFileSync("registry/ui/anchor.svelte", "utf8"),
-      "registry/ui/anchor.svelte",
+      readFileSync("assets/registry/ui/anchor.svelte", "utf8"),
+      "assets/registry/ui/anchor.svelte",
     ),
     [],
   );
@@ -34,7 +34,7 @@ test("native Anchor resolution scope retains application navigation and accessib
     (
       await messages(
         '<script lang="ts">import { goto } from "$app/navigation";</script><button onclick={() => goto("/unresolved")}>Go</button>',
-        "registry/ui/anchor.svelte",
+        "assets/registry/ui/anchor.svelte",
       )
     ).some(
       (message) => message.ruleId === "svelte/no-navigation-without-resolve",
@@ -44,7 +44,7 @@ test("native Anchor resolution scope retains application navigation and accessib
     (
       await messages(
         '<a href="/example"><img src="/example.png" /></a>',
-        "registry/ui/anchor.svelte",
+        "assets/registry/ui/anchor.svelte",
       )
     ).some(
       (message) =>

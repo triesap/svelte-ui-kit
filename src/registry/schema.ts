@@ -91,7 +91,7 @@ export const SHIPPED_SCHEMAS: Readonly<Record<string, string>> = {
 export const SHIPPED_SCHEMA_PATHS: readonly string[] =
   Object.keys(SHIPPED_SCHEMAS).map(schemaPath);
 
-function schemaPath(file: string): string {
+export function schemaPath(file: string): string {
   return file.startsWith("v2/") ? `schema/${file}` : `schema/v1/${file}`;
 }
 

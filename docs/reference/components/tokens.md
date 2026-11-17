@@ -24,7 +24,7 @@ Maintained consumer projections are byte-exact and checked before fixture/browse
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/foundation/tokens.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/foundation/tokens.json) owns this inventory.
 
 | Export | Kind     | Local target      |
 | ------ | -------- | ----------------- |
@@ -33,7 +33,7 @@ The [authoritative manifest](../../../registry/foundation/tokens.json) owns this
 Registry dependencies: none.
 Npm requirements: none.
 
-- [Managed tokens CSS](../../../registry/styles/tokens.css)
+- [Managed tokens CSS](../../../assets/registry/styles/tokens.css)
 
 The original foundation is CSS-only and has no runtime exports or target aliases.
 

@@ -7,13 +7,15 @@ import { write } from "./cli-package.js";
 /** Re-sign only an owned fixture, including every explicit advertised input. */
 export function refreshRegistryContent(root: string): void {
   const registry = JSON.parse(
-    readFileSync(path.join(root, "registry/registry.json"), "utf8"),
+    readFileSync(path.join(root, "assets/registry/registry.json"), "utf8"),
   );
   const paths = new Set<string>();
   for (const entry of registry.items) {
     const file = `registry/${entry.manifest}`;
     paths.add(file);
-    const item = JSON.parse(readFileSync(path.join(root, file), "utf8"));
+    const item = JSON.parse(
+      readFileSync(path.join(root, "assets", file), "utf8"),
+    );
     for (const asset of [...item.files, ...item.styles])
       paths.add(`registry/${asset.source}`);
     for (const source of Object.values(item.contracts ?? {}))
@@ -21,11 +23,11 @@ export function refreshRegistryContent(root: string): void {
   }
   const assets = [...paths].map((file) => ({
     path: file,
-    digest: sha256Hex(readFileSync(path.join(root, file))),
+    digest: sha256Hex(readFileSync(path.join(root, "assets", file))),
   }));
   write(
     root,
-    "registry/registry.json",
+    "assets/registry/registry.json",
     JSON.stringify({
       ...registry,
       contentHash: computeRegistryContentHash(registry, assets),

@@ -32,7 +32,7 @@ test("real Card declares complete native exports and direct source dependencies"
   assert.ok(
     item.files.every((file) => file.owner === "card" && file.cohort === "card"),
   );
-  const component = readFileSync("registry/ui/card.svelte", "utf8");
+  const component = readFileSync("assets/registry/ui/card.svelte", "utf8");
   assert.match(
     component,
     /import type \{ CardProps \} from "\.\/card\.types\.js"/,
@@ -97,7 +97,7 @@ for (const custom of [false, true])
       for (const name of ["card.svelte", "card.types.ts"])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

@@ -41,7 +41,7 @@ Imperatively removing a focused subtree requires application-owned focus restora
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/collapsible.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/collapsible.json) owns this inventory.
 
 | Export                    | Kind  | Local target           |
 | ------------------------- | ----- | ---------------------- |
@@ -55,12 +55,12 @@ The [authoritative manifest](../../../registry/ui/collapsible.json) owns this in
 Registry dependencies: `tokens`.
 Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
-- [Authored collapsible/root.svelte](../../../registry/ui/collapsible/root.svelte)
-- [Authored collapsible/trigger.svelte](../../../registry/ui/collapsible/trigger.svelte)
-- [Authored collapsible/content.svelte](../../../registry/ui/collapsible/content.svelte)
-- [Authored collapsible/types.ts](../../../registry/ui/collapsible/types.ts)
-- [Authored collapsible/index.ts](../../../registry/ui/collapsible/index.ts)
-- [Managed collapsible CSS](../../../registry/styles/collapsible.css)
+- [Authored collapsible/root.svelte](../../../assets/registry/ui/collapsible/root.svelte)
+- [Authored collapsible/trigger.svelte](../../../assets/registry/ui/collapsible/trigger.svelte)
+- [Authored collapsible/content.svelte](../../../assets/registry/ui/collapsible/content.svelte)
+- [Authored collapsible/types.ts](../../../assets/registry/ui/collapsible/types.ts)
+- [Authored collapsible/index.ts](../../../assets/registry/ui/collapsible/index.ts)
+- [Managed collapsible CSS](../../../assets/registry/styles/collapsible.css)
 
 Source adaptations preserve the original named surface: `CollapsibleContent`, `CollapsibleRoot`, `CollapsibleTrigger`. The names here describe source attribution, not extra target aliases.
 

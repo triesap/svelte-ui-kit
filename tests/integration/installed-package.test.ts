@@ -42,7 +42,7 @@ function linkRuntimeDependency(installedRoot: string, name: string): void {
 function installedCopy(t: { after: (fn: () => void) => void }): string {
   const installed = mkdtempSync(path.join(os.tmpdir(), "suik-installed-"));
   t.after(() => rmSync(installed, { recursive: true, force: true }));
-  for (const directory of ["dist", "schema", "registry"]) {
+  for (const directory of ["dist", "assets"]) {
     cpSync(path.join(PKG_ROOT, directory), path.join(installed, directory), {
       recursive: true,
     });
@@ -162,7 +162,7 @@ test("emitted modules and every default parser load from an isolated package cop
   const installed = installedCopy(t);
   const output = runChild(t, installed);
   const expected = JSON.parse(
-    readFileSync(path.join(installed, "registry/registry.json"), "utf8"),
+    readFileSync(path.join(installed, "assets/registry/registry.json"), "utf8"),
   );
   assert.deepEqual(output.snapshot, {
     ok: true,
@@ -180,7 +180,7 @@ test("emitted modules and every default parser load from an isolated package cop
 
 test("a missing copied schema fails the default parsers with no checkout fallback", (t) => {
   const installed = installedCopy(t);
-  rmSync(path.join(installed, "schema", "v1", "kit.schema.json"));
+  rmSync(path.join(installed, "assets/schemas", "v1", "kit.schema.json"));
   const output = runChild(t, installed);
   assert.equal(output.config.ok, false);
   assert.equal(output.config.codes.includes("ASSET_MISSING"), true);
@@ -191,7 +191,7 @@ test("a missing copied schema fails the default parsers with no checkout fallbac
 test("a corrupt copied schema fails the default parsers", (t) => {
   const installed = installedCopy(t);
   writeFileSync(
-    path.join(installed, "schema", "v1", "kit.schema.json"),
+    path.join(installed, "assets/schemas", "v1", "kit.schema.json"),
     "{ not json\n",
   );
   const output = runChild(t, installed);
@@ -205,10 +205,10 @@ test("an escaping copied schema symlink is rejected", (t) => {
   t.after(() => rmSync(outside, { recursive: true, force: true }));
   const external = path.join(outside, "kit.json");
   writeFileSync(external, "{}\n");
-  rmSync(path.join(installed, "schema", "v1", "kit.schema.json"));
+  rmSync(path.join(installed, "assets/schemas", "v1", "kit.schema.json"));
   symlinkSync(
     external,
-    path.join(installed, "schema", "v1", "kit.schema.json"),
+    path.join(installed, "assets/schemas", "v1", "kit.schema.json"),
   );
   const output = runChild(t, installed);
   assert.equal(output.config.ok, false);
@@ -221,8 +221,11 @@ test("an escaping copied registry asset symlink is rejected", (t) => {
   t.after(() => rmSync(outside, { recursive: true, force: true }));
   const external = path.join(outside, "registry.json");
   writeFileSync(external, "{}\n");
-  rmSync(path.join(installed, "registry", "registry.json"));
-  symlinkSync(external, path.join(installed, "registry", "registry.json"));
+  rmSync(path.join(installed, "assets/registry", "registry.json"));
+  symlinkSync(
+    external,
+    path.join(installed, "assets/registry", "registry.json"),
+  );
   const output = runChild(t, installed);
   assert.equal(output.snapshot.ok, false);
   assert.equal(output.snapshot.codes.includes("ASSET_SYMLINK_ESCAPE"), true);
@@ -247,9 +250,9 @@ const lock = await imp("codegen/lock.js");
 const digest = await imp("codegen/digest.js");
 const model = await imp("registry/model.js");
 const root = mkdtempSync(path.join(os.tmpdir(), "suik-r3-"));
-cpSync(path.join(installed, "schema"), path.join(root, "schema"), { recursive: true });
-mkdirSync(path.join(root, "registry", "ui"), { recursive: true });
-mkdirSync(path.join(root, "registry", "templates"), { recursive: true });
+cpSync(path.join(installed, "assets/schemas"), path.join(root, "assets/schemas"), { recursive: true });
+mkdirSync(path.join(root, "assets/registry", "ui"), { recursive: true });
+mkdirSync(path.join(root, "assets/registry", "templates"), { recursive: true });
 const compat = { svelte: "5.57.3", bits: "2.19.3", date: "^3.8.1" };
 const itemManifest = (id, date) => ({
   schemaVersion: 1,
@@ -274,10 +277,10 @@ const items =
 const assetList = [];
 for (const item of items) {
   const text = JSON.stringify(item);
-  writeFileSync(path.join(root, "registry", "ui", item.id + ".json"), text);
+  writeFileSync(path.join(root, "assets/registry", "ui", item.id + ".json"), text);
   assetList.push({ path: "registry/ui/" + item.id + ".json", digest: digest.sha256Hex(text) });
   const bytes = Buffer.from("<script>export interface X {}</script>\\n");
-  writeFileSync(path.join(root, "registry", item.files[0].source), bytes);
+  writeFileSync(path.join(root, "assets/registry", item.files[0].source), bytes);
   assetList.push({ path: "registry/" + item.files[0].source, digest: digest.sha256Hex(bytes) });
 }
 const basis = {
@@ -287,7 +290,7 @@ const basis = {
   items: items.map((item) => ({ id: item.id, manifest: "ui/" + item.id + ".json" })),
 };
 writeFileSync(
-  path.join(root, "registry", "registry.json"),
+  path.join(root, "assets/registry", "registry.json"),
   JSON.stringify({ ...basis, contentHash: model.computeRegistryContentHash(basis, assetList) }),
 );
 const health = validate.validateRegistryHealth(assets.createAssetProvider(root));

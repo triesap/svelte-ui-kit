@@ -6,7 +6,7 @@ import { test } from "node:test";
 import { buildAlertDialogCandidate } from "../helpers/alert-dialog-candidate.js";
 
 test("actual distinct candidate Root and Trigger compile and render SSR with raw Alert Dialog parts", () => {
-  const registryBefore = readFileSync("registry/registry.json");
+  const registryBefore = readFileSync("assets/registry/registry.json");
   const consumer = buildAlertDialogCandidate();
   try {
     for (const initial of ["closed", "open"]) {
@@ -54,5 +54,8 @@ test("actual distinct candidate Root and Trigger compile and render SSR with raw
   } finally {
     consumer.cleanup();
   }
-  assert.deepEqual(readFileSync("registry/registry.json"), registryBefore);
+  assert.deepEqual(
+    readFileSync("assets/registry/registry.json"),
+    registryBefore,
+  );
 });

@@ -34,7 +34,7 @@ test("real Alert declares complete native exports and direct source dependencies
       (file) => file.owner === "alert" && file.cohort === "alert",
     ),
   );
-  const component = readFileSync("registry/ui/alert.svelte", "utf8");
+  const component = readFileSync("assets/registry/ui/alert.svelte", "utf8");
   assert.match(
     component,
     /import type \{ AlertProps \} from "\.\/alert\.types\.js"/,
@@ -99,7 +99,7 @@ for (const custom of [false, true])
       for (const name of ["alert.svelte", "alert.types.ts"])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

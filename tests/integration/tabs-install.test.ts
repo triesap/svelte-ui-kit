@@ -129,7 +129,7 @@ for (const custom of [false, true])
         assert.ok(
           readFileSync(
             path.join(fixture.root, config.uiDir, "tabs", name),
-          ).equals(readFileSync(`registry/ui/tabs/${name}`)),
+          ).equals(readFileSync(`assets/registry/ui/tabs/${name}`)),
           name,
         );
       for (const file of lock.files)
@@ -342,7 +342,7 @@ test("actual built CLI refuses a required missing Tabs asset before any consumer
   const fixture = copyConsumerFixture();
   const packageRoot = mkdtempSync(path.join(os.tmpdir(), "suik-tabs-package-"));
   try {
-    for (const directory of ["registry", "schema", "dist"])
+    for (const directory of ["assets", "dist"])
       cpSync(directory, path.join(packageRoot, directory), { recursive: true });
     cpSync("package.json", path.join(packageRoot, "package.json"));
     symlinkSync(
@@ -362,7 +362,7 @@ test("actual built CLI refuses a required missing Tabs asset before any consumer
       0,
       initialized.stdout + initialized.stderr,
     );
-    rmSync(path.join(packageRoot, "registry/ui/tabs/content.svelte"));
+    rmSync(path.join(packageRoot, "assets/registry/ui/tabs/content.svelte"));
     const before = snapshotTree(fixture.root);
     const refused = run(["add", "tabs"]);
     assert.equal(refused.status, 12, refused.stdout + refused.stderr);

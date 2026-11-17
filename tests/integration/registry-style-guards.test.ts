@@ -25,15 +25,15 @@ for (const [label, body] of malformed)
     const fixture = cliPackage();
     try {
       // Replace only this allocated synthetic package with actual shipped assets.
-      rmSync(path.join(fixture.pkg, "registry"), {
+      rmSync(path.join(fixture.pkg, "assets/registry"), {
         recursive: true,
         force: true,
       });
-      cpSync("registry", path.join(fixture.pkg, "registry"), {
+      cpSync("assets/registry", path.join(fixture.pkg, "assets/registry"), {
         recursive: true,
       });
       assert.equal(fixture.run(["init"]).status, 0);
-      write(fixture.pkg, "registry/styles/tokens.css", body);
+      write(fixture.pkg, "assets/registry/styles/tokens.css", body);
       refreshRegistryContent(fixture.pkg);
       const before = snapshotTree(fixture.root);
       const result = fixture.run(["add", "tokens"]);

@@ -5,11 +5,11 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const outputs = [
   [
-    "registry/styles/tokens.css",
+    "assets/registry/styles/tokens.css",
     "tests/fixtures/consumer/src/lib/qualification/tokens/tokens.css",
   ],
   [
-    "registry/contracts/component-customization-v1.json",
+    "assets/registry/contracts/component-customization-v1.json",
     "tests/fixtures/consumer/src/lib/qualification/tokens/component-customization-v1.json",
   ],
 ];

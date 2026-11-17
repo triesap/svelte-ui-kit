@@ -30,7 +30,7 @@ export function buildDialogCandidate(
     for (const file of files) {
       const target = path.join(fixture.root, "src/lib/candidate/dialog", file);
       mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, readFileSync(`registry/ui/dialog/${file}`));
+      writeFileSync(target, readFileSync(`assets/registry/ui/dialog/${file}`));
     }
     const styles = stage === "styles" ? ["tokens", "dialog"] : [];
     for (const style of styles) {
@@ -40,7 +40,10 @@ export function buildDialogCandidate(
         `${style}.css`,
       );
       mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, readFileSync(`registry/styles/${style}.css`));
+      writeFileSync(
+        target,
+        readFileSync(`assets/registry/styles/${style}.css`),
+      );
     }
     const routeName = {
       "root-trigger": "dialog-candidate",
@@ -113,7 +116,7 @@ export function buildDialogCandidate(
         ],
         installation: "candidate-copy",
         catalogRegistered: JSON.parse(
-          readFileSync("registry/registry.json", "utf8"),
+          readFileSync("assets/registry/registry.json", "utf8"),
         ).items.some((item: { id: string }) => item.id === "dialog"),
         logs,
         files: Object.fromEntries(

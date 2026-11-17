@@ -6,7 +6,7 @@ import { test } from "node:test";
 import { buildDialogCandidate } from "../helpers/dialog-candidate.js";
 
 test("actual candidate Root/Trigger compile and SSR with remaining raw Bits parts", () => {
-  const registryBefore = readFileSync("registry/registry.json");
+  const registryBefore = readFileSync("assets/registry/registry.json");
   const consumer = buildDialogCandidate();
   try {
     const result = spawnSync(
@@ -32,11 +32,16 @@ test("actual candidate Root/Trigger compile and SSR with remaining raw Bits part
   } finally {
     consumer.cleanup();
   }
-  assert.deepEqual(readFileSync("registry/registry.json"), registryBefore);
+  assert.deepEqual(
+    readFileSync("assets/registry/registry.json"),
+    registryBefore,
+  );
 });
 
 test("incremental Root/Trigger composition leaves complete catalog registration intact", () => {
-  const root = JSON.parse(readFileSync("registry/registry.json", "utf8"));
+  const root = JSON.parse(
+    readFileSync("assets/registry/registry.json", "utf8"),
+  );
   assert.equal(
     root.items.filter((item: { id: string }) => item.id === "dialog").length,
     1,

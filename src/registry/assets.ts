@@ -164,6 +164,47 @@ function isSafeDirPrefix(value: string): boolean {
 export function createAssetProvider(root: string): AssetProvider {
   const resolvedRoot = resolve(root);
 
+  // Logical registry names are stable public identifiers; only the package's
+  // physical storage moves. There is no authoring/old-root fallback.
+  const assetPath = (logical: string): string =>
+    resolve(
+      resolvedRoot,
+      "assets",
+      logical.startsWith("schema/") ? `schemas/${logical.slice(7)}` : logical,
+    );
+
+  const ancestorIssue = (
+    absolute: string,
+    logical: string,
+  ): ModelIssue | null => {
+    let current = resolvedRoot;
+    for (const segment of relative(resolvedRoot, absolute)
+      .split(sep)
+      .slice(0, -1)) {
+      current = join(current, segment);
+      try {
+        const entry = lstatSync(current);
+        if (entry.isSymbolicLink())
+          return issue(
+            "ASSET_SYMLINK_ESCAPE",
+            "asset ancestry must not traverse a symlink",
+            logical,
+          );
+        if (!entry.isDirectory())
+          return issue(
+            "ASSET_NOT_DIRECTORY",
+            "asset ancestry must be a real directory",
+            logical,
+          );
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT")
+          return issue("ASSET_MISSING", "asset ancestry is missing", logical);
+        return ioFailure(logical, "stat", error);
+      }
+    }
+    return null;
+  };
+
   const realRoot = (): string => {
     try {
       return realpathSync(resolvedRoot);
@@ -175,7 +216,9 @@ export function createAssetProvider(root: string): AssetProvider {
   const readBytes = (logicalPath: string): ModelResult<Uint8Array> => {
     const normalized = normalizeAssetPath(logicalPath);
     if (!normalized.ok) return normalized;
-    const absolute = resolve(resolvedRoot, normalized.value);
+    const absolute = assetPath(normalized.value);
+    const problem = ancestorIssue(absolute, logicalPath);
+    if (problem !== null) return fail([problem]);
     if (!contained(resolvedRoot, absolute)) {
       return fail([
         issue(
@@ -266,7 +309,8 @@ export function createAssetProvider(root: string): AssetProvider {
         ),
       ]);
     }
-    const base = prefix === "" ? resolvedRoot : resolve(resolvedRoot, prefix);
+    const base =
+      prefix === "" ? resolve(resolvedRoot, "assets") : assetPath(prefix);
     if (base !== resolvedRoot && !contained(resolvedRoot, base)) {
       return fail([
         issue(
@@ -344,7 +388,12 @@ export function createAssetProvider(root: string): AssetProvider {
           const abs = join(dir, entry.name);
           const stats = lstatSync(abs);
           if (stats.isSymbolicLink()) continue;
-          const logical = rel === "" ? entry.name : `${rel}/${entry.name}`;
+          const logical =
+            rel === ""
+              ? entry.name === "schemas"
+                ? "schema"
+                : entry.name
+              : `${rel}/${entry.name}`;
           if (stats.isDirectory()) walk(abs, logical);
           else if (stats.isFile()) out.push(logical);
         }

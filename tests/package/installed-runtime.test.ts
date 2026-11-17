@@ -161,7 +161,7 @@ for (const custom of [false, true])
     };
     const registry = JSON.parse(
       readFileSync(
-        path.join(installed.packageRoot, "registry/registry.json"),
+        path.join(installed.packageRoot, "assets/registry/registry.json"),
         "utf8",
       ),
     );
@@ -299,7 +299,7 @@ test("copied packed CLI cannot substitute unavailable author assets or hide a mi
   assert.equal(sourceBound.status, 12, sourceBound.stdout + sourceBound.stderr);
   assert.equal(JSON.parse(sourceBound.stdout).status, "error");
   const missing = installed.clone("owned-missing-bundle-control");
-  rmSync(path.join(missing, "registry/registry.json"));
+  rmSync(path.join(missing, "assets/registry/registry.json"));
   const absent = installed.run(
     ["view", "dialog", "--source"],
     consumer,

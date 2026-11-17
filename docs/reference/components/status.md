@@ -26,7 +26,7 @@ Browser accessibility-tree observations do not promise actual speech across scre
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/status.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/status.json) owns this inventory.
 
 | Export             | Kind  | Local target      |
 | ------------------ | ----- | ----------------- |
@@ -38,9 +38,9 @@ The [authoritative manifest](../../../registry/ui/status.json) owns this invento
 Registry dependencies: `tokens`.
 Npm requirements: none.
 
-- [Authored status.svelte](../../../registry/ui/status.svelte)
-- [Authored status.types.ts](../../../registry/ui/status.types.ts)
-- [Managed status CSS](../../../registry/styles/status.css)
+- [Authored status.svelte](../../../assets/registry/ui/status.svelte)
+- [Authored status.types.ts](../../../assets/registry/ui/status.types.ts)
+- [Managed status CSS](../../../assets/registry/styles/status.css)
 
 Source adaptations preserve the original named surface: `Status`, `StatusPoliteness`, `StatusRole`. The names here describe source attribution, not extra target aliases.
 

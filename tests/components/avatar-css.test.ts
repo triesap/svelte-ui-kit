@@ -10,7 +10,7 @@ interface Rule {
 const source = JSON.parse(
   readFileSync("tests/fixtures/avatar-candidate/source-css.json", "utf8"),
 ) as { source: { revision: string; sha256: string }; rules: Rule[] };
-const css = readFileSync("registry/styles/avatar.css", "utf8");
+const css = readFileSync("assets/registry/styles/avatar.css", "utf8");
 const rules: Rule[] = [];
 function collect(value: unknown): void {
   if (Array.isArray(value)) {
@@ -70,7 +70,10 @@ test("immutable Avatar declarations preserve all 6 source layout control and sta
 
 test("Avatar preserves original272 customization records and appends only approved fallback hooks", () => {
   const contract = JSON.parse(
-    readFileSync("registry/contracts/component-customization-v1.json", "utf8"),
+    readFileSync(
+      "assets/registry/contracts/component-customization-v1.json",
+      "utf8",
+    ),
   );
   assert.ok(contract.properties.length >= 274);
   assert.equal(

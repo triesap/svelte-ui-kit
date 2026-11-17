@@ -37,11 +37,11 @@ function diagnostics(body: string) {
     writeFileSync(path.join(root, "package.json"), '{"type":"module"}');
     writeFileSync(
       path.join(root, "src/router-link.types.ts"),
-      readFileSync("registry/ui/router-link.types.ts"),
+      readFileSync("assets/registry/ui/router-link.types.ts"),
     );
     writeFileSync(
       path.join(root, "src/anchor.types.ts"),
-      readFileSync("registry/ui/anchor.types.ts"),
+      readFileSync("assets/registry/ui/anchor.types.ts"),
     );
     writeFileSync(path.join(root, "src/sveltekit-elements.d.ts"), augmentation);
     const fixture = path.join(root, "src/fixture.ts");

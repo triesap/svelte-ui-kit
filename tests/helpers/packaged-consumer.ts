@@ -80,7 +80,7 @@ export function buildPackagedConsumer(custom: boolean) {
     };
     const registry = JSON.parse(
       readFileSync(
-        path.join(cli.packageRoot, "registry/registry.json"),
+        path.join(cli.packageRoot, "assets/registry/registry.json"),
         "utf8",
       ),
     );
@@ -128,7 +128,7 @@ export function buildPackagedConsumer(custom: boolean) {
           assert.equal(
             read(file.path),
             readFileSync(
-              path.join(cli.packageRoot, "registry/ui", relative),
+              path.join(cli.packageRoot, "assets/registry/ui", relative),
               "utf8",
             ),
           );
@@ -138,7 +138,7 @@ export function buildPackagedConsumer(custom: boolean) {
       (item: { manifest: string }) =>
         JSON.parse(
           readFileSync(
-            path.join(cli.packageRoot, "registry", item.manifest),
+            path.join(cli.packageRoot, "assets/registry", item.manifest),
             "utf8",
           ),
         ).exports,
@@ -171,7 +171,7 @@ export function buildPackagedConsumer(custom: boolean) {
       "\n:root { --kit-color-primary: rgb(12, 34, 56); }\n";
     app.write(app.paths.appCss, appCss);
     const incoming = cli.clone(custom ? "custom-incoming" : "default-incoming");
-    const sourcePath = path.join(incoming, "registry/ui/button.svelte");
+    const sourcePath = path.join(incoming, "assets/registry/ui/button.svelte");
     const source = readFileSync(sourcePath, "utf8");
     assert.equal(source.split("<button\n").length, 2);
     const safeSource = source.replace(
@@ -179,7 +179,7 @@ export function buildPackagedConsumer(custom: boolean) {
       '<button\n  data-packed-revision="safe"\n',
     );
     writeFileSync(sourcePath, safeSource);
-    const itemPath = path.join(incoming, "registry/ui/button.json");
+    const itemPath = path.join(incoming, "assets/registry/ui/button.json");
     const item = JSON.parse(readFileSync(itemPath, "utf8"));
     item.version = "8.0.1";
     writeFileSync(itemPath, JSON.stringify(item));

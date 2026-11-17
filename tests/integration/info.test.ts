@@ -149,7 +149,7 @@ for (const kind of [
         assert.equal(
           envelope.data.registry.version,
           JSON.parse(
-            readFileSync(path.resolve("registry/registry.json"), "utf8"),
+            readFileSync(path.resolve("assets/registry/registry.json"), "utf8"),
           ).registryVersion,
         );
         assert.equal(

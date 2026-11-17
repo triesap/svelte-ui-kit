@@ -25,7 +25,7 @@ Low decorative contrast is not a readable-message contract.
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/skeleton.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/skeleton.json) owns this inventory.
 
 | Export          | Kind  | Local target        |
 | --------------- | ----- | ------------------- |
@@ -35,9 +35,9 @@ The [authoritative manifest](../../../registry/ui/skeleton.json) owns this inven
 Registry dependencies: `tokens`.
 Npm requirements: none.
 
-- [Authored skeleton.svelte](../../../registry/ui/skeleton.svelte)
-- [Authored skeleton.types.ts](../../../registry/ui/skeleton.types.ts)
-- [Managed skeleton CSS](../../../registry/styles/skeleton.css)
+- [Authored skeleton.svelte](../../../assets/registry/ui/skeleton.svelte)
+- [Authored skeleton.types.ts](../../../assets/registry/ui/skeleton.types.ts)
+- [Managed skeleton CSS](../../../assets/registry/styles/skeleton.css)
 
 Source adaptations preserve the original named surface: `Skeleton`. The names here describe source attribution, not extra target aliases.
 

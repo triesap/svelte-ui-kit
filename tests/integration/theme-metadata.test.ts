@@ -24,8 +24,13 @@ function json(root: string, file: string) {
 }
 function fixture() {
   const owned = cliPackage();
-  rmSync(path.join(owned.pkg, "registry"), { recursive: true, force: true });
-  cpSync("registry", path.join(owned.pkg, "registry"), { recursive: true });
+  rmSync(path.join(owned.pkg, "assets/registry"), {
+    recursive: true,
+    force: true,
+  });
+  cpSync("assets/registry", path.join(owned.pkg, "assets/registry"), {
+    recursive: true,
+  });
   return owned;
 }
 const rehash = refreshRegistryContent;
@@ -61,21 +66,29 @@ for (const unsafe of ["untracked", "symlink"] as const)
     }
   });
 function revision(pkg: string) {
-  const manifest = json(pkg, "registry/foundation/tokens.json");
+  const manifest = json(pkg, "assets/registry/foundation/tokens.json");
   manifest.version = "0.2.0";
-  write(pkg, "registry/foundation/tokens.json", JSON.stringify(manifest));
-  const contract = json(pkg, "registry/contracts/theme-v1.json");
+  write(
+    pkg,
+    "assets/registry/foundation/tokens.json",
+    JSON.stringify(manifest),
+  );
+  const contract = json(pkg, "assets/registry/contracts/theme-v1.json");
   contract.tokens.find(
     (token: { name: string }) => token.name === "--kit-color-canvas",
   ).fallback = "#fafafa";
-  write(pkg, "registry/contracts/theme-v1.json", JSON.stringify(contract));
   write(
     pkg,
-    "registry/styles/tokens.css",
-    readFileSync(path.join(pkg, "registry/styles/tokens.css"), "utf8").replace(
-      "--kit-color-canvas: #f8fafc;",
-      "--kit-color-canvas: #fafafa;",
-    ),
+    "assets/registry/contracts/theme-v1.json",
+    JSON.stringify(contract),
+  );
+  write(
+    pkg,
+    "assets/registry/styles/tokens.css",
+    readFileSync(
+      path.join(pkg, "assets/registry/styles/tokens.css"),
+      "utf8",
+    ).replace("--kit-color-canvas: #f8fafc;", "--kit-color-canvas: #fafafa;"),
   );
   rehash(pkg);
 }
@@ -165,19 +178,22 @@ for (const failure of [
     try {
       install(owned);
       if (failure === "removed") {
-        const manifest = json(owned.pkg, "registry/foundation/tokens.json");
+        const manifest = json(
+          owned.pkg,
+          "assets/registry/foundation/tokens.json",
+        );
         delete manifest.contracts;
         write(
           owned.pkg,
-          "registry/foundation/tokens.json",
+          "assets/registry/foundation/tokens.json",
           JSON.stringify(manifest),
         );
       } else if (failure === "comment-proof")
         write(
           owned.pkg,
-          "registry/styles/tokens.css",
+          "assets/registry/styles/tokens.css",
           readFileSync(
-            path.join(owned.pkg, "registry/styles/tokens.css"),
+            path.join(owned.pkg, "assets/registry/styles/tokens.css"),
             "utf8",
           ).replace(
             "--kit-color-canvas: #f8fafc;",
@@ -187,9 +203,9 @@ for (const failure of [
       else if (failure === "override")
         write(
           owned.pkg,
-          "registry/styles/tokens.css",
+          "assets/registry/styles/tokens.css",
           readFileSync(
-            path.join(owned.pkg, "registry/styles/tokens.css"),
+            path.join(owned.pkg, "assets/registry/styles/tokens.css"),
             "utf8",
           ).replace(
             "/* svelte-ui-kit:end tokens */",
@@ -197,12 +213,15 @@ for (const failure of [
           ),
         );
       else {
-        const contract = json(owned.pkg, "registry/contracts/theme-v1.json");
+        const contract = json(
+          owned.pkg,
+          "assets/registry/contracts/theme-v1.json",
+        );
         if (failure === "future") contract.contractVersion = 2;
         else contract.tokens[0].fallback = "#abcdef";
         write(
           owned.pkg,
-          "registry/contracts/theme-v1.json",
+          "assets/registry/contracts/theme-v1.json",
           JSON.stringify(contract),
         );
       }

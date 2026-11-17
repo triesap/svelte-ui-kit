@@ -57,7 +57,7 @@ See compatibility for measured presence, portal and CSP boundaries.
 
 ## Exports and installed assets
 
-The [authoritative manifest](../../../registry/ui/dialog.json) owns this inventory.
+The [authoritative manifest](../../../assets/registry/ui/dialog.json) owns this inventory.
 
 | Export                   | Kind  | Local target      |
 | ------------------------ | ----- | ----------------- |
@@ -81,17 +81,17 @@ The [authoritative manifest](../../../registry/ui/dialog.json) owns this invento
 Registry dependencies: `tokens`.
 Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
 
-- [Authored dialog/root.svelte](../../../registry/ui/dialog/root.svelte)
-- [Authored dialog/trigger.svelte](../../../registry/ui/dialog/trigger.svelte)
-- [Authored dialog/portal.svelte](../../../registry/ui/dialog/portal.svelte)
-- [Authored dialog/overlay.svelte](../../../registry/ui/dialog/overlay.svelte)
-- [Authored dialog/content.svelte](../../../registry/ui/dialog/content.svelte)
-- [Authored dialog/title.svelte](../../../registry/ui/dialog/title.svelte)
-- [Authored dialog/description.svelte](../../../registry/ui/dialog/description.svelte)
-- [Authored dialog/close.svelte](../../../registry/ui/dialog/close.svelte)
-- [Authored dialog/types.ts](../../../registry/ui/dialog/types.ts)
-- [Authored dialog/index.ts](../../../registry/ui/dialog/index.ts)
-- [Managed dialog CSS](../../../registry/styles/dialog.css)
+- [Authored dialog/root.svelte](../../../assets/registry/ui/dialog/root.svelte)
+- [Authored dialog/trigger.svelte](../../../assets/registry/ui/dialog/trigger.svelte)
+- [Authored dialog/portal.svelte](../../../assets/registry/ui/dialog/portal.svelte)
+- [Authored dialog/overlay.svelte](../../../assets/registry/ui/dialog/overlay.svelte)
+- [Authored dialog/content.svelte](../../../assets/registry/ui/dialog/content.svelte)
+- [Authored dialog/title.svelte](../../../assets/registry/ui/dialog/title.svelte)
+- [Authored dialog/description.svelte](../../../assets/registry/ui/dialog/description.svelte)
+- [Authored dialog/close.svelte](../../../assets/registry/ui/dialog/close.svelte)
+- [Authored dialog/types.ts](../../../assets/registry/ui/dialog/types.ts)
+- [Authored dialog/index.ts](../../../assets/registry/ui/dialog/index.ts)
+- [Managed dialog CSS](../../../assets/registry/styles/dialog.css)
 
 Source adaptations preserve the original named surface: `DialogClose`, `DialogContent`, `DialogContentRole`, `DialogDescription`, `DialogRoot`, `DialogTitle`, `DialogTrigger`. The names here describe source attribution, not extra target aliases.
 

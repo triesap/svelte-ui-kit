@@ -34,7 +34,7 @@ test("real Skeleton declares complete native exports and direct source dependenc
       (file) => file.owner === "skeleton" && file.cohort === "skeleton",
     ),
   );
-  const component = readFileSync("registry/ui/skeleton.svelte", "utf8");
+  const component = readFileSync("assets/registry/ui/skeleton.svelte", "utf8");
   assert.match(
     component,
     /import type \{ SkeletonProps \} from "\.\/skeleton\.types\.js"/,
@@ -99,7 +99,7 @@ for (const custom of [false, true])
       for (const name of ["skeleton.svelte", "skeleton.types.ts"])
         assert.ok(
           readFileSync(path.join(fixture.root, config.uiDir, name)).equals(
-            readFileSync(path.join("registry/ui", name)),
+            readFileSync(path.join("assets/registry/ui", name)),
           ),
         );
       for (const file of lock.files)

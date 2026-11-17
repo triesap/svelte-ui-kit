@@ -36,14 +36,14 @@ test("actual bundled tokens are CSS-only, loader authenticated and match the fro
   assert.deepEqual(tokens.manifest.exports, []);
   assert.deepEqual(tokens.manifest.npmDependencies, []);
   assert.equal(tokens.files.length, 1);
-  const css = readFileSync("registry/styles/tokens.css", "utf8");
+  const css = readFileSync("assets/registry/styles/tokens.css", "utf8");
   const parsed = parseManagedCss(css);
   assert.equal(parsed.ok, true, JSON.stringify(parsed));
   if (!parsed.ok) return;
   assert.equal(parsed.value.blocks.length, 1);
   assert.equal(parsed.value.blocks[0]!.id, "tokens");
   const semantic = JSON.parse(
-    readFileSync("registry/contracts/theme-v1.json", "utf8"),
+    readFileSync("assets/registry/contracts/theme-v1.json", "utf8"),
   );
   for (const token of semantic.tokens)
     assert.ok(css.includes(`${token.name}: ${token.fallback};`));

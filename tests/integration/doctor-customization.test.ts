@@ -86,7 +86,7 @@ for (const custom of [false, true])
         if (scenario === "unsafe") {
           rmSync(path.join(fixture.root, card));
           symlinkSync(
-            path.join(fixture.pkg, "registry/templates/card.svelte"),
+            path.join(fixture.pkg, "assets/registry/templates/card.svelte"),
             path.join(fixture.root, card),
           );
         }
