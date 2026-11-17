@@ -12,7 +12,7 @@ import {
 
 for (const kind of ["config", "lock"] as const)
   for (const schemaVersion of [0, 2, 999, "1", "0.9.0-alpha", "5.57.3"])
-    test(`${kind} ${schemaVersion === 2 ? "malformed supported" : "unsupported"} schema ${schemaVersion} blocks every mutation without migration`, () => {
+    test(`${kind} retired or malformed schema ${schemaVersion} blocks every mutation without migration`, () => {
       const fixture = cliPackage();
       try {
         assert.equal(fixture.run(["add", "card"]).status, 0);
@@ -26,6 +26,8 @@ for (const kind of ["config", "lock"] as const)
         write(fixture.root, logical, JSON.stringify(value));
         const before = snapshotTree(fixture.root);
         for (const args of [
+          ["info"],
+          ["doctor", "--strict"],
           ["init"],
           ["add", "button"],
           ["sync"],
@@ -38,10 +40,7 @@ for (const kind of ["config", "lock"] as const)
           assert.ok(
             envelope.diagnostics.some(
               (entry: { code: string; message: string }) =>
-                schemaVersion === 2
-                  ? entry.code === "SCHEMA_INVALID"
-                  : entry.message.includes("Unsupported") &&
-                    entry.message.includes("migration"),
+                entry.code === "SCHEMA_INVALID",
             ),
             result.stdout,
           );

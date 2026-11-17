@@ -106,6 +106,14 @@ export function resolveEffectiveConfig(
   const suppliedConfig = parseKitConfig(supplied);
   if (!suppliedConfig.ok) return suppliedConfig;
   const targetInstallation = environment.kitConfig;
+  if (!targetInstallation.ok && supplied.target !== "sveltekit")
+    return ok({
+      config: supplied,
+      observedRequested: supplied.requested,
+      provenance: "default",
+      configPath: null,
+      issues: targetInstallation.issues,
+    });
   const observed =
     targetInstallation.ok && targetInstallation.value.kind === "custom"
       ? targetInstallation.value

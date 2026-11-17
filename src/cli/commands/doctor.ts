@@ -129,6 +129,41 @@ export function diagnose(
   }
   const { snapshot, config, lock, registry } = context.value;
   const derived = deriveKitPaths(config);
+  const transactions = inspectTransactions(snapshot.root, derived.stateDir, {
+    uiDir: config.uiDir,
+    stylesDir: config.stylesDir,
+    ...generationFields(config),
+  });
+  for (const transaction of transactions)
+    record(
+      transaction.ok
+        ? [
+            issue(
+              "DOCTOR_RECOVERY_PENDING",
+              "Retained transaction state requires guarded recovery; doctor never repairs it.",
+              derived.stateDir + "/.svelte-ui-kit",
+            ),
+          ]
+        : transaction.issues.map((entry) => ({
+            ...entry,
+            locator: derived.stateDir + "/.svelte-ui-kit",
+          })),
+      "DOCTOR_RECOVERY",
+    );
+  const writer = observeEntry(
+    path.join(snapshot.root, writerLockDir(derived.stateDir)),
+  );
+  if (writer.kind !== "absent")
+    record(
+      [
+        issue(
+          "DOCTOR_WRITER_PRESENT",
+          "Writer ownership evidence is present; do not remove it or infer takeover from PID/age.",
+          derived.stateDir + "/.svelte-ui-kit",
+        ),
+      ],
+      "DOCTOR_COORDINATION",
+    );
   if (lock === null) {
     record(
       [
@@ -552,40 +587,5 @@ export function diagnose(
     });
     record(peers.ok ? [] : peers.issues, "DOCTOR_PEERS");
   }
-  const transactions = inspectTransactions(snapshot.root, derived.stateDir, {
-    uiDir: config.uiDir,
-    stylesDir: config.stylesDir,
-    ...generationFields(config),
-  });
-  for (const transaction of transactions)
-    record(
-      transaction.ok
-        ? [
-            issue(
-              "DOCTOR_RECOVERY_PENDING",
-              "Retained transaction state requires guarded recovery; doctor never repairs it.",
-              derived.stateDir + "/.svelte-ui-kit",
-            ),
-          ]
-        : transaction.issues.map((entry) => ({
-            ...entry,
-            locator: derived.stateDir + "/.svelte-ui-kit",
-          })),
-      "DOCTOR_RECOVERY",
-    );
-  const writer = observeEntry(
-    path.join(snapshot.root, writerLockDir(derived.stateDir)),
-  );
-  if (writer.kind !== "absent")
-    record(
-      [
-        issue(
-          "DOCTOR_WRITER_PRESENT",
-          "Writer ownership evidence is present; do not remove it or infer takeover from PID/age.",
-          derived.stateDir + "/.svelte-ui-kit",
-        ),
-      ],
-      "DOCTOR_COORDINATION",
-    );
   return result();
 }

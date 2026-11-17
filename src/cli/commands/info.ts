@@ -1,4 +1,6 @@
 import { generationFields } from "../../project/config.js";
+import { validateDiscoveryCapture } from "../../project/detect.js";
+import { readCapturedLock } from "./context.js";
 /** S079: actual read-only inspection of the selected consumer package. */
 import { resolveEffectiveConfig } from "../../codegen/effective-config.js";
 import { captureSnapshot } from "../../codegen/snapshot.js";
@@ -65,7 +67,11 @@ export function inspectInfo(
       ),
       data: { ready: false },
     }),
-    ...(failureClass === undefined ? {} : { failureClass }),
+    ...(failureClass !== undefined
+      ? { failureClass }
+      : issues.some((entry) => entry.code.includes("UNSAFE"))
+        ? { failureClass: "unsafe_path" as const }
+        : {}),
   });
   const selected = resolveProjectRoot({ cwd: request.cwd, invocationDir });
   if (!selected.ok)
@@ -80,12 +86,26 @@ export function inspectInfo(
   const registry = loadRegistrySnapshot(createAssetProvider(registryRoot));
   if (!registry.ok) return failure(registry.issues, "registry_failure");
   const located = discoverGenerationConfig(selected.value.root);
+  if (!located.ok) return failure(located.issues);
   const targetPaths =
     located.ok && located.value.kind === "custom"
       ? [...generationInputPaths(), located.value.configPath]
       : [];
   const snapshot = captureSnapshot(selected.value.root, targetPaths);
-  if (!snapshot.ok) return failure(snapshot.issues, "unsafe_path");
+  if (!snapshot.ok)
+    return failure(
+      snapshot.issues,
+      snapshot.issues.some(
+        (entry) => entry.code === "SNAPSHOT_INSTALLATION_CHANGED",
+      )
+        ? undefined
+        : "unsafe_path",
+    );
+  const discovery = validateDiscoveryCapture(
+    located,
+    snapshot.value.environment.kitConfig,
+  );
+  if (!discovery.ok) return failure(discovery.issues);
   const environment = snapshot.value.environment;
   const intent =
     environment.kitConfig.ok && environment.kitConfig.value.kind === "custom"
@@ -99,6 +119,8 @@ export function inspectInfo(
     ...effective.config,
     requested: effective.observedRequested,
   };
+  const installedLock = readCapturedLock(snapshot.value, config);
+  if (!installedLock.ok) return failure(installedLock.issues);
   const closure = projectRequests(registry.value, config.requested);
   if (!closure.ok) return failure(closure.issues, "registry_failure");
   const dependencies = planDependencies(registry.value, closure.value.order);

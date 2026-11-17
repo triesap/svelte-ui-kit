@@ -1,3 +1,4 @@
+import { parseKitConfig } from "../project/config.js";
 import {
   CONFIGURATION_FILES,
   readConfigurationBytes,
@@ -421,15 +422,21 @@ export function captureSnapshot(
   // Canonical target proof always binds package/framework candidates and their
   // absence in the same snapshot. Callers add product targets, never remember a
   // second format-dependent capture protocol. No live fallback is permitted.
+  const discovery = environment.kitConfig.ok
+    ? environment.kitConfig.value
+    : null;
+  const candidates = discovery?.candidates ?? [];
+  const selectedCoordination = (candidate: (typeof candidates)[number]) =>
+    (candidate.role === "writer" || candidate.role === "transactions") &&
+    candidate.path.startsWith(`${discovery!.derived.stateDir}/.svelte-ui-kit/`);
   const paths = [
     ...new Set([
       ...logicalPaths,
       "package.json",
       ...CONFIGURATION_FILES,
-      ...(environment.kitConfig.ok &&
-      environment.kitConfig.value.kind === "custom"
-        ? [environment.kitConfig.value.configPath]
-        : []),
+      ...candidates
+        .filter((candidate) => !selectedCoordination(candidate))
+        .map((candidate) => candidate.path),
     ]),
   ];
   if (paths.some((logical) => !isSafeLogicalRelativePath(logical)))
@@ -450,6 +457,53 @@ export function captureSnapshot(
       logicalPath,
       observeOne(canonical.value.path, logicalPath, ancestors),
     );
+  }
+  if (discovery) {
+    for (const candidate of candidates) {
+      // The selected writer has its own exclusive ownership protocol. Bind its
+      // capture without making its legitimate acquisition violate a read guard.
+      const observed = selectedCoordination(candidate)
+        ? observeOne(
+            canonical.value.path,
+            candidate.path,
+            observeAncestors(canonical.value.path, candidate.path),
+          )
+        : entries.get(candidate.path);
+      let unchanged =
+        observed?.kind === candidate.kind &&
+        (candidate.kind === "absent" ||
+          (observed?.identity?.device === candidate.device &&
+            observed.identity.inode === candidate.inode &&
+            observed.mode === candidate.mode));
+      if (
+        candidate.role === "config" &&
+        candidate.kind === "file" &&
+        observed?.bytes
+      ) {
+        try {
+          const parsed = parseKitConfig(
+            JSON.parse(
+              new TextDecoder("utf-8", { fatal: true }).decode(observed.bytes),
+            ),
+            candidate.path,
+          );
+          unchanged =
+            unchanged &&
+            parsed.ok &&
+            JSON.stringify(parsed.value) === JSON.stringify(discovery.config);
+        } catch {
+          unchanged = false;
+        }
+      }
+      if (!unchanged)
+        return fail([
+          issue(
+            "SNAPSHOT_INSTALLATION_CHANGED",
+            "Installation metadata changed during original capture; retry",
+            candidate.path,
+          ),
+        ]);
+    }
   }
   for (const captured of environment.configuration) {
     const observation = entries.get(captured.path);

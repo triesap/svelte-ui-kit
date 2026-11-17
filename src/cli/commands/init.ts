@@ -4,6 +4,7 @@ import {
   initializationFields,
   integrationMapping,
 } from "../../project/config.js";
+import { validateDiscoveryCapture } from "../../project/detect.js";
 /** S081: orchestration consumes the accepted pure planner and guarded applier. */
 import { applyPlan, validateApplyPlan } from "../../codegen/apply.js";
 import { composeApplyPlan } from "../../codegen/compose.js";
@@ -94,7 +95,20 @@ export function initialize(
     integrationMapping(supplied).path,
     ".gitignore",
   ]);
-  if (!snapshot.ok) return failure(snapshot.issues, "unsafe_path");
+  if (!snapshot.ok)
+    return failure(
+      snapshot.issues,
+      snapshot.issues.some(
+        (entry) => entry.code === "SNAPSHOT_INSTALLATION_CHANGED",
+      )
+        ? undefined
+        : "unsafe_path",
+    );
+  const discovery = validateDiscoveryCapture(
+    located.kitConfig,
+    snapshot.value.environment.kitConfig,
+  );
+  if (!discovery.ok) return failure(discovery.issues);
   const resolved = resolveEffectiveConfig(snapshot.value, supplied);
   if (!resolved.ok) return failure(resolved.issues);
   if (resolved.value.issues.length > 0) return failure(resolved.value.issues);

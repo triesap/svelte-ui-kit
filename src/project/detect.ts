@@ -366,11 +366,47 @@ export interface DiscoveredGenerationConfig {
   readonly configPath: string;
   readonly config: KitConfig;
   readonly derived: KitDerivedPaths;
+  /** Known metadata candidates, including absence; never ownership authority. */
+  readonly candidates: readonly InstallationObservation[];
+}
+
+/** Selected-package metadata observations are read guards, never recovery permission. */
+export interface InstallationObservation {
+  readonly path: string;
+  readonly role: "config" | "lock" | "writer" | "transactions";
+  readonly kind: import("./io.js").EntryObservation["kind"];
+  readonly device: number | null;
+  readonly inode: number | null;
+  readonly mode: number | null;
+}
+function installationObservations(
+  root: string,
+  stateDir: string,
+): InstallationObservation[] {
+  return (
+    [
+      ["config", `${stateDir}/kit.json`],
+      ["lock", `${stateDir}/kit.lock.json`],
+      ["writer", `${stateDir}/.svelte-ui-kit/writer.lock`],
+      ["transactions", `${stateDir}/.svelte-ui-kit/transactions`],
+    ] as const
+  ).map(([role, logical]) => {
+    const entry = observeEntry(path.join(root, logical));
+    return {
+      path: logical,
+      role,
+      kind: entry.kind,
+      device: "stats" in entry ? entry.stats.dev : null,
+      inode: "stats" in entry ? entry.stats.ino : null,
+      mode: "stats" in entry ? entry.stats.mode & 0o7777 : null,
+    };
+  });
 }
 
 /** Deterministic candidate collection with typed discovery issues. */
 interface CandidateScan {
   readonly candidates: readonly string[];
+  readonly observations: readonly InstallationObservation[];
   readonly issues: readonly ModelIssue[];
 }
 
@@ -387,6 +423,7 @@ interface CandidateScan {
  */
 function scanKitConfigCandidates(root: string): CandidateScan {
   const results: string[] = [];
+  const observations: InstallationObservation[] = [];
   const issues: ModelIssue[] = [];
 
   const walk = (dir: string, relDir: string): void => {
@@ -411,6 +448,84 @@ function scanKitConfigCandidates(root: string): CandidateScan {
       if (name === "_kit") {
         const kitJson = observeEntry(path.join(abs, "kit.json"));
         if (entry.kind === "directory") {
+          const transient = observeEntry(path.join(abs, ".svelte-ui-kit"));
+          if (transient.kind !== "absent" && transient.kind !== "directory") {
+            issues.push(
+              issue(
+                transient.kind === "unreadable"
+                  ? "KIT_STATE_UNREADABLE"
+                  : "KIT_STATE_UNSAFE",
+                "Retained coordination namespace must be a readable real directory",
+                `${rel}/.svelte-ui-kit`,
+              ),
+            );
+          } else {
+            const captured = installationObservations(root, rel);
+            observations.push(...captured);
+            const configObservation = captured.find(
+              (item) => item.role === "config",
+            )!;
+            if (
+              configObservation.kind !== kitJson.kind ||
+              ("stats" in kitJson &&
+                (configObservation.device !== kitJson.stats.dev ||
+                  configObservation.inode !== kitJson.stats.ino ||
+                  configObservation.mode !== (kitJson.stats.mode & 0o7777)))
+            )
+              issues.push(
+                issue(
+                  "KIT_CONFIG_CHANGED",
+                  "A configuration candidate changed during discovery; retry",
+                  `${rel}/kit.json`,
+                ),
+              );
+            for (const item of captured.filter(
+              (item) => item.role !== "config",
+            )) {
+              const expected = item.role === "lock" ? "file" : "directory";
+              if (item.kind !== "absent" && item.kind !== expected)
+                issues.push(
+                  issue(
+                    item.kind === "unreadable"
+                      ? "KIT_STATE_UNREADABLE"
+                      : "KIT_STATE_UNSAFE",
+                    "Installation metadata must have its actual regular file/directory role without links",
+                    item.path,
+                  ),
+                );
+            }
+            if (kitJson.kind === "absent") {
+              const writer = captured.find((item) => item.role === "writer")!;
+              const transactions = captured.find(
+                (item) => item.role === "transactions",
+              )!;
+              const lock = captured.find((item) => item.role === "lock")!;
+              if (writer.kind === "directory")
+                issues.push(
+                  issue(
+                    "KIT_WRITER_PRESENT",
+                    "Writer evidence survives without configuration; preserve it and never infer takeover from PID or age",
+                    writer.path,
+                  ),
+                );
+              else if (transactions.kind === "directory")
+                issues.push(
+                  issue(
+                    "KIT_RECOVERY_PENDING",
+                    "Retained transaction evidence survives without configuration; preserve it for guarded recovery with the matching canonical target and mapping",
+                    transactions.path,
+                  ),
+                );
+              else if (lock.kind === "file")
+                issues.push(
+                  issue(
+                    "KIT_INSTALLATION_INCOMPLETE",
+                    "Installed lock survives without configuration; restore a consistent application snapshot rather than initializing elsewhere",
+                    lock.path,
+                  ),
+                );
+            }
+          }
           if (kitJson.kind === "file") results.push(`${rel}/kit.json`);
           else if (kitJson.kind === "unreadable") {
             issues.push(
@@ -469,7 +584,13 @@ function scanKitConfigCandidates(root: string): CandidateScan {
 
   const rootEntry = observeEntry(root);
   if (rootEntry.kind === "directory") walk(root, "");
-  return { candidates: results.sort(), issues };
+  return {
+    candidates: results.sort(),
+    observations: observations.sort((a, b) =>
+      a.path < b.path ? -1 : a.path > b.path ? 1 : 0,
+    ),
+    issues,
+  };
 }
 
 /**
@@ -523,6 +644,7 @@ export function discoverGenerationConfig(
   const scan = scanKitConfigCandidates(root);
   const issues: ModelIssue[] = [...scan.issues];
   const valid: DiscoveredGenerationConfig[] = [];
+  const candidates = scan.observations;
 
   for (const rel of scan.candidates) {
     const abs = path.join(root, ...rel.split("/"));
@@ -558,8 +680,13 @@ export function discoverGenerationConfig(
       continue;
     }
     if (observation.kind === "absent") {
-      // Disappeared between the scan and the read: treat as missing, not a
-      // config, but never as a silent default when another issue exists.
+      issues.push(
+        issue(
+          "KIT_CONFIG_CHANGED",
+          "A discovered configuration disappeared during capture; retry from a fresh observation",
+          rel,
+        ),
+      );
       continue;
     }
     const parsed = parseKitConfig(observation.value, rel);
@@ -584,6 +711,7 @@ export function discoverGenerationConfig(
       configPath: rel,
       config: parsed.value,
       derived,
+      candidates,
     });
   }
 
@@ -606,11 +734,20 @@ export function discoverGenerationConfig(
   const ancestryIssue = defaultAncestryIssue(root);
   if (ancestryIssue !== null) return fail([ancestryIssue]);
 
+  const byPath = new Map(candidates.map((item) => [item.path, item]));
+  for (const candidate of installationObservations(
+    root,
+    deriveKitPaths(DEFAULT_KIT_CONFIG).stateDir,
+  ))
+    if (!byPath.has(candidate.path)) byPath.set(candidate.path, candidate);
   return ok({
     kind: "default",
     configPath: "src/lib/components/ui/_kit/kit.json",
     config: DEFAULT_KIT_CONFIG,
     derived: deriveKitPaths(DEFAULT_KIT_CONFIG),
+    candidates: [...byPath.values()].sort((a, b) =>
+      a.path < b.path ? -1 : a.path > b.path ? 1 : 0,
+    ),
   });
 }
 
@@ -636,4 +773,37 @@ export function discoverKitConfig(
       ),
     ]);
   return ok({ ...found.value, config });
+}
+
+/** Preliminary selection is a locator, never authority to ignore capture drift. */
+export function validateDiscoveryCapture(
+  before: ModelResult<DiscoveredGenerationConfig>,
+  after: ModelResult<DiscoveredGenerationConfig>,
+): ModelResult<DiscoveredGenerationConfig> {
+  if (!before.ok) return before;
+  if (!after.ok)
+    return fail([
+      issue(
+        "KIT_CONFIG_CHANGED",
+        "Installation discovery changed during capture; retry from a fresh observation",
+        before.value.configPath,
+      ),
+      ...after.issues,
+    ]);
+  if (
+    before.value.kind !== after.value.kind ||
+    before.value.configPath !== after.value.configPath ||
+    JSON.stringify(before.value.config) !==
+      JSON.stringify(after.value.config) ||
+    JSON.stringify(before.value.candidates) !==
+      JSON.stringify(after.value.candidates)
+  )
+    return fail([
+      issue(
+        "KIT_CONFIG_CHANGED",
+        "Installation discovery changed during capture; retry from a fresh observation",
+        before.value.configPath,
+      ),
+    ]);
+  return after;
 }

@@ -3,6 +3,7 @@ import {
   integrationMapping,
   type KitConfig,
 } from "../../project/config.js";
+import { validateDiscoveryCapture } from "../../project/detect.js";
 import { projectRequests } from "../../registry/projection.js";
 import { tokenMetadataPaths } from "../../registry/theme.js";
 /** Capture complete command planning authority; never fill snapshot gaps live. */
@@ -123,6 +124,11 @@ export function captureCommandContext(
   for (const file of old?.integrations ?? []) paths.add(file.path);
   const snapshot = captureSnapshot(selected.value.root, [...paths]);
   if (!snapshot.ok) return snapshot;
+  const discovery = validateDiscoveryCapture(
+    preliminary.kitConfig,
+    snapshot.value.environment.kitConfig,
+  );
+  if (!discovery.ok) return discovery;
   const effective = resolveEffectiveConfig(snapshot.value, config);
   if (!effective.ok) return effective;
   if (effective.value.issues.length > 0) return fail(effective.value.issues);
@@ -142,32 +148,9 @@ export function captureCommandContext(
         "kit.json",
       ),
     ]);
-  const decoded = decodeObservedText(snapshot.value.entries.get(lockPath)!);
-  let lock: KitLock | null = null;
-  if (decoded.kind === "text") {
-    let value: unknown;
-    try {
-      value = JSON.parse(decoded.text);
-    } catch {
-      return fail([
-        issue(
-          "COMMAND_LOCK_INVALID",
-          "The captured installed lock is not valid JSON.",
-          lockPath,
-        ),
-      ]);
-    }
-    const parsed = parseKitLock(value, lockPath, mapping);
-    if (!parsed.ok) return parsed;
-    lock = parsed.value;
-  } else if (snapshot.value.entries.get(lockPath)?.kind !== "absent")
-    return fail([
-      issue(
-        "COMMAND_LOCK_UNSAFE",
-        "The captured lock is not regular valid UTF-8 metadata.",
-        lockPath,
-      ),
-    ]);
+  const capturedLock = readCapturedLock(snapshot.value, capturedConfig);
+  if (!capturedLock.ok) return capturedLock;
+  const lock = capturedLock.value;
   // A changed old inventory needs a fresh invocation, not a live recapture.
   for (const file of [
     ...(lock?.files ?? []),
@@ -187,5 +170,51 @@ export function captureCommandContext(
     snapshot: snapshot.value,
     config: capturedConfig,
     lock,
+  });
+}
+
+/** One captured semantic-lock reader shared by information and write planning. */
+export function readCapturedLock(
+  snapshot: ProjectSnapshot,
+  config: KitConfig,
+): ModelResult<KitLock | null> {
+  const derived = deriveKitPaths(config),
+    lockPath = `${derived.stateDir}/kit.lock.json`;
+  const observed = snapshot.entries.get(lockPath);
+  if (observed?.kind === "absent") return ok(null);
+  if (!observed)
+    return fail([
+      issue(
+        "COMMAND_LOCK_UNOBSERVED",
+        "Capture the selected installed lock, including its absence",
+        lockPath,
+      ),
+    ]);
+  const decoded = decodeObservedText(observed);
+  if (decoded.kind !== "text")
+    return fail([
+      issue(
+        "COMMAND_LOCK_UNSAFE",
+        "The captured lock is not regular valid UTF-8 metadata.",
+        lockPath,
+      ),
+    ]);
+  let value: unknown;
+  try {
+    value = JSON.parse(decoded.text);
+  } catch {
+    return fail([
+      issue(
+        "COMMAND_LOCK_INVALID",
+        "The captured installed lock is not valid JSON.",
+        lockPath,
+      ),
+    ]);
+  }
+  return parseKitLock(value, lockPath, {
+    stateDir: derived.stateDir,
+    uiDir: config.uiDir,
+    stylesDir: config.stylesDir,
+    ...generationFields(config),
   });
 }

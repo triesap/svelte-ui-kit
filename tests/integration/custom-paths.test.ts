@@ -1,3 +1,4 @@
+import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
@@ -30,7 +31,7 @@ test("a supported explicit custom mapping resolves relative to the package", (t)
   t.after(() => project.cleanup());
   project.writeFile("package.json", JSON.stringify({ name: "custom" }));
   writeKitConfig(project, "app/ui/_kit/kit.json", {
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "app/ui",
     stylesDir: "app/styles",
     layoutFile: "src/routes/+layout.svelte",
@@ -68,7 +69,7 @@ test("a candidate whose uiDir disagrees with its location fails", (t) => {
   t.after(() => project.cleanup());
   project.writeFile("package.json", JSON.stringify({ name: "mismatch" }));
   writeKitConfig(project, "app/_kit/kit.json", {
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "other/ui",
   });
 
@@ -82,11 +83,11 @@ test("multiple valid candidates are ambiguous", (t) => {
   t.after(() => project.cleanup());
   project.writeFile("package.json", JSON.stringify({ name: "many" }));
   writeKitConfig(project, "a/ui/_kit/kit.json", {
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "a/ui",
   });
   writeKitConfig(project, "b/ui/_kit/kit.json", {
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "b/ui",
   });
 
@@ -112,29 +113,29 @@ test("dependency, build-output, nested package and symlink paths are excluded", 
   project.writeFile("package.json", JSON.stringify({ name: "excluded" }));
   // Only this should be discoverable.
   writeKitConfig(project, "app/ui/_kit/kit.json", {
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "app/ui",
   });
   // Excluded by directory name.
   writeKitConfig(project, "node_modules/pkg/_kit/kit.json", {
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "node_modules/pkg",
   });
   writeKitConfig(project, "dist/_kit/kit.json", {
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "dist",
   });
   // Excluded as a nested package root.
   project.writeFile("nested/package.json", JSON.stringify({ name: "nested" }));
   writeKitConfig(project, "nested/ui/_kit/kit.json", {
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "nested/ui",
   });
   // Excluded because it is only reachable through a symlink outside the root.
   const external = createTempProject({ prefix: "suik-custom-external-" });
   t.after(() => external.cleanup());
   writeKitConfig(external, "ui/_kit/kit.json", {
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "ui",
   });
   project.symlink(external.root, "linked");
@@ -156,7 +157,7 @@ test("application configuration is never executed during discovery", (t) => {
     'throw new Error("svelte.config.js must not be executed");\n',
   );
   writeKitConfig(project, "app/ui/_kit/kit.json", {
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "app/ui",
   });
 
@@ -171,7 +172,7 @@ test("a symlinked kit.json candidate is unsafe, not a default bootstrap", (t) =>
   t.after(() => project.cleanup());
   project.writeFile("package.json", JSON.stringify({ name: "linked" }));
   writeKitConfig(project, "app/ui/_kit/real.json", {
-    schemaVersion: 1,
+    ...DEFAULT_KIT_CONFIG,
     uiDir: "app/ui",
   });
   project.symlink("real.json", "app/ui/_kit/kit.json");
@@ -198,7 +199,10 @@ test("a symlinked _kit directory is observed deliberately", (t) => {
   project.writeFile("package.json", JSON.stringify({ name: "linked-kit" }));
   const external = createTempProject({ prefix: "suik-kit-external-" });
   t.after(() => external.cleanup());
-  writeKitConfig(external, "kit.json", { schemaVersion: 1, uiDir: "app/ui" });
+  writeKitConfig(external, "kit.json", {
+    ...DEFAULT_KIT_CONFIG,
+    uiDir: "app/ui",
+  });
   project.writeDir("app/ui");
   project.symlink(external.root, "app/ui/_kit");
 

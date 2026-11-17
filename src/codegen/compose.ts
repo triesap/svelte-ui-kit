@@ -440,7 +440,11 @@ export function composeApplyPlan(
     const observation = snapshot.entries.get(path);
     if (
       observation?.kind === "absent" &&
-      generationInputPaths().includes(path)
+      (generationInputPaths().includes(path) ||
+        (snapshot.environment.kitConfig.ok &&
+          snapshot.environment.kitConfig.value.candidates.some(
+            (candidate) => candidate.path === path,
+          )))
     ) {
       evidenceSeen.add(path);
       evidenceFiles.push({
