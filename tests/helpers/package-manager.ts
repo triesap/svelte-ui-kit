@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { sha256Hex } from "../../src/codegen/digest.js";
+import { createHash } from "node:crypto";
+const sha256Hex = (bytes: Uint8Array) =>
+  createHash("sha256").update(bytes).digest("hex");
 export function linkedFixtureEnvironment(): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {
     ...process.env,

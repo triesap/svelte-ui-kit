@@ -3,22 +3,25 @@
 All paths are relative to one selected application or library package. `--cwd`
 selects that package; the CLI does not scan and mutate every workspace member or
 execute application configuration/scripts to discover it. Configuration is
-validated against the [v1 schema](../../assets/schemas/kit.schema.json).
+validated against the [canonical project schema](../../assets/schemas/kit.schema.json).
 
 ## Desired configuration
 
 The default configuration is `src/lib/components/ui/_kit/kit.json`. It stores
-`schemaVersion`, the `builtin` registry, integration mappings and **explicit root
+`schemaVersion`, an explicit `target`, the `builtin` registry, integration mappings and **explicit root
 requests**, rather than replacing requests with dependency closure.
 
-| Field           | Meaning                                                                  |
-| --------------- | ------------------------------------------------------------------------ |
-| `schemaVersion` | Legacy SvelteKit format 1; explicit target format 2 is described below.  |
-| `registry`      | Built-in registry only; currently `builtin`.                             |
-| `uiDir`         | Local source and root export directory; default `src/lib/components/ui`. |
-| `stylesDir`     | Aggregate and application stylesheet directory; default `src/styles`.    |
-| `layoutFile`    | Explicit supported root layout or statically detected layout.            |
-| `requested`     | Unique installable root IDs deliberately selected by the app.            |
+| Field           | Meaning                                                                                        |
+| --------------- | ---------------------------------------------------------------------------------------------- |
+| `schemaVersion` | Literal integer 1 for every supported target.                                                  |
+| `target`        | `sveltekit`, `astro` or `svelte-library`; required on disk.                                    |
+| `toolVersion`   | CLI writer identity; current local package is 0.2.0.                                           |
+| `registry`      | Built-in registry only; currently `builtin`.                                                   |
+| `uiDir`         | Local source and root export directory; default `src/lib/components/ui`.                       |
+| `stylesDir`     | Aggregate and application stylesheet directory; default `src/styles`.                          |
+| `layoutFile`    | Application layout only: `.svelte` for SvelteKit or `.astro` for Astro.                        |
+| `styleEntry`    | Library stylesheet entry only; application layouts and library entries are mutually exclusive. |
+| `requested`     | Unique installable root IDs deliberately selected by the app.                                  |
 
 Unknown fields, duplicate requests, unsupported versions, unsafe/overlapping paths
 and ambiguous project identity fail visibly. Framework, CLI, registry, item and
@@ -48,17 +51,18 @@ nor its workspace is rewritten during discovery or refusal.
 
 ## Custom mapping
 
-### Explicit target schema
+### One canonical target schema
 
-The independent [v2 target schema](../../assets/schemas/kit.schema.json) defines
-explicit target discovery and integration intent. The CLI generates v1 SvelteKit
-and v2 SvelteKit, Astro and standalone Svelte-library installations.
-Existing v1 defaults, custom paths and unknown-field
-refusals remain unchanged; no automatic schema or ownership migration occurs.
+The [project schema](../../assets/schemas/kit.schema.json) has ID
+`urn:svelte-ui-kit:schema:v1:project-config`. Every persisted project requires
+`schemaVersion: 1` and its explicit `target`. This preserves target-bound
+integration and ownership; it is not a format-number rewrite of an old project.
+Targetless old format 1 and old format 2 are refused. Follow
+[canonical adoption](../guides/upgrading.md#canonical-format-adoption) with the
+matching previous binary and full application evidence; no automatic migration
+or old-format fallback is provided.
 
-V2 requires `schemaVersion: 2` and an explicit `target`. Common `uiDir`,
-`stylesDir`, `requested`, `toolVersion` and `registry` fields retain their v1
-meanings. Framework, registry, item, lock and configuration revisions are
+Framework, CLI, registry, item, lock, journal and command-envelope identities are
 independent. The target mapping is a closed union:
 
 | Target           | Required integration mapping                                   | Package evidence                                                                             |
@@ -88,7 +92,7 @@ stylesheet entry and never borrows a layout field. See
 
 ### Supported SvelteKit configuration
 
-Both v1 and v2 application paths require stable Kit2-only declarations and
+Canonical SvelteKit applications require stable Kit2-only declarations and
 independently matching installed metadata when present. Planning captures every
 Svelte/Vite configuration candidate and its absence. A present Vite configuration
 must be one regular bounded ESM file with a literal default object or imported
@@ -116,6 +120,7 @@ Before initialization, create `app/ui/_kit/kit.json` in the selected application
 ```json
 {
   "schemaVersion": 1,
+  "target": "sveltekit",
   "registry": "builtin",
   "uiDir": "app/ui",
   "stylesDir": "assets/styles",
@@ -129,16 +134,25 @@ Before initialization, create `app/ui/_kit/kit.json` in the selected application
 Exactly one discovered `_kit/kit.json` may identify the installation; its location
 must agree with `uiDir`. Discovery is deterministic and read-only, excludes VCS,
 dependencies/build outputs and nested package roots, and never follows symlinks.
-No candidate uses the default bootstrap location. Multiple, malformed or
-mislocated candidates fail rather than selecting one by accident.
+A fresh positively detected SvelteKit package has default in-memory intent and
+no persisted configuration path until initialization. An empty `_kit` directory
+does not establish ownership. Astro and libraries require explicit intent.
+Orphan locks, writers or transactions across mappings prevent silent bootstrap
+elsewhere. Multiple, malformed or mislocated candidates fail rather than selecting
+one by accident. Configuration without a lock is configured awaiting initialization.
 
 ## Installed observations
 
 The [lock schema](../../assets/schemas/kit-lock.schema.json) owns installed lineage:
-requested versus transitive origin, registry/item identities, file/CSS cohort
+canonical `schemaVersion: 1`, the same target, requested versus transitive origin,
+registry/item identities, file/CSS cohort
 owners, baseline hashes and integration contracts. Commit this tool-managed
 semantic metadata. Do not edit hashes to hide local work. Ephemeral coordination,
-staging and journals are distinct recovery evidence, not desired configuration.
+staging and durable journal format 3 are distinct recovery evidence, not desired
+configuration. The lock schema ID is `urn:svelte-ui-kit:schema:v1:install-lock`.
+Exactly three target-bound integrations record the layout or stylesheet entry,
+root exports and aggregate stylesheet. The lock binds the exact serialized
+configuration bytes; editing desired `requested` roots remains normal sync input.
 
 ## Source, exports and styles
 
@@ -150,7 +164,10 @@ barrel merely to imitate another framework.
 
 `kit.css` aggregates managed component blocks. `themes.css` and `app.css` remain
 application-owned. Supported layout integration imports kit, themes, then app CSS
-without replacing existing route rendering or unrelated layout code. Unsupported,
+without replacing existing route rendering or unrelated layout code. SvelteKit
+requires lexical `$props()` children and an actual `{@render children()}` (a real
+local alias is supported); old export-let/slot layout rendering does not qualify.
+Astro preserves its native slots and library packages integrate their CSS entry. Unsupported,
 dynamic or ambiguous integration stops with an actionable manual step.
 See [styling](../guides/styling.md), [upgrading](../guides/upgrading.md) and
 [recovery](../guides/recovery.md).

@@ -3,7 +3,18 @@
 This project has not been released. Entries describe the local source/package;
 they do not announce an npm release or broaden tested compatibility.
 
-## Unreleased
+## Unreleased — local 0.2.0
+
+- Breaking canonical project/lock format 1 requires an explicit SvelteKit, Astro
+  or library target. Targetless format 1 and old format 2 are refused. New
+  project-config/install-lock schema IDs distinguish these formats; durable
+  journals independently use format 3. Keep the previous binary and full evidence
+  for reviewed clean-copy adoption and consistent rollback.
+- Canonical discovery, package-indexed native evidence and one typed async
+  preparation path replace superseded compatibility entry points. Transaction
+  effects have their own module owner; published catalog/asset identity is stable.
+- SvelteKit layouts require modern `$props()`/`@render` child rendering, including
+  legitimate aliases. Astro slots and library stylesheet roles remain distinct.
 
 - Stronger light-surface control boundaries and readable info/success text defaults,
   with unchanged token APIs and ordinary customization-preserving update plans.

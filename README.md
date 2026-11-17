@@ -117,7 +117,9 @@ push, deployment or reference-source changes.
 Licensed under [MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE).
 Retain [source and dependency notices](NOTICE.md) when copying generated assets.
 
-Astro applications use [explicit v2 target intent](docs/guides/astro.md); existing
-SvelteKit v1 intent remains supported without automatic migration.
+All three targets use canonical project format 1 with an explicit target.
+Astro applications use [Astro intent](docs/guides/astro.md); existing installations
+using targetless format 1 or format 2 need the reviewed
+[clean-copy adoption procedure](docs/guides/upgrading.md#canonical-format-adoption).
 Shared packages use the [Svelte-library target](docs/guides/svelte-library.md),
 with an explicit CSS entry and consumer-owned package exports.

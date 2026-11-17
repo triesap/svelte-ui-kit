@@ -1,13 +1,66 @@
 # Upgrading and retiring requests
 
-Start with the [local installation procedure](../getting-started.md), preserve
-an external backup or reviewed version-control baseline, and inspect the incoming
-archive and its dependency requirements. An incoming CLI host is separate from
-both the existing host and application. Explicitly install the reviewed local
-archive there, then set `INCOMING_CLI` to its absolute installed executable.
-Keep `APP` set to the application package root.
+Preserve the existing CLI, its exact archive/digest, CLI-host manifest/lock and a
+verified full application snapshot before reviewing an incoming distribution.
+A version string alone does not identify a matching binary. Prepare the incoming
+CLI in a separate host using [local installation](../getting-started.md).
 
-## Inspect before applying
+## Canonical format adoption
+
+Local 0.2.0 uses one target-bearing project/lock format 1 and durable journal
+format 3. Old targetless project format 1 and old format 2 are refused. Changing
+a format number, removing ownership evidence or running ordinary sync does not
+establish a supported migration.
+
+Rehearse this procedure in an isolated working area before any separately
+reviewed application cutover:
+
+1. Stop writers and preserve the complete old application, including hidden
+   `_kit` state, journals, staged images, backups, publication evidence, modes,
+   links and unmanaged work. Verify file hashes, kinds, permissions and link
+   targets against the backup. Preserve native archives, dependency inputs and
+   the matching previous CLI archive and host lock. Account explicitly for
+   externally referenced dependency files; copying a link does not copy its
+   destination.
+2. Retain the original physical installation. A byte-copy backup changes file
+   and directory identities and is archival evidence, not authority to recover
+   a journal in another root. Use the matching previous CLI at its original root
+   only for provable interrupted state. Follow the bounded writer-coordination
+   procedure in [recovery](recovery.md) when its actual prerequisites are proven.
+   Ambiguous evidence or a planning refusal means preserve and stop; do not
+   invent a request to trigger recovery.
+3. After verified old recovery, preserve a settled snapshot and the original
+   physical installation for rollback. Review strict diagnosis and old app
+   checks. Create a separate clean candidate from reviewed application source
+   and dependency inputs, leaving the original untouched. Do not copy old kit
+   metadata or stale managed layout/export/CSS regions into a fresh installation.
+   Review their app-owned content and customizations separately.
+4. Declare canonical target intent and supply modern SvelteKit child rendering,
+   an Astro default slot or a library stylesheet as appropriate. Run canonical
+   info/init dry-run/init, restore deliberate root requests through normal
+   add/sync plans, and reapply reviewed source/theme customizations. Verify the
+   candidate with strict doctor, app checks/builds and relevant SSR/browser tests.
+   Generated success alone does not qualify application behavior.
+5. Keep original and candidate independent until review. Before an authorized
+   switch, preserve both complete installations and their exact CLI pairings.
+   A same-filesystem move preserves physical objects; a copied backup does not.
+   Recover interrupted state before relocation rather than assuming a saved
+   journal can be replayed at a new location.
+6. Rollback returns to the preserved settled old installation with its matching
+   previous binary and dependency state, retaining the candidate for diagnosis.
+   Verify the complete saved inventory and old diagnosis again. A backup with
+   retained physical evidence that cannot be restored consistently requires
+   review; do not edit journal identities/hashes to make it pass.
+
+Neither the incoming CLI nor these steps automatically rewrite an old project.
+The archived interrupted snapshot, settled snapshot, previous binary and original
+physical installation serve different purposes; keep each until review is complete.
+
+## Updates within the canonical format
+
+Use the following normal source reconciliation only for a compatible canonical
+installation. Set `INCOMING_CLI` to its independently installed executable and
+`APP` to that application package root.
 
 <!-- documented-upgrade-workflow:start -->
 

@@ -4,6 +4,16 @@ Use the [local CLI setup](../getting-started.md) to set absolute `CLI` and `APP`
 paths. The application owns its current files; protect them before any manual
 intervention. Diagnosis is read-only and cannot authorize recovery by itself.
 
+## Match the binary and physical installation
+
+Before diagnosing a format-boundary upgrade, retain the exact previous CLI
+archive/digest and the complete application snapshot, including hidden state.
+Canonical local 0.2.0 refuses old targetless format 1, old format 2 and retained
+journal formats 1/2. Use the matching previous binary only for its own provable
+interruption at the original physical root. A copied snapshot changes physical
+identities and is not permission to replay saved journals in a new root. Preserve
+ambiguous evidence and follow [canonical adoption and rollback](upgrading.md#canonical-format-adoption).
+
 ## Interrupted writes
 
 Stop further mutation when a command reports pending/ambiguous recovery. Preserve current files and transaction evidence. Use read-only diagnosis to understand the state; do not delete lock/journal files based only on age, PID, or a guess. The implemented protocol must safely finish/revert a provable interrupted state or refuse with actionable guidance. It must not overwrite edits made after interruption.

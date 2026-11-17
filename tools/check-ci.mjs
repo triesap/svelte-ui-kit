@@ -116,7 +116,7 @@ const scripts = Object.freeze({
     ]
       .map((file) => `tsc -p ${file} --noEmit`)
       .join(" && ") +
-    " && tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-package.ts tools/build-package.test.ts",
+    " && tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-package.ts tools/build-package.test.ts tools/rehearse-canonical-cutover.ts",
   build: "node tools/build-package.ts",
   "pack:local": "node tools/build-package.ts --pack-destination",
   "test:unit": "pnpm run build && node tools/run-unit-tests.mjs",

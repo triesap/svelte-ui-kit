@@ -47,7 +47,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0",
     "build": "node tools/build-package.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.unit.json --noEmit && tsc -p tsconfig.integration.json --noEmit && tsc -p tsconfig.components.json --noEmit && tsc -p tsconfig.registry.json --noEmit && tsc -p tsconfig.package.json --noEmit && tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-package.ts tools/build-package.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.unit.json --noEmit && tsc -p tsconfig.integration.json --noEmit && tsc -p tsconfig.components.json --noEmit && tsc -p tsconfig.registry.json --noEmit && tsc -p tsconfig.package.json --noEmit && tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-package.ts tools/build-package.test.ts tools/rehearse-canonical-cutover.ts",
     "test:cli-bootstrap": "node --test tests/smoke/cli-bootstrap.test.mjs",
     "test:unit": "pnpm run build && node tools/run-unit-tests.mjs",
     "test:integration": "pnpm run build && node tools/run-unit-tests.mjs --suite integration",
@@ -69,7 +69,8 @@
     "test:docs": "node --test tools/check-docs.test.mjs",
     "test:astro": "node tools/run-unit-tests.mjs --suite integration tests/integration/astro-consumer.test.ts tests/integration/astro-generation.test.ts",
     "native:artifacts:check": "node --test --test-concurrency=1 tools/prepare-native-artifacts.test.ts",
-    "pack:local": "node tools/build-package.ts --pack-destination"
+    "pack:local": "node tools/build-package.ts --pack-destination",
+    "rehearse:cutover": "node tools/rehearse-canonical-cutover.ts"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

@@ -27,6 +27,14 @@ multi-item add, remote registry or upstream compatibility alias.
 See [configuration](configuration.md), [upgrading](../guides/upgrading.md) and
 [recovery](../guides/recovery.md). Diagnosis does not execute recovery.
 
+`info --json` reports `data.paths.configSchema: 1`, the actual `target` and
+exactly one mapping role (`layoutFile` or `styleEntry`). A fresh detected
+SvelteKit package reports `data.config.kind: "default"` and `path: null`;
+persisted intent reports `"custom"` and its real logical path. These observations
+do not confer installed ownership. Configuration without a lock awaits init;
+retained, orphaned, crossed or ambiguous evidence retains its owning diagnosis.
+Select opted-in workspace packages explicitly with `--cwd` when ambiguous.
+
 ## Structured output and exits
 
 The [command envelope schema](../../assets/schemas/command-envelope.schema.json) owns
@@ -77,8 +85,8 @@ an unsafe path, conflict or incompatible component/source/style/export cohort.
 
 Plans describe direct runtime/tooling requirements, peers, declarations, installed
 versions and appropriate detected-manager commands. Installation is a separate
-application operation. Only the authentic application-owned Bits archive can
-normalize its explicit local-file declaration into the qualified internal version;
+application operation. Only each authentic application-owned Bits/Svelte archive can
+normalize its explicit local-file declaration into its qualified internal version;
 installed distribution provenance and full inventory must also match. The raw
 installed version must exactly equal the qualified baseline; v-prefixed and
 build-metadata equivalents are refused. Captured readiness and peer checks require
@@ -88,7 +96,7 @@ declarations cannot certify readiness. Follow the complete native extraction,
 digest check and explicit local install in [getting started](../getting-started.md).
 
 Authoritative implementation and regression sources are repository references:
-[argument grammar](https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/src/cli/args.ts),
-[protocol](https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/src/cli/protocol.ts),
-[output presentation](https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/src/cli/output.ts)
-and [protocol tests](https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/tests/unit/protocol.test.ts).
+[argument grammar](https://github.com/triesap/svelte-ui-kit/blob/6c8ce3aeb6efe28b5111952390d64a775aec1e69/src/cli/args.ts),
+[protocol](https://github.com/triesap/svelte-ui-kit/blob/6c8ce3aeb6efe28b5111952390d64a775aec1e69/src/cli/protocol.ts),
+[output presentation](https://github.com/triesap/svelte-ui-kit/blob/6c8ce3aeb6efe28b5111952390d64a775aec1e69/src/cli/output.ts)
+and [protocol tests](https://github.com/triesap/svelte-ui-kit/blob/6c8ce3aeb6efe28b5111952390d64a775aec1e69/tests/unit/protocol.test.ts).

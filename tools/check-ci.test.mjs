@@ -270,3 +270,12 @@ test("integration hydration requires the actual pinned Chromium installation", (
   );
   has(errors(workflow), "CI_COMMAND_COVERAGE");
 });
+
+test("omitting historical cutover tooling from strict type coverage is detected", () => {
+  const pkg = structuredClone(manifest);
+  pkg.scripts.typecheck = pkg.scripts.typecheck.replace(
+    " tools/rehearse-canonical-cutover.ts",
+    "",
+  );
+  has(errors(source, pkg), "CI_SCRIPT_COVERAGE");
+});

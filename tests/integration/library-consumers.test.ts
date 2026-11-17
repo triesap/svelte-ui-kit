@@ -415,9 +415,13 @@ test(
     );
     nativeArchive(library, cli.packageRoot);
     mkdirSync(path.join(library, "src/lib/_kit"), { recursive: true });
-    cpSync(
-      path.join(library, "kit-intent.json"),
+    writeFileSync(
       path.join(library, "src/lib/_kit/kit.json"),
+      documentedExample(
+        "docs/guides/svelte-library.md",
+        "documented-library-intent",
+        "json",
+      ),
     );
     cpSync(
       path.join(owner, "tests/fixtures/astro-consumer/src/styles"),

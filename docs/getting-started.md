@@ -66,10 +66,10 @@ The CLI-host preparation above is shared. Select the application package with
 Use the archive procedure below for every target, then follow the appropriate
 intent and composition guide **before** initializing:
 
-- SvelteKit: the remaining steps on this page use the default v1 target.
-- [Astro](guides/astro.md): use explicit v2 Astro intent and one Svelte component
+- SvelteKit: the remaining steps on this page use the canonical `sveltekit` target.
+- [Astro](guides/astro.md): use canonical Astro intent and one Svelte component
   per contextful island; no SvelteKit dependency is required.
-- [Svelte library](guides/svelte-library.md): use explicit v2 library intent and
+- [Svelte library](guides/svelte-library.md): use canonical library intent and
   native development archives, with portable SemVer peers for consumers.
 
 ## Prepare native dependencies
@@ -79,8 +79,8 @@ a workspace root. Back up or commit current work before installation. The app
 must declare SvelteKit, have supported configuration and own its check/build
 tooling. The tested setup uses SvelteKit 2.70.3, Vite 8.3.5, TypeScript 6.0.3,
 and svelte-check 4.7.7. The
-[tested consumer manifest](https://github.com/triesap/svelte-ui-kit/blob/dfc7c513fd6edb25546bf43e4b17879554c2bd30/tests/fixtures/consumer/package.json)
-and its [owning version catalog](https://github.com/triesap/svelte-ui-kit/blob/dfc7c513fd6edb25546bf43e4b17879554c2bd30/pnpm-workspace.yaml)
+[tested consumer manifest](https://github.com/triesap/svelte-ui-kit/blob/6c8ce3aeb6efe28b5111952390d64a775aec1e69/tests/fixtures/consumer/package.json)
+and its [owning version catalog](https://github.com/triesap/svelte-ui-kit/blob/6c8ce3aeb6efe28b5111952390d64a775aec1e69/pnpm-workspace.yaml)
 are source references for the qualified native files and resolved versions,
 not standalone manifests or a promise that the CLI creates an application.
 Astro and library packages use their own framework/build configuration instead.
@@ -146,6 +146,22 @@ Astro and library users now continue with their target guide, not the default
 SvelteKit initialization below. Component reference examples use SvelteKit's
 `$lib/components/ui` alias. The generator does not create that alias in Astro
 or libraries; import the actual generated relative `index.js` or package export.
+
+Existing SvelteKit root layouts must obtain children from `$props()` and actually
+render them. A legitimate local alias is supported. For example:
+
+```svelte
+<script lang="ts">
+  let { children } = $props();
+</script>
+
+{@render children()}
+```
+
+Initialization generates this structure for an absent layout. For an unsupported
+existing layout, supply its modern rendering yourself before retrying; the CLI
+preserves application source and provides actionable guidance. Astro continues
+to use its native default slot. See [configuration](reference/configuration.md).
 
 ### Inspect and initialize
 

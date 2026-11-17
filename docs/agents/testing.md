@@ -148,3 +148,29 @@ Pre-existing ignored `implementation/evidence/logs/` data is preserved historica
 operator state, not an active output destination or documentation authority.
 The current documentation checker rejects recreated retired roots and tracked
 historical files; immutable historical URLs remain valid provenance.
+
+## Historical binary cutover rehearsal
+
+From a prepared source checkout, the typed qualification tool creates only a fresh
+owned fixture tree. Supply the exact trusted previous 0.1.0 archive and its
+independently recorded digest, plus a fresh absolute output path under the
+verification output boundary:
+
+```sh
+pnpm run rehearse:cutover --previous-archive "$PREVIOUS_ARCHIVE" --previous-sha256 "$PREVIOUS_SHA256" --output "$CUTOVER_OUTPUT"
+```
+
+It uses the production packer, independent old/current CLI hosts, explicit lock
+resolution/fetch/strict frozen offline installation and the authored version
+catalog. The bounded historical fixture has genuine app-owned UI/styles ancestry and an
+explicitly non-owning empty metadata directory before preparation. A real old SDK
+writer is killed after its prepared journal; the matching
+old CLI recovers only after verified dead-owner coordination quarantine. Current
+CLI refusal, complete interrupted/settled backup inventories, reviewed clean-copy
+canonical requests/customization and original physical-installation rollback are
+observed separately. Both copies of evidence and actual directory identities matter.
+Raw commands, PIDs, deadlines, exits, signals and streams stay in the supplied
+output even on failure. The tool does not accept a real application path or perform
+a live cutover. This is a version-pinned qualification fixture, not a migration
+engine or proof that arbitrary historical interrupted state can be recovered.
+See the public [adoption procedure](../guides/upgrading.md#canonical-format-adoption).

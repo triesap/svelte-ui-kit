@@ -12,11 +12,13 @@ files. Preserve published peer requirements as SemVer; a local archive path is
 not a portable published peer requirement. Each consuming application must own
 and explicitly install its qualified native archives as well.
 
-Write v2 intent to `<uiDir>/_kit/kit.json`, for example:
+Write canonical format-1 intent to `<uiDir>/_kit/kit.json`, for example:
+
+<!-- documented-library-intent:start -->
 
 ```json
 {
-  "schemaVersion": 2,
+  "schemaVersion": 1,
   "target": "svelte-library",
   "uiDir": "src/lib",
   "stylesDir": "src/styles",
@@ -24,6 +26,8 @@ Write v2 intent to `<uiDir>/_kit/kit.json`, for example:
   "requested": []
 }
 ```
+
+<!-- documented-library-intent:end -->
 
 The stylesheet entry replaces the application layout role. Supported top-level
 CSS imports integrate kit, themes and application CSS in that order while
