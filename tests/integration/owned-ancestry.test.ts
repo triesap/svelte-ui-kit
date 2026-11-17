@@ -15,7 +15,7 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import type { ApplyPlanInput } from "../../src/codegen/apply.js";
+import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 import { recoverTransactions } from "../../src/codegen/recovery.js";
 import {
   createOwnedAncestors,

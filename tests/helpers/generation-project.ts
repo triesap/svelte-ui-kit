@@ -76,7 +76,7 @@ export function composeGenerationFoundation(
   config: import("../../src/project/app-config.js").AppProjectConfig,
 ): Foundation<
   import("../../src/project/app-config.js").AppProjectConfig,
-  import("../../src/codegen/apply.js").ApplyPlanInput
+  import("../../src/codegen/plan.js").ApplyPlanInput
 >;
 export function composeGenerationFoundation(
   root: string,
@@ -84,7 +84,7 @@ export function composeGenerationFoundation(
   config: import("../../src/project/generation-config.js").LibraryConfig,
 ): Foundation<
   import("../../src/project/generation-config.js").LibraryConfig,
-  import("../../src/codegen/apply.js").LibraryApplyPlanInput
+  import("../../src/codegen/plan.js").LibraryApplyPlanInput
 >;
 export function composeGenerationFoundation(
   root: string,

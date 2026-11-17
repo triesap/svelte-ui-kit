@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import type { ApplyPlanInput } from "../../src/codegen/apply.js";
+import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 
 import { lockPath } from "../../src/codegen/transaction-types.js";
 import { validKitConfigBytes } from "./kit-config.js";

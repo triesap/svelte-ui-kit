@@ -40,8 +40,8 @@ import type {
   ApplyPlanInput,
   ApplyTarget,
   LibraryApplyPlanInput,
-} from "./apply.js";
-import { derivePlanDigest } from "./apply.js";
+} from "./plan.js";
+import { derivePlanDigest } from "./plan.js";
 import type { PlanInstalledRead } from "./authority.js";
 import { identityDigest, type PlanReadFile } from "./authority.js";
 import { canonicalContentHash, sha256Hex } from "./digest.js";

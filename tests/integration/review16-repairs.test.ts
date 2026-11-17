@@ -21,11 +21,8 @@ import path from "node:path";
 import { test } from "node:test";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
-import {
-  applyPlan,
-  validateApplyPlan,
-  type ApplyPlanInput,
-} from "../../src/codegen/apply.js";
+import { type ApplyPlanInput } from "../../src/codegen/plan.js";
+import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { captureReadset, identityDigest } from "../../src/codegen/authority.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 

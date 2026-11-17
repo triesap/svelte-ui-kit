@@ -5,7 +5,7 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
-import type { ApplyPlanInput } from "../../src/codegen/apply.js";
+import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planAdd } from "../../src/codegen/plan-add.js";
 import { planInit } from "../../src/codegen/plan-init.js";

@@ -11,7 +11,7 @@ import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import type {
   ApplyPlanInput,
   ValidatedApplyPlan,
-} from "../../src/codegen/apply.js";
+} from "../../src/codegen/plan.js";
 
 import { persistJournal } from "../../src/codegen/transaction-journal.js";
 import {

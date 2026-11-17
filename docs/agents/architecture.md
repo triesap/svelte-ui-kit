@@ -25,6 +25,12 @@ runtime dependencies; CLI internals never become app imports.
 
 ## Machine contracts and authority
 
+Pure apply-plan data types and digest calculation live in `src/codegen/plan.ts`.
+Composition imports that planning boundary, never the application engine. Private
+composition receipts remain in composition; validated-instance membership and
+all filesystem coordination remain in the application engine. Recomputed digests,
+typed objects and cloned plans do not grant write authority.
+
 The package-relative provider resolves stable logical `registry/...` identifiers
 under `assets/registry/...` and logical schema paths under `assets/schemas/...`.
 Manifests, hashes and `view --source --json` retain their logical registry names;

@@ -10,11 +10,8 @@ import { clearOrphanedWriterLock } from "../helpers/transactions.js";
 import { parseTargetConfig } from "../../src/project/target-config.js";
 import { linkQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
 import { generationLockContext } from "../../src/project/generation-config.js";
-import {
-  applyPlan,
-  validateApplyPlan,
-  type LibraryApplyPlanInput,
-} from "../../src/codegen/apply.js";
+import { type LibraryApplyPlanInput } from "../../src/codegen/plan.js";
+import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { inspectLibraryStyles } from "../../src/codegen/library-styles.js";
 import { parseKitLock } from "../../src/codegen/lock.js";
 import {

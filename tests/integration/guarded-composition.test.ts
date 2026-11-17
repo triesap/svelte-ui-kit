@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import { writeFixtureWorkspace } from "../helpers/workspace-catalog.js";
+import {
+  linkedFixtureEnvironment,
+  verifyFixtureManager,
+} from "../helpers/package-manager.js";
 import { spawnSync } from "node:child_process";
 import {
   cpSync,
@@ -141,12 +145,25 @@ function seedConsumer(page: string): string {
 }
 
 function runPnpm(args: readonly string[], cwd: string) {
-  return spawnSync("pnpm", args, {
+  const env = { ...linkedFixtureEnvironment(), CI: "1" };
+  verifyFixtureManager("pnpm", [], cwd, env);
+  const shim = path.join(
+    FIXTURE,
+    "node_modules/svelte/node_modules/.bin/acorn",
+  );
+  const before = readFileSync(shim);
+  const result = spawnSync("pnpm", args, {
     cwd,
     encoding: "utf8",
     timeout: 150_000,
-    env: { ...process.env, CI: "1" },
+    env,
   });
+  assert.deepEqual(
+    readFileSync(shim),
+    before,
+    "linked consumer commands must not rewrite the maintained runtime",
+  );
+  return result;
 }
 
 async function renderProductionPage(

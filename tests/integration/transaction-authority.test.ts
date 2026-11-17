@@ -14,12 +14,11 @@ import path from "node:path";
 import { test } from "node:test";
 
 import {
-  applyPlan,
   derivePlanDigest,
-  validateApplyPlan,
   type ApplyTarget,
   type ValidatedApplyPlan,
-} from "../../src/codegen/apply.js";
+} from "../../src/codegen/plan.js";
+import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import { capturePreimage } from "../../src/codegen/revalidate.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { lockPath } from "../../src/codegen/transaction-types.js";

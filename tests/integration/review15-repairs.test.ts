@@ -12,11 +12,8 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import {
-  applyPlan,
-  validateApplyPlan,
-  type ApplyPlanInput,
-} from "../../src/codegen/apply.js";
+import { type ApplyPlanInput } from "../../src/codegen/plan.js";
+import { applyPlan, validateApplyPlan } from "../../src/codegen/apply.js";
 import {
   captureReadset,
   identityDigest,

@@ -8,11 +8,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
+import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import {
   applyPlan,
   validateApplyPlan,
   type ApplyOutcome,
-  type ValidatedApplyPlan,
 } from "../../src/codegen/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
