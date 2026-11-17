@@ -23,15 +23,17 @@ function snapshot(items: Record<string, readonly string[]>): RegistrySnapshot {
       compatibility: { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" },
       items: entries.map(([id]) => ({ id, manifest: `ui/${id}.json` })),
     },
-    items: entries.map(([id, dependencies]): RegistrySnapshotItem => ({
-      id,
-      manifestPath: `registry/ui/${id}.json`,
-      manifest: {
+    items: entries.map(
+      ([id, dependencies]): RegistrySnapshotItem => ({
         id,
-        registryDependencies: dependencies,
-      } as unknown as RegistryItem,
-      files: [],
-    })),
+        manifestPath: `registry/ui/${id}.json`,
+        manifest: {
+          id,
+          registryDependencies: dependencies,
+        } as unknown as RegistryItem,
+        files: [],
+      }),
+    ),
     assets: [],
   };
 }

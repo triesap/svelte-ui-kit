@@ -1,4 +1,4 @@
-import { type KitConfig } from "../project/config.js";
+import type { KitConfig } from "../project/config.js";
 /**
  * Root export-surface generation (S053).
  *

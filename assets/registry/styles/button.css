@@ -22,15 +22,15 @@
     cursor: pointer;
     transition:
       background-color
-        var(--kit-button-transition-duration, var(--kit-duration-fast))
-        var(--kit-button-transition-timing, var(--kit-easing-standard)),
+      var(--kit-button-transition-duration, var(--kit-duration-fast))
+      var(--kit-button-transition-timing, var(--kit-easing-standard)),
       border-color
-        var(--kit-button-transition-duration, var(--kit-duration-fast))
-        var(--kit-button-transition-timing, var(--kit-easing-standard)),
+      var(--kit-button-transition-duration, var(--kit-duration-fast))
+      var(--kit-button-transition-timing, var(--kit-easing-standard)),
       color var(--kit-button-transition-duration, var(--kit-duration-fast))
-        var(--kit-button-transition-timing, var(--kit-easing-standard)),
+      var(--kit-button-transition-timing, var(--kit-easing-standard)),
       box-shadow var(--kit-button-transition-duration, var(--kit-duration-fast))
-        var(--kit-button-transition-timing, var(--kit-easing-standard));
+      var(--kit-button-transition-timing, var(--kit-easing-standard));
   }
 
   .kit-button:focus-visible {

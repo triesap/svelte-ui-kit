@@ -26,7 +26,7 @@ const PACKAGE_ROOT = process.cwd();
 // temporary directory can itself be long.
 const SOCKET_PARENT = "/tmp";
 const NONREGULAR_CONTROL_SPEC =
-  "tests/integration/nonregular-writer-control.mjs";
+  "tests/integration/nonregular-writer-control.ts";
 
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");

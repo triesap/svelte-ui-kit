@@ -10,7 +10,7 @@ import {
  * `.unit-test-build/tests/unit/tooling.test.js` and executes it with the
  * package root as the working directory. It exercises the real authoring
  * `lint` and `format:check` package scripts against disposable package
- * fixtures that copy the real ESLint/Prettier configuration byte-for-byte and
+ * fixtures that copy the real Biome/ESLint/Prettier configuration byte-for-byte and
  * resolve the real installed tools through a `node_modules` symlink.
  *
  * Each fixture is fully owned by its test, is created outside the repository
@@ -43,6 +43,8 @@ const PACKAGE_ROOT = process.cwd();
 const SUBPROCESS_TIMEOUT_MS = 120_000;
 
 const REAL_CONFIG_FILES = [
+  "biome.json",
+  ".gitignore",
   "eslint.config.ts",
   ".prettierrc.json",
   ".prettierignore",
@@ -255,7 +257,7 @@ const CLEAN_SVELTE = `<script lang="ts">
 </script>
 
 <img src="logo.png" alt="Logo" />
-<button onclick={() => (count += 1)}>{doubled}</button>
+<button type="button" onclick={() => (count += 1)}>{doubled}</button>
 `;
 
 function createFixture(t: TestContext, label: string): Fixture {
@@ -272,6 +274,11 @@ function createFixture(t: TestContext, label: string): Fixture {
   for (const name of REAL_CONFIG_FILES) {
     cpSync(path.join(PACKAGE_ROOT, name), path.join(root, name));
   }
+  mkdirSync(path.join(root, "tools"));
+  cpSync(
+    path.join(PACKAGE_ROOT, "tools/lint.ts"),
+    path.join(root, "tools/lint.ts"),
+  );
   // A real `node_modules` directory with one symlink per installed entry, so a
   // reserved root-level dependency probe can live inside it while the actual
   // tools still resolve through the real installed packages.
@@ -301,6 +308,10 @@ function createFixture(t: TestContext, label: string): Fixture {
   );
   mkdirSync(path.join(root, "src"), { recursive: true });
 
+  writeFileSync(
+    path.join(root, "src/clean.ts"),
+    "export const answer: number = 42;\n",
+  );
   // Hidden sentinel and an in-fixture symlink prove entry kinds, link targets
   // and non-obvious files survive every invocation.
   writeFileSync(path.join(root, ".hidden-sentinel"), `sentinel ${label}\n`);
@@ -360,8 +371,11 @@ function assertPreserved(
 }
 
 test("the fixture reproduces the real authoring package scripts", () => {
-  assert.equal(REAL_SCRIPTS.lint, "eslint . --max-warnings 0");
-  assert.equal(REAL_SCRIPTS["format:check"], "prettier --check .");
+  assert.equal(REAL_SCRIPTS.lint, "node tools/lint.ts");
+  assert.equal(
+    REAL_SCRIPTS["format:check"],
+    'biome format . && prettier --check "**/*.{svelte,astro,md,yml,yaml}" --no-error-on-unmatched-pattern',
+  );
 });
 
 test("clean TypeScript and Svelte 5 lang=ts authoring input pass", (t) => {
@@ -437,7 +451,10 @@ test("a genuine TypeScript lint defect fails for its intended diagnostic", (t) =
     runFixtureScript(fixture.root, "lint"),
     "lint TypeScript defect",
   );
-  assert.match(output, /@typescript-eslint\/no-unused-vars/);
+  assert.match(
+    output,
+    /(?:noUnusedVariables|@typescript-eslint\/no-unused-vars)/,
+  );
   assert.match(output, /neverUsed/);
   assertPreserved(fixture, before, externalBefore, "TypeScript lint defect");
 
@@ -564,7 +581,10 @@ test("maintained consumer and registry source still fail for intended diagnostic
       runFixtureScript(fixture.root, "lint"),
       `lint maintained TS ${tsPath}`,
     );
-    assert.match(lintOutput, /@typescript-eslint\/no-unused-vars/);
+    assert.match(
+      lintOutput,
+      /(?:noUnusedVariables|@typescript-eslint\/no-unused-vars)/,
+    );
     assertFailed(
       runFixtureScript(fixture.root, "format:check"),
       `format:check maintained TS ${tsPath}`,

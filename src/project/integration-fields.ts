@@ -13,7 +13,8 @@ export interface LibraryIntegrationFields {
   readonly layoutFile?: never;
 }
 export type IntegrationFields =
-  ApplicationIntegrationFields | LibraryIntegrationFields;
+  | ApplicationIntegrationFields
+  | LibraryIntegrationFields;
 /** Only select a role; callers must validate original intent before granting authority. */
 export function mappedIntegration(
   fields: Partial<IntegrationFields>,

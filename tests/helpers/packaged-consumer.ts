@@ -263,7 +263,7 @@ export function buildPackagedConsumer(custom: boolean) {
     const handler = path.join(app.root, "build/handler.js");
     const rendered = spawnSync(
       process.execPath,
-      ["tests/helpers/render-built-consumer.mjs", handler, "/"],
+      ["tests/helpers/render-built-consumer.ts", handler, "/"],
       { encoding: "utf8", timeout: 30000 },
     );
     assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);

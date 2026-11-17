@@ -220,7 +220,7 @@ for (const mapping of mappings)
       const render = spawnSync(
         process.execPath,
         [
-          "tests/helpers/render-built-consumer.mjs",
+          "tests/helpers/render-built-consumer.ts",
           handler,
           "/qualification/layout-matrix?request=layout-render&on=1&extra=1",
         ],

@@ -3,7 +3,9 @@ import { createHash } from "node:crypto";
 import { lstatSync, readFileSync } from "node:fs";
 import path from "node:path";
 import baseline from "./native-dependency-baseline.json" with { type: "json" };
-import svelteBaseline from "./svelte-runtime-baseline.json" with { type: "json" };
+import svelteBaseline from "./svelte-runtime-baseline.json" with {
+  type: "json",
+};
 import { isSafeLogicalRelativePath } from "./paths.js";
 import type { ModelIssue } from "../registry/errors.js";
 import { issue } from "../registry/errors.js";

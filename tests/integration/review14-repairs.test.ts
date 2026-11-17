@@ -25,7 +25,7 @@ import {
   type PlanInstalledRead,
 } from "../../src/codegen/authority.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
-import { type ApplyPlanInput } from "../../src/codegen/plan.js";
+import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 import {
   recoverTransaction,
   recoverTransactions,

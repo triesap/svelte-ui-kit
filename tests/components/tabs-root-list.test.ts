@@ -13,7 +13,7 @@ test("actual candidate Root List preserve request selection mounted panels and n
       const result = spawnSync(
         process.execPath,
         [
-          path.resolve("tests/helpers/render-built-consumer.mjs"),
+          path.resolve("tests/helpers/render-built-consumer.ts"),
           consumer.handler,
           `${consumer.route}?value=${value}`,
         ],

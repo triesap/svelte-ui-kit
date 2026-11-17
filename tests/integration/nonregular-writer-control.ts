@@ -36,7 +36,9 @@ for (const [name, value] of [
   }
 }
 
-const { createTempProject } = await import(projectModule);
+const { createTempProject } = (await import(
+  projectModule!
+)) as typeof import("../helpers/project.js");
 
 const project = createTempProject({ parent: fifoParent, prefix: "child-" });
 project.writeDir("pipes");
@@ -47,7 +49,7 @@ const created = spawnSync("mkfifo", [fifo], { encoding: "utf8" });
 // locate and remove its tree.
 process.stdout.write(`SUIK_FIFO_ROOT:${project.root}\n`);
 
-function report(payload) {
+function report(payload: unknown) {
   process.stdout.write(`SUIK_FIFO_REPORT:${JSON.stringify(payload)}\n`);
 }
 

@@ -5,7 +5,7 @@ import {
   startOwnedServer,
   fetchRoute,
   DEFAULT_LAUNCHER,
-} from "../smoke/owned-server.mjs";
+} from "../smoke/owned-server.ts";
 
 const [handler, route] = process.argv.slice(2);
 if (!handler || !route?.startsWith("/"))

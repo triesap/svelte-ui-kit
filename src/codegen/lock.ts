@@ -1,4 +1,4 @@
-import { type LibraryIntegrationFields } from "../project/integration-fields.js";
+import type { LibraryIntegrationFields } from "../project/integration-fields.js";
 /**
  * Source-file ownership lock records (S019).
  *
@@ -69,7 +69,10 @@ export interface LockCssBlock {
 }
 
 export type IntegrationKind =
-  "layout" | "stylesheet" | "exports" | "stylesheet-entry";
+  | "layout"
+  | "stylesheet"
+  | "exports"
+  | "stylesheet-entry";
 
 export interface LockIntegration {
   readonly kind: IntegrationKind;
@@ -133,7 +136,8 @@ export type LibraryLockValidationContext = Omit<
 > &
   LibraryIntegrationFields;
 export type AnyLockValidationContext =
-  LockValidationContext | LibraryLockValidationContext;
+  | LockValidationContext
+  | LibraryLockValidationContext;
 
 /** The fixed aggregate stylesheet path for one styles root. */
 function derivedStylesheetPath(
@@ -754,12 +758,14 @@ export function parseKitLock(
   }
 
   const claims: LockClaim[] = [
-    ...[...paths.entries()].map(([path, index]): LockClaim => ({
-      path,
-      role: "file",
-      label: "managed file",
-      locator: `files[${index}].path`,
-    })),
+    ...[...paths.entries()].map(
+      ([path, index]): LockClaim => ({
+        path,
+        role: "file",
+        label: "managed file",
+        locator: `files[${index}].path`,
+      }),
+    ),
     ...[...rawBlocks.entries()].flatMap(([index, block]): LockClaim[] => {
       const path = block["path"];
       if (

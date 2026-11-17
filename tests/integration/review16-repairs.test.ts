@@ -24,7 +24,7 @@ import { snapshotTree } from "../helpers/tree-snapshot.js";
 import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { captureReadset, identityDigest } from "../../src/codegen/authority.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { type ApplyPlanInput } from "../../src/codegen/plan.js";
+import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 
 import {
   recoverTransaction,

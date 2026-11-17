@@ -31,15 +31,15 @@ for (const [name, value] of [
   }
 }
 
-const load = (abs) => import(pathToFileURL(abs).href);
-const { planInit } = await load(path.join(dist, "codegen/plan-init.js"));
-const { planAdd } = await load(path.join(dist, "codegen/plan-add.js"));
-const { planSync } = await load(path.join(dist, "codegen/plan-sync.js"));
-const { captureSnapshot } = await load(path.join(dist, "codegen/snapshot.js"));
+const load = (abs: string) => import(pathToFileURL(abs).href);
+const { planInit } = await load(path.join(dist!, "codegen/plan-init.js"));
+const { planAdd } = await load(path.join(dist!, "codegen/plan-add.js"));
+const { planSync } = await load(path.join(dist!, "codegen/plan-sync.js"));
+const { captureSnapshot } = await load(path.join(dist!, "codegen/snapshot.js"));
 const { DEFAULT_KIT_CONFIG, deriveKitPaths } = await load(
-  path.join(dist, "project/config.js"),
+  path.join(dist!, "project/config.js"),
 );
-const { componentItem, registryOf } = await load(helpers);
+const { componentItem, registryOf } = await load(helpers!);
 
 const derived = deriveKitPaths(DEFAULT_KIT_CONFIG);
 const paths = [
@@ -64,7 +64,7 @@ const registry = registryOf([
 let layoutSource = "";
 try {
   layoutSource = readFileSync(
-    path.join(root, DEFAULT_KIT_CONFIG.layoutFile),
+    path.join(root!, DEFAULT_KIT_CONFIG.layoutFile),
     "utf8",
   );
 } catch {

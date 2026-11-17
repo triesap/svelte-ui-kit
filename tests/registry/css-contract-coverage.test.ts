@@ -71,7 +71,9 @@ test("every authoritative kit class maps to component markup or the documented M
         assert.ok(name);
         if (/^kit-button--(primary|secondary|ghost|sm|md|lg)$/.test(name)) {
           assert.ok(
+            // biome-ignore lint/suspicious/noTemplateCurlyInString: the generated markup contains this literal Svelte interpolation.
             markup.includes("`kit-button--${variant}`") &&
+              // biome-ignore lint/suspicious/noTemplateCurlyInString: the generated markup contains this literal Svelte interpolation.
               markup.includes("`kit-button--${size}`"),
           );
         } else if (name === "kit-menu-radio-item-label") {

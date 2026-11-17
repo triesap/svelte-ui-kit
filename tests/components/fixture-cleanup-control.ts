@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { appendFileSync } from "node:fs";
-import { test } from "node:test";
+import { test, type TestContext } from "node:test";
 
 /**
  * Bounded cleanup control for the strict-audit fixture allocation.
@@ -31,10 +31,10 @@ const { prepareStrictFixture } = await import(strictAuditModule);
  * Allocate an owned fixture and register its cleanup on the test context before
  * recording the root, mirroring the maintained test convention.
  */
-function allocateOwned(t, label) {
+function allocateOwned(t: TestContext, label: string) {
   const copy = prepareStrictFixture();
   t.after(() => copy.cleanup());
-  appendFileSync(reportPath, `${label} ${copy.root}\n`);
+  appendFileSync(reportPath!, `${label} ${copy.root}\n`);
   return copy;
 }
 

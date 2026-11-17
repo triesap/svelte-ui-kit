@@ -22,7 +22,7 @@ import {
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
 import { planInit } from "../../src/codegen/plan-init.js";
-import { type ApplyPlanInput } from "../../src/codegen/plan.js";
+import type { ApplyPlanInput } from "../../src/codegen/plan.js";
 import { recoverTransaction } from "../../src/transactions/recovery.js";
 import {
   capturePreimage,

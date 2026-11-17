@@ -21,7 +21,11 @@
  *   serve-500       respond 500 with an HTML content type
  *   serve-plain     respond 200 with a text/plain content type
  */
-import { createServer } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from "node:http";
 
 const fault = process.env.SUIK_FAULT ?? "ok";
 
@@ -30,7 +34,7 @@ if (fault === "startup-failure") {
   process.exit(1);
 }
 
-function handler(_request, response) {
+function handler(_request: IncomingMessage, response: ServerResponse) {
   switch (fault) {
     case "stall-headers":
       return; // never respond

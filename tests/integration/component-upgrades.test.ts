@@ -362,7 +362,7 @@ for (const custom of [false, true])
               const rendered = spawnSync(
                 process.execPath,
                 [
-                  "tests/helpers/render-built-consumer.mjs",
+                  "tests/helpers/render-built-consumer.ts",
                   path.join(consumer.root, "build/handler.js"),
                   "/qualification/component-upgrades",
                 ],

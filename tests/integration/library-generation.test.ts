@@ -6,7 +6,7 @@ import { test } from "node:test";
 import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { inspectLibraryStyles } from "../../src/codegen/library-styles.js";
 import { parseKitLock } from "../../src/codegen/lock.js";
-import { type LibraryApplyPlanInput } from "../../src/codegen/plan.js";
+import type { LibraryApplyPlanInput } from "../../src/codegen/plan.js";
 import {
   parseJournal,
   validateJournalTargets,

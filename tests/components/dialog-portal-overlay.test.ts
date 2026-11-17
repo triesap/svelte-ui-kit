@@ -10,7 +10,7 @@ test("actual Portal/Overlay candidate compiles and imports during production SSR
     const rendered = spawnSync(
       process.execPath,
       [
-        path.resolve("tests/helpers/render-built-consumer.mjs"),
+        path.resolve("tests/helpers/render-built-consumer.ts"),
         consumer.handler,
         consumer.route,
       ],

@@ -27,15 +27,15 @@ const inputRoot = fileURLToPath(
 export const NATIVE_RECIPE = JSON.parse(
   readFileSync(path.join(inputRoot, "recipe.json"), "utf8"),
 );
-export function nativeDigest(bytes) {
+export function nativeDigest(bytes: string | Uint8Array) {
   return createHash("sha256").update(bytes).digest("hex");
 }
-function writeJson(file, value) {
+function writeJson(file: string, value: unknown) {
   writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
 }
 
 /** Canonical gzip metadata; genuine packed content and its CRC stay unchanged. */
-export function normalizePackedArchive(file) {
+export function normalizePackedArchive(file: string) {
   const bytes = readFileSync(file);
   assert.ok(bytes.length >= 18, "complete gzip archive");
   assert.deepEqual(
@@ -64,6 +64,24 @@ export function normalizePackedArchive(file) {
  * directory. Supplied source checkouts are read through their authenticated
  * Git archive, not copied from working trees or mutated in place.
  */
+export interface NativeBuildOptions {
+  output?: string;
+  nativeSource?: string;
+  emitterSource?: string;
+  recordLocks?: boolean;
+  baseline?: boolean;
+  report?: string;
+}
+interface CommandOutcome {
+  command: string;
+  args: readonly string[];
+  exitCode: number | null;
+  signal: NodeJS.Signals | null;
+  error: string | null;
+  stdout: string | { bytes?: number; sha256: string } | null;
+  stderr: string | null;
+}
+
 export function buildNativeDependency({
   output,
   nativeSource,
@@ -71,7 +89,7 @@ export function buildNativeDependency({
   recordLocks = false,
   baseline = false,
   report,
-} = {}) {
+}: NativeBuildOptions = {}) {
   assert.equal(NATIVE_RECIPE.schemaVersion, 1, "supported recipe version");
   assert.equal(
     process.versions.node,
@@ -86,7 +104,7 @@ export function buildNativeDependency({
     try {
       assert.ok(lstatSync(current).isDirectory(), "unsafe output ancestry");
     } catch (error) {
-      if (error.code !== "ENOENT") throw error;
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
     if (path.dirname(current) === current) break;
   }
@@ -95,16 +113,40 @@ export function buildNativeDependency({
     private: true,
     packageManager: `pnpm@${NATIVE_RECIPE.toolchain.pnpm}`,
   });
-  const outcomes = [];
-  const reportState = { baseline, outcomes };
-  const env = { ...process.env, pnpm_config_verify_deps_before_run: "false" };
+  const outcomes: CommandOutcome[] = [];
+  const reportState: {
+    baseline: boolean;
+    outcomes: CommandOutcome[];
+    declarations?: Record<string, string>;
+  } = { baseline, outcomes };
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    pnpm_config_verify_deps_before_run: "false",
+  };
   for (const name of ["NODE_TEST_CONTEXT", "NODE_OPTIONS", "NODE_V8_COVERAGE"])
     delete env[name];
   const save = (extra = {}) => {
     Object.assign(reportState, extra);
     if (report) writeJson(path.resolve(report), reportState);
   };
-  function run(command, args, cwd, binary = false) {
+  function run(
+    command: string,
+    args: readonly string[],
+    cwd: string,
+    binary: true,
+  ): Buffer;
+  function run(
+    command: string,
+    args: readonly string[],
+    cwd: string,
+    binary?: false,
+  ): string;
+  function run(
+    command: string,
+    args: readonly string[],
+    cwd: string,
+    binary = false,
+  ): string | Buffer {
     const result = spawnSync(command, args, {
       cwd,
       env,
@@ -123,8 +165,8 @@ export function buildNativeDependency({
             bytes: result.stdout?.length,
             sha256: nativeDigest(result.stdout ?? ""),
           }
-        : result.stdout,
-      stderr: binary ? result.stderr?.toString() : result.stderr,
+        : (result.stdout?.toString() ?? null),
+      stderr: result.stderr?.toString() ?? null,
     });
     save();
     assert.equal(result.error, undefined, `${command} tool failure`);
@@ -136,7 +178,7 @@ export function buildNativeDependency({
     );
     return result.stdout;
   }
-  function sourceArchive(role, supplied) {
+  function sourceArchive(role: "emitter" | "native", supplied?: string) {
     const descriptor = NATIVE_RECIPE[role];
     let source = supplied && path.resolve(supplied);
     if (source) {
@@ -185,7 +227,7 @@ export function buildNativeDependency({
     );
     return { root, manifest, archiveSha256: nativeDigest(bytes) };
   }
-  function install(root, role) {
+  function install(root: string, role: "emitter" | "native") {
     const lock = path.join(inputRoot, `${role}.pnpm-lock.yaml`);
     if (!recordLocks) cpSync(lock, path.join(root, "pnpm-lock.yaml"));
     run(
@@ -289,7 +331,7 @@ export function buildNativeDependency({
     for (const [name, bindings] of [
       ["button", ["ref"]],
       ["calendar", ["ref", "value", "placeholder"]],
-    ]) {
+    ] as const) {
       const declaration = readFileSync(
         path.join(
           nativeRoot,
@@ -324,51 +366,54 @@ export function buildNativeDependency({
         );
       }
     }
-    const provenance = {
-      schemaVersion: 1,
-      name: "bits-ui",
-      version: NATIVE_RECIPE.native.buildVersion,
-      variant: baseline
-        ? "unpatched-causal-control"
-        : "source-emitter-binding-signature",
-      nativeSource: {
-        ...NATIVE_RECIPE.native,
-        archiveSha256: native.archiveSha256,
-      },
-      emitterSource: {
-        repository: NATIVE_RECIPE.emitter.repository,
-        revision: NATIVE_RECIPE.emitter.revision,
-        sourceManifestVersion: NATIVE_RECIPE.emitter.sourceVersion,
-        sourceTag: NATIVE_RECIPE.emitter.sourceTag,
-        buildVersion: NATIVE_RECIPE.emitter.buildVersion,
-        archiveSha256: emitter.archiveSha256,
-      },
-      patchSha256: baseline ? null : nativeDigest(readFileSync(patch)),
-      recipeSha256: nativeDigest(
-        readFileSync(path.join(inputRoot, "recipe.json")),
-      ),
-      packagerAdapterSha256: nativeDigest(packagerAdapter),
-      producerLocks: Object.fromEntries(
-        ["emitter", "native"].map((role) => [
-          role,
-          nativeDigest(
-            readFileSync(
-              path.join(
-                role === "emitter" ? emitter.root : nativeRoot,
-                "pnpm-lock.yaml",
+    const provenance = Object.assign(
+      {
+        schemaVersion: 1,
+        name: "bits-ui",
+        version: NATIVE_RECIPE.native.buildVersion,
+        variant: baseline
+          ? "unpatched-causal-control"
+          : "source-emitter-binding-signature",
+        nativeSource: {
+          ...NATIVE_RECIPE.native,
+          archiveSha256: native.archiveSha256,
+        },
+        emitterSource: {
+          repository: NATIVE_RECIPE.emitter.repository,
+          revision: NATIVE_RECIPE.emitter.revision,
+          sourceManifestVersion: NATIVE_RECIPE.emitter.sourceVersion,
+          sourceTag: NATIVE_RECIPE.emitter.sourceTag,
+          buildVersion: NATIVE_RECIPE.emitter.buildVersion,
+          archiveSha256: emitter.archiveSha256,
+        },
+        patchSha256: baseline ? null : nativeDigest(readFileSync(patch)),
+        recipeSha256: nativeDigest(
+          readFileSync(path.join(inputRoot, "recipe.json")),
+        ),
+        packagerAdapterSha256: nativeDigest(packagerAdapter),
+        producerLocks: Object.fromEntries(
+          ["emitter", "native"].map((role) => [
+            role,
+            nativeDigest(
+              readFileSync(
+                path.join(
+                  role === "emitter" ? emitter.root : nativeRoot,
+                  "pnpm-lock.yaml",
+                ),
               ),
             ),
-          ),
-        ]),
-      ),
-      emitterArchiveSha256: nativeDigest(readFileSync(toolArchive)),
-      toolchain: {
-        node: process.versions.node,
-        pnpm: run("pnpm", ["--version"], work).trim(),
-        emitter: NATIVE_RECIPE.emitter.devDependencies,
-        native: NATIVE_RECIPE.nativeDevDependencies,
+          ]),
+        ),
+        emitterArchiveSha256: nativeDigest(readFileSync(toolArchive)),
+        toolchain: {
+          node: process.versions.node,
+          pnpm: run("pnpm", ["--version"], work).trim(),
+          emitter: NATIVE_RECIPE.emitter.devDependencies,
+          native: NATIVE_RECIPE.nativeDevDependencies,
+        },
       },
-    };
+      {} as { distributionFiles?: { path: string; sha256: string }[] },
+    );
     // Pack actual build output into a self-contained native distribution. The
     // producer's dev-only local emitter paths are not consumer requirements.
     const stage = path.join(work, "native-distribution");
@@ -390,7 +435,10 @@ export function buildNativeDependency({
       path.join(emitter.root, "LICENSE"),
       path.join(stage, "EMITTER_LICENSE"),
     );
-    const inventory = (directory, prefix = "") =>
+    const inventory = (
+      directory: string,
+      prefix = "",
+    ): { path: string; sha256: string }[] =>
       readdirSync(directory, { withFileTypes: true })
         .sort((left, right) =>
           left.name < right.name ? -1 : left.name > right.name ? 1 : 0,
@@ -432,6 +480,7 @@ export function buildNativeDependency({
     );
     const qualified = {
       ...provenance,
+      distributionFiles: provenance.distributionFiles,
       archive: NATIVE_RECIPE.native.archive,
       archiveSha256: nativeDigest(bytes),
     };
@@ -478,13 +527,16 @@ if (
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   const args = process.argv.slice(2);
-  const options = {};
+  const options: NativeBuildOptions = {};
   while (args.length) {
-    const option = args.shift();
+    const option = args.shift()!;
     if (option === "--record-locks") options.recordLocks = true;
     else if (option === "--baseline") options.baseline = true;
     else {
-      const names = {
+      const names: Record<
+        string,
+        "output" | "nativeSource" | "emitterSource" | "report"
+      > = {
         "--output": "output",
         "--native-source": "nativeSource",
         "--emitter-source": "emitterSource",

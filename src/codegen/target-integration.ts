@@ -46,15 +46,14 @@ export const svelteKitIntegration: TargetIntegrationAdapter = Object.freeze({
   },
 });
 
-export interface LibraryIntegrationAdapter extends Omit<
-  TargetIntegrationAdapter,
-  "target" | "inspect"
-> {
+export interface LibraryIntegrationAdapter
+  extends Omit<TargetIntegrationAdapter, "target" | "inspect"> {
   readonly target: "svelte-library";
   inspect(source: string): ModelResult<{ readonly imports: readonly string[] }>;
 }
 export type ExecutableIntegrationAdapter =
-  TargetIntegrationAdapter | LibraryIntegrationAdapter;
+  | TargetIntegrationAdapter
+  | LibraryIntegrationAdapter;
 export const libraryIntegration: LibraryIntegrationAdapter = Object.freeze({
   target: "svelte-library",
   contract: "library-styles-v1",

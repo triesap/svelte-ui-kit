@@ -281,8 +281,7 @@ test("an injected permission error is a typed logical cause", (t) => {
       error.code = "EACCES";
       throw error;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (real as any)(file, ...rest);
+    return Reflect.apply(real, undefined, [file, ...rest]);
   }) as typeof fs.lstatSync;
   syncBuiltinESMExports();
   try {

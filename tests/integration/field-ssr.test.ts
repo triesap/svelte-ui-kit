@@ -20,7 +20,7 @@ for (const custom of [false, true])
             const result = spawnSync(
               process.execPath,
               [
-                path.resolve("tests/helpers/render-built-consumer.mjs"),
+                path.resolve("tests/helpers/render-built-consumer.ts"),
                 consumer.handler,
                 `/${consumer.route}?invalid=${invalid}&helper=${helper}&value=${value}`,
               ],

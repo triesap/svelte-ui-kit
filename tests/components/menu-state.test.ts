@@ -12,7 +12,7 @@ test("actual Root Trigger candidate compiles and preserves native closed and ope
       const rendered = spawnSync(
         process.execPath,
         [
-          path.resolve("tests/helpers/render-built-consumer.mjs"),
+          path.resolve("tests/helpers/render-built-consumer.ts"),
           consumer.handler,
           `${consumer.route}?initial=${initial}`,
         ],

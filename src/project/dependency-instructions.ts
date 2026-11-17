@@ -224,10 +224,12 @@ type ParsedOperand =
  * option-like operand, a control byte or an invalid npm range is rejected.
  */
 export function parseOperand(spec: string): ParsedOperand {
-  // eslint-disable-next-line no-control-regex
+  /* eslint-disable no-control-regex -- dependency operands must reject control bytes. */
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters must be refused in dependency specifications.
   if (spec.length === 0 || /[\u0000-\u001f\u007f]/.test(spec)) {
     return { kind: "invalid", reason: "empty or contains a control byte" };
   }
+  /* eslint-enable no-control-regex */
   if (spec.startsWith("-")) {
     return {
       kind: "invalid",

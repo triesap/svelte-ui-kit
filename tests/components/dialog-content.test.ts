@@ -10,7 +10,7 @@ test("actual Content candidate forwards native policy, refs and both render path
     const rendered = spawnSync(
       process.execPath,
       [
-        path.resolve("tests/helpers/render-built-consumer.mjs"),
+        path.resolve("tests/helpers/render-built-consumer.ts"),
         consumer.handler,
         consumer.route,
       ],

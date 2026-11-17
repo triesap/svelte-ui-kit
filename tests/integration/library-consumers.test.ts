@@ -396,294 +396,286 @@ function packWithTransientControls(
   }
 }
 
-test(
-  "genuine packed standalone Svelte library qualifies in independent Astro and SvelteKit applications",
-  { timeout: 900_000 },
-  async (t) => {
-    const cli = installIndependentCli();
-    // Retain this owned independent host/library for review; authoring copy/archive were already removed by the helper.
-    const library = path.join(cli.root, "library");
-    clone("tests/fixtures/library", library);
-    writeFileSync(
-      path.join(library, "package.json"),
-      documentedExample(
-        "docs/guides/svelte-library.md",
-        "documented-library-manifest",
-        "json",
-      ),
-    );
-    writeFileSync(
-      path.join(library, "tsconfig.json"),
-      documentedExample(
-        "docs/guides/svelte-library.md",
-        "documented-library-tsconfig",
-        "json",
-      ),
-    );
-    nativeArchive(library, cli.packageRoot);
-    mkdirSync(path.join(library, "src/lib/_kit"), { recursive: true });
-    writeFileSync(
-      path.join(library, "src/lib/_kit/kit.json"),
-      documentedExample(
-        "docs/guides/svelte-library.md",
-        "documented-library-intent",
-        "json",
-      ),
-    );
-    cpSync(
-      path.join(owner, "tests/fixtures/astro-consumer/src/styles"),
-      path.join(library, "src/styles"),
-      { recursive: true },
-    );
-    const logs: Record<string, string> = {};
-    setup(library, logs);
-    const manifestBefore = readFileSync(
-      path.join(library, "package.json"),
-      "utf8",
-    );
-    for (const args of [
-      ["init"],
-      ["add", "button"],
-      ["add", "field"],
-      ["add", "dialog"],
-      ["add", "menu"],
-      ["sync"],
-    ])
-      logs[args.join(" ")] = cliResult(cli, library, args);
+test("genuine packed standalone Svelte library qualifies in independent Astro and SvelteKit applications", {
+  timeout: 900_000,
+}, async (t) => {
+  const cli = installIndependentCli();
+  // Retain this owned independent host/library for review; authoring copy/archive were already removed by the helper.
+  const library = path.join(cli.root, "library");
+  clone("tests/fixtures/library", library);
+  writeFileSync(
+    path.join(library, "package.json"),
+    documentedExample(
+      "docs/guides/svelte-library.md",
+      "documented-library-manifest",
+      "json",
+    ),
+  );
+  writeFileSync(
+    path.join(library, "tsconfig.json"),
+    documentedExample(
+      "docs/guides/svelte-library.md",
+      "documented-library-tsconfig",
+      "json",
+    ),
+  );
+  nativeArchive(library, cli.packageRoot);
+  mkdirSync(path.join(library, "src/lib/_kit"), { recursive: true });
+  writeFileSync(
+    path.join(library, "src/lib/_kit/kit.json"),
+    documentedExample(
+      "docs/guides/svelte-library.md",
+      "documented-library-intent",
+      "json",
+    ),
+  );
+  cpSync(
+    path.join(owner, "tests/fixtures/astro-consumer/src/styles"),
+    path.join(library, "src/styles"),
+    { recursive: true },
+  );
+  const logs: Record<string, string> = {};
+  setup(library, logs);
+  const manifestBefore = readFileSync(
+    path.join(library, "package.json"),
+    "utf8",
+  );
+  for (const args of [
+    ["init"],
+    ["add", "button"],
+    ["add", "field"],
+    ["add", "dialog"],
+    ["add", "menu"],
+    ["sync"],
+  ])
+    logs[args.join(" ")] = cliResult(cli, library, args);
+  assert.equal(
+    readFileSync(path.join(library, "package.json"), "utf8"),
+    manifestBefore,
+  );
+  assert.equal(existsSync(path.join(library, "src/routes")), false);
+  const before = snapshotTree(library);
+  for (const args of [
+    ["info"],
+    ["doctor"],
+    ["sync", "--dry-run"],
+    ["sync"],
+    ["init"],
+  ]) {
+    logs[args.join(" ")] = cliResult(cli, library, args);
+    assert.deepEqual(snapshotTree(library), before, args.join(" "));
+  }
+  logs.check = nativeCommand(library, "pnpm", ["run", "check"]);
+  assert.match(logs.check, /svelte-check found 0 errors and 0 warnings/);
+  logs.build = nativeCommand(library, "pnpm", ["run", "build"]);
+  const archives = path.join(cli.root, "library-archives");
+  mkdirSync(archives);
+  const { archive, transientPackaging } = packWithTransientControls(
+    library,
+    archives,
+    logs,
+  );
+  const inspection = path.join(cli.root, "library-packed-inspection");
+  mkdirSync(inspection);
+  nativeCommand(library, "tar", ["-xf", archive, "-C", inspection]);
+  const packed = path.join(inspection, "package"),
+    pkg = JSON.parse(readFileSync(path.join(packed, "package.json"), "utf8"));
+  assert.equal(pkg.name, libraryName);
+  assert.equal(pkg.peerDependencies.svelte, workspace.catalog.svelte);
+  assert.equal(pkg.peerDependencies["bits-ui"], NATIVE_BASELINE.version);
+  assert.equal(pkg.dependencies, undefined);
+  assert.equal(pkg.exports["."].svelte, "./dist/index.js");
+  assert.equal(pkg.exports["."].types, "./dist/index.d.ts");
+  assert.ok(
+    readFileSync(path.join(packed, "dist/index.d.ts"), "utf8").includes(
+      "Button",
+    ),
+  );
+  for (const file of [
+    "src/lib/index.ts",
+    "src/lib/_kit/kit.json",
+    "src/lib/_kit/kit.lock.json",
+    "src/styles.css",
+  ])
     assert.equal(
-      readFileSync(path.join(library, "package.json"), "utf8"),
-      manifestBefore,
+      sha256Hex(readFileSync(path.join(packed, file))),
+      sha256Hex(readFileSync(path.join(library, file))),
     );
-    assert.equal(existsSync(path.join(library, "src/routes")), false);
-    const before = snapshotTree(library);
-    for (const args of [
-      ["info"],
-      ["doctor"],
-      ["sync", "--dry-run"],
-      ["sync"],
-      ["init"],
-    ]) {
-      logs[args.join(" ")] = cliResult(cli, library, args);
-      assert.deepEqual(snapshotTree(library), before, args.join(" "));
-    }
-    logs.check = nativeCommand(library, "pnpm", ["run", "check"]);
-    assert.match(logs.check, /svelte-check found 0 errors and 0 warnings/);
-    logs.build = nativeCommand(library, "pnpm", ["run", "build"]);
-    const archives = path.join(cli.root, "library-archives");
-    mkdirSync(archives);
-    const { archive, transientPackaging } = packWithTransientControls(
-      library,
-      archives,
-      logs,
-    );
-    const inspection = path.join(cli.root, "library-packed-inspection");
-    mkdirSync(inspection);
-    nativeCommand(library, "tar", ["-xf", archive, "-C", inspection]);
-    const packed = path.join(inspection, "package"),
-      pkg = JSON.parse(readFileSync(path.join(packed, "package.json"), "utf8"));
-    assert.equal(pkg.name, libraryName);
-    assert.equal(pkg.peerDependencies.svelte, workspace.catalog.svelte);
-    assert.equal(pkg.peerDependencies["bits-ui"], NATIVE_BASELINE.version);
-    assert.equal(pkg.dependencies, undefined);
-    assert.equal(pkg.exports["."].svelte, "./dist/index.js");
-    assert.equal(pkg.exports["."].types, "./dist/index.d.ts");
-    assert.ok(
-      readFileSync(path.join(packed, "dist/index.d.ts"), "utf8").includes(
-        "Button",
-      ),
-    );
-    for (const file of [
-      "src/lib/index.ts",
-      "src/lib/_kit/kit.json",
-      "src/lib/_kit/kit.lock.json",
-      "src/styles.css",
-    ])
-      assert.equal(
-        sha256Hex(readFileSync(path.join(packed, file))),
-        sha256Hex(readFileSync(path.join(library, file))),
+  const lineage = JSON.parse(
+    readFileSync(path.join(packed, "src/lib/_kit/kit.lock.json"), "utf8"),
+  );
+  assert.equal(lineage.target, "svelte-library");
+  assert.deepEqual(lineage.requested, ["button", "dialog", "field", "menu"]);
+  const retainedLibrary = path.join(cli.root, "retained-generated-library");
+  renameSync(library, retainedLibrary);
+  assert.equal(existsSync(library), false);
+  t.after(() => {
+    if (existsSync(retainedLibrary) && !existsSync(library))
+      renameSync(retainedLibrary, library);
+  });
+  writeFileSync(
+    path.join(retainedLibrary, "verification-commands.json"),
+    JSON.stringify(logs, null, 2),
+  );
+  const base = path.join(owner, ".artifacts/verification/runtime-projects");
+  mkdirSync(base, { recursive: true });
+  assert.equal(lstatSync(base).isSymbolicLink(), false);
+  const batch = realpathSync(
+    mkdtempSync(path.join(base, "library-consumers-")),
+  );
+  const evidence = {
+    library: retainedLibrary,
+    archive,
+    archiveSha256: sha256Hex(readFileSync(archive)),
+    transientPackaging,
+    packedLineageSha256: sha256Hex(
+      readFileSync(path.join(packed, "src/lib/_kit/kit.lock.json")),
+    ),
+    consumers: [] as unknown[],
+  };
+  for (const framework of ["astro", "sveltekit"] as const) {
+    await t.test(`${framework} native packed consumer`, async (child) => {
+      assert.equal(existsSync(library), false);
+      const root = realpathSync(mkdtempSync(path.join(batch, `${framework}-`)));
+      clone(
+        framework === "astro"
+          ? "tests/fixtures/astro-consumer"
+          : "tests/fixtures/library-kit-consumer",
+        root,
       );
-    const lineage = JSON.parse(
-      readFileSync(path.join(packed, "src/lib/_kit/kit.lock.json"), "utf8"),
-    );
-    assert.equal(lineage.target, "svelte-library");
-    assert.deepEqual(lineage.requested, ["button", "dialog", "field", "menu"]);
-    const retainedLibrary = path.join(cli.root, "retained-generated-library");
-    renameSync(library, retainedLibrary);
-    assert.equal(existsSync(library), false);
-    t.after(() => {
-      if (existsSync(retainedLibrary) && !existsSync(library))
-        renameSync(retainedLibrary, library);
-    });
-    writeFileSync(
-      path.join(retainedLibrary, "verification-commands.json"),
-      JSON.stringify(logs, null, 2),
-    );
-    const base = path.join(owner, ".artifacts/verification/runtime-projects");
-    mkdirSync(base, { recursive: true });
-    assert.equal(lstatSync(base).isSymbolicLink(), false);
-    const batch = realpathSync(
-      mkdtempSync(path.join(base, "library-consumers-")),
-    );
-    const evidence = {
-      library: retainedLibrary,
-      archive,
-      archiveSha256: sha256Hex(readFileSync(archive)),
-      transientPackaging,
-      packedLineageSha256: sha256Hex(
-        readFileSync(path.join(packed, "src/lib/_kit/kit.lock.json")),
-      ),
-      consumers: [] as unknown[],
-    };
-    for (const framework of ["astro", "sveltekit"] as const) {
-      await t.test(`${framework} native packed consumer`, async (child) => {
-        assert.equal(existsSync(library), false);
-        const root = realpathSync(
-          mkdtempSync(path.join(batch, `${framework}-`)),
-        );
-        clone(
-          framework === "astro"
-            ? "tests/fixtures/astro-consumer"
-            : "tests/fixtures/library-kit-consumer",
-          root,
-        );
-        nativeArchive(root, cli.packageRoot);
-        const app = JSON.parse(
-          readFileSync(path.join(root, "package.json"), "utf8"),
-        );
-        mkdirSync(path.join(root, "vendor"));
-        cpSync(archive, path.join(root, "vendor/library.tgz"));
-        app.dependencies[libraryName] = "file:./vendor/library.tgz";
+      nativeArchive(root, cli.packageRoot);
+      const app = JSON.parse(
+        readFileSync(path.join(root, "package.json"), "utf8"),
+      );
+      mkdirSync(path.join(root, "vendor"));
+      cpSync(archive, path.join(root, "vendor/library.tgz"));
+      app.dependencies[libraryName] = "file:./vendor/library.tgz";
+      writeFileSync(
+        path.join(root, "package.json"),
+        JSON.stringify(app, null, 2) + "\n",
+      );
+      const island = path.join(
+        root,
+        framework === "astro"
+          ? "src/components/Island.svelte"
+          : "src/lib/Island.svelte",
+      );
+      mkdirSync(path.dirname(island), { recursive: true });
+      writeFileSync(
+        island,
+        documentedExample(
+          "docs/guides/svelte-library.md",
+          "documented-library-island",
+          "svelte",
+        ),
+      );
+      if (framework === "sveltekit")
         writeFileSync(
-          path.join(root, "package.json"),
-          JSON.stringify(app, null, 2) + "\n",
-        );
-        const island = path.join(
-          root,
-          framework === "astro"
-            ? "src/components/Island.svelte"
-            : "src/lib/Island.svelte",
-        );
-        mkdirSync(path.dirname(island), { recursive: true });
-        writeFileSync(
-          island,
+          path.join(root, "src/routes/+layout.svelte"),
           documentedExample(
             "docs/guides/svelte-library.md",
-            "documented-library-island",
+            "documented-library-kit-layout",
             "svelte",
           ),
         );
-        if (framework === "sveltekit")
-          writeFileSync(
-            path.join(root, "src/routes/+layout.svelte"),
-            documentedExample(
-              "docs/guides/svelte-library.md",
-              "documented-library-kit-layout",
-              "svelte",
-            ),
-          );
-        if (framework === "astro") {
-          const file = path.join(root, "src/layouts/Layout.astro"),
-            source = readFileSync(file, "utf8");
-          assert.ok(source.startsWith("---\n"));
-          writeFileSync(
-            file,
-            source.replace(
-              "---\n",
-              `---\n${documentedExample("docs/guides/svelte-library.md", "documented-library-css", "ts")}\n`,
-            ),
-          );
-        }
-        const nativeLogs: Record<string, string> = {};
-        setup(root, nativeLogs);
-        assert.equal(existsSync(path.join(root, "src/generated/ui")), false);
-        assert.equal(
-          realpathSync(path.join(root, "node_modules", libraryName)).startsWith(
-            path.join(root, "node_modules") + path.sep,
+      if (framework === "astro") {
+        const file = path.join(root, "src/layouts/Layout.astro"),
+          source = readFileSync(file, "utf8");
+        assert.ok(source.startsWith("---\n"));
+        writeFileSync(
+          file,
+          source.replace(
+            "---\n",
+            `---\n${documentedExample("docs/guides/svelte-library.md", "documented-library-css", "ts")}\n`,
           ),
-          true,
         );
-        assert.equal(
-          existsSync(path.join(cli.packageRoot, "dist/cli/main.js")),
-          true,
-        );
-        const guarded = sourceGuard(root, cli);
-        nativeLogs.check = nativeCommand(
-          root,
-          "pnpm",
-          ["run", "check"],
-          guarded.env,
-        );
+      }
+      const nativeLogs: Record<string, string> = {};
+      setup(root, nativeLogs);
+      assert.equal(existsSync(path.join(root, "src/generated/ui")), false);
+      assert.equal(
+        realpathSync(path.join(root, "node_modules", libraryName)).startsWith(
+          path.join(root, "node_modules") + path.sep,
+        ),
+        true,
+      );
+      assert.equal(
+        existsSync(path.join(cli.packageRoot, "dist/cli/main.js")),
+        true,
+      );
+      const guarded = sourceGuard(root, cli);
+      nativeLogs.check = nativeCommand(
+        root,
+        "pnpm",
+        ["run", "check"],
+        guarded.env,
+      );
+      assert.match(
+        nativeLogs.check,
+        /svelte-check found 0 errors and 0 warnings/,
+      );
+      if (framework === "astro")
         assert.match(
           nativeLogs.check,
-          /svelte-check found 0 errors and 0 warnings/,
+          /Result \(([1-9]\d*) files\):\s*\n- 0 errors\s*\n- 0 warnings/,
         );
-        if (framework === "astro")
-          assert.match(
-            nativeLogs.check,
-            /Result \(([1-9]\d*) files\):\s*\n- 0 errors\s*\n- 0 warnings/,
-          );
-        nativeLogs.build = nativeCommand(
+      nativeLogs.build = nativeCommand(
+        root,
+        "pnpm",
+        ["run", "build"],
+        guarded.env,
+      );
+      writeFileSync(
+        path.join(root, "verification-commands.json"),
+        JSON.stringify(nativeLogs, null, 2),
+      );
+      await verifyTargetConsumer(
+        {
           root,
-          "pnpm",
-          ["run", "build"],
-          guarded.env,
-        );
-        writeFileSync(
-          path.join(root, "verification-commands.json"),
-          JSON.stringify(nativeLogs, null, 2),
-        );
-        await verifyTargetConsumer(
-          {
-            root,
-            framework,
-            commands: Object.keys(nativeLogs),
-            env: guarded.env,
-          },
-          child,
-        );
-        const absences = readFileSync(guarded.audit, "utf8")
-          .trim()
-          .split("\n")
-          .filter(Boolean)
-          .map((line) => JSON.parse(line));
-        for (const event of absences) {
-          assert.equal(
-            event.kind,
-            "unavailable-metadata",
-            JSON.stringify(event),
-          );
-          assert.equal(event.code, "ENOENT");
-          assert.match(
-            event.operation,
-            /^(stat|lstat|realpath|readlink|access|exists)(Sync)?$/,
-          );
-          assert.equal(typeof event.locator, "string");
-        }
-        writeFileSync(
-          path.join(root, "enforced-native-metadata-absences.json"),
-          JSON.stringify(absences, null, 2),
-        );
-        evidence.consumers.push({
           framework,
-          root,
-          sourceDenials: 4,
-          cliHostDenials: 1,
-          unavailableRuntimeRoot: cli.root,
-          metadataAbsenceControls: 6,
-          inheritedPnpmGuardControls: 2,
-          enforcedMetadataAbsences: absences.length,
-          status: "pass",
-        });
+          commands: Object.keys(nativeLogs),
+          env: guarded.env,
+        },
+        child,
+      );
+      const absences = readFileSync(guarded.audit, "utf8")
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+      for (const event of absences) {
+        assert.equal(event.kind, "unavailable-metadata", JSON.stringify(event));
+        assert.equal(event.code, "ENOENT");
+        assert.match(
+          event.operation,
+          /^(stat|lstat|realpath|readlink|access|exists)(Sync)?$/,
+        );
+        assert.equal(typeof event.locator, "string");
+      }
+      writeFileSync(
+        path.join(root, "enforced-native-metadata-absences.json"),
+        JSON.stringify(absences, null, 2),
+      );
+      evidence.consumers.push({
+        framework,
+        root,
+        sourceDenials: 4,
+        cliHostDenials: 1,
+        unavailableRuntimeRoot: cli.root,
+        metadataAbsenceControls: 6,
+        inheritedPnpmGuardControls: 2,
+        enforcedMetadataAbsences: absences.length,
+        status: "pass",
       });
-    }
-    renameSync(retainedLibrary, library);
-    evidence.library = library;
-    writeFileSync(
-      path.join(batch, "library-verification.json"),
-      JSON.stringify(evidence, null, 2),
-    );
-    console.log(
-      `Retained packed library and consumers: ${JSON.stringify(evidence)}`,
-    );
-  },
-);
+    });
+  }
+  renameSync(retainedLibrary, library);
+  evidence.library = library;
+  writeFileSync(
+    path.join(batch, "library-verification.json"),
+    JSON.stringify(evidence, null, 2),
+  );
+  console.log(
+    `Retained packed library and consumers: ${JSON.stringify(evidence)}`,
+  );
+});

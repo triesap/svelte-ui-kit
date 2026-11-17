@@ -19,10 +19,36 @@
  *     termination path, including a forced SIGKILL fallback;
  *   - kills only the child it started, never an unrelated listener.
  */
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcessByStdio } from "node:child_process";
+import type { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
+interface ExitInfo {
+  code: number | null;
+  signal: NodeJS.Signals | null;
+  error?: Error;
+}
+export interface ServerOptions {
+  command?: string;
+  args?: readonly string[];
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  startTimeoutMs?: number;
+  stopTimeoutMs?: number;
+  killGraceMs?: number;
+}
+export interface ServerLifetime {
+  failure(): Error | null;
+  stop(): Promise<unknown>;
+  isClosed(): boolean;
+}
+export interface RouteResponse {
+  status: number;
+  contentType: string;
+  body: string;
+}
+export type OwnedServer = ReturnType<typeof startOwnedServer>;
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 export const DEFAULT_START_TIMEOUT_MS = 30_000;
@@ -31,7 +57,7 @@ export const DEFAULT_KILL_GRACE_MS = 2_000;
 export const DEFAULT_REQUEST_TIMEOUT_MS = 15_000;
 
 /** The maintained production-server launcher for the consumer fixture. */
-export const DEFAULT_LAUNCHER = path.join(HERE, "consumer-fixture-server.mjs");
+export const DEFAULT_LAUNCHER = path.join(HERE, "consumer-fixture-server.ts");
 /** The maintained fixture's adapter output, relative to this module. */
 export const DEFAULT_HANDLER = path.join(
   HERE,
@@ -43,15 +69,15 @@ export const DEFAULT_HANDLER = path.join(
 );
 
 /** Human-readable exit description used in diagnostics. */
-function describeExit(info) {
+function describeExit(info: ExitInfo) {
   if (info.error) return `spawn error: ${info.error.message}`;
   return `code=${String(info.code)} signal=${String(info.signal)}`;
 }
 
 /** Resolve `promise`, or reject after `ms` so a stuck child cannot hang a test. */
-function settleWithin(promise, ms) {
-  let timer;
-  const timeout = new Promise((_resolve, reject) => {
+function settleWithin<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
     timer = setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms);
   });
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
@@ -63,7 +89,7 @@ function settleWithin(promise, ms) {
  * never mutated. This prevents Node's conflicting-color warning from polluting
  * an owned child's stderr without filtering or suppressing anything.
  */
-function ownedChildEnvironment(overrides) {
+function ownedChildEnvironment(overrides: NodeJS.ProcessEnv) {
   const merged = { ...process.env, ...overrides };
   if (merged.NO_COLOR !== undefined) {
     delete merged.FORCE_COLOR;
@@ -75,7 +101,7 @@ function ownedChildEnvironment(overrides) {
  * Start an owned child server. Returns a handle whose `ready` promise resolves
  * to the assigned port. The caller owns the handle and must `stop()` it.
  */
-export function startOwnedServer(options = {}) {
+export function startOwnedServer(options: ServerOptions = {}) {
   const {
     command = process.execPath,
     args = [DEFAULT_LAUNCHER],
@@ -89,8 +115,8 @@ export function startOwnedServer(options = {}) {
   // A synchronous spawn throw (invalid options) and an asynchronous `error`
   // event (missing executable, invalid cwd) are both settled into `exitInfo`
   // so `stop()` can always resolve.
-  let child = null;
-  let spawnError = null;
+  let child: ChildProcessByStdio<null, Readable, Readable> | null = null;
+  let spawnError: Error | null = null;
   try {
     child = spawn(command, args, {
       cwd,
@@ -100,23 +126,23 @@ export function startOwnedServer(options = {}) {
     child.stderr.setEncoding("utf8");
     child.stdout.setEncoding("utf8");
   } catch (error) {
-    spawnError = error;
+    spawnError = error as Error;
   }
 
   let stderr = "";
   let stdout = "";
-  let exitInfo = spawnError
+  let exitInfo: ExitInfo | null = spawnError
     ? { code: null, signal: null, error: spawnError }
     : null;
   let closed = false;
   let intentionalStop = false;
-  let firstFailure = null;
-  let stopPromise = null;
+  let firstFailure: Error | null = null;
+  let stopPromise: Promise<ExitInfo | null> | null = null;
 
   let readySettled = false;
-  let resolveReady;
-  let rejectReady;
-  const ready = new Promise((resolve, reject) => {
+  let resolveReady!: (value: number) => void;
+  let rejectReady!: (reason?: unknown) => void;
+  const ready = new Promise<number>((resolve, reject) => {
     resolveReady = resolve;
     rejectReady = reject;
   });
@@ -124,22 +150,22 @@ export function startOwnedServer(options = {}) {
   // inspects `failure()` instead of awaiting `ready`.
   ready.catch(() => {});
 
-  let resolveExited;
-  const exited = new Promise((resolve) => {
+  let resolveExited!: (value: ExitInfo) => void;
+  const exited = new Promise<ExitInfo>((resolve) => {
     resolveExited = resolve;
   });
-  let resolveClosed;
-  const closePromise = new Promise((resolve) => {
+  let resolveClosed!: (value: ExitInfo) => void;
+  const closePromise = new Promise<ExitInfo>((resolve) => {
     resolveClosed = resolve;
   });
 
-  const settleReady = (fn, value) => {
+  const settleReady = <T>(fn: (value: T) => void, value: T) => {
     if (readySettled) return;
     readySettled = true;
     fn(value);
   };
 
-  const recordFailure = (error) => {
+  const recordFailure = (error: Error) => {
     if (firstFailure === null) firstFailure = error;
   };
 
@@ -204,9 +230,9 @@ export function startOwnedServer(options = {}) {
 
   // A synchronous spawn throw has no child events; settle immediately.
   if (spawnError !== null) {
-    resolveExited(exitInfo);
+    resolveExited(exitInfo!);
     closed = true;
-    resolveClosed(exitInfo);
+    resolveClosed(exitInfo!);
     settleReady(rejectReady, spawnError);
   }
 
@@ -251,7 +277,7 @@ export function startOwnedServer(options = {}) {
 
     child.once("exit", (code, signal) => {
       if (exitInfo === null) exitInfo = { code, signal };
-      resolveExited(exitInfo);
+      resolveExited(exitInfo!);
       clearTimeout(startTimer);
       settleReady(
         rejectReady,
@@ -265,16 +291,16 @@ export function startOwnedServer(options = {}) {
     child.once("close", (code, signal) => {
       if (exitInfo === null) exitInfo = { code, signal };
       closed = true;
-      resolveExited(exitInfo);
-      resolveClosed(exitInfo);
+      resolveExited(exitInfo!);
+      resolveClosed(exitInfo!);
     });
     child.once("error", (error) => {
       if (exitInfo === null) {
         exitInfo = { code: null, signal: null, error };
       }
       closed = true;
-      resolveExited(exitInfo);
-      resolveClosed(exitInfo);
+      resolveExited(exitInfo!);
+      resolveClosed(exitInfo!);
       clearTimeout(startTimer);
       settleReady(rejectReady, error);
     });
@@ -293,14 +319,14 @@ export function startOwnedServer(options = {}) {
       if (!alreadyExited) {
         intentionalStop = true;
         try {
-          child.kill("SIGTERM");
+          child!.kill("SIGTERM");
         } catch {
           // The process may already be gone; the close wait below decides.
         }
         const killTimer = setTimeout(() => {
           if (exitInfo === null) {
             try {
-              child.kill("SIGKILL");
+              child!.kill("SIGKILL");
             } catch {
               // Nothing else can be signalled.
             }
@@ -312,7 +338,7 @@ export function startOwnedServer(options = {}) {
         } catch (error) {
           recordFailure(
             new Error(
-              `owned server teardown did not complete: ${error.message}\nstderr:\n${stderr}`,
+              `owned server teardown did not complete: ${(error as Error).message}\nstderr:\n${stderr}`,
             ),
           );
         }
@@ -323,7 +349,7 @@ export function startOwnedServer(options = {}) {
         } catch (error) {
           recordFailure(
             new Error(
-              `owned server teardown did not complete: ${error.message}\nstderr:\n${stderr}`,
+              `owned server teardown did not complete: ${(error as Error).message}\nstderr:\n${stderr}`,
             ),
           );
         }
@@ -352,9 +378,12 @@ export function startOwnedServer(options = {}) {
  * sides of awaited stop, and preserve primary work errors alongside shutdown
  * failures rather than allowing a finally block to replace the original cause.
  */
-export async function stopOwnedServer(server, priorErrors = []) {
+export async function stopOwnedServer(
+  server: ServerLifetime,
+  priorErrors: readonly unknown[] = [],
+) {
   const errors = [...priorErrors];
-  const collect = (error) => {
+  const collect = (error: unknown) => {
     if (error !== null && !errors.includes(error)) errors.push(error);
   };
   collect(server.failure());
@@ -371,15 +400,22 @@ export async function stopOwnedServer(server, priorErrors = []) {
   if (errors.length > 1) {
     throw new AggregateError(
       errors,
-      errors.map((error) => String(error?.message ?? error)).join("\n"),
+      errors
+        .map((error) =>
+          String((error as { message?: unknown } | null)?.message ?? error),
+        )
+        .join("\n"),
     );
   }
 }
 
 /** Run owned server work and qualify its shutdown, including failed work. */
-export async function withOwnedServer(server, work) {
+export async function withOwnedServer<T>(
+  server: OwnedServer,
+  work: (server: OwnedServer) => Promise<T> | T,
+) {
   const errors = [];
-  let result;
+  let result!: T;
   try {
     result = await work(server);
   } catch (error) {
@@ -395,7 +431,10 @@ export async function withOwnedServer(server, work) {
  * AbortController bounds both phases; the thrown diagnostic names the phase
  * that stalled.
  */
-export async function fetchRoute(url, options = {}) {
+export async function fetchRoute(
+  url: string | URL,
+  options: { headers?: HeadersInit; timeoutMs?: number } = {},
+): Promise<RouteResponse> {
   const {
     headers = { accept: "text/html" },
     timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
@@ -418,7 +457,7 @@ export async function fetchRoute(url, options = {}) {
   } catch (error) {
     const phase = headersReceived ? "response body" : "response headers";
     throw new Error(
-      `request to ${url} failed during ${phase} after ${Date.now() - started}ms: ${error?.message ?? error}`,
+      `request to ${url} failed during ${phase} after ${Date.now() - started}ms: ${(error as { message?: unknown } | null)?.message ?? error}`,
       { cause: error },
     );
   } finally {

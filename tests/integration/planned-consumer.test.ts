@@ -245,351 +245,338 @@ async function renderProductionPage(
   }
 }
 
-test(
-  "a consumer built from exactly the planned add operations check/build passes",
-  { timeout: 180_000 },
-  async (t) => {
-    const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-reg-"));
-    const fixture = minimalConsumer();
-    const consumer = fixture.root;
-    t.after(() => {
-      rmSync(registryRoot, { recursive: true, force: true });
-      fixture.cleanup();
-    });
-    write(
-      consumer,
-      "src/routes/+page.svelte",
-      '<h1>PLANNED_SIMPLE_PAGE</h1>\n<script>import { Button } from "$lib/components/ui/index.js";</script>\n<Button />\n',
-    );
+test("a consumer built from exactly the planned add operations check/build passes", {
+  timeout: 180_000,
+}, async (t) => {
+  const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-reg-"));
+  const fixture = minimalConsumer();
+  const consumer = fixture.root;
+  t.after(() => {
+    rmSync(registryRoot, { recursive: true, force: true });
+    fixture.cleanup();
+  });
+  write(
+    consumer,
+    "src/routes/+page.svelte",
+    '<h1>PLANNED_SIMPLE_PAGE</h1>\n<script>import { Button } from "$lib/components/ui/index.js";</script>\n<Button />\n',
+  );
 
-    const registry = realRegistry(registryRoot);
-    assert.equal(registry.ok, true, JSON.stringify(registry));
-    if (!registry.ok) return;
+  const registry = realRegistry(registryRoot);
+  assert.equal(registry.ok, true, JSON.stringify(registry));
+  if (!registry.ok) return;
 
-    const snapshot = captureSnapshot(consumer, [
-      `${derived.stateDir}/kit.json`,
-      `${derived.stateDir}/kit.lock.json`,
-      derived.rootExports,
-      derived.kitCss,
-      derived.themesCss,
-      derived.appCss,
-      DEFAULT_KIT_CONFIG.layoutFile,
-      `${derived.rootExportsDir}/button.svelte`,
-    ]);
-    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-    if (!snapshot.ok) return;
+  const snapshot = captureSnapshot(consumer, [
+    `${derived.stateDir}/kit.json`,
+    `${derived.stateDir}/kit.lock.json`,
+    derived.rootExports,
+    derived.kitCss,
+    derived.themesCss,
+    derived.appCss,
+    DEFAULT_KIT_CONFIG.layoutFile,
+    `${derived.rootExportsDir}/button.svelte`,
+  ]);
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) return;
 
-    const planned = planAdd({
-      registry: registry.value,
-      config: DEFAULT_KIT_CONFIG,
-      addedRoots: ["button"],
-      snapshot: snapshot.value,
-      lock: null,
-      registryVersion: registry.value.root.registryVersion,
-      registryHash: registry.value.root.contentHash,
-    });
-    assert.equal(planned.ok, true, JSON.stringify(planned));
-    if (!planned.ok) return;
-    assert.equal(
-      planned.value.executable,
-      true,
-      JSON.stringify(planned.value.diagnostics),
-    );
-    applyWrites(consumer, planned.value.writes);
+  const planned = planAdd({
+    registry: registry.value,
+    config: DEFAULT_KIT_CONFIG,
+    addedRoots: ["button"],
+    snapshot: snapshot.value,
+    lock: null,
+    registryVersion: registry.value.root.registryVersion,
+    registryHash: registry.value.root.contentHash,
+  });
+  assert.equal(planned.ok, true, JSON.stringify(planned));
+  if (!planned.ok) return;
+  assert.equal(
+    planned.value.executable,
+    true,
+    JSON.stringify(planned.value.diagnostics),
+  );
+  applyWrites(consumer, planned.value.writes);
 
-    const checked = runPnpm(["run", "check"], consumer);
-    assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
-    const built = runPnpm(["run", "build"], consumer);
-    assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
-    const rendered = await renderProductionPage(consumer);
-    assert.equal(rendered.status, 200);
-    assert.ok(
-      rendered.html.includes("PLANNED_SIMPLE_PAGE"),
-      "the freshly planned layout must render the page, not suppress it",
-    );
-  },
-);
+  const checked = runPnpm(["run", "check"], consumer);
+  assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
+  const built = runPnpm(["run", "build"], consumer);
+  assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+  const rendered = await renderProductionPage(consumer);
+  assert.equal(rendered.status, 200);
+  assert.ok(
+    rendered.html.includes("PLANNED_SIMPLE_PAGE"),
+    "the freshly planned layout must render the page, not suppress it",
+  );
+});
 
-test(
-  "a customized aliased-children layout and app-owned export still check/build/render",
-  { timeout: 180_000 },
-  async (t) => {
-    const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-areg-"));
-    const fixture = minimalConsumer();
-    const consumer = fixture.root;
-    t.after(() => {
-      rmSync(registryRoot, { recursive: true, force: true });
-      fixture.cleanup();
-    });
-    write(
-      consumer,
-      "src/routes/+page.svelte",
-      '<h1>PLANNED_ALIASED_PAGE</h1>\n<script>import { Button } from "$lib/components/ui/index.js";</script>\n<Button />\n',
-    );
+test("a customized aliased-children layout and app-owned export still check/build/render", {
+  timeout: 180_000,
+}, async (t) => {
+  const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-areg-"));
+  const fixture = minimalConsumer();
+  const consumer = fixture.root;
+  t.after(() => {
+    rmSync(registryRoot, { recursive: true, force: true });
+    fixture.cleanup();
+  });
+  write(
+    consumer,
+    "src/routes/+page.svelte",
+    '<h1>PLANNED_ALIASED_PAGE</h1>\n<script>import { Button } from "$lib/components/ui/index.js";</script>\n<Button />\n',
+  );
 
-    const registry = realRegistry(registryRoot);
-    assert.equal(registry.ok, true, JSON.stringify(registry));
-    if (!registry.ok) return;
+  const registry = realRegistry(registryRoot);
+  assert.equal(registry.ok, true, JSON.stringify(registry));
+  if (!registry.ok) return;
 
-    const snapshot = captureSnapshot(consumer, [
-      `${derived.stateDir}/kit.json`,
-      `${derived.stateDir}/kit.lock.json`,
-      derived.rootExports,
-      derived.kitCss,
-      derived.themesCss,
-      derived.appCss,
-      DEFAULT_KIT_CONFIG.layoutFile,
-      `${derived.rootExportsDir}/button.svelte`,
-    ]);
-    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-    if (!snapshot.ok) return;
+  const snapshot = captureSnapshot(consumer, [
+    `${derived.stateDir}/kit.json`,
+    `${derived.stateDir}/kit.lock.json`,
+    derived.rootExports,
+    derived.kitCss,
+    derived.themesCss,
+    derived.appCss,
+    DEFAULT_KIT_CONFIG.layoutFile,
+    `${derived.rootExportsDir}/button.svelte`,
+  ]);
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) return;
 
-    const planned = planAdd({
-      registry: registry.value,
-      config: DEFAULT_KIT_CONFIG,
-      addedRoots: ["button"],
-      snapshot: snapshot.value,
-      lock: null,
-      registryVersion: registry.value.root.registryVersion,
-      registryHash: registry.value.root.contentHash,
-    });
-    assert.equal(planned.ok, true, JSON.stringify(planned));
-    if (!planned.ok) return;
-    assert.equal(
-      planned.value.executable,
-      true,
-      JSON.stringify(planned.value.diagnostics),
-    );
-    applyWrites(consumer, planned.value.writes);
+  const planned = planAdd({
+    registry: registry.value,
+    config: DEFAULT_KIT_CONFIG,
+    addedRoots: ["button"],
+    snapshot: snapshot.value,
+    lock: null,
+    registryVersion: registry.value.root.registryVersion,
+    registryHash: registry.value.root.contentHash,
+  });
+  assert.equal(planned.ok, true, JSON.stringify(planned));
+  if (!planned.ok) return;
+  assert.equal(
+    planned.value.executable,
+    true,
+    JSON.stringify(planned.value.diagnostics),
+  );
+  applyWrites(consumer, planned.value.writes);
 
-    // The generated layout is app-owned afterwards: a valid destructuring alias
-    // of the child snippet must still check, build and render the page child.
-    write(
-      consumer,
-      DEFAULT_KIT_CONFIG.layoutFile,
-      '<script>\nimport "../styles/kit.css";\nimport "../styles/themes.css";\nimport "../styles/app.css";\nlet { children: content } = $props();\n</script>\n\n{@render content()}\n',
-    );
-    // An application-owned declaration outside the managed export region stays
-    // legitimate and must not break the consumer.
-    const barrelPath = path.join(consumer, derived.rootExports);
-    writeFileSync(
-      barrelPath,
-      `${readFileSync(barrelPath, "utf8")}export const AppOwned = 1;\n`,
-    );
+  // The generated layout is app-owned afterwards: a valid destructuring alias
+  // of the child snippet must still check, build and render the page child.
+  write(
+    consumer,
+    DEFAULT_KIT_CONFIG.layoutFile,
+    '<script>\nimport "../styles/kit.css";\nimport "../styles/themes.css";\nimport "../styles/app.css";\nlet { children: content } = $props();\n</script>\n\n{@render content()}\n',
+  );
+  // An application-owned declaration outside the managed export region stays
+  // legitimate and must not break the consumer.
+  const barrelPath = path.join(consumer, derived.rootExports);
+  writeFileSync(
+    barrelPath,
+    `${readFileSync(barrelPath, "utf8")}export const AppOwned = 1;\n`,
+  );
 
-    const checked = runPnpm(["run", "check"], consumer);
-    assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
-    const built = runPnpm(["run", "build"], consumer);
-    assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
-    const rendered = await renderProductionPage(consumer);
-    assert.equal(rendered.status, 200);
-    assert.ok(
-      rendered.html.includes("PLANNED_ALIASED_PAGE"),
-      "the aliased-children layout must render the page child",
-    );
-  },
-);
+  const checked = runPnpm(["run", "check"], consumer);
+  assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
+  const built = runPnpm(["run", "build"], consumer);
+  assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+  const rendered = await renderProductionPage(consumer);
+  assert.equal(rendered.status, 200);
+  assert.ok(
+    rendered.html.includes("PLANNED_ALIASED_PAGE"),
+    "the aliased-children layout must render the page child",
+  );
+});
 
-test(
-  "a compound consumer built from exactly the planned add operations builds",
-  { timeout: 180_000 },
-  async (t) => {
-    const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-creg-"));
-    const fixture = minimalConsumer();
-    const consumer = fixture.root;
-    t.after(() => {
-      rmSync(registryRoot, { recursive: true, force: true });
-      fixture.cleanup();
-    });
-    write(
-      consumer,
-      "src/routes/+page.svelte",
-      '<h1>PLANNED_COMPOUND_PAGE</h1>\n<script>import { DialogRoot } from "$lib/components/ui/index.js";</script>\n<DialogRoot />\n',
-    );
+test("a compound consumer built from exactly the planned add operations builds", {
+  timeout: 180_000,
+}, async (t) => {
+  const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-creg-"));
+  const fixture = minimalConsumer();
+  const consumer = fixture.root;
+  t.after(() => {
+    rmSync(registryRoot, { recursive: true, force: true });
+    fixture.cleanup();
+  });
+  write(
+    consumer,
+    "src/routes/+page.svelte",
+    '<h1>PLANNED_COMPOUND_PAGE</h1>\n<script>import { DialogRoot } from "$lib/components/ui/index.js";</script>\n<DialogRoot />\n',
+  );
 
-    const registry = realCompoundRegistry(registryRoot);
-    assert.equal(registry.ok, true, JSON.stringify(registry));
-    if (!registry.ok) return;
+  const registry = realCompoundRegistry(registryRoot);
+  assert.equal(registry.ok, true, JSON.stringify(registry));
+  if (!registry.ok) return;
 
-    const snapshot = captureSnapshot(consumer, [
-      `${derived.stateDir}/kit.json`,
-      `${derived.stateDir}/kit.lock.json`,
-      derived.rootExports,
-      derived.kitCss,
-      derived.themesCss,
-      derived.appCss,
-      DEFAULT_KIT_CONFIG.layoutFile,
-      `${derived.rootExportsDir}/dialog/index.ts`,
-      `${derived.rootExportsDir}/dialog/root.svelte`,
-      `${derived.rootExportsDir}/dialog/trigger.svelte`,
-    ]);
-    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-    if (!snapshot.ok) return;
+  const snapshot = captureSnapshot(consumer, [
+    `${derived.stateDir}/kit.json`,
+    `${derived.stateDir}/kit.lock.json`,
+    derived.rootExports,
+    derived.kitCss,
+    derived.themesCss,
+    derived.appCss,
+    DEFAULT_KIT_CONFIG.layoutFile,
+    `${derived.rootExportsDir}/dialog/index.ts`,
+    `${derived.rootExportsDir}/dialog/root.svelte`,
+    `${derived.rootExportsDir}/dialog/trigger.svelte`,
+  ]);
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) return;
 
-    const planned = planAdd({
-      registry: registry.value,
-      config: DEFAULT_KIT_CONFIG,
-      addedRoots: ["dialog"],
-      snapshot: snapshot.value,
-      lock: null,
-      registryVersion: registry.value.root.registryVersion,
-      registryHash: registry.value.root.contentHash,
-    });
-    assert.equal(planned.ok, true, JSON.stringify(planned));
-    if (!planned.ok) return;
-    assert.equal(
-      planned.value.executable,
-      true,
-      JSON.stringify(planned.value.diagnostics),
-    );
-    const written = new Set(planned.value.writes.map((entry) => entry.path));
-    assert.ok(written.has(`${derived.rootExportsDir}/dialog/index.ts`));
-    assert.ok(written.has(`${derived.rootExportsDir}/dialog/root.svelte`));
-    assert.ok(written.has(`${derived.rootExportsDir}/dialog/trigger.svelte`));
-    const exportWrite = planned.value.writes.find(
-      (entry) => entry.path === derived.rootExports,
-    );
-    assert.ok(exportWrite);
-    assert.match(
-      new TextDecoder().decode(exportWrite.bytes),
-      /export \{ DialogRoot \} from "\.\/dialog\/index\.js";/,
-    );
-    applyWrites(consumer, planned.value.writes);
+  const planned = planAdd({
+    registry: registry.value,
+    config: DEFAULT_KIT_CONFIG,
+    addedRoots: ["dialog"],
+    snapshot: snapshot.value,
+    lock: null,
+    registryVersion: registry.value.root.registryVersion,
+    registryHash: registry.value.root.contentHash,
+  });
+  assert.equal(planned.ok, true, JSON.stringify(planned));
+  if (!planned.ok) return;
+  assert.equal(
+    planned.value.executable,
+    true,
+    JSON.stringify(planned.value.diagnostics),
+  );
+  const written = new Set(planned.value.writes.map((entry) => entry.path));
+  assert.ok(written.has(`${derived.rootExportsDir}/dialog/index.ts`));
+  assert.ok(written.has(`${derived.rootExportsDir}/dialog/root.svelte`));
+  assert.ok(written.has(`${derived.rootExportsDir}/dialog/trigger.svelte`));
+  const exportWrite = planned.value.writes.find(
+    (entry) => entry.path === derived.rootExports,
+  );
+  assert.ok(exportWrite);
+  assert.match(
+    new TextDecoder().decode(exportWrite.bytes),
+    /export \{ DialogRoot \} from "\.\/dialog\/index\.js";/,
+  );
+  applyWrites(consumer, planned.value.writes);
 
-    const checked = runPnpm(["run", "check"], consumer);
-    assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
-    const built = runPnpm(["run", "build"], consumer);
-    assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
-    const rendered = await renderProductionPage(consumer);
-    assert.equal(rendered.status, 200);
-    assert.ok(
-      rendered.html.includes("PLANNED_COMPOUND_PAGE"),
-      "the freshly planned compound layout must render the page",
-    );
-  },
-);
+  const checked = runPnpm(["run", "check"], consumer);
+  assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
+  const built = runPnpm(["run", "build"], consumer);
+  assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+  const rendered = await renderProductionPage(consumer);
+  assert.equal(rendered.status, 200);
+  assert.ok(
+    rendered.html.includes("PLANNED_COMPOUND_PAGE"),
+    "the freshly planned compound layout must render the page",
+  );
+});
 
-test(
-  "the planned-consumer SSR control fails for suppressed child rendering, not status",
-  { timeout: 180_000 },
-  async (t) => {
-    const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-sreg-"));
-    const fixture = minimalConsumer();
-    const consumer = fixture.root;
-    t.after(() => {
-      rmSync(registryRoot, { recursive: true, force: true });
-      fixture.cleanup();
-    });
-    write(
-      consumer,
-      "src/routes/+page.svelte",
-      "<h1>PLANNED_NEGATIVE_PAGE</h1>\n",
-    );
-    const registry = realRegistry(registryRoot);
-    assert.equal(registry.ok, true, JSON.stringify(registry));
-    if (!registry.ok) return;
-    const snapshot = captureSnapshot(consumer, [
-      `${derived.stateDir}/kit.json`,
-      `${derived.stateDir}/kit.lock.json`,
-      derived.rootExports,
-      derived.kitCss,
-      derived.themesCss,
-      derived.appCss,
-      DEFAULT_KIT_CONFIG.layoutFile,
-      `${derived.rootExportsDir}/button.svelte`,
-    ]);
-    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-    if (!snapshot.ok) return;
-    const planned = planAdd({
-      registry: registry.value,
-      config: DEFAULT_KIT_CONFIG,
-      addedRoots: ["button"],
-      snapshot: snapshot.value,
-      lock: null,
-      registryVersion: registry.value.root.registryVersion,
-      registryHash: registry.value.root.contentHash,
-    });
-    assert.equal(planned.ok, true, JSON.stringify(planned));
-    if (!planned.ok) return;
-    applyWrites(consumer, planned.value.writes);
-    // Simulate the historical defect: a materialized layout that imports the
-    // styles but never renders `children`.
-    writeFileSync(
-      path.join(consumer, DEFAULT_KIT_CONFIG.layoutFile),
-      '<script>\nimport "../styles/kit.css";\nimport "../styles/themes.css";\nimport "../styles/app.css";\n</script>\n',
-    );
-    const built = runPnpm(["run", "build"], consumer);
-    assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
-    const rendered = await renderProductionPage(consumer);
-    assert.equal(rendered.status, 200);
-    assert.ok(
-      !rendered.html.includes("PLANNED_NEGATIVE_PAGE"),
-      "the negative control must fail for the suppressed page content",
-    );
-  },
-);
+test("the planned-consumer SSR control fails for suppressed child rendering, not status", {
+  timeout: 180_000,
+}, async (t) => {
+  const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-sreg-"));
+  const fixture = minimalConsumer();
+  const consumer = fixture.root;
+  t.after(() => {
+    rmSync(registryRoot, { recursive: true, force: true });
+    fixture.cleanup();
+  });
+  write(
+    consumer,
+    "src/routes/+page.svelte",
+    "<h1>PLANNED_NEGATIVE_PAGE</h1>\n",
+  );
+  const registry = realRegistry(registryRoot);
+  assert.equal(registry.ok, true, JSON.stringify(registry));
+  if (!registry.ok) return;
+  const snapshot = captureSnapshot(consumer, [
+    `${derived.stateDir}/kit.json`,
+    `${derived.stateDir}/kit.lock.json`,
+    derived.rootExports,
+    derived.kitCss,
+    derived.themesCss,
+    derived.appCss,
+    DEFAULT_KIT_CONFIG.layoutFile,
+    `${derived.rootExportsDir}/button.svelte`,
+  ]);
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) return;
+  const planned = planAdd({
+    registry: registry.value,
+    config: DEFAULT_KIT_CONFIG,
+    addedRoots: ["button"],
+    snapshot: snapshot.value,
+    lock: null,
+    registryVersion: registry.value.root.registryVersion,
+    registryHash: registry.value.root.contentHash,
+  });
+  assert.equal(planned.ok, true, JSON.stringify(planned));
+  if (!planned.ok) return;
+  applyWrites(consumer, planned.value.writes);
+  // Simulate the historical defect: a materialized layout that imports the
+  // styles but never renders `children`.
+  writeFileSync(
+    path.join(consumer, DEFAULT_KIT_CONFIG.layoutFile),
+    '<script>\nimport "../styles/kit.css";\nimport "../styles/themes.css";\nimport "../styles/app.css";\n</script>\n',
+  );
+  const built = runPnpm(["run", "build"], consumer);
+  assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+  const rendered = await renderProductionPage(consumer);
+  assert.equal(rendered.status, 200);
+  assert.ok(
+    !rendered.html.includes("PLANNED_NEGATIVE_PAGE"),
+    "the negative control must fail for the suppressed page content",
+  );
+});
 
-test(
-  "the planned-consumer check lane rejects an injected type error",
-  { timeout: 180_000 },
-  (t) => {
-    const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-negreg-"));
-    const fixture = minimalConsumer();
-    const consumer = fixture.root;
-    t.after(() => {
-      rmSync(registryRoot, { recursive: true, force: true });
-      fixture.cleanup();
-    });
-    write(
-      consumer,
-      "src/routes/+page.svelte",
-      '<script lang="ts">import { Button } from "$lib/components/ui/index.js";\nconst broken: number = "not a number";\n</script>\n<Button />\n',
-    );
-    const registry = realRegistry(registryRoot);
-    assert.equal(registry.ok, true, JSON.stringify(registry));
-    if (!registry.ok) return;
-    const snapshot = captureSnapshot(consumer, [
-      `${derived.stateDir}/kit.json`,
-      `${derived.stateDir}/kit.lock.json`,
-      derived.rootExports,
-      derived.kitCss,
-      derived.themesCss,
-      derived.appCss,
-      DEFAULT_KIT_CONFIG.layoutFile,
-      `${derived.rootExportsDir}/button.svelte`,
-    ]);
-    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-    if (!snapshot.ok) return;
-    const planned = planAdd({
-      registry: registry.value,
-      config: DEFAULT_KIT_CONFIG,
-      addedRoots: ["button"],
-      snapshot: snapshot.value,
-      lock: null,
-      registryVersion: registry.value.root.registryVersion,
-      registryHash: registry.value.root.contentHash,
-    });
-    assert.equal(planned.ok, true, JSON.stringify(planned));
-    if (!planned.ok) return;
-    applyWrites(consumer, planned.value.writes);
-    const checked = runPnpm(["run", "check"], consumer);
-    const diagnostic = stripVTControlCharacters(
-      `${checked.stdout}\n${checked.stderr}`,
-    );
-    assert.equal(checked.signal, null, diagnostic);
-    assert.notEqual(checked.status, null, diagnostic);
-    assert.notEqual(checked.status, 0, diagnostic);
-    assert.match(diagnostic, /src[/\\]routes[/\\]\+page\.svelte/);
-    assert.match(
-      diagnostic,
-      /Type 'string' is not assignable to type 'number'/,
-    );
-    assert.ok(
-      diagnostic.includes('const broken: number = "not a number"'),
-      diagnostic,
-    );
-  },
-);
+test("the planned-consumer check lane rejects an injected type error", {
+  timeout: 180_000,
+}, (t) => {
+  const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-negreg-"));
+  const fixture = minimalConsumer();
+  const consumer = fixture.root;
+  t.after(() => {
+    rmSync(registryRoot, { recursive: true, force: true });
+    fixture.cleanup();
+  });
+  write(
+    consumer,
+    "src/routes/+page.svelte",
+    '<script lang="ts">import { Button } from "$lib/components/ui/index.js";\nconst broken: number = "not a number";\n</script>\n<Button />\n',
+  );
+  const registry = realRegistry(registryRoot);
+  assert.equal(registry.ok, true, JSON.stringify(registry));
+  if (!registry.ok) return;
+  const snapshot = captureSnapshot(consumer, [
+    `${derived.stateDir}/kit.json`,
+    `${derived.stateDir}/kit.lock.json`,
+    derived.rootExports,
+    derived.kitCss,
+    derived.themesCss,
+    derived.appCss,
+    DEFAULT_KIT_CONFIG.layoutFile,
+    `${derived.rootExportsDir}/button.svelte`,
+  ]);
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) return;
+  const planned = planAdd({
+    registry: registry.value,
+    config: DEFAULT_KIT_CONFIG,
+    addedRoots: ["button"],
+    snapshot: snapshot.value,
+    lock: null,
+    registryVersion: registry.value.root.registryVersion,
+    registryHash: registry.value.root.contentHash,
+  });
+  assert.equal(planned.ok, true, JSON.stringify(planned));
+  if (!planned.ok) return;
+  applyWrites(consumer, planned.value.writes);
+  const checked = runPnpm(["run", "check"], consumer);
+  const diagnostic = stripVTControlCharacters(
+    `${checked.stdout}\n${checked.stderr}`,
+  );
+  assert.equal(checked.signal, null, diagnostic);
+  assert.notEqual(checked.status, null, diagnostic);
+  assert.notEqual(checked.status, 0, diagnostic);
+  assert.match(diagnostic, /src[/\\]routes[/\\]\+page\.svelte/);
+  assert.match(diagnostic, /Type 'string' is not assignable to type 'number'/);
+  assert.ok(
+    diagnostic.includes('const broken: number = "not a number"'),
+    diagnostic,
+  );
+});
 
 /**
  * RCLD03-R8-1: a supported nondefault SvelteKit routes mapping is qualified
@@ -597,115 +584,110 @@ test(
  * routes directory, that layout must import the intended styles, and the
  * production handler must still render the page.
  */
-test(
-  "a nondefault routes mapping plans, checks, builds and renders through the active layout",
-  { timeout: 180_000 },
-  async (t) => {
-    const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-vreg-"));
-    const fixture = minimalConsumer();
-    const consumer = fixture.root;
-    t.after(() => {
-      rmSync(registryRoot, { recursive: true, force: true });
-      fixture.cleanup();
-    });
-    writeFileSync(
-      path.join(consumer, "svelte.config.ts"),
-      'import adapter from "@sveltejs/adapter-node";\nimport { vitePreprocess } from "@sveltejs/vite-plugin-svelte";\n\n/** @type {import(\'@sveltejs/kit\').Config} */\nconst config = {\n  preprocess: vitePreprocess(),\n  kit: { adapter: adapter(), files: { routes: "src/views" } },\n};\n\nexport default config;\n',
-    );
-    write(
-      consumer,
-      "src/views/+page.svelte",
-      '<h1>PLANNED_VIEWS_PAGE</h1>\n<script>import { Button } from "$lib/components/ui/index.js";</script>\n<Button />\n',
-    );
+test("a nondefault routes mapping plans, checks, builds and renders through the active layout", {
+  timeout: 180_000,
+}, async (t) => {
+  const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-pr-vreg-"));
+  const fixture = minimalConsumer();
+  const consumer = fixture.root;
+  t.after(() => {
+    rmSync(registryRoot, { recursive: true, force: true });
+    fixture.cleanup();
+  });
+  writeFileSync(
+    path.join(consumer, "svelte.config.ts"),
+    'import adapter from "@sveltejs/adapter-node";\nimport { vitePreprocess } from "@sveltejs/vite-plugin-svelte";\n\n/** @type {import(\'@sveltejs/kit\').Config} */\nconst config = {\n  preprocess: vitePreprocess(),\n  kit: { adapter: adapter(), files: { routes: "src/views" } },\n};\n\nexport default config;\n',
+  );
+  write(
+    consumer,
+    "src/views/+page.svelte",
+    '<h1>PLANNED_VIEWS_PAGE</h1>\n<script>import { Button } from "$lib/components/ui/index.js";</script>\n<Button />\n',
+  );
 
-    const registry = realRegistry(registryRoot);
-    assert.equal(registry.ok, true, JSON.stringify(registry));
-    if (!registry.ok) return;
+  const registry = realRegistry(registryRoot);
+  assert.equal(registry.ok, true, JSON.stringify(registry));
+  if (!registry.ok) return;
 
-    const layoutFile = "src/views/+layout.svelte";
-    const config = { ...DEFAULT_KIT_CONFIG, layoutFile };
-    const snapshot = captureSnapshot(consumer, [
-      `${derived.stateDir}/kit.json`,
-      `${derived.stateDir}/kit.lock.json`,
-      derived.rootExports,
-      derived.kitCss,
-      derived.themesCss,
-      derived.appCss,
-      layoutFile,
-      `${derived.rootExportsDir}/button.svelte`,
-      "svelte.config.ts",
-    ]);
-    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-    if (!snapshot.ok) return;
+  const layoutFile = "src/views/+layout.svelte";
+  const config = { ...DEFAULT_KIT_CONFIG, layoutFile };
+  const snapshot = captureSnapshot(consumer, [
+    `${derived.stateDir}/kit.json`,
+    `${derived.stateDir}/kit.lock.json`,
+    derived.rootExports,
+    derived.kitCss,
+    derived.themesCss,
+    derived.appCss,
+    layoutFile,
+    `${derived.rootExportsDir}/button.svelte`,
+    "svelte.config.ts",
+  ]);
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) return;
 
-    const planned = planAdd({
-      registry: registry.value,
-      config,
-      addedRoots: ["button"],
-      snapshot: snapshot.value,
-      lock: null,
-      registryVersion: registry.value.root.registryVersion,
-      registryHash: registry.value.root.contentHash,
-    });
-    assert.equal(planned.ok, true, JSON.stringify(planned));
-    if (!planned.ok) return;
-    assert.equal(
-      planned.value.executable,
-      true,
-      JSON.stringify(planned.value.diagnostics),
-    );
-    const layoutWrite = planned.value.writes.find(
-      (entry) => entry.path === layoutFile,
-    );
+  const planned = planAdd({
+    registry: registry.value,
+    config,
+    addedRoots: ["button"],
+    snapshot: snapshot.value,
+    lock: null,
+    registryVersion: registry.value.root.registryVersion,
+    registryHash: registry.value.root.contentHash,
+  });
+  assert.equal(planned.ok, true, JSON.stringify(planned));
+  if (!planned.ok) return;
+  assert.equal(
+    planned.value.executable,
+    true,
+    JSON.stringify(planned.value.diagnostics),
+  );
+  const layoutWrite = planned.value.writes.find(
+    (entry) => entry.path === layoutFile,
+  );
+  assert.ok(layoutWrite, "the active layout must be planned, not the default");
+  assert.ok(
+    !planned.value.writes.some(
+      (entry) => entry.path === DEFAULT_KIT_CONFIG.layoutFile,
+    ),
+  );
+  const layoutText = new TextDecoder().decode(layoutWrite.bytes);
+  for (const specifier of [
+    "../styles/kit.css",
+    "../styles/themes.css",
+    "../styles/app.css",
+  ]) {
     assert.ok(
-      layoutWrite,
-      "the active layout must be planned, not the default",
+      layoutText.includes(specifier),
+      `the active layout must import ${specifier}`,
     );
-    assert.ok(
-      !planned.value.writes.some(
-        (entry) => entry.path === DEFAULT_KIT_CONFIG.layoutFile,
-      ),
-    );
-    const layoutText = new TextDecoder().decode(layoutWrite.bytes);
-    for (const specifier of [
+  }
+
+  // Emitted planning: the deterministic envelope carries the active layout.
+  const envelope = toPlanningEnvelope(
+    "add",
+    planned.value.executable,
+    planned.value.writes,
+    planned.value.diagnostics,
+  );
+  assert.ok(
+    envelope.writes.some((entry) => entry.path === layoutFile),
+    JSON.stringify(envelope.writes.map((entry) => entry.path)),
+  );
+
+  applyWrites(consumer, planned.value.writes);
+
+  const checked = runPnpm(["run", "check"], consumer);
+  assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
+  const built = runPnpm(["run", "build"], consumer);
+  assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+  assert.ok(
+    readFileSync(path.join(consumer, layoutFile), "utf8").includes(
       "../styles/kit.css",
-      "../styles/themes.css",
-      "../styles/app.css",
-    ]) {
-      assert.ok(
-        layoutText.includes(specifier),
-        `the active layout must import ${specifier}`,
-      );
-    }
-
-    // Emitted planning: the deterministic envelope carries the active layout.
-    const envelope = toPlanningEnvelope(
-      "add",
-      planned.value.executable,
-      planned.value.writes,
-      planned.value.diagnostics,
-    );
-    assert.ok(
-      envelope.writes.some((entry) => entry.path === layoutFile),
-      JSON.stringify(envelope.writes.map((entry) => entry.path)),
-    );
-
-    applyWrites(consumer, planned.value.writes);
-
-    const checked = runPnpm(["run", "check"], consumer);
-    assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
-    const built = runPnpm(["run", "build"], consumer);
-    assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
-    assert.ok(
-      readFileSync(path.join(consumer, layoutFile), "utf8").includes(
-        "../styles/kit.css",
-      ),
-    );
-    const rendered = await renderProductionPage(consumer);
-    assert.equal(rendered.status, 200);
-    assert.ok(
-      rendered.html.includes("PLANNED_VIEWS_PAGE"),
-      "the active nondefault layout must render the page",
-    );
-  },
-);
+    ),
+  );
+  const rendered = await renderProductionPage(consumer);
+  assert.equal(rendered.status, 200);
+  assert.ok(
+    rendered.html.includes("PLANNED_VIEWS_PAGE"),
+    "the active nondefault layout must render the page",
+  );
+});

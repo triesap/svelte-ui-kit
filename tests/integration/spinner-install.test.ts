@@ -122,7 +122,7 @@ for (const custom of [false, true])
       const rendered = spawnSync(
         process.execPath,
         [
-          path.resolve("tests/helpers/render-built-consumer.mjs"),
+          path.resolve("tests/helpers/render-built-consumer.ts"),
           path.join(fixture.root, "build/handler.js"),
           "/qualification/installed-spinner",
         ],

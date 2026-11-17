@@ -452,7 +452,7 @@ test("planning starts no writer or package-manager process under denied permissi
   const before = snapshotTree(project.root);
   const control = path.join(
     process.cwd(),
-    "tests/integration/planner-no-writer-control.mjs",
+    "tests/integration/planner-no-writer-control.ts",
   );
   const env: NodeJS.ProcessEnv = {
     ...process.env,

@@ -16,7 +16,11 @@ import { randomUUID } from "node:crypto";
 
 /** Persisted recovery phases exclude the private in-memory staging draft. */
 export type DurableTransactionPhase =
-  "prepared" | "applied" | "published" | "cleaned" | "rolled_back";
+  | "prepared"
+  | "applied"
+  | "published"
+  | "cleaned"
+  | "rolled_back";
 
 /** Ordered internal transaction phases. */
 export type TransactionPhase = "planned" | DurableTransactionPhase;
@@ -76,7 +80,10 @@ export function isMutatingPhase(phase: TransactionPhase): boolean {
 
 /** The classified outcome of one guarded apply attempt. */
 export type TransactionOutcomeKind =
-  "no_change" | "applied" | "committed_needs_cleanup" | "refused";
+  | "no_change"
+  | "applied"
+  | "committed_needs_cleanup"
+  | "refused";
 
 /**
  * A distinct transaction identity. `transactionId` is unique per attempt; it is

@@ -4,7 +4,12 @@ import type { ClassValue, SvelteHTMLElements } from "svelte/elements";
 /** Source FieldSlot becomes a native optional snippet, not a runtime store. */
 export type FieldSlot = Snippet;
 export type TextInputType =
-  "text" | "email" | "password" | "search" | "tel" | "url";
+  | "text"
+  | "email"
+  | "password"
+  | "search"
+  | "tel"
+  | "url";
 
 type States = { required?: boolean; disabled?: boolean; invalid?: boolean };
 type Relationship = {

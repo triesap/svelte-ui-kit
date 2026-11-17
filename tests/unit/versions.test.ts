@@ -232,8 +232,9 @@ test("validateVersionIdentities collects every problem in one pass", () => {
 });
 
 test("project parsing refuses every retired schema independent of other version axes", async () => {
-  const { parseKitConfig, DEFAULT_KIT_CONFIG } =
-    await import("../../src/project/config.js");
+  const { parseKitConfig, DEFAULT_KIT_CONFIG } = await import(
+    "../../src/project/config.js"
+  );
   assert.equal(
     parseKitConfig({ ...DEFAULT_KIT_CONFIG, toolVersion: "9.9.9" }).ok,
     true,

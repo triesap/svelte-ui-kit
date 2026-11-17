@@ -1,5 +1,5 @@
-import { expect, test } from "./browser-issues";
-import { startFixtureServer, type OwnedServer } from "./fixture-server";
+import { expect, test } from "./browser-issues.js";
+import { startFixtureServer, type OwnedServer } from "./fixture-server.js";
 
 /**
  * Fault-injection control for the S008 browser gate.

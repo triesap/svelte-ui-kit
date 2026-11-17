@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { test, expect } from "./browser-issues";
-import { startFixtureServer, type OwnedServer } from "./fixture-server";
+import { test, expect } from "./browser-issues.js";
+import { startFixtureServer, type OwnedServer } from "./fixture-server.js";
 
 const properties: { name: string; scope: string; fallback: string }[] =
   JSON.parse(

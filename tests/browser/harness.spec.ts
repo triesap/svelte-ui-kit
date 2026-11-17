@@ -10,9 +10,9 @@ import {
 import os from "node:os";
 import path from "node:path";
 
-import { expect, test } from "./browser-issues";
-import { startFixtureServer, type OwnedServer } from "./fixture-server";
-import { fetchRoute } from "../smoke/owned-server.mjs";
+import { expect, test } from "./browser-issues.js";
+import { startFixtureServer, type OwnedServer } from "./fixture-server.js";
+import { fetchRoute } from "../smoke/owned-server.ts";
 
 /**
  * S008 production browser harness for the maintained consumer fixture.
@@ -46,7 +46,7 @@ const FIXTURE_FAULT_SERVER = path.join(
   PACKAGE_ROOT,
   "tests",
   "browser",
-  "fixture-fault-server.mjs",
+  "fixture-fault-server.ts",
 );
 const FAULT_OUTPUT_DIR = path.join(
   PACKAGE_ROOT,

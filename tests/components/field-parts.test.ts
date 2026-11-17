@@ -14,7 +14,7 @@ test("actual Field candidate compiles every source part and SSR associations des
         const result = spawnSync(
           process.execPath,
           [
-            path.resolve("tests/helpers/render-built-consumer.mjs"),
+            path.resolve("tests/helpers/render-built-consumer.ts"),
             consumer.handler,
             `${consumer.route}?invalid=${invalid}&value=${value}`,
           ],

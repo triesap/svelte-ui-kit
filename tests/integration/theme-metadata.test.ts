@@ -239,9 +239,8 @@ test("original loaded contract authority cannot be changed by provider edits or 
     const loaded = loadRegistrySnapshot(createAssetProvider(owned.pkg));
     assert.equal(loaded.ok, true, JSON.stringify(loaded));
     if (!loaded.ok) return;
-    const original = loaded.value.items.find(
-      (item) => item.id === "tokens",
-    )!.contracts!;
+    const original = loaded.value.items.find((item) => item.id === "tokens")!
+      .contracts!;
     const before = JSON.stringify(original);
     revision(owned.pkg);
     assert.equal(JSON.stringify(original), before);

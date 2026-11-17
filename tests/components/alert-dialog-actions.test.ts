@@ -11,7 +11,7 @@ test("actual nine-part Alert Dialog candidate compiles native labeling decision 
     const rendered = spawnSync(
       process.execPath,
       [
-        path.resolve("tests/helpers/render-built-consumer.mjs"),
+        path.resolve("tests/helpers/render-built-consumer.ts"),
         consumer.handler,
         consumer.route,
       ],

@@ -39,11 +39,11 @@ export function consumerEdges(file: string, source: string): ConsumerEdge[] {
           node.moduleSpecifier,
           Boolean(
             node.importClause?.isTypeOnly ||
-            (!node.importClause?.name &&
-              bindings &&
-              ts.isNamedImports(bindings) &&
-              bindings.elements.length &&
-              bindings.elements.every((entry) => entry.isTypeOnly)),
+              (!node.importClause?.name &&
+                bindings &&
+                ts.isNamedImports(bindings) &&
+                bindings.elements.length &&
+                bindings.elements.every((entry) => entry.isTypeOnly)),
           ),
         );
       } else if (ts.isExportDeclaration(node) && node.moduleSpecifier) {
@@ -52,9 +52,9 @@ export function consumerEdges(file: string, source: string): ConsumerEdge[] {
           node.isTypeOnly ||
             Boolean(
               node.exportClause &&
-              ts.isNamedExports(node.exportClause) &&
-              node.exportClause.elements.length &&
-              node.exportClause.elements.every((entry) => entry.isTypeOnly),
+                ts.isNamedExports(node.exportClause) &&
+                node.exportClause.elements.length &&
+                node.exportClause.elements.every((entry) => entry.isTypeOnly),
             ),
         );
       } else if (ts.isImportTypeNode(node)) {

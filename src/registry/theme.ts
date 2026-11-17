@@ -151,9 +151,9 @@ function collectStrings(
     return;
   }
   if (Array.isArray(value)) {
-    value.forEach((entry, index) =>
-      collectStrings(entry, `${path}[${index}]`, out),
-    );
+    value.forEach((entry, index) => {
+      collectStrings(entry, `${path}[${index}]`, out);
+    });
     return;
   }
   if (typeof value === "object" && value !== null) {

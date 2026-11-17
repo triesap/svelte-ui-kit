@@ -1882,7 +1882,7 @@ function classifyApplyPublication(
 
 function recoverTransactionsUnderLock(
   plan: AnyValidatedApplyPlan,
-  transactionId: string,
+  _transactionId: string,
   hooks?: TransactionHooks,
 ): ModelIssue[] {
   const recovered = recoverTransactions(

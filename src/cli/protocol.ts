@@ -40,7 +40,14 @@ export const COMMAND_ENVELOPE_SCHEMA = "command-envelope.schema.json";
 export const PROTOCOL_VERSION = INITIAL_PROTOCOL_VERSION;
 
 export type CommandName =
-  "info" | "init" | "view" | "add" | "sync" | "doctor" | "help" | "version";
+  | "info"
+  | "init"
+  | "view"
+  | "add"
+  | "sync"
+  | "doctor"
+  | "help"
+  | "version";
 
 export type ResultStatus =
   | "success"
@@ -56,7 +63,10 @@ export type ChangeAction = "create" | "update" | "retire";
 
 /** The more specific cause behind an ordinary `error` status. */
 export type FailureClass =
-  "usage" | "strict_doctor" | "unsafe_path" | "registry_failure";
+  | "usage"
+  | "strict_doctor"
+  | "unsafe_path"
+  | "registry_failure";
 
 export interface EnvelopeDiagnostic {
   readonly code: string;

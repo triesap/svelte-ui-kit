@@ -16,7 +16,7 @@ const server = await createServer({
   server: { middlewareMode: true, hmr: false },
 });
 const http = createHttpServer(server.middlewares);
-await new Promise((resolve, reject) => {
+await new Promise<void>((resolve, reject) => {
   http.once("error", reject);
   http.listen(0, "127.0.0.1", resolve);
 });
@@ -27,7 +27,7 @@ process.stdout.write(`${JSON.stringify({ port: address.port })}\n`);
 for (const signal of ["SIGTERM", "SIGINT"])
   process.on(signal, async () => {
     await server.close();
-    await new Promise((resolve, reject) =>
+    await new Promise<void>((resolve, reject) =>
       http.close((error) => (error ? reject(error) : resolve())),
     );
     process.exit(0);

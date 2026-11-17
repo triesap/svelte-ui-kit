@@ -16,7 +16,7 @@ import {
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import type { KitLock } from "../../src/codegen/lock.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
-import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
+import type { ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import type { ProjectSnapshot } from "../../src/codegen/snapshot.js";
 import {
   deriveKitPaths,
@@ -25,7 +25,7 @@ import {
 } from "../../src/project/config.js";
 import {
   assertTreeAfterMutations,
-  snapshotTree,
+  type snapshotTree,
   type TreeMutation,
 } from "./tree-snapshot.js";
 

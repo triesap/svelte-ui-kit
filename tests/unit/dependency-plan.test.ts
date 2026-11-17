@@ -36,16 +36,18 @@ function snapshot(
       compatibility: { svelte: "^5.57.3", bits: "^2.19.3", date: "^3.8.1" },
       items: entries.map(([id]) => ({ id, manifest: `ui/${id}.json` })),
     },
-    items: entries.map(([id, spec]): RegistrySnapshotItem => ({
-      id,
-      manifestPath: `registry/ui/${id}.json`,
-      manifest: {
+    items: entries.map(
+      ([id, spec]): RegistrySnapshotItem => ({
         id,
-        registryDependencies: spec.deps ?? [],
-        npmDependencies: spec.npm ?? [],
-      } as unknown as RegistryItem,
-      files: [],
-    })),
+        manifestPath: `registry/ui/${id}.json`,
+        manifest: {
+          id,
+          registryDependencies: spec.deps ?? [],
+          npmDependencies: spec.npm ?? [],
+        } as unknown as RegistryItem,
+        files: [],
+      }),
+    ),
     assets: [],
   };
 }

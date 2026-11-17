@@ -10,7 +10,7 @@ test("actual complete candidate labeling and close parts compile and SSR native 
     const rendered = spawnSync(
       process.execPath,
       [
-        path.resolve("tests/helpers/render-built-consumer.mjs"),
+        path.resolve("tests/helpers/render-built-consumer.ts"),
         consumer.handler,
         consumer.route,
       ],

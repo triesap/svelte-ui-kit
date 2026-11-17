@@ -52,7 +52,7 @@ import {
   type ConfigurationInput,
 } from "./configuration-inputs.js";
 import { deepFreeze, FrozenMap } from "./immutable.js";
-import { type JsonObservation } from "./io.js";
+import type { JsonObservation } from "./io.js";
 import {
   observeNativeFiles,
   type NativeFileObservation,

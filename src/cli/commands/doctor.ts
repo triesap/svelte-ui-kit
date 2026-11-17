@@ -44,7 +44,11 @@ import type { InfoResult } from "./info.js";
 export interface DoctorCheck {
   readonly code: string;
   readonly status:
-    "healthy" | "broken" | "unsafe" | "unverified" | "customized";
+    | "healthy"
+    | "broken"
+    | "unsafe"
+    | "unverified"
+    | "customized";
   readonly locator?: string;
 }
 export function diagnose(

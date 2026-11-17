@@ -12,7 +12,7 @@ test("compiled Menu Content preserves floating structures and native portal SSR 
       const rendered = spawnSync(
         process.execPath,
         [
-          path.resolve("tests/helpers/render-built-consumer.mjs"),
+          path.resolve("tests/helpers/render-built-consumer.ts"),
           consumer.handler,
           `${consumer.route}?portal=${mode}`,
         ],

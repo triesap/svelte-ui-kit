@@ -28,7 +28,7 @@ const packageRoot = path.resolve(
   "..",
 );
 const fixtureRoot = path.join(packageRoot, "tests/fixtures/consumer");
-const producerOverrides = {
+const producerOverrides: Record<string, string> = {
   runed: "0.35.1",
   "svelte-toolbelt": "0.10.6",
   svelte2tsx: "0.7.34",
@@ -47,7 +47,53 @@ assert.equal(process.argv.length, 4, "unexpected arguments");
 const reportRoot = path.resolve(output);
 mkdirSync(reportRoot, { recursive: true });
 const root = mkdtempSync(path.join(os.tmpdir(), "suik-native-diagnosis-"));
-const record = {
+type Diagnostic = {
+  code: number;
+  category: string;
+  file: string | null;
+  line: number | null;
+  message: string;
+};
+type Outcome = {
+  command: string;
+  args: readonly string[];
+  exitCode: number | null;
+  signal: NodeJS.Signals | null;
+  error: string | null;
+  stdout: string;
+  stderr: string;
+};
+interface TraceEvent {
+  name: string;
+  args: { size: number; typeIds: number[] };
+}
+interface TraceType {
+  id: number;
+  unionTypes: number[];
+  display?: string;
+  intrinsicName?: string;
+}
+interface ProbeRecord {
+  profile: string;
+  diagnosticQualification: boolean;
+  commands: Outcome[];
+  artifacts: Record<string, string>;
+  versions?: Record<string, string>;
+  nativeMetadata?: unknown;
+  nativeTransitives?: Record<string, string>;
+  packageEmitterVersion?: string;
+  lockSha256?: string;
+  checkerShimsSha256?: string;
+  minimal?: { source: string; diagnostics: Diagnostic[] };
+  noImportControl?: Diagnostic[];
+  authoredControl?: Diagnostic[];
+  traceLimits?: TraceEvent[];
+  traceTypes?: TraceType[];
+  traceSummary?: unknown;
+  fullConsumer?: Outcome;
+  ownedProjectRemoved?: boolean;
+}
+const record: ProbeRecord = {
   profile,
   diagnosticQualification: false,
   commands: [],
@@ -58,10 +104,13 @@ const save = () =>
     path.join(reportRoot, `${profile}.json`),
     `${JSON.stringify(record, null, 2)}\n`,
   );
-const env = { ...process.env, pnpm_config_verify_deps_before_run: "false" };
+const env: NodeJS.ProcessEnv = {
+  ...process.env,
+  pnpm_config_verify_deps_before_run: "false",
+};
 for (const name of ["NODE_TEST_CONTEXT", "NODE_OPTIONS", "NODE_V8_COVERAGE"])
   delete env[name];
-function run(command, args, cwd = root) {
+function run(command: string, args: readonly string[], cwd = root) {
   const result = spawnSync(command, args, {
     cwd,
     env,
@@ -84,7 +133,7 @@ function run(command, args, cwd = root) {
   assert.equal(outcome.error, null, `tool failure from ${command}`);
   return outcome;
 }
-function digest(bytes) {
+function digest(bytes: string | Uint8Array) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
@@ -161,7 +210,7 @@ try {
     "supported strict installation",
   );
   const require = createRequire(path.join(root, "package.json"));
-  const ts = require("typescript");
+  const ts = require("typescript") as typeof import("typescript");
   record.versions = {};
   for (const name of [
     ...Object.keys(manifest.dependencies),
@@ -239,7 +288,7 @@ try {
     "node_modules/svelte-check/dist/src/svelte-shims-v4.d.ts",
   );
   record.checkerShimsSha256 = digest(readFileSync(shims));
-  function check(source) {
+  function check(source: string) {
     writeFileSync(minimal, source);
     const program = ts.createProgram([minimal, shims], options);
     return ts.getPreEmitDiagnostics(program).map((item) => ({
@@ -263,7 +312,7 @@ try {
   );
   for (const item of record.minimal.diagnostics) assert.equal(item.code, 2590);
   assert.deepEqual(
-    record.minimal.diagnostics.map((item) => path.basename(item.file)).sort(),
+    record.minimal.diagnostics.map((item) => path.basename(item.file!)).sort(),
     nativeErrors === 2 ? ["button.svelte.d.ts", "calendar.svelte.d.ts"] : [],
   );
   record.noImportControl = check("export const control = 1;\n");
@@ -301,28 +350,28 @@ try {
     nativeErrors === 0 ? 0 : 2,
     "raw compiler failed; diagnostic qualification is not a raw pass",
   );
-  const trace = JSON.parse(
+  const trace: TraceEvent[] = JSON.parse(
     readFileSync(path.join(traceRoot, "trace.json"), "utf8"),
   );
-  const types = JSON.parse(
+  const types: TraceType[] = JSON.parse(
     readFileSync(path.join(traceRoot, "types.json"), "utf8"),
   );
   record.traceLimits = trace.filter((event) =>
     /(?:checkCrossProductUnion|removeSubtypes)_DepthLimit/.test(event.name),
   );
   record.traceTypes = types.filter((type) =>
-    record.traceLimits.some((event) => event.args?.typeIds?.includes(type.id)),
+    record.traceLimits!.some((event) => event.args?.typeIds?.includes(type.id)),
   );
   record.traceSummary = record.traceLimits.map((event) => ({
     name: event.name,
     size: event.args.size,
     keySets: event.args.typeIds.map((id) => {
-      const type = types.find((item) => item.id === id);
+      const type = types.find((item) => item.id === id)!;
       return {
         count: type.unionTypes.length,
         sample: type.unionTypes.slice(0, 12).map((key) => {
           const value = types.find((item) => item.id === key);
-          return value.display ?? value.intrinsicName;
+          return value!.display ?? value!.intrinsicName;
         }),
       };
     }),

@@ -62,7 +62,8 @@ import {
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
-import { run } from "node:test";
+import { run, type EventData } from "node:test";
+import type { TestEvent } from "node:test/reporters";
 import { fileURLToPath } from "node:url";
 import { inspect } from "node:util";
 
@@ -72,6 +73,14 @@ const TESTS_ROOT = path.join(PKG_ROOT, "tests");
 const OUT_DIR_NAME = ".unit-test-build";
 const OUT_BASE = path.join(PKG_ROOT, OUT_DIR_NAME);
 const TSC_BIN = path.join(PKG_ROOT, "node_modules", "typescript", "bin", "tsc");
+
+type Suite = ReturnType<typeof suiteDefinition>;
+type EventLocation = { entryFile?: string; file?: string };
+type Summary = EventData.TestSummary &
+  EventLocation & {
+    counts: EventData.TestSummary["counts"] & { failed: number };
+  };
+type Failure = EventData.TestFail & EventLocation;
 
 const LOG_PREFIX = "run-unit-tests:";
 
@@ -87,15 +96,15 @@ const SUITE_NAMES = [
 /** A deterministic, user-facing selection problem (never a crash). */
 class SelectionError extends Error {}
 
-function log(message) {
+function log(message: string) {
   process.stdout.write(`${LOG_PREFIX} ${message}\n`);
 }
 
-function logError(message) {
+function logError(message: string) {
   process.stderr.write(`${LOG_PREFIX} ${message}\n`);
 }
 
-function suiteDefinition(name) {
+function suiteDefinition(name: string) {
   if (!SUITE_NAMES.includes(name)) {
     throw new SelectionError(
       `unknown suite "${name}"; expected one of ${SUITE_NAMES.join(", ")}`,
@@ -118,7 +127,7 @@ function suiteDefinition(name) {
  * Path-component containment. `path.relative` is component-aware, so a
  * filename such as `..legal.test.ts` is not mistaken for a parent traversal.
  */
-function isContained(parent, child) {
+function isContained(parent: string, child: string) {
   const relative = path.relative(parent, child);
   if (relative === "" || path.isAbsolute(relative)) return false;
   return relative !== ".." && !relative.startsWith(`..${path.sep}`);
@@ -129,17 +138,17 @@ function isContained(parent, child) {
  * final path component is inspected, so a package checkout reached through an
  * otherwise valid working-directory symlink remains a valid test root.
  */
-function assertTestRootsReal(suite) {
+function assertTestRootsReal(suite: Suite) {
   const roots = [
     ["tests", TESTS_ROOT],
     [`tests/${suite.name}`, suite.testsRoot],
   ];
   for (const [label, root] of roots) {
-    let stats;
+    let stats: ReturnType<typeof lstatSync>;
     try {
       stats = lstatSync(root);
     } catch (error) {
-      if (error && error.code === "ENOENT") continue;
+      if (error && (error as NodeJS.ErrnoException).code === "ENOENT") continue;
       throw error;
     }
     if (stats.isSymbolicLink()) {
@@ -155,7 +164,7 @@ function assertTestRootsReal(suite) {
  * Parse `--suite <name>` (or `--suite=<name>`) plus an optional leading `--`
  * separator and repository-relative operands. Unknown options are rejected.
  */
-function parseArgs(argv) {
+function parseArgs(argv: readonly string[]) {
   const operands = [];
   let suite = "unit";
   let optionsEnded = false;
@@ -194,11 +203,11 @@ function parseArgs(argv) {
  * (final or ancestor) and reporting the first missing component. Returns the
  * final `lstat` result so the caller can classify the entry kind.
  */
-function walkComponents(abs, operand) {
+function walkComponents(abs: string, operand: string) {
   const relative = path.relative(PKG_ROOT, abs);
   const segments = relative.split(path.sep).filter((segment) => segment !== "");
   let current = PKG_ROOT;
-  let stats = null;
+  let stats: ReturnType<typeof lstatSync> | null = null;
   for (let index = 0; index < segments.length; index += 1) {
     current = path.join(current, segments[index]);
     try {
@@ -214,10 +223,10 @@ function walkComponents(abs, operand) {
       );
     }
   }
-  return stats;
+  return stats!;
 }
 
-function resolveOperand(suite, operand) {
+function resolveOperand(suite: Suite, operand: string) {
   if (operand === "") throw new SelectionError("empty test operand");
   if (/[*?[\]{}]/.test(operand)) {
     throw new SelectionError(
@@ -266,10 +275,10 @@ function resolveOperand(suite, operand) {
  * including dot-prefixed names and directories. Symlink and other entry kinds
  * are ignored, never followed.
  */
-function discover(suite) {
+function discover(suite: Suite) {
   if (!existsSync(suite.testsRoot)) return [];
-  const found = [];
-  const walk = (dir) => {
+  const found: string[] = [];
+  const walk = (dir: string): void => {
     const entries = readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
       a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
     );
@@ -294,11 +303,11 @@ function assertOwnedOutputBase() {
   if (dirname !== PKG_ROOT || path.basename(OUT_BASE) !== OUT_DIR_NAME) {
     throw new Error(`refusing to clean unexpected output base: ${OUT_BASE}`);
   }
-  let stats;
+  let stats: ReturnType<typeof lstatSync>;
   try {
     stats = lstatSync(OUT_BASE);
   } catch (error) {
-    if (error && error.code === "ENOENT") return;
+    if (error && (error as NodeJS.ErrnoException).code === "ENOENT") return;
     throw error;
   }
   if (stats.isSymbolicLink()) {
@@ -318,13 +327,13 @@ function assertOwnedOutputBase() {
  * suite directory is absent: non-following metadata rejects a symlinked output
  * root (or a symlinked `.unit-test-build` ancestor) before the compiler runs.
  */
-function cleanOwnedOutput(suite) {
+function cleanOwnedOutput(suite: Suite) {
   assertOwnedOutputBase();
-  let stats;
+  let stats: ReturnType<typeof lstatSync>;
   try {
     stats = lstatSync(suite.outputDir);
   } catch (error) {
-    if (error && error.code === "ENOENT") return;
+    if (error && (error as NodeJS.ErrnoException).code === "ENOENT") return;
     throw error;
   }
   if (stats.isSymbolicLink()) {
@@ -340,7 +349,7 @@ function cleanOwnedOutput(suite) {
   rmSync(suite.outputDir, { recursive: true, force: true });
 }
 
-function toPosix(value) {
+function toPosix(value: string) {
   return value.split(path.sep).join("/");
 }
 
@@ -351,7 +360,7 @@ function toPosix(value) {
  * suite entry so dot-prefixed files and names beginning with `..` are emitted
  * exactly like any other regular test entry.
  */
-function writeGeneratedConfig(suite, compileSet) {
+function writeGeneratedConfig(suite: Suite, compileSet: readonly string[]) {
   if (!existsSync(suite.baseTsconfig)) {
     throw new Error(
       `missing ${suite.name} compiler configuration: ${path.relative(PKG_ROOT, suite.baseTsconfig)}`,
@@ -371,7 +380,7 @@ function writeGeneratedConfig(suite, compileSet) {
   return suite.generatedTsconfig;
 }
 
-function compileConfig(configPath) {
+function compileConfig(configPath: string) {
   if (!existsSync(TSC_BIN)) {
     throw new Error(
       `installed TypeScript compiler not found at ${path.relative(PKG_ROOT, TSC_BIN)}`,
@@ -394,12 +403,12 @@ function compileConfig(configPath) {
 }
 
 /** Recover the suite name for a friendly compile diagnostic. */
-function suiteNameForConfig(configPath) {
+function suiteNameForConfig(configPath: string) {
   const match = /tsconfig\.([a-z]+)\.generated\.json$/.exec(configPath);
   return match ? match[1] : "suite";
 }
 
-function compiledPathFor(suite, absTs) {
+function compiledPathFor(suite: Suite, absTs: string) {
   const rel = path.relative(PKG_ROOT, absTs);
   return path.join(suite.outputDir, rel.replace(/\.test\.ts$/, ".test.js"));
 }
@@ -410,7 +419,7 @@ function compiledPathFor(suite, absTs) {
  * (`file`), so both are normalised before they are matched against the
  * selected compiled files.
  */
-function keyFor(value) {
+function keyFor(value: string) {
   const resolved = path.resolve(value);
   try {
     return realpathSync(resolved);
@@ -424,7 +433,7 @@ function keyFor(value) {
  * mapping mirror-compiled `.js` output back to its `.ts` source so defining
  * file/line information stays meaningful to a developer.
  */
-function displayPath(value, outputDir) {
+function displayPath(value: string, outputDir: string) {
   const resolved = path.resolve(value);
   if (
     resolved === outputDir ||
@@ -444,7 +453,7 @@ function displayPath(value, outputDir) {
   return relative;
 }
 
-function renderFailure(rel, data, outputDir) {
+function renderFailure(rel: string, data: Failure, outputDir: string) {
   const parts = [];
   const rawName = typeof data.name === "string" ? data.name : "(unnamed test)";
   const name = path.isAbsolute(rawName)
@@ -469,7 +478,7 @@ function renderFailure(rel, data, outputDir) {
   return parts.join("\n");
 }
 
-function formatDiagnostic(rel, text) {
+function formatDiagnostic(rel: string, text: string) {
   return text
     .split("\n")
     .map((line) => `    ${rel}: ${line}`)
@@ -480,24 +489,28 @@ function formatDiagnostic(rel, text) {
  * Run the compiled files and classify each selected file from Node's
  * structured events. Returns `{ ok, lines }`.
  */
-async function runCompiled(suite, selected, compiledByTs) {
-  const summaries = new Map();
-  const failures = new Map();
-  const captured = new Map();
-  const selectedKeys = new Set();
+async function runCompiled(
+  suite: Suite,
+  selected: readonly string[],
+  compiledByTs: ReadonlyMap<string, string>,
+) {
+  const summaries = new Map<string, Summary>();
+  const failures = new Map<string, Failure[]>();
+  const captured = new Map<string, string[]>();
+  const selectedKeys = new Set<string>();
   for (const compiled of compiledByTs.values())
     selectedKeys.add(keyFor(compiled));
-  const strayFailures = [];
-  let aggregate = null;
-  let streamError = null;
+  const strayFailures: Failure[] = [];
+  let aggregate: Summary | null = null;
+  let streamError: unknown = null;
 
-  const remember = (map, key, value) => {
+  const remember = <T>(map: Map<string, T[]>, key: string, value: T) => {
     const list = map.get(key) ?? [];
     list.push(value);
     map.set(key, list);
   };
 
-  const entryKeyFor = (data) => {
+  const entryKeyFor = (data: EventLocation) => {
     if (typeof data.entryFile === "string") return keyFor(data.entryFile);
     if (typeof data.file === "string") return keyFor(data.file);
     return null;
@@ -509,23 +522,24 @@ async function runCompiled(suite, selected, compiledByTs) {
       cwd: PKG_ROOT,
       concurrency: 1,
     });
-    for await (const event of stream) {
-      const data = event.data ?? {};
+    for await (const rawEvent of stream) {
+      const event = rawEvent as TestEvent;
+      const data = (event.data ?? {}) as EventLocation;
       const entry = entryKeyFor(data);
       if (event.type === "test:summary") {
-        if (entry !== null) summaries.set(entry, data);
-        else aggregate = data;
+        if (entry !== null) summaries.set(entry, event.data as Summary);
+        else aggregate = event.data as Summary;
       } else if (event.type === "test:fail") {
         if (entry !== null && selectedKeys.has(entry)) {
-          remember(failures, entry, data);
+          remember(failures, entry, event.data);
         } else {
-          strayFailures.push(data);
+          strayFailures.push(event.data);
         }
       } else if (
         (event.type === "test:stdout" || event.type === "test:stderr") &&
         entry !== null
       ) {
-        remember(captured, entry, `${data.message ?? ""}`);
+        remember(captured, entry, `${event.data.message ?? ""}`);
       }
     }
   } catch (error) {
@@ -543,7 +557,7 @@ async function runCompiled(suite, selected, compiledByTs) {
 
   for (const absTs of selected) {
     const rel = path.relative(PKG_ROOT, absTs);
-    const compiled = compiledByTs.get(absTs);
+    const compiled = compiledByTs.get(absTs)!;
     const compiledKey = keyFor(compiled);
     const summary = summaries.get(compiledKey);
     const fileFailures = failures.get(compiledKey) ?? [];
@@ -583,7 +597,7 @@ async function runCompiled(suite, selected, compiledByTs) {
       lines.push(block.join("\n"));
     } else {
       lines.push(
-        `PASS ${rel} (tests ${counts.tests}, pass ${counts.passed}, suites ${counts.suites}, skipped ${counts.skipped}, todo ${counts.todo})`,
+        `PASS ${rel} (tests ${counts!.tests}, pass ${counts!.passed}, suites ${counts!.suites}, skipped ${counts!.skipped}, todo ${counts!.todo})`,
       );
     }
   }
@@ -596,7 +610,7 @@ async function runCompiled(suite, selected, compiledByTs) {
     lines.push(
       `totals: tests ${totals.tests}, pass ${totals.passed}, fail ${totals.failed}, suites ${totals.suites}, skipped ${totals.skipped}, todo ${totals.todo}, cancelled ${totals.cancelled}`,
     );
-    if (aggregate.success === false) {
+    if (aggregate!.success === false) {
       ok = false;
       lines.push("FAIL (aggregate summary reported success: false)");
     }
@@ -631,9 +645,9 @@ async function runCompiled(suite, selected, compiledByTs) {
   return { ok, lines };
 }
 
-async function main(argv) {
-  let parsed;
-  let suite;
+async function main(argv: readonly string[]) {
+  let parsed: ReturnType<typeof parseArgs>;
+  let suite: Suite;
   try {
     parsed = parseArgs(argv);
     suite = suiteDefinition(parsed.suiteName);
@@ -642,8 +656,8 @@ async function main(argv) {
     return 1;
   }
 
-  let selected;
-  let discovered;
+  let selected: string[];
+  let discovered: string[];
   try {
     assertTestRootsReal(suite);
     discovered = discover(suite);
@@ -683,7 +697,7 @@ async function main(argv) {
     return 1;
   }
 
-  const compiledByTs = new Map();
+  const compiledByTs = new Map<string, string>();
   for (const absTs of selected) {
     const compiled = compiledPathFor(suite, absTs);
     if (!existsSync(compiled)) {

@@ -16,7 +16,13 @@ import {
   extractLinks,
   maskInlineCode,
   readMarkedExample,
-} from "./markdown-docs.mjs";
+} from "./markdown-docs.ts";
+
+export interface DocIssue {
+  file: string;
+  code: string;
+  message: string;
+}
 
 export const REQUIRED_DOCS = Object.freeze([
   "README.md",
@@ -42,7 +48,9 @@ export const REQUIRED_DOCS = Object.freeze([
   "docs/agents/native-dependency.md",
   "docs/provenance.md",
 ]);
-export const EXAMPLES = Object.freeze([
+export const EXAMPLES = Object.freeze<
+  readonly (readonly [string, string, string, number | null])[]
+>([
   ["docs/getting-started.md", "documented-cli-workflow", "sh", 7],
   ["docs/getting-started.md", "documented-item-install", "sh", 6],
   [
@@ -55,7 +63,7 @@ export const EXAMPLES = Object.freeze([
   ["docs/guides/recovery.md", "documented-recovery-diagnosis", "sh", 2],
 ]);
 
-function inside(root, file) {
+function inside(root: string, file: string) {
   const relative = path.relative(root, file);
   return (
     relative === "" ||
@@ -66,7 +74,7 @@ function inside(root, file) {
 }
 
 /** Resolve with exact casing and refuse symlinks/nonregular files. */
-export function localFile(root, relative) {
+export function localFile(root: string, relative: string) {
   let cursor = root;
   for (const part of relative.split("/")) {
     if (
@@ -86,9 +94,9 @@ export function localFile(root, relative) {
   return cursor;
 }
 
-export function markdownFiles(root, directory = "docs") {
-  const files = [];
-  const visit = (relative) => {
+export function markdownFiles(root: string, directory = "docs") {
+  const files: string[] = [];
+  const visit = (relative: string): void => {
     const absolute = path.join(root, relative);
     if (!existsSync(absolute)) return;
     const info = lstatSync(absolute);
@@ -104,16 +112,17 @@ export function markdownFiles(root, directory = "docs") {
 }
 
 /** Validate an explicit document set, also usable against an extracted package. */
-export function checkLinks(root, documents) {
+export function checkLinks(root: string, documents: readonly string[]) {
   root = realpathSync(root);
-  const issues = [];
-  const fail = (file, code, message) => issues.push({ file, code, message });
+  const issues: DocIssue[] = [];
+  const fail = (file: string, code: string, message: string) =>
+    issues.push({ file, code, message });
   for (const file of documents) {
-    let text;
+    let text: string;
     try {
       text = readFileSync(localFile(root, file), "utf8");
     } catch (error) {
-      fail(file, "DOCUMENT", error.message);
+      fail(file, "DOCUMENT", (error as Error).message);
       continue;
     }
     // HTML comments are not rendered Markdown; marker ownership is checked separately.
@@ -123,7 +132,7 @@ export function checkLinks(root, documents) {
       fail(file, "ANCHOR", "duplicate explicit anchor: " + id);
     const lines = rendered.split("\n"),
       fences = computeFenceMask(lines);
-    let openFence = null;
+    let openFence: string | null = null;
     const definitions = new Set();
     for (let n = 0; n < lines.length; n++) {
       const fence = lines[n].match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
@@ -166,7 +175,7 @@ export function checkLinks(root, documents) {
     }
     if (openFence !== null) fail(file, "SYNTAX", "unclosed Markdown fence");
     for (const link of extractLinks(rendered)) {
-      if (link.missingRef) {
+      if (link.missingRef || link.target === null) {
         fail(file, "LINK", "undefined link reference: " + link.ref);
         continue;
       }
@@ -210,7 +219,7 @@ export function checkLinks(root, documents) {
             throw Error("missing anchor: " + link.target);
         }
       } catch (error) {
-        fail(file, "LINK", error.message);
+        fail(file, "LINK", (error as Error).message);
       }
     }
   }
@@ -218,9 +227,9 @@ export function checkLinks(root, documents) {
 }
 
 /** Reject retired authoring roots without consulting historical Git objects. */
-export function checkTopology(root) {
-  const issues = [];
-  const fail = (file, message) =>
+export function checkTopology(root: string) {
+  const issues: DocIssue[] = [];
+  const fail = (file: string, message: string) =>
     issues.push({ file, code: "TOPOLOGY", message });
   const retired = [
     "specs",
@@ -232,13 +241,13 @@ export function checkTopology(root) {
     "tools/native-dependency/README.md",
   ];
   const historicalLogs = "implementation/evidence/logs";
-  const inspect = (relative) => {
+  const inspect = (relative: string): void => {
     const absolute = path.join(root, relative);
-    let info;
+    let info: ReturnType<typeof lstatSync>;
     try {
       info = lstatSync(absolute);
     } catch (error) {
-      if (error.code === "ENOENT") return;
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
       throw error;
     }
     if (info.isSymbolicLink()) {
@@ -279,15 +288,18 @@ export function checkTopology(root) {
   return issues;
 }
 
-export function checkDocs(root) {
+export function checkDocs(root: string) {
   root = realpathSync(root);
-  const issues = [];
-  const fail = (file, code, message) => issues.push({ file, code, message });
-  let documents;
+  const issues: DocIssue[] = [];
+  const fail = (file: string, code: string, message: string) =>
+    issues.push({ file, code, message });
+  let documents: string[];
   try {
     documents = [...new Set([...REQUIRED_DOCS, ...markdownFiles(root)])];
   } catch (error) {
-    return [{ file: "docs", code: "DOCUMENT", message: error.message }];
+    return [
+      { file: "docs", code: "DOCUMENT", message: (error as Error).message },
+    ];
   }
   issues.push(...checkTopology(root), ...checkLinks(root, documents));
   for (const [file, marker, language, count] of EXAMPLES) {
@@ -319,7 +331,7 @@ export function checkDocs(root) {
           );
       } else JSON.parse(example);
     } catch (error) {
-      fail(file, "EXAMPLE", error.message);
+      fail(file, "EXAMPLE", (error as Error).message);
     }
   }
   try {
@@ -339,7 +351,7 @@ export function checkDocs(root) {
       .filter(
         (link) => link.target && /^[a-z][a-z0-9-]*\.md$/.test(link.target),
       )
-      .map((link) => link.target.slice(0, -3));
+      .map((link) => link.target!.slice(0, -3));
     if (
       JSON.stringify(advertised.slice().sort()) !==
       JSON.stringify(items.map((item) => item.id).sort())
@@ -383,7 +395,7 @@ export function checkDocs(root) {
         localFile(root, "assets/registry/" + asset.source);
     }
   } catch (error) {
-    fail("assets/registry/registry.json", "CATALOG", error.message);
+    fail("assets/registry/registry.json", "CATALOG", (error as Error).message);
   }
   for (const [file, pointer] of [
     ["docs/reference/configuration.md", "assets/schemas/kit.schema.json"],
@@ -399,7 +411,7 @@ export function checkDocs(root) {
       )
         throw Error("missing authoritative pointer: " + pointer);
     } catch (error) {
-      fail(file, "POINTER", error.message);
+      fail(file, "POINTER", (error as Error).message);
     }
   }
   return issues;
@@ -409,7 +421,7 @@ export function main(args = process.argv.slice(2)) {
   let root = fileURLToPath(new URL("../", import.meta.url));
   if (args.length) {
     if (args.length !== 2 || args[0] !== "--root") {
-      console.error("usage: node tools/check-docs.mjs [--root directory]");
+      console.error("usage: node tools/check-docs.ts [--root directory]");
       return 2;
     }
     root = path.resolve(args[1]);
@@ -421,7 +433,7 @@ export function main(args = process.argv.slice(2)) {
     if (!issues.length) console.log("Current documentation: PASS");
     return issues.length ? 1 : 0;
   } catch (error) {
-    console.error(error.message);
+    console.error((error as Error).message);
     return 1;
   }
 }

@@ -133,7 +133,10 @@ export type LibraryProjectedBatch = Omit<
 export type AnyProjectedBatch = ProjectedBatch | LibraryProjectedBatch;
 
 export type ProjectedConfigState =
-  "created" | "updated" | "unchanged" | "missing";
+  | "created"
+  | "updated"
+  | "unchanged"
+  | "missing";
 
 export interface ProjectedConfig {
   /** The effective mapping used to validate the final lock, or null on refusal. */

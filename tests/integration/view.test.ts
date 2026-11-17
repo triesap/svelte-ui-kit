@@ -57,7 +57,7 @@ test("built view reads exact packaged metadata and source from an unrelated cwd 
         for (const file of envelope.data.sources) {
           assert.equal(
             file.text,
-            readFileSync(path.join(pkg, file.path), "utf8"),
+            readFileSync(path.join(pkg, "assets", file.path), "utf8"),
           );
           assert.ok(
             loaded.value.items

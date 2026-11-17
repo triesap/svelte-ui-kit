@@ -73,11 +73,11 @@
     );
     transition:
       opacity
-        var(--kit-menu-content-transition-duration, var(--kit-duration-fast))
-        var(--kit-menu-content-transition-timing, var(--kit-easing-standard)),
+      var(--kit-menu-content-transition-duration, var(--kit-duration-fast))
+      var(--kit-menu-content-transition-timing, var(--kit-easing-standard)),
       transform
-        var(--kit-menu-content-transition-duration, var(--kit-duration-fast))
-        var(--kit-menu-content-transition-timing, var(--kit-easing-standard));
+      var(--kit-menu-content-transition-duration, var(--kit-duration-fast))
+      var(--kit-menu-content-transition-timing, var(--kit-easing-standard));
   }
 
   .kit-menu-content[data-state="closed"][data-side="bottom"] {

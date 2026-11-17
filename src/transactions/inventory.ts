@@ -486,7 +486,7 @@ export function emptyOwnedInventory(): OwnedInventory {
 }
 
 function inventoryIssue(
-  transactionId: string,
+  _transactionId: string,
   message: string,
   locator?: string,
 ): ModelIssue {

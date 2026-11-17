@@ -13,7 +13,7 @@ test("actual distinct candidate Root and Trigger compile and render SSR with raw
       const result = spawnSync(
         process.execPath,
         [
-          path.resolve("tests/helpers/render-built-consumer.mjs"),
+          path.resolve("tests/helpers/render-built-consumer.ts"),
           consumer.handler,
           `${consumer.route}?initial=${initial}`,
         ],

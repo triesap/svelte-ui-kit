@@ -23,7 +23,7 @@ for (const custom of [false, true])
       const rendered = spawnSync(
         process.execPath,
         [
-          "tests/helpers/render-built-consumer.mjs",
+          "tests/helpers/render-built-consumer.ts",
           consumer.handler,
           `/${consumer.route}`,
         ],

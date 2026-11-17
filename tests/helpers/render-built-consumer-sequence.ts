@@ -5,7 +5,7 @@ import {
   startOwnedServer,
   fetchRoute,
   DEFAULT_LAUNCHER,
-} from "../smoke/owned-server.mjs";
+} from "../smoke/owned-server.ts";
 
 const [handler, ...routes] = process.argv.slice(2);
 if (
@@ -18,7 +18,8 @@ const server = startOwnedServer({ args: [DEFAULT_LAUNCHER, handler] });
 let concurrent, repeated;
 try {
   const port = await server.ready;
-  const fetch = (route) => fetchRoute(`http://127.0.0.1:${port}${route}`);
+  const fetch = (route: string) =>
+    fetchRoute(`http://127.0.0.1:${port}${route}`);
   concurrent = await Promise.all(routes.map(fetch));
   repeated = [];
   for (const route of routes) repeated.push(await fetch(route));

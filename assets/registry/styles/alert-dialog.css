@@ -186,11 +186,11 @@
     transform: translateY(-50%);
     transition:
       opacity
-        var(--kit-alert-dialog-transition-duration, var(--kit-duration-normal))
-        var(--kit-alert-dialog-transition-timing, var(--kit-easing-standard)),
+      var(--kit-alert-dialog-transition-duration, var(--kit-duration-normal))
+      var(--kit-alert-dialog-transition-timing, var(--kit-easing-standard)),
       transform
-        var(--kit-alert-dialog-transition-duration, var(--kit-duration-normal))
-        var(--kit-alert-dialog-transition-timing, var(--kit-easing-standard));
+      var(--kit-alert-dialog-transition-duration, var(--kit-duration-normal))
+      var(--kit-alert-dialog-transition-timing, var(--kit-easing-standard));
   }
 
   .kit-alert-dialog-content[data-state="closed"],

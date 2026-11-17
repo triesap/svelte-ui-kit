@@ -2,7 +2,7 @@
 
 Scope: select credible checks for changed contracts, preserve causal controls and
 report actual execution. [package.json](../../package.json), the CI workflow and
-`tools/check-ci.mjs` own the command surface/pins, not a second evidence database.
+`tools/check-ci.ts` own the command surface/pins, not a second evidence database.
 Read the owning test before changing a contract; do not waive requirements to
 accommodate tool failures or mistake configured remote jobs for executed evidence.
 
@@ -66,7 +66,7 @@ tests or skipped required cases. Keep diagnostic failures visible in reports.
 No other value is accepted for this selector. Run the supported default selection
 for normal acceptance and the extended selection when investigating that boundary.
 
-`node tools/run-unit-tests.mjs --suite <unit|integration|components|registry|package>`
+`node tools/run-unit-tests.ts --suite <unit|integration|components|registry|package>`
 accepts repository-relative `*.test.ts` paths under the selected suite. With no
 operands it discovers all entries deterministically, including hidden names.
 Absolute/traversing/symlinked roots, operands or output ancestry fail closed rather
@@ -83,7 +83,7 @@ Build the CLI first when a focused integration/registry/package test invokes it:
 
 ```sh
 pnpm run build
-node tools/run-unit-tests.mjs --suite integration tests/integration/documented-workflow.test.ts tests/integration/docs-upgrade.test.ts tests/integration/docs-recovery.test.ts
+node tools/run-unit-tests.ts --suite integration tests/integration/documented-workflow.test.ts tests/integration/docs-upgrade.test.ts tests/integration/docs-recovery.test.ts
 ```
 
 Those tests read the canonical marked guides and preserve actual command counts,
@@ -109,17 +109,17 @@ guards report unavailable source metadata as ENOENT while denying content,
 directory listings and module imports. Independent library consumers also deny
 their actual CLI-host root; the direct Astro consumer removes that host.
 
-| Lane                | Required command / purpose                                                                                                                                                                                   |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Foundation          | test:unit, test:harness and test:cli-bootstrap; grammar/protocol/observations/planners plus runner/bootstrap refusal controls.                                                                               |
-| Integration         | test:integration; full real CLI ownership, structural integration, conflicts, process recovery and zero-write assertions.                                                                                    |
-| Components          | test:components; actual authored/native types and causal invalid inputs, not generic prop dictionaries.                                                                                                      |
-| Registry            | test:registry; authentic assets/exports/targets/cohorts, source catalog and exact tokens/CSS fallbacks.                                                                                                      |
-| Package             | test:package; actual tarball inventory/metadata/local-link closure, separate installed host and unavailable authoring source.                                                                                |
-| Maintained consumer | fixture:check and test:fixture; raw strict zero errors/warnings, production build, SSR and guarded owned servers.                                                                                            |
-| Browser             | pnpm exec playwright install chromium, then test:browser; full configured Chromium suite, one worker, zero retries, strict page/console/hydration/teardown collection.                                       |
-| Native producer     | node --test tools/build-native-dependency.test.mjs and native bootstrap controls; authentic repeat builds, unpatched causal control, notices/inventory, strict/public bindings and resulting consumer build. |
-| Filesystem          | Execute the actual check-ci FILESYSTEM_TESTS matrix on available supported macOS/Linux under ordinary unprivileged conditions, including permission-denial proof.                                            |
+| Lane                | Required command / purpose                                                                                                                                                                                  |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Foundation          | test:unit, test:harness and test:cli-bootstrap; grammar/protocol/observations/planners plus runner/bootstrap refusal controls.                                                                              |
+| Integration         | test:integration; full real CLI ownership, structural integration, conflicts, process recovery and zero-write assertions.                                                                                   |
+| Components          | test:components; actual authored/native types and causal invalid inputs, not generic prop dictionaries.                                                                                                     |
+| Registry            | test:registry; authentic assets/exports/targets/cohorts, source catalog and exact tokens/CSS fallbacks.                                                                                                     |
+| Package             | test:package; actual tarball inventory/metadata/local-link closure, separate installed host and unavailable authoring source.                                                                               |
+| Maintained consumer | fixture:check and test:fixture; raw strict zero errors/warnings, production build, SSR and guarded owned servers.                                                                                           |
+| Browser             | pnpm exec playwright install chromium, then test:browser; full configured Chromium suite, one worker, zero retries, strict page/console/hydration/teardown collection.                                      |
+| Native producer     | node --test tools/build-native-dependency.test.ts and native bootstrap controls; authentic repeat builds, unpatched causal control, notices/inventory, strict/public bindings and resulting consumer build. |
+| Filesystem          | Execute the actual check-ci FILESYSTEM_TESTS matrix on available supported macOS/Linux under ordinary unprivileged conditions, including permission-denial proof.                                           |
 
 Use `pnpm run <script>` for the named scripts. Preserve every configured acceptance
 job, immutable action pins, read-only permissions, archive-before-frozen-install

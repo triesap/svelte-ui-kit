@@ -237,7 +237,8 @@ export type ValidatedLibraryApplyPlan = Omit<
   LibraryIntegrationFields;
 
 export type AnyValidatedApplyPlan =
-  ValidatedApplyPlan | ValidatedLibraryApplyPlan;
+  | ValidatedApplyPlan
+  | ValidatedLibraryApplyPlan;
 
 /**
  * Derive the canonical digest of the complete sealed plan: exact result bytes,

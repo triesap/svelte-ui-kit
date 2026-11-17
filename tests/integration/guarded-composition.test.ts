@@ -232,141 +232,130 @@ function applyThroughGuard(
   return outcome;
 }
 
-test(
-  "a real bundled-registry init plan applies through guarded code and the consumer renders",
-  { timeout: 180_000 },
-  async (t) => {
-    const consumer = seedConsumer("<h1>GUARDED_INIT_PAGE</h1>\n");
-    t.after(() => rmSync(consumer, { recursive: true, force: true }));
+test("a real bundled-registry init plan applies through guarded code and the consumer renders", {
+  timeout: 180_000,
+}, async (t) => {
+  const consumer = seedConsumer("<h1>GUARDED_INIT_PAGE</h1>\n");
+  t.after(() => rmSync(consumer, { recursive: true, force: true }));
 
-    const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
-    assert.equal(registry.ok, true, JSON.stringify(registry));
-    if (!registry.ok) return;
-    const snapshot = captureSnapshot(consumer, consumerPaths());
-    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-    if (!snapshot.ok) return;
+  const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
+  assert.equal(registry.ok, true, JSON.stringify(registry));
+  if (!registry.ok) return;
+  const snapshot = captureSnapshot(consumer, consumerPaths());
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) return;
 
-    const planned = planInit({
-      config: DEFAULT_KIT_CONFIG,
-      layoutFile: DEFAULT_KIT_CONFIG.layoutFile,
-      layoutSource: "",
-      snapshot: snapshot.value,
-      registry: registry.value,
-      configHash: "b".repeat(64),
-    });
-    assert.equal(planned.ok, true, JSON.stringify(planned));
-    if (!planned.ok) return;
-    applyThroughGuard(consumer, snapshot.value, planned.value.writes);
+  const planned = planInit({
+    config: DEFAULT_KIT_CONFIG,
+    layoutFile: DEFAULT_KIT_CONFIG.layoutFile,
+    layoutSource: "",
+    snapshot: snapshot.value,
+    registry: registry.value,
+    configHash: "b".repeat(64),
+  });
+  assert.equal(planned.ok, true, JSON.stringify(planned));
+  if (!planned.ok) return;
+  applyThroughGuard(consumer, snapshot.value, planned.value.writes);
 
-    const checked = runPnpm(["run", "check"], consumer);
-    assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
-    const built = runPnpm(["run", "build"], consumer);
-    assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
-    const rendered = await renderProductionPage(consumer);
-    assert.equal(rendered.status, 200);
-    assert.ok(rendered.html.includes("GUARDED_INIT_PAGE"));
-  },
-);
+  const checked = runPnpm(["run", "check"], consumer);
+  assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
+  const built = runPnpm(["run", "build"], consumer);
+  assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+  const rendered = await renderProductionPage(consumer);
+  assert.equal(rendered.status, 200);
+  assert.ok(rendered.html.includes("GUARDED_INIT_PAGE"));
+});
 
-test(
-  "a real add plan applies through guarded code and the consumer renders",
-  { timeout: 180_000 },
-  async (t) => {
-    const registryRoot = mkdtempSync(
-      path.join(os.tmpdir(), "suik-guarded-reg-"),
-    );
-    const consumer = seedConsumer(
-      '<h1>GUARDED_ADD_PAGE</h1>\n<script>import { Button } from "$lib/components/ui/index.js";</script>\n<Button />\n',
-    );
-    t.after(() => {
-      rmSync(registryRoot, { recursive: true, force: true });
-      rmSync(consumer, { recursive: true, force: true });
-    });
+test("a real add plan applies through guarded code and the consumer renders", {
+  timeout: 180_000,
+}, async (t) => {
+  const registryRoot = mkdtempSync(path.join(os.tmpdir(), "suik-guarded-reg-"));
+  const consumer = seedConsumer(
+    '<h1>GUARDED_ADD_PAGE</h1>\n<script>import { Button } from "$lib/components/ui/index.js";</script>\n<Button />\n',
+  );
+  t.after(() => {
+    rmSync(registryRoot, { recursive: true, force: true });
+    rmSync(consumer, { recursive: true, force: true });
+  });
 
-    const registry = onDiskRegistry(registryRoot);
-    assert.equal(registry.ok, true, JSON.stringify(registry));
-    if (!registry.ok) return;
-    const snapshot = captureSnapshot(consumer, consumerPaths());
-    assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
-    if (!snapshot.ok) return;
+  const registry = onDiskRegistry(registryRoot);
+  assert.equal(registry.ok, true, JSON.stringify(registry));
+  if (!registry.ok) return;
+  const snapshot = captureSnapshot(consumer, consumerPaths());
+  assert.equal(snapshot.ok, true, JSON.stringify(snapshot));
+  if (!snapshot.ok) return;
 
-    const planned = planAdd({
-      registry: registry.value,
-      config: DEFAULT_KIT_CONFIG,
-      addedRoots: ["button"],
-      snapshot: snapshot.value,
-      lock: null,
-      registryVersion: registry.value.root.registryVersion,
-      registryHash: registry.value.root.contentHash,
-    });
-    assert.equal(planned.ok, true, JSON.stringify(planned));
-    if (!planned.ok) return;
+  const planned = planAdd({
+    registry: registry.value,
+    config: DEFAULT_KIT_CONFIG,
+    addedRoots: ["button"],
+    snapshot: snapshot.value,
+    lock: null,
+    registryVersion: registry.value.root.registryVersion,
+    registryHash: registry.value.root.contentHash,
+  });
+  assert.equal(planned.ok, true, JSON.stringify(planned));
+  if (!planned.ok) return;
+  assert.equal(
+    planned.value.executable,
+    true,
+    JSON.stringify(planned.value.diagnostics),
+  );
+  applyThroughGuard(consumer, snapshot.value, planned.value.writes);
+
+  // A second identical plan is satisfied: the guarded boundary reports
+  // no_change without opening a transaction.
+  const secondSnapshot = captureSnapshot(consumer, consumerPaths());
+  assert.equal(secondSnapshot.ok, true);
+  if (!secondSnapshot.ok) return;
+  const lock = JSON.parse(
+    readFileSync(
+      path.join(consumer, derived.stateDir, "kit.lock.json"),
+      "utf8",
+    ),
+  );
+  const replay = planSync({
+    registry: registry.value,
+    config: { ...DEFAULT_KIT_CONFIG, requested: ["button"] },
+    snapshot: secondSnapshot.value,
+    lock,
+    registryVersion: registry.value.root.registryVersion,
+    registryHash: registry.value.root.contentHash,
+  });
+  assert.equal(replay.ok, true, JSON.stringify(replay));
+  if (!replay.ok) return;
+  if (replay.value.writes.length === 0) {
+    // A satisfied replay has nothing to apply; no transaction is opened.
     assert.equal(
-      planned.value.executable,
-      true,
-      JSON.stringify(planned.value.diagnostics),
-    );
-    applyThroughGuard(consumer, snapshot.value, planned.value.writes);
-
-    // A second identical plan is satisfied: the guarded boundary reports
-    // no_change without opening a transaction.
-    const secondSnapshot = captureSnapshot(consumer, consumerPaths());
-    assert.equal(secondSnapshot.ok, true);
-    if (!secondSnapshot.ok) return;
-    const lock = JSON.parse(
-      readFileSync(
-        path.join(consumer, derived.stateDir, "kit.lock.json"),
-        "utf8",
+      existsSync(
+        path.join(consumer, derived.stateDir, ".svelte-ui-kit", "transactions"),
       ),
+      false,
     );
-    const replay = planSync({
-      registry: registry.value,
-      config: { ...DEFAULT_KIT_CONFIG, requested: ["button"] },
+  } else {
+    const composed = composeApplyPlan({
+      root: consumer,
+      config: DEFAULT_KIT_CONFIG,
+      writes: replay.value.writes,
       snapshot: secondSnapshot.value,
-      lock,
-      registryVersion: registry.value.root.registryVersion,
-      registryHash: registry.value.root.contentHash,
     });
-    assert.equal(replay.ok, true, JSON.stringify(replay));
-    if (!replay.ok) return;
-    if (replay.value.writes.length === 0) {
-      // A satisfied replay has nothing to apply; no transaction is opened.
-      assert.equal(
-        existsSync(
-          path.join(
-            consumer,
-            derived.stateDir,
-            ".svelte-ui-kit",
-            "transactions",
-          ),
-        ),
-        false,
-      );
-    } else {
-      const composed = composeApplyPlan({
-        root: consumer,
-        config: DEFAULT_KIT_CONFIG,
-        writes: replay.value.writes,
-        snapshot: secondSnapshot.value,
-      });
-      assert.equal(composed.ok, true, JSON.stringify(composed));
-      if (!composed.ok) return;
-      const validated = validateApplyPlan(composed.value);
-      assert.equal(validated.ok, true, JSON.stringify(validated));
-      if (!validated.ok) return;
-      const replayOutcome = applyPlan(validated.value);
-      assert.ok(
-        replayOutcome.kind === "no_change" || replayOutcome.kind === "applied",
-        replayOutcome.kind,
-      );
-    }
+    assert.equal(composed.ok, true, JSON.stringify(composed));
+    if (!composed.ok) return;
+    const validated = validateApplyPlan(composed.value);
+    assert.equal(validated.ok, true, JSON.stringify(validated));
+    if (!validated.ok) return;
+    const replayOutcome = applyPlan(validated.value);
+    assert.ok(
+      replayOutcome.kind === "no_change" || replayOutcome.kind === "applied",
+      replayOutcome.kind,
+    );
+  }
 
-    const checked = runPnpm(["run", "check"], consumer);
-    assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
-    const built = runPnpm(["run", "build"], consumer);
-    assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
-    const rendered = await renderProductionPage(consumer);
-    assert.equal(rendered.status, 200);
-    assert.ok(rendered.html.includes("GUARDED_ADD_PAGE"));
-  },
-);
+  const checked = runPnpm(["run", "check"], consumer);
+  assert.equal(checked.status, 0, `${checked.stdout}\n${checked.stderr}`);
+  const built = runPnpm(["run", "build"], consumer);
+  assert.equal(built.status, 0, `${built.stdout}\n${built.stderr}`);
+  const rendered = await renderProductionPage(consumer);
+  assert.equal(rendered.status, 200);
+  assert.ok(rendered.html.includes("GUARDED_ADD_PAGE"));
+});

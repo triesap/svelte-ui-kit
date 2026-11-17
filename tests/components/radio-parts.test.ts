@@ -12,7 +12,7 @@ test("actual candidate preserves controlled string state snippets and native rad
       const result = spawnSync(
         process.execPath,
         [
-          path.resolve("tests/helpers/render-built-consumer.mjs"),
+          path.resolve("tests/helpers/render-built-consumer.ts"),
           consumer.handler,
           `${consumer.route}?value=${value}`,
         ],

@@ -33,7 +33,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import test from "node:test";
+import test, { type TestContext } from "node:test";
 import { fileURLToPath } from "node:url";
 
 /** Set only when this file is re-invoked inside a disposable mutant copy. */
@@ -65,7 +65,13 @@ assert.ok(
 const expectedVersion = `${manifest.name} ${manifest.version}\n`;
 
 /** Run a built entrypoint with the active Node and capture real streams. */
-function runEntry(entry, args, cwd, env, timeoutMs = 30_000) {
+function runEntry(
+  entry: string,
+  args: readonly string[],
+  cwd: string,
+  env?: NodeJS.ProcessEnv,
+  timeoutMs = 30_000,
+) {
   const result = spawnSync(process.execPath, [entry, ...args], {
     cwd,
     encoding: "utf8",
@@ -91,7 +97,7 @@ function runEntry(entry, args, cwd, env, timeoutMs = 30_000) {
   };
 }
 
-function runCli(args, options = {}) {
+function runCli(args: readonly string[], options: { cwd?: string } = {}) {
   return runEntry(entrypoint, args, options.cwd ?? packageRoot);
 }
 
@@ -102,9 +108,13 @@ function runCli(args, options = {}) {
  * never followed and no timestamps are recorded, so atime/mtime churn cannot
  * influence the result.
  */
-function snapshot(dir) {
-  const out = [];
-  const walk = (base, prefix) => {
+function snapshot(dir: string) {
+  const out: (
+    | { path: string; type: "dir" | "other" }
+    | { path: string; type: "symlink"; target: string }
+    | { path: string; type: "file"; size: number; sha256: string }
+  )[] = [];
+  const walk = (base: string, prefix: string): void => {
     const entries = readdirSync(base, { withFileTypes: true }).sort((a, b) =>
       a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
     );
@@ -134,14 +144,14 @@ function snapshot(dir) {
   return out;
 }
 
-function makeOwnedDir(t, prefix) {
+function makeOwnedDir(t: TestContext, prefix: string) {
   const dir = mkdtempSync(path.join(tmpdir(), prefix));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
 /** Seed an owned fixture with visible, hidden, nested and symlinked entries. */
-function seedProbeFixture(t, prefix = "svelte-ui-kit seeded ") {
+function seedProbeFixture(t: TestContext, prefix = "svelte-ui-kit seeded ") {
   const dir = makeOwnedDir(t, prefix);
   writeFileSync(path.join(dir, "regular.txt"), "regular fixture\n");
   writeFileSync(path.join(dir, ".decoy-hidden"), "hidden fixture\n");
@@ -154,7 +164,11 @@ function seedProbeFixture(t, prefix = "svelte-ui-kit seeded ") {
 }
 
 /** Copy only built output and package metadata; no source or dev deps. */
-function makeDisposableCopy(t, manifestText, prefix) {
+function makeDisposableCopy(
+  t: TestContext,
+  manifestText: string,
+  prefix: string,
+) {
   const dir = makeOwnedDir(t, prefix);
   mkdirSync(path.join(dir, "dist"), { recursive: true });
   cpSync(path.join(packageRoot, "dist"), path.join(dir, "dist"), {
@@ -164,11 +178,11 @@ function makeDisposableCopy(t, manifestText, prefix) {
   return { dir, entry: path.join(dir, binValue) };
 }
 
-function jsonText(value) {
+function jsonText(value: unknown) {
   return `${JSON.stringify(value)}\n`;
 }
 
-const moduleManifest = (name, version) => ({
+const moduleManifest = (name: unknown, version: unknown) => ({
   type: "module",
   name,
   version,
@@ -445,7 +459,7 @@ test("rejects non-string name fields (Node package-config) with exit 1", (t) => 
   // Node validates the package `name` field type while selecting the module
   // loader, so these values are rejected before the entrypoint runs; the
   // observable contract (exit 1, empty stdout, safe stderr) still holds.
-  const nodeRejectedNames = [
+  const nodeRejectedNames: [unknown, string][] = [
     [moduleManifest(123, "0.1.0"), "numeric name"],
     [moduleManifest(null, "0.1.0"), "null name"],
     [moduleManifest(true, "0.1.0"), "boolean name"],
@@ -472,7 +486,7 @@ test("rejects non-string name fields (Node package-config) with exit 1", (t) => 
 });
 
 test("rejects missing and non-string version fields with exit 1", (t) => {
-  const cliRejectedFields = [
+  const cliRejectedFields: [unknown, string][] = [
     [{ type: "module", version: "0.1.0" }, "missing name"],
     [{ type: "module", name: "svelte-ui-kit" }, "missing version"],
     [moduleManifest("svelte-ui-kit", 123), "numeric version"],
@@ -690,15 +704,17 @@ test("snapshot records entry types, bytes and symlink targets", (t) => {
   symlinkSync("file.txt", path.join(dir, "link"));
 
   const byPath = new Map(snapshot(dir).map((entry) => [entry.path, entry]));
-  assert.equal(byPath.get("file.txt").type, "file");
+  const fileEntry = byPath.get("file.txt");
+  assert.ok(fileEntry?.type === "file");
   assert.equal(
-    byPath.get("file.txt").sha256,
+    fileEntry.sha256,
     createHash("sha256").update("hello").digest("hex"),
   );
-  assert.equal(byPath.get("sub").type, "dir");
-  assert.equal(byPath.get("sub/inner.txt").type, "file");
-  assert.equal(byPath.get("link").type, "symlink");
-  assert.equal(byPath.get("link").target, "file.txt");
+  assert.equal(byPath.get("sub")?.type, "dir");
+  assert.equal(byPath.get("sub/inner.txt")?.type, "file");
+  const linkEntry = byPath.get("link");
+  assert.ok(linkEntry?.type === "symlink");
+  assert.equal(linkEntry.target, "file.txt");
 });
 
 test("snapshot detects same-path, same-length content replacement", (t) => {
@@ -721,7 +737,7 @@ test("snapshot detects a retargeted symlink", (t) => {
 });
 
 /** Inject an "overwrite a pre-existing seeded hidden file" behaviour. */
-function existingFileWriteMutant(source) {
+function existingFileWriteMutant(source: string) {
   // Metadata I/O now belongs to package-identity, so the adapter need not
   // import fs itself. Give the mutant its own distinct imports; qualification
   // must reject the actual write rather than an obsolete source-shape guess.
@@ -738,7 +754,7 @@ function existingFileWriteMutant(source) {
 }
 
 /** Replace metadata-derived version output with a literal. */
-function hardCodedVersionMutant(source) {
+function hardCodedVersionMutant(source: string) {
   // After S012 the version string is produced by the shared `runCli` executor,
   // so the mutant hard-codes it in the adapter before the metadata is read.
   const needle = "const metadata = readPackageMetadata(intent);";
@@ -759,7 +775,10 @@ function hardCodedVersionMutant(source) {
  * mutation, and run the suite against it. The nested run sets the probe env
  * var so its own mutation meta-tests are skipped rather than recursing.
  */
-function runMutantSuite(t, { version, mutate }) {
+function runMutantSuite(
+  t: TestContext,
+  { version, mutate }: { version: string; mutate: (source: string) => string },
+) {
   const { dir } = makeDisposableCopy(
     t,
     jsonText({ ...manifest, version }),
@@ -768,7 +787,7 @@ function runMutantSuite(t, { version, mutate }) {
   mkdirSync(path.join(dir, "tests", "smoke"), { recursive: true });
   cpSync(
     fileURLToPath(import.meta.url),
-    path.join(dir, "tests", "smoke", "cli-bootstrap.test.mjs"),
+    path.join(dir, "tests", "smoke", "cli-bootstrap.test.ts"),
   );
 
   const builtPath = path.join(dir, binValue);
@@ -779,12 +798,15 @@ function runMutantSuite(t, { version, mutate }) {
   // it would make the nested `node --test` no-op and return 0. Strip it so the
   // nested suite really runs, and set the probe marker to skip its own
   // mutation meta-tests instead of recursing.
-  const probeEnv = { ...process.env, [MUTATION_PROBE_ENV]: "1" };
+  const probeEnv: NodeJS.ProcessEnv = {
+    ...process.env,
+    [MUTATION_PROBE_ENV]: "1",
+  };
   delete probeEnv.NODE_TEST_CONTEXT;
 
   const result = spawnSync(
     process.execPath,
-    ["--test", "--test-reporter=tap", "tests/smoke/cli-bootstrap.test.mjs"],
+    ["--test", "--test-reporter=tap", "tests/smoke/cli-bootstrap.test.ts"],
     {
       cwd: dir,
       encoding: "utf8",
@@ -807,37 +829,33 @@ function runMutantSuite(t, { version, mutate }) {
   return result;
 }
 
-test(
-  "strengthened smoke rejects an existing-file-write mutant",
-  { skip: insideMutationProbe },
-  (t) => {
-    const result = runMutantSuite(t, {
-      version: manifest.version,
-      mutate: existingFileWriteMutant,
-    });
-    assert.notEqual(
-      result.status,
-      0,
-      "existing-file-write mutant unexpectedly passed the smoke suite",
-    );
-    assert.match(result.stdout, /^not ok /m);
-    assert.match(result.stdout, /seeded cwd changed after/);
-  },
-);
+test("strengthened smoke rejects an existing-file-write mutant", {
+  skip: insideMutationProbe,
+}, (t) => {
+  const result = runMutantSuite(t, {
+    version: manifest.version,
+    mutate: existingFileWriteMutant,
+  });
+  assert.notEqual(
+    result.status,
+    0,
+    "existing-file-write mutant unexpectedly passed the smoke suite",
+  );
+  assert.match(result.stdout, /^not ok /m);
+  assert.match(result.stdout, /seeded cwd changed after/);
+});
 
-test(
-  "strengthened smoke rejects a hard-coded-version mutant",
-  { skip: insideMutationProbe },
-  (t) => {
-    const result = runMutantSuite(t, {
-      version: "2.3.4-rc.1+build.001",
-      mutate: hardCodedVersionMutant,
-    });
-    assert.notEqual(
-      result.status,
-      0,
-      "hard-coded-version mutant unexpectedly passed the smoke suite",
-    );
-    assert.match(result.stdout, /^not ok /m);
-  },
-);
+test("strengthened smoke rejects a hard-coded-version mutant", {
+  skip: insideMutationProbe,
+}, (t) => {
+  const result = runMutantSuite(t, {
+    version: "2.3.4-rc.1+build.001",
+    mutate: hardCodedVersionMutant,
+  });
+  assert.notEqual(
+    result.status,
+    0,
+    "hard-coded-version mutant unexpectedly passed the smoke suite",
+  );
+  assert.match(result.stdout, /^not ok /m);
+});

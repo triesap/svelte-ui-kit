@@ -104,8 +104,8 @@ authenticates existing bytes before completing delivery or refusing a mismatch.
 Use Node 24.22.1, pnpm 12.16.1, Git and tar from the repository root:
 
 ```sh
-node tools/build-native-dependency.mjs --output .native-build/reproduction
-node --test tools/build-native-dependency.test.mjs
+node tools/build-native-dependency.ts --output .native-build/reproduction
+node --test tools/build-native-dependency.test.ts
 ```
 
 The output directory must be absent, with safe non-symlink ancestry. The builder

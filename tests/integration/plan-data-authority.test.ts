@@ -118,6 +118,7 @@ for (const target of ["astro", "svelte-library"] as const) {
         });
       if (field === "byte-iterator")
         Object.defineProperty(
+          // biome-ignore lint/suspicious/noAssignInExpressions: the control deliberately changes the exact original target before defining its hostile iterator.
           (changed.targets[0]!.bytes = new Uint8Array(
             original.targets[0]!.bytes,
           )),

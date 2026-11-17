@@ -87,7 +87,7 @@ before(() => {
   const output = path.join(base, "producer");
   run(
     process.execPath,
-    ["tools/build-native-dependency.mjs", "--output", output],
+    ["tools/build-native-dependency.ts", "--output", output],
     process.cwd(),
   );
   mkdirSync(path.join(fixture, "vendor"), { recursive: true });

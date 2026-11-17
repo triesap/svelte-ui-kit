@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "dialog",
   "kind": "component",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Complete pinned Dialog compound family with explicit state, refs, snippets and portal composition.",
   "compatibility": {
     "svelte": "5.57.3",

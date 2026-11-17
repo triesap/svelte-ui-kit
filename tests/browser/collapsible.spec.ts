@@ -297,7 +297,9 @@ for (const custom of [false, true])
       await expect(content).toHaveAttribute("data-state", "closed");
       await expect(content).toBeVisible();
       await content.evaluate((node) =>
-        node.getAnimations().forEach((animation) => animation.finish()),
+        node.getAnimations().forEach((animation) => {
+          animation.finish();
+        }),
       );
       await expect(content).toBeHidden();
       await expect(page.locator("#completed")).toHaveText("false");
@@ -405,7 +407,24 @@ for (const custom of [false, true])
         "aria-controls",
         "disclosure-content",
       );
+      // The fixture owns bind:open outside the conditional mount. Remounting
+      // retains that caller state; keyboard activation must toggle it normally.
+      await expect(page.locator("#disclosure-trigger")).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
+      await expect(page.locator("#disclosure-content")).toBeVisible();
       await page.locator("#disclosure-trigger").press("Enter");
+      await expect(page.locator("#disclosure-trigger")).toHaveAttribute(
+        "aria-expanded",
+        "false",
+      );
+      await expect(page.locator("#disclosure-content")).toBeHidden();
+      await page.locator("#disclosure-trigger").press("Enter");
+      await expect(page.locator("#disclosure-trigger")).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
       await expect(page.locator("#disclosure-content")).toBeVisible();
     });
 

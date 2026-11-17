@@ -46,7 +46,7 @@ import { snapshotTree } from "../helpers/tree-snapshot.js";
  *
  * Component add/update/retirement tree and ownership coverage stays in
  * `multi-item-lifecycle.test.ts`; the resulting consumer's real check/build/
- * render is qualified in `tests/smoke/q2-resulting-consumer.test.mjs`.
+ * render is qualified in `tests/smoke/q2-resulting-consumer.test.ts`.
  */
 
 function abs(root: string, rel: string): string {

@@ -12,7 +12,7 @@ test("actual candidate Root/Trigger compile and SSR with remaining raw Bits part
     const result = spawnSync(
       process.execPath,
       [
-        path.resolve("tests/helpers/render-built-consumer.mjs"),
+        path.resolve("tests/helpers/render-built-consumer.ts"),
         consumer.handler,
         "/dialog-candidate",
       ],

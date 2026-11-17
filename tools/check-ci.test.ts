@@ -5,18 +5,35 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { parse, stringify } from "yaml";
-import { checkCi, CI_LANES } from "./check-ci.mjs";
+import { checkCi, CI_LANES } from "./check-ci.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const read = (file) =>
+const read = (file: string) =>
   readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
 const source = read(".github/workflows/ci.yml");
 const manifest = JSON.parse(read("package.json"));
 const fixture = JSON.parse(read("tests/fixtures/consumer/package.json"));
 const fixtureConfig = JSON.parse(read("tests/fixtures/consumer/tsconfig.json"));
-const actual = () => parse(source);
+interface TestStep {
+  run?: string;
+  uses?: string;
+  with?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+interface TestJob {
+  steps: TestStep[];
+  strategy: { matrix: { os: string[] }; "fail-fast"?: boolean };
+  [key: string]: unknown;
+}
+interface TestWorkflow {
+  permissions: { contents: string };
+  on: Record<string, unknown>;
+  jobs: Record<string, TestJob>;
+  [key: string]: unknown;
+}
+const actual = (): TestWorkflow => parse(source);
 const errors = (
-  workflow,
+  workflow: unknown,
   pkg = manifest,
   consumer = fixture,
   config = fixtureConfig,
@@ -27,7 +44,7 @@ const errors = (
     consumer,
     config,
   );
-const has = (issues, code) =>
+const has = (issues: ReturnType<typeof checkCi>, code: string) =>
   assert.ok(
     issues.some((issue) => issue.code === code),
     JSON.stringify(issues),
@@ -45,7 +62,7 @@ test("actual full acceptance workflow and its command implementations validate r
   const hashes = () =>
     files.map((file) => createHash("sha256").update(read(file)).digest("hex"));
   const before = hashes();
-  const result = spawnSync(process.execPath, ["tools/check-ci.mjs"], {
+  const result = spawnSync(process.execPath, ["tools/check-ci.ts"], {
     cwd: root,
     encoding: "utf8",
     timeout: 15000,
@@ -76,9 +93,9 @@ test("equivalent mapping order and folded YAML commands preserve semantic covera
     matrix: { os: ["ubuntu-24.04", "macos-15"] },
     "fail-fast": false,
   };
-  workflow.jobs.filesystem.steps.at(-1).run = workflow.jobs.filesystem.steps
-    .at(-1)
-    .run.replaceAll(" tests/", "\n  tests/");
+  workflow.jobs.filesystem.steps.at(-1)!.run = workflow.jobs.filesystem.steps
+    .at(-1)!
+    .run!.replaceAll(" tests/", "\n  tests/");
   assert.deepEqual(errors(workflow), []);
 });
 
@@ -89,7 +106,7 @@ test("a harness-only or otherwise selected browser command cannot certify the fu
     " --project chromium",
   ]) {
     const workflow = actual();
-    workflow.jobs.browser.steps.at(-1).run += selector;
+    workflow.jobs.browser.steps.at(-1)!.run += selector;
     has(errors(workflow), "CI_COMMAND_COVERAGE");
   }
   const pkg = structuredClone(manifest);
@@ -99,6 +116,9 @@ test("a harness-only or otherwise selected browser command cannot certify the fu
 
 test("changing a package/component/integration script to a subset or masking failure is detected", () => {
   for (const name of [
+    "check:source",
+    "format:check",
+    "lint",
     "test:package",
     "test:components",
     "test:integration",
@@ -117,9 +137,9 @@ test("changing a package/component/integration script to a subset or masking fai
 test("commented-out commands and an omitted producer/delivery control do not count as coverage", () => {
   const workflow = actual();
   workflow.jobs.native.steps.find((step) =>
-    step.run?.includes("tools/build-native-dependency.test.mjs"),
-  ).run =
-    "node --test tools/build-native-dependency.test.mjs # tools/prepare-native-dependency.test.mjs";
+    step.run?.includes("tools/build-native-dependency.test.ts"),
+  )!.run =
+    "node --test tools/build-native-dependency.test.ts # tools/prepare-native-dependency.test.ts";
   has(errors(workflow), "CI_COMMAND_COVERAGE");
   workflow.jobs.contracts.steps.pop();
   has(errors(workflow), "CI_COMMAND_COVERAGE");
@@ -163,20 +183,20 @@ test("both runtime and artifact checks and explicit typed-tool coverage are mand
 
 test("unpinned actions, wrong runtimes, partial history and retained credentials are refused", () => {
   for (const change of [
-    (job) => {
+    (job: TestJob) => {
       job.steps[0].uses = "actions/checkout@main";
     },
-    (job) => {
-      job.steps[0].with["fetch-depth"] = 1;
+    (job: TestJob) => {
+      job.steps[0].with!["fetch-depth"] = 1;
     },
-    (job) => {
-      job.steps[0].with["persist-credentials"] = true;
+    (job: TestJob) => {
+      job.steps[0].with!["persist-credentials"] = true;
     },
-    (job) => {
-      job.steps[1].with.version = "latest";
+    (job: TestJob) => {
+      job.steps[1].with!.version = "latest";
     },
-    (job) => {
-      job.steps[2].with["node-version"] = "24";
+    (job: TestJob) => {
+      job.steps[2].with!["node-version"] = "24";
     },
   ]) {
     const workflow = actual();
@@ -189,15 +209,16 @@ test("permissions, secrets, conditional skips, failure masks and shared workspac
   const permissions = actual();
   permissions.permissions.contents = "write";
   has(errors(permissions), "CI_PERMISSIONS");
-  for (const [key, value] of [
-    ["if", "false"],
-    ["continue-on-error", true],
-    ["working-directory", "/shared"],
-    ["env", { NODE_OPTIONS: "${{ secrets.RUNTIME }}" }],
-    ["shell", "bash --noprofile --norc {0}"],
-  ]) {
+  for (const [key, value] of Object.entries({
+    if: "false",
+    "continue-on-error": true,
+    "working-directory": "/shared",
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal GitHub Actions expression, not a JavaScript interpolation.
+    env: { NODE_OPTIONS: "${{ secrets.RUNTIME }}" },
+    shell: "bash --noprofile --norc {0}",
+  })) {
     const workflow = actual();
-    workflow.jobs.integration.steps.at(-1)[key] = value;
+    workflow.jobs.integration.steps.at(-1)![key] = value;
     has(errors(workflow), "CI_STEP_OVERRIDE");
   }
   for (const key of [
@@ -225,24 +246,24 @@ test("both supported filesystem platforms and all owning safety files remain man
   workflow.jobs.filesystem.strategy.matrix.os = ["ubuntu-24.04"];
   has(errors(workflow), "CI_PLATFORMS");
   const omitted = actual();
-  omitted.jobs.filesystem.steps.at(-1).run = omitted.jobs.filesystem.steps
-    .at(-1)
-    .run.replace(" tests/integration/unchanged-state.test.ts", "");
+  omitted.jobs.filesystem.steps.at(-1)!.run = omitted.jobs.filesystem.steps
+    .at(-1)!
+    .run!.replace(" tests/integration/unchanged-state.test.ts", "");
   has(errors(omitted), "CI_COMMAND_COVERAGE");
   const phaseOmitted = actual();
-  phaseOmitted.jobs.filesystem.steps.at(-1).run =
+  phaseOmitted.jobs.filesystem.steps.at(-1)!.run =
     phaseOmitted.jobs.filesystem.steps
-      .at(-1)
-      .run.replace(" tests/integration/journal-phase-processes.test.ts", "");
+      .at(-1)!
+      .run!.replace(" tests/integration/journal-phase-processes.test.ts", "");
   has(errors(phaseOmitted), "CI_COMMAND_COVERAGE");
   const targetOmitted = actual();
-  targetOmitted.jobs.filesystem.steps.at(-1).run =
+  targetOmitted.jobs.filesystem.steps.at(-1)!.run =
     targetOmitted.jobs.filesystem.steps
-      .at(-1)
-      .run.replace(" tests/integration/target-recovery.test.ts", "");
+      .at(-1)!
+      .run!.replace(" tests/integration/target-recovery.test.ts", "");
   has(errors(targetOmitted), "CI_COMMAND_COVERAGE");
   const narrowed = actual();
-  narrowed.jobs.filesystem.steps.at(-1).run += " --test-name-pattern clean";
+  narrowed.jobs.filesystem.steps.at(-1)!.run += " --test-name-pattern clean";
   has(errors(narrowed), "CI_COMMAND_COVERAGE");
 });
 
@@ -280,7 +301,7 @@ test("integration hydration requires the actual pinned Chromium installation", (
 test("omitting historical cutover tooling from strict type coverage is detected", () => {
   const pkg = structuredClone(manifest);
   pkg.scripts.typecheck = pkg.scripts.typecheck.replace(
-    " tools/rehearse-canonical-cutover.ts",
+    " && tsc -p tsconfig.tooling.json --noEmit",
     "",
   );
   has(errors(source, pkg), "CI_SCRIPT_COVERAGE");

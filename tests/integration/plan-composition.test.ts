@@ -160,9 +160,30 @@ test("add rejects an incomplete snapshot for config and lock metadata", (t) => {
       entry !== `${derived.stateDir}/kit.json` &&
       entry !== `${derived.stateDir}/kit.lock.json`,
   );
+  const captured = snapshotOf(project, incomplete);
+  const metadata = [
+    `${derived.stateDir}/kit.json`,
+    `${derived.stateDir}/kit.lock.json`,
+  ];
+  for (const entry of metadata)
+    assert.ok(
+      captured.entries.has(entry),
+      "canonical capture includes metadata even when the caller omits it",
+    );
+  const entries = new Map(captured.entries);
+  for (const entry of metadata) entries.delete(entry);
   const result = add(project, registry(), {
-    snapshot: snapshotOf(project, incomplete),
+    snapshot: {
+      ...captured,
+      entries,
+      paths: captured.paths.filter((entry) => !metadata.includes(entry)),
+    },
   });
+  for (const entry of metadata)
+    assert.ok(
+      captured.entries.has(entry),
+      "the fault control must preserve the original snapshot",
+    );
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
   assert.equal(result.value.executable, false);

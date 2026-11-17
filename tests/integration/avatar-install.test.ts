@@ -138,7 +138,7 @@ for (const custom of [false, true])
       const rendered = spawnSync(
         process.execPath,
         [
-          path.resolve("tests/helpers/render-built-consumer.mjs"),
+          path.resolve("tests/helpers/render-built-consumer.ts"),
           path.join(fixture.root, "build/handler.js"),
           "/qualification/installed-avatar",
         ],
@@ -177,7 +177,7 @@ for (const custom of [false, true])
       );
       assert.match(
         response.body,
-        /<span[^>]*class="kit-avatar-fallback"[^>]*aria-hidden="true"[^>]*>[^]*?AD/,
+        /<span[^>]*class="kit-avatar-fallback"[^>]*aria-hidden="true"[^>]*>[\s\S]*?AD/,
       );
       assert.match(image("native"), /alt="Native alternate text"/);
       assert.doesNotMatch(image("native"), /aria-hidden=/);

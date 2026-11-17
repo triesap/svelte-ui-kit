@@ -33,9 +33,7 @@ interface PreparedArtifact {
 const bitsProducer: {
   buildNativeDependency(options: { output: string }): unknown;
   NATIVE_RECIPE: { native: { buildVersion: string; archive: string } };
-} = await import(
-  new URL("./build-native-dependency.mjs", import.meta.url).href
-);
+} = await import(new URL("./build-native-dependency.ts", import.meta.url).href);
 
 /** Internal cache authentication; all deliveries use the combined async API. */
 function prepareBitsCache(root: string): PreparedArtifact {

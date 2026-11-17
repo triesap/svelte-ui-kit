@@ -780,7 +780,7 @@ test("normal and strict checking detect referenced declarations while an owned s
 // Owned fixture cleanup control
 // ---------------------------------------------------------------------------
 
-const CLEANUP_CONTROL_SPEC = "tests/components/fixture-cleanup-control.mjs";
+const CLEANUP_CONTROL_SPEC = "tests/components/fixture-cleanup-control.ts";
 
 /**
  * Prove that every owned strict-audit fixture copy is cleaned up, even when a

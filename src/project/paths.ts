@@ -14,8 +14,8 @@
  */
 
 const WINDOWS_DRIVE = /^[A-Za-z]:/;
-// eslint-disable-next-line no-control-regex
-const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
+// biome-ignore lint/suspicious/noControlCharactersInRegex: reject untrusted control characters in logical paths.
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/; // eslint-disable-line no-control-regex
 /**
  * Characters that are not portable in a single path segment. `?`, `*`, `<`,
  * `>`, `|` and `"` are reserved by Windows and, more importantly for a shell

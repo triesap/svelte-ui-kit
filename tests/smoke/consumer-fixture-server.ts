@@ -8,7 +8,7 @@
  * port as a single JSON line on stdout so the smoke test can connect. The
  * process stays in the foreground and shuts down on SIGTERM/SIGINT.
  *
- * Usage: node consumer-fixture-server.mjs [handler.js]
+ * Usage: node consumer-fixture-server.ts [handler.js]
  * With no argument it loads the maintained fixture handler.
  */
 import { createServer } from "node:http";

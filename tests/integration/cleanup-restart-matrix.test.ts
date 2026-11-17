@@ -17,10 +17,10 @@ import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit } from "../../src/codegen/plan-init.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
-import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
-import {
-  type RecoveryResult,
-  type RecoveryRoots,
+import type { ValidatedApplyPlan } from "../../src/codegen/plan.js";
+import type {
+  RecoveryResult,
+  RecoveryRoots,
 } from "../../src/transactions/recovery.js";
 import {
   captureSnapshot,

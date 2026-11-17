@@ -16,7 +16,7 @@ import { test } from "node:test";
 
 import { applyPlan, validateApplyPlan } from "../../src/transactions/apply.js";
 import { sha256Hex } from "../../src/codegen/digest.js";
-import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
+import type { ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import {
   recoverTransaction,
   recoverTransactions,

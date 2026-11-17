@@ -21,7 +21,7 @@ import {
 import { composeApplyPlan } from "../../src/codegen/compose.js";
 import { planInit, type InitPlan } from "../../src/codegen/plan-init.js";
 import type { PlanWrite } from "../../src/codegen/plan.js";
-import { type ValidatedApplyPlan } from "../../src/codegen/plan.js";
+import type { ValidatedApplyPlan } from "../../src/codegen/plan.js";
 import {
   captureSnapshot,
   type ProjectSnapshot,
@@ -52,7 +52,7 @@ import {
  * conflict dispositions are exercised through the same core. Component add/
  * sync/update/retirement and cohort coverage are qualified in
  * `multi-item-lifecycle.test.ts`; the generated consumer's check/build/render is
- * qualified in `tests/smoke/lifecycle-consumer.test.mjs`.
+ * qualified in `tests/smoke/lifecycle-consumer.test.ts`.
  */
 
 const PKG_ROOT = process.cwd();

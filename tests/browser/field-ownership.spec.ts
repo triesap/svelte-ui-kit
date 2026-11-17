@@ -288,7 +288,9 @@ for (const custom of [false, true]) {
       for (const handle of handles)
         expect(
           await handle.evaluate(
-            (node) => node === document.getElementById(node.id),
+            (node) =>
+              node instanceof Element &&
+              node === document.getElementById(node.id),
           ),
         ).toBe(true);
       await expect(page.locator("#owned .kit-field-message")).toHaveText([
@@ -396,7 +398,7 @@ for (const custom of [false, true]) {
       const result = spawnSync(
         process.execPath,
         [
-          path.resolve("tests/helpers/render-built-consumer.mjs"),
+          path.resolve("tests/helpers/render-built-consumer.ts"),
           consumer.handler,
           `/${consumer.route}?unexpected=1`,
         ],
@@ -415,7 +417,7 @@ for (const custom of [false, true]) {
       devShutdownQualified = false;
       const dev = await startFixtureServer({
         handler: consumer.handler,
-        launcher: path.resolve("tests/helpers/field-dev-server.mjs"),
+        launcher: path.resolve("tests/helpers/field-dev-server.ts"),
       });
       const warnings: string[] = [];
       page.on("console", (message) => {

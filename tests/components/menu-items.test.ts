@@ -11,7 +11,7 @@ test("all eight authored Menu parts compile and render actual native selection a
     const rendered = spawnSync(
       process.execPath,
       [
-        path.resolve("tests/helpers/render-built-consumer.mjs"),
+        path.resolve("tests/helpers/render-built-consumer.ts"),
         consumer.handler,
         consumer.route,
       ],

@@ -1,7 +1,7 @@
 /** Shared Markdown helpers; extracted from the original contract checker. */
-export function computeFenceMask(lines) {
+export function computeFenceMask(lines: readonly string[]) {
   const mask = new Array(lines.length).fill(false);
-  let open = null;
+  let open: { marker: string; length: number } | null = null;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (open === null) {
@@ -30,14 +30,14 @@ export function computeFenceMask(lines) {
  * ranges, gate lines, summaries, evidence records) must never be satisfied or
  * duplicated by content inside a literal example fence.
  */
-export function stripFencedLines(text) {
+export function stripFencedLines(text: string) {
   const lines = text.split("\n");
   const fence = computeFenceMask(lines);
   return lines.filter((_, i) => !fence[i]);
 }
 
 /** Replace inline code spans with equal-length spaces so links/anchors inside them are ignored. */
-export function maskInlineCode(line) {
+export function maskInlineCode(line: string) {
   let out = "";
   let i = 0;
   while (i < line.length) {
@@ -58,7 +58,7 @@ export function maskInlineCode(line) {
   return out;
 }
 
-export function slugifyHeading(text) {
+export function slugifyHeading(text: string) {
   return text
     .replace(/<[^>]*>/g, "")
     .replace(/[`*_~[\]]/g, "")
@@ -73,7 +73,7 @@ export function slugifyHeading(text) {
  * their literal value and duplicates are reported instead of being suffixed;
  * duplicate headings receive GitHub-style numeric suffixes.
  */
-export function extractAnchorData(text) {
+export function extractAnchorData(text: string) {
   const lines = text.split("\n");
   const fence = computeFenceMask(lines);
   const explicit = [];
@@ -111,12 +111,12 @@ export function extractAnchorData(text) {
  * that resolve to a definition; image links are included. Inline code is
  * masked so code examples neither create nor hide links.
  */
-export function extractLinks(text) {
+export function extractLinks(text: string) {
   const lines = text.split("\n");
   const fence = computeFenceMask(lines);
-  const definitions = new Map();
+  const definitions = new Map<string, { target: string; line: number }>();
   const definitionLines = new Set();
-  const normalizeRef = (value) =>
+  const normalizeRef = (value: string) =>
     value.trim().toLowerCase().replace(/\s+/g, " ");
   for (let i = 0; i < lines.length; i++) {
     if (fence[i]) continue;
@@ -171,7 +171,11 @@ export function extractLinks(text) {
 }
 
 /** Read exactly one owned, nonempty fenced example without executing its text. */
-export function readMarkedExample(text, marker, language) {
+export function readMarkedExample(
+  text: string,
+  marker: string,
+  language: string,
+) {
   const start = "<!-- " + marker + ":start -->";
   const end = "<!-- " + marker + ":end -->";
   if (text.split(start).length !== 2 || text.split(end).length !== 2)

@@ -20,20 +20,20 @@ import {
   checkLinks,
   EXAMPLES,
   REQUIRED_DOCS,
-} from "./check-docs.mjs";
-import { extractAnchorData, readMarkedExample } from "./markdown-docs.mjs";
+} from "./check-docs.ts";
+import { extractAnchorData, readMarkedExample } from "./markdown-docs.ts";
 
-const tool = fileURLToPath(new URL("./check-docs.mjs", import.meta.url));
-function write(root, file, text) {
+const tool = fileURLToPath(new URL("./check-docs.ts", import.meta.url));
+function write(root: string, file: string, text: string) {
   mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
   writeFileSync(path.join(root, file), text);
 }
-function append(root, file, text) {
+function append(root: string, file: string, text: string) {
   write(root, file, readFileSync(path.join(root, file), "utf8") + text);
 }
-function snapshot(root) {
-  const entries = [];
-  const visit = (file) => {
+function snapshot(root: string) {
+  const entries: [string, number, string][] = [];
+  const visit = (file: string): void => {
     const info = lstatSync(path.join(root, file));
     entries.push([
       file,
@@ -106,7 +106,7 @@ function fixture() {
   write(root, ".hidden/state", "preserve\n");
   return root;
 }
-function withFixture(fn) {
+function withFixture(fn: (root: string) => void) {
   const root = fixture();
   try {
     fn(root);
@@ -114,7 +114,7 @@ function withFixture(fn) {
     rmSync(root, { recursive: true, force: true });
   }
 }
-function cli(root) {
+function cli(root: string) {
   return spawnSync(process.execPath, [tool, "--root", root], {
     encoding: "utf8",
   });
@@ -128,7 +128,7 @@ test("valid current fixture passes CLI without Git history or writes", () =>
     assert.equal(snapshot(root), before);
   }));
 
-const failures = [
+const failures: [string, (root: string) => void, string][] = [
   [
     "missing document",
     (root) => rmSync(path.join(root, "docs/guides/styling.md")),

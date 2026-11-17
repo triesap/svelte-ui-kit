@@ -230,7 +230,7 @@ for (const custom of [false, true])
     const ssr = spawnSync(
       process.execPath,
       [
-        "tests/helpers/render-built-consumer.mjs",
+        "tests/helpers/render-built-consumer.ts",
         path.join(app.root, "build/handler.js"),
         "/",
       ],

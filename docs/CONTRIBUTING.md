@@ -38,6 +38,32 @@ maintenance contract. A focused pass is not final release qualification. Shared
 fixture/compiler/native/package writers must run serially. Browser tests own
 their production server lifecycle and fail unexpected page/console/hydration errors.
 
+## Formatting and lint ownership
+
+`biome.json` pins the policy, with Biome's version in the shared pnpm catalog.
+Use `pnpm run format`, `pnpm run format:check` and `pnpm run lint`; CI runs the
+same commands. Biome owns TypeScript/JavaScript, JSON and CSS formatting and its
+recommended lint preset. Prettier owns Svelte, Astro, Markdown and YAML formatting,
+with disjoint Biome formatter overrides. Biome's framework support is experimental;
+ESLint remains necessary for Svelte compiler/accessibility, framework rules and
+TypeScript recommendations. Do not remove those checks merely to reduce tooling.
+
+The config documents narrow exceptions through explicit paths: dynamic FieldLabel
+association and Separator roles use native/compiler/browser checks; qualification
+fixtures intentionally exercise native button defaults, decorative ARIA and semantic
+roles. Browser tests use rendered `innerText` where visibility matters. Non-null
+assertions remain available for checked invariants; strict TypeScript, rather than
+Biome's uninitialized-let heuristic, owns evolving variable types. Callback cleanup
+and Playwright fixture `void` types retain their actual upstream contracts. Generated
+outputs, lockfiles and vendored producer artifacts retain their owning formats.
+Inline suppressions explain deliberate literal Actions expressions and hostile-input
+controls. They do not waive actual compiler, accessibility or browser qualification.
+
+All authored modules under `tests/` and `tools/` use `.ts`, including executable
+helpers. `pnpm run check:source` rejects JavaScript entrypoints, hidden escapes,
+symlinks and narrowed tooling coverage. The tooling compiler covers every such
+module; framework fixtures retain their separate strict application checks.
+
 ## Change and review policy
 
 Inspect current status and the relevant contracts/tests before edits. Preserve

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * S005 focused, dependency-free regression tests for `tools/run-unit-tests.mjs`.
+ * S005 focused, dependency-free regression tests for `tools/run-unit-tests.ts`.
  *
  * Each case builds a disposable package fixture (a copy of the real manifest,
  * both TypeScript configurations, `src/`, the runner itself and a symlinked
@@ -27,15 +27,15 @@ import {
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { test } from "node:test";
+import { test, type TestContext } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, "..");
-const RUNNER_REL = path.join("tools", "run-unit-tests.mjs");
+const RUNNER_REL = path.join("tools", "run-unit-tests.ts");
 const SUBPROCESS_TIMEOUT_MS = 60_000;
 
-const PASS_TEST = `import { test } from "node:test";
+const PASS_TEST = `import { test, type TestContext } from "node:test";
 import assert from "node:assert/strict";
 
 test("fixture passes", () => {
@@ -43,7 +43,7 @@ test("fixture passes", () => {
 });
 `;
 
-const FAIL_TEST = `import { test } from "node:test";
+const FAIL_TEST = `import { test, type TestContext } from "node:test";
 import assert from "node:assert/strict";
 
 test("fixture fails", () => {
@@ -51,7 +51,7 @@ test("fixture fails", () => {
 });
 `;
 
-const SENTINEL_PASS = `import { test } from "node:test";
+const SENTINEL_PASS = `import { test, type TestContext } from "node:test";
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 
@@ -61,7 +61,7 @@ test("writes a side-effect sentinel", () => {
 });
 `;
 
-const SENTINEL_FAIL = `import { test } from "node:test";
+const SENTINEL_FAIL = `import { test, type TestContext } from "node:test";
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 
@@ -81,13 +81,13 @@ const EMPTY_SUITE = `import { describe } from "node:test";
 describe("empty suite", () => {});
 `;
 
-const SKIP_TODO_ONLY = `import { test } from "node:test";
+const SKIP_TODO_ONLY = `import { test, type TestContext } from "node:test";
 
 test("skipped", { skip: true }, () => {});
 test("todo", { todo: true }, () => {});
 `;
 
-const TODO_OK_BESIDE_PASS = `import { test } from "node:test";
+const TODO_OK_BESIDE_PASS = `import { test, type TestContext } from "node:test";
 import assert from "node:assert/strict";
 
 test("real pass", () => {
@@ -96,21 +96,21 @@ test("real pass", () => {
 test("todo ok", { todo: true }, () => {});
 `;
 
-const TODO_FAIL_INLINE = `import { test } from "node:test";
+const TODO_FAIL_INLINE = `import { test, type TestContext } from "node:test";
 
 test("inline todo failure", { todo: true }, () => {
   throw new Error("inline todo boom");
 });
 `;
 
-const TIMEOUT_TEST = `import { test } from "node:test";
+const TIMEOUT_TEST = `import { test, type TestContext } from "node:test";
 
 test("slow cancellation", { timeout: 100 }, async () => {
   await new Promise(() => {});
 });
 `;
 
-const EXIT_ABNORMAL = `import { test } from "node:test";
+const EXIT_ABNORMAL = `import { test, type TestContext } from "node:test";
 import assert from "node:assert/strict";
 
 test("before abnormal exit", () => {
@@ -125,7 +125,7 @@ const TS_ERROR = `export const broken: number = "not a number";
 // A helper compiled through the inherited `tests/unit/**/*.ts` include. It
 // registers tests as an import side effect so a failing test can be defined in
 // an imported module rather than in the selected entry file.
-const IMPORTED_ASSERT_HELPER = `import { test } from "node:test";
+const IMPORTED_ASSERT_HELPER = `import { test, type TestContext } from "node:test";
 import assert from "node:assert/strict";
 
 export function registerImportedFailures(): void {
@@ -138,7 +138,7 @@ export function registerImportedFailures(): void {
 }
 `;
 
-const IMPORTED_TODO_HELPER = `import { test } from "node:test";
+const IMPORTED_TODO_HELPER = `import { test, type TestContext } from "node:test";
 
 export function registerImportedTodoFailure(): void {
   test("imported todo failure", { todo: true }, () => {
@@ -147,7 +147,7 @@ export function registerImportedTodoFailure(): void {
 }
 `;
 
-const IMPORTED_ENTRY = `import { test } from "node:test";
+const IMPORTED_ENTRY = `import { test, type TestContext } from "node:test";
 import assert from "node:assert/strict";
 import { registerImportedFailures } from "./helper.js";
 
@@ -157,7 +157,7 @@ test("inline passing", () => {
 registerImportedFailures();
 `;
 
-const IMPORTED_TODO_ENTRY = `import { test } from "node:test";
+const IMPORTED_TODO_ENTRY = `import { test, type TestContext } from "node:test";
 import assert from "node:assert/strict";
 import { registerImportedTodoFailure } from "./helper.js";
 
@@ -168,7 +168,7 @@ registerImportedTodoFailure();
 `;
 
 /** Build a disposable package fixture; the test owns its cleanup. */
-function makePackage(t) {
+function makePackage(t: TestContext) {
   const dir = mkdtempSync(path.join(os.tmpdir(), "suik-unit-harness-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   for (const rel of [
@@ -195,25 +195,29 @@ function makePackage(t) {
   return dir;
 }
 
-function writeTest(pkg, rel, source) {
+function writeTest(pkg: string, rel: string, source: string) {
   const abs = path.join(pkg, rel);
   mkdirSync(path.dirname(abs), { recursive: true });
   writeFileSync(abs, source);
 }
 
-function writeOwnedFile(pkg, rel, contents) {
+function writeOwnedFile(pkg: string, rel: string, contents: string) {
   const abs = path.join(pkg, rel);
   mkdirSync(path.dirname(abs), { recursive: true });
   writeFileSync(abs, contents);
 }
 
-function externalDir(t, prefix = "suik-unit-external-") {
+function externalDir(t: TestContext, prefix = "suik-unit-external-") {
   const dir = mkdtempSync(path.join(os.tmpdir(), prefix));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
-function runRunner(pkg, args = [], options = {}) {
+function runRunner(
+  pkg: string,
+  args: readonly string[] = [],
+  options: { runnerRel?: string; timeout?: number } = {},
+) {
   const env = { ...process.env };
   // The outer `node --test` worker exports NODE_TEST_CONTEXT; a nested
   // independent runner must not inherit it or it can silently no-op.
@@ -237,7 +241,7 @@ function runRunner(pkg, args = [], options = {}) {
   };
 }
 
-function selected(stdout) {
+function selected(stdout: string) {
   return stdout
     .split("\n")
     .filter((line) => line.startsWith("run-unit-tests:   "))
@@ -313,7 +317,7 @@ test("invalid selections are rejected with a clear diagnostic", (t) => {
   const pkg = makePackage(t);
   writeTest(pkg, "tests/unit/a.test.ts", PASS_TEST);
 
-  const cases = [
+  const cases: [string, RegExp][] = [
     ["tests/unit/*.test.ts", /glob and brace patterns are not supported/],
     ["tests/unit", /is a directory, not a file/],
     ["--unknown", /unknown option is not supported/],

@@ -5,8 +5,8 @@ import path from "node:path";
 // Typed suites emit their own TS sources, not tool JS. Resolve the shared
 // authoring parser explicitly from the repository cwd used by the runner.
 const parser = createRequire(import.meta.url)(
-  path.resolve("tools/markdown-docs.mjs"),
-) as typeof import("../../tools/markdown-docs.mjs");
+  path.resolve("tools/markdown-docs.ts"),
+) as typeof import("../../tools/markdown-docs.ts");
 export function documentedExample(
   file: string,
   marker: string,

@@ -24,15 +24,15 @@ import {
   startOwnedServer,
   stopOwnedServer,
   withOwnedServer,
-} from "./owned-server.mjs";
-import { assertHtmlTransport } from "./ssr-assertions.mjs";
+} from "./owned-server.ts";
+import { assertHtmlTransport } from "./ssr-assertions.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const FAULT_SERVER = path.join(HERE, "fault-server.mjs");
+const FAULT_SERVER = path.join(HERE, "fault-server.ts");
 const FAULT_STOP_TIMEOUT_MS = 2_000;
 const STALL_TIMEOUT_MS = 400;
 
-function startFault(fault) {
+function startFault(fault: string) {
   return startOwnedServer({
     args: [FAULT_SERVER],
     env: { SUIK_FAULT: fault },
@@ -89,8 +89,8 @@ test("qualified work rejects shutdown stderr and retains its primary assertion",
     (error) => {
       assert.ok(error instanceof AggregateError);
       assert.ok(error.errors.includes(primary));
-      assert.match(error.message, /primary render assertion/);
-      assert.match(error.message, /stderr during shutdown/);
+      assert.match((error as Error).message, /primary render assertion/);
+      assert.match((error as Error).message, /stderr during shutdown/);
       return true;
     },
   );
@@ -102,7 +102,7 @@ test("qualification samples health before and after stop even when stop rejects"
   const before = new Error("unexpected exit before stop");
   const after = new Error("shutdown stderr after stop");
   const stopError = new Error("stop rejected");
-  const events = [];
+  const events: string[] = [];
   const server = {
     failure: () => {
       events.push("sample");
@@ -133,10 +133,10 @@ test("later shutdown output is retained after an earlier health failure", async 
   const server = startFault("stderr-and-shutdown");
   const port = await server.ready;
   await fetchRoute(`http://127.0.0.1:${port}/`);
-  assert.match(server.failure().message, /injected stderr/);
+  assert.match(server.failure()!.message, /injected stderr/);
   await assert.rejects(stopOwnedServer(server), (error) => {
-    assert.match(error.message, /injected stderr/);
-    assert.match(error.message, /stderr during shutdown/);
+    assert.match((error as Error).message, /injected stderr/);
+    assert.match((error as Error).message, /stderr during shutdown/);
     return true;
   });
   assert.match(server.stderr(), /stderr during shutdown/);
@@ -295,7 +295,10 @@ test("an assertion failure after startup still stops the owned server", async ()
   try {
     assert.fail("intentional assertion failure");
   } catch (error) {
-    assert.match(String(error.message), /intentional assertion failure/);
+    assert.match(
+      String((error as Error).message),
+      /intentional assertion failure/,
+    );
   } finally {
     const info = await server.stop();
     assert.notEqual(info, null, "stop must observe the owned exit");

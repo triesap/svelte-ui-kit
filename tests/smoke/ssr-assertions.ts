@@ -7,14 +7,15 @@
  * specific and greppable.
  */
 import { strict as assert } from "node:assert";
+import type { RouteResponse } from "./owned-server.ts";
 
 /** The HTML with executable/serialized script content removed. */
-export function stripScripts(html) {
+export function stripScripts(html: string) {
   return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
 }
 
 /** The HTML with HTML comment content removed. */
-export function stripComments(html) {
+export function stripComments(html: string) {
   return html.replace(/<!--[\s\S]*?-->/g, "");
 }
 
@@ -23,11 +24,11 @@ export function stripComments(html) {
  * that appears only inside a serialized hydration script or an HTML comment is
  * therefore never counted as rendered content.
  */
-export function visibleMarkup(html) {
+export function visibleMarkup(html: string) {
   return stripComments(stripScripts(html));
 }
 
-function escapeRegExp(value) {
+function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
@@ -35,7 +36,7 @@ function escapeRegExp(value) {
  * Assert successful HTTP transport independent of page content. Throws for a
  * non-200 status or a non-HTML content type.
  */
-export function assertHtmlTransport(response, label) {
+export function assertHtmlTransport(response: RouteResponse, label: string) {
   assert.equal(response.status, 200, `${label}: expected HTTP 200`);
   assert.match(
     response.contentType,
@@ -48,7 +49,10 @@ export function assertHtmlTransport(response, label) {
  * Return a specific Error when visible server-rendered markup is missing, or
  * null when the expected heading and request-local value are both present.
  */
-export function missingSsrMarkupError(response, expectedValue) {
+export function missingSsrMarkupError(
+  response: RouteResponse,
+  expectedValue: string,
+) {
   const visible = visibleMarkup(response.body);
   if (!/Consumer fixture qualification/.test(visible)) {
     return new Error(
@@ -68,7 +72,10 @@ export function missingSsrMarkupError(response, expectedValue) {
  * heading and request-local value in visible markup (not only in the
  * serialized hydration script).
  */
-export function assertServerRendered(response, expectedValue) {
+export function assertServerRendered(
+  response: RouteResponse,
+  expectedValue: string,
+) {
   assertHtmlTransport(response, "SSR");
   const error = missingSsrMarkupError(response, expectedValue);
   if (error) throw error;
@@ -82,8 +89,11 @@ export function assertServerRendered(response, expectedValue) {
  * satisfy a marker assertion. Returns the visible markup for diagnostics.
  */
 export function assertVisibleMarkers(
-  response,
-  { present = [], absent = [] } = {},
+  response: RouteResponse,
+  {
+    present = [],
+    absent = [],
+  }: { present?: readonly string[]; absent?: readonly string[] } = {},
   label = "SSR",
 ) {
   assertHtmlTransport(response, label);
@@ -124,8 +134,14 @@ export function assertVisibleMarkers(
  * cannot satisfy a component assertion. Returns the visible markup.
  */
 export function assertGeneratedComponentMarkup(
-  response,
-  { components = [], absent = [] } = {},
+  response: RouteResponse,
+  {
+    components = [],
+    absent = [],
+  }: {
+    components?: readonly { tag: string; marker: string; text: string }[];
+    absent?: readonly string[];
+  } = {},
   label = "SSR",
 ) {
   assertHtmlTransport(response, label);

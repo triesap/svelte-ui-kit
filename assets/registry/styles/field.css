@@ -87,11 +87,11 @@
     line-height: var(--kit-field-control-line-height, 1.35);
     transition:
       border-color
-        var(--kit-field-control-transition-duration, var(--kit-duration-fast))
-        var(--kit-field-control-transition-timing, var(--kit-easing-standard)),
+      var(--kit-field-control-transition-duration, var(--kit-duration-fast))
+      var(--kit-field-control-transition-timing, var(--kit-easing-standard)),
       box-shadow
-        var(--kit-field-control-transition-duration, var(--kit-duration-fast))
-        var(--kit-field-control-transition-timing, var(--kit-easing-standard));
+      var(--kit-field-control-transition-duration, var(--kit-duration-fast))
+      var(--kit-field-control-transition-timing, var(--kit-easing-standard));
   }
 
   .kit-text-input {
@@ -159,10 +159,11 @@
     appearance: none;
     padding-inline-end: calc(
       var(
-          --kit-select-icon-inline-end,
-          var(--kit-field-control-padding-inline, 0.75rem)
-        ) *
-        2 + var(--kit-select-icon-size, 1rem)
+        --kit-select-icon-inline-end,
+        var(--kit-field-control-padding-inline, 0.75rem)
+      ) *
+      2 +
+      var(--kit-select-icon-size, 1rem)
     );
   }
 
@@ -191,10 +192,10 @@
     min-inline-size: 0;
     padding-inline-end: calc(
       var(
-          --kit-select-icon-inline-end,
-          var(--kit-field-control-padding-inline, 0.75rem)
-        ) +
-        var(--kit-select-icon-size, 1rem)
+        --kit-select-icon-inline-end,
+        var(--kit-field-control-padding-inline, 0.75rem)
+      ) +
+      var(--kit-select-icon-size, 1rem)
     );
     pointer-events: none;
     position: relative;

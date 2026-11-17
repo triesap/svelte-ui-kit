@@ -2,7 +2,7 @@ import {
   DEFAULT_LAUNCHER,
   startOwnedServer,
   stopOwnedServer,
-} from "../smoke/owned-server.mjs";
+} from "../smoke/owned-server.ts";
 
 /**
  * Shared owned-server startup for the S008 browser specs. The harness and its

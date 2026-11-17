@@ -262,7 +262,7 @@ archive identities, not an arbitrary matching registry installation.
 The maintained blueprints are `tests/fixtures/library` and
 `tests/fixtures/library-kit-consumer`. From a bootstrapped checkout, run
 `pnpm run build`, then
-`node tools/run-unit-tests.mjs --suite integration tests/integration/library-consumers.test.ts`.
+`node tools/run-unit-tests.ts --suite integration tests/integration/library-consumers.test.ts`.
 This packs a generated library, makes its original source unavailable, installs
 the archive into independent Astro and SvelteKit applications, and runs strict
 native checking, production builds, Node SSR and hydrated browser controls.

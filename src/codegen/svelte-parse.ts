@@ -131,7 +131,6 @@ function childBindingNames(content: string): readonly string[] {
           if (keyed !== "children") continue;
           if (ts.isIdentifier(element.name)) names.push(element.name.text);
         }
-        continue;
       }
     }
   }
@@ -277,7 +276,8 @@ function fragmentRendersChild(
     const record = child as Record<string, unknown>;
     if (record["type"] === "ConstTag") {
       const declaration = record["declaration"] as
-        { declarations?: { id?: unknown }[] } | undefined;
+        | { declarations?: { id?: unknown }[] }
+        | undefined;
       for (const entry of declaration?.declarations ?? []) {
         for (const name of patternNames(entry.id)) constNames.add(name);
       }

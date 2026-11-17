@@ -49,11 +49,11 @@ import {
   fetchRoute,
   startOwnedServer,
   stopOwnedServer,
-} from "./owned-server.mjs";
+} from "./owned-server.ts";
 import {
   assertGeneratedComponentMarkup,
   assertServerRendered,
-} from "./ssr-assertions.mjs";
+} from "./ssr-assertions.ts";
 
 const PACKAGE_ROOT = process.cwd();
 const FIXTURE_ROOT = path.join(PACKAGE_ROOT, "tests", "fixtures", "consumer");
@@ -70,8 +70,21 @@ const EVIDENCE_DIR =
     `rcl04-q2-${process.pid}`,
   );
 
-const dist = (rel) => import(pathToFileURL(path.join(DIST, rel)).href);
-const abs = (root, rel) => path.join(root, ...rel.split("/"));
+type DistModules = {
+  "codegen/compose.js": typeof import("../../src/codegen/compose.js");
+  "codegen/plan-add.js": typeof import("../../src/codegen/plan-add.js");
+  "codegen/plan-sync.js": typeof import("../../src/codegen/plan-sync.js");
+  "codegen/snapshot.js": typeof import("../../src/codegen/snapshot.js");
+  "project/config.js": typeof import("../../src/project/config.js");
+  "registry/assets.js": typeof import("../../src/registry/assets.js");
+  "registry/load.js": typeof import("../../src/registry/load.js");
+  "registry/model.js": typeof import("../../src/registry/model.js");
+  "registry/versions.js": typeof import("../../src/registry/versions.js");
+  "transactions/apply.js": typeof import("../../src/transactions/apply.js");
+};
+const dist = <K extends keyof DistModules>(rel: K): Promise<DistModules[K]> =>
+  import(pathToFileURL(path.join(DIST, rel)).href);
+const abs = (root: string, rel: string) => path.join(root, ...rel.split("/"));
 
 const { INITIAL_COMPATIBILITY: COMPATIBILITY } = await dist(
   "registry/versions.js",
@@ -111,10 +124,10 @@ const BUTTON_ITEM = {
     { name: "Button", target: "button.svelte", kind: "value" },
     { name: "ButtonProps", target: "button.types.ts", kind: "type" },
   ],
-  dependencies: [],
+  dependencies: [] as string[],
 };
 
-function cardItem(body) {
+function cardItem(body: string) {
   return {
     id: "card",
     body,
@@ -154,29 +167,29 @@ function cardItem(body) {
   };
 }
 
-function utf8(value) {
+function utf8(value: string) {
   return new TextEncoder().encode(value);
 }
 
-function write(root, rel, data) {
+function write(root: string, rel: string, data: string | Uint8Array) {
   const target = abs(root, rel);
   mkdirSync(path.dirname(target), { recursive: true });
   writeFileSync(target, data);
 }
 
-function sha256(bytes) {
+function sha256(bytes: string | Uint8Array) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-function fileDigestOrNull(file) {
+function fileDigestOrNull(file: string) {
   return existsSync(file) ? sha256(readFileSync(file)) : null;
 }
 
 /** Deterministic digest over the sorted entries and file bytes of a tree. */
-function treeDigest(root) {
+function treeDigest(root: string) {
   if (!existsSync(root)) return null;
-  const parts = [];
-  const walk = (abs, rel) => {
+  const parts: string[] = [];
+  const walk = (abs: string, rel: string): void => {
     const stats = lstatSync(abs);
     if (stats.isDirectory()) {
       parts.push(`d ${rel}`);
@@ -195,7 +208,7 @@ function treeDigest(root) {
   return sha256(utf8(parts.join("\n")));
 }
 
-function retain(label, stage, kind, content) {
+function retain(label: string, stage: string, kind: string, content: unknown) {
   mkdirSync(EVIDENCE_DIR, { recursive: true });
   writeFileSync(
     path.join(EVIDENCE_DIR, `${label}-${stage}-${kind}.log`),
@@ -203,7 +216,10 @@ function retain(label, stage, kind, content) {
   );
 }
 
-function linkFixtureNodeModules(fixtureNodeModules, targetNodeModules) {
+function linkFixtureNodeModules(
+  fixtureNodeModules: string,
+  targetNodeModules: string,
+) {
   mkdirSync(targetNodeModules, { recursive: true });
   for (const entry of readdirSync(fixtureNodeModules)) {
     if (entry === ".bin") continue;
@@ -254,7 +270,7 @@ function seedConsumer() {
  * Materialize the representative compound registry with marker-bearing bodies
  * and an explicit value+type hybrid per item, then load its snapshot.
  */
-function buildRegistry(root, items) {
+function buildRegistry(root: string, items: readonly (typeof BUTTON_ITEM)[]) {
   cpSync(
     path.join(PACKAGE_ROOT, "assets/schemas"),
     path.join(root, "assets/schemas"),
@@ -321,7 +337,7 @@ function buildRegistry(root, items) {
 }
 
 /** `card.types.ts` → `CardProps`; `button.types.ts` → `ButtonProps`. */
-function pascal(target) {
+function pascal(target: string) {
   const base = path.basename(target, path.extname(target));
   const name = base.endsWith(".types") ? base.slice(0, -".types".length) : base;
   return `${name.charAt(0).toUpperCase()}${name.slice(1)}Props`;
@@ -332,7 +348,7 @@ function pascal(target) {
  * root barrel. Derived from the actual mapped roots; no path alias or product
  * API is used.
  */
-function importSpecifier(consumer, rootExports) {
+function importSpecifier(consumer: string, rootExports: string) {
   const pageDir = path.join(consumer, "src", "routes");
   const target = abs(consumer, rootExports).replace(/\.ts$/i, "");
   const rel = path.relative(pageDir, target).split(path.sep).join("/");
@@ -345,7 +361,11 @@ function importSpecifier(consumer, rootExports) {
  * marker per component. This is harness-owned application setup, not a
  * generator write.
  */
-function pageSource(consumer, config, stage) {
+function pageSource(
+  consumer: string,
+  config: import("../../src/project/config.js").KitConfig,
+  stage: string,
+) {
   const spec = importSpecifier(consumer, deriveKitPaths(config).rootExports);
   const cardImports =
     stage === "retirement"
@@ -374,7 +394,7 @@ ${cardDeclaration}</script>
 ${cardRender}`;
 }
 
-function runFixtureScript(root, script, timeout) {
+function runFixtureScript(root: string, script: string, timeout: number) {
   const execPath = process.env["npm_execpath"];
   const viaNode =
     typeof execPath === "string" &&
@@ -411,7 +431,10 @@ function runFixtureScript(root, script, timeout) {
   };
 }
 
-function assertCompleted(result, label) {
+function assertCompleted(
+  result: ReturnType<typeof runFixtureScript>,
+  label: string,
+) {
   assert.equal(
     result.error,
     undefined,
@@ -435,7 +458,9 @@ const { createAssetProvider } = await dist("registry/assets.js");
 const { loadRegistrySnapshot } = await dist("registry/load.js");
 const { computeRegistryContentHash } = await dist("registry/model.js");
 
-function observedPaths(config) {
+function observedPaths(
+  config: import("../../src/project/config.js").ApplicationConfig,
+) {
   const derived = deriveKitPaths(config);
   return [
     `${derived.stateDir}/kit.json`,
@@ -453,24 +478,38 @@ function observedPaths(config) {
   ];
 }
 
-function currentLock(consumer, derived) {
+function currentLock(
+  consumer: string,
+  derived: ReturnType<
+    typeof import("../../src/project/config.js").deriveKitPaths
+  >,
+) {
   const lockPath = abs(consumer, `${derived.stateDir}/kit.lock.json`);
   return existsSync(lockPath)
     ? JSON.parse(readFileSync(lockPath, "utf8"))
     : null;
 }
 
-function applyGuarded(consumer, config, snapshot, writes) {
+function applyGuarded(
+  consumer: string,
+  config: import("../../src/project/config.js").KitConfig,
+  snapshot: Parameters<
+    typeof import("../../src/codegen/compose.js").composeApplyPlan
+  >[0]["snapshot"],
+  writes: Parameters<
+    typeof import("../../src/codegen/compose.js").composeApplyPlan
+  >[0]["writes"],
+) {
   const composed = composeApplyPlan({
     root: consumer,
     config,
     writes,
     snapshot,
   });
-  assert.equal(composed.ok, true, JSON.stringify(composed.issues));
+  assert.equal(composed.ok, true, JSON.stringify(composed));
   if (!composed.ok) throw new Error("compose failed");
   const validated = validateApplyPlan(composed.value);
-  assert.equal(validated.ok, true, JSON.stringify(validated.issues));
+  assert.equal(validated.ok, true, JSON.stringify(validated));
   if (!validated.ok) throw new Error("validation failed");
   return applyPlan(validated.value);
 }
@@ -498,16 +537,61 @@ const STAGE_MARKERS = {
   },
 };
 
-async function runStage({ label, consumer, config, registry, stage, servers }) {
+type Stage = keyof typeof STAGE_MARKERS;
+type CommandRecord = {
+  command: string;
+  args: string[];
+  cwd: string;
+  status: number | null;
+  signal: NodeJS.Signals | null;
+  error: string | null;
+};
+interface ServerRecord {
+  command: string;
+  args: string[];
+  cwd: string;
+  handlerSha256: string | null;
+  buildOutputDigest: string | null;
+  port?: number;
+  responseSha256?: string;
+  responseStatus?: number;
+  contentType?: string;
+  stdout?: string;
+  stderr?: string;
+  closed?: boolean;
+  failure?: string | null;
+}
+async function runStage({
+  label,
+  consumer,
+  config,
+  registry,
+  stage,
+  servers,
+}: {
+  label: string;
+  consumer: string;
+  config: import("../../src/project/config.js").SvelteKitConfig;
+  registry: import("../../src/registry/load.js").RegistrySnapshot;
+  stage: Stage;
+  servers: Set<ReturnType<typeof startOwnedServer>>;
+}) {
   const derived = deriveKitPaths(config);
-  const stageLog = {
+  const stageLog: {
+    label: string;
+    stage: Stage;
+    commands: CommandRecord[];
+    server: ServerRecord | null;
+    failure: string | null;
+    identity?: unknown;
+  } = {
     label,
     stage,
     commands: [],
     server: null,
     failure: null,
   };
-  const recordCommand = (result) => ({
+  const recordCommand = (result: ReturnType<typeof runFixtureScript>) => ({
     command: result.command,
     args: result.args,
     cwd: result.cwd,
@@ -640,7 +724,7 @@ async function runStage({ label, consumer, config, registry, stage, servers }) {
       `${label}/${stage} missing handler`,
     );
     let server;
-    const renderErrors = [];
+    const renderErrors: unknown[] = [];
     try {
       server = startOwnedServer({
         command: process.execPath,
@@ -683,10 +767,10 @@ async function runStage({ label, consumer, config, registry, stage, servers }) {
           await stopOwnedServer(server, renderErrors);
         } finally {
           // Capture drained shutdown output even when rendering or stop failed.
-          stageLog.server.stdout = server.stdout();
-          stageLog.server.stderr = server.stderr();
-          stageLog.server.closed = server.isClosed();
-          stageLog.server.failure = server.failure()?.message ?? null;
+          stageLog.server!.stdout = server.stdout();
+          stageLog.server!.stderr = server.stderr();
+          stageLog.server!.closed = server.isClosed();
+          stageLog.server!.failure = server.failure()?.message ?? null;
         }
       }
     }
@@ -727,9 +811,12 @@ async function runStage({ label, consumer, config, registry, stage, servers }) {
   }
 }
 
-async function runMapping(label, config) {
+async function runMapping(
+  label: string,
+  config: import("../../src/project/config.js").SvelteKitConfig,
+) {
   const { base, root } = seedConsumer();
-  const servers = new Set();
+  const servers = new Set<ReturnType<typeof startOwnedServer>>();
   const registryRoots = [
     mkdtempSync(path.join(os.tmpdir(), "suik-q2-add-")),
     mkdtempSync(path.join(os.tmpdir(), "suik-q2-upd-")),
@@ -817,7 +904,11 @@ test("custom mapping: resulting consumer checks, builds and renders after add, u
  * deterministic and does not depend on a build.
  */
 test("generated-component assertion has positive and causal negative controls", () => {
-  const html = (body) => ({ status: 200, contentType: "text/html", body });
+  const html = (body: string) => ({
+    status: 200,
+    contentType: "text/html",
+    body,
+  });
   const stage = STAGE_MARKERS.add;
   const realComponent =
     '<div><button data-kit-marker="BUTTON_RETAINED">Retained button</button>' +

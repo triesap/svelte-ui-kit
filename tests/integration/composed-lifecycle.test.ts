@@ -535,83 +535,81 @@ test("a custom mapping init applies through the guarded path", () => {
   }
 });
 
-test(
-  "the actual bundled registry drives default init, check and satisfied sync",
-  { timeout: 240_000 },
-  () => {
-    const consumer = seedConsumer("<h1>SHIPPED_PAGE</h1>\n");
-    try {
-      const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
-      assert.equal(registry.ok, true, JSON.stringify(registry));
-      if (!registry.ok) return;
-      const first = captureSnapshot(consumer, consumerPaths());
-      assert.equal(first.ok, true);
-      if (!first.ok) return;
-      const planned = planInit({
-        config: DEFAULT_KIT_CONFIG,
-        layoutFile: DEFAULT_KIT_CONFIG.layoutFile,
-        layoutSource: "",
-        snapshot: first.value,
-        registry: registry.value,
-        configHash: "b".repeat(64),
-      });
-      assert.equal(planned.ok, true, JSON.stringify(planned));
-      if (!planned.ok) return;
-      const outcome = applyGuarded(consumer, first.value, planned.value.writes);
-      assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
-      assert.equal(
-        existsSync(abs(consumer, `${derived.stateDir}/kit.lock.json`)),
-        true,
-      );
-      assert.equal(existsSync(abs(consumer, derived.kitCss)), true);
+test("the actual bundled registry drives default init, check and satisfied sync", {
+  timeout: 240_000,
+}, () => {
+  const consumer = seedConsumer("<h1>SHIPPED_PAGE</h1>\n");
+  try {
+    const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
+    assert.equal(registry.ok, true, JSON.stringify(registry));
+    if (!registry.ok) return;
+    const first = captureSnapshot(consumer, consumerPaths());
+    assert.equal(first.ok, true);
+    if (!first.ok) return;
+    const planned = planInit({
+      config: DEFAULT_KIT_CONFIG,
+      layoutFile: DEFAULT_KIT_CONFIG.layoutFile,
+      layoutSource: "",
+      snapshot: first.value,
+      registry: registry.value,
+      configHash: "b".repeat(64),
+    });
+    assert.equal(planned.ok, true, JSON.stringify(planned));
+    if (!planned.ok) return;
+    const outcome = applyGuarded(consumer, first.value, planned.value.writes);
+    assert.equal(outcome.kind, "applied", JSON.stringify(outcome.issues));
+    assert.equal(
+      existsSync(abs(consumer, `${derived.stateDir}/kit.lock.json`)),
+      true,
+    );
+    assert.equal(existsSync(abs(consumer, derived.kitCss)), true);
 
-      // The generated application must actually check with the shipped registry.
-      const env = { ...linkedFixtureEnvironment(), CI: "1" };
-      verifyFixtureManager("pnpm", [], consumer, env);
-      const runtime = realpathSync(path.join(FIXTURE, "node_modules/svelte"));
-      const runtimeBefore = snapshotTree(runtime);
-      const check = spawnSync("pnpm", ["run", "check"], {
-        cwd: consumer,
-        encoding: "utf8",
-        timeout: 180_000,
-        env,
-      });
-      assert.equal(check.status, 0, `${check.stdout}\n${check.stderr}`);
-      assert.deepEqual(
-        snapshotTree(runtime),
-        runtimeBefore,
-        "linked check preserves complete maintained runtime including installer metadata",
-      );
+    // The generated application must actually check with the shipped registry.
+    const env = { ...linkedFixtureEnvironment(), CI: "1" };
+    verifyFixtureManager("pnpm", [], consumer, env);
+    const runtime = realpathSync(path.join(FIXTURE, "node_modules/svelte"));
+    const runtimeBefore = snapshotTree(runtime);
+    const check = spawnSync("pnpm", ["run", "check"], {
+      cwd: consumer,
+      encoding: "utf8",
+      timeout: 180_000,
+      env,
+    });
+    assert.equal(check.status, 0, `${check.stdout}\n${check.stderr}`);
+    assert.deepEqual(
+      snapshotTree(runtime),
+      runtimeBefore,
+      "linked check preserves complete maintained runtime including installer metadata",
+    );
 
-      const before = snapshotTree(consumer);
-      const second = captureSnapshot(consumer, consumerPaths());
-      assert.equal(second.ok, true);
-      if (!second.ok) return;
-      const sync = planSync({
-        registry: registry.value,
-        config: DEFAULT_KIT_CONFIG,
-        snapshot: second.value,
-        lock: currentLock(consumer),
-        registryVersion: registry.value.root.registryVersion,
-        registryHash: registry.value.root.contentHash,
-      });
-      assert.equal(sync.ok, true, JSON.stringify(sync));
-      if (!sync.ok) return;
-      if (sync.value.writes.length === 0) {
-        assert.deepEqual(snapshotTree(consumer), before);
-        return;
-      }
-      const replay = applyGuarded(consumer, second.value, sync.value.writes);
-      assert.ok(
-        replay.kind === "no_change" || replay.kind === "applied",
-        JSON.stringify(replay.issues),
-      );
+    const before = snapshotTree(consumer);
+    const second = captureSnapshot(consumer, consumerPaths());
+    assert.equal(second.ok, true);
+    if (!second.ok) return;
+    const sync = planSync({
+      registry: registry.value,
+      config: DEFAULT_KIT_CONFIG,
+      snapshot: second.value,
+      lock: currentLock(consumer),
+      registryVersion: registry.value.root.registryVersion,
+      registryHash: registry.value.root.contentHash,
+    });
+    assert.equal(sync.ok, true, JSON.stringify(sync));
+    if (!sync.ok) return;
+    if (sync.value.writes.length === 0) {
       assert.deepEqual(snapshotTree(consumer), before);
-    } finally {
-      rmSync(consumer, { recursive: true, force: true });
+      return;
     }
-  },
-);
+    const replay = applyGuarded(consumer, second.value, sync.value.writes);
+    assert.ok(
+      replay.kind === "no_change" || replay.kind === "applied",
+      JSON.stringify(replay.issues),
+    );
+    assert.deepEqual(snapshotTree(consumer), before);
+  } finally {
+    rmSync(consumer, { recursive: true, force: true });
+  }
+});
 
 test("a custom mapping satisfied sync replays through the guarded path", () => {
   const consumer = seedConsumer("<h1>CUSTOM_SYNC_PAGE</h1>\n");

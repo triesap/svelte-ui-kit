@@ -31,7 +31,7 @@ for (const custom of [false, true])
       const result = spawnSync(
         process.execPath,
         [
-          "tests/helpers/render-built-consumer-sequence.mjs",
+          "tests/helpers/render-built-consumer-sequence.ts",
           consumer.handler,
           ...routes,
         ],
@@ -155,7 +155,7 @@ for (const custom of [false, true])
         floatingIds(responses.repeated.at(-1)!.body),
         "direct pinned native floating wrapper also uses its nonsemantic process counter",
       );
-      responses.concurrent.forEach((response, i) =>
+      responses.concurrent.forEach((response, i) => {
         assert.deepEqual(
           ids(response.body).filter(
             (id) => !floatingIds(response.body).includes(id),
@@ -164,8 +164,8 @@ for (const custom of [false, true])
             (id) => !floatingIds(responses.repeated[i]!.body).includes(id),
           ),
           "all semantic native and recipe IDs reset; measured native floating wrapper boundary is recorded separately",
-        ),
-      );
+        );
+      });
       mkdirSync(".artifacts/verification/catalog-ssr", {
         recursive: true,
       });

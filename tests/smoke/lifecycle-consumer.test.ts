@@ -35,8 +35,8 @@ import {
   fetchRoute,
   startOwnedServer,
   stopOwnedServer,
-} from "./owned-server.mjs";
-import { assertServerRendered } from "./ssr-assertions.mjs";
+} from "./owned-server.ts";
+import { assertServerRendered } from "./ssr-assertions.ts";
 
 const PACKAGE_ROOT = process.cwd();
 const FIXTURE_ROOT = path.join(PACKAGE_ROOT, "tests", "fixtures", "consumer");
@@ -51,9 +51,22 @@ const COPY_EXCLUDES = new Set([
   "coverage",
 ]);
 
-const dist = (rel) => import(pathToFileURL(path.join(DIST, rel)).href);
+type DistModules = {
+  "codegen/compose.js": typeof import("../../src/codegen/compose.js");
+  "codegen/plan-init.js": typeof import("../../src/codegen/plan-init.js");
+  "codegen/snapshot.js": typeof import("../../src/codegen/snapshot.js");
+  "project/config.js": typeof import("../../src/project/config.js");
+  "registry/assets.js": typeof import("../../src/registry/assets.js");
+  "registry/load.js": typeof import("../../src/registry/load.js");
+  "transactions/apply.js": typeof import("../../src/transactions/apply.js");
+};
+const dist = <K extends keyof DistModules>(rel: K): Promise<DistModules[K]> =>
+  import(pathToFileURL(path.join(DIST, rel)).href);
 
-function linkFixtureNodeModules(fixtureNodeModules, targetNodeModules) {
+function linkFixtureNodeModules(
+  fixtureNodeModules: string,
+  targetNodeModules: string,
+) {
   mkdirSync(targetNodeModules, { recursive: true });
   for (const entry of readdirSync(fixtureNodeModules)) {
     if (entry === ".bin") continue;
@@ -72,7 +85,7 @@ function linkFixtureNodeModules(fixtureNodeModules, targetNodeModules) {
   }
 }
 
-function runFixtureScript(root, script, timeout) {
+function runFixtureScript(root: string, script: string, timeout: number) {
   const execPath = process.env["npm_execpath"];
   const viaNode =
     typeof execPath === "string" &&
@@ -95,7 +108,10 @@ function runFixtureScript(root, script, timeout) {
   });
 }
 
-function assertCompleted(result, label) {
+function assertCompleted(
+  result: ReturnType<typeof runFixtureScript>,
+  label: string,
+) {
   assert.equal(
     result.error,
     undefined,
@@ -112,7 +128,7 @@ function assertCompleted(result, label) {
 test("a generated default consumer checks, builds and server-renders", async (t) => {
   const base = mkdtempSync(path.join(os.tmpdir(), "suik-lifecycle-"));
   const root = path.join(base, "consumer");
-  let server;
+  let server: ReturnType<typeof startOwnedServer> | undefined = undefined;
   t.after(async () => {
     try {
       if (server) await stopOwnedServer(server);

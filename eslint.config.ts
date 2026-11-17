@@ -67,8 +67,7 @@ export default tseslint.config(
       "src/registry/**/*.ts",
       "src/codegen/**/*.ts",
       "src/transactions/**/*.ts",
-      "tools/**/*.mjs",
-      "tests/**/*.mjs",
+      "tools/**/*.ts",
       "tests/**/*.ts",
     ],
     languageOptions: {

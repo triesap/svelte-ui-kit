@@ -29,7 +29,7 @@ import {
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { after, afterEach, before, test } from "node:test";
+import { after, afterEach, before, test, type TestContext } from "node:test";
 
 import {
   DEFAULT_LAUNCHER,
@@ -37,13 +37,13 @@ import {
   startOwnedServer,
   stopOwnedServer,
   withOwnedServer,
-} from "./owned-server.mjs";
+} from "./owned-server.ts";
 import {
   assertHtmlTransport,
   assertServerRendered,
   missingSsrMarkupError,
   stripScripts,
-} from "./ssr-assertions.mjs";
+} from "./ssr-assertions.ts";
 
 const PACKAGE_ROOT = process.cwd();
 const FIXTURE_ROOT = path.join(PACKAGE_ROOT, "tests", "fixtures", "consumer");
@@ -67,7 +67,10 @@ const COPY_EXCLUDES = new Set([
  * Linking each package and each bin script individually keeps the copy's
  * package resolution and the shims' real path correct.
  */
-function linkFixtureNodeModules(fixtureNodeModules, targetNodeModules) {
+function linkFixtureNodeModules(
+  fixtureNodeModules: string,
+  targetNodeModules: string,
+) {
   mkdirSync(targetNodeModules, { recursive: true });
   for (const entry of readdirSync(fixtureNodeModules)) {
     if (entry === ".bin") continue;
@@ -93,9 +96,13 @@ function linkFixtureNodeModules(fixtureNodeModules, targetNodeModules) {
  * rethrowing, so a failed setup cannot leak an owned directory.
  */
 function createDisposableCopy(
-  t,
-  label,
-  { source = FIXTURE_ROOT, parent = os.tmpdir(), canRemove = () => true } = {},
+  t: TestContext,
+  label: string,
+  {
+    source = FIXTURE_ROOT,
+    parent = os.tmpdir(),
+    canRemove = () => true,
+  }: { source?: string; parent?: string; canRemove?: () => boolean } = {},
 ) {
   const base = mkdtempSync(path.join(parent, `suik-consumer-${label}-`));
   const cleanup = () => {
@@ -122,7 +129,7 @@ function createDisposableCopy(
   }
 }
 
-function runFixtureScript(root, script, timeout) {
+function runFixtureScript(root: string, script: string, timeout: number) {
   const execPath = process.env["npm_execpath"];
   const viaNode =
     execPath !== undefined &&
@@ -152,7 +159,10 @@ function runFixtureScript(root, script, timeout) {
   };
 }
 
-function assertCompleted(result, label) {
+function assertCompleted(
+  result: ReturnType<typeof runFixtureScript>,
+  label: string,
+) {
   assert.equal(
     result.error,
     undefined,
@@ -166,8 +176,8 @@ function assertCompleted(result, label) {
   return result.status;
 }
 
-let server;
-let port;
+let server: ReturnType<typeof startOwnedServer>;
+let port: number;
 
 before(async () => {
   assert.ok(
@@ -315,7 +325,8 @@ test("a real Svelte/TypeScript mismatch fails fixture:check and restored input p
 });
 
 test("disabling SSR fails only the missing-markup assertion (disposable copy)", async (t) => {
-  let disabledServer;
+  let disabledServer: ReturnType<typeof startOwnedServer> | undefined =
+    undefined;
   const copy = createDisposableCopy(t, "ssr-disabled", {
     canRemove: () => !disabledServer || disabledServer.isClosed(),
   });

@@ -374,7 +374,8 @@ export function parseRegistryItem(
   }
 
   const registryDependencies = (record["registryDependencies"] ?? []) as
-    readonly unknown[] | undefined;
+    | readonly unknown[]
+    | undefined;
   const registryDepIds: string[] = [];
   for (const [index, dependency] of (registryDependencies ?? []).entries()) {
     if (typeof dependency !== "string") continue;
@@ -422,7 +423,8 @@ export function parseRegistryItem(
   }
 
   const rawAccessibility = record["accessibility"] as
-    Record<string, unknown> | undefined;
+    | Record<string, unknown>
+    | undefined;
   const accessibility: AccessibilityMetadata =
     rawAccessibility === undefined
       ? EMPTY_ACCESSIBILITY

@@ -44,6 +44,7 @@ export const CI_LANES = Object.freeze({
       "pnpm run format:check",
       "pnpm run lint",
       "pnpm run typecheck",
+      "pnpm run check:source",
       "pnpm run test:unit",
       "pnpm run test:harness",
       "pnpm run test:cli-bootstrap",
@@ -90,7 +91,7 @@ export const CI_LANES = Object.freeze({
   native: {
     minutes: 45,
     commands: [
-      "node --test --test-concurrency=1 tools/build-native-dependency.test.mjs tools/prepare-native-dependency.test.mjs",
+      "node --test --test-concurrency=1 tools/build-native-dependency.test.ts tools/prepare-native-dependency.test.ts",
       "pnpm run native:runtime:check",
       "pnpm run native:artifacts:check",
     ],
@@ -99,59 +100,61 @@ export const CI_LANES = Object.freeze({
     minutes: 60,
     commands: [
       "pnpm run build",
-      `node tools/run-unit-tests.mjs --suite integration ${FILESYSTEM_TESTS.join(" ")}`,
+      `node tools/run-unit-tests.ts --suite integration ${FILESYSTEM_TESTS.join(" ")}`,
     ],
   },
 });
 const scripts = Object.freeze({
-  "format:check": "prettier --check .",
-  lint: "eslint . --max-warnings 0",
-  typecheck:
-    [
-      "tsconfig.json",
-      "tsconfig.unit.json",
-      "tsconfig.integration.json",
-      "tsconfig.components.json",
-      "tsconfig.registry.json",
-      "tsconfig.package.json",
-    ]
-      .map((file) => `tsc -p ${file} --noEmit`)
-      .join(" && ") +
-    " && tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-package.ts tools/build-package.test.ts tools/rehearse-canonical-cutover.ts",
+  "check:source":
+    "node tools/check-source-policy.ts && node --test tools/check-source-policy.test.ts",
+  "format:check":
+    'biome format . && prettier --check "**/*.{svelte,astro,md,yml,yaml}" --no-error-on-unmatched-pattern',
+  lint: "node tools/lint.ts",
+  typecheck: [
+    "tsconfig.json",
+    "tsconfig.unit.json",
+    "tsconfig.integration.json",
+    "tsconfig.components.json",
+    "tsconfig.registry.json",
+    "tsconfig.package.json",
+    "tsconfig.tooling.json",
+  ]
+    .map((file) => `tsc -p ${file} --noEmit`)
+    .join(" && "),
   build: "node tools/build-package.ts",
   "pack:local": "node tools/build-package.ts --pack-destination",
-  "test:unit": "pnpm run build && node tools/run-unit-tests.mjs",
+  "test:unit": "pnpm run build && node tools/run-unit-tests.ts",
   "test:integration":
-    "pnpm run build && node tools/run-unit-tests.mjs --suite integration",
-  "test:components": "node tools/run-unit-tests.mjs --suite components",
+    "pnpm run build && node tools/run-unit-tests.ts --suite integration",
+  "test:components": "node tools/run-unit-tests.ts --suite components",
   "test:registry":
-    "pnpm run build && node tools/run-unit-tests.mjs --suite registry",
+    "pnpm run build && node tools/run-unit-tests.ts --suite registry",
   "test:package":
-    "pnpm run build && node --test tools/build-package.test.ts && node tools/run-unit-tests.mjs --suite package",
-  "test:harness": "node --test tools/run-unit-tests.test.mjs",
+    "pnpm run build && node --test tools/build-package.test.ts && node tools/run-unit-tests.ts --suite package",
+  "test:harness": "node --test tools/run-unit-tests.test.ts",
   "native:runtime:check":
     "tsc --ignoreConfig --noEmit --types node --allowImportingTsExtensions --target ES2023 --module NodeNext --strict tools/build-svelte-runtime.ts tools/build-svelte-runtime.test.ts tools/native-runtime/archive.ts tools/native-runtime/recipe.ts tools/native-artifacts.ts tools/prepare-native-artifacts.ts tools/prepare-native-artifacts.test.ts && node --test tools/build-svelte-runtime.test.ts",
   "native:prepare": "node tools/prepare-native-artifacts.ts --fixture",
   "native:artifacts:check":
     "node --test --test-concurrency=1 tools/prepare-native-artifacts.test.ts",
-  "test:cli-bootstrap": "node --test tests/smoke/cli-bootstrap.test.mjs",
-  "fixture:tokens:check": "node tools/project-token-fixture.mjs --check",
+  "test:cli-bootstrap": "node --test tests/smoke/cli-bootstrap.test.ts",
+  "fixture:tokens:check": "node tools/project-token-fixture.ts --check",
   "fixture:check":
     "pnpm run fixture:tokens:check && pnpm --dir tests/fixtures/consumer run check",
   "fixture:build":
     "pnpm run fixture:tokens:check && pnpm --dir tests/fixtures/consumer run build",
   "test:fixture":
-    "pnpm run fixture:build && node --test --test-concurrency=1 tests/smoke/consumer-fixture.test.mjs tests/smoke/owned-server.test.mjs tests/smoke/lifecycle-consumer.test.mjs tests/smoke/q2-resulting-consumer.test.mjs",
+    "pnpm run fixture:build && node --test --test-concurrency=1 tests/smoke/consumer-fixture.test.ts tests/smoke/owned-server.test.ts tests/smoke/lifecycle-consumer.test.ts tests/smoke/q2-resulting-consumer.test.ts",
   "test:browser":
     "pnpm run fixture:build && playwright test --config playwright.config.ts",
-  "check:docs": "node tools/check-docs.mjs",
-  "test:docs": "node --test tools/check-docs.test.mjs",
-  "check:ci": "node tools/check-ci.mjs",
-  "test:ci": "node --test tools/check-ci.test.mjs",
+  "check:docs": "node tools/check-docs.ts",
+  "test:docs": "node --test tools/check-docs.test.ts",
+  "check:ci": "node tools/check-ci.ts",
+  "test:ci": "node --test tools/check-ci.test.ts",
 });
-const record = (value) =>
+const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
-const canonical = (value) =>
+const canonical = (value: unknown): unknown =>
   Array.isArray(value)
     ? value.map(canonical)
     : record(value)
@@ -161,21 +164,26 @@ const canonical = (value) =>
             .map((key) => [key, canonical(value[key])]),
         )
       : value;
-const equal = (a, b) =>
+const equal = (a: unknown, b: unknown) =>
   JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
 
 export function checkCi(
-  source,
-  manifest,
-  fixture,
-  fixtureConfig,
-  workspace = parseDocument(
+  source: string,
+  manifest: {
+    scripts?: Record<string, string>;
+    packageManager?: string;
+    dependencies?: Record<string, string>;
+  },
+  fixture: { scripts?: Record<string, string> },
+  fixtureConfig: { compilerOptions?: { skipLibCheck?: boolean } },
+  workspace: { catalog?: Record<string, string> } = parseDocument(
     readFileSync(path.join(root, "pnpm-workspace.yaml"), "utf8"),
   ).toJS(),
 ) {
-  const issues = [];
-  const fail = (code, message) => issues.push({ code, message });
-  let workflow;
+  const issues: { code: string; message: string }[] = [];
+  const fail = (code: string, message: string) =>
+    issues.push({ code, message });
+  let workflow: unknown;
   try {
     const document = parseDocument(source, {
       strict: true,
@@ -255,6 +263,7 @@ export function checkCi(
         );
     if (name === "filesystem") {
       if (
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: literal GitHub Actions expression, not a JavaScript interpolation.
         job["runs-on"] !== "${{ matrix.os }}" ||
         !equal(job.strategy, {
           "fail-fast": false,

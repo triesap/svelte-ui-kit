@@ -100,7 +100,11 @@ import {
 } from "./write-lock.js";
 
 export type RecoveryStatus =
-  "no_change" | "rolled_back" | "cleaned" | "committed" | "refused";
+  | "no_change"
+  | "rolled_back"
+  | "cleaned"
+  | "committed"
+  | "refused";
 
 export interface RecoveryResult {
   readonly status: RecoveryStatus;
@@ -1141,12 +1145,14 @@ function removeCoordinatedAncestors(
         root,
         [
           ...images,
-          ...[...removed].map((logical): TargetPreimage => ({
-            path: logical,
-            kind: "absent",
-            digest: null,
-            mode: null,
-          })),
+          ...[...removed].map(
+            (logical): TargetPreimage => ({
+              path: logical,
+              kind: "absent",
+              digest: null,
+              mode: null,
+            }),
+          ),
         ],
         { ancestors: [] },
       );

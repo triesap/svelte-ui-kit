@@ -138,10 +138,10 @@
     transform: translateY(-50%);
     transition:
       opacity var(--kit-dialog-transition-duration, var(--kit-duration-normal))
-        var(--kit-dialog-transition-timing, var(--kit-easing-standard)),
+      var(--kit-dialog-transition-timing, var(--kit-easing-standard)),
       transform
-        var(--kit-dialog-transition-duration, var(--kit-duration-normal))
-        var(--kit-dialog-transition-timing, var(--kit-easing-standard));
+      var(--kit-dialog-transition-duration, var(--kit-duration-normal))
+      var(--kit-dialog-transition-timing, var(--kit-easing-standard));
   }
 
   .kit-dialog-content[data-state="closed"],

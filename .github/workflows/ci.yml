@@ -38,6 +38,8 @@ jobs:
         run: pnpm run lint
       - name: pnpm run typecheck
         run: pnpm run typecheck
+      - name: pnpm run check:source
+        run: pnpm run check:source
       - name: pnpm run test:unit
         run: pnpm run test:unit
       - name: pnpm run test:harness
@@ -237,8 +239,8 @@ jobs:
         run: node tools/prepare-native-artifacts.ts --fixture
       - name: Install frozen strict dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
-      - name: node --test --test-concurrency=1 tools/build-native-dependency.test.mjs tools/prepare-native-dependency.test.mjs
-        run: node --test --test-concurrency=1 tools/build-native-dependency.test.mjs tools/prepare-native-dependency.test.mjs
+      - name: node --test --test-concurrency=1 tools/build-native-dependency.test.ts tools/prepare-native-dependency.test.ts
+        run: node --test --test-concurrency=1 tools/build-native-dependency.test.ts tools/prepare-native-dependency.test.ts
       - name: pnpm run native:runtime:check
         run: pnpm run native:runtime:check
       - name: pnpm run native:artifacts:check
@@ -274,5 +276,5 @@ jobs:
         run: pnpm install --frozen-lockfile --strict-peer-dependencies --engine-strict
       - name: pnpm run build
         run: pnpm run build
-      - name: node tools/run-unit-tests.mjs --suite integration tests/integration/cleanup-restart-matrix.test.ts tests/integration/docs-recovery.test.ts tests/integration/durability-flush-paths.test.ts tests/integration/durability-ordering.test.ts tests/integration/filesystem-paths.test.ts tests/integration/journal-phase-processes.test.ts tests/integration/lock-publication.test.ts tests/integration/platform-filesystem.test.ts tests/integration/publication-witness.test.ts tests/integration/recovery-invalid.test.ts tests/integration/recovery-ownership.test.ts tests/integration/recovery-prepublication.test.ts tests/integration/recovery-published.test.ts tests/integration/target-recovery.test.ts tests/integration/transaction-authority.test.ts tests/integration/transaction-cleanup.test.ts tests/integration/transaction-processes.test.ts tests/integration/transaction-safety.test.ts tests/integration/unchanged-state.test.ts
-        run: node tools/run-unit-tests.mjs --suite integration tests/integration/cleanup-restart-matrix.test.ts tests/integration/docs-recovery.test.ts tests/integration/durability-flush-paths.test.ts tests/integration/durability-ordering.test.ts tests/integration/filesystem-paths.test.ts tests/integration/journal-phase-processes.test.ts tests/integration/lock-publication.test.ts tests/integration/platform-filesystem.test.ts tests/integration/publication-witness.test.ts tests/integration/recovery-invalid.test.ts tests/integration/recovery-ownership.test.ts tests/integration/recovery-prepublication.test.ts tests/integration/recovery-published.test.ts tests/integration/target-recovery.test.ts tests/integration/transaction-authority.test.ts tests/integration/transaction-cleanup.test.ts tests/integration/transaction-processes.test.ts tests/integration/transaction-safety.test.ts tests/integration/unchanged-state.test.ts
+      - name: node tools/run-unit-tests.ts --suite integration tests/integration/cleanup-restart-matrix.test.ts tests/integration/docs-recovery.test.ts tests/integration/durability-flush-paths.test.ts tests/integration/durability-ordering.test.ts tests/integration/filesystem-paths.test.ts tests/integration/journal-phase-processes.test.ts tests/integration/lock-publication.test.ts tests/integration/platform-filesystem.test.ts tests/integration/publication-witness.test.ts tests/integration/recovery-invalid.test.ts tests/integration/recovery-ownership.test.ts tests/integration/recovery-prepublication.test.ts tests/integration/recovery-published.test.ts tests/integration/target-recovery.test.ts tests/integration/transaction-authority.test.ts tests/integration/transaction-cleanup.test.ts tests/integration/transaction-processes.test.ts tests/integration/transaction-safety.test.ts tests/integration/unchanged-state.test.ts
+        run: node tools/run-unit-tests.ts --suite integration tests/integration/cleanup-restart-matrix.test.ts tests/integration/docs-recovery.test.ts tests/integration/durability-flush-paths.test.ts tests/integration/durability-ordering.test.ts tests/integration/filesystem-paths.test.ts tests/integration/journal-phase-processes.test.ts tests/integration/lock-publication.test.ts tests/integration/platform-filesystem.test.ts tests/integration/publication-witness.test.ts tests/integration/recovery-invalid.test.ts tests/integration/recovery-ownership.test.ts tests/integration/recovery-prepublication.test.ts tests/integration/recovery-published.test.ts tests/integration/target-recovery.test.ts tests/integration/transaction-authority.test.ts tests/integration/transaction-cleanup.test.ts tests/integration/transaction-processes.test.ts tests/integration/transaction-safety.test.ts tests/integration/unchanged-state.test.ts
