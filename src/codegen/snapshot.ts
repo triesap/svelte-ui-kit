@@ -1,3 +1,7 @@
+import {
+  captureInstallationCandidates,
+  type InstallationCandidateScan,
+} from "../project/detect.js";
 import { parseKitConfig } from "../project/config.js";
 import {
   CONFIGURATION_FILES,
@@ -67,6 +71,7 @@ export interface TargetObservation {
 }
 
 export interface ProjectSnapshot {
+  readonly installationCandidates: InstallationCandidateScan;
   /** Canonical absolute root (runtime value, never used as a diagnostic locator). */
   readonly root: string;
   /** Observed identity of the canonical root, for a later coordinated recheck. */
@@ -406,6 +411,9 @@ export function captureSnapshot(
 
   const canonical = canonicalRoot(root);
   if (!canonical.ok) return canonical;
+  const installationCandidates = captureInstallationCandidates(
+    canonical.value.path,
+  );
   const environment = captureEnvironment(canonical.value.path);
   const oversized = environment.configuration.find(
     (entry) =>
@@ -540,6 +548,7 @@ export function captureSnapshot(
       entries: new FrozenMap(entries),
       ancestors: new FrozenMap(ancestorMap),
       paths: Object.freeze(paths),
+      installationCandidates,
       environment,
     }),
   );

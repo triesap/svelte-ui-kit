@@ -308,6 +308,9 @@ export function derivePlanDigest(
       },
     },
     readset: {
+      ...(input.readset.installation === undefined
+        ? {}
+        : { installation: input.readset.installation }),
       catalogDigest: input.readset.catalogDigest ?? null,
       root: {
         device: input.readset.root.device,

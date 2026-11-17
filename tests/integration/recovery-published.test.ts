@@ -27,6 +27,7 @@ import {
   persistJournal,
   prepareJournal,
   type TransactionJournal,
+  type TransactionDraft,
 } from "../../src/codegen/transaction-journal.js";
 import {
   journalPath,
@@ -76,7 +77,7 @@ function lockBytes(configHash: string): Uint8Array {
   );
 }
 
-function journalFor(root: string): TransactionJournal {
+function journalFor(root: string): TransactionDraft {
   return {
     target: "sveltekit",
     createdDirs: [],
@@ -183,7 +184,7 @@ for (const phase of ["planned", "prepared", "applied", "cleaned"] as const) {
   test(`a published physical witness controls ${phase} relabeling`, () => {
     withRoot((root) => {
       const published = publish(root, "d".repeat(64));
-      const edited: TransactionJournal = {
+      const edited = {
         ...published,
         phase,
         operations: published.operations.map((operation) => ({
@@ -192,7 +193,11 @@ for (const phase of ["planned", "prepared", "applied", "cleaned"] as const) {
         })),
         lock: { ...published.lock!, published: phase === "cleaned" },
       };
-      persistJournal(root, journalPath(STATE_DIR, ID), edited);
+      // Deliberately malformed persisted input bypasses the canonical writer.
+      writeFileSync(
+        abs(root, journalPath(STATE_DIR, ID)),
+        JSON.stringify(edited),
+      );
       const before = snapshotTree(root);
       const result = recoverTransaction(root, STATE_DIR, ID, RECOVERY_ROOTS);
       assert.equal(

@@ -50,6 +50,13 @@ and content digests do not justify hashing a plan's own claims as authentication
 The planner's approved immutable observations and live apply revalidation must
 agree. Dynamic filesystem observations never authorize themselves through journals.
 
+Original snapshots capture installation candidates independently of semantic
+configuration discovery. Plans bind the relevant foreign metadata inventory and
+recheck it at entry, after staging and at guarded mutations. Newly introduced
+foreign configurations, locks or coordination cannot hide behind an unchanged
+known path. Ordinary application files and empty non-owning roots remain allowed;
+the selected mapping retains its existing target and exclusive-writer guards.
+
 Authored types derive from pinned native/Bits interfaces; component docs interpret
 them without making a separate manual JSON API authority. Native producer recipe,
 patch and frozen locks are executable reproduction inputs under tools. Build

@@ -21,7 +21,7 @@ import { stageOperations } from "../../src/codegen/stage.js";
 import {
   persistJournal,
   prepareJournal,
-  type TransactionJournal,
+  type TransactionDraft,
 } from "../../src/codegen/transaction-journal.js";
 import {
   backupsDir,
@@ -165,7 +165,7 @@ function boundaryFixture(
   ]);
   assert.equal(staged.ok, true, JSON.stringify(staged));
   if (!staged.ok) throw new Error("staging failed");
-  const journal: TransactionJournal = {
+  const journal: TransactionDraft = {
     target: "sveltekit",
     createdDirs: [],
     ignoreFiles: [],

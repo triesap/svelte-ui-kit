@@ -1,3 +1,4 @@
+import { observeForeignInstallationInventory } from "../project/detect.js";
 import {
   mappedIntegration,
   type LibraryIntegrationFields,
@@ -39,6 +40,7 @@ import {
   observeRootIdentity,
 } from "./authority.js";
 import { sha256Hex } from "./digest.js";
+import { parseKitLock } from "./lock.js";
 import { flushDirectory, isEmptyRemovalAbsence } from "./durability.js";
 import {
   holdMutationAuthority,
@@ -509,7 +511,6 @@ function terminalRollbackIssues(
   root: string,
   stateDir: string,
   journal: TransactionJournal,
-  planned = false,
 ): ModelIssue[] {
   const problems = rootBindingIssues(root, journal);
   const removedOwned = new Set(
@@ -543,7 +544,7 @@ function terminalRollbackIssues(
       );
     }
     problems.push(
-      ...retainedOperationIssues(root, stateDir, journal, operation, planned),
+      ...retainedOperationIssues(root, stateDir, journal, operation),
     );
   }
   const witness = readPublicationIntent(
@@ -559,24 +560,13 @@ function terminalRollbackIssues(
       ),
     );
   }
-  if (witness === null && journal.lock !== null && !planned) {
+  if (witness === null && journal.lock !== null) {
     problems.push(
       issue(
         "RECOVERY_AMBIGUOUS_PUBLICATION",
         "the terminal publication record has no witness; preserving evidence",
       ),
     );
-  }
-  if (planned && witness === null) {
-    const stagedLock = `${stagedDir(stateDir, journal.transactionId)}/kit.lock.json`;
-    if (currentImage(root, stagedLock).kind !== "absent")
-      problems.push(
-        issue(
-          "RECOVERY_AMBIGUOUS_PUBLICATION",
-          "planned cleanup cannot prove an unwitnessed staged publication image; preserving it",
-          stagedLock,
-        ),
-      );
   }
   if (witness !== null) {
     problems.push(
@@ -592,7 +582,6 @@ function retainedOperationIssues(
   stateDir: string,
   journal: TransactionJournal,
   operation: JournalOperationRecord,
-  planned = false,
 ): ModelIssue[] {
   const problems: ModelIssue[] = [];
   const original = operation.preimage;
@@ -632,21 +621,6 @@ function retainedOperationIssues(
           record.path,
         ),
       );
-    if (
-      planned &&
-      operation.backupId !== null &&
-      record.path ===
-        `${backupsDir(stateDir, journal.transactionId)}/${operation.backupId}` &&
-      image.kind !== "absent"
-    ) {
-      problems.push(
-        issue(
-          "RECOVERY_PHASE_CONTRADICTION",
-          "a planned journal retains a moved preimage; preserving possible mutation evidence",
-          record.path,
-        ),
-      );
-    }
     if (
       image.kind !== "absent" &&
       !(
@@ -746,13 +720,8 @@ function phasePhysicalIssues(
   stateDir: string,
   journal: TransactionJournal,
 ): ModelIssue[] {
-  if (journal.phase === "planned" || journal.phase === "rolled_back")
-    return terminalRollbackIssues(
-      root,
-      stateDir,
-      journal,
-      journal.phase === "planned",
-    );
+  if (journal.phase === "rolled_back")
+    return terminalRollbackIssues(root, stateDir, journal);
   const retained = journal.operations.flatMap((operation) =>
     retainedOperationIssues(root, stateDir, journal, operation),
   );
@@ -840,15 +809,41 @@ function phasePhysicalIssues(
   );
 }
 
+function canonicalLockIssues(
+  root: string,
+  stateDir: string,
+  roots: AnyRecoveryRoots,
+): ModelIssue[] {
+  try {
+    const parsed = parseKitLock(
+      JSON.parse(readFileSync(absOf(root, lockPath(stateDir)), "utf8")),
+      lockPath(stateDir),
+      { ...roots, stateDir },
+    );
+    return parsed.ok ? [] : [...parsed.issues];
+  } catch {
+    return [
+      issue(
+        "RECOVERY_AMBIGUOUS_PUBLICATION",
+        "The cleanup tail has no valid canonical lock for the approved mapping; preserve it.",
+        lockPath(stateDir),
+      ),
+    ];
+  }
+}
+
 /** A journal-less cleanup tail still needs complete canonical image proof. */
 function journalLessPublicationIssues(
   root: string,
   stateDir: string,
   id: string,
   witness: PublicationIntent,
+  roots: AnyRecoveryRoots,
 ): ModelIssue[] {
   const binding = intentBindingIssues(root, stateDir, id, witness);
   if (binding.length > 0) return binding;
+  const canonical = canonicalLockIssues(root, stateDir, roots);
+  if (canonical.length > 0) return canonical;
   const image = currentImage(root, lockPath(stateDir));
   const state = classifyPublication({
     intent: witness,
@@ -1608,6 +1603,8 @@ export function recoverTransaction(
   roots: AnyRecoveryRoots,
   hooks?: TransactionHooks,
 ): RecoveryResult {
+  const inventory = recoveryInventoryIssues(root, stateDir, roots);
+  if (inventory.length > 0) return refuse(transactionId, inventory);
   if (holdsWriterLock(root, stateDir)) {
     const contradiction = verifyHeldWriterLock(root, stateDir);
     if (contradiction.length > 0) return refuse(transactionId, contradiction);
@@ -1676,6 +1673,9 @@ function recoverTransactionUnderLock(
   roots: AnyRecoveryRoots,
   hooks?: TransactionHooks,
 ): RecoveryResult {
+  const inventoryPreflight = recoveryInventoryIssues(root, stateDir, roots);
+  if (inventoryPreflight.length > 0)
+    return refuse(transactionId, inventoryPreflight);
   // A directory whose journal and owned state were already removed is the tail
   // of a completed cleanup; finish removing the empty directory rather than
   // refusing forever. Any remaining entry is treated as evidence and refused.
@@ -1759,6 +1759,7 @@ function recoverTransactionUnderLock(
           stateDir,
           transactionId,
           intentRead,
+          roots,
         );
         if (proof.length > 0) return refuse(transactionId, proof);
       }
@@ -1798,34 +1799,6 @@ function recoverTransactionUnderLock(
     );
     if (cleanup.length > 0) return refuse(transactionId, cleanup);
     return completedRollback(journal, "rolled_back", stateDir);
-  }
-
-  if (journal.phase === "planned") {
-    const proof = terminalRollbackIssues(root, stateDir, journal, true);
-    if (proof.length > 0) return refuse(transactionId, proof);
-    // Positive original-image, absent-backup and publication proof establishes
-    // that this planned transaction wrote no live bytes. Its owned empty ancestry is
-    // removed only when every identity/removal/flush issue is proven. A
-    // contradiction or durability fault is refused with the journal preserved
-    // rather than discarding proof while reporting clean.
-    const ancestryIssues = removeCoordinatedAncestors(
-      root,
-      stateDir,
-      journal,
-      hooks,
-    );
-    if (ancestryIssues.length > 0) {
-      return refuse(transactionId, ancestryIssues);
-    }
-    const cleanup = removeOwnedEntries(
-      root,
-      stateDir,
-      transactionId,
-      hooks,
-      ownedInventoryFor(journal),
-    );
-    if (cleanup.length > 0) return refuse(transactionId, cleanup);
-    return completedRollback(journal, "cleaned", stateDir);
   }
 
   if (journal.phase === "published" || journal.phase === "cleaned") {
@@ -2207,6 +2180,9 @@ export function recoverTransactions(
   roots: AnyRecoveryRoots,
   hooks?: TransactionHooks,
 ): readonly RecoveryResult[] {
+  const inventory = recoveryInventoryIssues(root, stateDir, roots);
+  if (inventory.length > 0)
+    return [{ status: "refused", transactionId: null, issues: inventory }];
   if (holdsWriterLock(root, stateDir)) {
     const contradiction = verifyHeldWriterLock(root, stateDir);
     if (contradiction.length > 0) {
@@ -2263,6 +2239,9 @@ function recoverScannedTransactions(
   roots: AnyRecoveryRoots,
   hooks?: TransactionHooks,
 ): readonly RecoveryResult[] {
+  const inventory = recoveryInventoryIssues(root, stateDir, roots);
+  if (inventory.length > 0)
+    return [{ status: "refused", transactionId: null, issues: inventory }];
   const scan = scanTransactionsChecked(root, stateDir);
   if (!scan.ok) {
     return [{ status: "refused", transactionId: null, issues: scan.issues }];
@@ -2289,6 +2268,34 @@ export function inspectUnchangedState(
   stateDir: string,
   roots: AnyRecoveryRoots,
 ): readonly ModelIssue[] {
+  return inspectRetainedState(root, stateDir, roots, false);
+}
+
+function recoveryInventoryIssues(
+  root: string,
+  stateDir: string,
+  roots: AnyRecoveryRoots,
+): readonly ModelIssue[] {
+  const foreign = observeForeignInstallationInventory(root, stateDir);
+  if (!foreign.ok || foreign.value.some((row) => row.kind !== "absent"))
+    return [
+      issue(
+        "RECOVERY_FOREIGN_INSTALLATION",
+        "Foreign installation metadata prevents recovery of this mapping; preserve it and resolve package intent.",
+        stateDir,
+      ),
+    ];
+  return inspectRetainedState(root, stateDir, roots, true).filter(
+    (entry) => entry.code !== "RECOVERY_PENDING",
+  );
+}
+
+function inspectRetainedState(
+  root: string,
+  stateDir: string,
+  roots: AnyRecoveryRoots,
+  recovering: boolean,
+): readonly ModelIssue[] {
   const namespace = transientRoot(stateDir);
   const unreadable = (logical: string) =>
     issue(
@@ -2309,10 +2316,39 @@ export function inspectUnchangedState(
     kind: "file" | "directory",
   ): ModelIssue[] => {
     const ancestors = captureAncestors(root, logical);
-    if (!ancestors.ok) return [unsafe(namespace)];
+    if (!ancestors.ok)
+      return [
+        recovering
+          ? issue(
+              "RECOVERY_UNSAFE_ANCESTRY",
+              "An approved recovery target has unsafe physical ancestry; preserve it.",
+              namespace,
+            )
+          : unsafe(namespace),
+      ];
     const observed = observeEntry(absOf(root, logical));
     if (observed.kind === "absent" || observed.kind === kind) return [];
     if (observed.kind === "unreadable") return [unreadable(logical)];
+    if (recovering && logical === transactionsDir(stateDir))
+      return [
+        issue(
+          "RECOVERY_SCAN_UNSAFE",
+          "The transaction namespace is not a real directory; preserve it.",
+          namespace,
+        ),
+      ];
+    if (
+      recovering &&
+      kind === "directory" &&
+      (logical === roots.uiDir || logical === roots.stylesDir)
+    )
+      return [
+        issue(
+          "RECOVERY_UNSAFE_ANCESTRY",
+          "An approved recovery target has unsafe physical ancestry; preserve it.",
+          namespace,
+        ),
+      ];
     return [unsafe(namespace)];
   };
   const rootIdentity = observeRootIdentity(root);
@@ -2413,7 +2449,28 @@ export function inspectUnchangedState(
   }
   if (physical.length > 0) return physical;
   const writer = readWriterLock(root, stateDir);
-  if (writer.kind !== "absent") {
+  const ownsWriter = recovering && holdsWriterLock(root, stateDir);
+  if (ownsWriter) {
+    const contradiction = verifyHeldWriterLock(root, stateDir);
+    if (contradiction.length > 0) return contradiction;
+    try {
+      if (
+        readdirSync(absOf(root, writerLockDir(stateDir))).some(
+          (name) => name !== "owner.json",
+        )
+      )
+        return [
+          issue(
+            "WRITER_LOCK_UNAVAILABLE",
+            "The held writer contains unrecorded inventory; preserve it.",
+            writerLockDir(stateDir),
+          ),
+        ];
+    } catch {
+      return [unreadable(writerLockDir(stateDir))];
+    }
+  }
+  if (writer.kind !== "absent" && !ownsWriter) {
     let exact = false;
     try {
       exact = readdirSync(absOf(root, writerLockDir(stateDir))).every(
@@ -2488,7 +2545,7 @@ export function inspectUnchangedState(
       }
       if (intent !== null) {
         retain(
-          journalLessPublicationIssues(root, stateDir, id, intent),
+          journalLessPublicationIssues(root, stateDir, id, intent, roots),
           locator,
         );
       }
@@ -2509,10 +2566,6 @@ export function inspectUnchangedState(
     }
     if (read.phase === "rolled_back") {
       retain(terminalRollbackIssues(root, stateDir, read), locator);
-      continue;
-    }
-    if (read.phase === "planned") {
-      retain(terminalRollbackIssues(root, stateDir, read, true), locator);
       continue;
     }
     const intent = readPublicationIntent(
@@ -2564,6 +2617,7 @@ export function inspectUnchangedState(
       published ||= classification === "published";
     }
     if (published) {
+      retain(canonicalLockIssues(root, stateDir, roots), locator);
       if (
         read.lock === null ||
         readFileSafe(root, lockPath(stateDir)) !== read.lock.digest

@@ -63,6 +63,14 @@ the canonical rename. Intended lock bytes are copied before hooks run. Once the
 rename completes, a later hook or flush failure reports a committed transaction
 that needs cleanup, even when the durable journal still records publication intent.
 
+Recovery first inspects the whole retained inventory, then revalidates it under
+the actual exclusive writer before semantic mutation. A malformed or retired
+sibling blocks single-transaction and aggregate recovery in either order. Foreign
+installation metadata in the selected package also blocks recovery. Journal-less
+publication tails and journal-backed published cleanup require a canonical lock
+for the independently approved target/mapping as well as physical publication
+proof; equal bytes alone never qualify cleanup.
+
 Recovery freezes the approved current targets, backups, journal, witness and
 physical ancestry after whole-journal preflight. It rechecks that held evidence
 and the actual writer after returning restore or removal hooks. Late edits
@@ -94,7 +102,11 @@ and performs supported atomic per-file replacement. The batch includes config,
 source, CSS, export/layout integration and semantic lock; dependency installation
 is outside because the CLI never performs it. There is no native multi-file atomicity.
 
-Phases are planned → prepared → applied → published → cleaned. Prepared/applied
+Internal phases are planned → prepared → applied → published → cleaned.
+The planned draft is memory-only and cannot be serialized or persisted. Durable
+journal schema 3 begins at prepared, requires its supported target and explicit
+created-directory/ignore arrays, and preserves actual nullable preimages. Retired
+journal formats cannot authorize canonical recovery. Prepared/applied
 may roll back through recovery; published may only be cleaned. Planned has no
 live writes. Canonical kit.lock.json replacement is the semantic commit point
 and occurs last. Dispositions are no_change, applied, committed_needs_cleanup or

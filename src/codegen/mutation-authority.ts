@@ -1,3 +1,4 @@
+import { verifyInstallationInventory } from "../project/detect.js";
 import { verifyCatalogDigest } from "../project/catalogs.js";
 /** Final cooperative mutation proof, held before returning fault hooks run. */
 import path from "node:path";
@@ -54,6 +55,7 @@ export function scopeMutationAuthority(
   const scoped: MutationAuthority = Object.freeze({
     root: authority.root,
     readset: Object.freeze({
+      installation: authority.readset.installation,
       root: authority.readset.root,
       ancestors: Object.freeze(
         authority.readset.ancestors.filter(
@@ -124,6 +126,10 @@ export function holdMutationAuthority(
   const authority: MutationAuthority = Object.freeze({
     root,
     readset: Object.freeze({
+      installation:
+        original?.readset.installation === undefined
+          ? undefined
+          : Object.freeze({ ...original.readset.installation }),
       catalogDigest: original?.readset.catalogDigest,
       root: Object.freeze({
         ...(original?.readset.root ?? observedRoot.value),
@@ -198,6 +204,7 @@ export function verifyMutationAuthority(
   }
   const issues = [
     ...verifyCatalogDigest(root, authority.readset.catalogDigest),
+    ...verifyInstallationInventory(root, authority.readset.installation),
     ...verifyHeldWriterLock(root, stateDir),
     ...verifyRootIdentity(root, authority.readset.root),
     ...verifyReadFiles(root, authority.readset.files),

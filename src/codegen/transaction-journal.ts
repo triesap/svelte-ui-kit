@@ -44,6 +44,7 @@ import {
   lockPath,
   TRANSACTION_PHASES,
   type TransactionPhase,
+  type DurableTransactionPhase,
 } from "./transaction-types.js";
 
 const HEX64 = /^[0-9a-f]{64}$/;
@@ -89,7 +90,7 @@ export interface JournalCreatedDir {
   readonly path: string;
   readonly device: number;
   readonly inode: number;
-  /** Recorded for new receipts; legacy records omit this field. */
+  /** Exact permission mode recorded by the canonical writer. */
   readonly mode: number;
 }
 
@@ -99,22 +100,25 @@ export interface TransactionJournal {
   readonly transactionId: string;
   readonly rootIdentity: string;
   readonly planDigest: string;
-  readonly phase: TransactionPhase;
+  readonly phase: DurableTransactionPhase;
   readonly operations: readonly JournalOperationRecord[];
   readonly lock: JournalLockRecord | null;
   /**
-   * Owned generated-ancestry directories created by this attempt. Absent on
-   * older/legacy records, which therefore claim no owned ancestry.
+   * Owned generated-ancestry directories created by this attempt; empty is valid.
    */
   readonly createdDirs: readonly JournalCreatedDir[];
   /**
    * The narrowly approved application ignore files this batch edits. Recorded
    * so journal validation, recovery, rollback and restart recognize the same
-   * ignore role instead of rejecting the guarded ignore operation. Absent on
-   * legacy records, which therefore claim no ignore authority.
+   * ignore role instead of rejecting the guarded ignore operation. Empty is valid.
    */
   readonly ignoreFiles: readonly string[];
 }
+
+/** Private staging data has no durable recovery authority and cannot be persisted. */
+export type TransactionDraft = Omit<TransactionJournal, "phase"> & {
+  readonly phase: "planned";
+};
 
 const JOURNAL_KEYS = [
   "schemaVersion",
@@ -525,7 +529,7 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
     transactionId: parsed["transactionId"] as string,
     rootIdentity: parsed["rootIdentity"] as string,
     planDigest: parsed["planDigest"] as string,
-    phase: parsed["phase"] as TransactionPhase,
+    phase: parsed["phase"] as DurableTransactionPhase,
     operations,
     lock,
     createdDirs,
@@ -535,6 +539,10 @@ export function parseJournal(text: string): ModelResult<TransactionJournal> {
 
 /** Deterministic canonical JSON for one journal document. */
 export function serializeJournal(journal: TransactionJournal): string {
+  if ((journal.phase as string) === "planned")
+    throw new Error(
+      "An in-memory transaction draft cannot be serialized as a durable journal",
+    );
   return canonicalJson(journal);
 }
 
@@ -642,11 +650,12 @@ export function persistJournal(
   hooks?: TransactionHooks,
   ownership?: OwnedCreation[],
 ): void {
+  // Reject an untyped draft before creating even coordination ancestry.
+  const bytes = Buffer.from(serializeJournal(journal), "utf8");
   const destination = path.join(root, ...logicalJournalPath.split("/"));
   const dir = path.dirname(destination);
   if (ownership === undefined) mkdirSync(dir, { recursive: true, mode: 0o700 });
   const temporary = `${destination}.tmp-${journal.transactionId}`;
-  const bytes = Buffer.from(serializeJournal(journal), "utf8");
   fireHooks(hooks, "before", "journal:write", logicalJournalPath);
   if (ownership !== undefined) {
     writeOwnedFile(temporary, bytes, 0o600, ownership);
@@ -677,7 +686,7 @@ export function persistJournal(
 /** Replace one journal phase immutably. */
 export function withPhase(
   journal: TransactionJournal,
-  phase: TransactionPhase,
+  phase: DurableTransactionPhase,
 ): TransactionJournal {
   return { ...journal, phase };
 }
@@ -689,7 +698,7 @@ export function withPhase(
  * caller persists it durably before any live replacement begins.
  */
 export function prepareJournal(
-  journal: TransactionJournal,
+  journal: TransactionDraft,
   staged: readonly { readonly path: string; readonly stagedId: string }[],
 ): TransactionJournal {
   const stagedByPath = new Map(

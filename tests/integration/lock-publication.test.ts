@@ -17,6 +17,7 @@ import {
   persistJournal,
   prepareJournal,
   type TransactionJournal,
+  type TransactionDraft,
 } from "../../src/codegen/transaction-journal.js";
 import { journalPath, lockPath } from "../../src/codegen/transaction-types.js";
 import { publishPreparedLock as publishLock } from "../helpers/publication.js";
@@ -58,7 +59,7 @@ const lockBytes = (configHash: string): Uint8Array =>
     `${JSON.stringify(lockValue(configHash), null, 2)}\n`,
   );
 
-function journalFor(): TransactionJournal {
+function journalFor(): TransactionDraft {
   return {
     target: "sveltekit",
     createdDirs: [],

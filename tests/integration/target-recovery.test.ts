@@ -159,7 +159,7 @@ const phases = [
   { boundary: "cleanup:journal", event: "before", category: "committed" },
   { boundary: "cleanup:journal", category: "committed" },
 ] as const;
-for (const target of ["astro", "svelte-library"] as const) {
+for (const target of ["sveltekit", "astro", "svelte-library"] as const) {
   for (const phase of phases)
     test(`${target}: real ${"event" in phase ? phase.event : "after"} ${phase.boundary} ${"phase" in phase ? phase.phase : ""} preserves original-plan recovery`, (t) => {
       const f = generationFixture(t, target),

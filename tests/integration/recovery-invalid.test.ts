@@ -29,6 +29,7 @@ import {
   prepareJournal,
   serializeJournal,
   type TransactionJournal,
+  type TransactionDraft,
 } from "../../src/codegen/transaction-journal.js";
 import {
   backupsDir,
@@ -472,13 +473,13 @@ test("age and PID alone cannot authorize destructive cleanup", () => {
     ]);
     assert.equal(staged.ok, true);
     if (!staged.ok) return;
-    const journal: TransactionJournal = {
+    const journal: TransactionDraft = {
       target: "sveltekit",
       createdDirs: [],
       ignoreFiles: [],
       schemaVersion: 3,
       transactionId: id,
-      rootIdentity: "a".repeat(64),
+      rootIdentity: liveRootIdentity(root),
       planDigest: "b".repeat(64),
       phase: "planned",
       operations: [

@@ -27,7 +27,7 @@ import {
 import {
   persistJournal,
   prepareJournal,
-  type TransactionJournal,
+  type TransactionDraft,
 } from "../../src/codegen/transaction-journal.js";
 import {
   journalPath,
@@ -66,7 +66,7 @@ const OPERATIONS: StageOperation[] = [
   },
 ];
 
-function journalFor(root: string): TransactionJournal {
+function journalFor(root: string): TransactionDraft {
   return {
     target: "sveltekit",
     createdDirs: [],

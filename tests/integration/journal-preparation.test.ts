@@ -21,6 +21,7 @@ import {
   prepareJournal,
   verifyPreparedJournal,
   type TransactionJournal,
+  type TransactionDraft,
 } from "../../src/codegen/transaction-journal.js";
 import { journalPath, stagedDir } from "../../src/codegen/transaction-types.js";
 
@@ -39,7 +40,7 @@ function withRoot(body: (root: string) => void): void {
 const abs = (root: string, logical: string): string =>
   path.join(root, ...logical.split("/"));
 
-function freshJournal(): TransactionJournal {
+function freshJournal(): TransactionDraft {
   return {
     target: "sveltekit",
     createdDirs: [],

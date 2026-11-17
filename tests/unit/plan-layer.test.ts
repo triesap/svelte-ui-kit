@@ -161,3 +161,24 @@ for (const sample of cases)
       sample.expected,
     );
   });
+
+for (const sample of cases)
+  test(`pure digest binds ${sample.name} installation inventory without changing absent-field witnesses`, () => {
+    const input = { ...base, ...sample.mapping };
+    const installation = { stateDir: base.stateDir, digest: "a".repeat(64) };
+    const bound = { ...input, readset: { ...base.readset, installation } };
+    const digest = derivePlanDigest(bound);
+    assert.notEqual(digest, sample.expected);
+    assert.equal(derivePlanDigest(bound), digest);
+    for (const changed of [
+      { ...installation, digest: "b".repeat(64) },
+      { ...installation, stateDir: "different/ui/_kit" },
+    ])
+      assert.notEqual(
+        derivePlanDigest({
+          ...input,
+          readset: { ...base.readset, installation: changed },
+        }),
+        digest,
+      );
+  });

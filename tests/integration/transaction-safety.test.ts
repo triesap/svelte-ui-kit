@@ -51,6 +51,7 @@ import {
 import {
   clearOrphanedWriterLock,
   RECOVERY_ROOTS,
+  liveRootIdentity,
 } from "../helpers/transactions.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
@@ -203,7 +204,7 @@ test("recovery refuses a forged journal target outside the approved roots", () =
       ignoreFiles: [],
       schemaVersion: 3,
       transactionId: ID,
-      rootIdentity: "a".repeat(64),
+      rootIdentity: liveRootIdentity(root),
       planDigest: "b".repeat(64),
       phase: "prepared",
       operations: [
@@ -244,7 +245,7 @@ test("recovery refuses a corrupted backup instead of restoring it", () => {
       ignoreFiles: [],
       schemaVersion: 3,
       transactionId: ID,
-      rootIdentity: "a".repeat(64),
+      rootIdentity: liveRootIdentity(root),
       planDigest: "b".repeat(64),
       phase: "applied",
       operations: [
@@ -290,7 +291,7 @@ test("recovery refuses a symlinked ancestor and preserves outside files", () => 
         ignoreFiles: [],
         schemaVersion: 3,
         transactionId: ID,
-        rootIdentity: "a".repeat(64),
+        rootIdentity: liveRootIdentity(root),
         planDigest: "b".repeat(64),
         phase: "applied",
         operations: [
@@ -337,7 +338,7 @@ test("published recovery retains an unexpected entry and refuses cleanup", () =>
       ignoreFiles: [],
       schemaVersion: 3,
       transactionId: ID,
-      rootIdentity: "a".repeat(64),
+      rootIdentity: liveRootIdentity(root),
       planDigest: "b".repeat(64),
       phase: "published",
       operations: [],

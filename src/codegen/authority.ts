@@ -1,3 +1,4 @@
+import type { InstallationInventory } from "../project/detect.js";
 /**
  * Complete immutable apply authority and physical read set (RCLD04-R1-1).
  *
@@ -86,6 +87,7 @@ export interface PlanReadFile {
 
 /** The complete physical authority a plan depends on. */
 export interface PlanReadset {
+  readonly installation?: InstallationInventory;
   readonly root: PhysicalIdentity;
   readonly ancestors: readonly PlanAncestor[];
   readonly files: readonly PlanReadFile[];
@@ -362,11 +364,34 @@ export function validateReadset(readset: unknown): ModelIssue[] {
         "readset.catalogDigest",
       ),
     );
+  if (
+    value.installation !== undefined &&
+    (typeof value.installation !== "object" ||
+      value.installation === null ||
+      Object.keys(value.installation).some(
+        (key) => key !== "stateDir" && key !== "digest",
+      ) ||
+      !isSafeLogicalRelativePath(value.installation.stateDir) ||
+      typeof value.installation.digest !== "string" ||
+      !/^[a-f0-9]{64}$/.test(value.installation.digest))
+  )
+    problems.push(
+      issue(
+        "PLAN_READSET_INVALID",
+        "Invalid installation inventory fingerprint",
+        "readset.installation",
+      ),
+    );
   for (const key of Object.keys(value)) {
     if (
-      !["root", "ancestors", "files", "installed", "catalogDigest"].includes(
-        key,
-      )
+      ![
+        "root",
+        "ancestors",
+        "files",
+        "installed",
+        "catalogDigest",
+        "installation",
+      ].includes(key)
     ) {
       problems.push(
         issue(

@@ -1,3 +1,4 @@
+import { verifyInstallationInventory } from "../project/detect.js";
 import { generationFields } from "../project/config.js";
 import {
   copyIntegrationFields,
@@ -107,6 +108,7 @@ import {
   prepareJournal,
   type JournalCreatedDir,
   type TransactionJournal,
+  type TransactionDraft,
 } from "./transaction-journal.js";
 import {
   APPROVED_IGNORE_FILES,
@@ -1020,6 +1022,10 @@ function validateApplyPlanData(
     rootIdentity: derivedRootIdentity,
     planDigest: "",
     readset: Object.freeze({
+      installation:
+        plan.readset.installation === undefined
+          ? undefined
+          : Object.freeze({ ...plan.readset.installation }),
       catalogDigest: plan.readset.catalogDigest,
       root: Object.freeze({ ...plan.readset.root }),
       ancestors: Object.freeze(
@@ -1396,6 +1402,7 @@ export function applyPlan(
   // Immutable decision inputs may refuse before coordination. Target/ancestor
   // preimages wait until owned recovery has reconciled interrupted writes.
   const initialInputs = [
+    ...verifyInstallationInventory(plan.root, plan.readset.installation),
     ...verifyReadFiles(plan.root, plan.readset.files),
     ...verifyInstalledReads(plan.root, plan.readset.installed ?? []),
   ];
@@ -1520,6 +1527,10 @@ function applyUnderLock(
       ancestors: plan.readset.ancestors,
       files: plan.readset.files,
       installed: plan.readset.installed,
+      installation:
+        plan.readset.installation === undefined
+          ? undefined
+          : Object.freeze({ ...plan.readset.installation }),
       catalogDigest: plan.readset.catalogDigest,
     },
   );
@@ -1548,7 +1559,7 @@ function applyUnderLock(
     return { kind: "no_change", transactionId: null, issues: [] };
   }
 
-  const journal: TransactionJournal = {
+  const journal: TransactionDraft = {
     schemaVersion: 3,
     target: plan.target,
     transactionId,
@@ -1693,6 +1704,10 @@ function applyUnderLock(
       ancestors: plan.readset.ancestors,
       files: plan.readset.files,
       installed: plan.readset.installed,
+      installation:
+        plan.readset.installation === undefined
+          ? undefined
+          : Object.freeze({ ...plan.readset.installation }),
       catalogDigest: plan.readset.catalogDigest,
     },
   );

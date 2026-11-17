@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { observeCatalogs } from "./catalogs.js";
 import { isLibraryConfig, parseKitConfig, type KitConfig } from "./config.js";
 import { captureConfigurationInputs } from "./configuration-inputs.js";
@@ -404,7 +405,7 @@ function installationObservations(
 }
 
 /** Deterministic candidate collection with typed discovery issues. */
-interface CandidateScan {
+export interface InstallationCandidateScan {
   readonly candidates: readonly string[];
   readonly observations: readonly InstallationObservation[];
   readonly issues: readonly ModelIssue[];
@@ -421,7 +422,7 @@ interface CandidateScan {
  * being silently skipped. Unrelated symlink subtrees are not traversed and are
  * not claimed to be verified.
  */
-function scanKitConfigCandidates(root: string): CandidateScan {
+function scanKitConfigCandidates(root: string): InstallationCandidateScan {
   const results: string[] = [];
   const observations: InstallationObservation[] = [];
   const issues: ModelIssue[] = [];
@@ -806,4 +807,73 @@ export function validateDiscoveryCapture(
       ),
     ]);
   return after;
+}
+
+/** Sealed discovery projection excludes only the independently approved active mapping. */
+export interface InstallationInventory {
+  readonly stateDir: string;
+  readonly digest: string;
+}
+export function installationInventoryDigest(
+  observations: readonly InstallationObservation[],
+  stateDir: string,
+): string {
+  return createHash("sha256")
+    .update(
+      JSON.stringify(
+        observations.filter(
+          (row) =>
+            row.kind !== "absent" && !row.path.startsWith(`${stateDir}/`),
+        ),
+      ),
+    )
+    .digest("hex");
+}
+/** Same bounded selected-package discovery rules, without inferring target intent. */
+export function observeForeignInstallationInventory(
+  root: string,
+  stateDir: string,
+): ModelResult<readonly InstallationObservation[]> {
+  const scan = scanKitConfigCandidates(root);
+  const foreignIssues = scan.issues.filter(
+    (row) =>
+      row.locator !== stateDir && !row.locator?.startsWith(`${stateDir}/`),
+  );
+  return foreignIssues.length > 0
+    ? fail(foreignIssues)
+    : ok(
+        scan.observations.filter((row) => !row.path.startsWith(`${stateDir}/`)),
+      );
+}
+export function verifyInstallationInventory(
+  root: string,
+  expected: InstallationInventory | undefined,
+): ModelIssue[] {
+  if (!expected) return [];
+  const current = observeForeignInstallationInventory(root, expected.stateDir);
+  return !current.ok ||
+    installationInventoryDigest(current.value, expected.stateDir) !==
+      expected.digest
+    ? [
+        issue(
+          "AUTHORITY_INSTALLATION_CHANGED",
+          "Installation discovery changed after capture; preserve evidence and capture a fresh plan.",
+          expected.stateDir,
+        ),
+      ]
+    : [];
+}
+
+/** Capture independently of semantic config selection, including explicit SDK plans. */
+export function captureInstallationCandidates(
+  root: string,
+): InstallationCandidateScan {
+  const scan = scanKitConfigCandidates(root);
+  return Object.freeze({
+    candidates: Object.freeze([...scan.candidates]),
+    observations: Object.freeze(
+      scan.observations.map((row) => Object.freeze({ ...row })),
+    ),
+    issues: Object.freeze(scan.issues.map((row) => Object.freeze({ ...row }))),
+  });
 }

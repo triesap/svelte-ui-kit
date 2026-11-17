@@ -14,9 +14,12 @@
  */
 import { randomUUID } from "node:crypto";
 
+/** Persisted recovery phases exclude the private in-memory staging draft. */
+export type DurableTransactionPhase =
+  "prepared" | "applied" | "published" | "cleaned" | "rolled_back";
+
 /** Ordered internal transaction phases. */
-export type TransactionPhase =
-  "planned" | "prepared" | "applied" | "published" | "cleaned" | "rolled_back";
+export type TransactionPhase = "planned" | DurableTransactionPhase;
 
 export const TRANSACTION_PHASES: readonly TransactionPhase[] = [
   "planned",

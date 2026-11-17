@@ -1,3 +1,4 @@
+import { installationInventoryDigest } from "../project/detect.js";
 import {
   generationFields,
   generationInputPaths,
@@ -207,6 +208,30 @@ export function composeApplyPlan(
 
   const derived = deriveKitPaths(input.config);
   const stateDir = derived.stateDir;
+  if (
+    !snapshot.installationCandidates ||
+    !Array.isArray(snapshot.installationCandidates.observations)
+  )
+    return fail([
+      issue(
+        "COMPOSE_INSTALLATION_CAPTURE_REQUIRED",
+        "The original independent installation capture is required",
+        "snapshot",
+      ),
+    ]);
+  const inventoryIssues = snapshot.installationCandidates.issues.filter(
+    (row) =>
+      !(
+        [
+          "KIT_WRITER_PRESENT",
+          "KIT_RECOVERY_PENDING",
+          "KIT_INSTALLATION_INCOMPLETE",
+        ].includes(row.code) &&
+        (row.locator === stateDir || row.locator?.startsWith(`${stateDir}/`))
+      ),
+  );
+  if (inventoryIssues.length > 0) return fail(inventoryIssues);
+
   const canonicalLock = lockPath(stateDir);
   const root = snapshot.root;
   const problems: ModelIssue[] = [];
@@ -799,6 +824,13 @@ export function composeApplyPlan(
       },
     },
     readset: {
+      installation: {
+        stateDir,
+        digest: installationInventoryDigest(
+          snapshot.installationCandidates.observations,
+          stateDir,
+        ),
+      },
       catalogDigest: snapshot.environment.catalogDigest,
       root: {
         device: snapshot.rootIdentity.device,
@@ -840,6 +872,13 @@ export function composeApplyPlan(
     rootIdentity,
     planDigest,
     readset: {
+      installation: {
+        stateDir,
+        digest: installationInventoryDigest(
+          snapshot.installationCandidates.observations,
+          stateDir,
+        ),
+      },
       catalogDigest: snapshot.environment.catalogDigest,
       root: {
         device: snapshot.rootIdentity.device,

@@ -187,14 +187,14 @@ function sealed(plan: unknown) {
   return result.value;
 }
 
-function journalWith(operation: Record<string, unknown>): string {
+function journalWith(root: string, operation: Record<string, unknown>): string {
   return JSON.stringify({
     target: "sveltekit",
     createdDirs: [],
     ignoreFiles: [],
     schemaVersion: 3,
     transactionId: ID,
-    rootIdentity: "a".repeat(64),
+    rootIdentity: liveRootIdentity(root),
     planDigest: "b".repeat(64),
     phase: "prepared",
     operations: [operation],
@@ -714,7 +714,7 @@ test("a corrupted backup mode is refused rather than restored", () => {
     write(
       root,
       journalPath(GUARDED_STATE, ID),
-      journalWith(updateOperation(0o644)),
+      journalWith(root, updateOperation(0o644)),
     );
     chmodSync(abs(root, `${backupsDir(GUARDED_STATE, ID)}/backup-0`), 0o777);
     const recovered = recoverTransaction(root, GUARDED_STATE, ID, ROOTS);
@@ -732,7 +732,7 @@ test("a mode edit on the current image is preserved through refusal", () => {
     write(
       root,
       journalPath(GUARDED_STATE, ID),
-      journalWith(updateOperation(0o644)),
+      journalWith(root, updateOperation(0o644)),
     );
     chmodSync(abs(root, `${ROOTS.stylesDir}/kit.css`), 0o700);
     const recovered = recoverTransaction(root, GUARDED_STATE, ID, ROOTS);
@@ -753,7 +753,7 @@ test("the canonical lock is rejected as an ordinary recovery operation", () => {
     write(
       root,
       journalPath(GUARDED_STATE, ID),
-      journalWith({
+      journalWith(root, {
         path: lockPath(GUARDED_STATE),
         operation: "update",
         preimage: { kind: "file", digest: sha256Hex("{}"), mode: 0o644 },

@@ -1,3 +1,7 @@
+import {
+  verifyInstallationInventory,
+  type InstallationInventory,
+} from "../project/detect.js";
 /**
  * Plan preimage revalidation under exclusive coordination (S067).
  *
@@ -130,6 +134,7 @@ function checkAncestry(root: string, logicalPath: string): string | null {
 }
 
 export interface RevalidateOptions {
+  readonly installation?: InstallationInventory;
   /**
    * The captured ancestor chain. When supplied, absence is legitimate for a
    * component the plan recorded as absent (fresh init/custom mapping), and a
@@ -156,7 +161,10 @@ export function revalidatePreimages(
   expected: readonly TargetPreimage[],
   options: RevalidateOptions = {},
 ): ModelResult<null> {
-  const issues = [...verifyCatalogDigest(root, options.catalogDigest)];
+  const issues = [
+    ...verifyCatalogDigest(root, options.catalogDigest),
+    ...verifyInstallationInventory(root, options.installation),
+  ];
   if (options.root) issues.push(...verifyRootIdentity(root, options.root));
   if (options.files && options.files.length > 0) {
     issues.push(...verifyReadFiles(root, options.files));
