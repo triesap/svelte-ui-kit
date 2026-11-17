@@ -235,6 +235,12 @@ test("both supported filesystem platforms and all owning safety files remain man
       .at(-1)
       .run.replace(" tests/integration/journal-phase-processes.test.ts", "");
   has(errors(phaseOmitted), "CI_COMMAND_COVERAGE");
+  const targetOmitted = actual();
+  targetOmitted.jobs.filesystem.steps.at(-1).run =
+    targetOmitted.jobs.filesystem.steps
+      .at(-1)
+      .run.replace(" tests/integration/target-recovery.test.ts", "");
+  has(errors(targetOmitted), "CI_COMMAND_COVERAGE");
   const narrowed = actual();
   narrowed.jobs.filesystem.steps.at(-1).run += " --test-name-pattern clean";
   has(errors(narrowed), "CI_COMMAND_COVERAGE");

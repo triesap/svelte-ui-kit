@@ -25,6 +25,7 @@ export const FILESYSTEM_TESTS = Object.freeze(
     "recovery-ownership",
     "recovery-prepublication",
     "recovery-published",
+    "target-recovery",
     "transaction-authority",
     "transaction-cleanup",
     "transaction-processes",

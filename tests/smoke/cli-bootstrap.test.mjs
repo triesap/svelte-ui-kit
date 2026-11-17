@@ -722,22 +722,17 @@ test("snapshot detects a retargeted symlink", (t) => {
 
 /** Inject an "overwrite a pre-existing seeded hidden file" behaviour. */
 function existingFileWriteMutant(source) {
-  const needle = 'import { readFileSync } from "node:fs";';
-  const withImports = source.replace(
-    needle,
-    'import { readFileSync, existsSync, writeFileSync } from "node:fs";',
-  );
-  assert.notEqual(
-    withImports,
-    source,
-    "expected the built entrypoint to import readFileSync from node:fs",
-  );
+  // Metadata I/O now belongs to package-identity, so the adapter need not
+  // import fs itself. Give the mutant its own distinct imports; qualification
+  // must reject the actual write rather than an obsolete source-shape guess.
+  assert.equal(source.includes("__ownedSmokeWrite"), false);
   return (
-    withImports +
+    source +
     "\n// S004 mutation probe: overwrite a pre-existing seeded hidden file.\n" +
+    'import { existsSync as __ownedSmokeExists, writeFileSync as __ownedSmokeWrite } from "node:fs";\n' +
     "{\n" +
     '  const mutantPath = process.cwd() + "/.decoy-hidden";\n' +
-    '  if (existsSync(mutantPath)) writeFileSync(mutantPath, "mutant overwrite\\n");\n' +
+    '  if (__ownedSmokeExists(mutantPath)) __ownedSmokeWrite(mutantPath, "mutant overwrite\\n");\n' +
     "}\n"
   );
 }
@@ -826,6 +821,7 @@ test(
       "existing-file-write mutant unexpectedly passed the smoke suite",
     );
     assert.match(result.stdout, /^not ok /m);
+    assert.match(result.stdout, /seeded cwd changed after/);
   },
 );
 
