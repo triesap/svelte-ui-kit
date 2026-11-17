@@ -201,7 +201,11 @@ export function makeGuardedPlan(
   write(root, config.uiDir + "/old.svelte", "old component");
   write(root, config.uiDir + "/keep.svelte", "keep me");
   write(root, config.stylesDir + "/kit.css", "old css");
-  write(root, config.layoutFile, "<main><slot /></main>\n");
+  write(
+    root,
+    config.layoutFile,
+    "<script>let { children } = $props();</script>\n<main>{@render children()}</main>\n",
+  );
   write(root, stateDir + "/kit.json", validKitConfigBytes(config));
   const original = capturedFixtureInit(root, config);
   if (options.metadataOnly) {

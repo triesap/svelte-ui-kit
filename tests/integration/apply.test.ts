@@ -223,7 +223,7 @@ test("a recoverable failure rolls back and preserves a consistent state", () => 
     );
     assert.equal(
       readFileSync(abs(root, LAYOUT), "utf8"),
-      "<main><slot /></main>\n",
+      "<script>let { children } = $props();</script>\n<main>{@render children()}</main>\n",
     );
     assert.equal(
       readFileSync(abs(root, `${UI}/old.svelte`), "utf8"),

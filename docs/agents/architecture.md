@@ -128,3 +128,10 @@ actual import/render AST and lexical child-render proof, strict types/native
 provenance, structural patchers and installed consumers. Preserve authenticated
 immutable export/cohort authority and equivalent-customization controls: neither
 planned output nor a test inventory can certify its own correctness.
+
+SvelteKit layout integration requires a lexical `$props()` children binding and
+an executable `{@render ...}` of that binding, including legitimate aliases.
+Legacy `<slot>` and `export let children` do not establish this contract. Existing
+layouts are checked before unchanged planner success; the CLI diagnoses unsupported
+rendering without rewriting it. Native Astro slots and ordinary component parsing
+retain their independent behavior.

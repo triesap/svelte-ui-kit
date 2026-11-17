@@ -718,11 +718,31 @@ export function buildCatalogHydrationConsumer(custom: boolean) {
   const registry = JSON.parse(
     readFileSync("assets/registry/registry.json", "utf8"),
   );
+  const layoutRendering = {
+    path: "",
+    binding: custom ? "pageContent" : "children",
+    sha256: "",
+  };
   const consumer = buildInstalledItemsConsumer(
     custom,
     "catalog-hydration",
     registry.items.map((item: { id: string }) => item.id),
     (root, config) => {
+      const layoutFile = path.join(root, config.layoutFile);
+      const originalLayout = readFileSync(layoutFile, "utf8");
+      let modernLayout = originalLayout;
+      if (custom) {
+        assert.ok(originalLayout.includes("let { children }:"));
+        assert.ok(originalLayout.includes("{@render children()}"));
+        modernLayout = originalLayout
+          .replace("let { children }:", "let { children: pageContent }:")
+          .replace("{@render children()}", "{@render pageContent()}");
+        writeFileSync(layoutFile, modernLayout);
+        runGeneratedCommand(root, path.resolve("dist/cli/main.js"), ["sync"]);
+        assert.equal(readFileSync(layoutFile, "utf8"), modernLayout);
+      }
+      layoutRendering.path = config.layoutFile;
+      layoutRendering.sha256 = sha256Hex(Buffer.from(modernLayout));
       const folder = "src/routes/qualification/catalog-hydration";
       let module = path.posix.relative(folder, `${config.uiDir}/index.js`);
       if (!module.startsWith(".")) module = `./${module}`;
@@ -748,7 +768,9 @@ export function buildCatalogHydrationConsumer(custom: boolean) {
     ...consumer,
     evidence: {
       ...consumer.evidence,
+      layoutRendering,
       files: {
+        [layoutRendering.path]: layoutRendering.sha256,
         ...consumer.evidence.files,
         [catalog]: sha256Hex(readFileSync(path.join(consumer.root, catalog))),
         "src/routes/qualification/catalog-hydration/native/+page.svelte":

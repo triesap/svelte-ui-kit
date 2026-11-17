@@ -13,7 +13,8 @@
  * template literal is not an import. Child-rendering proof is the actual Svelte
  * template AST: a `{@render ...}` node whose rendered expression resolves to a
  * name bound to the `children` prop (including a destructuring alias such as
- * `let { children: content } = $props()`), or a legacy `<slot>` element. Text
+ * `let { children: content } = $props()`). Legacy slots and export-let props
+ * do not establish the modern layout contract. Text
  * inside an HTML comment is a `Comment` node, never a `RenderTag`.
  */
 import { parse } from "svelte/compiler";
@@ -49,8 +50,8 @@ export interface LayoutInfo {
   readonly moduleImports: readonly string[];
   /**
    * True only when the template has an executable child-rendering node: a
-   * `{@render ...}` of a name bound to the `children` prop, or a legacy
-   * `<slot>`. Comments, unrelated render calls and undeclared names are not
+   * `{@render ...}` of a name bound to the modern `$props()` children prop.
+   * Comments, legacy slots/props, unrelated render calls and undeclared names are not
    * proof.
    */
   readonly rendersChildren: boolean;
@@ -107,11 +108,6 @@ function childBindingNames(content: string): readonly string[] {
   const names: string[] = [];
   for (const statement of sourceFile.statements) {
     if (!ts.isVariableStatement(statement)) continue;
-    const exported =
-      ts
-        .getModifiers(statement)
-        ?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) ??
-      false;
     for (const declaration of statement.declarationList.declarations) {
       const initializer = declaration.initializer;
       if (
@@ -136,15 +132,6 @@ function childBindingNames(content: string): readonly string[] {
           if (ts.isIdentifier(element.name)) names.push(element.name.text);
         }
         continue;
-      }
-      // Legacy Svelte 4 prop declaration: `export let children;`.
-      if (
-        exported &&
-        initializer === undefined &&
-        ts.isIdentifier(declaration.name) &&
-        declaration.name.text === "children"
-      ) {
-        names.push("children");
       }
     }
   }
@@ -172,7 +159,7 @@ function renderTargetName(expression: unknown): string | null {
  * Walk the Svelte template AST for an *executable* child render.
  *
  * Only an actual `RenderTag` of a name that lexically resolves to the `children`
- * prop binding, or a legacy `SlotElement`, counts. The proof is binding-aware
+ * prop binding from `$props()`, counts. The proof is binding-aware
  * and reachability-aware: a snippet declaration's body is deferred content, so a
  * child render inside a declared-but-never-invoked snippet is not executable and
  * does not count. A reachable `{@render snippet()}` does recurse into the
@@ -181,7 +168,7 @@ function renderTargetName(expression: unknown): string | null {
  * Comments and unrelated render calls are separate nodes and never satisfy it.
  *
  * The analysis is deliberately bounded: it resolves direct/aliased children,
- * conditional/each/await branches, invoked snippets and legacy slots, and
+ * conditional/each/await branches and invoked snippets, and
  * treats anything it cannot prove as not-rendered rather than guessing.
  */
 
@@ -326,17 +313,7 @@ function templateRendersChild(
   if (node === null || typeof node !== "object") return false;
   const record = node as Record<string, unknown>;
   const type = record["type"];
-  if (type === "SlotElement") {
-    const attributes = Array.isArray(record["attributes"])
-      ? record["attributes"]
-      : [];
-    return !attributes.some(
-      (attribute) =>
-        typeof attribute === "object" &&
-        attribute !== null &&
-        (attribute as Record<string, unknown>)["name"] === "name",
-    );
-  }
+  if (type === "SlotElement") return false;
   if (type === "SnippetBlock") return false;
   // Component children are a deferred snippet/slot. An unknown component may
   // discard them entirely or supply its own slot bindings; visiting that body

@@ -93,10 +93,15 @@ test("child rendering proof follows the actual render node and binding", () => {
   const legacy =
     "<script>export let children;</script>\n{@render children()}\n";
   const slot = "<main><slot /></main>\n";
-  for (const source of [direct, aliased, legacy, slot]) {
+  for (const source of [direct, aliased]) {
     const result = parseSvelteLayout(source);
     assert.equal(result.ok, true, JSON.stringify(result));
     if (result.ok) assert.equal(result.value.rendersChildren, true, source);
+  }
+  for (const source of [legacy, slot]) {
+    const result = parseSvelteLayout(source);
+    assert.ok(result.ok, JSON.stringify(result));
+    if (result.ok) assert.equal(result.value.rendersChildren, false, source);
   }
 });
 
@@ -201,7 +206,7 @@ test("snippet closures and fallback branches retain declaration-site children", 
   }
 });
 
-test("only a direct default slot proves legacy layout children", () => {
+test("legacy slots never prove modern layout children", () => {
   for (const source of [
     '<slot name="other" />',
     "<svelte:fragment><slot /></svelte:fragment>",
@@ -212,5 +217,5 @@ test("only a direct default slot proves legacy layout children", () => {
   }
   const direct = parseSvelteLayout("<main><slot /></main>");
   assert.equal(direct.ok, true, JSON.stringify(direct));
-  if (direct.ok) assert.equal(direct.value.rendersChildren, true);
+  if (direct.ok) assert.equal(direct.value.rendersChildren, false);
 });

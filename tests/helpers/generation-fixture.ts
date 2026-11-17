@@ -134,7 +134,7 @@ export function generationFixture(
     target === "astro"
       ? '---\nconst heading = "Preserved";\n---\n<main data-owned="original"><h1>{heading}</h1><slot /></main>\n'
       : target === "sveltekit"
-        ? '<main data-owned="original"><slot /></main>\n'
+        ? '<script>let { children } = $props();</script>\n<main data-owned="original">{@render children()}</main>\n'
         : '@charset "UTF-8";\n/* preserved application entry */\n@layer application;\n',
   );
   project.writeFile(".gitignore", "# application ignore rules\n");

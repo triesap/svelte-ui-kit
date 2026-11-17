@@ -18,6 +18,27 @@ import { patchOrderedScriptImports } from "./script-imports.js";
 import { fail, issue, ok, type ModelResult } from "../registry/errors.js";
 import { parseScriptImports, parseSvelteLayout } from "./svelte-parse.js";
 
+/** One actionable modern layout contract shared by planners and projected checks. */
+export function modernChildrenIssue(logicalPath: string) {
+  return issue(
+    "PROJECTED_LAYOUT_RENDERING_MISSING",
+    `The SvelteKit layout ${JSON.stringify(logicalPath)} must render its modern children prop. Use let { children } = $props(); with {@render children()}, or a legitimate renamed binding, and reconcile the layout manually.`,
+    logicalPath,
+  );
+}
+
+/** Existing layouts must qualify before an unchanged planner result can succeed. */
+export function requireModernChildren(
+  source: string,
+  logicalPath: string,
+): ModelResult<null> {
+  const parsed = parseSvelteLayout(source);
+  if (!parsed.ok) return parsed;
+  return parsed.value.rendersChildren
+    ? ok(null)
+    : fail([modernChildrenIssue(logicalPath)]);
+}
+
 export interface LayoutImport {
   readonly specifier: string;
 }

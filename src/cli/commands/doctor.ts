@@ -1,3 +1,4 @@
+import { modernChildrenIssue } from "../../codegen/svelte.js";
 import { parse, parseCss } from "svelte/compiler";
 import { sha256Hex } from "../../codegen/digest.js";
 import { generationFields, generationTarget } from "../../project/config.js";
@@ -422,7 +423,9 @@ export function diagnose(
             ? [
                 issue(
                   "DOCTOR_CHILD_RENDER_MISSING",
-                  "The layout no longer proves application child rendering.",
+                  generationTarget(config) === "sveltekit"
+                    ? modernChildrenIssue(integration.path).message
+                    : "The layout no longer proves application child rendering.",
                   integration.path,
                 ),
               ]

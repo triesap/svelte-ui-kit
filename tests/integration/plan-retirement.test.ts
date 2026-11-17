@@ -114,7 +114,7 @@ function installedExports(): string {
   return rendered.value;
 }
 const INSTALLED_LAYOUT =
-  '<script>import "../../styles/kit.css"; import "../../styles/themes.css"; import "../../styles/app.css";</script>\n<slot />\n';
+  '<script>import "../../styles/kit.css"; import "../../styles/themes.css"; import "../../styles/app.css";let { children } = $props();</script>\n{@render children()}\n';
 function installedConfig(): string {
   return serializeKitConfig({
     ...DEFAULT_KIT_CONFIG,

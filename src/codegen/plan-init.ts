@@ -1,3 +1,4 @@
+import { requireModernChildren } from "./svelte.js";
 import {
   generationFields,
   integrationMapping,
@@ -350,6 +351,11 @@ export function planInit(input: AnyInitPlanInput): ModelResult<InitPlan> {
         ),
       ]);
     }
+  }
+
+  if (config.target === "sveltekit" && layoutObservation.kind === "file") {
+    const rendering = requireModernChildren(layoutSource, targets.layout);
+    if (!rendering.ok) return rendering;
   }
 
   const writes: PlannedWrite[] = [];

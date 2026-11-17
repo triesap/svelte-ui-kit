@@ -1,3 +1,4 @@
+import { requireModernChildren } from "./svelte.js";
 import type {
   ApplicationConfig,
   KitConfig,
@@ -1117,6 +1118,13 @@ export function planAdd(
     hasConflict = true;
   } else {
     const existing = layoutState.status === "file" ? layoutState.text : "";
+    if (config.target === "sveltekit" && layoutState.status === "file") {
+      const rendering = requireModernChildren(
+        existing,
+        integrationMapping(config).path,
+      );
+      if (!rendering.ok) return rendering;
+    }
     finalLayout = existing;
     const layoutIntegration = (lock?.integrations ?? []).find(
       (entry) =>

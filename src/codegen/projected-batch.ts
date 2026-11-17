@@ -1,3 +1,4 @@
+import { modernChildrenIssue } from "./svelte.js";
 import {
   integrationMapping,
   parseKitConfig,
@@ -471,7 +472,9 @@ function validateLayoutIntegration(
     issues.push(
       issue(
         "PROJECTED_LAYOUT_RENDERING_MISSING",
-        `the projected layout ${JSON.stringify(layoutPath)} declares the ${LAYOUT_CONTRACT} contract but does not render its child content`,
+        config.target === "sveltekit"
+          ? modernChildrenIssue(layoutPath).message
+          : `the projected layout ${JSON.stringify(layoutPath)} declares the ${LAYOUT_CONTRACT} contract but does not render its child content`,
         layoutPath,
       ),
     );

@@ -33,8 +33,7 @@ import {
  * RCLD04-R2-1/R2-5 semantic integration authority.
  *
  * The guarded boundary must prove a `layout-v1` integration from the actual
- * Svelte template AST (a real `{@render}` of the `children` binding or a legacy
- * `<slot>`), never from import-looking or render-looking text inside a comment.
+ * Svelte template AST (a real `{@render}` of the `children` modern `$props()` binding), never from import-looking or render-looking text inside a comment.
  * It must prove an `exports-v1` integration from the effective managed export
  * region against the registry-declared export cohort carried from planning, so
  * a barrel replacement that silently drops or retargets a declared export is
@@ -213,7 +212,7 @@ for (const [label, config] of CONFIGS) {
     });
   });
 
-  test(`[${label}] direct, aliased and legacy children rendering are accepted`, () => {
+  test(`[${label}] direct and aliased children are accepted while legacy slots refuse`, () => {
     withCapturedInit(config, (_root, plan) => {
       const direct = plan;
       assert.equal(validateApplyPlan(direct).ok, true);
@@ -237,13 +236,12 @@ for (const [label, config] of CONFIGS) {
         `<main><slot /></main>\n`,
       );
       const slotResult = validateApplyPlan(slot);
-      // A legacy slot renders children but still needs the mapped imports, so
-      // this stays an integration refusal, never a rendering refusal.
+      // Legacy slots cannot establish modern rendering, even before import proof.
       assert.equal(slotResult.ok, false, JSON.stringify(slotResult));
       if (!slotResult.ok) {
         assert.ok(
-          slotResult.issues.every(
-            (entry) => entry.code !== "PROJECTED_LAYOUT_RENDERING_MISSING",
+          slotResult.issues.some(
+            (entry) => entry.code === "PROJECTED_LAYOUT_RENDERING_MISSING",
           ),
           JSON.stringify(slotResult.issues),
         );
