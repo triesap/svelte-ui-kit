@@ -87,8 +87,8 @@ checks both compiled baselines when bundling and permits exactly the two archive
 members in `dist/native`. Matching existing files retain their bytes, identity
 and mode; foreign, linked or mismatched inputs refuse. The Svelte producer's
 `report.json` remains regular diagnostic data in its source cache and is never
-delivery authority or a bundled member. Shared preparation I/O keeps the legacy
-synchronous Bits-only preparer available for focused controls. Maintained
+delivery authority or a bundled member. Preparation has one typed asynchronous entry point for both archives; its internal
+Bits cache step retains the actual producer and the same qualification controls. Maintained
 application manifests select both archives explicitly; the library uses local
 development dependencies and retains SemVer peers. Copying archives alone does
 not establish installed qualification. The CLI's compiler dependency and public peer ranges
@@ -245,8 +245,8 @@ generated dependency closure also constrain peer validation. A valid development
 file cannot conceal an incompatible published Bits or date peer.
 
 Invocation capture keeps a deeply immutable package-indexed archive collection.
-The historical `nativeFile` accessor remains the same Bits observation. Each
-authenticated source contributes its actual hash/mode and complete ancestry to
+Use `nativeFiles.get(name)` for each explicitly captured package; there is no
+singular Bits-only accessor or fallback. Each authenticated source contributes its actual hash/mode and complete ancestry to
 snapshot evidence; later byte, mode or physical-path changes cannot hide behind
 an unchanged application manifest. Missing and invalid sources remain distinct
 observations. Archive capture alone never establishes installed readiness or

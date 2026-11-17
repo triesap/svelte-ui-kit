@@ -64,8 +64,8 @@ test("both package sources are captured read-only with exact evidence and distin
   const captured = captureSnapshot(project.root, []);
   assert.ok(captured.ok);
   const environment = captured.value.environment;
+  assert.equal(Object.hasOwn(environment, "nativeFile"), false);
   assert.deepEqual([...environment.nativeFiles.keys()], ["bits-ui", "svelte"]);
-  assert.equal(environment.nativeFile, environment.nativeFiles.get("bits-ui"));
   for (const name of ["bits-ui", "svelte"] as const) {
     const source = environment.nativeFiles.get(name);
     assert.ok(source?.kind === "value");
@@ -112,8 +112,7 @@ test("absent declarations and invalid declared sources remain distinct immutable
   const project = consumer(t, ["svelte"]);
   rmSync(path.join(project.root, declarations.svelte));
   const environment = captureEnvironment(project.root);
-  assert.equal(environment.nativeFile.kind, "absent");
-  assert.equal(environment.nativeFile, environment.nativeFiles.get("bits-ui"));
+  assert.equal(environment.nativeFiles.get("bits-ui")?.kind, "absent");
   const source = environment.nativeFiles.get("svelte");
   assert.ok(source?.kind === "invalid");
   assert.ok(source.issues.length > 0);

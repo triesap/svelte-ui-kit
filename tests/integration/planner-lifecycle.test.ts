@@ -394,14 +394,14 @@ test("initialization refuses unverifiable scalar registry identity", (t) => {
     registryVersion: "9.9.9",
     registryHash: "a".repeat(64),
     configHash: "b".repeat(64),
-  });
+  } as never); // Intentional raw retired input: scalar identity grants no authority.
   assert.equal(result.ok, false);
   assert.deepEqual(result.ok ? [] : result.issues.map((entry) => entry.code), [
     "INIT_REGISTRY_UNVERIFIED",
   ]);
 });
 
-test("initialization records the validated registry identity, not a spoofed scalar", (t) => {
+test("initialization records identity from the validated registry snapshot", (t) => {
   const project = createSupportedProject();
   t.after(() => project.cleanup());
   const registry = registryOf([]);
@@ -411,8 +411,6 @@ test("initialization records the validated registry identity, not a spoofed scal
     layoutSource: "",
     snapshot: snapshotOf(project),
     registry,
-    registryVersion: "9.9.9",
-    registryHash: "a".repeat(64),
     configHash: "b".repeat(64),
   });
   assert.equal(result.ok, true, JSON.stringify(result));

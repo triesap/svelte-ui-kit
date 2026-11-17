@@ -253,20 +253,14 @@ function declaredRange(
 export interface DependencyEvidence {
   readonly manifest: JsonObservation;
   readonly observe: (name: string) => InstalledObservation | null;
-  readonly nativeFile?: NativeFileObservation;
   readonly nativeFiles?: ReadonlyMap<string, NativeFileObservation>;
 }
 
 function nativeSource(
   name: QualifiedNativeName,
-  legacy: NativeFileObservation | undefined,
   sources: ReadonlyMap<string, NativeFileObservation> | undefined,
 ): NativeFileObservation | undefined {
-  return sources === undefined
-    ? name === "bits-ui"
-      ? legacy
-      : undefined
-    : sources.get(name);
+  return sources?.get(name);
 }
 
 /**
@@ -284,7 +278,6 @@ export function inspectDependencyStateFromEvidence(
     evidence.manifest,
     evidence.observe,
     requirements,
-    evidence.nativeFile,
     evidence.nativeFiles,
   );
 }
@@ -293,7 +286,6 @@ function inspectWithEvidence(
   manifestObservation: JsonObservation,
   observeInstalled: (name: string) => InstalledObservation | null,
   requirements: readonly DependencyRequirement[],
-  nativeFile?: NativeFileObservation,
   nativeFiles?: ReadonlyMap<string, NativeFileObservation>,
 ): ModelResult<readonly DependencyStateEntry[]> {
   const issues: ModelIssue[] = [];
@@ -373,7 +365,7 @@ function inspectWithEvidence(
       isQualifiedNativeName(requirement.name) &&
       declared.range?.startsWith("file:")
     ) {
-      const source = nativeSource(requirement.name, nativeFile, nativeFiles);
+      const source = nativeSource(requirement.name, nativeFiles);
       const sourceIssues = nativeArchiveIssues(
         declared.range,
         source,
@@ -452,7 +444,7 @@ function inspectWithEvidence(
       }
       const sourceIssues = nativeArchiveIssues(
         declared.range,
-        nativeSource(requirement.name, nativeFile, nativeFiles),
+        nativeSource(requirement.name, nativeFiles),
         requirement.name,
       );
       if (sourceIssues.length > 0) {
@@ -519,7 +511,6 @@ export function inspectDependencyState(
     manifest,
     (name) => observeInstalled(root, name),
     requirements,
-    undefined,
     observeNativeFiles(root, manifest.kind === "value" ? manifest.value : null),
   );
 }
@@ -563,7 +554,6 @@ function collectPeerConstraints(
   plan: DependencyPlan,
   issues: ModelIssue[],
   manifest: Record<string, unknown> | null,
-  nativeFile?: NativeFileObservation,
   nativeFiles?: ReadonlyMap<string, NativeFileObservation>,
 ): readonly PeerConstraint[] {
   const byName = new Map<
@@ -670,7 +660,7 @@ function collectPeerConstraints(
         ),
         ...nativeArchiveIssues(
           nativeDeclaration(manifest, entry.name),
-          nativeSource(entry.name, nativeFile, nativeFiles),
+          nativeSource(entry.name, nativeFiles),
           entry.name,
         ),
       ];
@@ -796,7 +786,6 @@ export function validatePeerDependenciesFromEvidence(
     evidence.manifest,
     evidence.observe,
     plan,
-    evidence.nativeFile,
     evidence.nativeFiles,
   );
 }
@@ -816,7 +805,6 @@ export function validatePeerDependencies(
     manifest,
     (name) => observeInstalled(root, name),
     plan,
-    undefined,
     observeNativeFiles(root, manifest.kind === "value" ? manifest.value : null),
   );
 }
@@ -825,7 +813,6 @@ function validatePeerWithEvidence(
   manifestObservation: JsonObservation,
   observeInstalled: (name: string) => InstalledObservation | null,
   plan: DependencyPlan,
-  nativeFile?: NativeFileObservation,
   nativeFiles?: ReadonlyMap<string, NativeFileObservation>,
 ): ModelResult<readonly DependencyStateEntry[]> {
   const issues: ModelIssue[] = [];
@@ -861,7 +848,6 @@ function validatePeerWithEvidence(
     plan,
     issues,
     manifestObservation.kind === "value" ? manifestObservation.value : null,
-    nativeFile,
     nativeFiles,
   );
   if (issues.length > 0) return fail(issues);
@@ -870,7 +856,6 @@ function validatePeerWithEvidence(
   const installedEvidence: DependencyEvidence = {
     manifest: manifestObservation,
     observe: observeInstalled,
-    nativeFile,
     nativeFiles,
   };
   const results: DependencyStateEntry[] = [];

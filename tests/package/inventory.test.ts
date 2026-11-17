@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { TRANSACTION_MODULE_MOVES } from "../helpers/transaction-modules.js";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -199,6 +200,27 @@ test("real packed inventory contains only standalone distribution assets and run
     // Installed dependency linkage is explicit test setup. There is no src,
     // registry fallback or current-directory assets in this extracted package.
     symlinkSync(path.resolve("node_modules"), path.join(root, "node_modules"));
+    const discoveryApi = spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "-e",
+        'const api = await import(process.argv[1]); console.log(JSON.stringify({ canonical: typeof api.discoverGenerationConfig, retired: Object.hasOwn(api, "discoverKitConfig") }));',
+        pathToFileURL(path.join(root, "dist/project/detect.js")).href,
+      ],
+      { cwd: consumer, encoding: "utf8", timeout: 30000 },
+    );
+    assert.equal(discoveryApi.error, undefined);
+    assert.equal(discoveryApi.signal, null);
+    assert.equal(
+      discoveryApi.status,
+      0,
+      discoveryApi.stdout + discoveryApi.stderr,
+    );
+    assert.deepEqual(JSON.parse(discoveryApi.stdout), {
+      canonical: "function",
+      retired: false,
+    });
     const executable = path.join(root, "dist/cli/main.js");
     const help = spawnSync(process.execPath, [executable, "--help", "--json"], {
       cwd: consumer,

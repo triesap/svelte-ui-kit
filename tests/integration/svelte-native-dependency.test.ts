@@ -158,7 +158,7 @@ function evidence(app: string): DependencyEvidence {
   const captured = captureEnvironment(app);
   return {
     manifest: captured.manifest,
-    nativeFile: captured.nativeFile,
+
     nativeFiles: captured.nativeFiles,
     observe: (name) => captured.installed.get(name) ?? null,
   };

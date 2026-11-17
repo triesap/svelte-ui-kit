@@ -105,12 +105,6 @@ export function extractAnchorData(text) {
   return { explicit, explicitSet, duplicateExplicit, slugs, slugSet };
 }
 
-/** Backwards-compatible union of explicit anchors and heading slugs. */
-export function extractAnchors(text) {
-  const { explicit, slugs } = extractAnchorData(text);
-  return [...explicit, ...slugs];
-}
-
 /**
  * Extract Markdown links outside fenced code blocks. Supports inline links,
  * reference-style links (`[label][ref]`, `[label][]`) and shortcut references

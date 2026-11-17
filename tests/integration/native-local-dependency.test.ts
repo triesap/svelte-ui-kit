@@ -45,6 +45,12 @@ const requirements = [
 const log = path.resolve(".artifacts/verification/native-local-file");
 mkdirSync(log, { recursive: true });
 const transcript: unknown[] = [];
+const retainedRoots = new Set<string>();
+const saveTranscript = () =>
+  writeFileSync(
+    path.join(log, `${process.pid}.json`),
+    JSON.stringify(transcript, null, 2),
+  );
 const env: NodeJS.ProcessEnv = {
   ...process.env,
   npm_config_verify_deps_before_run: "false",
@@ -122,11 +128,21 @@ before(() => {
   );
   rmSync(output, { recursive: true, force: true });
 });
-after(() => rmSync(base, { recursive: true, force: true }));
+after(() => {
+  if (retainedRoots.size === 0) rmSync(base, { recursive: true, force: true });
+  else
+    writeFileSync(
+      path.join(log, `${process.pid}-retained.json`),
+      JSON.stringify({ base, retainedRoots: [...retainedRoots] }, null, 2),
+    );
+});
 function copy(t: { after(callback: () => void): void }): string {
   const root = mkdtempSync(path.join(base, "consumer-"));
   cpSync(fixture, root, { recursive: true, verbatimSymlinks: true });
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => {
+    if (!retainedRoots.has(root))
+      rmSync(root, { recursive: true, force: true });
+  });
   return root;
 }
 function codes(root: string): string[] {
@@ -177,17 +193,45 @@ test("selected-owner native catalog authenticates the real archive and installed
 });
 
 function cli(root: string, args: string[]) {
-  const result = spawnSync(
-    process.execPath,
-    [path.resolve("dist/cli/main.js"), ...args, "--cwd", root, "--json"],
-    {
-      cwd: root,
-      env,
-      encoding: "utf8",
-      timeout: 30_000,
-      killSignal: "SIGKILL",
-    },
-  );
+  const argv = [
+    path.resolve("dist/cli/main.js"),
+    ...args,
+    "--cwd",
+    root,
+    "--json",
+  ];
+  const started = performance.now();
+  const result = spawnSync(process.execPath, argv, {
+    cwd: root,
+    env,
+    encoding: "utf8",
+    timeout: 30_000,
+    killSignal: "SIGKILL",
+  });
+  transcript.push({
+    command: process.execPath,
+    args: argv,
+    cwd: root,
+    pid: result.pid ?? null,
+    timeout: 30_000,
+    killSignal: "SIGKILL",
+    elapsedMs: performance.now() - started,
+    status: result.status,
+    signal: result.signal,
+    errorCode:
+      (result.error as NodeJS.ErrnoException | undefined)?.code ?? null,
+    error: result.error?.message ?? null,
+    stdout: result.stdout,
+    stderr: result.stderr,
+  });
+  saveTranscript();
+  if (
+    result.error !== undefined ||
+    result.signal !== null ||
+    result.status === null
+  )
+    retainedRoots.add(root);
+
   assert.equal(result.error, undefined);
   assert.equal(result.signal, null);
   assert.equal(result.stderr, "");
@@ -212,7 +256,7 @@ test("captured native readiness and peers require explicit positive installed an
   };
   const evidence = {
     manifest: captured.manifest,
-    nativeFile: captured.nativeFile,
+
     nativeFiles: captured.nativeFiles,
     observe: (name: string) => captured.installed.get(name) ?? null,
   };
@@ -324,7 +368,10 @@ test("actual file install remains ready with complete identity and read-only cap
   assert.equal(inspected.value[0]?.installedVersion, NATIVE_BASELINE.version);
   const snapshot = captureSnapshot(root, ["target.ts"]);
   assert.ok(snapshot.ok);
-  assert.equal(snapshot.value.environment.nativeFile.kind, "value");
+  assert.equal(
+    snapshot.value.environment.nativeFiles.get("bits-ui")?.kind,
+    "value",
+  );
   assert.ok(snapshot.value.ancestors.has("vendor"));
   assert.ok(
     snapshot.value.environment.evidence.some(
@@ -367,7 +414,7 @@ test("library development installs cannot mask incompatible published Bits or da
     writeFileSync(
       path.join(root, "src/lib/_kit/kit.json"),
       JSON.stringify({
-        schemaVersion: 2,
+        schemaVersion: 1,
         target: "svelte-library",
         uiDir: "src/lib",
         stylesDir: "src/styles",
@@ -375,8 +422,10 @@ test("library development installs cannot mask incompatible published Bits or da
         requested: [],
       }),
     );
-    assert.equal(cli(root, ["init"]).status, 0);
-    assert.equal(cli(root, ["add", "dialog"]).status, 0);
+    const initialized = cli(root, ["init"]);
+    assert.equal(initialized.status, 0, JSON.stringify(initialized.envelope));
+    const installed = cli(root, ["add", "dialog"]);
+    assert.equal(installed.status, 0, JSON.stringify(installed.envelope));
     manifest.peerDependencies[name] = name === "bits-ui" ? "^3" : "^4";
     writeFileSync(file, JSON.stringify(manifest));
     const before = snapshotTree(root);
@@ -538,7 +587,7 @@ test("captured readiness stays immutable while archive and ancestry changes refu
   const captured = snapshot.value.environment;
   const evidence = {
     manifest: captured.manifest,
-    nativeFile: captured.nativeFile,
+
     nativeFiles: captured.nativeFiles,
     observe: (name: string) => captured.installed.get(name) ?? null,
   };
@@ -677,7 +726,7 @@ test("live native authority refuses missing declarations and noncanonical identi
     const stale = inspectDependencyStateFromEvidence(
       {
         manifest: captured.manifest,
-        nativeFile: captured.nativeFile,
+
         nativeFiles: captured.nativeFiles,
         observe: (name) => captured.installed.get(name) ?? null,
       },

@@ -160,7 +160,7 @@ export function inspectInfo(
       });
   const evidence = {
     manifest: environment.manifest,
-    nativeFile: environment.nativeFile,
+
     nativeFiles: environment.nativeFiles,
     observe: (name: string) =>
       environment.installed.get(name) ??

@@ -118,8 +118,6 @@ export interface CapturedEnvironment {
   readonly manifest: JsonObservation;
   readonly catalogDigest: string | null;
   readonly catalogIssues: readonly ModelIssue[];
-  /** Bits compatibility accessor for its entry in nativeFiles. */
-  readonly nativeFile: NativeFileObservation;
   /** Immutable package-indexed sources; archive proof is not installed readiness. */
   readonly nativeFiles: ReadonlyMap<string, NativeFileObservation>;
   /**
@@ -428,7 +426,6 @@ export function captureEnvironment(root: string): CapturedEnvironment {
     manifest.kind === "value" ? manifest.value : null,
   );
   // Both fixed names are constructed by observeNativeFiles on every capture.
-  const nativeFile = nativeFiles.get("bits-ui")!;
   const enumerated = enumerateInstalledNames(root);
   // Decision-relevant names are the union of enumerated installed names and the
   // selected package's declared dependency names. A declared-but-absent name is
@@ -464,7 +461,6 @@ export function captureEnvironment(root: string): CapturedEnvironment {
     manifest,
     catalogDigest: catalogs.digest,
     catalogIssues: catalogs.issues,
-    nativeFile,
     nativeFiles,
     configuration,
     evidence: [

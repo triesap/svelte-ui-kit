@@ -89,9 +89,6 @@ export interface InitPlanInput {
   readonly snapshot: ProjectSnapshot;
   /** Validated registry snapshot; the authoritative registry identity. */
   readonly registry?: RegistrySnapshot;
-  /** Deprecated scalar identity; ignored in favor of `registry`. */
-  readonly registryVersion?: string;
-  readonly registryHash?: string;
   readonly configHash: string;
 }
 export type LibraryInitPlanInput = Omit<

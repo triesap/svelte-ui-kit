@@ -2,7 +2,7 @@ import { DEFAULT_KIT_CONFIG } from "../../src/project/config.js";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { discoverKitConfig } from "../../src/project/detect.js";
+import { discoverGenerationConfig } from "../../src/project/detect.js";
 import type { ModelResult } from "../../src/registry/errors.js";
 import { createTempProject, type TempProject } from "../helpers/project.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
@@ -38,7 +38,7 @@ test("a supported explicit custom mapping resolves relative to the package", (t)
   });
 
   const before = snapshotTree(project.root);
-  const result = discoverKitConfig(project.root);
+  const result = discoverGenerationConfig(project.root);
   const after = snapshotTree(project.root);
 
   assert.equal(result.ok, true, JSON.stringify(result));
@@ -56,7 +56,7 @@ test("no candidate falls back to the default bootstrap location", (t) => {
   t.after(() => project.cleanup());
   project.writeFile("package.json", JSON.stringify({ name: "plain" }));
 
-  const result = discoverKitConfig(project.root);
+  const result = discoverGenerationConfig(project.root);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
   assert.equal(result.value.kind, "default");
@@ -73,7 +73,7 @@ test("a candidate whose uiDir disagrees with its location fails", (t) => {
     uiDir: "other/ui",
   });
 
-  const result = discoverKitConfig(project.root);
+  const result = discoverGenerationConfig(project.root);
   assert.equal(result.ok, false);
   assert.deepEqual(codes(result), ["KIT_CONFIG_LOCATION_MISMATCH"]);
 });
@@ -91,7 +91,7 @@ test("multiple valid candidates are ambiguous", (t) => {
     uiDir: "b/ui",
   });
 
-  const result = discoverKitConfig(project.root);
+  const result = discoverGenerationConfig(project.root);
   assert.equal(result.ok, false);
   assert.deepEqual(codes(result), ["KIT_CONFIG_AMBIGUOUS"]);
 });
@@ -102,7 +102,7 @@ test("malformed candidates fail visibly", (t) => {
   project.writeFile("package.json", JSON.stringify({ name: "bad" }));
   project.writeFile("app/ui/_kit/kit.json", "{ not json");
 
-  const result = discoverKitConfig(project.root);
+  const result = discoverGenerationConfig(project.root);
   assert.equal(result.ok, false);
   assert.ok(codes(result).includes("KIT_CONFIG_INVALID_JSON"));
 });
@@ -140,7 +140,7 @@ test("dependency, build-output, nested package and symlink paths are excluded", 
   });
   project.symlink(external.root, "linked");
 
-  const result = discoverKitConfig(project.root);
+  const result = discoverGenerationConfig(project.root);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
   assert.equal(result.value.kind, "custom");
@@ -161,7 +161,7 @@ test("application configuration is never executed during discovery", (t) => {
     uiDir: "app/ui",
   });
 
-  const result = discoverKitConfig(project.root);
+  const result = discoverGenerationConfig(project.root);
   assert.equal(result.ok, true, JSON.stringify(result));
   if (!result.ok) return;
   assert.equal(result.value.kind, "custom");
@@ -177,7 +177,7 @@ test("a symlinked kit.json candidate is unsafe, not a default bootstrap", (t) =>
   });
   project.symlink("real.json", "app/ui/_kit/kit.json");
 
-  const result = discoverKitConfig(project.root);
+  const result = discoverGenerationConfig(project.root);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(codes(result), ["KIT_CONFIG_UNSAFE"]);
 });
@@ -188,7 +188,7 @@ test("a directory at kit.json is unsafe, not a default bootstrap", (t) => {
   project.writeFile("package.json", JSON.stringify({ name: "dir" }));
   project.writeDir("src/lib/components/ui/_kit/kit.json");
 
-  const result = discoverKitConfig(project.root);
+  const result = discoverGenerationConfig(project.root);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(codes(result), ["KIT_CONFIG_UNSAFE"]);
 });
@@ -206,7 +206,7 @@ test("a symlinked _kit directory is observed deliberately", (t) => {
   project.writeDir("app/ui");
   project.symlink(external.root, "app/ui/_kit");
 
-  const result = discoverKitConfig(project.root);
+  const result = discoverGenerationConfig(project.root);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.ok(codes(result).includes("KIT_CONFIG_UNSAFE"));
 });
@@ -223,7 +223,7 @@ test("a symlinked default ancestry cannot become a default bootstrap", (t) => {
   t.after(() => external.cleanup());
   project.symlink(external.root, "src");
 
-  const result = discoverKitConfig(project.root);
+  const result = discoverGenerationConfig(project.root);
   assert.equal(result.ok, false, JSON.stringify(result));
   assert.deepEqual(codes(result), ["KIT_CONFIG_UNSAFE"]);
 });

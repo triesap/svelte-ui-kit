@@ -16,7 +16,6 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { prepareNativeDependency } from "./prepare-native-dependency.mjs";
 import { prepareNativeArtifacts } from "./prepare-native-artifacts.ts";
 import { nativeDigest, NATIVE_RECIPE } from "./build-native-dependency.mjs";
 
@@ -38,13 +37,23 @@ function project(parent, name) {
     path.join(root, "package.json"),
     JSON.stringify({ name: "svelte-ui-kit", private: true }),
   );
+  cpSync(
+    path.join(repository, "src/project/svelte-runtime-baseline.json"),
+    path.join(root, "src/project/svelte-runtime-baseline.json"),
+  );
+  mkdirSync(path.join(root, ".native-build"));
+  cpSync(
+    path.join(repository, ".native-build", svelteBaseline.buildId),
+    path.join(root, ".native-build", svelteBaseline.buildId),
+    { recursive: true },
+  );
   return root;
 }
 
 test(
   "preparation uses a real qualified archive, replays unchanged and refuses corrupt or linked artifact state",
   { timeout: 300_000 },
-  () => {
+  async () => {
     const root = mkdtempSync(
       path.join(os.tmpdir(), "suik-native-preparation-"),
     );
@@ -57,14 +66,20 @@ test(
         path.join(author, "src/project/native-dependency-baseline.json"),
         path.join(author, "dist/project/native-dependency-baseline.json"),
       );
+      cpSync(
+        path.join(author, "src/project/svelte-runtime-baseline.json"),
+        path.join(author, "dist/project/svelte-runtime-baseline.json"),
+      );
       mkdirSync(path.join(author, "tests/fixtures/consumer"), {
         recursive: true,
       });
-      const prepared = prepareNativeDependency({
-        root: author,
-        bundle: true,
-        fixture: true,
-      });
+      const prepared = (
+        await prepareNativeArtifacts({
+          root: author,
+          bundle: true,
+          fixture: true,
+        })
+      ).bits;
       assert.equal(prepared.built, true);
       assert.equal(prepared.bundled, true);
       assert.equal(prepared.fixture, true);
@@ -87,11 +102,13 @@ test(
         inode: lstatSync(file).ino,
         mode: lstatSync(file).mode,
       }));
-      const replay = prepareNativeDependency({
-        root: author,
-        bundle: true,
-        fixture: true,
-      });
+      const replay = (
+        await prepareNativeArtifacts({
+          root: author,
+          bundle: true,
+          fixture: true,
+        })
+      ).bits;
       assert.equal(replay.built, false);
       assert.deepEqual(
         [cached, bundled, appOwned].map((file) => ({
@@ -150,8 +167,8 @@ test(
           rmSync(fixtureArchive);
           symlinkSync(original, fixtureArchive);
         }
-        assert.throws(
-          () => prepareNativeDependency({ root: owned, fixture: true }),
+        await assert.rejects(
+          () => prepareNativeArtifacts({ root: owned, fixture: true }),
           undefined,
           fault,
         );

@@ -35,7 +35,7 @@ import {
   deriveKitPaths,
   type KitConfig,
 } from "../../src/project/config.js";
-import { discoverKitConfig } from "../../src/project/detect.js";
+import { discoverGenerationConfig } from "../../src/project/detect.js";
 import { createAssetProvider } from "../../src/registry/assets.js";
 import { loadRegistrySnapshot } from "../../src/registry/load.js";
 import { computeRegistryContentHash } from "../../src/registry/model.js";
@@ -476,11 +476,12 @@ test("a custom mapping init applies through the guarded path", () => {
         layoutFile: "src/routes/+layout.svelte",
       }),
     );
-    const discovery = discoverKitConfig(consumer);
+    const discovery = discoverGenerationConfig(consumer);
     assert.equal(discovery.ok, true, JSON.stringify(discovery));
     if (!discovery.ok) return;
     assert.equal(discovery.value.kind, "custom");
     const custom = discovery.value.config;
+    assert.ok(custom.target !== "svelte-library");
 
     const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
     assert.equal(registry.ok, true, JSON.stringify(registry));
@@ -625,10 +626,11 @@ test("a custom mapping satisfied sync replays through the guarded path", () => {
         layoutFile: "src/routes/+layout.svelte",
       }),
     );
-    const discovery = discoverKitConfig(consumer);
+    const discovery = discoverGenerationConfig(consumer);
     assert.equal(discovery.ok, true, JSON.stringify(discovery));
     if (!discovery.ok) return;
     const custom = discovery.value.config;
+    assert.ok(custom.target !== "svelte-library");
     const registry = loadRegistrySnapshot(createAssetProvider(PKG_ROOT));
     assert.equal(registry.ok, true, JSON.stringify(registry));
     if (!registry.ok) return;

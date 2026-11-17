@@ -435,7 +435,7 @@ export function planAdd(
   const environment = snapshot.environment;
   const dependencyEvidence: DependencyEvidence = {
     manifest: environment.manifest,
-    nativeFile: environment.nativeFile,
+
     nativeFiles: environment.nativeFiles,
     observe: (name) => {
       const found = environment.installed.get(name);

@@ -16,10 +16,7 @@ import {
   parseKitConfig,
   serializeKitConfig,
 } from "../../src/project/config.js";
-import {
-  discoverGenerationConfig,
-  discoverKitConfig,
-} from "../../src/project/detect.js";
+import { discoverGenerationConfig } from "../../src/project/detect.js";
 import { composeGenerationFoundation } from "../helpers/generation-project.js";
 import { createTempProject } from "../helpers/project.js";
 import { linkQualifiedFixtureRuntime } from "../helpers/qualified-runtime.js";
@@ -133,9 +130,8 @@ test("standalone source and CSS entry generation has genuine library ownership a
     }).ok,
   );
 });
-test("legacy application discovery refuses library interpretation while generation discovery preserves the actual role", (t) => {
+test("generation discovery preserves the library role without a layout interpretation", (t) => {
   const f = fixture(t);
-  assert.equal(discoverKitConfig(f.project.root).ok, false);
   const found = discoverGenerationConfig(f.project.root);
   assert.ok(found.ok);
   assert.equal("layoutFile" in found.value.config, false);

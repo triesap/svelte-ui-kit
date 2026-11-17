@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { observeCatalogs } from "./catalogs.js";
-import { isLibraryConfig, parseKitConfig, type KitConfig } from "./config.js";
+import { parseKitConfig, type KitConfig } from "./config.js";
 import { captureConfigurationInputs } from "./configuration-inputs.js";
 import { observeInstalled } from "./dependencies.js";
 import {
@@ -750,30 +750,6 @@ export function discoverGenerationConfig(
       a.path < b.path ? -1 : a.path > b.path ? 1 : 0,
     ),
   });
-}
-
-/** Legacy application discovery never reinterprets a standalone stylesheet as a layout. */
-export interface DiscoveredKitConfig extends Omit<
-  DiscoveredGenerationConfig,
-  "config"
-> {
-  readonly config: import("./config.js").ApplicationConfig;
-}
-export function discoverKitConfig(
-  root: string,
-): ModelResult<DiscoveredKitConfig> {
-  const found = discoverGenerationConfig(root);
-  if (!found.ok) return found;
-  const config = found.value.config;
-  if (isLibraryConfig(config))
-    return fail([
-      issue(
-        "TARGET_GENERATION_UNAVAILABLE",
-        "Use generation discovery for standalone Svelte library intent",
-        found.value.configPath,
-      ),
-    ]);
-  return ok({ ...found.value, config });
 }
 
 /** Preliminary selection is a locator, never authority to ignore capture drift. */

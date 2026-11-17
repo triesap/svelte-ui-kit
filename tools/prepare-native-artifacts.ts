@@ -29,13 +29,85 @@ interface PreparedArtifact {
   readonly bundled: boolean;
   readonly fixture: boolean;
 }
-// Preserve the existing synchronous Bits API. The fixed owned module is loaded
-// through its URL; this bridge does not load application-selected code.
-const legacy: {
-  prepareNativeDependency(options?: PreparationOptions): PreparedArtifact;
+// Fixed owned producer; no application-selected module is loaded.
+const bitsProducer: {
+  buildNativeDependency(options: { output: string }): unknown;
+  NATIVE_RECIPE: { native: { buildVersion: string; archive: string } };
 } = await import(
-  new URL("./prepare-native-dependency.mjs", import.meta.url).href
+  new URL("./build-native-dependency.mjs", import.meta.url).href
 );
+
+/** Internal cache authentication; all deliveries use the combined async API. */
+function prepareBitsCache(root: string): PreparedArtifact {
+  const packageRoot = realpathSync(root);
+  const manifest = JSON.parse(
+    regularArtifact(path.join(packageRoot, "package.json")).toString("utf8"),
+  );
+  assert.equal(manifest.name, "svelte-ui-kit", "authoring package identity");
+  const expected = JSON.parse(
+    regularArtifact(
+      path.join(packageRoot, "src/project/native-dependency-baseline.json"),
+    ).toString("utf8"),
+  );
+  assert.equal(expected.schemaVersion, 1, "native identity version");
+  assert.equal(expected.name, "bits-ui");
+  assert.equal(
+    expected.version,
+    bitsProducer.NATIVE_RECIPE.native.buildVersion,
+  );
+  assert.equal(expected.archive, bitsProducer.NATIVE_RECIPE.native.archive);
+  assert.match(
+    expected.version,
+    /^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$/,
+    "portable build-version directory",
+  );
+  assert.match(
+    expected.archive,
+    /^[A-Za-z0-9._-]+\.tgz$/,
+    "portable archive basename",
+  );
+  assert.match(expected.archiveSha256, /^[0-9a-f]{64}$/);
+  assert.match(expected.provenanceSha256, /^[0-9a-f]{64}$/);
+  const parent = artifactDirectory(packageRoot, ".native-build", true);
+  const cache = path.join(parent, expected.version);
+  let built = false;
+  if (!existsSync(cache)) {
+    bitsProducer.buildNativeDependency({ output: cache });
+    built = true;
+  }
+  artifactDirectory(parent, expected.version);
+  assert.deepEqual(
+    readdirSync(cache).sort(),
+    [expected.archive, "provenance.json"].sort(),
+    "only owned cache entries",
+  );
+  const bytes = regularArtifact(path.join(cache, expected.archive));
+  assert.equal(
+    artifactDigest(bytes),
+    expected.archiveSha256,
+    "qualified cached archive",
+  );
+  const provenance = JSON.parse(
+    regularArtifact(path.join(cache, "provenance.json")).toString("utf8"),
+  );
+  assert.equal(provenance.archive, expected.archive);
+  assert.equal(provenance.archiveSha256, expected.archiveSha256);
+  const inner = { ...provenance };
+  delete inner.archive;
+  delete inner.archiveSha256;
+  assert.equal(
+    artifactDigest(Buffer.from(`${JSON.stringify(inner, null, 2)}\n`)),
+    expected.provenanceSha256,
+    "qualified cached provenance",
+  );
+  return {
+    built,
+    archive: `.native-build/${expected.version}/${expected.archive}`,
+    sha256: expected.archiveSha256,
+    bundled: false,
+    fixture: false,
+  };
+}
 const sourceRoot = fileURLToPath(new URL("../", import.meta.url));
 
 export async function prepareNativeArtifacts({
@@ -48,7 +120,7 @@ export async function prepareNativeArtifacts({
   readonly svelte: PreparedArtifact;
 }> {
   const packageRoot = realpathSync(root);
-  const bits = legacy.prepareNativeDependency({ root: packageRoot });
+  const bits = prepareBitsCache(packageRoot);
   const baselineFile = "src/project/svelte-runtime-baseline.json";
   const expected = JSON.parse(
     regularArtifact(path.join(packageRoot, baselineFile)).toString("utf8"),
