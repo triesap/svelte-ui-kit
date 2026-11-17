@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 import { chmodSync, copyFileSync, readFileSync } from "node:fs";
 import path from "node:path";
 import {
+  DEFAULT_UI_DIR,
   parseKitConfig,
   serializeKitConfig,
+  type TargetKind,
 } from "../../src/project/config.js";
 import { NATIVE_BASELINE } from "../../src/project/native-dependency.js";
 import { composeGenerationFoundation } from "./generation-project.js";
@@ -14,20 +16,40 @@ import { writeFixtureWorkspace } from "./workspace-catalog.js";
 
 export function generationFixture(
   t: { after(fn: () => void): void },
-  target: "astro" | "svelte-library",
+  target: TargetKind,
   custom = false,
+  cleanupWhen: () => boolean = () => true,
 ) {
   const owner = process.cwd(),
     project = createTempProject();
-  t.after(() => project.cleanup());
+  t.after(() => {
+    if (cleanupWhen()) project.cleanup();
+    else
+      console.error(
+        `Retained failed owned generation fixture: ${project.root}`,
+      );
+  });
   const parsed = parseKitConfig({
     schemaVersion: 1,
     target,
-    uiDir: custom ? "components/design" : "src/lib",
+    uiDir: custom
+      ? "components/design"
+      : target === "sveltekit"
+        ? DEFAULT_UI_DIR
+        : "src/lib",
     stylesDir: custom ? "theme/site" : "src/styles",
-    ...(target === "astro"
-      ? { layoutFile: custom ? "app/shell.astro" : "src/layouts/Layout.astro" }
-      : { styleEntry: custom ? "style/index.css" : "src/styles.css" }),
+    ...(target === "svelte-library"
+      ? { styleEntry: custom ? "style/index.css" : "src/styles.css" }
+      : {
+          layoutFile:
+            target === "astro"
+              ? custom
+                ? "app/shell.astro"
+                : "src/layouts/Layout.astro"
+              : custom
+                ? "app/routes/+layout.svelte"
+                : "src/routes/+layout.svelte",
+        }),
     requested: [],
   });
   assert.ok(parsed.ok, JSON.stringify(parsed));
@@ -50,22 +72,26 @@ export function generationFixture(
               svelte: "catalog:",
             },
           }
-        : {
-            peerDependencies: { svelte: "catalog:" },
-            svelte: "./dist/index.js",
-            types: "./dist/index.d.ts",
-            exports: {
-              ".": {
-                types: "./dist/index.d.ts",
-                svelte: "./dist/index.js",
-                default: "./dist/index.js",
+        : target === "sveltekit"
+          ? {
+              dependencies: { svelte: "catalog:", "@sveltejs/kit": "catalog:" },
+            }
+          : {
+              peerDependencies: { svelte: "catalog:" },
+              svelte: "./dist/index.js",
+              types: "./dist/index.d.ts",
+              exports: {
+                ".": {
+                  types: "./dist/index.d.ts",
+                  svelte: "./dist/index.js",
+                  default: "./dist/index.js",
+                },
+                "./styles.css":
+                  config.target === "svelte-library"
+                    ? `./${config.styleEntry}`
+                    : "",
               },
-              "./styles.css":
-                config.target === "svelte-library"
-                  ? `./${config.styleEntry}`
-                  : "",
-            },
-          }),
+            }),
       devDependencies: {
         "bits-ui": "file:./vendor/native.tgz",
         "@internationalized/date": "catalog:",
@@ -74,7 +100,7 @@ export function generationFixture(
   );
   linkQualifiedFixtureRuntime(
     project,
-    target === "astro" ? "dependencies" : "devDependencies",
+    target === "svelte-library" ? "devDependencies" : "dependencies",
   );
   project.writeDir("vendor");
   copyFileSync(
@@ -95,18 +121,21 @@ export function generationFixture(
       "astro.config.ts",
       'import {defineConfig} from "astro/config"; import svelte from "@astrojs/svelte"; export default defineConfig({integrations:[svelte()]});\n',
     );
+  if (target === "sveltekit" && config.target === "sveltekit")
+    project.writeFile(
+      "svelte.config.ts",
+      `export default {kit:{files:{routes:${JSON.stringify(path.posix.dirname(config.layoutFile))}}}};\n`,
+    );
   const primary =
-    config.target === "astro"
-      ? config.layoutFile
-      : config.target === "svelte-library"
-        ? config.styleEntry
-        : "";
+    config.target === "svelte-library" ? config.styleEntry : config.layoutFile;
   assert.ok(primary);
   project.writeFile(
     primary,
     target === "astro"
       ? '---\nconst heading = "Preserved";\n---\n<main data-owned="original"><h1>{heading}</h1><slot /></main>\n'
-      : '@charset "UTF-8";\n/* preserved application entry */\n@layer application;\n',
+      : target === "sveltekit"
+        ? '<main data-owned="original"><slot /></main>\n'
+        : '@charset "UTF-8";\n/* preserved application entry */\n@layer application;\n',
   );
   project.writeFile(".gitignore", "# application ignore rules\n");
   project.writeFile(".operator-note", "preserve hidden unrelated bytes\n");

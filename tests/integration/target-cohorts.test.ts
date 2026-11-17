@@ -15,9 +15,10 @@ import { generationFixture } from "../helpers/generation-fixture.js";
 import { createTempProject } from "../helpers/project.js";
 import { snapshotTree } from "../helpers/tree-snapshot.js";
 
-for (const target of ["astro", "svelte-library"] as const)
+for (const target of ["sveltekit", "astro", "svelte-library"] as const)
   test(`${target}: an authenticated incoming style cannot split a locally customized source cohort`, (t) => {
-    const f = generationFixture(t, target, true);
+    let passed = false;
+    const f = generationFixture(t, target, true, () => passed);
     for (const args of [["init"], ["add", "button"]]) {
       const child = spawnSync(
         process.execPath,
@@ -40,7 +41,13 @@ for (const target of ["astro", "svelte-library"] as const)
         "\n<!-- local source customization -->\n",
     );
     const incomingOwner = createTempProject();
-    t.after(() => incomingOwner.cleanup());
+    t.after(() => {
+      if (passed) incomingOwner.cleanup();
+      else
+        console.error(
+          `Retained failed owned incoming registry: ${incomingOwner.root}`,
+        );
+    });
     for (const name of ["assets"])
       cpSync(path.join(f.owner, name), path.join(incomingOwner.root, name), {
         recursive: true,
@@ -140,4 +147,5 @@ for (const target of ["astro", "svelte-library"] as const)
     assert.match(sync.value.diagnostics.join("\n"), /cohort/i);
     assert.deepEqual(snapshotTree(f.project.root), before);
     assert.deepEqual(snapshotTree(incomingOwner.root), incomingBefore);
+    passed = true;
   });

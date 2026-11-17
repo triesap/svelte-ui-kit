@@ -1,6 +1,6 @@
 /** Strict generated-host children retain attributable process diagnostics. */
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
@@ -17,8 +17,14 @@ export function runGeneratedCommand(
   options: {
     readonly timeoutMs?: number;
     readonly diagnosticDir?: string;
+    readonly expectedStatus?: number;
   } = {},
-): void {
+): SpawnSyncReturns<string> {
+  const expectedStatus = options.expectedStatus ?? 0;
+  assert.ok(
+    [0, 1, 2, 3, 10, 11, 12].includes(expectedStatus),
+    "known CLI exit category",
+  );
   const deadline = options.timeoutMs ?? 30000;
   assert.ok(
     Number.isSafeInteger(deadline) && deadline > 0 && deadline <= 30000,
@@ -34,10 +40,10 @@ export function runGeneratedCommand(
   if (
     !result.error &&
     result.signal === null &&
-    result.status === 0 &&
+    result.status === expectedStatus &&
     result.stderr === ""
   )
-    return;
+    return result;
   const directory =
     options.diagnosticDir ?? ".artifacts/verification/generated-consumer";
   mkdirSync(directory, { recursive: true });
@@ -56,6 +62,7 @@ export function runGeneratedCommand(
         cwd: root,
         pid: result.pid,
         deadlineMs: deadline,
+        expectedStatus,
         killSignal: "SIGKILL",
         status: result.status,
         signal: result.signal,

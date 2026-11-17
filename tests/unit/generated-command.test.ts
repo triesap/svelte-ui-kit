@@ -93,3 +93,52 @@ for (const scenario of [
     assert.equal(readdirSync(f.options.diagnosticDir).length, 1);
   });
 }
+
+test("expected conflict is a completed bounded command, not a failed process waiver", (t) => {
+  const f = fixture(
+    t,
+    'process.stdout.write(\'{"status":"conflict"}\\n\');process.exitCode=10;',
+  );
+  const result = runGeneratedCommand(f.root, f.entrypoint, ["sync"], {
+    ...f.options,
+    expectedStatus: 10,
+  });
+  assert.equal(result.status, 10);
+  assert.equal(result.signal, null);
+  assert.equal(result.error, undefined);
+  assert.ok(result.pid > 0);
+  assert.equal(existsSync(f.options.diagnosticDir), false);
+});
+test("an expected conflict cannot accept a valid-looking response followed by a stall", (t) => {
+  const f = fixture(
+    t,
+    'process.stdout.write(\'{"status":"conflict"}\\n\');process.exitCode=10;setInterval(()=>{},1000);',
+  );
+  let failure: unknown;
+  try {
+    runGeneratedCommand(f.root, f.entrypoint, ["sync"], {
+      ...f.options,
+      expectedStatus: 10,
+    });
+  } catch (error) {
+    failure = error;
+  }
+  assert.ok(failure instanceof GeneratedCommandFailure);
+  const record = JSON.parse(readFileSync(failure.diagnostic, "utf8"));
+  assert.equal(record.expectedStatus, 10);
+  assert.equal(record.deadlineMs, 1000);
+  assert.equal(record.signal, "SIGKILL");
+  assert.equal(record.error.code, "ETIMEDOUT");
+});
+test("an unrecognized expected exit category cannot turn a broken tool green", (t) => {
+  const f = fixture(t, "process.exit(7);");
+  assert.throws(
+    () =>
+      runGeneratedCommand(f.root, f.entrypoint, ["sync"], {
+        ...f.options,
+        expectedStatus: 7,
+      }),
+    /known CLI exit category/,
+  );
+  assert.equal(existsSync(f.options.diagnosticDir), false);
+});
