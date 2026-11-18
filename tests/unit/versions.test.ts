@@ -41,7 +41,7 @@ test("initial identities validate and stay independent", () => {
   const result = validateVersionIdentities(INITIAL_IDENTITIES);
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(INITIAL_SCHEMA_VERSION, 1);
-  assert.equal(TOOL_VERSION, "0.2.1");
+  assert.equal(TOOL_VERSION, "0.2.2");
   assert.equal(INITIAL_REGISTRY_VERSION, "0.1.0");
   assert.equal(INITIAL_ITEM_VERSION, "0.1.0");
   // The compatibility range is a range, never the integer schema identity.
@@ -51,7 +51,7 @@ test("initial identities validate and stay independent", () => {
 
 test("advertised tested support is exact and Bits peers stay distinct", () => {
   assert.equal(INITIAL_COMPATIBILITY.svelte, "5.57.3");
-  assert.equal(INITIAL_COMPATIBILITY.bits, "2.20.2-svelte-ui-kit.1");
+  assert.equal(INITIAL_COMPATIBILITY.bits, "2.20.2-svelte-ui-kit.2");
   assert.equal(INITIAL_COMPATIBILITY.date, "^3.8.1");
   assert.equal(BITS_UI_PEER_REQUIREMENTS.svelte, "^5.33.0");
   assert.equal(BITS_UI_PEER_REQUIREMENTS.date, "^3.8.1");

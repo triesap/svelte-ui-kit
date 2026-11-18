@@ -82,7 +82,7 @@ test("actual installed canonical archive has one schema catalog and one CLI/writ
       cli(["--version"], root),
       `svelte-ui-kit ${installed.evidence.manifest.version}\n`,
     );
-    assert.equal(installed.evidence.manifest.version, "0.2.1");
+    assert.equal(installed.evidence.manifest.version, "0.2.2");
     const schemas = path.join(installed.packageRoot, "assets/schemas");
     assert.equal(readdirSync(schemas).length, 10);
     assert.ok(

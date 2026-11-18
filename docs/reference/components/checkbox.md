@@ -40,7 +40,7 @@ The [authoritative manifest](../../../assets/registry/ui/checkbox.json) owns thi
 | `CheckboxProps` | type  | `checkbox.types.ts` |
 
 Registry dependencies: `tokens`.
-Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
+Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.2.
 
 - [Authored checkbox.svelte](../../../assets/registry/ui/checkbox.svelte)
 - [Authored checkbox.types.ts](../../../assets/registry/ui/checkbox.types.ts)

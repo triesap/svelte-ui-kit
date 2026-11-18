@@ -9,7 +9,7 @@ browser/platform cases were repeated for each dependency update.
 ## Toolchain and distribution
 
 The tested toolchain is Node 24.22.1, pnpm 12.16.1, Svelte 5.57.3,
-Bits 2.20.2-svelte-ui-kit.1, date 3.12.4, TypeScript 6.0.3,
+Bits 2.20.2-svelte-ui-kit.2, date 3.12.4, TypeScript 6.0.3,
 svelte-check 4.7.7, SvelteKit 2.70.3, Vite 8.3.5 and csstype 3.2.3.
 Package engines admit Node >=24.22.1 <25; that is not a claim of testing every
 Node 24 update. The package remains private and unpublished. No registry release
@@ -17,7 +17,7 @@ or automated dependency installation is assumed.
 
 The authentic native archive is a local qualified source build, not an upstream
 release. Its SHA-256 is
-`1e952f7cb1edd822650384e9e30dd75e864b3848d4a20fc73cb8ccd5224d1f27`.
+`01c0d49ca64a2d8fdfc89fa2caf178f288bc83f8d2a64803bb16afc2e9dddebe`.
 The producer recipe, patch, emitter inputs and locks own reproduction. Strict
 checking uses skipLibCheck=false with zero errors/warnings; installed declaration
 patching, hiding imports and diagnostic suppression do not qualify it. Positive
@@ -95,7 +95,7 @@ remaining browser, detached/shadow dispatch or arbitrary application boundaries.
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Reset cancellation      | The selected corrected Svelte runtime preserves bound text for canceled programmatic and trusted resets in supported connected-document forms. Switch/Checkbox/Radio preserve cancellation and current form ownership. Unpatched upstream historically restored trusted text defaults despite preventDefault; that historical defect is not the current supported guarantee. Extended-root limits above remain explicit. |
 | Closed forceMount modal | Both modal families' default nondelegated retained closed Content can lock body pointer interaction even without Overlay. Teardown restores it. Arbitrary caller overlays and animations need their own checks.                                                                                                                                                                                                          |
-| First opening           | Current Bits2.20.2-svelte-ui-kit.1 reports true then false for completed portal opening/closing; wrapper and direct-native controls require that exact sequence. This fixes the historical first-open omission measured on the prior graph. Callbacks remain forwarded without synthesized presence.                                                                                                                     |
+| First opening           | Current Bits2.20.2-svelte-ui-kit.2 reports true then false for completed portal opening/closing; wrapper and direct-native controls require that exact sequence. This fixes the historical first-open omission measured on the prior graph. Callbacks remain forwarded without synthesized presence.                                                                                                                     |
 | SSR relationships       | Some inferred links register after earlier server evaluation and complete during hydration. Native caller aria-label is available when initial server naming is necessary. IDs alone do not prove naming.                                                                                                                                                                                                                |
 | Floating wrapper IDs    | Native Menu's nonsemantic floating wrapper useId() is a process counter. Equivalent SSR preserves semantic component/form IDs, state and valid relationships; it does not reset every native wrapper ID per request.                                                                                                                                                                                                     |
 | CSP                     | Denying style attributes rejects native initial floating/measurement styles; later CSSOM geometry does not establish strict SSR parity. Measured Menu policy permits style attributes with nonce scripts and self-hosted CSS. Svelte Avatar's server image event recorder attributes also exist before hydration. Plain CSS is not zero runtime inline styling.                                                          |
@@ -118,7 +118,7 @@ Altered, linked, missing and shadowing metadata remains refused.
 
 Disposition: deliberately non-generated. The original source KitIdProvider and
 use_kit_id counter/provider is not an installable item, helper, export or alias.
-Pinned Svelte5.57.3 and Bits2.20.2-svelte-ui-kit.1 supply native per-instance
+Pinned Svelte5.57.3 and Bits2.20.2-svelte-ui-kit.2 supply native per-instance
 semantic identity. Field uses `$props.id()` and a per-Root context; its shared
 Symbol is a key, not shared relationship state. Native Bits createId formats
 the part's `$props.id()` result rather than allocating a kit counter.

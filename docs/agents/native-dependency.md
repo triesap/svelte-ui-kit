@@ -1,6 +1,6 @@
 # Native dependency reproduction and qualification
 
-Scope: the authentic local Bits 2.20.2-svelte-ui-kit.1 archive and its source/emitter producer. See [compatibility](../reference/compatibility.md) and [testing](testing.md) for consumer/runtime/delivery boundaries. Producer success alone is neither release nor independent acceptance.
+Scope: the authentic local Bits 2.20.2-svelte-ui-kit.2 archive and its source/emitter producer. See [compatibility](../reference/compatibility.md) and [testing](testing.md) for consumer/runtime/delivery boundaries. Producer success alone is neither release nor independent acceptance.
 
 ## Source and correction
 
@@ -13,7 +13,7 @@ Upstream build-tool constraints remain frozen in its source and producer lock.
 Both archives use canonical gzip metadata: operating-system marker 255 and zero
 timestamp, with genuine tar content and CRC preserved. This policy was introduced
 by the prior 2.19.5-svelte-ui-kit.2 build after its first packaging variant had
-platform-dependent gzip metadata; the new 2.20.2-svelte-ui-kit.1 retains the policy.
+platform-dependent gzip metadata; the new 2.20.2-svelte-ui-kit.2 retains the policy.
 Historical qualification does not qualify a new archive.
 
 The current package3 CLI requires explicit aliases. Genuine upstream Kit2 sync
@@ -32,6 +32,15 @@ original props, Svelte internals, return exports, optional legacy methods,
 custom element and exact `z_$$bindings` metadata remain present. It introduces
 no constructor or additional bindable prop. Existing upstream annotations and
 existing callback types are preserved.
+
+Build .2 retains optional metadata through a native `Pick<Component<...>>`
+whose synthetic props carry only the exact binding keys. The real callable still
+uses original props and exports. This avoids both eager full-prop union expansion
+and the old indexed-optional-read introduction of explicit undefined. It preserves
+exact optional assignability without a Svelte type patch or checker relaxation.
+Current ordinary Bits2.21.0 still fails the original Button/Calendar TS2590 probe;
+Svelte5.58.0 still lacks the accepted reset repairs. Neither ordinary release is
+an accepted replacement merely because its version is newer.
 
 The builder applies this patch only in an owned source copy, builds the actual
 emitter, and verifies that the real package tool resolves that built emitter.

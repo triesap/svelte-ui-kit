@@ -699,6 +699,40 @@ for (const custom of [false, true])
       await expect(field).toBeChecked();
       await expect(external).toBeChecked();
       await expect(field).toHaveCount(1);
+      await page
+        .getByRole("button", { name: "Clear external owner", exact: true })
+        .click();
+      await expect(external).not.toHaveAttribute("form");
+      await expect(field).not.toHaveAttribute("form");
+      await expect(page.locator("#native-readonly")).not.toHaveAttribute(
+        "form",
+      );
+      await external.click();
+      await page
+        .locator("#external-form")
+        .evaluate((node) => (node as HTMLFormElement).reset());
+      await expect(field).not.toBeChecked();
+      await expect(external).not.toBeChecked();
+      await page
+        .getByRole("button", { name: "Empty external owner", exact: true })
+        .click();
+      await expect(external).toHaveAttribute("form", "");
+      await expect(field).toHaveAttribute("form", "");
+      await expect(page.locator("#native-readonly")).toHaveAttribute(
+        "form",
+        "",
+      );
+      await page
+        .getByRole("button", { name: "Restore external owner", exact: true })
+        .click();
+      await expect(external).toHaveAttribute("form", "external-form");
+      await expect(field).toHaveAttribute("form", "external-form");
+      await page
+        .locator("#external-form")
+        .evaluate((node) => (node as HTMLFormElement).reset());
+      await expect(field).toBeChecked();
+      await expect(external).toBeChecked();
+      await expect(field).toHaveCount(1);
     });
   });
 

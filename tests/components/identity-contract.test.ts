@@ -156,7 +156,7 @@ test("pinned Svelte SSR identity allocation is per renderer and client hydration
 test("actual Bits identity formatter and affected parts derive IDs from native component runes", () => {
   assert.equal(
     JSON.parse(read("node_modules/bits-ui/package.json")).version,
-    "2.20.2-svelte-ui-kit.1",
+    "2.20.2-svelte-ui-kit.2",
   );
   const formatter = read("node_modules/bits-ui/dist/internal/create-id.js");
   assert.match(formatter, /export function createId\(prefixOrUid, uid\)/);

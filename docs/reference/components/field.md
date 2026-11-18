@@ -162,3 +162,8 @@ Local behavioral evidence is bounded to the tested native graph and platforms; a
 - [Owning tests/browser/field-description-control.spec.ts](https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/tests/browser/field-description-control.spec.ts)
 - [Owning tests/browser/field-styles.spec.ts](https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/tests/browser/field-styles.spec.ts)
 - [Owning tests/browser/field.spec.ts](https://github.com/triesap/svelte-ui-kit/blob/ae136d7d08ac4efeffdd2056d49dd554557dd68d/tests/browser/field.spec.ts)
+
+The optional native input, textarea and select `value` props explicitly admit
+`undefined`, including convenience-field bindings. This preserves their existing
+uncontrolled/default/reset behavior under exact optional property checking;
+numeric values and unsupported multiple-select extensions remain rejected.

@@ -138,7 +138,7 @@ The [authoritative manifest](../../../assets/registry/ui/menu.json) owns this in
 | `MenuItemIndicatorProps` | type  | `menu/index.ts` |
 
 Registry dependencies: `tokens`.
-Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
+Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.2.
 
 - [Authored menu/root.svelte](../../../assets/registry/ui/menu/root.svelte)
 - [Authored menu/trigger.svelte](../../../assets/registry/ui/menu/trigger.svelte)

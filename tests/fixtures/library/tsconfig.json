@@ -13,7 +13,8 @@
     "types": ["svelte", "node"],
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "exactOptionalPropertyTypes": true
   },
   "include": ["src/**/*.svelte", "src/**/*.ts"],
   "exclude": ["dist", "node_modules", ".native-build"]

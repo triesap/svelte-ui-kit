@@ -3,6 +3,17 @@
 This project has not been released. Entries describe the local source/package;
 they do not announce an npm release or broaden tested compatibility.
 
+## Unreleased — local 0.2.2
+
+- Preserve native exact optional component metadata without eagerly expanding
+  large prop unions in the source-built Bits declaration emitter. New authenticated
+  Bits build 2.20.2-svelte-ui-kit.2 keeps component/runtime source unchanged.
+- Omit the optional native Checkbox form prop when undefined while retaining
+  empty IDs, external association, native input ownership and reset semantics.
+- Accept explicit undefined for genuinely optional Field bound values, matching
+  their existing default/reset semantics. Registry 0.1.8 advances affected item
+  compatibility identities; generated files still belong to the application.
+
 ## Unreleased — local 0.2.1
 
 - Authenticate the measured pnpm12.21.0/Acorn8.19.0 installer launcher while

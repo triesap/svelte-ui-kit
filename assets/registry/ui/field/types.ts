@@ -54,7 +54,7 @@ export type TextInputProps = Omit<
   "type" | "value" | "defaultValue" | "defaultvalue" | "children"
 > & {
   type?: TextInputType;
-  value?: string;
+  value?: string | undefined;
   defaultValue?: string;
   invalid?: boolean;
 };
@@ -62,7 +62,7 @@ export type TextAreaProps = Omit<
   Native<"textarea", HTMLTextAreaElement>,
   "value" | "defaultValue" | "defaultvalue" | "children"
 > & {
-  value?: string;
+  value?: string | undefined;
   defaultValue?: string;
   invalid?: boolean;
 };
@@ -70,7 +70,7 @@ export type NativeSelectProps = Omit<
   Native<"select", HTMLSelectElement>,
   "value" | "multiple" | "defaultValue" | "defaultvalue"
 > & {
-  value?: string;
+  value?: string | undefined;
   multiple?: false;
   invalid?: boolean;
   children: FieldSlot;

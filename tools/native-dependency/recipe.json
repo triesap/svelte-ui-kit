@@ -8,8 +8,8 @@
     "revision": "33186c8cc7bb3e0fb8b665063fa29663b606c416",
     "packagePath": "packages/bits-ui",
     "sourceVersion": "2.20.2",
-    "buildVersion": "2.20.2-svelte-ui-kit.1",
-    "archive": "bits-ui-2.20.2-svelte-ui-kit.1.tgz"
+    "buildVersion": "2.20.2-svelte-ui-kit.2",
+    "archive": "bits-ui-2.20.2-svelte-ui-kit.2.tgz"
   },
   "emitter": {
     "repository": "https://github.com/sveltejs/language-tools.git",
@@ -17,8 +17,8 @@
     "packagePath": "packages/svelte2tsx",
     "sourceVersion": "0.7.62",
     "sourceTag": "svelte2tsx-0.7.62",
-    "buildVersion": "0.7.62-svelte-ui-kit.1",
-    "archive": "svelte2tsx-0.7.62-svelte-ui-kit.1.tgz",
+    "buildVersion": "0.7.62-svelte-ui-kit.2",
+    "archive": "svelte2tsx-0.7.62-svelte-ui-kit.2.tgz",
     "patch": "binding-signature.patch",
     "devDependencies": {
       "typescript": "6.0.3",

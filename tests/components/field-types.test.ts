@@ -37,6 +37,7 @@ function diagnostics(body: string) {
       ],
       {
         strict: true,
+        exactOptionalPropertyTypes: true,
         noEmit: true,
         skipLibCheck: false,
         module: ts.ModuleKind.NodeNext,
@@ -71,6 +72,19 @@ const areaField:TextAreaFieldProps={label:"Body",name:"body",value:"",rows:8,mes
 const selectField:SelectFieldProps={label:"Choice",name:"choice",value:"a",selectedLabel:"Alpha",children,icon:slot,iconClass:"icon",valueClass:"value",valueRowClass:"row",ref:document.createElement("select")};
 void slot;void types;void root;void plain;void surface;void label;void message;void required;void icon;void input;void area;void select;void textField;void areaField;void selectField;
 `),
+    [],
+  );
+});
+test("optional native bound field values explicitly accept undefined under exact optional checking", () => {
+  assert.deepEqual(
+    diagnostics(`declare const children:Snippet;
+    const input:TextInputProps={value:undefined};
+    const area:TextAreaProps={value:undefined};
+    const select:NativeSelectProps={value:undefined,children};
+    const field:TextFieldProps={name:"field",label:"Field",value:undefined};
+    const body:TextAreaFieldProps={name:"body",label:"Body",value:undefined};
+    const choice:SelectFieldProps={name:"choice",label:"Choice",selectedLabel:"",value:undefined,children};
+    void input;void area;void select;void field;void body;void choice;`),
     [],
   );
 });

@@ -1,6 +1,7 @@
 import { documentedExample } from "../helpers/documented-example.js";
 /** Real packed library and independent native consumers; source metadata is never runtime proof. */
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -449,6 +450,22 @@ test("genuine packed standalone Svelte library qualifies in independent Astro an
     ["sync"],
   ])
     logs[args.join(" ")] = cliResult(cli, library, args);
+  // The guide intentionally starts with four items; qualify the complete catalog too.
+  const catalog = JSON.parse(
+    readFileSync(
+      path.join(cli.packageRoot, "assets/registry/registry.json"),
+      "utf8",
+    ),
+  );
+  const intentFile = path.join(library, "src/lib/_kit/kit.json");
+  const intent = JSON.parse(readFileSync(intentFile, "utf8"));
+  assert.deepEqual(intent.requested, ["button", "dialog", "field", "menu"]);
+  intent.requested = catalog.items
+    .map((item: { id: string }) => item.id)
+    .sort();
+  assert.equal(intent.requested.length, 22);
+  writeFileSync(intentFile, `${JSON.stringify(intent, null, 2)}\n`);
+  logs["all22 sync"] = cliResult(cli, library, ["sync"]);
   assert.equal(
     readFileSync(path.join(library, "package.json"), "utf8"),
     manifestBefore,
@@ -467,6 +484,44 @@ test("genuine packed standalone Svelte library qualifies in independent Astro an
   }
   logs.check = nativeCommand(library, "pnpm", ["run", "check"]);
   assert.match(logs.check, /svelte-check found 0 errors and 0 warnings/);
+  const checkboxFile = path.join(library, "src/lib/checkbox.svelte"),
+    checkboxBefore = readFileSync(checkboxFile, "utf8");
+  const omission = "{...form === undefined ? {} : { form }}";
+  assert.equal(checkboxBefore.split(omission).length, 2);
+  try {
+    writeFileSync(checkboxFile, checkboxBefore.replace(omission, "{form}"));
+    const result = spawnSync("pnpm", ["run", "check"], {
+      cwd: library,
+      encoding: "utf8",
+      timeout: 240000,
+      killSignal: "SIGKILL",
+      env: { ...process.env, pnpm_config_verify_deps_before_run: "false" },
+    });
+    logs["checkbox undefined-prop causal refusal"] = JSON.stringify({
+      argv: ["pnpm", "run", "check"],
+      cwd: library,
+      pid: result.pid,
+      deadlineMs: 240000,
+      exit: result.status,
+      signal: result.signal,
+      error: result.error?.message ?? null,
+      stdout: result.stdout,
+      stderr: result.stderr,
+    });
+    assert.equal(result.error, undefined);
+    assert.equal(result.signal, null);
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stdout + result.stderr,
+      /Types of property 'form' are incompatible/u,
+    );
+  } finally {
+    writeFileSync(checkboxFile, checkboxBefore);
+  }
+  logs["all22 restored check"] = nativeCommand(library, "pnpm", [
+    "run",
+    "check",
+  ]);
   logs.build = nativeCommand(library, "pnpm", ["run", "build"]);
   const archives = path.join(cli.root, "library-archives");
   mkdirSync(archives);
@@ -505,7 +560,7 @@ test("genuine packed standalone Svelte library qualifies in independent Astro an
     readFileSync(path.join(packed, "src/lib/_kit/kit.lock.json"), "utf8"),
   );
   assert.equal(lineage.target, "svelte-library");
-  assert.deepEqual(lineage.requested, ["button", "dialog", "field", "menu"]);
+  assert.deepEqual(lineage.requested, intent.requested);
   const retainedLibrary = path.join(cli.root, "retained-generated-library");
   renameSync(library, retainedLibrary);
   assert.equal(existsSync(library), false);

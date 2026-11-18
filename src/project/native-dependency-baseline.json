@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "name": "bits-ui",
-  "version": "2.20.2-svelte-ui-kit.1",
-  "archive": "bits-ui-2.20.2-svelte-ui-kit.1.tgz",
-  "archiveSha256": "1e952f7cb1edd822650384e9e30dd75e864b3848d4a20fc73cb8ccd5224d1f27",
-  "provenanceSha256": "ff7fda07defa8f815190a5d40cf7cf2df9d79b7a8c5c1c9b83cf6fdb7b633811"
+  "version": "2.20.2-svelte-ui-kit.2",
+  "archive": "bits-ui-2.20.2-svelte-ui-kit.2.tgz",
+  "archiveSha256": "01c0d49ca64a2d8fdfc89fa2caf178f288bc83f8d2a64803bb16afc2e9dddebe",
+  "provenanceSha256": "8b0b42ae8829a6078dc3de7496f2fade4deb9a2116ff32123c9627e9adc9e76d"
 }

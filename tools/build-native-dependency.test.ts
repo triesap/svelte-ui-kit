@@ -110,7 +110,7 @@ for (const name of ["NODE_TEST_CONTEXT", "NODE_OPTIONS", "NODE_V8_COVERAGE"])
   delete env[name];
 const positive = `
 import { Button, Calendar, Dialog } from 'bits-ui';
-import type { Component, Snippet } from 'svelte';
+import type { Component, ComponentProps, Snippet } from 'svelte';
 import { CalendarDate } from '@internationalized/date';
 type Assert<T extends true> = T;
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
@@ -120,6 +120,8 @@ export type ButtonToNative = Assert<ActualButton extends Button.RootProps ? true
 export type NativeToButton = Assert<Button.RootProps extends ActualButton ? true : false>;
 export type CalendarToNative = Assert<ActualCalendar extends Calendar.RootProps ? true : false>;
 export type NativeToCalendar = Assert<Calendar.RootProps extends ActualCalendar ? true : false>;
+export type InferredButtonProps = Assert<Equal<ComponentProps<typeof Button.Root>, ActualButton>>;
+export type InferredCalendarProps = Assert<Equal<ComponentProps<typeof Calendar.Root>, ActualCalendar>>;
 export type ButtonBindings = Assert<Equal<NonNullable<typeof Button.Root['z_$$bindings']>, 'ref'>>;
 export type CalendarBindings = Assert<Equal<NonNullable<typeof Calendar.Root['z_$$bindings']>, 'ref' | 'value' | 'placeholder'>>;
 export type NoConstructor = Assert<typeof Button.Root extends abstract new (...args: never[]) => unknown ? false : true>;
@@ -142,6 +144,7 @@ const negatives = {
   "button-ref": `const bad: Parameters<typeof Button.Root>[1] = { ref: 123 }; void bad;`,
   "button-event": `const bad: Parameters<typeof Button.Root>[1] = { onclick: (event: string) => { void event; } }; void bad;`,
   "button-snippet": `const bad: Parameters<typeof Button.Root>[1] = { children: 'text' }; void bad;`,
+  "button-set": `declare const set: NonNullable<ReturnType<typeof Button.Root>['$set']>; set({disabled: 'invalid'});`,
   "button-bindings": `const bad: NonNullable<typeof Button.Root['z_$$bindings']> = 'disabled'; void bad;`,
   "calendar-discriminant": `const bad: Parameters<typeof Calendar.Root>[1] = { type: 'single', value: [] }; void bad;`,
   "calendar-callback": `const bad: Parameters<typeof Calendar.Root>[1] = { type: 'multiple', onValueChange: (value: boolean) => { void value; } }; void bad;`,
@@ -417,6 +420,7 @@ test("real frozen producer is reproducible, preserves runtime and rejects invali
       const sourceFile = path.join(consumer, "native-control.ts");
       const options = {
         strict: true,
+        exactOptionalPropertyTypes: true,
         skipLibCheck: false,
         noEmit: true,
         target: ts.ScriptTarget.ES2023,
@@ -489,6 +493,7 @@ test("real frozen producer is reproducible, preserves runtime and rejects invali
           JSON.stringify({
             compilerOptions: {
               strict: true,
+              exactOptionalPropertyTypes: true,
               skipLibCheck: false,
               noEmit: true,
               target: "ES2023",

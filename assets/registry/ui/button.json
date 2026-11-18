@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "button",
   "kind": "component",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Native button with source design variants and loading-safe semantics.",
   "compatibility": {
     "svelte": "5.57.3",
-    "bits": "2.20.2-svelte-ui-kit.1",
+    "bits": "2.20.2-svelte-ui-kit.2",
     "date": "^3.8.1"
   },
   "files": [

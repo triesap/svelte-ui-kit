@@ -315,8 +315,8 @@ importers:
         specifier: 'catalog:'
         version: 7.8.0
       bits-ui:
-        specifier: file:./.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz
-        version: file:.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))
+        specifier: file:./.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz
+        version: file:.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))
       eslint:
         specifier: 'catalog:'
         version: 10.13.0(jiti@2.7.0)
@@ -363,8 +363,8 @@ importers:
         specifier: 'catalog:'
         version: 7.4.4(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)
       bits-ui:
-        specifier: file:./.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz
-        version: file:tests/fixtures/astro-consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))
+        specifier: file:./.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz
+        version: file:tests/fixtures/astro-consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))
       svelte:
         specifier: file:./.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz
         version: file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1)
@@ -391,8 +391,8 @@ importers:
         specifier: 'catalog:'
         version: 3.12.4
       bits-ui:
-        specifier: file:./.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz
-        version: file:tests/fixtures/consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))
+        specifier: file:./.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz
+        version: file:tests/fixtures/consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))
       svelte:
         specifier: file:./.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz
         version: file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1)
@@ -434,8 +434,8 @@ importers:
         specifier: 'catalog:'
         version: 24.19.2
       bits-ui:
-        specifier: file:./.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz
-        version: file:tests/fixtures/library/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))
+        specifier: file:./.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz
+        version: file:tests/fixtures/library/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))
       csstype:
         specifier: 'catalog:'
         version: 3.2.3
@@ -455,8 +455,8 @@ importers:
         specifier: 'catalog:'
         version: 3.12.4
       bits-ui:
-        specifier: file:./.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz
-        version: file:tests/fixtures/library-kit-consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))
+        specifier: file:./.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz
+        version: file:tests/fixtures/library-kit-consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))
       svelte:
         specifier: file:./.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz
         version: file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1)
@@ -1695,41 +1695,41 @@ packages:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
     engines: {node: 18 || 20 || >=22}
 
-  bits-ui@file:.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz:
-    resolution: {integrity: sha512-Fbnu5bh1Z7zUt8cOLroGglKf1d6ZQIic73cGS5PAz+teBDNDWqs1jYQzI/gW4xyMoKGFjRtAMHNxawXABYx8rg==, tarball: file:.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz}
-    version: 2.20.2-svelte-ui-kit.1
+  bits-ui@file:.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz:
+    resolution: {integrity: sha512-bJRkoSgJo/YHPTQksEZY1+RTh0pMLb35xDNnk+TKi6w8vAyDtuICGcAzj1DhG9fIES676fgJtne/JA31nNb/OQ==, tarball: file:.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz}
+    version: 2.20.2-svelte-ui-kit.2
     engines: {node: '>=20'}
     peerDependencies:
       '@internationalized/date': ^3.8.1
       svelte: ^5.33.0
 
-  bits-ui@file:tests/fixtures/astro-consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz:
-    resolution: {integrity: sha512-Fbnu5bh1Z7zUt8cOLroGglKf1d6ZQIic73cGS5PAz+teBDNDWqs1jYQzI/gW4xyMoKGFjRtAMHNxawXABYx8rg==, tarball: file:tests/fixtures/astro-consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz}
-    version: 2.20.2-svelte-ui-kit.1
+  bits-ui@file:tests/fixtures/astro-consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz:
+    resolution: {integrity: sha512-bJRkoSgJo/YHPTQksEZY1+RTh0pMLb35xDNnk+TKi6w8vAyDtuICGcAzj1DhG9fIES676fgJtne/JA31nNb/OQ==, tarball: file:tests/fixtures/astro-consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz}
+    version: 2.20.2-svelte-ui-kit.2
     engines: {node: '>=20'}
     peerDependencies:
       '@internationalized/date': ^3.8.1
       svelte: ^5.33.0
 
-  bits-ui@file:tests/fixtures/consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz:
-    resolution: {integrity: sha512-Fbnu5bh1Z7zUt8cOLroGglKf1d6ZQIic73cGS5PAz+teBDNDWqs1jYQzI/gW4xyMoKGFjRtAMHNxawXABYx8rg==, tarball: file:tests/fixtures/consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz}
-    version: 2.20.2-svelte-ui-kit.1
+  bits-ui@file:tests/fixtures/consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz:
+    resolution: {integrity: sha512-bJRkoSgJo/YHPTQksEZY1+RTh0pMLb35xDNnk+TKi6w8vAyDtuICGcAzj1DhG9fIES676fgJtne/JA31nNb/OQ==, tarball: file:tests/fixtures/consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz}
+    version: 2.20.2-svelte-ui-kit.2
     engines: {node: '>=20'}
     peerDependencies:
       '@internationalized/date': ^3.8.1
       svelte: ^5.33.0
 
-  bits-ui@file:tests/fixtures/library-kit-consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz:
-    resolution: {integrity: sha512-Fbnu5bh1Z7zUt8cOLroGglKf1d6ZQIic73cGS5PAz+teBDNDWqs1jYQzI/gW4xyMoKGFjRtAMHNxawXABYx8rg==, tarball: file:tests/fixtures/library-kit-consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz}
-    version: 2.20.2-svelte-ui-kit.1
+  bits-ui@file:tests/fixtures/library-kit-consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz:
+    resolution: {integrity: sha512-bJRkoSgJo/YHPTQksEZY1+RTh0pMLb35xDNnk+TKi6w8vAyDtuICGcAzj1DhG9fIES676fgJtne/JA31nNb/OQ==, tarball: file:tests/fixtures/library-kit-consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz}
+    version: 2.20.2-svelte-ui-kit.2
     engines: {node: '>=20'}
     peerDependencies:
       '@internationalized/date': ^3.8.1
       svelte: ^5.33.0
 
-  bits-ui@file:tests/fixtures/library/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz:
-    resolution: {integrity: sha512-Fbnu5bh1Z7zUt8cOLroGglKf1d6ZQIic73cGS5PAz+teBDNDWqs1jYQzI/gW4xyMoKGFjRtAMHNxawXABYx8rg==, tarball: file:tests/fixtures/library/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz}
-    version: 2.20.2-svelte-ui-kit.1
+  bits-ui@file:tests/fixtures/library/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz:
+    resolution: {integrity: sha512-bJRkoSgJo/YHPTQksEZY1+RTh0pMLb35xDNnk+TKi6w8vAyDtuICGcAzj1DhG9fIES676fgJtne/JA31nNb/OQ==, tarball: file:tests/fixtures/library/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz}
+    version: 2.20.2-svelte-ui-kit.2
     engines: {node: '>=20'}
     peerDependencies:
       '@internationalized/date': ^3.8.1
@@ -4521,7 +4521,7 @@ snapshots:
 
   balanced-match@4.0.4: {}
 
-  bits-ui@file:.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@5.57.3(@typescript-eslint/types@8.72.1)):
+  bits-ui@file:.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@5.57.3(@typescript-eslint/types@8.72.1)):
     dependencies:
       '@floating-ui/core': 1.8.0
       '@floating-ui/dom': 1.8.0
@@ -4535,7 +4535,7 @@ snapshots:
     transitivePeerDependencies:
       - '@sveltejs/kit'
 
-  bits-ui@file:tests/fixtures/astro-consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1)):
+  bits-ui@file:tests/fixtures/astro-consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/astro-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1)):
     dependencies:
       '@floating-ui/core': 1.8.0
       '@floating-ui/dom': 1.8.0
@@ -4549,7 +4549,7 @@ snapshots:
     transitivePeerDependencies:
       - '@sveltejs/kit'
 
-  bits-ui@file:tests/fixtures/consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1)):
+  bits-ui@file:tests/fixtures/consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1)):
     dependencies:
       '@floating-ui/core': 1.8.0
       '@floating-ui/dom': 1.8.0
@@ -4563,7 +4563,7 @@ snapshots:
     transitivePeerDependencies:
       - '@sveltejs/kit'
 
-  bits-ui@file:tests/fixtures/library-kit-consumer/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1)):
+  bits-ui@file:tests/fixtures/library-kit-consumer/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library-kit-consumer/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1)):
     dependencies:
       '@floating-ui/core': 1.8.0
       '@floating-ui/dom': 1.8.0
@@ -4577,7 +4577,7 @@ snapshots:
     transitivePeerDependencies:
       - '@sveltejs/kit'
 
-  bits-ui@file:tests/fixtures/library/.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1)):
+  bits-ui@file:tests/fixtures/library/.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@file:tests/fixtures/library/.native-build/5.57.3-reset-dispatch.2/svelte-5.57.3-reset-dispatch.2.tgz(@typescript-eslint/types@8.72.1)):
     dependencies:
       '@floating-ui/core': 1.8.0
       '@floating-ui/dom': 1.8.0

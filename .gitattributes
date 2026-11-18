@@ -1,1 +1,4 @@
 * text=auto eol=lf
+
+# Unified-diff blank context lines contain one required space.
+tools/native-dependency/binding-signature.patch whitespace=-blank-at-eol

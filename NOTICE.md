@@ -22,7 +22,7 @@ their upstream MIT notices through normal dependency delivery; their CLI-only
 syntax handling does not become a generated application runtime.
 
 The locally packed CLI contains the qualified unstyled Bits dependency at
-`dist/native/bits-ui-2.20.2-svelte-ui-kit.1.tgz` for explicit application-owned
+`dist/native/bits-ui-2.20.2-svelte-ui-kit.2.tgz` for explicit application-owned
 extraction and installation. Its Bits source is revision
 `33186c8cc7bb3e0fb8b665063fa29663b606c416` from
 [Bits UI](https://github.com/huntabyte/bits-ui). Its emitter source and narrow

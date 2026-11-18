@@ -79,7 +79,7 @@ The [authoritative manifest](../../../assets/registry/ui/dialog.json) owns this 
 | `DialogCloseProps`       | type  | `dialog/index.ts` |
 
 Registry dependencies: `tokens`.
-Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
+Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.2.
 
 - [Authored dialog/root.svelte](../../../assets/registry/ui/dialog/root.svelte)
 - [Authored dialog/trigger.svelte](../../../assets/registry/ui/dialog/trigger.svelte)

@@ -49,7 +49,7 @@ The [authoritative manifest](../../../assets/registry/ui/radio.json) owns this i
 | `RadioItemProps`  | type  | `radio/index.ts` |
 
 Registry dependencies: `tokens`.
-Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.1.
+Npm requirements: `bits-ui` 2.20.2-svelte-ui-kit.2.
 
 - [Authored radio/group.svelte](../../../assets/registry/ui/radio/group.svelte)
 - [Authored radio/item.svelte](../../../assets/registry/ui/radio/item.svelte)

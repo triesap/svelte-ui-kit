@@ -37,6 +37,7 @@ function diagnostics(body: string) {
       ],
       {
         strict: true,
+        exactOptionalPropertyTypes: true,
         noEmit: true,
         skipLibCheck: false,
         module: ts.ModuleKind.NodeNext,
@@ -59,6 +60,14 @@ test("exact pinned Checkbox props accept checked/ref/native form/style/event con
   assert.deepEqual(
     diagnostics(
       `const props: CheckboxProps = { checked: true, indeterminate: false, readonly: false, onIndeterminateChange: mixed => { const value: boolean = mixed; void value; }, ref: document.createElement("button"), required: true, disabled: false, name: "enabled", value: "on", form: "editor", id: "checkbox", "aria-label": "Enabled", "data-caller": "yes", class: ["caller", { retained: true }], style: { color: "red" }, onCheckedChange: checked => { const value: boolean = checked; void value; }, onclick: event => { const button: HTMLButtonElement = event.currentTarget; button.focus(); } }; void props;`,
+    ),
+    [],
+  );
+});
+test("native form accepts omitted empty and explicit external association under exact optional checking", () => {
+  assert.deepEqual(
+    diagnostics(
+      'const omitted:CheckboxProps={};const empty:CheckboxProps={form:""};const external:CheckboxProps={form:"editor"};void omitted;void empty;void external;',
     ),
     [],
   );

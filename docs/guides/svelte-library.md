@@ -97,13 +97,13 @@ development dependencies, never published peer requirements:
   },
   "peerDependencies": {
     "svelte": "5.57.3",
-    "bits-ui": "2.20.2-svelte-ui-kit.1",
+    "bits-ui": "2.20.2-svelte-ui-kit.2",
     "@internationalized/date": "3.12.4"
   },
   "devDependencies": {
     "@sveltejs/package": "3.0.1",
     "@internationalized/date": "3.12.4",
-    "bits-ui": "file:./vendor/bits-ui-2.20.2-svelte-ui-kit.1.tgz",
+    "bits-ui": "file:./vendor/bits-ui-2.20.2-svelte-ui-kit.2.tgz",
     "svelte": "file:./vendor/svelte-5.57.3-reset-dispatch.2.tgz",
     "svelte-check": "4.7.7",
     "typescript": "6.0.3",
@@ -127,6 +127,7 @@ procedure, then install explicitly with strict peers. Keep `tsconfig.json`:
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
+    "exactOptionalPropertyTypes": true,
     "skipLibCheck": false,
     "verbatimModuleSyntax": true,
     "allowJs": true,

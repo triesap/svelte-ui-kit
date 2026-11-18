@@ -12,7 +12,7 @@
     routePage.url.searchParams.get("mixed") === "true",
   );
   let nativeReadonlyClicks = $state(0);
-  let externalForm = $state("external-form");
+  let externalForm = $state<string | undefined>("external-form");
   let mixedCallbacks = $state(0);
   let readonly = $state(false);
   let ref = $state<HTMLElement | null>(null);
@@ -184,7 +184,7 @@
 </form>
 <Checkbox
   id="external"
-  form={externalForm}
+  {...externalForm === undefined ? {} : { form: externalForm }}
   name="outside"
   value="yes"
   checked
@@ -196,9 +196,24 @@
     externalForm = "alternate-form";
   }}>Reassociate external owner</button
 >
+<button
+  onclick={() => {
+    externalForm = undefined;
+  }}>Clear external owner</button
+>
+<button
+  onclick={() => {
+    externalForm = "";
+  }}>Empty external owner</button
+>
+<button
+  onclick={() => {
+    externalForm = "external-form";
+  }}>Restore external owner</button
+>
 <BitsCheckbox.Root
   id="native-readonly"
-  form={externalForm}
+  {...externalForm === undefined ? {} : { form: externalForm }}
   readonly
   checked
   aria-label="Native readonly"

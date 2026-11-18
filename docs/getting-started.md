@@ -103,7 +103,7 @@ The archive variables remain available in the calling shell.
 <!-- documented-native-extraction:start -->
 
 ```sh
-NATIVE_ARCHIVE=bits-ui-2.20.2-svelte-ui-kit.1.tgz
+NATIVE_ARCHIVE=bits-ui-2.20.2-svelte-ui-kit.2.tgz
 SVELTE_ARCHIVE=svelte-5.57.3-reset-dispatch.2.tgz
 (
   set -eu
@@ -125,7 +125,7 @@ SVELTE_ARCHIVE=svelte-5.57.3-reset-dispatch.2.tgz
 <!-- documented-native-extraction:end -->
 
 Proceed only if the Bits archive digest is exactly
-`1e952f7cb1edd822650384e9e30dd75e864b3848d4a20fc73cb8ccd5224d1f27`
+`01c0d49ca64a2d8fdfc89fa2caf178f288bc83f8d2a64803bb16afc2e9dddebe`
 and the Svelte archive digest is exactly
 `a7c2bfa42a6827ba2ced3e281a6f1ed2e8e1cfd4b1cddf1698796089f411abc4`.
 Then run (libraries use `add -D` and retain SemVer peers):

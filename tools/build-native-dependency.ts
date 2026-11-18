@@ -343,9 +343,10 @@ export function buildNativeDependency({
         declarations: { ...reportState.declarations, [name]: declaration },
       });
       if (!baseline) {
-        const bindingType = /z_\$\$bindings\?:\s*([^;]+);/.exec(
-          declaration,
-        )?.[1];
+        const bindingType =
+          /Pick<import\("svelte"\)\.Component<Record<([^>]+), unknown>/.exec(
+            declaration,
+          )?.[1];
         assert.ok(
           bindingType &&
             /^"[a-z]+"(?:\s*\|\s*"[a-z]+")*(?:\s*\|\s*undefined)?$/.test(

@@ -55,7 +55,7 @@
     {disabled}
     {required}
     {readonly}
-    {form}
+    {...form === undefined ? {} : { form }}
     bind:checked
     bind:indeterminate
     bind:ref

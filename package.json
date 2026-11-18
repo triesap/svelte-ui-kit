@@ -1,6 +1,6 @@
 {
   "name": "svelte-ui-kit",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A source-first Svelte UI kit",
   "private": true,
   "license": "(MIT OR Apache-2.0)",
@@ -82,7 +82,7 @@
     "@sveltejs/vite-plugin-svelte": "catalog:",
     "@types/node": "catalog:",
     "@types/semver": "catalog:",
-    "bits-ui": "file:./.native-build/2.20.2-svelte-ui-kit.1/bits-ui-2.20.2-svelte-ui-kit.1.tgz",
+    "bits-ui": "file:./.native-build/2.20.2-svelte-ui-kit.2/bits-ui-2.20.2-svelte-ui-kit.2.tgz",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
     "eslint-plugin-svelte": "catalog:",
