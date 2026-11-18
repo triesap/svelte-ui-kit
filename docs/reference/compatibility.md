@@ -109,6 +109,11 @@ portal choices and production behavior for its actual use. Preserve SSR and
 strict diagnostics when investigating defects; do not add blanket suppression
 or disguise an unresolved finding by rewriting historical palette observations. Document and verify deliberate improvements to current defaults.
 
+The exact pnpm12.21.0/Acorn8.19.0 installer launcher is also authenticated;
+this consumer metadata allowance does not change shipped Svelte bytes or qualify
+arbitrary launcher contents, installers, layouts or the full authoring toolchain.
+Altered, linked, missing and shadowing metadata remains refused.
+
 ## Identity and SSR
 
 Disposition: deliberately non-generated. The original source KitIdProvider and

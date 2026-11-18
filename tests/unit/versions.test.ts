@@ -41,7 +41,7 @@ test("initial identities validate and stay independent", () => {
   const result = validateVersionIdentities(INITIAL_IDENTITIES);
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(INITIAL_SCHEMA_VERSION, 1);
-  assert.equal(TOOL_VERSION, "0.2.0");
+  assert.equal(TOOL_VERSION, "0.2.1");
   assert.equal(INITIAL_REGISTRY_VERSION, "0.1.0");
   assert.equal(INITIAL_ITEM_VERSION, "0.1.0");
   // The compatibility range is a range, never the integer schema identity.

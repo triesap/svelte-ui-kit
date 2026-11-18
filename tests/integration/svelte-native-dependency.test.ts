@@ -435,57 +435,73 @@ test("Svelte requires exact raw version and explicit positive proof, including n
 });
 
 test("exact pnpm installer metadata is inventoried while altered, linked, missing and shadowing files refuse", (t) => {
-  const shim = readFileSync(
-    path.resolve(
-      "tests/fixtures/consumer/node_modules/svelte/node_modules/.bin/acorn",
+  const shims = [
+    readFileSync(
+      path.resolve(
+        "tests/fixtures/consumer/node_modules/svelte/node_modules/.bin/acorn",
+      ),
     ),
+    readFileSync(
+      path.resolve(
+        "tests/fixtures/native-metadata/pnpm-12.21-acorn-8.19.fixture",
+      ),
+    ),
+  ];
+  assert.equal(
+    createHash("sha256").update(shims[1]!).digest("hex"),
+    "934d2191bf94854c8e9cf7b4889f25bd1f84eec377390067c7da5eefded52a4d",
   );
-  for (const fault of [
-    "none",
-    "bytes",
-    "link",
-    "missing",
-    "shadow",
-    "extra",
-    "empty-directory",
-    "parent-link",
-  ]) {
-    const { app, packageRoot } = consumer(t);
-    const directory = path.join(packageRoot, "node_modules/.bin");
-    mkdirSync(directory, { recursive: true });
-    const file = path.join(directory, "acorn");
-    writeFileSync(file, shim);
-    if (fault === "bytes")
-      writeFileSync(file, Buffer.concat([shim, Buffer.from("\n# changed\n")]));
-    if (fault === "link") {
-      const target = path.join(app, "shim");
-      writeFileSync(target, shim);
-      rmSync(file);
-      symlinkSync(target, file);
-    }
-    if (fault === "missing") rmSync(file);
-    if (fault === "shadow") {
-      mkdirSync(path.join(packageRoot, "node_modules/acorn"));
-      writeFileSync(
-        path.join(packageRoot, "node_modules/acorn/index.js"),
-        "export {};",
+  for (const shim of shims) {
+    for (const fault of [
+      "none",
+      "bytes",
+      "link",
+      "missing",
+      "shadow",
+      "extra",
+      "empty-directory",
+      "parent-link",
+    ]) {
+      const { app, packageRoot } = consumer(t);
+      const directory = path.join(packageRoot, "node_modules/.bin");
+      mkdirSync(directory, { recursive: true });
+      const file = path.join(directory, "acorn");
+      writeFileSync(file, shim);
+      if (fault === "bytes")
+        writeFileSync(
+          file,
+          Buffer.concat([shim, Buffer.from("\n# changed\n")]),
+        );
+      if (fault === "link") {
+        const target = path.join(app, "shim");
+        writeFileSync(target, shim);
+        rmSync(file);
+        symlinkSync(target, file);
+      }
+      if (fault === "missing") rmSync(file);
+      if (fault === "shadow") {
+        mkdirSync(path.join(packageRoot, "node_modules/acorn"));
+        writeFileSync(
+          path.join(packageRoot, "node_modules/acorn/index.js"),
+          "export {};",
+        );
+      }
+      if (fault === "extra") writeFileSync(path.join(directory, "other"), shim);
+      if (fault === "empty-directory") mkdirSync(path.join(directory, "other"));
+      if (fault === "parent-link") {
+        const target = path.join(app, "bin");
+        cpSync(directory, target, { recursive: true });
+        rmSync(directory, { recursive: true });
+        symlinkSync(target, directory);
+      }
+      const before = snapshotTree(app);
+      assert.equal(
+        observeNativeInstall(packageRoot, baseline.version, "svelte").kind,
+        fault === "none" ? "authenticated" : "invalid",
+        fault,
       );
+      assert.deepEqual(snapshotTree(app), before);
     }
-    if (fault === "extra") writeFileSync(path.join(directory, "other"), shim);
-    if (fault === "empty-directory") mkdirSync(path.join(directory, "other"));
-    if (fault === "parent-link") {
-      const target = path.join(app, "bin");
-      cpSync(directory, target, { recursive: true });
-      rmSync(directory, { recursive: true });
-      symlinkSync(target, directory);
-    }
-    const before = snapshotTree(app);
-    assert.equal(
-      observeNativeInstall(packageRoot, baseline.version, "svelte").kind,
-      fault === "none" ? "authenticated" : "invalid",
-      fault,
-    );
-    assert.deepEqual(snapshotTree(app), before);
   }
 });
 

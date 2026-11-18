@@ -186,7 +186,7 @@ export async function rehearseCanonicalCutover(options: Options) {
       "0.1.0",
       "this historical SDK fixture targets the retained0.1.0 binary",
     );
-    assert.equal(json(path.join(currentPkg, "package.json")).version, "0.2.0");
+    assert.equal(json(path.join(currentPkg, "package.json")).version, "0.2.1");
     const catalog = parseYaml(
       readFileSync(path.join(owner, "pnpm-workspace.yaml"), "utf8"),
     ).catalog as Record<string, string>;
@@ -586,7 +586,7 @@ throw Error('prepared crash checkpoint was not reached: '+JSON.stringify(outcome
       candidateArchive: candidate,
       candidateSha256: digest(readFileSync(candidate)),
       previousVersion: "0.1.0",
-      candidateVersion: "0.2.0",
+      candidateVersion: "0.2.1",
       prepared,
       previousRootIdentity: { device: identity.dev, inode: identity.ino },
       historicalPositiveProfile: {

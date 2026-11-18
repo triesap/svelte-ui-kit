@@ -3,6 +3,12 @@
 This project has not been released. Entries describe the local source/package;
 they do not announce an npm release or broaden tested compatibility.
 
+## Unreleased — local 0.2.1
+
+- Authenticate the measured pnpm12.21.0/Acorn8.19.0 installer launcher while
+  retaining complete shipped-file hashes and altered/link/missing/shadow refusals.
+  The native archives, component APIs, registry and canonical formats are unchanged.
+
 ## Unreleased — local 0.2.0
 
 - Breaking canonical project/lock format 1 requires an explicit SvelteKit, Astro
