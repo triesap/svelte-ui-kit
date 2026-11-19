@@ -54,6 +54,9 @@
                 id="generated-indicator">✓</MenuItemIndicator
               >{/snippet}
           </MenuRadioItem>
+          <MenuRadioItem value="b" id="generated-radio-second"
+            >Second radio choice</MenuRadioItem
+          >
         </MenuRadioGroup>
       </MenuContent>
     </MenuPortal>

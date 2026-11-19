@@ -68,6 +68,19 @@ export async function verifyShowcase(
   await expect(
     page.getByRole("menuitemradio", { name: "Compact", exact: true }),
   ).toHaveAttribute("aria-checked", "true");
+  const rows = await page
+    .getByRole("menu", { name: "Display density", exact: true })
+    .getByRole("menuitemradio")
+    .evaluateAll((nodes) =>
+      nodes.map((node) => {
+        const rect = node.getBoundingClientRect();
+        return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+      }),
+    );
+  expect(rows).toHaveLength(2);
+  expect(rows[0]!.x).toBe(rows[1]!.x);
+  expect(rows[0]!.width).toBe(rows[1]!.width);
+  expect(rows[1]!.y).toBeGreaterThanOrEqual(rows[0]!.y + rows[0]!.height);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("menu")).toHaveCount(0);
   for (const width of [1440, 390, 320]) {

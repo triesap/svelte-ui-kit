@@ -104,6 +104,9 @@ There is no Rust index/typeahead/placement engine.
 Root binds open and has no DOM/ref/class/modal prop.
 Native onSelect Event, preventDefault, disabled, closeOnSelect and selection callbacks retain order.
 RadioItem children receives checked; compose its label with `kit-menu-radio-item-label` and MenuItemIndicator checked.
+RadioGroup keeps its native wrapper and stacks choices in rows using the content
+gap token. Keep decorative checkmarks `aria-hidden="true"` so selection state does
+not change an item's accessible name.
 Indicator is a stateless native span with required boolean checked, native ref/children, owned hidden/data-state and no delegated child hook.
 Floating Content child receives distinct wrapperProps, inner props and open; spread these on outer and inner elements respectively.
 Design CSS belongs to inner content.

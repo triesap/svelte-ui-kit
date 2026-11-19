@@ -40,6 +40,12 @@
     );
   }
 
+  .kit-menu-radio-group {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--kit-menu-content-gap, 0.125rem);
+  }
+
   .kit-menu-content {
     --kit-menu-content-translate-x: 0;
     --kit-menu-content-translate-y: 0;

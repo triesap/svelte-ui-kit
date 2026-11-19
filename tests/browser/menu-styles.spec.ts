@@ -58,6 +58,18 @@ for (const custom of [false, true])
         outerTransform: expect.stringMatching(/translate/),
         outerClass: "",
       });
+      const group = page.locator(".kit-menu-radio-group");
+      await expect(group).toHaveCSS("display", "grid");
+      const rows = await group.locator(".kit-menu-item").evaluateAll((nodes) =>
+        nodes.map((node) => {
+          const box = node.getBoundingClientRect();
+          return { x: box.x, y: box.y, width: box.width, height: box.height };
+        }),
+      );
+      expect(rows).toHaveLength(2);
+      expect(rows[0]!.x).toBe(rows[1]!.x);
+      expect(rows[0]!.width).toBe(rows[1]!.width);
+      expect(rows[1]!.y).toBeGreaterThanOrEqual(rows[0]!.y + rows[0]!.height);
       const indicator = page.locator("#generated-indicator");
       await expect(indicator).toBeVisible();
       expect(
