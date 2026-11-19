@@ -6,7 +6,7 @@ import { writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import path from "node:path";
 import type { TestContext } from "node:test";
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect, type Page } from "@playwright/test";
 export function nativeCommand(
   root: string,
   executable: string,
@@ -48,11 +48,13 @@ export async function verifyTargetConsumer(
     framework,
     commands,
     env = {},
+    verifyAdditional,
   }: {
     root: string;
     framework: "astro" | "sveltekit";
     commands: readonly string[];
     env?: NodeJS.ProcessEnv;
+    verifyAdditional?: (page: Page, baseURL: string) => Promise<void>;
   },
   t: TestContext,
 ) {
@@ -267,6 +269,7 @@ export async function verifyTargetConsumer(
     path: path.join(root, "consumer.png"),
     fullPage: true,
   });
+  await verifyAdditional?.(page, `http://127.0.0.1:${port}/`);
   assert.deepEqual(errors, []);
   writeFileSync(
     path.join(root, "verification.json"),

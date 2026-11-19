@@ -1,4 +1,8 @@
 import assert from "node:assert/strict";
+import {
+  materializeShowcase,
+  showcaseHost,
+} from "../../src/examples/showcase.js";
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { sha256Hex } from "../../src/codegen/digest.js";
@@ -461,7 +465,11 @@ export function buildIdentityConsumer(custom: boolean) {
   return buildInstalledItemsConsumer(custom, "identity", requested);
 }
 
-export function buildCatalogConsumer(custom: boolean) {
+export function buildCatalogConsumer(
+  custom: boolean,
+  beforeBuild?: (root: string, config: SvelteKitConfig) => void,
+  setup: "add" | "sync" = "add",
+) {
   const registry = JSON.parse(
     readFileSync("assets/registry/registry.json", "utf8"),
   );
@@ -488,7 +496,9 @@ export function buildCatalogConsumer(custom: boolean) {
         path.join(root, "src/catalog-exports.ts"),
         `import * as UI from ${JSON.stringify(module)};\nimport type {${types.join(",")}} from ${JSON.stringify(module)};\nexport const catalogValues = [${values.join(",")}];\nexport type CatalogTypes = [${types.join(",")}];\n`,
       );
+      beforeBuild?.(root, config);
     },
+    setup,
   );
 }
 
@@ -839,6 +849,7 @@ function buildInstalledItemsConsumer(
   qualification: string,
   requested: string[],
   beforeBuild?: (root: string, config: SvelteKitConfig) => void,
+  setup: "add" | "sync" = "add",
 ) {
   let additional: Record<string, string> = {};
   const consumer = buildComponentConsumer(
@@ -848,11 +859,23 @@ function buildInstalledItemsConsumer(
     false,
     process.cwd(),
     (root, config) => {
-      for (const item of requested.filter((item) => item !== "field")) {
-        runGeneratedCommand(root, path.resolve("dist/cli/main.js"), [
-          "add",
-          item,
-        ]);
+      if (setup === "sync") {
+        const desired = path.join(
+          root,
+          deriveKitPaths(config).stateDir,
+          "kit.json",
+        );
+        const current = JSON.parse(readFileSync(desired, "utf8"));
+        current.requested = [...requested].sort();
+        writeFileSync(desired, JSON.stringify(current, null, 2));
+        runGeneratedCommand(root, path.resolve("dist/cli/main.js"), ["sync"]);
+      } else {
+        for (const item of requested.filter((item) => item !== "field")) {
+          runGeneratedCommand(root, path.resolve("dist/cli/main.js"), [
+            "add",
+            item,
+          ]);
+        }
       }
       const lock = JSON.parse(
         readFileSync(
@@ -1083,4 +1106,52 @@ export function buildFieldFormsConsumer(custom: boolean) {
       files: { ...consumer.evidence.files, ...additional },
     },
   };
+}
+
+/** Same canonical public source, with explicit local module binding only. */
+export function buildShowcaseConsumer(custom: boolean) {
+  return buildCatalogConsumer(
+    custom,
+    (root, config) => {
+      const source = path.resolve("examples/showcase");
+      const destination = path.join(root, "src/lib/showcase");
+      mkdirSync(path.dirname(destination), { recursive: true });
+      let ui = path.posix.relative(
+        "src/lib/showcase",
+        `${config.uiDir}/index.js`,
+      );
+      if (!ui.startsWith(".")) ui = `./${ui}`;
+      const binding = materializeShowcase(source, destination, ui);
+      const route = "src/routes/qualification/catalog/+page.svelte";
+      let styles = path.posix.relative(
+        path.posix.dirname(route),
+        `${config.stylesDir}/kit.css`,
+      );
+      if (!styles.startsWith(".")) styles = `./${styles}`;
+      const host = showcaseHost(
+        source,
+        "sveltekit",
+        styles,
+        "$lib/showcase/Gallery.svelte",
+      );
+      writeFileSync(path.join(root, route), host.text);
+      const html = path.join(root, "src/app.html");
+      const original = readFileSync(html, "utf8");
+      assert.equal(original.split("<body ").length, 2);
+      writeFileSync(
+        html,
+        original.replace("<body ", '<body class="showcase-page" '),
+      );
+      mkdirSync(path.join(root, "static"), { recursive: true });
+      writeFileSync(
+        path.join(root, "static/showcase-avatar.svg"),
+        readFileSync(path.join(destination, "avatar.svg")),
+      );
+      writeFileSync(
+        path.join(root, "showcase-binding.json"),
+        JSON.stringify({ binding, host }, null, 2),
+      );
+    },
+    "sync",
+  );
 }

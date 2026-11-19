@@ -128,3 +128,11 @@ The package remains at version `0.1.0` throughout in-progress v1 development
 until the first public npm release. Use an exact Git revision and verified
 archive digest to identify a particular development delivery. Project/schema
 identity and individual registry content identities remain independently checked.
+
+## Canonical component showcase
+
+The [portable public showcase](examples/showcase/README.md) uses one shared Svelte
+implementation with thin Astro and SvelteKit hosts. It demonstrates the complete
+generated catalog, white canvas, pill buttons, native forms, explicit themes and
+optional reusable recipes. The example is included in the verified CLI archive;
+applications own its materialized source and need no CLI runtime dependency.

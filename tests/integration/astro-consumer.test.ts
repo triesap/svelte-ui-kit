@@ -1,3 +1,5 @@
+import { pathToFileURL } from "node:url";
+import { verifyShowcase } from "../helpers/showcase-browser.js";
 import { documentedExample } from "../helpers/documented-example.js";
 import {
   nativeCommand as command,
@@ -37,6 +39,9 @@ test("real generated Astro consumer checks, builds, serves SSR and hydrates inde
   const installed = installIndependentCli();
   const root = path.join(installed.root, `astro-${randomUUID()}`);
   function cli(root: string, ...args: string[]) {
+    return invoke(root, args, 30_000);
+  }
+  function invoke(root: string, args: string[], deadlineMs: number) {
     const result = installed.runNode(
       [
         path.join(installed.packageRoot, "dist/cli/main.js"),
@@ -47,7 +52,7 @@ test("real generated Astro consumer checks, builds, serves SSR and hydrates inde
       ],
       root,
       "generated-astro-cli",
-      30_000,
+      deadlineMs,
     );
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.equal(result.stderr, "");
@@ -168,6 +173,56 @@ test("real generated Astro consumer checks, builds, serves SSR and hydrates inde
     logs[args.join(" ")] = cli(root, ...args);
     assert.deepEqual(snapshotTree(root), before, args.join(" "));
   }
+  // Use the public example from the actual independent package, never a
+  // private gallery copy. Preserve the original two-island route above.
+  const desiredPath = path.join(state, "kit.json");
+  const desired = JSON.parse(readFileSync(desiredPath, "utf8"));
+  const catalog: string[] = JSON.parse(
+    readFileSync(
+      path.join(installed.packageRoot, "assets/registry/registry.json"),
+      "utf8",
+    ),
+  )
+    .items.map((item: { id: string }) => item.id)
+    .sort();
+  desired.requested = catalog;
+  writeFileSync(desiredPath, JSON.stringify(desired, null, 2));
+  logs["showcase-sync-plan"] = cli(root, "sync", "--dry-run");
+  // New bulk-catalog setup uses the installed mutation lane; original
+  // controls and cold parser retain their original 30-second deadline.
+  logs["showcase-sync"] = invoke(root, ["sync"], 300_000);
+  const example = path.join(installed.packageRoot, "examples/showcase");
+  // Use the compiled setup helper shipped in the installed package.
+  const { materializeShowcase, showcaseHost } = await import(
+    pathToFileURL(path.join(installed.packageRoot, "dist/examples/showcase.js"))
+      .href
+  );
+  const destination = path.join(root, "src/lib/showcase");
+  mkdirSync(path.dirname(destination), { recursive: true });
+  const binding = materializeShowcase(
+    example,
+    destination,
+    "../../generated/ui/index.js",
+  );
+  const host = showcaseHost(
+    example,
+    "astro",
+    "../styles/kit.css",
+    "../lib/showcase/Gallery.svelte",
+  );
+  writeFileSync(path.join(root, "src/pages/showcase.astro"), host.text, {
+    flag: "wx",
+  });
+  mkdirSync(path.join(root, "public"), { recursive: true });
+  writeFileSync(
+    path.join(root, "public/showcase-avatar.svg"),
+    readFileSync(path.join(destination, "avatar.svg")),
+    { flag: "wx" },
+  );
+  writeFileSync(
+    path.join(root, "showcase-binding.json"),
+    JSON.stringify({ binding, host, catalog }, null, 2),
+  );
   rmSync(path.join(installed.root, "host"), { recursive: true });
   assert.equal(existsSync(installed.packageRoot), false);
   const audit = path.join(root, "source-audit.jsonl");
@@ -250,6 +305,13 @@ test("real generated Astro consumer checks, builds, serves SSR and hydrates inde
       framework: "astro",
       commands: Object.keys(logs),
       env: guardedEnv,
+      verifyAdditional: (page, baseURL) =>
+        verifyShowcase(
+          page,
+          new URL("showcase", baseURL).href,
+          catalog,
+          (name) => path.join(root, name),
+        ),
     },
     t,
   );

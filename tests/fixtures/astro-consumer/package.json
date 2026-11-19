@@ -25,6 +25,7 @@
     "@types/node": "catalog:",
     "csstype": "catalog:",
     "svelte-check": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite": "catalog:"
   }
 }

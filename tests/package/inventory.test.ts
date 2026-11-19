@@ -45,6 +45,22 @@ test("real packed inventory contains only standalone distribution assets and run
     const list = spawnSync("tar", ["-tzf", archive], { encoding: "utf8" });
     assert.equal(list.status, 0, list.stderr);
     const entries = list.stdout.trim().split("\n");
+    assert.ok(entries.includes("package/dist/examples/showcase.js"));
+    for (const member of [
+      "Gallery.svelte",
+      "Specimen.svelte",
+      "showcase.css",
+      "recipes.css",
+      "avatar.svg",
+      "README.md",
+      "hosts/astro/index.astro",
+      "hosts/sveltekit/+page.svelte",
+    ]) {
+      assert.ok(
+        entries.includes(`package/examples/showcase/${member}`),
+        member,
+      );
+    }
     for (const [retired, current] of TRANSACTION_MODULE_MOVES) {
       assert.ok(
         entries.includes(`package/dist/transactions/${current}.js`),
