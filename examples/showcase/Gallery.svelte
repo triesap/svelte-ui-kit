@@ -302,7 +302,22 @@
           name="choice"
           selectedLabel={choice === "a" ? "Weekly" : "Monthly"}
           bind:value={choice}
-          ><option value="a">Weekly</option><option value="b">Monthly</option
+          >{#snippet icon()}<svg
+              aria-hidden="true"
+              focusable="false"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              ><path
+                d="m4 6 4 4 4-4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg
+            >{/snippet}<option value="a">Weekly</option><option value="b"
+            >Monthly</option
           ></SelectField
         ><FieldRoot required
           >{#snippet children({ controlId })}<FieldSurface
@@ -420,11 +435,13 @@
                 ><MenuRadioItem value="a" closeOnSelect={false}
                   >{#snippet children({ checked: active })}<span
                       >Comfortable</span
-                    ><MenuItemIndicator checked={active}>✓</MenuItemIndicator
+                    ><MenuItemIndicator aria-hidden="true" checked={active}
+                      >✓</MenuItemIndicator
                     >{/snippet}</MenuRadioItem
                 ><MenuRadioItem value="b" closeOnSelect={false}
                   >{#snippet children({ checked: active })}<span>Compact</span
-                    ><MenuItemIndicator checked={active}>✓</MenuItemIndicator
+                    ><MenuItemIndicator aria-hidden="true" checked={active}
+                      >✓</MenuItemIndicator
                     >{/snippet}</MenuRadioItem
                 ></MenuRadioGroup
               ></MenuContent

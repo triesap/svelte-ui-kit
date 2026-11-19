@@ -56,6 +56,20 @@ export async function verifyShowcase(
   await expect(page.locator("[data-showcase-submissions]")).toContainText(
     "Submitted 0 times",
   );
+  await expect(
+    page.locator('[data-kit-item="field"] .kit-select-icon svg'),
+  ).toHaveAttribute("aria-hidden", "true");
+  await page
+    .getByRole("button", { name: "Choose display density", exact: true })
+    .click();
+  await page
+    .getByRole("menuitemradio", { name: "Compact", exact: true })
+    .click();
+  await expect(
+    page.getByRole("menuitemradio", { name: "Compact", exact: true }),
+  ).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toHaveCount(0);
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: width === 1440 ? 1000 : 900 });
     expect(
