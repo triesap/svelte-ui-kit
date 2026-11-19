@@ -213,6 +213,16 @@ for (const custom of [false, true])
     }) => {
       const action = page.locator("#action");
       await expect(action).toHaveCSS("border-top-left-radius", "9px");
+      const defaultRadius = await action.evaluate(() => {
+        const fresh = document.createElement("button");
+        fresh.className = "kit-button kit-button--primary kit-button--md";
+        fresh.textContent = "Fresh default";
+        document.body.append(fresh);
+        const radius = getComputedStyle(fresh).borderTopLeftRadius;
+        fresh.remove();
+        return radius;
+      });
+      expect(defaultRadius).toBe("999px");
       await expect(action).toHaveCSS("min-height", "40px");
       await page
         .getByRole("button", { name: "Cycle variant", exact: true })

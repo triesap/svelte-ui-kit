@@ -123,7 +123,7 @@ export interface CompatibilityPolicy {
   readonly date: CompatibilityRange;
 }
 
-/** The complete independent identity of a tool/registry projection. */
+/** Independent format/version metadata; exact build identity requires archive/source digests. */
 export interface VersionIdentities {
   readonly schemaVersion: SchemaVersion;
   readonly protocolVersion: ProtocolVersion;

@@ -30,7 +30,7 @@ component property
   → reference radius
 ```
 
-For Button: `--kit-button-radius` → `--kit-radius-control` → `--kit-radius-default` → `--kit-radius-md`. Preserve default shapes when optional variables are unset. Shape-critical geometry (spinner, inner circular indicators) remains circular unless its exact component property explicitly overrides it. Accept full CSS border-radius grammar; do not use restrictive `@property` registration. Invalid custom-property values follow ordinary computed-value behavior.
+For Button: `--kit-button-radius` → `--kit-radius-control` → `--kit-radius-default` → `--kit-radius-full`. Preserve default shapes when optional variables are unset. Shape-critical geometry (spinner, inner circular indicators) remains circular unless its exact component property explicitly overrides it. Accept full CSS border-radius grammar; do not use restrictive `@property` registration. Invalid custom-property values follow ordinary computed-value behavior.
 
 Retain semantic colors, text/surface/border roles, focus ring, shadows, motion/easing, disabled opacity, and per-component customization as observed in the reference assets. A theme token expresses portable design intent; a component property is a separately governed runtime CSS API. Preserve this distinction and test fallback precedence.
 
@@ -55,3 +55,18 @@ Use reduced-motion alternatives for animated controls; verify logical properties
 Plain-CSS design styling does not guarantee no inline runtime positioning styles. Audit the pinned primitive output for floating menu/overlay placement and document supported CSP behavior. No strict-CSP parity claim is allowed without a tested policy. Do not remove necessary primitive wrapper structure just to eliminate a style attribute.
 
 The aggregate CSS contains all installed item blocks. No promise of per-route stylesheet tree shaking is made. Application-owned overrides should normally live after kit.css, minimizing future block conflicts without restricting direct editing.
+
+The canonical light canvas is white and uncustomized buttons are pill-shaped.
+Set `--kit-button-radius: var(--kit-radius-md)` to restore moderate rounding;
+component, semantic-role and global-default overrides retain their precedence.
+
+## Portable semantic recipes
+
+The editable [recipe stylesheet](../../examples/showcase/recipes.css) provides
+accent/danger button and info/success/danger feedback treatments using the existing
+semantic tokens. Load it after kit CSS, then add `showcase-button-accent` or
+`showcase-button-danger` alongside an ordinary Button class. Native disabled,
+loading and focus behavior remains component-owned. Feedback classes apply to
+Alert/Status without changing their announcement semantics. The optional
+`showcase-radius-moderate` scope restores the earlier button shape. These are
+application-owned recipes; the CLI does not install a theme store or global reset.

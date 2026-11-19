@@ -6,9 +6,15 @@ intervention. Diagnosis is read-only and cannot authorize recovery by itself.
 
 ## Match the binary and physical installation
 
+In-progress builds share npm version `0.1.0`. Select a previous binary by its
+verified archive digest and exact source revision, never the version string alone.
+Physical writer/journal/publication evidence remains mandatory; a matching package
+version grants no recovery authority. Persisted protocol identities are independent
+of this package version and must change or refuse if their semantics break.
+
 Before diagnosing a format-boundary upgrade, retain the exact previous CLI
 archive/digest and the complete application snapshot, including hidden state.
-Canonical local 0.2.0 refuses old targetless format 1, old format 2 and retained
+The canonical in-progress 0.1.0 package refuses old targetless format 1, old format 2 and retained
 journal formats 1/2. Use the matching previous binary only for its own provable
 interruption at the original physical root. A copied snapshot changes physical
 identities and is not permission to replay saved journals in a new root. Preserve

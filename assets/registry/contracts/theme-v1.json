@@ -12,7 +12,7 @@
       "name": "--kit-color-canvas",
       "role": "surface",
       "type": "color",
-      "fallback": "#f8fafc"
+      "fallback": "#ffffff"
     },
     {
       "name": "--kit-color-surface",

@@ -115,7 +115,7 @@ test("component then semantic then default then reference precedence is preserve
   page,
 }) => {
   const name = "--kit-button-radius";
-  expect(await radius(page, name)).toBe("6px");
+  expect(await radius(page, name)).toBe("999px");
   await rootProperty(page, "--kit-radius-default", "10px");
   expect(await radius(page, name)).toBe("10px");
   await rootProperty(page, "--kit-radius-control", "12px");
@@ -127,7 +127,7 @@ test("component then semantic then default then reference precedence is preserve
   await rootProperty(page, "--kit-radius-control", null);
   expect(await radius(page, name)).toBe("10px");
   await rootProperty(page, "--kit-radius-default", null);
-  expect(await radius(page, name)).toBe("6px");
+  expect(await radius(page, name)).toBe("999px");
 });
 test("all properties preserve multi-corner and elliptical border-radius grammar", async ({
   page,
@@ -169,9 +169,9 @@ test("native invalid computed values and unset property behavior are explicit", 
   await rootProperty(page, "--kit-button-radius", "not-a-radius");
   expect(await radius(page, "--kit-button-radius")).toBe("0px");
   await rootProperty(page, "--kit-button-radius", "initial");
-  expect(await radius(page, "--kit-button-radius")).toBe("6px");
+  expect(await radius(page, "--kit-button-radius")).toBe("999px");
   await rootProperty(page, "--kit-button-radius", "unset");
-  expect(await radius(page, "--kit-button-radius")).toBe("6px");
+  expect(await radius(page, "--kit-button-radius")).toBe("999px");
   await rootProperty(page, "--kit-button-radius", "calc(2px + 3px)");
   expect(await radius(page, "--kit-button-radius")).toBe("5px");
 });

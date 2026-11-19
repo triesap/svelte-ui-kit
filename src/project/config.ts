@@ -308,7 +308,8 @@ export function initializationFields(config: KitConfig, source: string) {
 }
 
 /** Deterministic canonical writer metadata and desired state. Reading historical
- * toolVersion remains valid; a new publication always identifies this build. */
+ * toolVersion remains valid; publication records the current package version.
+ * Exact build selection uses the verified archive/source identity, not this field. */
 export function serializeKitConfig(config: KitConfig): string {
   return (
     JSON.stringify(

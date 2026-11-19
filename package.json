@@ -1,6 +1,6 @@
 {
   "name": "svelte-ui-kit",
-  "version": "0.2.2",
+  "version": "0.1.0",
   "description": "A source-first Svelte UI kit",
   "private": true,
   "license": "(MIT OR Apache-2.0)",
@@ -40,7 +40,8 @@
     "docs/CHANGELOG.md",
     "docs/getting-started.md",
     "docs/guides",
-    "docs/reference"
+    "docs/reference",
+    "examples/showcase"
   ],
   "scripts": {
     "format": "biome format --write . && prettier --write \"**/*.{svelte,astro,md,yml,yaml}\" --no-error-on-unmatched-pattern",

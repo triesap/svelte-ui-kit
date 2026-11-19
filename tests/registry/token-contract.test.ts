@@ -148,11 +148,12 @@ test("portable contracts validate independently without source ABI identities", 
   assert.equal(customization.contractVersion, 1);
 });
 
-test("semantic defaults preserve source observations with four explicit readable-palette adaptations", () => {
+test("semantic defaults preserve source observations with explicit readable-palette adaptations and canonical white canvas", () => {
   const rows = baseline.tokens;
   assert.equal(rows.length, 44);
   assert.equal(semantic.tokens.length, 44);
   const readableDefaults: Record<string, string> = {
+    "--kit-color-canvas": "#ffffff",
     "--kit-color-border": "#6b7280",
     "--kit-color-border-strong": "#4b5563",
     "--kit-color-info": "#0369a1",
@@ -245,7 +246,7 @@ test("complete source radius inventory and distinct family extension retain orde
     );
   assert.equal(
     property("button-radius").fallback,
-    "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))",
+    "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-full)))",
   );
   assert.equal(
     property("card-radius").fallback,

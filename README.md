@@ -123,3 +123,8 @@ using targetless format 1 or format 2 need the reviewed
 [clean-copy adoption procedure](docs/guides/upgrading.md#canonical-format-adoption).
 Shared packages use the [Svelte-library target](docs/guides/svelte-library.md),
 with an explicit CSS entry and consumer-owned package exports.
+
+The package remains at version `0.1.0` throughout in-progress v1 development
+until the first public npm release. Use an exact Git revision and verified
+archive digest to identify a particular development delivery. Project/schema
+identity and individual registry content identities remain independently checked.

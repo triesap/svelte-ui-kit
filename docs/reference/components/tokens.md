@@ -44,11 +44,11 @@ MIT option and retains Copyright (c) 2026 Tyson Lupul and the full
 [MIT notice](../../../LICENSE-MIT). Preserve the distribution's
 [source notices](../../../NOTICE.md) when copying generated assets.
 
-Four color defaults deliberately improve the original design: border #6b7280, strong border #4b5563, info #0369a1 and success #15803d. The original source observations remain preserved in the test fixture; they are not rewritten as passing contrast evidence. Other defaults and fallback order are retained. Application overrides and semantic defaults are distinct.
+The white canvas and four contrast color defaults deliberately improve the original design: border #6b7280, strong border #4b5563, info #0369a1 and success #15803d. The original source observations remain preserved in the test fixture; they are not rewritten as passing contrast evidence. Other defaults and fallback order are retained. Application overrides and semantic defaults are distinct.
 
 | Property                          | Target role  | Value type        | Current default                 |
 | --------------------------------- | ------------ | ----------------- | ------------------------------- |
-| --kit-color-canvas                | surface      | color             | #f8fafc                         |
+| --kit-color-canvas                | surface      | color             | #ffffff                         |
 | --kit-color-surface               | surface      | color             | #ffffff                         |
 | --kit-color-surface-raised        | surface      | color             | #ffffff                         |
 | --kit-color-surface-hover         | surface      | color             | #f3f4f6                         |
@@ -102,7 +102,7 @@ Four color defaults deliberately improve the original design: border #6b7280, st
 | --kit-alert-radius                | alert        | surface           | no                              | `var(--kit-radius-surface, var(--kit-radius-default, var(--kit-radius-md)))`                                  |
 | --kit-avatar-radius               | avatar       | geometry-critical | yes                             | `var(--kit-radius-full)`                                                                                      |
 | --kit-badge-radius                | badge        | indicator         | no                              | `var(--kit-radius-indicator, var(--kit-radius-default, var(--kit-radius-full)))`                              |
-| --kit-button-radius               | button       | control           | no                              | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))`                                  |
+| --kit-button-radius               | button       | control           | no                              | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-full)))`                                |
 | --kit-card-radius                 | card         | surface           | no                              | `var(--kit-radius-surface, var(--kit-radius-default, var(--kit-radius-lg)))`                                  |
 | --kit-checkbox-radius             | checkbox     | control           | no                              | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-sm)))`                                  |
 | --kit-collapsible-trigger-radius  | collapsible  | control           | no                              | `var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))`                                  |

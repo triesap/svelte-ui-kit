@@ -1,0 +1,30 @@
+/* Optional application-owned recipes; load after generated kit CSS. */
+.showcase-button-accent {
+  background: var(--kit-color-accent);
+  color: var(--kit-color-accent-foreground);
+}
+.showcase-button-accent:hover:not(:disabled) {
+  background: var(--kit-color-accent-hover);
+}
+.showcase-button-danger {
+  background: var(--kit-color-danger);
+  color: var(--kit-color-danger-foreground);
+}
+.showcase-button-danger:hover:not(:disabled) {
+  background: var(--kit-color-danger-hover);
+}
+.showcase-feedback-info {
+  background: var(--kit-color-info);
+  color: var(--kit-color-info-foreground);
+}
+.showcase-feedback-success {
+  background: var(--kit-color-success);
+  color: var(--kit-color-success-foreground);
+}
+.showcase-feedback-danger {
+  background: var(--kit-color-danger);
+  color: var(--kit-color-danger-foreground);
+}
+.showcase-radius-moderate {
+  --kit-button-radius: var(--kit-radius-md);
+}

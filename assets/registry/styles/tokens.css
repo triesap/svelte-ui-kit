@@ -7,7 +7,7 @@
 @layer svelte-ui-kit.tokens {
   :root {
     color-scheme: light;
-    --kit-color-canvas: #f8fafc;
+    --kit-color-canvas: #ffffff;
     --kit-color-surface: #ffffff;
     --kit-color-surface-raised: #ffffff;
     --kit-color-surface-hover: #f3f4f6;

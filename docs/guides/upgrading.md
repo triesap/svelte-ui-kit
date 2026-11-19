@@ -7,7 +7,7 @@ CLI in a separate host using [local installation](../getting-started.md).
 
 ## Canonical format adoption
 
-Local 0.2.0 uses one target-bearing project/lock format 1 and durable journal
+The in-progress 0.1.0 package uses one target-bearing project/lock format 1 and durable journal
 format 3. Old targetless project format 1 and old format 2 are refused. Changing
 a format number, removing ownership evidence or running ordinary sync does not
 establish a supported migration.

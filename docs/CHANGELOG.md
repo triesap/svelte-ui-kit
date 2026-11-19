@@ -3,7 +3,18 @@
 This project has not been released. Entries describe the local source/package;
 they do not announce an npm release or broaden tested compatibility.
 
-## Unreleased — local 0.2.2
+## In-progress v1 — package 0.1.0
+
+- Keep npm package identity at 0.1.0 until the first public npm release. Exact Git
+  revisions and archive digests identify development deliveries.
+- Canonical white canvas and pill-shaped button defaults preserve semantic/global
+  override precedence, contrast improvements and all existing component APIs.
+- Public semantic-color and moderate-radius recipes remain editable source.
+
+The following local build labels record historical provenance, not maintained
+release lines or currently selectable product versions.
+
+### Historical local build 0.2.2
 
 - Preserve native exact optional component metadata without eagerly expanding
   large prop unions in the source-built Bits declaration emitter. New authenticated
@@ -14,13 +25,13 @@ they do not announce an npm release or broaden tested compatibility.
   their existing default/reset semantics. Registry 0.1.8 advances affected item
   compatibility identities; generated files still belong to the application.
 
-## Unreleased — local 0.2.1
+### Historical local build 0.2.1
 
 - Authenticate the measured pnpm12.21.0/Acorn8.19.0 installer launcher while
   retaining complete shipped-file hashes and altered/link/missing/shadow refusals.
   The native archives, component APIs, registry and canonical formats are unchanged.
 
-## Unreleased — local 0.2.0
+### Historical local build 0.2.0
 
 - Breaking canonical project/lock format 1 requires an explicit SvelteKit, Astro
   or library target. Targetless format 1 and old format 2 are refused. New

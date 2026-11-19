@@ -27,6 +27,7 @@ function fixture(t: { after(callback: () => void): void }) {
     "src",
     "tools",
     "assets",
+    "examples",
     "package.json",
     "pnpm-workspace.yaml",
     "tsconfig.json",
@@ -81,6 +82,7 @@ test("production packaging excludes actual removed compiler inputs after a dirty
   });
   assert.equal(list.status, 0, list.stderr);
   assert.doesNotMatch(list.stdout, /retired-module/);
+  assert.match(list.stdout, /package\/examples\/showcase\/recipes\.css/);
   const extracted = path.join(root, "extracted");
   mkdirSync(extracted);
   const unpack = spawnSync("tar", ["-xzf", archive, "-C", extracted], {

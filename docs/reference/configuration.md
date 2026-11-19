@@ -15,7 +15,7 @@ requests**, rather than replacing requests with dependency closure.
 | --------------- | ---------------------------------------------------------------------------------------------- |
 | `schemaVersion` | Literal integer 1 for every supported target.                                                  |
 | `target`        | `sveltekit`, `astro` or `svelte-library`; required on disk.                                    |
-| `toolVersion`   | CLI writer identity; current local package is 0.2.0.                                           |
+| `toolVersion`   | CLI package version, currently 0.1.0; not an exact build identity.                             |
 | `registry`      | Built-in registry only; currently `builtin`.                                                   |
 | `uiDir`         | Local source and root export directory; default `src/lib/components/ui`.                       |
 | `stylesDir`     | Aggregate and application stylesheet directory; default `src/styles`.                          |

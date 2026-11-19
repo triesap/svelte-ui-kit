@@ -212,6 +212,7 @@ export function installIndependentCli() {
       "tools",
       ".native-build",
       "assets",
+      "examples",
       "tsconfig.json",
       "package.json",
       "pnpm-workspace.yaml",

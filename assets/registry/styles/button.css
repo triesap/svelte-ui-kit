@@ -12,7 +12,10 @@
       transparent;
     border-radius: var(
       --kit-button-radius,
-      var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))
+      var(
+        --kit-radius-control,
+        var(--kit-radius-default, var(--kit-radius-full))
+      )
     );
     font: inherit;
     font-weight: var(--kit-button-font-weight, 600);

@@ -487,7 +487,7 @@
       "name": "--kit-button-radius",
       "scope": "button",
       "grammar": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]? | inherit | initial | unset | revert | revert-layer",
-      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-md)))"
+      "fallback": "var(--kit-radius-control, var(--kit-radius-default, var(--kit-radius-full)))"
     },
     {
       "name": "--kit-card-radius",

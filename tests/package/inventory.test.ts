@@ -62,7 +62,7 @@ test("real packed inventory contains only standalone distribution assets and run
       const logical = entry.slice("package/".length);
       assert.match(
         logical,
-        /^(?:dist\/|assets\/|docs\/(?:README\.md$|CHANGELOG\.md$|getting-started\.md$|guides\/|reference\/)|package\.json$|README\.md$|NOTICE\.md$|LICENSE-MIT$|LICENSE-APACHE$)/,
+        /^(?:dist\/|assets\/|examples\/showcase\/|docs\/(?:README\.md$|CHANGELOG\.md$|getting-started\.md$|guides\/|reference\/)|package\.json$|README\.md$|NOTICE\.md$|LICENSE-MIT$|LICENSE-APACHE$)/,
         logical,
       );
       assert.doesNotMatch(
