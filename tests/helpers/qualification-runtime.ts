@@ -1,3 +1,4 @@
+import { nodeStorageCommand } from "../../tools/node-storage.ts";
 /** Producer qualification installs into a new owned host, never a package store. */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -104,7 +105,7 @@ export function installQualificationRuntime(
   const env = linkedFixtureEnvironment();
   verifyFixtureManager("pnpm", [], root, env);
   for (const frozen of [false, true]) {
-    const result = spawnSync(
+    const routed = nodeStorageCommand(
       "pnpm",
       [
         "install",
@@ -112,14 +113,16 @@ export function installQualificationRuntime(
         "--engine-strict",
         ...(frozen ? ["--frozen-lockfile"] : []),
       ],
-      {
-        cwd: root,
-        env,
-        encoding: "utf8",
-        timeout: 180000,
-        maxBuffer: 8 * 1024 * 1024,
-      },
+      root,
+      env,
     );
+    const result = spawnSync(routed.command, routed.args, {
+      cwd: routed.cwd,
+      env,
+      encoding: "utf8",
+      timeout: 180000,
+      maxBuffer: 8 * 1024 * 1024,
+    });
     assert.equal(result.error, undefined);
     assert.equal(result.signal, null);
     assert.equal(result.status, 0, result.stdout + result.stderr);

@@ -1,3 +1,4 @@
+import { nodeStorageCommand } from "./node-storage.ts";
 /** Qualification only: creates fresh owned fixtures, never operates on a user app. */
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
@@ -83,8 +84,9 @@ export async function rehearseCanonicalCutover(options: Options) {
     timeout = 240000,
   ) => {
     const start = performance.now();
-    const result = spawnSync(command, args, {
-      cwd,
+    const routed = nodeStorageCommand(command, args, cwd, env);
+    const result = spawnSync(routed.command, routed.args, {
+      cwd: routed.cwd,
       env,
       encoding: "utf8",
       timeout,
@@ -95,7 +97,7 @@ export async function rehearseCanonicalCutover(options: Options) {
       label,
       command,
       args,
-      cwd,
+      cwd: routed.cwd,
       pid: result.pid ?? null,
       timeout,
       elapsedMs: performance.now() - start,

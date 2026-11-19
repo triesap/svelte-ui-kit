@@ -340,7 +340,13 @@ export function checkCi(
     }
   }
   for (const [name, expected] of Object.entries(scripts))
-    if (manifest?.scripts?.[name] !== expected)
+    if (
+      manifest?.scripts?.[name] !==
+      expected.replace(
+        /(^|&& )node /g,
+        "$1node --import ./tools/node-workspace-env.ts ",
+      )
+    )
       fail(
         "CI_SCRIPT_COVERAGE",
         `${name}: preserve its full repository-owned command without selectors or skipped checks.`,

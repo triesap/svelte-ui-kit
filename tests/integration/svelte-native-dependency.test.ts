@@ -299,7 +299,7 @@ test("live write authority independently reauthenticates runtime and source afte
       });
       cpSync(
         path.resolve(
-          "tests/fixtures/consumer/node_modules/svelte/node_modules/.bin/acorn",
+          "tests/fixtures/native-metadata/pnpm-12.21-acorn-8.19.fixture",
         ),
         path.join(packageRoot, "node_modules/.bin/acorn"),
       );
@@ -438,7 +438,7 @@ test("exact pnpm installer metadata is inventoried while altered, linked, missin
   const shims = [
     readFileSync(
       path.resolve(
-        "tests/fixtures/consumer/node_modules/svelte/node_modules/.bin/acorn",
+        "tests/fixtures/native-metadata/pnpm-12.21-acorn-8.19.fixture",
       ),
     ),
     readFileSync(
@@ -634,4 +634,58 @@ test("closed Svelte provenance schema preserves actual producer identity and rej
     validateWithSchema("native-provenance.schema.json", original).ok,
     false,
   );
+});
+
+test("relocated native shim binds every location field and preserves full executable inventory", (t) => {
+  const template = readFileSync(
+    "tests/fixtures/native-metadata/pnpm-12.16-acorn-8.18-relocatable.fixture",
+    "utf8",
+  );
+  assert.equal(
+    createHash("sha256").update(template).digest("hex"),
+    "8f9cf71581226f17c24fd5b0931044dbffe951b270ecdd3db122e771e88b6570",
+  );
+  for (const fault of [
+    "none",
+    "statement",
+    "node-path",
+    "target",
+    "redirected-dependency",
+    "ambiguous-location",
+  ]) {
+    const { app, packageRoot } = consumer(t);
+    const store = path.join(
+      app,
+      fault === "ambiguous-location" ? "store:shadow" : "store",
+    );
+    const acorn = path.join(store, "acorn@8.18.0/node_modules/acorn");
+    mkdirSync(acorn, { recursive: true });
+    symlinkSync(acorn, path.join(app, "acorn"));
+    const nodePath = [
+      path.join(acorn, "node_modules"),
+      path.dirname(acorn),
+      path.join(store, "node_modules"),
+    ].join(":");
+    const target = path.resolve(packageRoot, "../acorn/bin/acorn");
+    let shim = template
+      .replaceAll("@PNPM_NODE_PATH@", nodePath)
+      .replaceAll("@PNPM_ACORN_TARGET@", target);
+    if (fault === "statement") shim += "\nexec untrusted\n";
+    if (fault === "node-path") shim = shim.replace(nodePath, "/untrusted");
+    if (fault === "target") shim = shim.replace(target, "/untrusted/bin/acorn");
+    if (fault === "redirected-dependency") {
+      rmSync(path.join(app, "acorn"));
+      const other = path.join(store, "acorn@8.19.0/node_modules/acorn");
+      mkdirSync(other, { recursive: true });
+      symlinkSync(other, path.join(app, "acorn"));
+    }
+    const directory = path.join(packageRoot, "node_modules/.bin");
+    mkdirSync(directory, { recursive: true });
+    writeFileSync(path.join(directory, "acorn"), shim);
+    assert.equal(
+      observeNativeInstall(packageRoot, baseline.version, "svelte").kind,
+      fault === "none" ? "authenticated" : "invalid",
+      fault,
+    );
+  }
 });

@@ -1,6 +1,6 @@
 /** Qualified native artifact identity; no package code is executed or installed. */
 import { createHash } from "node:crypto";
-import { lstatSync, readFileSync } from "node:fs";
+import { lstatSync, readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
 import baseline from "./native-dependency-baseline.json" with { type: "json" };
 import svelteBaseline from "./svelte-runtime-baseline.json" with {
@@ -251,6 +251,43 @@ export function observeNativeFiles(
   );
 }
 
+/** Exact pnpm 12.16 launcher template with physically bound location fields. */
+function relocatableAcornShim(packageRoot: string, bytes: Buffer): boolean {
+  const root = realpathSync(packageRoot);
+  const acorn = realpathSync(path.resolve(root, "../acorn"));
+  const modules = path.dirname(acorn);
+  const entry = path.dirname(modules);
+  if (
+    path.basename(acorn) !== "acorn" ||
+    path.basename(modules) !== "node_modules" ||
+    !/^acorn@8\.(18|19)\.0$/.test(path.basename(entry))
+  )
+    return false;
+  const store = path.dirname(entry);
+  const nodePath = [
+    path.join(acorn, "node_modules"),
+    modules,
+    path.join(store, "node_modules"),
+  ].join(":");
+  const target = path.resolve(root, "../acorn/bin/acorn");
+  // Bind both interpolated fields to this physical dependency, never accept
+  // arbitrary shell text or normalize executable statements.
+  if (
+    [acorn, modules, store, target].some((value) => /[\n\r"\\`$:]/.test(value))
+  )
+    return false;
+  const text = bytes.toString("utf8");
+  if (text.split(nodePath).length !== 3 || text.split(target).length !== 2)
+    return false;
+  const normalized = text
+    .replaceAll(nodePath, "@PNPM_NODE_PATH@")
+    .replaceAll(target, "@PNPM_ACORN_TARGET@");
+  return (
+    digest(Buffer.from(normalized)) ===
+    "8f9cf71581226f17c24fd5b0931044dbffe951b270ecdd3db122e771e88b6570"
+  );
+}
+
 /**
  * Verify the actual installed distribution, including authentic provenance and
  * every packed file. The package root may be a legitimate pnpm/hoisted link;
@@ -324,7 +361,8 @@ export function authenticateNativeInstall(
             "b3ab33f6f443865b444d6ff92f547281238f4e2e90c522776b0274371ab0cf2c",
             "9d391338d51186f9bbce223b0e4b1d6e8d491b40d91abacce19ef138234b14d0",
             "934d2191bf94854c8e9cf7b4889f25bd1f84eec377390067c7da5eefded52a4d",
-          ].includes(hash)
+          ].includes(hash) &&
+          !relocatableAcornShim(packageRoot, shim.bytes)
         )
           throw new Error("Unqualified Svelte installer metadata");
         expected.set(logical, hash);

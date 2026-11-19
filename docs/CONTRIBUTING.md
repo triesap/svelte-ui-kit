@@ -103,3 +103,11 @@ is inspection, not publication. No external mutation is implied by contribution.
 
 Contributions are licensed under [MIT](../LICENSE-MIT) OR
 [Apache-2.0](../LICENSE-APACHE); retain [notices](../NOTICE.md).
+
+When an external build runtime supplies `EXTBUILD_EXECUTABLE`,
+`EXTBUILD_MACHINE_CONFIG` and `EXTBUILD_PROJECT_ROOT`, repository-owned pnpm
+subprocesses re-enter it for each source or generated workspace. Unmanaged
+checkouts retain ordinary pnpm behavior. The runtime owns path admission and
+locks; this optional tooling adapter does not change package resolution or
+authenticate dependency payloads. Native inventories remain complete, including
+the exact pnpm shim template with its physical dependency locations checked.

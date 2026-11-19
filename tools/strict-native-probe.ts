@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { nodeStorageCommand } from "./node-storage.ts";
 /**
  * R11-F01 diagnostic qualification, not final strict acceptance. Every trial
  * installs supported packages in a disposable owned project. Public entry
@@ -111,8 +112,9 @@ const env: NodeJS.ProcessEnv = {
 for (const name of ["NODE_TEST_CONTEXT", "NODE_OPTIONS", "NODE_V8_COVERAGE"])
   delete env[name];
 function run(command: string, args: readonly string[], cwd = root) {
-  const result = spawnSync(command, args, {
-    cwd,
+  const routed = nodeStorageCommand(command, args, cwd, env);
+  const result = spawnSync(routed.command, routed.args, {
+    cwd: routed.cwd,
     env,
     encoding: "utf8",
     timeout: 240_000,

@@ -1,3 +1,4 @@
+import { nodeStorageCommand } from "../../tools/node-storage.ts";
 /** Real offline local-tarball installation into an owned standalone host. */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -32,8 +33,9 @@ export function installPackedCore() {
       cwd: string,
       label: string,
     ) => {
-      const result = spawnSync(command, args, {
-        cwd,
+      const routed = nodeStorageCommand(command, args, cwd);
+      const result = spawnSync(routed.command, routed.args, {
+        cwd: routed.cwd,
         encoding: "utf8",
         timeout: 180000,
       });

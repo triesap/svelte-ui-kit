@@ -1,3 +1,4 @@
+import { nodeStorageCommand } from "../../tools/node-storage.ts";
 /** Native generated/packed consumer execution shared by supported application targets. */
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
@@ -13,8 +14,9 @@ export function nativeCommand(
   args: string[],
   extraEnv: NodeJS.ProcessEnv = {},
 ) {
-  const result = spawnSync(executable, args, {
-    cwd: root,
+  const routed = nodeStorageCommand(executable, args, root);
+  const result = spawnSync(routed.command, routed.args, {
+    cwd: routed.cwd,
     encoding: "utf8",
     timeout: 240_000,
     env: {

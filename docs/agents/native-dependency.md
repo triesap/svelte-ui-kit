@@ -70,7 +70,7 @@ cached between mutation boundaries, and the archive/provenance/manifest and late
 physical or byte checks remain live at their existing boundaries.
 
 pnpm 12.16.1 can add `node_modules/.bin/acorn` inside an installed local Svelte
-package. Four measured fingerprints qualify: the ordinary Acorn 8.18.0
+package. Four fixed fingerprints and one location-bound template qualify: the ordinary Acorn 8.18.0
 and 8.19.0 shims and the Acorn 8.19.0 fetch/offline variant without the optional
 `NODE_PATH` block, plus the pnpm12.21.0 Acorn8.19.0 symlink-safe launcher
 (SHA-256 `934d2191bf94854c8e9cf7b4889f25bd1f84eec377390067c7da5eefded52a4d`).
@@ -262,3 +262,16 @@ snapshot evidence; later byte, mode or physical-path changes cannot hide behind
 an unchanged application manifest. Missing and invalid sources remain distinct
 observations. Archive capture alone never establishes installed readiness or
 selects a runtime variant for an application.
+
+For external pnpm12.16 installations, the complete measured Acorn launcher is
+also authenticated after replacing only its physically checked NODE_PATH and
+final target fields with fixed tokens. Every executable statement and every
+packed distribution byte remains authenticated. Altered fields, dependency
+redirection, extra files and executable changes fail; this does not authorize
+patching installed dependencies or changing native archive baselines.
+
+Native producer source remains byte-identical to its qualified provenance. The
+repository lifecycle preloader clears only inherited invocation-local pnpm
+placement. Producers allocate unique directories below the managed TMPDIR and
+retain the outer runtime's project cleanup lease. Their package storage is
+external without changing the immutable producer or its archive bytes.

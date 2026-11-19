@@ -1,3 +1,4 @@
+import { nodeStorageCommand } from "../../tools/node-storage.ts";
 import { writeFixtureWorkspace } from "./workspace-catalog.js";
 import { prepareOfflineInstall } from "./package-manager.js";
 /** Build an owned authoring copy, install its real tarball, then remove it. */
@@ -167,8 +168,9 @@ export function installIndependentCli() {
     label: string,
   ) => {
     const started = performance.now();
-    const result = spawnSync(command, args, {
-      cwd,
+    const routed = nodeStorageCommand(command, args, cwd, env);
+    const result = spawnSync(routed.command, routed.args, {
+      cwd: routed.cwd,
       env,
       encoding: "utf8",
       timeout: 240000,
@@ -178,7 +180,7 @@ export function installIndependentCli() {
       label,
       command,
       args,
-      cwd,
+      cwd: routed.cwd,
       pid: result.pid,
       elapsedMs: performance.now() - started,
       timeoutMs: 240000,

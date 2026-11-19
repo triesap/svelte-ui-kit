@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { nodeStorageCommand } from "./node-storage.ts";
 /** One production compiler/packer. Installed CLI commands never load this tool. */
 import assert from "node:assert/strict";
 import {
@@ -26,8 +27,9 @@ import {
 const sourceRoot = fileURLToPath(new URL("../", import.meta.url));
 
 function execute(command: string, args: string[], cwd: string): string {
-  const result = spawnSync(command, args, {
-    cwd,
+  const routed = nodeStorageCommand(command, args, cwd);
+  const result = spawnSync(routed.command, routed.args, {
+    cwd: routed.cwd,
     encoding: "utf8",
     timeout: 240000,
     killSignal: "SIGKILL",
